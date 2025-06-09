@@ -1,0 +1,10 @@
+[project]
+name = "professional"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "docx>=0.2.4",
+    "fpdf>=1.7.2",
+]
