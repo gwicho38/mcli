@@ -1,0 +1,2 @@
+[paths]
+included_dirs = ["app", "self", "workflow", "public"]

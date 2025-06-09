@@ -1,0 +1,2 @@
+[console_scripts]
+mcli = mcli.app.main:main

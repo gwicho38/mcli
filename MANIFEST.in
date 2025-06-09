@@ -1,0 +1,43 @@
+include LICENSE
+include README.md
+include pyproject.toml
+include setup.cfg
+include build_extension.py
+include build.cfg
+include build.env
+include build.sh
+
+# Core application files
+include src/mcli/app/*.py
+include src/mcli/app/*.pyx
+include src/mcli/app/*.pxd
+include src/mcli/app/*.so
+include src/mcli/app/*.html
+include src/mcli/app/**/__init__.py
+
+# Documentation
+include src/mcli/README.md
+
+# Include all Python files in the package
+recursive-include src/mcli *.py
+
+# Include private apps
+recursive-include src/mcli/private/lpy *
+
+# Include public apps
+recursive-include src/mcli/public/mcli *
+
+# Database files
+include db/*.db
+
+# Dependencies
+recursive-include dependencies/git-worktree-switcher *
+
+# Exclude unnecessary files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude *.so
+global-exclude .DS_Store
+global-exclude *.egg-info/*

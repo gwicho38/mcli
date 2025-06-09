@@ -1,0 +1,21 @@
+[gcloud]
+default_project = "remote-ws-88"  # Default project value
+default_region = "us-west1"       # Default region value
+
+[workstations]
+cluster = "cluster-cirrus-ws"     # Default cluster value
+config = "config-cirrus-ws"       # Default config value
+
+[instances]
+alpha = "apps-luis-fernandez-de-la-vara"
+
+[tcp_tunnel]
+local_host = "127.0.0.1"         # Local host for TCP tunnel
+local_port = "2222"              # Local port for TCP tunnel
+remote_port = "22"               # Remote port for SSH connection
+
+[commands.describe]
+command = "describe"             # Command for querying workstation details
+
+[commands.tunnel]
+command = "start-tcp-tunnel"     # Command for establishing TCP tunnel
