@@ -78,6 +78,7 @@ tests/test_erd_import.py
 tests/test_fix.py
 tests/test_fixed_issues.py
 tests/test_generate_graph.py
+tests/test_generic_erd.py
 tests/test_harness.py
 tests/test_rich.py
 tests/test_uv_compatibility.py

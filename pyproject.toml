@@ -60,6 +60,7 @@ dependencies = [
   "scikit-image>=0.24.0",
   "scipy>=1.13.1",
   "cryptography>=44.0.2",
+  "tomli>=2.2.1",
 ]
 
 [project.optional-dependencies]

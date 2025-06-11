@@ -39,6 +39,7 @@ graphviz>=0.20.3
 scikit-image>=0.24.0
 scipy>=1.13.1
 cryptography>=44.0.2
+tomli>=2.2.1
 
 [dev]
 pytest-cov<5.0.0,>=4.1.0
