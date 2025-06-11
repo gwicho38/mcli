@@ -79,6 +79,8 @@ debug: ## Show debug information
 clean: ## Clean all build artifacts
 	@echo "$(CYAN)Cleaning build artifacts...$(RESET)"
 	-rm -rf $(BUILD_DIR)/ $(DIST_DIR)/ *.egg-info/ $(TEMP_DIR)/
+	-rm -rf $(BINARY_DIR)/ $(CACHE_DIR)/ $(DISTRIBUTION_DIR)/
+	-rm -rf .venv 2>/dev/null || true
 	-find . -type f -name "*.so" -delete
 	-find . -type f -name "*.cpp" -delete
 	-find . -type f -name "*.c" -delete
@@ -135,8 +137,8 @@ $(WHEEL_CACHE): $(SRC_FILES) $(UV_ENV_CACHE) | $(CACHE_DIR)
 	@touch $@
 	@echo "$(GREEN)macOS build completed ✅$(RESET)"
 
-.PHONY: darwin
-darwin: $(WHEEL_CACHE) ## Build for macOS with caching
+# .PHONY: darwin
+# darwin: $(WHEEL_CACHE) ## Build for macOS with caching
 
 # Binary build with caching
 $(BINARY_CACHE): $(WHEEL_CACHE) | $(CACHE_DIR)
@@ -227,8 +229,8 @@ install: $(WHEEL_CACHE) ## Install the package with caching
 	@echo "$(GREEN)Installation completed ✅$(RESET)"
 
 # Install portable binary
-.PHONY: install-portable
-install-portable: $(BINARY_CACHE) ## Install portable binary to system path
+.PHONY: binary
+binary: $(BINARY_CACHE) ## Install portable binary to system path
 	@echo "$(CYAN)Installing binary to /usr/local/bin/$(PACKAGE_NAME)...$(RESET)"
 	@if [ -f "$(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)" ]; then \
 		sudo cp "$(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)" /usr/local/bin/$(PACKAGE_NAME); \
