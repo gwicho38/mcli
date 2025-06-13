@@ -1,4 +1,4 @@
-typer<0.10.0,>=0.9.0
+typer<0.13.0,>=0.12.0
 click<9.0.0,>=8.1.7
 ipython<9.0.0,>=8.12.0
 pandoc<3.0,>=2.3
@@ -40,6 +40,8 @@ scikit-image>=0.24.0
 scipy>=1.13.1
 cryptography>=44.0.2
 tomli>=2.2.1
+csvkit>=2.1.0
+xlsxwriter>=3.2.3
 
 [dev]
 pytest-cov<5.0.0,>=4.1.0

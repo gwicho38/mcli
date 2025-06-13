@@ -1,2 +1,2 @@
 [paths]
-included_dirs = ["workflow/videos"]
+included_dirs = ["workflow/videos", "public/csv"]

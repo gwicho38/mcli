@@ -169,6 +169,11 @@ $(BINARY_CACHE): $(WHEEL_CACHE) | $(CACHE_DIR)
 	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "tmp_ret = collect_all('charset_normalizer')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+	@echo "# Include mypyc compiled modules" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+	@echo "import glob, os" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+	@echo "mypyc_modules = glob.glob(os.path.join(os.environ.get('VIRTUAL_ENV', '.venv'), 'lib/python*/site-packages/*mypyc*.so'))" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+	@echo "for module in mypyc_modules:" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+	@echo "    binaries.append((module, '.'))" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo '' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "a = Analysis(" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "    ['src/mcli/app/main.py']," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec

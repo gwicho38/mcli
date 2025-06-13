@@ -19,7 +19,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-  "typer>=0.9.0,<0.10.0",
+  "typer>=0.12.0,<0.13.0",
   "click>=8.1.7,<9.0.0",
   "ipython>=8.12.0,<9.0.0",
   "pandoc>=2.3,<3.0",
@@ -61,6 +61,8 @@ dependencies = [
   "scipy>=1.13.1",
   "cryptography>=44.0.2",
   "tomli>=2.2.1",
+  "csvkit>=2.1.0",
+  "xlsxwriter>=3.2.3",
 ]
 
 [project.optional-dependencies]
