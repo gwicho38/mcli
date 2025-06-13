@@ -197,45 +197,6 @@ def create_app() -> Typer:
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         
-    # Add readiness command explicitly
-    try:
-        if 'readiness' in globals():
-            logger.info(f"Found readiness in globals: {readiness}")
-            # Create a Typer app for the readiness group
-            readiness_app = Typer(name=readiness.name, help=readiness.help or "Readiness commands", no_args_is_help=True, rich_markup_mode=None)
-            
-            # Add the readiness app to the main app
-            app.add_typer(readiness_app, name=readiness.name)
-            
-            # Create wrapper function for each command in the Click group
-            def create_wrapper(callback):
-                @functools.wraps(callback)
-                def wrapper(*args, **kwargs):
-                    return callback(*args, **kwargs)
-                
-                # Remove the 'ctx' parameter if it exists
-                try:
-                    sig = inspect.signature(callback)
-                    parameters = list(sig.parameters.values())
-                    if parameters and parameters[0].name == "ctx":
-                        parameters = parameters[1:]
-                    new_sig = inspect.Signature(parameters)
-                    wrapper.__signature__ = new_sig
-                except Exception as e:
-                    logger.error(f"Error preserving signature: {e}")
-                return wrapper
-            
-            # Add each command to the readiness app
-            for cmd_name, cmd in readiness.commands.items():
-                logger.info(f"Adding readiness command: {cmd_name}")
-                readiness_app.command(name=cmd_name)(create_wrapper(cmd.callback))
-                
-            logger.info("Added readiness commands to mcli")
-    except Exception as e:
-        logger.error(f"Error adding readiness commands: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-
     # # Import each module and register its commands properly
     for module_name in module_names:
         try:
@@ -266,38 +227,19 @@ def create_app() -> Typer:
                             logger.error(f"Error preserving signature: {e}")
                         return wrapper
 
-                    @group_app.callback()
-                    def readiness_callback(ctx: typer.Context):
-                        if ctx.invoked_subcommand is None:
-                            typer.echo(ctx.get_help())
-
-                            # Add the group app to the main app first
-
                     app.add_typer(group_app, name=obj.name)
 
                     # Add each command from the Click group to the Typer app
                     for cmd_name, cmd in obj.commands.items():
-                        # logger.info(f"Adding command {cmd_name} to group {obj.name}")
+                        logger.info(f"Adding command {cmd_name} to group {obj.name}")
                         group_app.command(name=cmd_name)(create_wrapper(cmd.callback))
-                        # logger.info(cmd_name)
+                        logger.info(cmd_name)
 
                 elif isinstance(obj, typer.Typer):
                     # It's already a Typer app
                     app.add_typer(obj, name=obj.info.name)
                 else:
                     pass
-                # elif isinstance(obj, click.Command):
-                #     # Add individual Click commands directly to the main app
-                #     def create_wrapper(callback):
-                #         def wrapper(*args, **kwargs):
-                #             return callback(*args, **kwargs)
-
-                #         wrapper.__name__ = callback.__name__
-                #         wrapper.__doc__ = callback.__doc__
-                #         return wrapper
-
-                #     wrapper = create_wrapper(obj.callback)
-                #     app.command(name=obj.name)(wrapper)
 
         except ImportError as e:
             logger.warning(f"Could not import module {module_name}: {e}")
@@ -315,7 +257,7 @@ def get_version_info(verbose: bool = False) -> str:
         info = [f"mcli version {mcli_version}"]
 
         if verbose:
-            info.extend(
+                info.extend(
                 [
                     f"\nPython: {sys.version.split()[0]}",
                     f"Platform: {platform.platform()}",

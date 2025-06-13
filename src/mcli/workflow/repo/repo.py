@@ -3,18 +3,21 @@ import csv
 import click
 import pandas as pd
 from openpyxl.styles import Alignment
+from openai import OpenAI
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.shell.shell import get_shell_script_path, shell_exec
+
+
 logger = get_logger(__name__)
 
 
-@click.group()
-@click.pass_context
-def pkg(ctx):
-    """pkg utility - use this to interact with the mcli packages"""
-    pass
+@click.group(name="repo")
+def repo():
+    """repo utility - use this to interact with git and relevant utilities"""
+    click.echo("repo")
 
 
-@pkg.command()
+@repo.command()
 @click.argument("path")
 def analyze(path: str):
     """Provides a source lines of code analysis for a given pkg path"""
@@ -145,40 +148,26 @@ def _analyze(path: str):
     # Write the results to CSV and Excel files
     write_results_to_files(sloc_counts, csv_file, excel_file)
 
-
-import click
-
-# from mcli.lib.shell.shell import shell_exec, get_shell_script_path
-import os
-from openai import OpenAI
-
-
-@click.group(name="repo")
-def repo():
-    """repo utility - use this to interact with git and relevant utilities"""
-    click.echo("repo")
-
-
-@click.command(name="wt")
+@repo.command(name="wt")
 def worktree():
     """Create and manage worktrees"""
     scripts_path = get_shell_script_path("repo", __file__)
     shell_exec(scripts_path, "wt")
 
 
-@click.group(name="commit")
+@repo.command(name="commit")
 def commit():
     """Edit commits to a repository"""
     click.echo("commit")
 
 
-@click.command(name="revert")
+@repo.command(name="revert")
 def revert():
     """Create and manage worktrees"""
     scripts_path = get_shell_script_path("repo", __file__)
     shell_exec(scripts_path, "revert")
 
-@click.command(name="migration-loe")
+@repo.command(name="migration-loe")
 @click.argument("branch-a")
 @click.argument("branch-b")
 def loe(branch_a: str, branch_b: str):
@@ -226,9 +215,6 @@ def loe(branch_a: str, branch_b: str):
     except Exception as e:
         logger.info(f"An error occurred while calling OpenAI API: {e}")
 
-
-repo.add_command(worktree)
-repo.add_command(loe)
 
 if __name__ == "__main__":
     repo()
