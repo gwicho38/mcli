@@ -145,7 +145,7 @@ def create_app() -> Typer:
     
     logger.debug("create_app")
     
-    app = Typer(name="mcli", add_completion=True, no_args_is_help=True)
+    app = Typer(name="mcli", add_completion=True, no_args_is_help=True, rich_markup_mode=None)
 
     @app.command()
     def hello():
@@ -172,7 +172,7 @@ def create_app() -> Typer:
     try:
         if 'self_app' in globals():
             # Create a Typer app to wrap the Click-based self_app
-            self_typer_app = Typer(name="self", help="Manage and extend the mcli application", no_args_is_help=True)
+            self_typer_app = Typer(name="self", help="Manage and extend the mcli application", no_args_is_help=True, rich_markup_mode=None)
             
             # Add each command from the Click group to the Typer app
             for cmd_name, cmd in self_app.commands.items():
@@ -202,7 +202,7 @@ def create_app() -> Typer:
         if 'readiness' in globals():
             logger.info(f"Found readiness in globals: {readiness}")
             # Create a Typer app for the readiness group
-            readiness_app = Typer(name=readiness.name, help=readiness.help or "Readiness commands", no_args_is_help=True)
+            readiness_app = Typer(name=readiness.name, help=readiness.help or "Readiness commands", no_args_is_help=True, rich_markup_mode=None)
             
             # Add the readiness app to the main app
             app.add_typer(readiness_app, name=readiness.name)
@@ -246,7 +246,7 @@ def create_app() -> Typer:
                 if isinstance(obj, click.Group):
                     # Create a Typer app for each group
                     group_app = Typer(
-                        name=obj.name, help=obj.help, no_args_is_help=True
+                        name=obj.name, help=obj.help, no_args_is_help=True, rich_markup_mode=None
                     )
 
                     def create_wrapper(callback):
