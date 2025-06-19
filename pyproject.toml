@@ -63,6 +63,7 @@ dependencies = [
   "tomli>=2.2.1",
   "csvkit>=2.1.0",
   "xlsxwriter>=3.2.3",
+  "pymupdf>=1.26.1",
 ]
 
 [project.optional-dependencies]

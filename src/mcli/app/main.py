@@ -137,6 +137,30 @@ def discover_modules(
                 except Exception as e:
                     logger.error(f"Error converting {package} to module: {e}")
 
+    # PyInstaller fallback: check if we're running in PyInstaller environment
+    import sys
+    is_pyinstaller = hasattr(sys, '_MEIPASS')
+    
+    if is_pyinstaller or not modules:
+        logger.warning("Running in PyInstaller or no modules found, using fallback module list")
+        fallback_modules = [
+            "mcli.workflow.repo.repo",
+            "mcli.workflow.videos.videos",
+            "mcli.workflow.gcloud.gcloud",
+            "mcli.workflow.docker.docker",
+            "mcli.workflow.registry.registry",
+            "mcli.workflow.wakatime.wakatime",
+            "mcli.public.oi.oi"
+        ]
+        
+        for module_name in fallback_modules:
+            try:
+                importlib.import_module(module_name)
+                modules.append(module_name)
+                logger.debug(f"Successfully imported fallback module: {module_name}")
+            except ImportError as e:
+                logger.warning(f"Failed to import fallback module {module_name}: {e}")
+    
     return modules
 
 

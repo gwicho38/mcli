@@ -59,6 +59,8 @@ src/mcli/workflow/__init__.py
 src/mcli/workflow/workflow.py
 src/mcli/workflow/docker/__init__.py
 src/mcli/workflow/docker/docker.py
+src/mcli/workflow/file/__init__.py
+src/mcli/workflow/file/file.py
 src/mcli/workflow/gcloud/__init__.py
 src/mcli/workflow/gcloud/gcloud.py
 src/mcli/workflow/interview/__init__.py

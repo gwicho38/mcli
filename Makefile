@@ -176,7 +176,7 @@ $(BINARY_CACHE): $(WHEEL_CACHE) | $(CACHE_DIR)
 	@echo "    binaries.append((module, '.'))" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo '' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "a = Analysis(" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    ['src/mcli/app/main.py']," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+	@echo "    ['pyinstaller_main.py']," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "    pathex=[]," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "    binaries=binaries," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "    datas=datas," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec

@@ -42,6 +42,7 @@ cryptography>=44.0.2
 tomli>=2.2.1
 csvkit>=2.1.0
 xlsxwriter>=3.2.3
+pymupdf>=1.26.1
 
 [dev]
 pytest-cov<5.0.0,>=4.1.0
