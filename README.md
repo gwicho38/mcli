@@ -134,7 +134,6 @@ This project relies on several dependencies to provide its functionality. Key de
 
 - [requests](https://pypi.org/project/requests/): HTTP library for Python.
 - [ipython](https://pypi.org/project/ipython/): Interactive computing in Python.
-- [typer](https://pypi.org/project/typer/): Build great CLIs with Python.
 - [click](https://pypi.org/project/click/): Python package for creating command-line interfaces.
 - [cython](https://pypi.org/project/Cython/): C-Extensions for Python.
 - [tensorflow](https://pypi.org/project/tensorflow/): Machine learning library.
