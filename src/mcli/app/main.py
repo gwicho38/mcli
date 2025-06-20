@@ -4,15 +4,16 @@ import inspect
 import importlib
 from pathlib import Path
 from typing import Optional, List
-import typer
-from typer import Typer, Option
 from importlib.metadata import version, metadata
 from functools import lru_cache
 import click
-import functools
 import tomli
 import os
-from mcli.lib.logger.logger import get_logger, enable_runtime_tracing, disable_runtime_tracing
+from mcli.lib.logger.logger import (
+    get_logger,
+    enable_runtime_tracing,
+    disable_runtime_tracing,
+)
 
 # Get logger
 logger = get_logger()
@@ -164,12 +165,12 @@ def discover_modules(
     return modules
 
 
-def create_app() -> Typer:
-    """Creates and configures the Typer application with dynamically loaded commands."""
-    
+def create_app() -> click.Group:
+    """Create the Click application and dynamically load commands."""
+
     logger.debug("create_app")
-    
-    app = Typer(name="mcli", add_completion=True, no_args_is_help=True, rich_markup_mode=None)
+
+    app = click.Group(name="mcli")
 
     @app.command()
     def hello():
@@ -177,13 +178,10 @@ def create_app() -> Typer:
         logger.info("Hello from mcli!")
 
     @app.command()
-    def version(
-        verbose: Optional[bool] = Option(
-            False, "--verbose", "-v", help="Show additional system information"
-        ),
-    ):
+    @click.option("--verbose", "-v", is_flag=True, help="Show additional system information")
+    def version(verbose: bool):
         """Show mcli version and system information"""
-        logger.info(get_version_info(verbose))
+        click.echo(get_version_info(verbose))
 
     # Get the base path (mcli root)
     base_path = Path(__file__).parent.parent  # Updated to point to src/mcli instead of src/mcli/app
@@ -193,81 +191,26 @@ def create_app() -> Typer:
     logger.debug(f"Discovered modules: {module_names}")
 
     # Add self commands explicitly
-    try:
-        if 'self_app' in globals():
-            # Create a Typer app to wrap the Click-based self_app
-            self_typer_app = Typer(name="self", help="Manage and extend the mcli application", no_args_is_help=True, rich_markup_mode=None)
-            
-            # Add each command from the Click group to the Typer app
-            for cmd_name, cmd in self_app.commands.items():
-                # Create wrapper function for each command
-                def create_click_wrapper(click_cmd):
-                    @functools.wraps(click_cmd.callback)
-                    def wrapper(*args, **kwargs):
-                        # Filter out typer context if it was passed
-                        if 'ctx' in kwargs and isinstance(kwargs['ctx'], typer.Context):
-                            del kwargs['ctx']
-                        yield click_cmd.callback(*args, **kwargs)
-                    return wrapper
-                
-                # Register the command
-                self_typer_app.command(name=cmd_name)(create_click_wrapper(cmd))
-            
-            # Add the self commands to the main app
-            app.add_typer(self_typer_app)
+    if "self_app" in globals():
+        try:
+            app.add_command(self_app)
             logger.info("Added self management commands to mcli")
-    except Exception as e:
-        logger.error(f"Error adding self management commands: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
+        except Exception as e:
+            logger.error(f"Error adding self management commands: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
         
-    # # Import each module and register its commands properly
+    # Import each module and register its commands
     for module_name in module_names:
         try:
             module = importlib.import_module(module_name)
 
-            # Look for Click groups first
             for name, obj in inspect.getmembers(module):
-                if isinstance(obj, click.Group):
-                    # Create a Typer app for each group
-                    group_app = Typer(
-                        name=obj.name, help=obj.help, no_args_is_help=True, rich_markup_mode=None
-                    )
-
-                    def create_wrapper(callback):
-                        @functools.wraps(callback)
-                        def wrapper(*args, **kwargs):
-                            return callback(*args, **kwargs)
-
-                        try:
-                            sig = inspect.signature(callback)
-                            parameters = list(sig.parameters.values())
-                            # Remove the first parameter if it's the context (named "ctx")
-                            if parameters and parameters[0].name == "ctx":
-                                parameters = parameters[1:]
-                            new_sig = inspect.Signature(parameters)
-                            wrapper.__signature__ = new_sig
-                        except Exception as e:
-                            logger.error(f"Error preserving signature: {e}")
-                        return wrapper
-
-                    app.add_typer(group_app, name=obj.name)
-
-                    # Add each command from the Click group to the Typer app
-                    for cmd_name, cmd in obj.commands.items():
-                        logger.info(f"Adding command {cmd_name} to group {obj.name}")
-                        group_app.command(name=cmd_name)(create_wrapper(cmd.callback))
-                        logger.info(cmd_name)
-
-                elif isinstance(obj, typer.Typer):
-                    # It's already a Typer app
-                    app.add_typer(obj, name=obj.info.name)
-                else:
-                    pass
-
+                if isinstance(obj, (click.Group, click.Command)):
+                    app.add_command(obj)
         except ImportError as e:
             logger.warning(f"Could not import module {module_name}: {e}")
-    
+
     return app
 
 
