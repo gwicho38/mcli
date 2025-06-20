@@ -160,8 +160,7 @@ $(BINARY_CACHE): $(WHEEL_CACHE) | $(CACHE_DIR)
 	@echo '' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "datas = [('src/mcli/private', 'mcli/private'), ('src/mcli/public', 'mcli/public'), ('db', 'db'), ('dependencies', 'dependencies')]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo 'binaries = []' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "hiddenimports = ['typer', 'typer.completion', 'click', 'pandas', 'numpy', 'watchdog', 'openai', 'git', 'flask', 'cachetools', 'tomli', 'ipywidgets', 'encodings', 'encodings.utf_8', 'encodings.cp1252', 'encodings.ascii', 'encodings.idna', 'encodings.latin_1', 'codecs', 'InquirerPy', 'requests']" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "tmp_ret = collect_all('typer')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+	@echo "hiddenimports = ['click', 'pandas', 'numpy', 'watchdog', 'openai', 'git', 'flask', 'cachetools', 'tomli', 'ipywidgets', 'encodings', 'encodings.utf_8', 'encodings.cp1252', 'encodings.ascii', 'encodings.idna', 'encodings.latin_1', 'codecs', 'InquirerPy', 'requests']" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "tmp_ret = collect_all('click')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
