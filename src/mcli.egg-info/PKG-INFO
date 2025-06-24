@@ -15,7 +15,6 @@ Classifier: Programming Language :: Python :: 3.12
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: typer<0.13.0,>=0.12.0
 Requires-Dist: click<9.0.0,>=8.1.7
 Requires-Dist: ipython<9.0.0,>=8.12.0
 Requires-Dist: pandoc<3.0,>=2.3
@@ -203,7 +202,6 @@ This project relies on several dependencies to provide its functionality. Key de
 
 - [requests](https://pypi.org/project/requests/): HTTP library for Python.
 - [ipython](https://pypi.org/project/ipython/): Interactive computing in Python.
-- [typer](https://pypi.org/project/typer/): Build great CLIs with Python.
 - [click](https://pypi.org/project/click/): Python package for creating command-line interfaces.
 - [cython](https://pypi.org/project/Cython/): C-Extensions for Python.
 - [tensorflow](https://pypi.org/project/tensorflow/): Machine learning library.
