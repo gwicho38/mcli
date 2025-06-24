@@ -158,7 +158,7 @@ $(BINARY_CACHE): $(WHEEL_CACHE) | $(CACHE_DIR)
 	@echo '# -*- mode: python ; coding: utf-8 -*-' > $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo 'from PyInstaller.utils.hooks import collect_all' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo '' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "datas = [('src/mcli/private', 'mcli/private'), ('src/mcli/public', 'mcli/public'), ('db', 'db'), ('dependencies', 'dependencies')]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+        @echo "datas = [('src/mcli', 'mcli'), ('db', 'db'), ('dependencies', 'dependencies')]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo 'binaries = []' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "hiddenimports = ['click', 'pandas', 'numpy', 'watchdog', 'openai', 'git', 'flask', 'cachetools', 'tomli', 'ipywidgets', 'encodings', 'encodings.utf_8', 'encodings.cp1252', 'encodings.ascii', 'encodings.idna', 'encodings.latin_1', 'codecs', 'InquirerPy', 'requests']" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "tmp_ret = collect_all('click')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
@@ -166,8 +166,10 @@ $(BINARY_CACHE): $(WHEEL_CACHE) | $(CACHE_DIR)
 	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "tmp_ret = collect_all('tomli')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "tmp_ret = collect_all('charset_normalizer')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+        @echo "tmp_ret = collect_all('charset_normalizer')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+        @echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+        @echo "tmp_ret = collect_all('mcli')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
+        @echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "# Include mypyc compiled modules" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "import glob, os" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
 	@echo "mypyc_modules = glob.glob(os.path.join(os.environ.get('VIRTUAL_ENV', '.venv'), 'lib/python*/site-packages/*mypyc*.so'))" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
