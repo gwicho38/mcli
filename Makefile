@@ -89,13 +89,6 @@ clean: ## Clean all build artifacts
 	-rm -f setup.py  # Remove existing setup.py if present
 	@echo "$(GREEN)Clean completed ✅$(RESET)"
 
-.PHONY: clean-all
-clean-all: clean ## Complete clean including cache and binaries
-	@echo "$(CYAN)Performing complete clean...$(RESET)"
-	-rm -rf $(BINARY_DIR)/ $(CACHE_DIR)/ $(DISTRIBUTION_DIR)/
-	-rm -rf .venv 2>/dev/null || true
-	@echo "$(GREEN)Complete clean finished ✅$(RESET)"
-
 # Setup target with caching
 $(UV_ENV_CACHE): $(DEPENDENCY_FILES) | $(CACHE_DIR)
 	@echo "$(CYAN)Setting up UV environment...$(RESET)"
@@ -137,138 +130,11 @@ $(WHEEL_CACHE): $(SRC_FILES) $(UV_ENV_CACHE) | $(CACHE_DIR)
 	@touch $@
 	@echo "$(GREEN)macOS build completed ✅$(RESET)"
 
-# .PHONY: darwin
-# darwin: $(WHEEL_CACHE) ## Build for macOS with caching
-
-# Binary build with caching
-$(BINARY_CACHE): $(WHEEL_CACHE) | $(CACHE_DIR)
-	@echo "$(CYAN)Creating portable binary executable with all dependencies...$(RESET)"
-	@mkdir -p $(BINARY_DIR)
-	@mkdir -p $(DIST_DIR)
-
-	# Ensure required directories exist
-	@mkdir -p db dependencies src/mcli/private src/mcli/public
-	@touch db/.gitkeep dependencies/.gitkeep
-
-	# Install PyInstaller in the UV environment
-	$(UV) pip install -U pyinstaller
-
-	# Create a PyInstaller spec file
-	@echo "$(CYAN)Creating PyInstaller spec file...$(RESET)"
-	@echo '# -*- mode: python ; coding: utf-8 -*-' > $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo 'from PyInstaller.utils.hooks import collect_all' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo '' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "datas = [('src/mcli/private', 'mcli/private'), ('src/mcli/public', 'mcli/public'), ('db', 'db'), ('dependencies', 'dependencies')]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo 'binaries = []' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "hiddenimports = ['click', 'pandas', 'numpy', 'watchdog', 'openai', 'git', 'flask', 'cachetools', 'tomli', 'ipywidgets', 'encodings', 'encodings.utf_8', 'encodings.cp1252', 'encodings.ascii', 'encodings.idna', 'encodings.latin_1', 'codecs', 'InquirerPy', 'requests']" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "tmp_ret = collect_all('click')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "tmp_ret = collect_all('tomli')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "tmp_ret = collect_all('charset_normalizer')" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "datas += tmp_ret[0]; binaries += tmp_ret[1]; hiddenimports += tmp_ret[2]" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "# Include mypyc compiled modules" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "import glob, os" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "mypyc_modules = glob.glob(os.path.join(os.environ.get('VIRTUAL_ENV', '.venv'), 'lib/python*/site-packages/*mypyc*.so'))" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "for module in mypyc_modules:" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    binaries.append((module, '.'))" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo '' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "a = Analysis(" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    ['pyinstaller_main.py']," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    pathex=[]," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    binaries=binaries," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    datas=datas," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    hiddenimports=hiddenimports," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    hookspath=[]," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    hooksconfig={}," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    runtime_hooks=[]," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    excludes=[]," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    noarchive=False," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo ")" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "pyz = PYZ(a.pure)" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo '' >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "exe = EXE(" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    pyz," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    a.scripts," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    a.binaries," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    a.zipfiles," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    a.datas," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    []," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    name='$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)'," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    debug=False," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    bootloader_ignore_signals=False," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    strip=False," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    upx=False," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    upx_exclude=[]," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    runtime_tmpdir=None," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    console=True," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    disable_windowed_traceback=False," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    argv_emulation=False," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    target_arch=None," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    codesign_identity=None," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo "    entitlements_file=None," >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-	@echo ")" >> $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec
-
-	# Run PyInstaller using the UV environment's Python
-	@echo "$(CYAN)Running PyInstaller with the spec file...$(RESET)"
-	.venv/bin/python -m PyInstaller $(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX).spec --clean --noconfirm
-
-	# Handle the output file
-	@if [ -f "$(DIST_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)" ]; then \
-		mkdir -p $(BINARY_DIR); \
-		mv "$(DIST_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)" "$(BINARY_DIR)/"; \
-		echo "$(GREEN)Portable binary created at $(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX) ✅$(RESET)"; \
-	else \
-		echo "$(RED)❌ Error: PyInstaller failed to build the binary.$(RESET)"; \
-		echo "$(YELLOW)Checking for output files in the dist directory:$(RESET)"; \
-		ls -la $(DIST_DIR) || echo "No dist directory found"; \
-		exit 1; \
-	fi
-
-	@mkdir -p $(dir $@)
-	@touch $@
-
-
 .PHONY: install
 install: $(WHEEL_CACHE) ## Install the package with caching
 	@echo "$(CYAN)Installing package...$(RESET)"
 	$(PIP) install $(DIST_DIR)/*.whl --force-reinstall
 	@echo "$(GREEN)Installation completed ✅$(RESET)"
-
-# Install portable binary
-.PHONY: binary
-binary: $(BINARY_CACHE) ## Install portable binary to system path
-	@echo "$(CYAN)Installing binary to /usr/local/bin/$(PACKAGE_NAME)...$(RESET)"
-	@if [ -f "$(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)" ]; then \
-		sudo cp "$(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)" /usr/local/bin/$(PACKAGE_NAME); \
-		sudo chmod +x /usr/local/bin/$(PACKAGE_NAME); \
-		echo "$(GREEN)Binary installed successfully at /usr/local/bin/$(PACKAGE_NAME) ✅$(RESET)"; \
-		echo "$(CYAN)Adding shell completion for $(SHELL)...$(RESET)"; \
-		case "$(SHELL)" in \
-			*/bash) \
-				SHELL_RC="$${HOME}/.bashrc"; \
-				[ -f "$${HOME}/.bash_profile" ] && SHELL_RC="$${HOME}/.bash_profile"; \
-				echo "$(PACKAGE_NAME) completion --bash > /tmp/$(PACKAGE_NAME)_completion.bash && source /tmp/$(PACKAGE_NAME)_completion.bash" >> "$${SHELL_RC}"; \
-				;; \
-			*/zsh) \
-				echo "$(PACKAGE_NAME) completion --zsh > $${HOME}/.zsh_$(PACKAGE_NAME)_completion"; \
-				echo "source $${HOME}/.zsh_$(PACKAGE_NAME)_completion" >> "$${HOME}/.zshrc"; \
-				;; \
-			*/fish) \
-				FISH_DIR="$${HOME}/.config/fish/completions"; \
-				mkdir -p "$${FISH_DIR}"; \
-				$(PACKAGE_NAME) completion --fish > "$${FISH_DIR}/$(PACKAGE_NAME).fish"; \
-				;; \
-			*) \
-				echo "$(YELLOW)Shell completion not configured: Unsupported shell $(SHELL)$(RESET)"; \
-				;; \
-		esac; \
-		echo "$(GREEN)Shell completion configuration added for $(SHELL) ✅$(RESET)"; \
-	else \
-		echo "$(RED)❌ Error: Binary not found! Run 'make portable' first.$(RESET)"; \
-		exit 1; \
-	fi
 
 # Uninstall either the app bundle or standalone binary based on what's installed
 .PHONY: uninstall
@@ -291,44 +157,6 @@ test: install ## Test the installation
 	$(VENV_PYTHON) -c "from mcli.app.main import main; print('Import test passed ✅')"
 	.venv/bin/mcli --help || $(VENV_PYTHON) -m mcli --help
 	@echo "$(GREEN)Testing completed ✅$(RESET)"
-
-# Test the binary
-.PHONY: test-binary
-test-binary: $(BINARY_CACHE) ## Test the portable binary
-	@echo "$(CYAN)Testing portable binary...$(RESET)"
-	@if [ -f "$(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)" ]; then \
-		echo "$(YELLOW)Binary found at: $(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)$(RESET)"; \
-		chmod +x "$(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)"; \
-		echo "$(CYAN)Running with --version flag:$(RESET)"; \
-		"$(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)" --version; \
-		RESULT=$$?; \
-		if [ $$RESULT -eq 0 ]; then \
-			echo "$(GREEN)Binary executed successfully with exit code 0 ✅$(RESET)"; \
-		else \
-			echo "$(YELLOW)Binary executed with non-zero exit code: $$RESULT$(RESET)"; \
-			echo "$(YELLOW)This might not be an error if --version is not implemented.$(RESET)"; \
-			echo "$(CYAN)Testing with --help flag:$(RESET)"; \
-			"$(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)" --help; \
-			HELP_RESULT=$$?; \
-			if [ $$HELP_RESULT -eq 0 ]; then \
-				echo "$(GREEN)Binary executed successfully with --help flag ✅$(RESET)"; \
-			else \
-				echo "$(RED)❌ Binary --help test failed with exit code: $$HELP_RESULT$(RESET)"; \
-			fi; \
-		fi; \
-		echo "$(GREEN)Binary test completed ✅$(RESET)"; \
-	else \
-		echo "$(RED)❌ Error: Binary not found at $(BINARY_DIR)/$(PACKAGE_NAME)_$(VERSION)_$(PLATFORM_SUFFIX)$(RESET)"; \
-		echo "$(CYAN)Searching for binary in other locations...$(RESET)"; \
-		echo "Checking build directory:"; \
-		find build -type f -name "$(PACKAGE_NAME)*" -o -name "main*" 2>/dev/null | grep -v "__pycache__" || echo "No matching files found in build/"; \
-		echo "Checking dist directory:"; \
-		find dist -type f -name "$(PACKAGE_NAME)*" -o -name "main*" 2>/dev/null || echo "No matching files found in dist/"; \
-		echo "Checking bin directory:"; \
-		find bin -type f -name "$(PACKAGE_NAME)*" 2>/dev/null || echo "No matching files found in bin/"; \
-		echo "$(YELLOW)To rebuild the binary, run: make clean portable$(RESET)"; \
-		exit 1; \
-	fi
 
 .PHONY: help
 help: ## Show this help message
