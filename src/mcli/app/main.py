@@ -197,21 +197,37 @@ def create_app() -> click.Group:
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
         
-    # Import each module and register its commands
+    # First import all modules and collect Click groups
+    groups = {}
     for module_name in module_names:
         try:
             module = importlib.import_module(module_name)
 
             for name, obj in inspect.getmembers(module):
                 if isinstance(obj, click.Group):
-                    logger.info(f"Adding group {obj.name}")
-                    app.add_command(obj, name=obj.name)
-                elif isinstance(obj, click.Command):
-                    logger.info(f"Adding command {obj.name}")
-                    app.add_command(obj, name=obj.name)
-
+                    logger.info(f"Discovered group {obj.name} in {module_name}")
+                    groups[module_name] = obj
         except ImportError as e:
             logger.warning(f"Could not import module {module_name}: {e}")
+
+    def find_parent(module_name: str) -> Optional[str]:
+        """Return the parent module path if a parent group exists."""
+        parts = module_name.split(".")
+        if len(parts) >= 4 and parts[-1] == parts[-2]:
+            candidate = ".".join(parts[:-2] + [parts[-3]])
+            if candidate in groups:
+                return candidate
+        return None
+
+    # Register groups with proper nesting
+    for module_name, group in groups.items():
+        parent = find_parent(module_name)
+        if parent:
+            logger.info(f"Nesting group {group.name} under {groups[parent].name}")
+            groups[parent].add_command(group, name=group.name)
+        else:
+            logger.info(f"Adding top-level group {group.name}")
+            app.add_command(group, name=group.name)
     
     return app
 
