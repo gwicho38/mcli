@@ -8,6 +8,7 @@ from importlib.metadata import version, metadata
 from functools import lru_cache
 import click
 import functools
+from mcli.lib.ui.styling import info, success
 import tomli
 import os
 from mcli.lib.logger.logger import get_logger, enable_runtime_tracing, disable_runtime_tracing
@@ -172,13 +173,17 @@ def create_app() -> click.Group:
     @app.command()
     def hello():
         """Test command to verify CLI is working"""
-        logger.info("Hello from mcli!")
+        message = "Hello from mcli!"
+        logger.info(message)
+        success(message)
 
     @app.command()
     @click.option("--verbose", "-v", is_flag=True, help="Show additional system information")
     def version(verbose: bool):
         """Show mcli version and system information"""
-        logger.info(get_version_info(verbose))
+        message = get_version_info(verbose)
+        logger.info(message)
+        info(message)
 
     # Get the base path (mcli root)
     base_path = Path(__file__).parent.parent  # Updated to point to src/mcli instead of src/mcli/app
