@@ -126,6 +126,7 @@ You can find more detailed usage instructions in the [documentation](https://git
 - **Dependency Management**: Simplifies handling project dependencies using `poetry`.
 - **Packaging**: Easy-to-use tools for building and distributing Python packages.
 - **CLI Interface**: Command-line tools built with Python Click for efficient project management.
+- **Colorful Output**: Uses the Rich library to provide accessible, colorized command output.
 - **Cython Support**: Optionally compile Python code to C for improved performance.
 
 ## Dependencies
