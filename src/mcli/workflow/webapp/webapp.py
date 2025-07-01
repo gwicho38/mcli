@@ -542,5 +542,90 @@ def delete(app_name: str, force: bool):
         click.echo(f"❌ Error deleting application: {e}", err=True)
 
 
+@webapp.command()
+@click.argument('app-name', type=str)
+@click.option('--test-type', type=click.Choice(['basic', 'advanced', 'api', 'ui', 'all']), default='all', help='Type of tests to run')
+@click.option('--report', '-r', is_flag=True, help='Generate test report')
+@click.option('--check', '-c', is_flag=True, help='Check environment only')
+@click.option('--verbose', '-v', is_flag=True, help='Verbose output')
+def test(app_name: str, test_type: str, report: bool, check: bool, verbose: bool):
+    """Run Puppeteer tests for a generated web application"""
+    
+    webapps_dir = get_webapps_dir()
+    
+    if not webapps_dir.exists():
+        click.echo("No web applications found.")
+        return
+    
+    # Find the app by name
+    app_dir = None
+    for potential_dir in webapps_dir.iterdir():
+        if potential_dir.is_dir():
+            app_info = get_app_info(potential_dir)
+            if app_info and app_info['name'] == app_name:
+                app_dir = potential_dir
+                break
+    
+    if not app_dir:
+        click.echo(f"Error: Web application '{app_name}' not found.")
+        click.echo("Use 'list' to see available applications.")
+        return
+    
+    # Check if test directory exists
+    test_dir = app_dir / "test"
+    if not test_dir.exists():
+        click.echo(f"Error: Test directory not found for '{app_name}'.")
+        click.echo("This application may not support testing.")
+        return
+    
+    test_runner = test_dir / "run-tests.sh"
+    if not test_runner.exists():
+        click.echo(f"Error: Test runner not found for '{app_name}'.")
+        click.echo("This application may not support testing.")
+        return
+    
+    click.echo(f"Running tests for '{app_name}'...")
+    click.echo(f"Test type: {test_type}")
+    click.echo(f"App directory: {app_dir}")
+    
+    try:
+        # Change to the app directory
+        original_dir = os.getcwd()
+        os.chdir(app_dir)
+        
+        # Build command arguments
+        cmd = [str(test_runner)]
+        
+        if report:
+            cmd.append('--report')
+        
+        if check:
+            cmd.append('--check')
+        
+        if verbose:
+            cmd.append('--verbose')
+        
+        if test_type != 'all':
+            cmd.append(test_type)
+        
+        # Run the test runner
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            click.echo("✅ Tests completed successfully!")
+            if result.stdout:
+                click.echo(result.stdout)
+        else:
+            click.echo(f"❌ Tests failed: {result.stderr}", err=True)
+            if result.stdout:
+                click.echo(result.stdout)
+            
+    except Exception as e:
+        click.echo(f"❌ Error running tests: {e}", err=True)
+    finally:
+        # Change back to original directory
+        os.chdir(original_dir)
+
+
 if __name__ == '__main__':
     webapp() 
