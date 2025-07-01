@@ -159,6 +159,21 @@ expressApp.get('/api/vector-visualization', async (req, res) => {
   }
 });
 
+expressApp.post('/api/search', async (req, res) => {
+  try {
+    const { query, top_k = 10, exact_match = false } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({ success: false, error: 'Query is required' });
+    }
+    
+    const results = await performSearch(query, top_k, exact_match);
+    res.json({ success: true, results });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Vector processing functions
 async function processFilesForEmbeddings(files) {
   const results = [];
@@ -256,6 +271,29 @@ async function deleteDocument(id) {
 async function generateVectorVisualization() {
   // Generate vector proximity visualization
   return {};
+}
+
+async function performSearch(query, top_k = 10, exact_match = false) {
+  try {
+    // Call Python backend for search
+    const options = {
+      mode: 'text',
+      pythonPath: 'python3',
+      pythonOptions: ['-u'],
+      scriptPath: path.join(__dirname, 'python'),
+      args: [query, top_k.toString(), exact_match.toString(), vectorStorePath]
+    };
+
+    return new Promise((resolve, reject) => {
+      PythonShell.run('search_embeddings.py', options, (err, results) => {
+        if (err) reject(err);
+        else resolve(JSON.parse(results[0]));
+      });
+    });
+  } catch (error) {
+    console.error('Search error:', error);
+    return [];
+  }
 }
 
 // Electron app lifecycle

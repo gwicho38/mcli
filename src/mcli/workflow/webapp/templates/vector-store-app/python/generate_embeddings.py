@@ -502,6 +502,43 @@ class VectorStoreManager:
             logger.error(f"Error in similarity search: {e}")
             return []
 
+    def search_exact(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
+        """Search for exact text matches in documents"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Search for exact text matches
+            cursor.execute('''
+                SELECT e.document_id, e.text_chunk, d.original_name, e.chunk_index
+                FROM embeddings e
+                JOIN documents d ON e.document_id = d.id
+                WHERE e.text_chunk LIKE ?
+                ORDER BY e.id
+                LIMIT ?
+            ''', (f'%{query}%', top_k))
+            
+            rows = cursor.fetchall()
+            results = []
+            
+            for i, row in enumerate(rows):
+                results.append({
+                    "rank": i + 1,
+                    "document_id": row[0],
+                    "document_name": row[2],
+                    "text_chunk": row[1],
+                    "chunk_index": row[3],
+                    "similarity_score": 1.0,  # Exact match gets full score
+                    "match_type": "exact"
+                })
+            
+            conn.close()
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error in exact search: {e}")
+            return []
+
 
 class MemoryMonitor:
     """Monitor and manage memory usage"""

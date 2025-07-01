@@ -1,0 +1,52 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - text:  Vector Store Manager
+  - button " Upload Documents"
+  - button "Visualize Vectors"
+- main:
+  - text: 
+  - textbox "Type to search your documents or ask questions"
+  - button ""
+  - text: ✓ Semantic Search Exact Match
+  - complementary:
+    - heading " Documents" [level=3]
+    - button ""
+    - text: 
+    - paragraph: No documents uploaded yet
+    - button "Upload Documents"
+  - heading " Chat & Results" [level=3]
+  - button ""
+  - text: 
+  - heading "Welcome to Vector Store Manager" [level=2]
+  - paragraph: Upload documents to build your knowledge base, then search and explore your content with AI-powered semantic search.
+  - text:  Upload multiple file types  Semantic search across documents Visualize document relationships
+  - complementary:
+    - heading "Vector Space" [level=3]
+    - button ""
+    - text: "Clustering:"
+    - combobox:
+      - option "K-Means" [selected]
+      - option "Hierarchical"
+      - option "DBSCAN"
+    - text: "Dimensions:"
+    - combobox:
+      - option "PCA (2D)" [selected]
+      - option "t-SNE"
+      - option "UMAP"
+    - text: "Color by:"
+    - combobox:
+      - option "Cluster" [selected]
+      - option "Document Type"
+      - option "Similarity"
+- heading " Upload Documents" [level=3]
+- button "×"
+- text: 
+- paragraph: Drag and drop files here or click to browse
+- paragraph: Supports PDF, DOCX, TXT, MD, CSV, JSON, XML, HTML
+- text: Processing files...  sample.txt 177 B  research.md 207 B  data.json 204 B
+- button "Cancel"
+- button "Upload Files"
+- contentinfo: " 0 documents  Memory: --  Last update: 11:58:52 PM"
+```

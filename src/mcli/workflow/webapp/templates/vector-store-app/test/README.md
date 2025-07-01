@@ -6,8 +6,10 @@ This directory contains comprehensive end-to-end tests for the Vector Store Mana
 
 - `simple-e2e.test.js` - Basic functionality tests (UI elements, modals, etc.)
 - `e2e-vectorstore.test.js` - Full E2E tests (file upload, search, CRUD operations)
+- `functional-vectorstore.test.js` - **Functional tests for vector operations and database**
 - `test-helper.js` - Port management and test utilities
 - `playwright.config.js` - Playwright configuration
+- `run-functional-tests.sh` - **Functional test runner script**
 
 ## Port Management Solution
 
@@ -42,6 +44,15 @@ npx playwright test simple-e2e.test.js --timeout=60000
 npx playwright test e2e-vectorstore.test.js --timeout=180000
 ```
 
+### Run Functional Tests (Vector Operations)
+```bash
+# Using the test runner script (recommended)
+./run-functional-tests.sh
+
+# Or directly with Playwright
+npx playwright test functional-vectorstore.test.js --timeout=180000
+```
+
 ### Run All Tests
 ```bash
 npx playwright test --timeout=180000
@@ -67,6 +78,17 @@ npx playwright show-report
 - ✅ Semantic and exact match search
 - ✅ Memory usage monitoring
 - ✅ App restart and cleanup
+
+### Functional Tests (Vector Operations)
+- ✅ **Vector database creation and storage**
+- ✅ **Document embedding generation**
+- ✅ **Semantic search with AI models**
+- ✅ **Exact text matching**
+- ✅ **UI state synchronization with database**
+- ✅ **Document CRUD with database persistence**
+- ✅ **Vector visualization generation**
+- ✅ **WebSocket real-time communication**
+- ✅ **Data persistence across app restarts**
 
 ## Troubleshooting
 
