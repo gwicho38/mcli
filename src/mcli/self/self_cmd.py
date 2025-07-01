@@ -474,6 +474,9 @@ def plugin_update(plugin_name):
     config_env = os.environ.get("MCLI_CONFIG")
     config_path = None
 
+@self_app.command('search')
+def search(name="World"):
+    return search_command(name)
     if config_env and Path(config_env).expanduser().exists():
         config_path = Path(config_env).expanduser()
     else:

@@ -48,6 +48,7 @@ src/mcli/lib/shell/__init__.py
 src/mcli/lib/shell/shell.py
 src/mcli/lib/toml/__init__.py
 src/mcli/lib/toml/toml.py
+src/mcli/lib/ui/styling.py
 src/mcli/lib/watcher/__init__.py
 src/mcli/lib/watcher/watcher.py
 src/mcli/public/__init__.py
