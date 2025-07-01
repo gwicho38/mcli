@@ -7,6 +7,7 @@ const fs = require('fs-extra');
 const { v4: uuidv4 } = require('uuid');
 const { PythonShell } = require('python-shell');
 const WebSocket = require('ws');
+const net = require('net');
 
 // Global variables
 let mainWindow;
@@ -14,6 +15,41 @@ let server;
 let wss;
 let vectorStorePath;
 let documentsPath;
+
+// Port management utilities
+function isPortAvailable(port) {
+  return new Promise((resolve) => {
+    const tester = net.createServer()
+      .once('error', () => resolve(false))
+      .once('listening', () => {
+        tester.once('close', () => resolve(true))
+          .close();
+      })
+      .listen(port);
+  });
+}
+
+async function findAvailablePort(startPort = 3001) {
+  let port = startPort;
+  while (!(await isPortAvailable(port))) {
+    port++;
+    if (port > startPort + 100) { // Prevent infinite loop
+      throw new Error('No available ports found');
+    }
+  }
+  return port;
+}
+
+function cleanupPort(port) {
+  return new Promise((resolve) => {
+    const tester = net.createServer()
+      .once('error', () => resolve()) // Port is already free
+      .once('listening', () => {
+        tester.close(() => resolve());
+      })
+      .listen(port);
+  });
+}
 
 // Express app setup
 const expressApp = express();
@@ -265,27 +301,35 @@ ipcMain.handle('get-app-version', () => {
 });
 
 // App event handlers
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   initializePaths();
   
-  // Start Express server
-  const PORT = 3001;
-  server = expressApp.listen(PORT, () => {
-    console.log(`Vector Store API server running on port ${PORT}`);
-  });
-  
-  // Start WebSocket server
-  wss = new WebSocket.Server({ server });
-  
-  wss.on('connection', (ws) => {
-    console.log('Client connected to WebSocket');
+  try {
+    // Find available port
+    const startPort = parseInt(process.env.PORT) || 3001;
+    const PORT = await findAvailablePort(startPort);
     
-    ws.on('close', () => {
-      console.log('Client disconnected from WebSocket');
+    // Start Express server
+    server = expressApp.listen(PORT, () => {
+      console.log(`Vector Store API server running on port ${PORT}`);
     });
-  });
-  
-  createWindow();
+    
+    // Start WebSocket server
+    wss = new WebSocket.Server({ server });
+    
+    wss.on('connection', (ws) => {
+      console.log('Client connected to WebSocket');
+      
+      ws.on('close', () => {
+        console.log('Client disconnected from WebSocket');
+      });
+    });
+    
+    createWindow();
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    app.quit();
+  }
 });
 
 app.on('window-all-closed', () => {
@@ -300,11 +344,19 @@ app.on('activate', () => {
   }
 });
 
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
+  console.log('Cleaning up server connections...');
+  
+  if (wss) {
+    wss.close();
+  }
+  
   if (server) {
     server.close();
   }
-  if (wss) {
-    wss.close();
+  
+  // Additional cleanup for any remaining connections
+  if (server && server.address()) {
+    await cleanupPort(server.address().port);
   }
 }); 

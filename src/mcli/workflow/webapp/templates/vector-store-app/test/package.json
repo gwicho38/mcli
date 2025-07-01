@@ -1,23 +1,28 @@
 {
   "name": "vector-store-app-tests",
   "version": "1.0.0",
-  "description": "Puppeteer test suite for Vector Store Manager",
+  "description": "Puppeteer and Playwright test suite for Vector Store Manager",
   "main": "puppeteer-test.js",
   "scripts": {
     "test": "node puppeteer-test.js",
     "test:headless": "node puppeteer-test.js --headless",
-    "test:debug": "node puppeteer-test.js --debug"
+    "test:debug": "node puppeteer-test.js --debug",
+    "e2e": "npx playwright test e2e-vectorstore.test.js"
   },
   "dependencies": {
-    "puppeteer": "^21.0.0",
+    "@playwright/test": "^1.53.2",
+    "electron": "^37.1.0",
     "jest": "^29.0.0",
-    "jest-puppeteer": "^9.0.0"
+    "jest-puppeteer": "^9.0.0",
+    "puppeteer": "^21.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "playwright": "^1.44.0"
   },
   "keywords": [
     "puppeteer",
+    "playwright",
     "testing",
     "electron",
     "vector-store",
@@ -25,4 +30,4 @@
   ],
   "author": "mcli",
   "license": "MIT"
-} 
+}

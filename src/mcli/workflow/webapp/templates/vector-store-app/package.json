@@ -28,7 +28,6 @@
     "node-fetch": "^3.3.2",
     "ws": "^8.14.2",
     "sqlite3": "^5.1.6",
-    "better-sqlite3": "^9.2.2",
     "sharp": "^0.33.0",
     "pdf-parse": "^1.1.1",
     "mammoth": "^1.6.0",
@@ -39,7 +38,7 @@
     "stopword": "^2.0.8",
     "compression": "^1.7.4",
     "helmet": "^7.1.0",
-    "rate-limiter-flexible": "^3.0.8"
+    "rate-limiter-flexible": "^3.0.0"
   },
   "build": {
     "appId": "com.mcli.vectorstore",

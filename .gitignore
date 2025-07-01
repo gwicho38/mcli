@@ -69,3 +69,4 @@ output/**/*
 *.webm
 
 temp/
+node_modules/
