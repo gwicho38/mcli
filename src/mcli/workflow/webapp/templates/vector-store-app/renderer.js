@@ -96,13 +96,36 @@ class VectorStoreApp {
     
     handleWebSocketMessage(data) {
         switch (data.type) {
+            case 'processing_started':
+                this.showNotification(`Processing "${data.filename}"...`, 'info');
+                this.updateProcessingStatus(data.fileId, 'Processing...');
+                break;
+            case 'text_extracted':
+                this.showNotification(`Text extracted from "${data.filename}" (${data.textLength} characters)`, 'info');
+                this.updateProcessingStatus(data.fileId, 'Text extracted');
+                break;
+            case 'embeddings_generated':
+                this.showNotification(`Generated ${data.embeddingCount} embeddings for "${data.filename}"`, 'info');
+                this.updateProcessingStatus(data.fileId, 'Embeddings generated');
+                break;
             case 'document_processed':
-                this.showNotification(`Document "${data.filename}" processed successfully`, 'success');
+                this.showNotification(`Document "${data.filename}" processed successfully (${data.embeddingCount} embeddings)`, 'success');
+                this.updateProcessingStatus(data.fileId, 'Completed');
                 this.loadDocuments(); // Refresh document list
                 break;
             case 'processing_error':
-                this.showNotification(`Error processing document: ${data.error}`, 'error');
+                this.showNotification(`Error processing "${data.filename}": ${data.error}`, 'error');
+                this.updateProcessingStatus(data.fileId, 'Failed');
                 break;
+        }
+    }
+    
+    updateProcessingStatus(fileId, status) {
+        // Update status in the UI if we have a processing indicator
+        const statusElement = document.querySelector(`[data-file-id="${fileId}"] .processing-status`);
+        if (statusElement) {
+            statusElement.textContent = status;
+            statusElement.className = `processing-status ${status.toLowerCase().replace(/\s+/g, '-')}`;
         }
     }
     

@@ -220,10 +220,10 @@ class VectorStoreManager:
         """Extract text from CSV files"""
         try:
             df = pd.read_csv(file_path)
-            return df.to_string()
+            return df.to_string(index=False)
         except Exception as e:
             logger.error(f"Error extracting CSV text: {e}")
-            return ""
+            return self._extract_txt_text(file_path)
     
     def _extract_json_text(self, file_path: Path) -> str:
         """Extract text from JSON files"""
@@ -233,17 +233,17 @@ class VectorStoreManager:
                 return json_lib.dumps(data, indent=2)
         except Exception as e:
             logger.error(f"Error extracting JSON text: {e}")
-            return ""
+            return self._extract_txt_text(file_path)
     
     def _extract_xml_text(self, file_path: Path) -> str:
         """Extract text from XML files"""
         try:
             tree = ET.parse(file_path)
             root = tree.getroot()
-            return ET.tostring(root, encoding='unicode')
+            return ET.tostring(root, encoding='unicode', method='xml')
         except Exception as e:
             logger.error(f"Error extracting XML text: {e}")
-            return ""
+            return self._extract_txt_text(file_path)
     
     def _extract_html_text(self, file_path: Path) -> str:
         """Extract text from HTML files"""
@@ -253,7 +253,7 @@ class VectorStoreManager:
                 return soup.get_text()
         except Exception as e:
             logger.error(f"Error extracting HTML text: {e}")
-            return ""
+            return self._extract_txt_text(file_path)
     
     def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
         """Split text into overlapping chunks for better embedding"""
