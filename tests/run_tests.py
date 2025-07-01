@@ -7,6 +7,7 @@ import os
 import sys
 import unittest
 import argparse
+import pytest
 
 def run_tests(test_pattern=None):
     """
@@ -18,27 +19,53 @@ def run_tests(test_pattern=None):
     # Add parent directory to sys.path
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
     
-    # Discover tests in the current directory
-    loader = unittest.TestLoader()
-    
+    # Use pytest for better test discovery and reporting
     if test_pattern:
-        test_suite = loader.discover('.', pattern=f'test_{test_pattern}.py')
+        # Run specific test file
+        test_file = f'test_{test_pattern}.py'
+        if os.path.exists(test_file):
+            return pytest.main([test_file, '-v', '--no-cov', '--override-ini=addopts='])
+        else:
+            print(f"Test file {test_file} not found")
+            return 1
     else:
-        test_suite = loader.discover('.', pattern='test_*.py')
+        # Run all tests
+        return pytest.main(['.', '-v', '--no-cov', '--override-ini=addopts='])
+
+def run_cli_tests():
+    """
+    Run only CLI-related tests
+    """
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
     
-    # Create a test runner
-    runner = unittest.TextTestRunner(verbosity=2)
+    cli_test_files = [
+        'test_webapp.py',
+        'test_file.py', 
+        'test_registry.py',
+        'test_repo.py',
+        'test_gcloud.py',
+        'test_videos.py',
+        'test_wakatime.py',
+        'test_oi.py',
+        'test_self.py',
+        'test_lib.py',
+        'test_auth.py',
+        'test_workflow.py',
+        'test_main_app.py',
+        'test_all_cli.py'
+    ]
     
-    # Run the test suite
-    result = runner.run(test_suite)
-    
-    # Return exit code based on test result
-    return 0 if result.wasSuccessful() else 1
+    # Override pytest configuration to avoid coverage and other options
+    return pytest.main(cli_test_files + ['-v', '--no-cov', '--override-ini=addopts='])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run mcli tests')
     parser.add_argument('pattern', nargs='?', help='Test pattern to run (e.g., "generate_graph" to run test_generate_graph.py)')
+    parser.add_argument('--cli-only', action='store_true', help='Run only CLI tests')
     
     args = parser.parse_args()
     
-    sys.exit(run_tests(args.pattern))
+    if args.cli_only:
+        sys.exit(run_cli_tests())
+    else:
+        sys.exit(run_tests(args.pattern))
