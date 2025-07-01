@@ -19,13 +19,15 @@
                     <span>Vector Store Manager</span>
                 </div>
                 <div class="header-actions">
-                    <button id="uploadBtn" class="btn btn-primary">
+                    <button id="uploadBtn" class="btn btn-primary tooltip" title="Upload documents to your vector store">
                         <i class="fas fa-upload"></i>
                         Upload Documents
+                        <span class="tooltiptext">Upload documents to your vector store</span>
                     </button>
-                    <button id="visualizeBtn" class="btn btn-secondary">
+                    <button id="visualizeBtn" class="btn btn-secondary tooltip" title="Visualize your document vectors">
                         <i class="fas fa-chart-network"></i>
                         Visualize Vectors
+                        <span class="tooltiptext">Visualize your document vectors</span>
                     </button>
                 </div>
             </div>
@@ -37,27 +39,33 @@
             <section class="search-section">
                 <div class="search-container">
                     <div class="search-box">
-                        <i class="fas fa-search search-icon"></i>
+                        <i class="fas fa-search search-icon tooltip" title="Search your documents">
+                          <span class="tooltiptext">Search your documents</span>
+                        </i>
                         <input 
                             type="text" 
                             id="searchInput" 
                             placeholder="Search your documents or ask questions..."
-                            class="search-input"
+                            class="search-input tooltip"
+                            title="Type to search your documents or ask questions"
                         >
-                        <button id="searchBtn" class="search-btn">
+                        <button id="searchBtn" class="search-btn tooltip" title="Run search">
                             <i class="fas fa-arrow-right"></i>
+                            <span class="tooltiptext">Run search</span>
                         </button>
                     </div>
                     <div class="search-options">
-                        <label class="checkbox-container">
+                        <label class="checkbox-container tooltip" title="Enable semantic search">
                             <input type="checkbox" id="semanticSearch" checked>
                             <span class="checkmark"></span>
                             Semantic Search
+                            <span class="tooltiptext">Enable AI-powered semantic search</span>
                         </label>
-                        <label class="checkbox-container">
+                        <label class="checkbox-container tooltip" title="Enable exact match search">
                             <input type="checkbox" id="exactMatch">
                             <span class="checkmark"></span>
                             Exact Match
+                            <span class="tooltiptext">Enable exact match search</span>
                         </label>
                     </div>
                 </div>
@@ -68,9 +76,10 @@
                 <!-- Documents Panel -->
                 <aside class="documents-panel">
                     <div class="panel-header">
-                        <h3><i class="fas fa-folder"></i> Documents</h3>
-                        <button id="refreshDocs" class="btn-icon">
+                        <h3><i class="fas fa-folder tooltip" title="Your uploaded documents"><span class="tooltiptext">Your uploaded documents</span></i> Documents</h3>
+                        <button id="refreshDocs" class="btn-icon tooltip" title="Refresh document list">
                             <i class="fas fa-sync-alt"></i>
+                            <span class="tooltiptext">Refresh document list</span>
                         </button>
                     </div>
                     <div class="documents-list" id="documentsList">
@@ -86,8 +95,9 @@
                     <div class="panel-header">
                         <h3><i class="fas fa-comments"></i> Chat & Results</h3>
                         <div class="panel-actions">
-                            <button id="clearChat" class="btn-icon">
+                            <button id="clearChat" class="btn-icon tooltip" title="Clear chat/results">
                                 <i class="fas fa-trash"></i>
+                                <span class="tooltiptext">Clear chat/results</span>
                             </button>
                         </div>
                     </div>
@@ -99,17 +109,20 @@
                             <h2>Welcome to Vector Store Manager</h2>
                             <p>Upload documents to build your knowledge base, then search and explore your content with AI-powered semantic search.</p>
                             <div class="welcome-features">
-                                <div class="feature">
+                                <div class="feature tooltip" title="Upload multiple file types">
                                     <i class="fas fa-upload"></i>
                                     <span>Upload multiple file types</span>
+                                    <span class="tooltiptext">Upload PDF, DOCX, TXT, MD, CSV, JSON, XML, HTML</span>
                                 </div>
-                                <div class="feature">
+                                <div class="feature tooltip" title="Semantic search across documents">
                                     <i class="fas fa-search"></i>
                                     <span>Semantic search across documents</span>
+                                    <span class="tooltiptext">AI-powered semantic search across all your documents</span>
                                 </div>
-                                <div class="feature">
+                                <div class="feature tooltip" title="Visualize document relationships">
                                     <i class="fas fa-chart-network"></i>
                                     <span>Visualize document relationships</span>
+                                    <span class="tooltiptext">Visualize relationships and proximity between documents</span>
                                 </div>
                             </div>
                         </div>
@@ -120,36 +133,40 @@
                 <aside class="visualization-panel" id="visualizationPanel">
                     <div class="panel-header">
                         <h3><i class="fas fa-chart-network"></i> Vector Space</h3>
-                        <button id="closeViz" class="btn-icon">
+                        <button id="closeViz" class="btn-icon tooltip" title="Close visualization panel">
                             <i class="fas fa-times"></i>
+                            <span class="tooltiptext">Close visualization panel</span>
                         </button>
                     </div>
                     <div class="visualization-container">
                         <div id="vectorCanvas"></div>
                         <div class="visualization-controls">
-                            <div class="control-group">
+                            <div class="control-group tooltip" title="Choose clustering method">
                                 <label>Clustering:</label>
                                 <select id="clusteringMethod">
                                     <option value="kmeans">K-Means</option>
                                     <option value="hierarchical">Hierarchical</option>
                                     <option value="dbscan">DBSCAN</option>
                                 </select>
+                                <span class="tooltiptext">Choose clustering method for vector visualization</span>
                             </div>
-                            <div class="control-group">
+                            <div class="control-group tooltip" title="Choose dimension reduction method">
                                 <label>Dimensions:</label>
                                 <select id="dimensionReduction">
                                     <option value="pca">PCA (2D)</option>
                                     <option value="tsne">t-SNE</option>
                                     <option value="umap">UMAP</option>
                                 </select>
+                                <span class="tooltiptext">Choose dimension reduction for visualization</span>
                             </div>
-                            <div class="control-group">
+                            <div class="control-group tooltip" title="Color vectors by property">
                                 <label>Color by:</label>
                                 <select id="colorBy">
                                     <option value="cluster">Cluster</option>
                                     <option value="document_type">Document Type</option>
                                     <option value="similarity">Similarity</option>
                                 </select>
+                                <span class="tooltiptext">Color vectors by property</span>
                             </div>
                         </div>
                     </div>

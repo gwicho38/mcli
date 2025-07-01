@@ -800,4 +800,73 @@ body {
 
 .shadow {
     box-shadow: var(--shadow-md);
-} 
+}
+
+/* --- Custom Scrollbar Styling --- */
+::-webkit-scrollbar {
+  width: 10px;
+  background: #232c3a;
+}
+::-webkit-scrollbar-thumb {
+  background: #4a566e;
+  border-radius: 8px;
+  border: 2px solid #232c3a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6c7a99;
+}
+::-webkit-scrollbar-corner {
+  background: #232c3a;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4a566e #232c3a;
+}
+
+/* --- Tooltip Styling --- */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: max-content;
+  max-width: 240px;
+  background: #232c3a;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 6px 12px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  font-size: 0.95em;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+.tooltip:hover .tooltiptext,
+.tooltip:focus .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Optional: Arrow for tooltip */
+.tooltip .tooltiptext::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -6px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: #232c3a transparent transparent transparent;
+}
+
+/* --- End Custom Styles --- */ 
