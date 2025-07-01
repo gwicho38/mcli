@@ -42,7 +42,7 @@ except ImportError as e:
 logger.debug("main")
 
 def discover_modules(
-    base_path: Path, config_path: Path = None
+    base_path: Path, config_path: Optional[Path] = None
 ) -> List[str]:
     """
     Discovers Python modules in specified paths.
@@ -149,6 +149,7 @@ def discover_modules(
             "mcli.workflow.docker.docker",
             "mcli.workflow.registry.registry",
             "mcli.workflow.wakatime.wakatime",
+            "mcli.workflow.webapp.webapp",
             "mcli.public.oi.oi"
         ]
         
