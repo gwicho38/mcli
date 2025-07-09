@@ -1,0 +1,22 @@
+# Essential dependencies for Vector Store Manager
+# Compatible with Python 3.13
+
+# Core ML libraries
+torch
+sentence-transformers
+transformers
+
+# Document processing
+PyPDF2
+python-docx
+beautifulsoup4
+
+# Vector operations
+numpy
+faiss-cpu
+
+# Text processing
+pandas
+
+# Utilities
+psutil 

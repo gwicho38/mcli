@@ -28,7 +28,10 @@
                     <mxGeometry x="110" y="650" width="39.38" height="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="17" value="- Configuration allows user to provide a target file path for document discovery (only pdf support)&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;- After user specifies path, then vector database is either updated or created&lt;/font&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=default;labelBackgroundColor=default;" parent="1" vertex="1">
-                    <mxGeometry x="30" y="840" width="490" height="130" as="geometry"/>
+                    <mxGeometry x="20" y="840" width="490" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="Page" style="html=1;whiteSpace=wrap;strokeColor=none;fillColor=#0079D6;labelPosition=center;verticalLabelPosition=middle;verticalAlign=top;align=center;fontSize=12;outlineConnect=0;spacingTop=-6;fontColor=#FFFFFF;sketch=0;shape=mxgraph.sitemap.page;" vertex="1" parent="1">
+                    <mxGeometry x="-150" y="1050" width="860" height="670" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

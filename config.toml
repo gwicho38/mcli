@@ -1,2 +1,9 @@
 [paths]
-included_dirs = ["workflow", "workflow/videos", "workflow/file", "workflow/webapp"]
+included_dirs = [
+    "workflow",
+    "workflow/videos",
+    "workflow/file",
+    "workflow/webapp",
+    "workflow/openai",
+    "workflow/daemon",
+]

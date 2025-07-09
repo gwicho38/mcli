@@ -1,0 +1,73 @@
+{
+  "name": "my_vector_store",
+  "version": "1.0.0",
+  "description": "Vector Store Manager for My Vector Store",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "vector-store",
+    "document-processing",
+    "embeddings",
+    "chatgpt"
+  ],
+  "author": "mcli",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.6.4",
+    "form-data": "^4.0.3",
+    "ws": "^8.18.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.2.2",
+    "cheerio": "^1.0.0-rc.12",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "express": "^4.18.2",
+    "fs-extra": "^11.1.1",
+    "helmet": "^7.1.0",
+    "mammoth": "^1.6.0",
+    "multer": "^1.4.5-lts.1",
+    "natural": "^6.10.4",
+    "node-fetch": "^3.3.2",
+    "path": "^0.12.7",
+    "pdf-parse": "^1.1.1",
+    "python-shell": "^5.0.0",
+    "rate-limiter-flexible": "^2.4.2",
+    "sharp": "^0.33.0",
+    "sqlite3": "^5.1.6",
+    "stopword": "^2.0.8",
+    "uuid": "^9.0.1",
+    "xml2js": "^0.6.2"
+  },
+  "build": {
+    "appId": "com.mcli.My_Vector_Store",
+    "productName": "My Vector Store Vector Store",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!dist/**/*",
+      "!build/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "productName": "My Vector Store Vector Store"
+}

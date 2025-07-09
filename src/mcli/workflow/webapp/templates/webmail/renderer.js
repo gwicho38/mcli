@@ -76,7 +76,6 @@ class VectorStoreApp {
             
             this.ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                console.log('RECEIVED WS MESSAGE:', data);
                 this.handleWebSocketMessage(data);
             };
             

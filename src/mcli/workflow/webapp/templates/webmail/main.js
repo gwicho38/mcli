@@ -266,7 +266,6 @@ async function processFilesForEmbeddings(files) {
       
       // Generate embeddings using Python backend
       const embeddings = await generateEmbeddings(textContent, file.id);
-      console.log('PYTHON OUTPUT:', embeddings);
       
       // Notify embedding generation complete
       if (wss) {
@@ -293,11 +292,6 @@ async function processFilesForEmbeddings(files) {
       });
       
       // Notify frontend via WebSocket
-      console.log('SENDING document_processed', {
-        fileId: file.id,
-        filename: file.originalName,
-        embeddingCount: embeddings.embedding_count || 0
-      });
       if (wss) {
         wss.clients.forEach(client => {
           if (client.readyState === WebSocket.OPEN) {
@@ -313,6 +307,7 @@ async function processFilesForEmbeddings(files) {
       }
     } catch (error) {
       console.error(`Error processing file ${file.originalName}:`, error);
+      
       // Notify error via WebSocket
       if (wss) {
         wss.clients.forEach(client => {
@@ -327,6 +322,7 @@ async function processFilesForEmbeddings(files) {
           }
         });
       }
+      
       results.push({
         fileId: file.id,
         success: false,
@@ -387,7 +383,6 @@ async function generateEmbeddings(text, fileId) {
           reject(err);
         } else {
           try {
-            console.log('PYTHON RAW OUTPUT:', results);
             const result = JSON.parse(results[0]);
             resolve(result);
           } catch (parseError) {
