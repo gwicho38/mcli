@@ -1,0 +1,55 @@
+*.tar filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.gz filter=lfs diff=lfs merge=lfs -text
+*.bz2 filter=lfs diff=lfs merge=lfs -text
+*.xz filter=lfs diff=lfs merge=lfs -text
+*.7z filter=lfs diff=lfs merge=lfs -text
+*.rar filter=lfs diff=lfs merge=lfs -text
+# Image files
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.bmp filter=lfs diff=lfs merge=lfs -text
+*.tiff filter=lfs diff=lfs merge=lfs -text
+*.webp filter=lfs diff=lfs merge=lfs -text
+*.svg filter=lfs diff=lfs merge=lfs -text
+*.ico filter=lfs diff=lfs merge=lfs -text
+# Video files
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.avi filter=lfs diff=lfs merge=lfs -text
+*.mkv filter=lfs diff=lfs merge=lfs -text
+*.wmv filter=lfs diff=lfs merge=lfs -text
+*.flv filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+*.m4v filter=lfs diff=lfs merge=lfs -text
+# Audio files
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.flac filter=lfs diff=lfs merge=lfs -text
+*.aac filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.wma filter=lfs diff=lfs merge=lfs -text
+# ML model files
+*.safetensor filter=lfs diff=lfs merge=lfs -text
+*.safetensors filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+*.model filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
+*.pth filter=lfs diff=lfs merge=lfs -text
+*.ckpt filter=lfs diff=lfs merge=lfs -text
+*.h5 filter=lfs diff=lfs merge=lfs -text
+*.pb filter=lfs diff=lfs merge=lfs -text
+# Document files (large)
+*.pdf filter=lfs diff=lfs merge=lfs -text
+*.docx filter=lfs diff=lfs merge=lfs -text
+*.pptx filter=lfs diff=lfs merge=lfs -text
+*.xlsx filter=lfs diff=lfs merge=lfs -text
+# Data files
+*.csv filter=lfs diff=lfs merge=lfs -text
+*.json filter=lfs diff=lfs merge=lfs -text
+*.parquet filter=lfs diff=lfs merge=lfs -text
+*.feather filter=lfs diff=lfs merge=lfs -text
+# Existing specific file
+archive/c3.tar filter=lfs diff=lfs merge=lfs -text
