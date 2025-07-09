@@ -24,13 +24,13 @@ def run_tests(test_pattern=None):
         # Run specific test file
         test_file = f'test_{test_pattern}.py'
         if os.path.exists(test_file):
-            return pytest.main([test_file, '-v', '--no-cov', '--override-ini=addopts='])
+            return pytest.main([test_file, '-v'])
         else:
             print(f"Test file {test_file} not found")
             return 1
     else:
         # Run all tests
-        return pytest.main(['.', '-v', '--no-cov', '--override-ini=addopts='])
+        return pytest.main(['.', '-v'])
 
 def run_cli_tests():
     """
@@ -40,6 +40,7 @@ def run_cli_tests():
     
     cli_test_files = [
         'test_webapp.py',
+        'test_webapp_comprehensive.py',
         'test_file.py', 
         'test_registry.py',
         'test_repo.py',
@@ -51,12 +52,14 @@ def run_cli_tests():
         'test_lib.py',
         'test_auth.py',
         'test_workflow.py',
+        'test_workflow_integration.py',
         'test_main_app.py',
-        'test_all_cli.py'
+        'test_all_cli.py',
+        'test_daemon.py'
     ]
     
-    # Override pytest configuration to avoid coverage and other options
-    return pytest.main(cli_test_files + ['-v', '--no-cov', '--override-ini=addopts='])
+    # Run CLI tests
+    return pytest.main(cli_test_files + ['-v'])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run mcli tests')
