@@ -84,7 +84,7 @@ def discover_modules(
         logger.warning(f"Config file not found, using default configuration")
         config = {"paths": {"included_dirs": ["app", "self", "workflow", "public"]}}
     excluded_files = {"setup.py", "__init__.py"}
-    excluded_dirs = {"resources", "models", "scripts", "private"}
+    excluded_dirs = {"resources", "models", "scripts", "private", "venv", ".venv", "__pycache__"}
 
     included_dirs = config.get("paths", {}).get("included_dirs", [])
 

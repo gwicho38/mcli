@@ -13,6 +13,9 @@ from rich.table import Table
 from rich.prompt import Prompt
 import tomli
 import os
+import hashlib
+import json
+from datetime import datetime
 
 try:
     import warnings
@@ -35,6 +38,141 @@ def self_app():
     pass
 
 console = Console()
+
+LOCKFILE_PATH = Path.home() / ".local" / "mcli" / "command_lock.json"
+
+# Utility functions for command state lockfile
+
+def get_current_command_state():
+    """Collect all command metadata (names, groups, etc.)"""
+    # This should use your actual command collection logic
+    # For now, use the collect_commands() function
+    return collect_commands()
+
+def hash_command_state(commands):
+    """Hash the command state for fast comparison."""
+    # Sort for deterministic hash
+    commands_sorted = sorted(commands, key=lambda c: (c.get('group') or '', c['name']))
+    state_json = json.dumps(commands_sorted, sort_keys=True)
+    return hashlib.sha256(state_json.encode('utf-8')).hexdigest()
+
+def load_lockfile():
+    if LOCKFILE_PATH.exists():
+        with open(LOCKFILE_PATH, "r") as f:
+            return json.load(f)
+    return []
+
+def save_lockfile(states):
+    with open(LOCKFILE_PATH, "w") as f:
+        json.dump(states, f, indent=2, default=str)
+
+def append_lockfile(new_state):
+    states = load_lockfile()
+    states.append(new_state)
+    save_lockfile(states)
+
+def find_state_by_hash(hash_value):
+    states = load_lockfile()
+    for state in states:
+        if state['hash'] == hash_value:
+            return state
+    return None
+
+def restore_command_state(hash_value):
+    state = find_state_by_hash(hash_value)
+    if not state:
+        return False
+    # Here you would implement logic to restore the command registry to this state
+    # For now, just print the commands
+    print(json.dumps(state['commands'], indent=2))
+    return True
+
+# Create a Click group for all command management
+@self_app.group("commands")
+def commands_group():
+    """Manage CLI commands and command state."""
+    pass
+
+# Move the command-state group under commands_group
+@commands_group.group("state")
+def command_state():
+    """Manage command state lockfile and history."""
+    pass
+
+@command_state.command("list")
+def list_states():
+    """List all saved command states (hash, timestamp, #commands)."""
+    states = load_lockfile()
+    if not states:
+        click.echo("No command states found.")
+        return
+    table = Table(title="Command States")
+    table.add_column("Hash", style="cyan")
+    table.add_column("Timestamp", style="green")
+    table.add_column("# Commands", style="yellow")
+    for state in states:
+        table.add_row(state['hash'][:8], state['timestamp'], str(len(state['commands'])))
+    console.print(table)
+
+@command_state.command("restore")
+@click.argument("hash_value")
+def restore_state(hash_value):
+    """Restore to a previous command state by hash."""
+    if restore_command_state(hash_value):
+        click.echo(f"Restored to state {hash_value[:8]}")
+    else:
+        click.echo(f"State {hash_value[:8]} not found.", err=True)
+
+@command_state.command("write")
+@click.argument("json_file", required=False, type=click.Path(exists=False))
+def write_state(json_file):
+    """Write a new command state to the lockfile from a JSON file or the current app state."""
+    import traceback
+    print("[DEBUG] write_state called")
+    print(f"[DEBUG] LOCKFILE_PATH: {LOCKFILE_PATH}")
+    try:
+        if json_file:
+            print(f"[DEBUG] Loading command state from file: {json_file}")
+            with open(json_file, 'r') as f:
+                commands = json.load(f)
+            click.echo(f"Loaded command state from {json_file}.")
+        else:
+            print("[DEBUG] Snapshotting current command state.")
+            commands = get_current_command_state()
+        state_hash = hash_command_state(commands)
+        new_state = {
+            'hash': state_hash,
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'commands': commands
+        }
+        append_lockfile(new_state)
+        print(f"[DEBUG] Wrote new command state {state_hash[:8]} to lockfile at {LOCKFILE_PATH}")
+        click.echo(f"Wrote new command state {state_hash[:8]} to lockfile.")
+    except Exception as e:
+        print(f"[ERROR] Exception in write_state: {e}")
+        print(traceback.format_exc())
+        click.echo(f"[ERROR] Failed to write command state: {e}", err=True)
+
+# On CLI startup, check and update lockfile if needed
+
+def check_and_update_command_lockfile():
+    current_commands = get_current_command_state()
+    current_hash = hash_command_state(current_commands)
+    states = load_lockfile()
+    if states and states[-1]['hash'] == current_hash:
+        # No change
+        return
+    # New state, append
+    new_state = {
+        'hash': current_hash,
+        'timestamp': datetime.utcnow().isoformat() + 'Z',
+        'commands': current_commands
+    }
+    append_lockfile(new_state)
+    logger.info(f"Appended new command state {current_hash[:8]} to lockfile.")
+
+# Call this at the top of your CLI entrypoint (main.py or similar)
+# check_and_update_command_lockfile()
 
 def get_command_template(name: str, group: Optional[str] = None) -> str:
     """Generate template code for a new command."""
@@ -474,9 +612,10 @@ def plugin_update(plugin_name):
     config_env = os.environ.get("MCLI_CONFIG")
     config_path = None
 
-@self_app.command('search')
-def search(name="World"):
-    return search_command(name)
+    # Determine plugin install path as in plugin_add
+    config_env = os.environ.get("MCLI_CONFIG")
+    config_path = None
+
     if config_env and Path(config_env).expanduser().exists():
         config_path = Path(config_env).expanduser()
     else:
@@ -520,6 +659,258 @@ def search(name="World"):
         return 1
 
     return 0
+
+@self_app.command("logs")
+@click.option("--type", "-t", type=click.Choice(['main', 'system', 'trace', 'all']), default='main', 
+              help="Type of logs to display")
+@click.option("--lines", "-n", default=50, help="Number of lines to show (default: 50)")
+@click.option("--follow", "-f", is_flag=True, help="Follow log output in real-time")
+@click.option("--date", "-d", help="Show logs for specific date (YYYYMMDD format)")
+@click.option("--grep", "-g", help="Filter logs by pattern")
+@click.option("--level", "-l", type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']), 
+              help="Filter logs by minimum level")
+def logs(type: str, lines: int, follow: bool, date: str, grep: str, level: str):
+    """
+    Display runtime logs of the mcli application.
+    
+    Shows the most recent log entries from the application's logging system.
+    Supports filtering by log type, date, content, and log level.
+    
+    Log files are named as mcli_YYYYMMDD.log, mcli_system_YYYYMMDD.log, mcli_trace_YYYYMMDD.log.
+    """
+    from pathlib import Path
+    import subprocess
+    import re
+    from datetime import datetime
+    
+    # Find the logs directory
+    current_file = Path(__file__)
+    # Go up 5 levels: file -> self -> mcli -> src -> repo_root
+    project_root = current_file.parents[4]
+    logs_dir = project_root / "logs"
+    
+    # Alternative: try current working directory first
+    if not logs_dir.exists():
+        logs_dir = Path.cwd() / "logs"
+    
+    if not logs_dir.exists():
+        click.echo("❌ Logs directory not found", err=True)
+        return
+    
+    # Determine which log files to read
+    log_files = []
+    
+    if type == 'all':
+        # Get all log files for the specified date or latest
+        if date:
+            # Look for files like mcli_20250709.log, mcli_system_20250709.log, mcli_trace_20250709.log
+            patterns = [
+                f"mcli_{date}.log",
+                f"mcli_system_{date}.log",
+                f"mcli_trace_{date}.log"
+            ]
+        else:
+            # Get the most recent log files
+            patterns = ["mcli_*.log"]
+        
+        log_files = []
+        for pattern in patterns:
+            files = list(logs_dir.glob(pattern))
+            if files:
+                # Sort by modification time (newest first)
+                files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                log_files.extend(files)
+        
+        # Remove duplicates and take only the most recent files of each type
+        seen_types = set()
+        filtered_files = []
+        for log_file in log_files:
+            # Extract log type from filename
+            # mcli_20250709 -> main
+            # mcli_system_20250709 -> system  
+            # mcli_trace_20250709 -> trace
+            if log_file.name.startswith('mcli_system_'):
+                log_type = 'system'
+            elif log_file.name.startswith('mcli_trace_'):
+                log_type = 'trace'
+            else:
+                log_type = 'main'
+            
+            if log_type not in seen_types:
+                seen_types.add(log_type)
+                filtered_files.append(log_file)
+        
+        log_files = filtered_files
+    else:
+        # Get specific log type
+        if date:
+            if type == 'main':
+                filename = f"mcli_{date}.log"
+            else:
+                filename = f"mcli_{type}_{date}.log"
+        else:
+            # Find the most recent file for this type
+            if type == 'main':
+                pattern = "mcli_*.log"
+                # Exclude system and trace files
+                exclude_patterns = ["mcli_system_*.log", "mcli_trace_*.log"]
+            else:
+                pattern = f"mcli_{type}_*.log"
+                exclude_patterns = []
+            
+            files = list(logs_dir.glob(pattern))
+            
+            # Filter out excluded patterns
+            if exclude_patterns:
+                filtered_files = []
+                for file in files:
+                    excluded = False
+                    for exclude_pattern in exclude_patterns:
+                        if file.match(exclude_pattern):
+                            excluded = True
+                            break
+                    if not excluded:
+                        filtered_files.append(file)
+                files = filtered_files
+            
+            if files:
+                # Sort by modification time and take the most recent
+                files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                filename = files[0].name
+            else:
+                click.echo(f"❌ No {type} log files found", err=True)
+                return
+        
+        log_file = logs_dir / filename
+        if log_file.exists():
+            log_files = [log_file]
+        else:
+            click.echo(f"❌ Log file not found: {filename}", err=True)
+            return
+    
+    if not log_files:
+        click.echo("❌ No log files found", err=True)
+        return
+    
+    # Display log file information
+    click.echo(f"📋 Showing logs from {len(log_files)} file(s):")
+    for log_file in log_files:
+        size_mb = log_file.stat().st_size / (1024 * 1024)
+        modified = datetime.fromtimestamp(log_file.stat().st_mtime)
+        click.echo(f"   📄 {log_file.name} ({size_mb:.1f}MB, modified {modified.strftime('%Y-%m-%d %H:%M:%S')})")
+    click.echo()
+    
+    # Process each log file
+    for log_file in log_files:
+        click.echo(f"🔍 Reading: {log_file.name}")
+        click.echo("─" * 80)
+        
+        try:
+            # Read the file content
+            with open(log_file, 'r') as f:
+                content = f.readlines()
+            
+            # Apply filters
+            filtered_lines = []
+            for line in content:
+                # Apply grep filter
+                if grep and grep.lower() not in line.lower():
+                    continue
+                
+                # Apply level filter
+                if level:
+                    level_pattern = rf'\b{level}\b'
+                    if not re.search(level_pattern, line, re.IGNORECASE):
+                        # Check if line has a lower level than requested
+                        level_order = {'DEBUG': 0, 'INFO': 1, 'WARNING': 2, 'ERROR': 3, 'CRITICAL': 4}
+                        requested_level = level_order.get(level.upper(), 0)
+                        
+                        # Check if line contains any log level
+                        found_level = None
+                        for log_level in level_order:
+                            if log_level in line.upper():
+                                found_level = level_order[log_level]
+                                break
+                        
+                        if found_level is None or found_level < requested_level:
+                            continue
+                
+                filtered_lines.append(line)
+            
+            # Show the last N lines
+            if lines > 0:
+                filtered_lines = filtered_lines[-lines:]
+            
+            # Display the lines
+            for line in filtered_lines:
+                # Colorize log levels
+                colored_line = line
+                if 'ERROR' in line or 'CRITICAL' in line:
+                    colored_line = click.style(line, fg='red')
+                elif 'WARNING' in line:
+                    colored_line = click.style(line, fg='yellow')
+                elif 'INFO' in line:
+                    colored_line = click.style(line, fg='green')
+                elif 'DEBUG' in line:
+                    colored_line = click.style(line, fg='blue')
+                
+                click.echo(colored_line.rstrip())
+            
+            if not filtered_lines:
+                click.echo("(No matching log entries found)")
+            
+        except Exception as e:
+            click.echo(f"❌ Error reading log file {log_file.name}: {e}", err=True)
+        
+        click.echo()
+    
+    if follow:
+        click.echo("🔄 Following log output... (Press Ctrl+C to stop)")
+        try:
+            # Use tail -f for real-time following
+            for log_file in log_files:
+                click.echo(f"📡 Following: {log_file.name}")
+                process = subprocess.Popen(
+                    ["tail", "-f", str(log_file)],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                
+                try:
+                    if process.stdout:
+                        for line in process.stdout:
+                            # Apply filters to real-time output
+                            if grep and grep.lower() not in line.lower():
+                                continue
+                            
+                            if level:
+                                level_pattern = rf'\b{level}\b'
+                                if not re.search(level_pattern, line, re.IGNORECASE):
+                                    continue
+                            
+                            # Colorize and display
+                            colored_line = line
+                            if 'ERROR' in line or 'CRITICAL' in line:
+                                colored_line = click.style(line, fg='red')
+                            elif 'WARNING' in line:
+                                colored_line = click.style(line, fg='yellow')
+                            elif 'INFO' in line:
+                                colored_line = click.style(line, fg='green')
+                            elif 'DEBUG' in line:
+                                colored_line = click.style(line, fg='blue')
+                            
+                            click.echo(colored_line.rstrip())
+                        
+                except KeyboardInterrupt:
+                    process.terminate()
+                    break
+                    
+        except KeyboardInterrupt:
+            click.echo("\n🛑 Stopped following logs")
+        except Exception as e:
+            click.echo(f"❌ Error following logs: {e}", err=True)
+
 
 # Register the plugin group with self_app
 self_app.add_command(plugin)
