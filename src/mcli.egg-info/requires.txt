@@ -42,6 +42,9 @@ tomli>=2.2.1
 csvkit>=2.1.0
 xlsxwriter>=3.2.3
 pymupdf>=1.26.1
+umap>=0.1.1
+mammoth>=1.9.1
+fpdf>=1.7.2
 
 [dev]
 pytest-cov<5.0.0,>=4.1.0

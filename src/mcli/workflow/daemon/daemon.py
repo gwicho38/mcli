@@ -24,7 +24,7 @@ import logging
 
 # Import existing utilities
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.config.config import get_config
+from mcli.lib.toml.toml import read_from_toml
 
 logger = get_logger(__name__)
 
@@ -526,7 +526,31 @@ class DaemonService:
     """Background daemon service for command management"""
     
     def __init__(self, config_path: Optional[str] = None):
-        self.config = get_config()
+        # Load configuration from TOML
+        if config_path is None:
+            # Try to find config.toml in common locations
+            config_paths = [
+                Path("config.toml"),  # Current directory
+                Path.home() / ".config" / "mcli" / "config.toml",  # User config
+                Path(__file__).parent.parent.parent.parent.parent / "config.toml"  # Project root
+            ]
+            
+            for path in config_paths:
+                if path.exists():
+                    config_path = str(path)
+                    break
+        
+        self.config = {}
+        if config_path:
+            try:
+                # Load paths configuration
+                paths_config = read_from_toml(config_path, "paths")
+                if paths_config:
+                    self.config["paths"] = paths_config
+                logger.info(f"Loaded config from {config_path}")
+            except Exception as e:
+                logger.warning(f"Could not load config from {config_path}: {e}")
+        
         self.db = CommandDatabase()
         self.executor = CommandExecutor()
         self.running = False

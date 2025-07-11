@@ -364,6 +364,15 @@ wheels = [
 ]
 
 [[package]]
+name = "cobble"
+version = "0.1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/54/7a/a507c709be2c96e1bb6102eb7b7f4026c5e5e223ef7d745a17d239e9d844/cobble-0.1.4.tar.gz", hash = "sha256:de38be1539992c8a06e569630717c485a5f91be2192c461ea2b220607dfa78aa", size = 3805, upload-time = "2024-06-01T18:11:09.528Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d5/e1/3714a2f371985215c219c2a70953d38e3eed81ef165aed061d21de0e998b/cobble-0.1.4-py3-none-any.whl", hash = "sha256:36c91b1655e599fd428e2b95fdd5f0da1ca2e9f1abb0bc871dec21a0e78a2b44", size = 3984, upload-time = "2024-06-01T18:11:07.911Z" },
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -1901,6 +1910,18 @@ wheels = [
 ]
 
 [[package]]
+name = "mammoth"
+version = "1.9.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cobble" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/23/f8/b48bf3b9c7c47f3bc0de7630f0f180c01e92570953611089489d34542253/mammoth-1.9.1.tar.gz", hash = "sha256:7924254ab8f03efe55fadc0fd5f7828db831190eb2679d63cb4372873e71c572", size = 51056, upload-time = "2025-05-28T19:17:56.332Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/be/0c/3153f159b78e368ac473a00e955d69d976e4b69740ed07c76c9f72a161b8/mammoth-1.9.1-py2.py3-none-any.whl", hash = "sha256:f0569bd640cee6c77a07e7c75c5dc10d745dc4dc95d530cfcbb0a5d9536d636c", size = 52991, upload-time = "2025-05-28T19:17:54.62Z" },
+]
+
+[[package]]
 name = "markdown-it-py"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2131,7 +2152,7 @@ wheels = [
 
 [[package]]
 name = "mcli"
-version = "3.0.0"
+version = "5.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "cachetools" },
@@ -2142,6 +2163,7 @@ dependencies = [
     { name = "cython" },
     { name = "docker" },
     { name = "flask" },
+    { name = "fpdf" },
     { name = "fuzzywuzzy" },
     { name = "gitpython" },
     { name = "graphviz" },
@@ -2152,6 +2174,7 @@ dependencies = [
     { name = "ipython", version = "8.37.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "ipywidgets" },
     { name = "keras" },
+    { name = "mammoth" },
     { name = "matplotlib", version = "3.9.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "matplotlib", version = "3.10.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "networkx", version = "3.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -2184,6 +2207,7 @@ dependencies = [
     { name = "timeout" },
     { name = "tomli" },
     { name = "tqdm" },
+    { name = "umap" },
     { name = "watchdog" },
     { name = "xlsxwriter" },
 ]
@@ -2205,6 +2229,7 @@ requires-dist = [
     { name = "cython", specifier = ">=3.0.0,<4.0.0" },
     { name = "docker", specifier = ">=6.1.0,<7.0.0" },
     { name = "flask", specifier = ">=2.3.0,<3.0.0" },
+    { name = "fpdf", specifier = ">=1.7.2" },
     { name = "fuzzywuzzy", specifier = ">=0.18.0,<0.19.0" },
     { name = "gitpython", specifier = ">=3.1.40,<4.0.0" },
     { name = "graphviz", specifier = ">=0.20.3" },
@@ -2215,6 +2240,7 @@ requires-dist = [
     { name = "ipywidgets", specifier = ">=8.1.1,<9.0.0" },
     { name = "isort", marker = "extra == 'dev'", specifier = ">=5.12.0,<6.0.0" },
     { name = "keras", specifier = ">=2.15.0,<3.0.0" },
+    { name = "mammoth", specifier = ">=1.9.1" },
     { name = "matplotlib", specifier = ">=3.7.3,<4.0.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.7.1,<2.0.0" },
     { name = "networkx", specifier = ">=3.1,<4.0.0" },
@@ -2244,6 +2270,7 @@ requires-dist = [
     { name = "timeout", specifier = ">=0.1.2" },
     { name = "tomli", specifier = ">=2.2.1" },
     { name = "tqdm", specifier = ">=4.66.1,<5.0.0" },
+    { name = "umap", specifier = ">=0.1.1" },
     { name = "watchdog", specifier = ">=3.0.0,<4.0.0" },
     { name = "xlsxwriter", specifier = ">=3.2.3" },
 ]
@@ -3963,6 +3990,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/95/32/1a225d6164441be76
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5c/23/c7abc0ca0a1526a0774eca151daeb8de62ec457e77262b66b359c3c7679e/tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8", size = 347839, upload-time = "2025-03-23T13:54:41.845Z" },
 ]
+
+[[package]]
+name = "umap"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4b/46/08ab68936625400fe690684428d4db4764f49b406782cc133df1d0299d06/umap-0.1.1.tar.gz", hash = "sha256:5d08c1a335cc7ee175811a99dc9356d3d4b8567ad082e2b1b205198cf27c4256", size = 3191, upload-time = "2016-01-20T16:33:11.724Z" }
 
 [[package]]
 name = "urllib3"
