@@ -12,6 +12,11 @@ from datetime import datetime
 # Import the daemon classes
 from .daemon import CommandDatabase, Command, CommandExecutor
 
+@click.group()
+def client():
+    """Client CLI for daemon commands."""
+    pass
+
 class DaemonClient:
     """Client interface for interacting with the daemon service"""
     
@@ -202,43 +207,12 @@ class DaemonClient:
         return self.db.delete_command(command_id)
 
 # CLI Commands - these will be subcommands under the daemon group
-def create_client_commands(daemon_group):
-    """Create client commands as subcommands of the daemon group"""
-    
-    @daemon_group.command()
-    @click.argument('name')
-    @click.argument('file_path', type=click.Path(exists=True))
-    @click.option('--description', help='Command description')
-    @click.option('--language', type=click.Choice(['python', 'node', 'lua', 'shell', 'auto']), 
-                  default='auto', help='Programming language')
-    @click.option('--group', help='Command group')
-    @click.option('--tags', help='Comma-separated tags')
-    def add_file(name: str, file_path: str, description: str, language: str, group: str, tags: str):
-        """Add a command from a file"""
-        client = DaemonClient()
-        
-        # Parse tags
-        tag_list = [tag.strip() for tag in tags.split(',')] if tags else []
-        
-        try:
-            command_id = client.add_command_from_file(
-                name=name,
-                file_path=file_path,
-                description=description,
-                language=language,
-                group=group,
-                tags=tag_list
-            )
-            click.echo(f"✅ Command '{name}' added with ID: {command_id}")
-        except Exception as e:
-            click.echo(f"❌ Error adding command: {e}", err=True)
-
 @client.command()
 @click.argument('name')
 @click.argument('file_path', type=click.Path(exists=True))
 @click.option('--description', help='Command description')
 @click.option('--language', type=click.Choice(['python', 'node', 'lua', 'shell', 'auto']), 
-              default='auto', help='Programming language')
+                  default='auto', help='Programming language')
 @click.option('--group', help='Command group')
 @click.option('--tags', help='Comma-separated tags')
 def add_file(name: str, file_path: str, description: str, language: str, group: str, tags: str):
