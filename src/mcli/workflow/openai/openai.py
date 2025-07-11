@@ -1,3 +1,4 @@
+import os
 import requests
 import click
 from mcli.lib.logger.logger import get_logger
