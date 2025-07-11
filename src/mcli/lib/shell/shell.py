@@ -10,10 +10,16 @@ from mcli.lib.logger.logger import get_logger, register_subprocess
 logger = get_logger(__name__)
 
 
-def shell_exec(script_path, function_name, *args) -> Optional[Dict[str, List[str]]]:
+def shell_exec(script_path: str, function_name: str, *args) -> Dict[str, Any]:
+    """Execute a shell script function with security checks and better error handling"""
+    # Validate script path
+    script_path = Path(script_path).resolve()
+    if not script_path.exists():
+        raise FileNotFoundError(f"Script not found: {script_path}")
+    
     # Prepare the full command with the shell script, function name, and arguments
-    command = [script_path, function_name]
-    result = None
+    command = [str(script_path), function_name]
+    result = {"success": False, "stdout": "", "stderr": ""}
     logger.info(f"Running command: {command}")
     try:
         # Run the shell script with the function name and arguments

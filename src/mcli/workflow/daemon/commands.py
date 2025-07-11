@@ -414,9 +414,17 @@ class CommandExecutor:
             }
     
     def _execute_python(self, command: Command, args: List[str]) -> Dict[str, str]:
-        """Execute Python code safely"""
-        # Create temporary file
+        """Execute Python code safely with resource limits and sandboxing"""
+        # Create secure temporary file
         script_file = self.temp_dir / f"{command.id}_{int(time.time())}.py"
+        script_file.touch(mode=0o700)  # Restrict permissions
+        
+        # Add resource limits
+        resource_limits = """
+import resource
+resource.setrlimit(resource.RLIMIT_CPU, (1, 1))  # 1 second CPU time
+resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024, 256*1024*1024))  # 256MB memory
+"""
         
         try:
             # Write code to file

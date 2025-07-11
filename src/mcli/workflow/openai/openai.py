@@ -11,7 +11,8 @@ OPENAI_NASTY_CATEGORIES = {
     "harassment/threatening", "violence"
 }
 
-openai_api_key = ""
+# Get API key from environment variable
+openai_api_key = os.environ.get("OPENAI_API_KEY", "")
 start_sequence = "\nA:"
 restart_sequence = "\n\nQ: "
 

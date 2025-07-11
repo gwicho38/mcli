@@ -20,9 +20,18 @@ def client():
 class DaemonClient:
     """Client interface for interacting with the daemon service"""
     
-    def __init__(self):
+    def __init__(self, timeout: int = 30):
         self.db = CommandDatabase()
         self.executor = CommandExecutor()
+        self.timeout = timeout  # Default timeout for operations
+        self._validate_connection()
+
+    def _validate_connection(self):
+        """Verify connection to the daemon service"""
+        try:
+            self.db.get_all_commands()  # Simple query to test connection
+        except Exception as e:
+            raise ConnectionError(f"Failed to connect to daemon: {str(e)}") from e
     
     def add_command_from_file(self, name: str, file_path: str, description: Optional[str] = None,
                              language: str = 'python', group: Optional[str] = None, tags: Optional[List[str]] = None) -> str:
