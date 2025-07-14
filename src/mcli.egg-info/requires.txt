@@ -45,6 +45,8 @@ pymupdf>=1.26.1
 umap>=0.1.1
 mammoth>=1.9.1
 fpdf>=1.7.2
+fastapi>=0.116.1
+uvicorn>=0.35.0
 
 [dev]
 pytest-cov<5.0.0,>=4.1.0

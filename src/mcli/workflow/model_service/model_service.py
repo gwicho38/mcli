@@ -9,7 +9,7 @@ import threading
 import signal
 import psutil
 from pathlib import Path
-from typing import Optional, Dict, List, Any, Union, Callable
+from typing import Optional, Dict, List, Any
 from datetime import datetime
 import logging
 from dataclasses import dataclass, asdict
@@ -65,11 +65,10 @@ class ModelInfo:
     temperature: float = 0.7
     top_p: float = 0.9
     top_k: int = 50
-    created_at: datetime = None
     is_loaded: bool = False
     memory_usage_mb: float = 0.0
     parameters_count: int = 0
-    
+    created_at: datetime = datetime.now() # Do not assign None; let __post_init__ handle default
     def __post_init__(self):
         if self.created_at is None:
             self.created_at = datetime.now()
@@ -79,10 +78,11 @@ class ModelDatabase:
     
     def __init__(self, db_path: Optional[str] = None):
         if db_path is None:
-            db_path = Path.home() / ".local" / "mcli" / "model_service" / "models.db"
-        
-        self.db_path = Path(db_path)
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            db_path = str(Path.home() / ".local" / "mcli" / "model_service" / "models.db")
+        else:
+            db_path = str(db_path)
+        self.db_path = db_path
+        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self.init_database()
     
     def init_database(self):
@@ -244,9 +244,9 @@ class ModelDatabase:
         finally:
             conn.close()
     
-    def record_inference(self, model_id: str, request_type: str, input_data: str = None,
-                        output_data: str = None, execution_time_ms: int = None,
-                        error_message: str = None):
+    def record_inference(self, model_id: str, request_type: str, input_data: str = str(),
+                        output_data: str = str(), execution_time_ms: int = int(),
+                        error_message: str = str()):
         """Record inference request"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -448,8 +448,8 @@ class ModelManager:
         except:
             return 0.0
     
-    def generate_text(self, model_id: str, prompt: str, max_length: int = None,
-                     temperature: float = None, top_p: float = None, top_k: int = None) -> str:
+    def generate_text(self, model_id: str, prompt: str, max_length: int = int(),
+                     temperature: float = float(), top_p: float = float(), top_k: int = int()) -> str:
         """Generate text using a loaded model"""
         if model_id not in self.loaded_models:
             raise ValueError(f"Model {model_id} not loaded")
@@ -590,7 +590,7 @@ class TranslationRequest(BaseModel):
 class ModelService:
     """Main model service daemon"""
     
-    def __init__(self, config: Dict[str, Any] = None):
+    def __init__(self, config: Dict[str, Any] = dict[str(), object()]()):
         self.config = {**DEFAULT_CONFIG, **(config or {})}
         self.model_manager = ModelManager(
             models_dir=self.config["models_dir"],
@@ -692,10 +692,10 @@ class ModelService:
                 generated_text = self.model_manager.generate_text(
                     model_id=model_id,
                     prompt=request.prompt,
-                    max_length=request.max_length,
-                    temperature=request.temperature,
-                    top_p=request.top_p,
-                    top_k=request.top_k
+                    max_length=request.max_length or 512,
+                    temperature=request.temperature or 0.7,
+                    top_p=request.top_p or 0.9,
+                    top_k=request.top_k or 50
                 )
                 
                 execution_time = int((time.time() - start_time) * 1000)
@@ -981,7 +981,7 @@ def status():
 @click.option('--type', 'model_type', required=True, help='Model type (text-generation, text-classification, translation)')
 @click.option('--tokenizer-path', help='Path to tokenizer (optional)')
 @click.option('--device', default='auto', help='Device to use (cpu, cuda, auto)')
-def add_model(model_path: str, name: str, model_type: str, tokenizer_path: str = None, device: str = 'auto'):
+def add_model(model_path: str, name: str, model_type: str, tokenizer_path: str = str(), device: str = 'auto'):
     """Add a model to the service"""
     service = ModelService()
     

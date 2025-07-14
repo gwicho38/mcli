@@ -6,5 +6,5 @@ included_dirs = [
 #    "workflow/webapp",
 #    "workflow/openai",
     "workflow/daemon",
-    "app/model"
+    "workflow/model_service"
 ]
