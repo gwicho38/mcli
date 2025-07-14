@@ -683,6 +683,51 @@ class ModelService:
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
         
+        @self.app.put("/models/{model_id}")
+        async def update_model(model_id: str, request: Dict[str, Any]):
+            """Update model configuration"""
+            try:
+                # Get current model info
+                model_info = self.model_manager.db.get_model(model_id)
+                if not model_info:
+                    raise HTTPException(status_code=404, detail="Model not found")
+                
+                # Update model info with new values
+                for key, value in request.items():
+                    if hasattr(model_info, key):
+                        setattr(model_info, key, value)
+                
+                # Update in database
+                success = self.model_manager.db.update_model(model_info)
+                if success:
+                    return {"status": "updated", "model_id": model_id}
+                else:
+                    raise HTTPException(status_code=500, detail="Failed to update model")
+                    
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.delete("/models/{model_id}/remove")
+        async def remove_model(model_id: str):
+            """Remove a model from the database"""
+            try:
+                # First unload if loaded
+                self.model_manager.unload_model(model_id)
+                
+                # Remove from database
+                success = self.model_manager.db.delete_model(model_id)
+                if success:
+                    return {"status": "removed", "model_id": model_id}
+                else:
+                    raise HTTPException(status_code=404, detail="Model not found")
+                    
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+
         @self.app.post("/models/{model_id}/generate")
         async def generate_text(model_id: str, request: TextGenerationRequest):
             """Generate text using a model"""
@@ -1007,6 +1052,101 @@ def add_model(model_path: str, name: str, model_type: str, tokenizer_path: str =
             
     except Exception as e:
         click.echo(f"❌ Error adding model: {e}")
+
+@model_service.command()
+@click.argument('model_id')
+@click.option('--name', help='New model name')
+@click.option('--temperature', type=float, help='New temperature value')
+@click.option('--max-length', type=int, help='New max length value')
+@click.option('--top-p', type=float, help='New top-p value')
+@click.option('--top-k', type=int, help='New top-k value')
+@click.option('--device', help='New device setting')
+def update_model(model_id: str, name: Optional[str] = None, temperature: Optional[float] = None, 
+                max_length: Optional[int] = None, top_p: Optional[float] = None, top_k: Optional[int] = None, device: Optional[str] = None):
+    """Update model configuration"""
+    service = ModelService()
+    
+    try:
+        # Get current model info
+        model_info = service.model_manager.db.get_model(model_id)
+        if not model_info:
+            click.echo(f"❌ Model {model_id} not found")
+            return
+        
+        # Build updates
+        updates = {}
+        if name is not None:
+            updates['name'] = name
+        if temperature is not None:
+            updates['temperature'] = temperature
+        if max_length is not None:
+            updates['max_length'] = max_length
+        if top_p is not None:
+            updates['top_p'] = top_p
+        if top_k is not None:
+            updates['top_k'] = top_k
+        if device is not None:
+            updates['device'] = device
+        
+        if not updates:
+            click.echo("❌ No updates specified. Use --help to see available options.")
+            return
+        
+        # Update model
+        for key, value in updates.items():
+            setattr(model_info, key, value)
+        
+        success = service.model_manager.db.update_model(model_info)
+        if success:
+            click.echo(f"✅ Model {model_id} updated successfully!")
+            click.echo("Updated parameters:")
+            for key, value in updates.items():
+                click.echo(f"  {key}: {value}")
+        else:
+            click.echo(f"❌ Failed to update model {model_id}")
+            
+    except Exception as e:
+        click.echo(f"❌ Error updating model: {e}")
+
+@model_service.command()
+@click.argument('model_id')
+@click.option('--force', is_flag=True, help='Force removal without confirmation')
+def remove_model(model_id: str, force: bool = False):
+    """Remove a model from the service"""
+    service = ModelService()
+    
+    try:
+        # Get model info first
+        model_info = service.model_manager.db.get_model(model_id)
+        if not model_info:
+            click.echo(f"❌ Model {model_id} not found")
+            return
+        
+        if not force:
+            click.echo(f"Model to remove:")
+            click.echo(f"  Name: {model_info.name}")
+            click.echo(f"  Type: {model_info.model_type}")
+            click.echo(f"  Path: {model_info.model_path}")
+            click.echo(f"  Loaded: {'Yes' if model_info.is_loaded else 'No'}")
+            
+            if not click.confirm("Are you sure you want to remove this model?"):
+                click.echo("Operation cancelled.")
+                return
+        
+        # First unload if loaded
+        if model_info.is_loaded:
+            service.model_manager.unload_model(model_id)
+            click.echo(f"✅ Model {model_id} unloaded")
+        
+        # Remove from database
+        success = service.model_manager.db.delete_model(model_id)
+        if success:
+            click.echo(f"✅ Model {model_id} removed successfully!")
+        else:
+            click.echo(f"❌ Failed to remove model {model_id}")
+            
+    except Exception as e:
+        click.echo(f"❌ Error removing model: {e}")
 
 if __name__ == '__main__':
     model_service() 

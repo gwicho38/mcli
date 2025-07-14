@@ -313,6 +313,12 @@ python client.py list-models
 # Load a model
 python client.py load-model <path> --name "Model Name" --type text-generation
 
+# Update a model
+python client.py update-model <model_id> --name "New Name" --temperature 0.8
+
+# Remove a model
+python client.py remove-model <model_id> --force
+
 # Generate text
 python client.py generate <model_id> "Your prompt here"
 

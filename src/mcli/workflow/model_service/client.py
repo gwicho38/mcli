@@ -22,7 +22,7 @@ class ModelServiceClient:
             'Accept': 'application/json'
         })
     
-    def _make_request(self, method: str, endpoint: str, data: Dict = None) -> Dict:
+    def _make_request(self, method: str, endpoint: str, data: Optional[Dict] = None) -> Dict:
         """Make a request to the model service"""
         url = f"{self.base_url}{endpoint}"
         
@@ -92,6 +92,22 @@ class ModelServiceClient:
         except ValueError:
             return False
     
+    def update_model(self, model_id: str, updates: Dict[str, Any]) -> bool:
+        """Update model configuration"""
+        try:
+            self._make_request("PUT", f"/models/{model_id}", updates)
+            return True
+        except ValueError:
+            return False
+    
+    def remove_model(self, model_id: str) -> bool:
+        """Remove a model from the database"""
+        try:
+            self._make_request("DELETE", f"/models/{model_id}/remove")
+            return True
+        except ValueError:
+            return False
+
     def generate_text(self, model_id: str, prompt: str, max_length: Optional[int] = None,
                      temperature: Optional[float] = None, top_p: Optional[float] = None,
                      top_k: Optional[int] = None) -> Dict[str, Any]:
@@ -244,14 +260,105 @@ def unload_model(model_id: str, url: str):
 
 @model_client.command()
 @click.argument('model_id')
+@click.option('--url', default='http://localhost:8000', help='Model service URL')
+@click.option('--name', help='New model name')
+@click.option('--temperature', type=float, help='New temperature value')
+@click.option('--max-length', type=int, help='New max length value')
+@click.option('--top-p', type=float, help='New top-p value')
+@click.option('--top-k', type=int, help='New top-k value')
+@click.option('--device', help='New device setting')
+def update_model(model_id: str, url: str, name: Optional[str] = None, temperature: Optional[float] = None, 
+                max_length: Optional[int] = None, top_p: Optional[float] = None, top_k: Optional[int] = None, device: Optional[str] = None):
+    """Update model configuration"""
+    try:
+        client = ModelServiceClient(url)
+        
+        # Build updates dictionary
+        updates = {}
+        if name is not None:
+            updates['name'] = name
+        if temperature is not None:
+            updates['temperature'] = temperature
+        if max_length is not None:
+            updates['max_length'] = max_length
+        if top_p is not None:
+            updates['top_p'] = top_p
+        if top_k is not None:
+            updates['top_k'] = top_k
+        if device is not None:
+            updates['device'] = device
+        
+        if not updates:
+            click.echo(click.style("❌ No updates specified. Use --help to see available options.", fg="red"))
+            return
+        
+        click.echo(f"Updating model {model_id}...")
+        success = client.update_model(model_id, updates)
+        
+        if success:
+            click.echo(click.style(f"✅ Model {model_id} updated successfully!", fg="green"))
+            click.echo("Updated parameters:")
+            for key, value in updates.items():
+                click.echo(f"  {key}: {value}")
+        else:
+            click.echo(click.style(f"❌ Model {model_id} not found", fg="red"))
+            
+    except Exception as e:
+        click.echo(click.style(f"❌ Error updating model: {e}", fg="red"))
+
+@model_client.command()
+@click.argument('model_id')
+@click.option('--url', default='http://localhost:8000', help='Model service URL')
+@click.option('--force', is_flag=True, help='Force removal without confirmation')
+def remove_model(model_id: str, url: str, force: bool = False):
+    """Remove a model from the database"""
+    try:
+        client = ModelServiceClient(url)
+        
+        if not force:
+            # Get model info first
+            models = client.list_models()
+            model_info = None
+            for model in models:
+                if model['id'] == model_id:
+                    model_info = model
+                    break
+            
+            if model_info:
+                click.echo(f"Model to remove:")
+                click.echo(f"  Name: {model_info['name']}")
+                click.echo(f"  Type: {model_info['model_type']}")
+                click.echo(f"  Path: {model_info['model_path']}")
+                click.echo(f"  Loaded: {'Yes' if model_info.get('is_loaded') else 'No'}")
+                
+                if not click.confirm("Are you sure you want to remove this model?"):
+                    click.echo("Operation cancelled.")
+                    return
+            else:
+                click.echo(click.style(f"❌ Model {model_id} not found", fg="red"))
+                return
+        
+        click.echo(f"Removing model {model_id}...")
+        success = client.remove_model(model_id)
+        
+        if success:
+            click.echo(click.style(f"✅ Model {model_id} removed successfully!", fg="green"))
+        else:
+            click.echo(click.style(f"❌ Model {model_id} not found", fg="red"))
+            
+    except Exception as e:
+        click.echo(click.style(f"❌ Error removing model: {e}", fg="red"))
+
+@model_client.command()
+@click.argument('model_id')
 @click.argument('prompt')
 @click.option('--url', default='http://localhost:8000', help='Model service URL')
 @click.option('--max-length', type=int, help='Maximum sequence length')
 @click.option('--temperature', type=float, help='Sampling temperature')
 @click.option('--top-p', type=float, help='Top-p sampling')
 @click.option('--top-k', type=int, help='Top-k sampling')
-def generate(model_id: str, prompt: str, url: str, max_length: int = None,
-             temperature: float = None, top_p: float = None, top_k: int = None):
+def generate(model_id: str, prompt: str, url: str, max_length: Optional[int] = None,
+             temperature: Optional[float] = None, top_p: Optional[float] = None, top_k: Optional[int] = None):
     """Generate text using a model"""
     try:
         client = ModelServiceClient(url)
@@ -363,7 +470,7 @@ def test_model(url: str, model_id: str, prompt: str):
 @click.option('--file', type=click.Path(exists=True), help='File with prompts to test')
 @click.option('--model-id', required=True, help='Model ID to test')
 @click.option('--output', type=click.Path(), help='Output file for results')
-def batch_test(url: str, file: str = None, model_id: str = None, output: str = None):
+def batch_test(url: str, file: Optional[str] = None, model_id: Optional[str] = None, output: Optional[str] = None):
     """Run batch tests on a model"""
     try:
         client = ModelServiceClient(url)

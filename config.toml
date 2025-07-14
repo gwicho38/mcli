@@ -2,5 +2,5 @@
 included_dirs = [
     "workflow",
     "workflow/daemon",
-    "workflow/model_service"
+    "workflow/model_service",
 ]

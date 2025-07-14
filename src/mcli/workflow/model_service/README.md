@@ -114,6 +114,12 @@ python client.py list-models
 # Load a model
 python client.py load-model /path/to/model --name "My Model" --type text-generation
 
+# Update a model
+python client.py update-model <model_id> --name "New Name" --temperature 0.8
+
+# Remove a model
+python client.py remove-model <model_id>
+
 # Generate text
 python client.py generate <model_id> "Hello, how are you?"
 
@@ -132,7 +138,9 @@ python client.py test-model --model-id <model_id> --prompt "Test prompt"
 
 - `GET /models` - List all available models
 - `POST /models` - Load a new model
+- `PUT /models/{model_id}` - Update model configuration
 - `DELETE /models/{model_id}` - Unload a model
+- `DELETE /models/{model_id}/remove` - Remove a model from database
 
 #### Inference
 
