@@ -5,6 +5,7 @@ A powerful daemon service for hosting and providing inference APIs for arbitrary
 ## Features
 
 ### 🚀 **Multi-Model Support**
+
 - **Text Generation**: GPT-style models for text completion and generation
 - **Text Classification**: BERT-style models for sentiment analysis and classification
 - **Translation**: Sequence-to-sequence models for language translation
@@ -12,18 +13,21 @@ A powerful daemon service for hosting and providing inference APIs for arbitrary
 - **Custom Models**: Extensible architecture for custom model types
 
 ### 🎯 **Easy Model Management**
+
 - **Dynamic Loading**: Load and unload models without restarting the service
 - **Model Caching**: Intelligent caching with configurable memory limits
 - **Metadata Storage**: SQLite database for model metadata and inference history
 - **Device Management**: Automatic GPU/CPU detection and management
 
 ### 🌐 **REST API**
+
 - **FastAPI**: Modern, fast web framework with automatic documentation
 - **CORS Support**: Cross-origin resource sharing for web applications
 - **Health Checks**: Built-in health monitoring endpoints
 - **Error Handling**: Comprehensive error handling and reporting
 
 ### 📊 **Monitoring & Analytics**
+
 - **Inference History**: Track all inference requests and responses
 - **Performance Metrics**: Execution time and memory usage tracking
 - **Error Logging**: Detailed error logging and debugging information
@@ -31,7 +35,7 @@ A powerful daemon service for hosting and providing inference APIs for arbitrary
 
 ## Architecture
 
-```
+```text
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Electron      │    │   Web Client    │    │   CLI Client    │
 │   Frontend      │    │                 │    │                 │
@@ -66,16 +70,19 @@ A powerful daemon service for hosting and providing inference APIs for arbitrary
 ### Quick Start
 
 1. **Install dependencies**:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 2. **Start the service**:
+
    ```bash
    python model_service.py start
    ```
 
 3. **Check status**:
+
    ```bash
    python model_service.py status
    ```
@@ -117,15 +124,18 @@ python client.py test-model --model-id <model_id> --prompt "Test prompt"
 ### API Endpoints
 
 #### Service Information
+
 - `GET /` - Service status and information
 - `GET /health` - Health check with resource usage
 
 #### Model Management
+
 - `GET /models` - List all available models
 - `POST /models` - Load a new model
 - `DELETE /models/{model_id}` - Unload a model
 
 #### Inference
+
 - `POST /models/{model_id}/generate` - Generate text
 - `POST /models/{model_id}/classify` - Classify text
 - `POST /models/{model_id}/translate` - Translate text
@@ -162,11 +172,13 @@ log_level = "INFO"
 ### Text Generation Models
 
 Supported formats:
+
 - Hugging Face Transformers models
 - Custom PyTorch models
 - ONNX models (planned)
 
 Example usage:
+
 ```python
 # Load a text generation model
 model_id = client.load_model(
@@ -185,6 +197,7 @@ print(result['generated_text'])
 ### Text Classification Models
 
 Example usage:
+
 ```python
 # Load a classification model
 model_id = client.load_model(
@@ -201,6 +214,7 @@ print(result['classifications'])
 ### Translation Models
 
 Example usage:
+
 ```python
 # Load a translation model
 model_id = client.load_model(
@@ -309,6 +323,7 @@ pytest --cov=model_service tests/
 To add support for new model types:
 
 1. **Extend ModelManager**:
+
    ```python
    def _load_custom_model(self, model_info: ModelInfo):
        # Custom loading logic
@@ -316,6 +331,7 @@ To add support for new model types:
    ```
 
 2. **Add inference method**:
+
    ```python
    def custom_inference(self, model_id: str, input_data: Any) -> Any:
        # Custom inference logic
@@ -323,6 +339,7 @@ To add support for new model types:
    ```
 
 3. **Add API endpoint**:
+
    ```python
    @self.app.post("/models/{model_id}/custom")
    async def custom_inference(model_id: str, request: CustomRequest):
@@ -352,6 +369,7 @@ To add support for new model types:
 ### Logs
 
 The service logs are stored in:
+
 - System logs: `/var/log/mcli/model_service.log`
 - User logs: `~/.local/mcli/model_service/logs/`
 
@@ -382,6 +400,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For support and questions:
+
 - Create an issue on GitHub
 - Check the documentation
-- Join the community discussions 
+- Join the community discussions
