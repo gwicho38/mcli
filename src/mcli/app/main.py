@@ -13,6 +13,8 @@ import tomli
 import os
 from mcli.lib.logger.logger import get_logger, enable_runtime_tracing, disable_runtime_tracing
 
+print("[DEBUG] mcli.app.main loaded")
+
 # Get logger
 logger = get_logger()
 
