@@ -16,6 +16,8 @@ from dataclasses import dataclass, asdict
 import sqlite3
 import tempfile
 import shutil
+import urllib.parse
+from urllib.parse import urlparse
 
 # FastAPI for REST API
 from fastapi import FastAPI, HTTPException, BackgroundTasks
@@ -35,6 +37,12 @@ import requests
 # Import existing utilities
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
+
+# Import lightweight model server
+from .lightweight_model_server import LightweightModelServer, LIGHTWEIGHT_MODELS
+
+# CLI Commands
+import click
 
 logger = get_logger(__name__)
 
@@ -560,12 +568,140 @@ class ModelManager:
             logger.error(f"Error translating text: {e}")
             raise
 
+    def download_model_from_url(self, model_url: str, tokenizer_url: Optional[str] = None) -> tuple[str, Optional[str]]:
+        """Download model and tokenizer from URLs and return local paths"""
+        try:
+            # Parse URLs
+            model_parsed = urlparse(model_url)
+            model_filename = os.path.basename(model_parsed.path) or "model"
+            
+            # Create model directory
+            model_dir = self.models_dir / model_filename
+            model_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Download model
+            logger.info(f"Downloading model from: {model_url}")
+            model_response = requests.get(model_url, stream=True)
+            model_response.raise_for_status()
+            
+            model_path = model_dir / "model"
+            with open(model_path, 'wb') as f:
+                for chunk in model_response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            
+            # Download tokenizer if provided
+            tokenizer_path = None
+            if tokenizer_url:
+                logger.info(f"Downloading tokenizer from: {tokenizer_url}")
+                tokenizer_response = requests.get(tokenizer_url, stream=True)
+                tokenizer_response.raise_for_status()
+                
+                tokenizer_path = model_dir / "tokenizer"
+                with open(tokenizer_path, 'wb') as f:
+                    for chunk in tokenizer_response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+            
+            logger.info(f"Model downloaded to: {model_path}")
+            return str(model_path), str(tokenizer_path) if tokenizer_path else None
+            
+        except Exception as e:
+            logger.error(f"Error downloading model from URL: {e}")
+            raise
+
+    def add_model_from_url(self, name: str, model_type: str, model_url: str, 
+                          tokenizer_url: Optional[str] = None, device: str = "auto",
+                          max_length: int = 512, temperature: float = 0.7, 
+                          top_p: float = 0.9, top_k: int = 50) -> str:
+        """Add a model from URL by downloading it first"""
+        try:
+            # Download model and tokenizer
+            model_path, tokenizer_path = self.download_model_from_url(model_url, tokenizer_url)
+            
+            # Create model info
+            model_info = ModelInfo(
+                id=str(uuid.uuid4()),
+                name=name,
+                model_type=model_type,
+                model_path=model_path,
+                tokenizer_path=tokenizer_path,
+                device=device,
+                max_length=max_length,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k
+            )
+            
+            # Add to database
+            model_id = self.db.add_model(model_info)
+            
+            # Try to load the model
+            if self.load_model(model_info):
+                logger.info(f"Successfully added and loaded model from URL: {name}")
+            else:
+                logger.warning(f"Model added from URL but failed to load: {name}")
+            
+            return model_id
+            
+        except Exception as e:
+            logger.error(f"Error adding model from URL: {e}")
+            raise
+
+    def get_models_summary(self) -> Dict[str, Any]:
+        """Get a summary of all models with statistics"""
+        models = self.db.get_all_models()
+        
+        summary = {
+            "total_models": len(models),
+            "loaded_models": len([m for m in models if m.is_loaded]),
+            "total_memory_mb": sum(m.memory_usage_mb for m in models if m.is_loaded),
+            "models_by_type": {},
+            "models": []
+        }
+        
+        for model in models:
+            # Add to type statistics
+            model_type = model.model_type
+            if model_type not in summary["models_by_type"]:
+                summary["models_by_type"][model_type] = {
+                    "count": 0,
+                    "loaded": 0,
+                    "memory_mb": 0.0
+                }
+            summary["models_by_type"][model_type]["count"] += 1
+            if model.is_loaded:
+                summary["models_by_type"][model_type]["loaded"] += 1
+                summary["models_by_type"][model_type]["memory_mb"] += model.memory_usage_mb
+            
+            # Add model details
+            summary["models"].append({
+                "id": model.id,
+                "name": model.name,
+                "type": model.model_type,
+                "loaded": model.is_loaded,
+                "memory_mb": model.memory_usage_mb,
+                "parameters_count": model.parameters_count,
+                "created_at": model.created_at.isoformat()
+            })
+        
+        return summary
+
 # Pydantic models for API
 class ModelLoadRequest(BaseModel):
     name: str
     model_type: str
     model_path: str
     tokenizer_path: Optional[str] = None
+    device: str = "auto"
+    max_length: int = 512
+    temperature: float = 0.7
+    top_p: float = 0.9
+    top_k: int = 50
+
+class ModelLoadFromUrlRequest(BaseModel):
+    name: str
+    model_type: str
+    model_url: str
+    tokenizer_url: Optional[str] = None
     device: str = "auto"
     max_length: int = 512
     temperature: float = 0.7
@@ -596,6 +732,13 @@ class ModelService:
             models_dir=self.config["models_dir"],
             max_cache_size=self.config["model_cache_size"]
         )
+        
+        # Initialize lightweight server
+        self.lightweight_server = LightweightModelServer(
+            models_dir=f"{self.config['models_dir']}/lightweight",
+            port=self.config["port"] + 1  # Use next port
+        )
+        
         self.running = False
         self.pid_file = Path.home() / ".local" / "mcli" / "model_service" / "model_service.pid"
         self.pid_file.parent.mkdir(parents=True, exist_ok=True)
@@ -637,6 +780,11 @@ class ModelService:
             """List all available models"""
             models = self.model_manager.db.get_all_models()
             return [asdict(model) for model in models]
+
+        @self.app.get("/models/summary")
+        async def get_models_summary():
+            """Get a summary of all models with statistics"""
+            return self.model_manager.get_models_summary()
         
         @self.app.post("/models")
         async def load_model(request: ModelLoadRequest):
@@ -667,6 +815,27 @@ class ModelService:
                     # Remove from database if loading failed
                     self.model_manager.db.delete_model(model_id)
                     raise HTTPException(status_code=500, detail="Failed to load model")
+                    
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+
+        @self.app.post("/models/from-url")
+        async def load_model_from_url(request: ModelLoadFromUrlRequest):
+            """Load a new model from URL"""
+            try:
+                model_id = self.model_manager.add_model_from_url(
+                    name=request.name,
+                    model_type=request.model_type,
+                    model_url=request.model_url,
+                    tokenizer_url=request.tokenizer_url,
+                    device=request.device,
+                    max_length=request.max_length,
+                    temperature=request.temperature,
+                    top_p=request.top_p,
+                    top_k=request.top_k
+                )
+                
+                return {"model_id": model_id, "status": "loaded"}
                     
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
@@ -856,6 +1025,54 @@ class ModelService:
                     for model_data in self.model_manager.loaded_models.values()
                 )
             }
+        
+        # Lightweight server endpoints
+        @self.app.get("/lightweight/models")
+        async def list_lightweight_models():
+            """List available lightweight models"""
+            return {
+                "models": LIGHTWEIGHT_MODELS,
+                "downloaded": self.lightweight_server.downloader.get_downloaded_models(),
+                "loaded": list(self.lightweight_server.loaded_models.keys())
+            }
+        
+        @self.app.post("/lightweight/models/{model_key}/download")
+        async def download_lightweight_model(model_key: str):
+            """Download a lightweight model"""
+            if model_key not in LIGHTWEIGHT_MODELS:
+                raise HTTPException(status_code=404, detail="Model not found")
+            
+            try:
+                success = self.lightweight_server.download_and_load_model(model_key)
+                if success:
+                    return {"status": "downloaded", "model": model_key}
+                else:
+                    raise HTTPException(status_code=500, detail="Failed to download model")
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.post("/lightweight/start")
+        async def start_lightweight_server():
+            """Start the lightweight server"""
+            try:
+                self.lightweight_server.start_server()
+                return {
+                    "status": "started",
+                    "port": self.lightweight_server.port,
+                    "url": f"http://localhost:{self.lightweight_server.port}"
+                }
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/lightweight/status")
+        async def lightweight_status():
+            """Get lightweight server status"""
+            return {
+                "running": self.lightweight_server.running,
+                "port": self.lightweight_server.port,
+                "loaded_models": list(self.lightweight_server.loaded_models.keys()),
+                "system_info": self.lightweight_server.get_system_info()
+            }
     
     def start(self):
         """Start the model service"""
@@ -1021,6 +1238,57 @@ def status():
     click.echo(f"📁 PID file: {status_info['pid_file']}")
 
 @model_service.command()
+@click.option('--summary', is_flag=True, help='Show summary statistics')
+def list_models(summary: bool = False):
+    """List all models in the service"""
+    service = ModelService()
+    
+    try:
+        if summary:
+            # Show summary
+            summary_data = service.model_manager.get_models_summary()
+            click.echo("📊 Model Service Summary")
+            click.echo("=" * 50)
+            click.echo(f"Total Models: {summary_data['total_models']}")
+            click.echo(f"Loaded Models: {summary_data['loaded_models']}")
+            click.echo(f"Total Memory: {summary_data['total_memory_mb']:.1f} MB")
+            click.echo()
+            
+            if summary_data['models_by_type']:
+                click.echo("Models by Type:")
+                for model_type, stats in summary_data['models_by_type'].items():
+                    click.echo(f"  {model_type}: {stats['loaded']}/{stats['count']} loaded ({stats['memory_mb']:.1f} MB)")
+            click.echo()
+        else:
+            # Show detailed list
+            models = service.model_manager.db.get_all_models()
+            
+            if not models:
+                click.echo("📝 No models found in the service")
+                return
+            
+            click.echo(f"📝 Found {len(models)} model(s):")
+            click.echo("=" * 80)
+            
+            for model in models:
+                status_icon = "🟢" if model.is_loaded else "⚪"
+                click.echo(f"{status_icon} {model.name} (ID: {model.id})")
+                click.echo(f"   Type: {model.model_type}")
+                click.echo(f"   Path: {model.model_path}")
+                if model.tokenizer_path:
+                    click.echo(f"   Tokenizer: {model.tokenizer_path}")
+                click.echo(f"   Device: {model.device}")
+                click.echo(f"   Loaded: {'Yes' if model.is_loaded else 'No'}")
+                if model.is_loaded:
+                    click.echo(f"   Memory: {model.memory_usage_mb:.1f} MB")
+                    click.echo(f"   Parameters: {model.parameters_count:,}")
+                click.echo(f"   Created: {model.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
+                click.echo()
+            
+    except Exception as e:
+        click.echo(f"❌ Error listing models: {e}")
+
+@model_service.command()
 @click.argument('model_path')
 @click.option('--name', required=True, help='Model name')
 @click.option('--type', 'model_type', required=True, help='Model type (text-generation, text-classification, translation)')
@@ -1052,6 +1320,44 @@ def add_model(model_path: str, name: str, model_type: str, tokenizer_path: str =
             
     except Exception as e:
         click.echo(f"❌ Error adding model: {e}")
+
+@model_service.command()
+@click.argument('model_url')
+@click.option('--name', required=True, help='Model name')
+@click.option('--type', 'model_type', required=True, help='Model type (text-generation, text-classification, translation)')
+@click.option('--tokenizer-url', help='URL to tokenizer (optional)')
+@click.option('--device', default='auto', help='Device to use (cpu, cuda, auto)')
+@click.option('--max-length', default=512, help='Maximum sequence length')
+@click.option('--temperature', default=0.7, help='Temperature for generation')
+@click.option('--top-p', default=0.9, help='Top-p for generation')
+@click.option('--top-k', default=50, help='Top-k for generation')
+def add_model_from_url(model_url: str, name: str, model_type: str, tokenizer_url: str = str(), 
+                      device: str = 'auto', max_length: int = 512, temperature: float = 0.7, 
+                      top_p: float = 0.9, top_k: int = 50):
+    """Add a model from URL to the service"""
+    service = ModelService()
+    
+    try:
+        click.echo(f"🌐 Downloading model from: {model_url}")
+        if tokenizer_url:
+            click.echo(f"🌐 Downloading tokenizer from: {tokenizer_url}")
+        
+        model_id = service.model_manager.add_model_from_url(
+            name=name,
+            model_type=model_type,
+            model_url=model_url,
+            tokenizer_url=tokenizer_url,
+            device=device,
+            max_length=max_length,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k
+        )
+        
+        click.echo(f"✅ Model '{name}' downloaded and added with ID: {model_id}")
+        
+    except Exception as e:
+        click.echo(f"❌ Error adding model from URL: {e}")
 
 @model_service.command()
 @click.argument('model_id')
@@ -1147,6 +1453,138 @@ def remove_model(model_id: str, force: bool = False):
             
     except Exception as e:
         click.echo(f"❌ Error removing model: {e}")
+
+# Lightweight server commands
+@model_service.command()
+@click.option('--list', is_flag=True, help='List available lightweight models')
+@click.option('--download', help='Download a specific lightweight model')
+@click.option('--auto', is_flag=True, help='Automatically select best model for your system')
+@click.option('--start-server', is_flag=True, help='Start the lightweight server')
+@click.option('--port', default=8080, help='Port for lightweight server')
+def lightweight(list: bool, download: str, auto: bool, start_server: bool, port: int):
+    """Manage lightweight models and server"""
+    service = ModelService()
+    
+    if list:
+        click.echo("🚀 Available Lightweight Models:")
+        click.echo("=" * 60)
+        
+        for key, info in LIGHTWEIGHT_MODELS.items():
+            status = "✅ Downloaded" if key in service.lightweight_server.loaded_models else "⏳ Not downloaded"
+            click.echo(f"{status} - {info['name']} ({info['parameters']})")
+            click.echo(f"    Size: {info['size_mb']} MB | Efficiency: {info['efficiency_score']}/10")
+            click.echo(f"    Type: {info['model_type']} | Tags: {', '.join(info['tags'])}")
+            click.echo()
+        return
+    
+    if download:
+        if download not in LIGHTWEIGHT_MODELS:
+            click.echo(f"❌ Model '{download}' not found")
+            click.echo("Available models:")
+            for key in LIGHTWEIGHT_MODELS.keys():
+                click.echo(f"  {key}")
+            return
+        
+        click.echo(f"📥 Downloading {download}...")
+        success = service.lightweight_server.download_and_load_model(download)
+        if success:
+            click.echo(f"✅ Model '{download}' downloaded successfully!")
+        else:
+            click.echo(f"❌ Failed to download model '{download}'")
+        return
+    
+    if auto:
+        recommended = service.lightweight_server.recommend_model()
+        click.echo(f"🎯 Recommended model: {recommended}")
+        click.echo(f"📥 Downloading {recommended}...")
+        success = service.lightweight_server.download_and_load_model(recommended)
+        if success:
+            click.echo(f"✅ Model '{recommended}' downloaded successfully!")
+        else:
+            click.echo(f"❌ Failed to download model '{recommended}'")
+        return
+    
+    if start_server:
+        click.echo(f"🚀 Starting lightweight server on port {port}...")
+        service.lightweight_server.port = port
+        service.lightweight_server.start_server()
+        
+        click.echo(f"✅ Server started!")
+        click.echo(f"🌐 API: http://localhost:{port}")
+        click.echo(f"📊 Health: http://localhost:{port}/health")
+        click.echo(f"📋 Models: http://localhost:{port}/models")
+        
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            click.echo("\n🛑 Server stopped")
+        return
+    
+    # Show help if no options provided
+    click.echo("Lightweight model server commands:")
+    click.echo("  --list          List available models")
+    click.echo("  --download MODEL Download a specific model")
+    click.echo("  --auto          Download recommended model for your system")
+    click.echo("  --start-server  Start the lightweight server")
+
+@model_service.command()
+@click.option('--model', type=click.Choice(list(LIGHTWEIGHT_MODELS.keys())), 
+              help='Specific model to download and run')
+@click.option('--auto', is_flag=True, default=True, 
+              help='Automatically select best model for your system')
+@click.option('--port', default=8080, help='Port to run server on')
+@click.option('--list-models', is_flag=True, help='List available models')
+@click.option('--download-only', is_flag=True, help='Only download models, don\'t start server')
+def lightweight_run(model: Optional[str], auto: bool, port: int, list_models: bool, download_only: bool):
+    """Run lightweight model server (standalone mode)"""
+    service = ModelService()
+    
+    click.echo("🚀 MCLI Lightweight Model Server")
+    click.echo("=" * 50)
+    
+    if list_models:
+        service.lightweight_server.list_models()
+        return 0
+    
+    # Get system info and recommend model
+    if model:
+        selected_model = model
+        click.echo(f"🎯 Using specified model: {selected_model}")
+    elif auto:
+        selected_model = service.lightweight_server.recommend_model()
+        click.echo(f"🎯 Recommended model: {selected_model}")
+    else:
+        click.echo("Available models:")
+        for key, info in LIGHTWEIGHT_MODELS.items():
+            click.echo(f"  {key}: {info['name']} ({info['parameters']})")
+        selected_model = click.prompt("Select model", type=click.Choice(list(LIGHTWEIGHT_MODELS.keys())))
+    
+    # Download and load model
+    if not service.lightweight_server.download_and_load_model(selected_model):
+        click.echo("❌ Failed to download model")
+        return 1
+    
+    if download_only:
+        click.echo("✅ Model downloaded successfully")
+        return 0
+    
+    # Start server
+    click.echo(f"\n🚀 Starting lightweight server on port {port}...")
+    service.lightweight_server.port = port
+    service.lightweight_server.start_server()
+    
+    click.echo(f"\n📝 Usage:")
+    click.echo(f"  - API: http://localhost:{port}")
+    click.echo(f"  - Health: http://localhost:{port}/health")
+    click.echo(f"  - Models: http://localhost:{port}/models")
+    
+    try:
+        # Keep server running
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        click.echo("\n🛑 Server stopped")
 
 if __name__ == '__main__':
     model_service() 
