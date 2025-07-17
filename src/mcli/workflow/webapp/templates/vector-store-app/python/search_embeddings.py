@@ -20,7 +20,7 @@ except ImportError:
 
 def main():
     if len(sys.argv) < 4:
-        print(json.dumps([]))
+        print(json.dumps({"error": "Insufficient arguments", "code": "INVALID_ARGS"}))
         return
     
     query = sys.argv[1]
@@ -42,23 +42,50 @@ def main():
             results = vsm.search_exact(query, top_k)
         else:
             # For semantic search, use embedding similarity
-            results = vsm.search_similar(query, top_k)
+            try:
+                results = vsm.search_similar(query, top_k)
+            except RuntimeError as e:
+                # Handle insufficient embeddings error
+                error_msg = str(e)
+                if "Only" in error_msg and "embeddings found" in error_msg:
+                    print(json.dumps({
+                        "error": error_msg,
+                        "code": "NOT_ENOUGH_EMBEDDINGS",
+                        "suggestion": "Try exact search instead or add more documents",
+                        "status": "semantic_search_unavailable"
+                    }))
+                else:
+                    print(json.dumps({
+                        "error": error_msg,
+                        "code": "VECTOR_INDEX_ERROR",
+                        "status": "error"
+                    }))
+                sys.exit(2)
         
         # Format results for JSON output
         formatted_results = []
         for result in results:
             formatted_results.append({
                 'document_id': result.get('document_id', ''),
-                'filename': result.get('filename', ''),
+                'filename': result.get('document_name', ''),
                 'text_chunk': result.get('text_chunk', ''),
                 'similarity_score': result.get('similarity_score', 0.0),
-                'chunk_index': result.get('chunk_index', 0)
+                'chunk_index': result.get('chunk_index', 0),
+                'rank': result.get('rank', 0)
             })
         
-        print(json.dumps(formatted_results))
+        print(json.dumps({
+            "results": formatted_results,
+            "count": len(formatted_results),
+            "status": "success"
+        }))
         
     except Exception as e:
-        print(json.dumps([]))
+        print(json.dumps({
+            "error": str(e),
+            "code": "UNKNOWN_ERROR",
+            "status": "error"
+        }))
         sys.exit(1)
 
 if __name__ == "__main__":

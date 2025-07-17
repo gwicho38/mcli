@@ -16,6 +16,7 @@ import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import time
 import gc
+from datetime import datetime
 
 # Import high-performance libraries
 import numpy as np
@@ -374,6 +375,29 @@ class VectorStoreManager:
         finally:
             conn.close()
     
+    def _store_document_metadata(self, document_id: str, filename: str, file_path: str, text_content: str, mime_type: str = "application/pdf"):
+        """Store document metadata in the documents table"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            file_size = Path(file_path).stat().st_size if Path(file_path).exists() else 0
+            upload_date = datetime.now().isoformat()
+            
+            cursor.execute('''
+                INSERT OR REPLACE INTO documents 
+                (id, filename, original_name, file_path, file_size, mime_type, upload_date, text_content, processing_status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (document_id, filename, filename, file_path, file_size, mime_type, upload_date, text_content, "processing"))
+            
+            conn.commit()
+            
+        except Exception as e:
+            logger.error(f"Error storing document metadata: {e}")
+            conn.rollback()
+        finally:
+            conn.close()
+    
     def _update_document_status(self, document_id: str, status: str, embedding_count: int = 0):
         """Update document processing status"""
         conn = sqlite3.connect(self.db_path)
@@ -401,36 +425,52 @@ class VectorStoreManager:
             
             if not embeddings:
                 logger.warning("No embeddings found to build index")
-                return
+                return {"success": False, "error": "No embeddings found"}
+            
+            # Check minimum embeddings for FAISS
+            if len(embeddings) < 10:
+                logger.warning(f"Only {len(embeddings)} embeddings found. FAISS requires more embeddings for clustering.")
+                return {"success": False, "error": f"Only {len(embeddings)} embeddings found, need at least 10"}
             
             # Convert to numpy array
             embedding_vectors = np.array(embeddings)
             
-            # Create FAISS index (IVFFlat for good balance of speed/accuracy)
-            dimension = embedding_vectors.shape[1]
-            nlist = min(100, max(1, embedding_vectors.shape[0] // 100))  # Number of clusters
-            
-            self.index = faiss.IndexIVFFlat(
-                faiss.IndexFlatL2(dimension),  # Quantizer
-                dimension,                      # Dimension
-                nlist,                         # Number of clusters
-                faiss.METRIC_L2               # Distance metric
-            )
-            
-            # Train the index
-            self.index.train(embedding_vectors)
-            
-            # Add vectors to index
-            self.index.add(embedding_vectors)
-            
-            # Save index
-            index_path = self.vector_store_path / "faiss_index.bin"
-            faiss.write_index(self.index, str(index_path))
-            
-            logger.info(f"Vector index built with {len(embeddings)} embeddings")
+            # For small datasets, use a simpler index type
+            if len(embedding_vectors) < 50:
+                # Use FlatL2 index for small datasets (no clustering)
+                dimension = embedding_vectors.shape[1]
+                self.index = faiss.IndexFlatL2(dimension)
+                self.index.add(embedding_vectors)
+                
+                logger.info(f"Vector index built with {len(embeddings)} embeddings (FlatL2)")
+                return {"success": True, "index_type": "FlatL2", "index_size": len(embeddings)}
+            else:
+                # Use IVFFlat for larger datasets
+                dimension = embedding_vectors.shape[1]
+                nlist = min(100, max(1, embedding_vectors.shape[0] // 100))  # Number of clusters
+                
+                # Ensure nlist is at least 1 and not greater than number of vectors
+                nlist = max(1, min(nlist, embedding_vectors.shape[0] // 2))
+                
+                self.index = faiss.IndexIVFFlat(
+                    faiss.IndexFlatL2(dimension),  # Quantizer
+                    dimension,                      # Dimension
+                    nlist,                         # Number of clusters
+                    faiss.METRIC_L2               # Distance metric
+                )
+                
+                # Train the index
+                self.index.train(embedding_vectors)
+                
+                # Add vectors to index
+                self.index.add(embedding_vectors)
+                
+                logger.info(f"Vector index built with {len(embeddings)} embeddings (IVFFlat)")
+                return {"success": True, "index_type": "IVFFlat", "index_size": len(embeddings)}
             
         except Exception as e:
             logger.error(f"Error building vector index: {e}")
+            return {"success": False, "error": str(e)}
     
     def _load_all_embeddings(self) -> List[np.ndarray]:
         """Load all embeddings from database"""
@@ -458,7 +498,9 @@ class VectorStoreManager:
     def search_similar(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
         """Search for similar documents using vector similarity"""
         if not self.index:
-            self.build_vector_index()
+            index_result = self.build_vector_index()
+            if not index_result.get("success"):
+                raise RuntimeError(index_result.get("error", "Failed to build vector index"))
         
         try:
             # Generate query embedding
@@ -509,6 +551,21 @@ class VectorStoreManager:
             logger.error(f"Error in similarity search: {e}")
             return []
 
+    def can_perform_semantic_search(self) -> bool:
+        """Check if semantic search is available (has enough embeddings)"""
+        embeddings = self._load_all_embeddings()
+        return len(embeddings) >= 10
+    
+    def get_semantic_search_status(self) -> Dict[str, Any]:
+        """Get detailed status of semantic search availability"""
+        embeddings = self._load_all_embeddings()
+        return {
+            "available": len(embeddings) >= 10,
+            "embedding_count": len(embeddings),
+            "minimum_required": 10,
+            "message": f"Semantic search requires at least 10 embeddings, found {len(embeddings)}"
+        }
+    
     def search_exact(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
         """Search for exact text matches in documents"""
         try:
