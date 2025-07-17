@@ -40,6 +40,8 @@ from mcli.lib.toml.toml import read_from_toml
 
 # Import lightweight model server
 from .lightweight_model_server import LightweightModelServer, LIGHTWEIGHT_MODELS
+from .pdf_processor import PDFProcessor
+from .lightweight_embedder import LightweightEmbedder
 
 # CLI Commands
 import click
@@ -739,6 +741,17 @@ class ModelService:
             port=self.config["port"] + 1  # Use next port
         )
         
+        # Initialize PDF processor
+        self.pdf_processor = PDFProcessor(
+            models_dir=f"{self.config['models_dir']}/lightweight",
+            port=self.config["port"] + 2  # Use next port after lightweight server
+        )
+        
+        # Initialize lightweight embedder
+        self.embedder = LightweightEmbedder(
+            models_dir=f"{self.config['models_dir']}/embeddings"
+        )
+        
         self.running = False
         self.pid_file = Path.home() / ".local" / "mcli" / "model_service" / "model_service.pid"
         self.pid_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1073,6 +1086,100 @@ class ModelService:
                 "loaded_models": list(self.lightweight_server.loaded_models.keys()),
                 "system_info": self.lightweight_server.get_system_info()
             }
+        
+        # PDF processing endpoints
+        @self.app.post("/pdf/extract-text")
+        async def extract_pdf_text(request: Dict[str, Any]):
+            """Extract text from PDF"""
+            try:
+                pdf_path = request.get('pdf_path')
+                if not pdf_path:
+                    raise HTTPException(status_code=400, detail="PDF path is required")
+                
+                result = self.pdf_processor.extract_text_from_pdf(pdf_path)
+                return result
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.post("/pdf/process-with-ai")
+        async def process_pdf_with_ai(request: Dict[str, Any]):
+            """Process PDF with AI analysis"""
+            try:
+                pdf_path = request.get('pdf_path')
+                model_key = request.get('model_key')
+                
+                if not pdf_path:
+                    raise HTTPException(status_code=400, detail="PDF path is required")
+                
+                # Handle optional model_key parameter
+                if model_key:
+                    result = self.pdf_processor.process_pdf_with_ai(pdf_path, str(model_key))
+                else:
+                    result = self.pdf_processor.process_pdf_with_ai(pdf_path)
+                return result
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/pdf/status")
+        async def pdf_processor_status():
+            """Get PDF processor status"""
+            return self.pdf_processor.get_service_status()
+        
+        # Embedding endpoints
+        @self.app.post("/embed/text")
+        async def embed_text(request: Dict[str, Any]):
+            """Embed text using lightweight embedder"""
+            try:
+                text = request.get('text')
+                method = request.get('method')
+                
+                if not text:
+                    raise HTTPException(status_code=400, detail="Text is required")
+                
+                # Handle optional method parameter
+                if method:
+                    result = self.embedder.embed_text(text, str(method))
+                else:
+                    result = self.embedder.embed_text(text)
+                return result
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.post("/embed/document")
+        async def embed_document(request: Dict[str, Any]):
+            """Embed document using lightweight embedder"""
+            try:
+                text = request.get('text')
+                chunk_size = request.get('chunk_size', 1000)
+                
+                if not text:
+                    raise HTTPException(status_code=400, detail="Text is required")
+                
+                result = self.embedder.embed_document(text, chunk_size)
+                return result
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.post("/embed/search")
+        async def search_embeddings(request: Dict[str, Any]):
+            """Search similar documents using embeddings"""
+            try:
+                query = request.get('query')
+                embeddings = request.get('embeddings', [])
+                top_k = request.get('top_k', 5)
+                
+                if not query:
+                    raise HTTPException(status_code=400, detail="Query is required")
+                
+                results = self.embedder.search_similar(query, embeddings, top_k)
+                return {"results": results}
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/embed/status")
+        async def embedder_status():
+            """Get embedder status"""
+            return self.embedder.get_status()
     
     def start(self):
         """Start the model service"""
@@ -1585,6 +1692,140 @@ def lightweight_run(model: Optional[str], auto: bool, port: int, list_models: bo
             time.sleep(1)
     except KeyboardInterrupt:
         click.echo("\n🛑 Server stopped")
+
+# PDF processing commands
+@model_service.command()
+@click.argument('pdf_path')
+@click.option('--model', help='Specific model to use for AI analysis')
+@click.option('--extract-only', is_flag=True, help='Only extract text, no AI analysis')
+def process_pdf(pdf_path: str, model: str, extract_only: bool):
+    """Process PDF with AI analysis"""
+    service = ModelService()
+    
+    try:
+        if extract_only:
+            click.echo(f"📄 Extracting text from: {pdf_path}")
+            result = service.pdf_processor.extract_text_from_pdf(pdf_path)
+        else:
+            click.echo(f"🤖 Processing PDF with AI: {pdf_path}")
+            if model:
+                click.echo(f"🎯 Using model: {model}")
+                result = service.pdf_processor.process_pdf_with_ai(pdf_path, model)
+            else:
+                result = service.pdf_processor.process_pdf_with_ai(pdf_path)
+        
+        if result.get("success"):
+            if extract_only:
+                click.echo(f"✅ Text extracted: {result['text_length']} characters")
+                click.echo(f"📝 Preview: {result['text'][:200]}...")
+            else:
+                analysis = result['pdf_analysis']['ai_analysis']
+                click.echo(f"✅ PDF processed successfully!")
+                click.echo(f"📊 Document type: {analysis['document_type']}")
+                click.echo(f"📝 Summary: {analysis['summary'][:200]}...")
+                click.echo(f"🔑 Key topics: {', '.join(analysis['key_topics'])}")
+                click.echo(f"📈 Complexity score: {analysis['complexity_score']:.2f}")
+        else:
+            click.echo(f"❌ Error: {result.get('error', 'Unknown error')}")
+            
+    except Exception as e:
+        click.echo(f"❌ Error processing PDF: {e}")
+
+@model_service.command()
+@click.option('--port', default=8080, help='Port for PDF processing service')
+def start_pdf_service(port: int):
+    """Start PDF processing service"""
+    service = ModelService()
+    
+    try:
+        click.echo(f"🚀 Starting PDF processing service on port {port}...")
+        success = service.pdf_processor.start_pdf_processing_service(port)
+        
+        if success:
+            click.echo(f"✅ PDF processing service started!")
+            click.echo(f"🌐 API: http://localhost:{port}")
+            click.echo(f"📊 Status: http://localhost:{port}/status")
+            
+            try:
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                click.echo("\n🛑 PDF processing service stopped")
+        else:
+            click.echo("❌ Failed to start PDF processing service")
+            
+    except Exception as e:
+        click.echo(f"❌ Error starting PDF service: {e}")
+
+# Embedding commands
+@model_service.command()
+@click.argument('text')
+@click.option('--method', help='Embedding method (sentence_transformers, tfidf, simple_hash)')
+def embed_text(text: str, method: str):
+    """Embed text using lightweight embedder"""
+    service = ModelService()
+    
+    try:
+        click.echo(f"🔤 Embedding text: {text[:50]}...")
+        if method:
+            click.echo(f"🎯 Using method: {method}")
+            result = service.embedder.embed_text(text, method)
+        else:
+            result = service.embedder.embed_text(text)
+        
+        if result:
+            click.echo(f"✅ Text embedded successfully!")
+            click.echo(f"📊 Method: {result['method']}")
+            click.echo(f"📏 Dimensions: {result['dimensions']}")
+            click.echo(f"📝 Text length: {result['text_length']}")
+        else:
+            click.echo("❌ Failed to embed text")
+            
+    except Exception as e:
+        click.echo(f"❌ Error embedding text: {e}")
+
+@model_service.command()
+@click.argument('text')
+@click.option('--chunk-size', default=1000, help='Chunk size for document embedding')
+def embed_document(text: str, chunk_size: int):
+    """Embed document using lightweight embedder"""
+    service = ModelService()
+    
+    try:
+        click.echo(f"📄 Embedding document: {text[:50]}...")
+        result = service.embedder.embed_document(text, chunk_size)
+        
+        if result.get("success"):
+            doc_embedding = result["document_embedding"]
+            click.echo(f"✅ Document embedded successfully!")
+            click.echo(f"📊 Method: {doc_embedding['method']}")
+            click.echo(f"📄 Total chunks: {doc_embedding['total_chunks']}")
+            click.echo(f"📏 Text length: {doc_embedding['total_text_length']}")
+        else:
+            click.echo(f"❌ Failed to embed document: {result.get('error', 'Unknown error')}")
+            
+    except Exception as e:
+        click.echo(f"❌ Error embedding document: {e}")
+
+@model_service.command()
+def embedder_status():
+    """Show embedder status"""
+    service = ModelService()
+    
+    try:
+        status = service.embedder.get_status()
+        click.echo("🔤 Lightweight Embedder Status")
+        click.echo("=" * 40)
+        click.echo(f"Current method: {status['current_method']}")
+        click.echo(f"Models directory: {status['models_dir']}")
+        click.echo(f"Cache size: {status['cache_size']}")
+        click.echo("\nAvailable methods:")
+        for method, available in status['available_methods'].items():
+            status_icon = "✅" if available else "❌"
+            click.echo(f"  {status_icon} {method}")
+            
+    except Exception as e:
+        click.echo(f"❌ Error getting embedder status: {e}")
 
 if __name__ == '__main__':
     model_service() 

@@ -1,0 +1,3 @@
+Test Document for MCLI Integration
+This is a test document to verify the integration
+between MCLI lightweight model service and myAi application.

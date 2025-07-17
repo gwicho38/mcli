@@ -72,10 +72,15 @@ src/mcli/workflow/gcloud/gcloud.py
 src/mcli/workflow/interview/__init__.py
 src/mcli/workflow/model_service/client.py
 src/mcli/workflow/model_service/download_and_run_efficient_models.py
+src/mcli/workflow/model_service/lightweight_embedder.py
+src/mcli/workflow/model_service/lightweight_model_server.py
+src/mcli/workflow/model_service/lightweight_test.py
 src/mcli/workflow/model_service/model_service.py
 src/mcli/workflow/model_service/ollama_efficient_runner.py
+src/mcli/workflow/model_service/pdf_processor.py
 src/mcli/workflow/model_service/test_efficient_runner.py
 src/mcli/workflow/model_service/test_example.py
+src/mcli/workflow/model_service/test_integration.py
 src/mcli/workflow/model_service/test_new_features.py
 src/mcli/workflow/openai/openai.py
 src/mcli/workflow/professional/create_doc_resume.py
