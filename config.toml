@@ -11,3 +11,15 @@ host = "0.0.0.0"
 # port will be set to random if not specified
 use_random_port = true
 debug = false
+
+[api_daemon]
+enabled = false
+host = "0.0.0.0"
+port = null  # null means use random port
+use_random_port = true
+debug = false
+auto_start = false
+command_timeout = 300  # 5 minutes
+max_concurrent_commands = 10
+enable_command_caching = true
+enable_command_history = true

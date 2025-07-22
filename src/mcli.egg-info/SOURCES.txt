@@ -21,6 +21,8 @@ src/mcli/lib/__init__.py
 src/mcli/lib/lib.py
 src/mcli/lib/api/__init__.py
 src/mcli/lib/api/api.py
+src/mcli/lib/api/daemon_client.py
+src/mcli/lib/api/daemon_decorator.py
 src/mcli/lib/auth/__init__.py
 src/mcli/lib/auth/auth.py
 src/mcli/lib/auth/aws_manager.py
@@ -59,6 +61,7 @@ src/mcli/self/self_cmd.py
 src/mcli/workflow/__init__.py
 src/mcli/workflow/workflow.py
 src/mcli/workflow/daemon/__init__.py
+src/mcli/workflow/daemon/api_daemon.py
 src/mcli/workflow/daemon/client.py
 src/mcli/workflow/daemon/commands.py
 src/mcli/workflow/daemon/daemon.py
