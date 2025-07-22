@@ -61,6 +61,7 @@ faiss-cpu>=1.11.0.post1
 python-docx>=1.2.0
 beautifulsoup4>=4.13.4
 reportlab>=4.4.2
+build>=1.2.2.post1
 
 [build]
 cython<4.0.0,>=3.0.0

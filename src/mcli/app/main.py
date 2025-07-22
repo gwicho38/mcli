@@ -106,8 +106,8 @@ def discover_modules(
                     if file_path.name not in excluded_files and not any(
                         excluded_dir in file_path.parts for excluded_dir in excluded_dirs
                     ):
-                        # Convert file path to module name
-                        relative_path = file_path.relative_to(base_path)
+                        # Convert file path to module name with mcli prefix
+                        relative_path = file_path.relative_to(base_path.parent)
                         module_name = str(relative_path).replace("/", ".").replace(".py", "")
                         modules.append(module_name)
                         logger.debug(f"Found nested module: {module_name}")
@@ -120,8 +120,8 @@ def discover_modules(
                     if file_path.name not in excluded_files and not any(
                         excluded_dir in file_path.parts for excluded_dir in excluded_dirs
                     ):
-                        # Convert file path to module name
-                        relative_path = file_path.relative_to(base_path)
+                        # Convert file path to module name with mcli prefix
+                        relative_path = file_path.relative_to(base_path.parent)
                         module_name = str(relative_path).replace("/", ".").replace(".py", "")
                         modules.append(module_name)
                         logger.debug(f"Found module: {module_name}")
@@ -231,6 +231,7 @@ def create_app() -> click.Group:
     groups = {}
     for module_name in module_names:
         try:
+            logger.debug(f"Processing module: {module_name}")
             module = importlib.import_module(module_name)
 
             for name, obj in inspect.getmembers(module):
@@ -249,6 +250,11 @@ def create_app() -> click.Group:
                     
         except ImportError as e:
             logger.warning(f"Could not import module {module_name}: {e}")
+        except Exception as e:
+            logger.error(f"Error processing module {module_name}: {e}")
+
+    logger.info(f"Total groups found: {len(groups)}")
+    logger.info(f"Group modules: {list(groups.keys())}")
 
     def find_parent(module_name: str) -> Optional[str]:
         """Return the parent module path if a parent group exists."""
