@@ -13,6 +13,9 @@ import tomli
 import os
 from mcli.lib.logger.logger import get_logger, enable_runtime_tracing, disable_runtime_tracing
 
+# Import API decorator
+from mcli.lib.api.api import api_endpoint, start_api_server, register_command_as_api
+
 # Get logger
 logger = get_logger()
 
@@ -99,69 +102,87 @@ def discover_modules(
             logger.debug(f"Searching in nested path: {search_path}")
             
             if search_path.exists():
-                # Find the main module file (same name as the last directory part)
-                last_dir = parts[-1]
-                main_file = search_path / f"{last_dir}.py"
-                
-                if main_file.exists():
-                    try:
-                        # Create module path like mcli.app.readiness.readiness
-                        module_parts = [base_path.name] + parts + [last_dir]
-                        module_name = ".".join(module_parts)
-                        logger.debug(f"Adding nested module: {module_name}")
+                for file_path in search_path.rglob("*.py"):
+                    if file_path.name not in excluded_files and not any(
+                        excluded_dir in file_path.parts for excluded_dir in excluded_dirs
+                    ):
+                        # Convert file path to module name
+                        relative_path = file_path.relative_to(base_path)
+                        module_name = str(relative_path).replace("/", ".").replace(".py", "")
                         modules.append(module_name)
-                    except Exception as e:
-                        logger.error(f"Error adding nested module {main_file}: {e}")
-            continue
+                        logger.debug(f"Found nested module: {module_name}")
+        else:
+            search_path = base_path / directory
+            logger.debug(f"Searching in path: {search_path}")
             
-        # Original code for non-nested paths
-        search_path = base_path / directory
-        logger.debug(f"Searching in path: {search_path}")
-        if search_path.exists():
-            for package in search_path.rglob("*.py"):
-                if (
-                    package.name in excluded_files
-                    or package.stem.startswith("test_")
-                    or package.stem != search_path.stem
-                ):
-                    continue
+            if search_path.exists():
+                for file_path in search_path.rglob("*.py"):
+                    if file_path.name not in excluded_files and not any(
+                        excluded_dir in file_path.parts for excluded_dir in excluded_dirs
+                    ):
+                        # Convert file path to module name
+                        relative_path = file_path.relative_to(base_path)
+                        module_name = str(relative_path).replace("/", ".").replace(".py", "")
+                        modules.append(module_name)
+                        logger.debug(f"Found module: {module_name}")
 
-                if any(part in excluded_dirs for part in package.parts):
-                    continue
-
-                try:
-                    relative_path = package.relative_to(base_path.parent)
-                    module_name = ".".join(relative_path.with_suffix("").parts)
-                    modules.append(module_name)
-                except Exception as e:
-                    logger.error(f"Error converting {package} to module: {e}")
-
-    # PyInstaller fallback: check if we're running in PyInstaller environment
-    import sys
-    is_pyinstaller = hasattr(sys, '_MEIPASS')
-    
-    if is_pyinstaller or not modules:
-        logger.warning("Running in PyInstaller or no modules found, using fallback module list")
-        fallback_modules = [
-            "mcli.workflow.repo.repo",
-            "mcli.workflow.videos.videos",
-            "mcli.workflow.gcloud.gcloud",
-            "mcli.workflow.docker.docker",
-            "mcli.workflow.registry.registry",
-            "mcli.workflow.wakatime.wakatime",
-            "mcli.workflow.webapp.webapp",
-            "mcli.public.oi.oi"
-        ]
-        
-        for module_name in fallback_modules:
-            try:
-                importlib.import_module(module_name)
-                modules.append(module_name)
-                logger.debug(f"Successfully imported fallback module: {module_name}")
-            except ImportError as e:
-                logger.warning(f"Failed to import fallback module {module_name}: {e}")
-    
+    logger.info(f"Discovered {len(modules)} modules")
     return modules
+
+
+def register_command_as_api_endpoint(command_func, module_name: str, command_name: str):
+    """
+    Register a Click command as an API endpoint.
+    
+    Args:
+        command_func: The Click command function
+        module_name: The module name for grouping
+        command_name: The command name
+    """
+    try:
+        # Create endpoint path based on module and command
+        endpoint_path = f"/{module_name.replace('.', '/')}/{command_name}"
+        
+        # Register the command as an API endpoint
+        register_command_as_api(
+            command_func=command_func,
+            endpoint_path=endpoint_path,
+            http_method="POST",
+            description=f"API endpoint for {command_name} command from {module_name}",
+            tags=[module_name.split('.')[-1]]  # Use last part of module name as tag
+        )
+        
+        logger.debug(f"Registered API endpoint: {endpoint_path} for command {command_name}")
+        
+    except Exception as e:
+        logger.warning(f"Failed to register API endpoint for {command_name}: {e}")
+
+
+def process_click_commands(obj, module_name: str, parent_name: str = ""):
+    """
+    Recursively process Click commands and groups to register them as API endpoints.
+    
+    Args:
+        obj: Click command or group object
+        module_name: The module name
+        parent_name: Parent command name for nesting
+    """
+    if hasattr(obj, 'commands'):
+        # This is a Click group
+        for name, command in obj.commands.items():
+            full_name = f"{parent_name}/{name}" if parent_name else name
+            
+            # Register the command as an API endpoint
+            register_command_as_api_endpoint(command.callback, module_name, full_name)
+            
+            # Recursively process nested commands
+            if hasattr(command, 'commands'):
+                process_click_commands(command, module_name, full_name)
+    else:
+        # This is a single command
+        if hasattr(obj, 'callback') and obj.callback:
+            full_name = parent_name if parent_name else obj.name
+            register_command_as_api_endpoint(obj.callback, module_name, full_name)
 
 
 def create_app() -> click.Group:
@@ -198,6 +219,9 @@ def create_app() -> click.Group:
         if 'self_app' in globals():
             app.add_command(self_app, name="self")
             logger.info("Added self management commands to mcli")
+            
+            # Register self commands as API endpoints
+            process_click_commands(self_app, "mcli.self", "self")
     except Exception as e:
         logger.error(f"Error adding self management commands: {e}")
         import traceback
@@ -213,6 +237,16 @@ def create_app() -> click.Group:
                 if isinstance(obj, click.Group):
                     logger.info(f"Discovered group {obj.name} in {module_name}")
                     groups[module_name] = obj
+                    
+                    # Register all commands in this group as API endpoints
+                    process_click_commands(obj, module_name, obj.name)
+                    
+                elif isinstance(obj, click.Command):
+                    logger.info(f"Discovered command {obj.name} in {module_name}")
+                    
+                    # Register single command as API endpoint
+                    register_command_as_api_endpoint(obj.callback, module_name, obj.name)
+                    
         except ImportError as e:
             logger.warning(f"Could not import module {module_name}: {e}")
 
@@ -234,6 +268,14 @@ def create_app() -> click.Group:
         else:
             logger.info(f"Adding top-level group {group.name}")
             app.add_command(group, name=group.name)
+    
+    # Start API server if environment variable is set
+    if os.environ.get('MCLI_API_SERVER', 'false').lower() in ('true', '1', 'yes'):
+        api_host = os.environ.get('MCLI_API_HOST', '0.0.0.0')
+        api_port = int(os.environ.get('MCLI_API_PORT', '8000'))
+        
+        logger.info(f"Starting API server on {api_host}:{api_port}")
+        start_api_server(host=api_host, port=api_port)
     
     return app
 

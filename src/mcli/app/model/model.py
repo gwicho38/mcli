@@ -873,6 +873,8 @@ def generate(input, output, prompt, negative, fps, strength, guidance, batch,
     click.echo(click.style("✓ Generation Complete!", fg="bright_green", bold=True))
     click.echo(f"Output saved to: {click.style(output_path, fg='bright_green', bold=True)}")
     click.echo("=" * 80 + "\n")
+    
+    return {"output_path": output_path, "status": "completed"}
 
 
 @model.command()
@@ -914,6 +916,8 @@ def config(config_file, output):
             json.dump(updated_config, f, indent=2)
             
         click.echo(click.style(f"Configuration file created at {output}", fg="green"))
+    
+    return {"config_file": output, "status": "saved"}
 
 
 @model.command()
@@ -967,6 +971,8 @@ def list_models(path):
     click.echo("\n" + "=" * 80)
     click.echo("Usage: Specify any of these models with the respective options in the generate command")
     click.echo("=" * 80 + "\n")
+    
+    return {"models": models, "search_path": path}
 
 
 @model.command()
@@ -1036,6 +1042,8 @@ def check_comfyui():
         click.echo(f"  Error: {e}")
         click.echo("\nPlease ensure that ComfyUI is running at {CONFIG['comfyui_api']}")
         click.echo("You can start ComfyUI with: python main.py --listen 0.0.0.0 --port 8188")
+    
+    return {"status": "checked", "comfyui_url": CONFIG['comfyui_api']}
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
+import os
 
 # Add the current directory to Python path
 sys.path.append(str(Path(__file__).parent))
@@ -76,8 +77,8 @@ def get_vector_store_manager():
     """Get or initialize the vector store manager"""
     global vsm
     if vsm is None:
-        # You can configure this path via environment variable
-        vector_store_path = Path("./vector-store")
+        # Use environment variable if set, otherwise default
+        vector_store_path = os.environ.get('VECTOR_STORE_PATH', './vector-store')
         vsm = VectorStoreManager(str(vector_store_path))
     return vsm
 

@@ -115,6 +115,7 @@ src/mcli/workflow/webapp/templates/vector-store-app/node_modules/dmg-builder/ven
 src/mcli/workflow/webapp/templates/vector-store-app/python/extract_text.py
 src/mcli/workflow/webapp/templates/vector-store-app/python/generate_embeddings.py
 src/mcli/workflow/webapp/templates/vector-store-app/python/search_embeddings.py
+src/mcli/workflow/webapp/templates/vector-store-app/python/vector_store_api.py
 src/mcli/workflow/webapp/templates/webmail/test_python_env.py
 src/mcli/workflow/webapp/templates/webmail/python/extract_text.py
 src/mcli/workflow/webapp/templates/webmail/python/generate_embeddings.py
