@@ -10,6 +10,7 @@ The API decorator allows you to expose Click commands as REST API endpoints with
 2. Handles parameter conversion between HTTP requests and Click options
 3. Provides automatic response formatting
 4. Includes error handling and logging
+5. **Uses random ports by default for security**
 
 ## Quick Start
 
@@ -31,12 +32,21 @@ def hello(name: str):
 
 ### 2. Enable API Server
 
-Set environment variables to enable the API server:
-
+#### Option A: Environment Variable (Quick)
 ```bash
 export MCLI_API_SERVER=true
-export MCLI_API_HOST=0.0.0.0
-export MCLI_API_PORT=8000
+python -m mcli
+```
+
+#### Option B: Configuration File (Recommended)
+Edit `config.toml`:
+```toml
+[api]
+enabled = true
+host = "0.0.0.0"
+port = null  # null means use random port
+use_random_port = true
+debug = false
 ```
 
 ### 3. Run the Application
@@ -45,7 +55,65 @@ export MCLI_API_PORT=8000
 python -m mcli
 ```
 
-The API server will start automatically and expose all decorated commands as endpoints.
+The API server will start automatically with a random port and expose all decorated commands as endpoints.
+
+## Configuration
+
+### Configuration File (`config.toml`)
+
+The API server can be configured through the `config.toml` file:
+
+```toml
+[api]
+enabled = true           # Enable/disable API server
+host = "0.0.0.0"        # Host to bind to
+port = null              # Port (null = random port)
+use_random_port = true   # Use random port if port is null
+debug = false            # Enable debug mode
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MCLI_API_SERVER` | `false` | Enable API server (`true`, `1`, `yes`) |
+| `MCLI_API_HOST` | `0.0.0.0` | API server host |
+| `MCLI_API_PORT` | `null` | API server port (null = random) |
+| `MCLI_API_DEBUG` | `false` | Enable debug mode |
+
+### Configuration Priority
+
+1. **Environment variables** (highest priority)
+2. **User config**: `~/.config/mcli/config.toml`
+3. **Project config**: `./config.toml`
+4. **Default values** (lowest priority)
+
+## Random Port Behavior
+
+### Security Benefits
+
+- **No port conflicts**: Random ports prevent conflicts with other services
+- **Security through obscurity**: Harder to guess the API endpoint
+- **Multiple instances**: Can run multiple MCLI instances simultaneously
+
+### Port Selection
+
+The system will:
+1. Try ports starting from 8000
+2. Find the first available port
+3. If no ports available in range, use random port in safe range (49152-65535)
+
+### Finding Your Port
+
+When the API server starts, it logs the URL:
+```
+✅ API server started at http://0.0.0.0:8473
+📋 Available endpoints:
+   GET  http://0.0.0.0:8473/health
+   GET  http://0.0.0.0:8473/
+   GET  http://0.0.0.0:8473/docs
+   GET  http://0.0.0.0:8473/redoc
+```
 
 ## Decorator Parameters
 
@@ -152,16 +220,19 @@ GET  /mcli/app/model/model/check-comfyui # Check ComfyUI status
 ### Using curl
 
 ```bash
+# First, find your API server URL from the logs
+# Example: http://0.0.0.0:8473
+
 # Test hello endpoint
-curl -X GET 'http://localhost:8000/test/hello?name=API'
+curl -X GET 'http://0.0.0.0:8473/test/hello?name=API'
 
 # Test calculate endpoint
-curl -X POST 'http://localhost:8000/test/calculate' \
+curl -X POST 'http://0.0.0.0:8473/test/calculate' \
   -H 'Content-Type: application/json' \
   -d '{"a": 10, "b": 5, "operation": "multiply"}'
 
 # Test echo endpoint
-curl -X POST 'http://localhost:8000/test/echo' \
+curl -X POST 'http://0.0.0.0:8473/test/echo' \
   -H 'Content-Type: application/json' \
   -d '{"message": "Hello from API!"}'
 ```
@@ -171,13 +242,16 @@ curl -X POST 'http://localhost:8000/test/echo' \
 ```python
 import requests
 
+# Replace with your actual port from the logs
+api_url = "http://0.0.0.0:8473"
+
 # Test GET endpoint
-response = requests.get('http://localhost:8000/test/hello', 
+response = requests.get(f'{api_url}/test/hello', 
                        params={'name': 'API'})
 print(response.json())
 
 # Test POST endpoint
-response = requests.post('http://localhost:8000/test/calculate',
+response = requests.post(f'{api_url}/test/calculate',
                         json={'a': 10, 'b': 5, 'operation': 'multiply'})
 print(response.json())
 ```
@@ -204,13 +278,36 @@ All API endpoints return a standardized response format:
 }
 ```
 
-## Environment Variables
+## Configuration Examples
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `MCLI_API_SERVER` | `false` | Enable API server (`true`, `1`, `yes`) |
-| `MCLI_API_HOST` | `0.0.0.0` | Host to bind API server to |
-| `MCLI_API_PORT` | `8000` | Port to bind API server to |
+### Enable API with Random Port
+```toml
+[api]
+enabled = true
+use_random_port = true
+```
+
+### Enable API with Fixed Port
+```toml
+[api]
+enabled = true
+port = 8000
+use_random_port = false
+```
+
+### Enable API with Debug Mode
+```toml
+[api]
+enabled = true
+debug = true
+use_random_port = true
+```
+
+### Disable API Server
+```toml
+[api]
+enabled = false
+```
 
 ## Advanced Features
 
@@ -262,8 +359,8 @@ def divide(a: float, b: float):
 
 The API server automatically generates OpenAPI documentation at:
 
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- Swagger UI: `http://your-port/docs`
+- ReDoc: `http://your-port/redoc`
 
 ## Integration with Existing Commands
 
@@ -273,8 +370,8 @@ The API decorator is automatically applied to all existing MCLI commands. For ex
 # CLI usage
 mcli app model model generate --input video.mp4 --output output.mp4 --prompt "A beautiful landscape"
 
-# API usage
-curl -X POST 'http://localhost:8000/mcli/app/model/model/generate' \
+# API usage (replace PORT with your actual port)
+curl -X POST 'http://0.0.0.0:PORT/mcli/app/model/model/generate' \
   -H 'Content-Type: application/json' \
   -d '{
     "input": "video.mp4",
@@ -289,8 +386,8 @@ curl -X POST 'http://localhost:8000/mcli/app/model/model/generate' \
 
 ### Common Issues
 
-1. **API server not starting**: Check that `MCLI_API_SERVER=true` is set
-2. **Port already in use**: Change `MCLI_API_PORT` to a different port
+1. **API server not starting**: Check that API is enabled in config or environment
+2. **Port conflicts**: Random ports should prevent this, but you can set a specific port
 3. **Import errors**: Ensure all dependencies are installed (`fastapi`, `uvicorn`, `pydantic`)
 
 ### Debug Mode
@@ -298,14 +395,34 @@ curl -X POST 'http://localhost:8000/mcli/app/model/model/generate' \
 Enable debug logging:
 
 ```bash
-export MCLI_TRACE_LEVEL=2
+export MCLI_API_DEBUG=true
 python -m mcli
+```
+
+Or in config:
+```toml
+[api]
+enabled = true
+debug = true
 ```
 
 ### Check API Status
 
 ```bash
-curl http://localhost:8000/health
+# Replace PORT with your actual port
+curl http://0.0.0.0:PORT/health
+```
+
+### Find Your Port
+
+The port is logged when the server starts:
+```
+✅ API server started at http://0.0.0.0:8473
+```
+
+You can also check the root endpoint:
+```bash
+curl http://0.0.0.0:PORT/
 ```
 
 ## Example Test Script
@@ -313,7 +430,7 @@ curl http://localhost:8000/health
 Run the included test script to see the API decorator in action:
 
 ```bash
-python test_api_integration.py
+python test_api_demo.py
 ```
 
 This will start a test server with example endpoints and show you how to test them with curl commands. 

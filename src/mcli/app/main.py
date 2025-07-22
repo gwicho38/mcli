@@ -14,10 +14,10 @@ import os
 from mcli.lib.logger.logger import get_logger, enable_runtime_tracing, disable_runtime_tracing
 
 # Import API decorator
-from mcli.lib.api.api import api_endpoint, start_api_server, register_command_as_api
+from mcli.lib.api.api import api_endpoint, start_api_server, register_command_as_api, get_api_config
 
 # Get logger
-logger = get_logger()
+logger = get_logger(__name__)
 
 # Enable runtime tracing if environment variable is set
 trace_level = os.environ.get('MCLI_TRACE_LEVEL')
@@ -269,13 +269,21 @@ def create_app() -> click.Group:
             logger.info(f"Adding top-level group {group.name}")
             app.add_command(group, name=group.name)
     
-    # Start API server if environment variable is set
-    if os.environ.get('MCLI_API_SERVER', 'false').lower() in ('true', '1', 'yes'):
-        api_host = os.environ.get('MCLI_API_HOST', '0.0.0.0')
-        api_port = int(os.environ.get('MCLI_API_PORT', '8000'))
-        
-        logger.info(f"Starting API server on {api_host}:{api_port}")
-        start_api_server(host=api_host, port=api_port)
+    # Start API server if enabled in configuration
+    api_config = get_api_config()
+    if api_config["enabled"]:
+        api_url = start_api_server()
+        if api_url:
+            logger.info(f"✅ API server started at {api_url}")
+            logger.info(f"📋 Available endpoints:")
+            logger.info(f"   GET  {api_url}/health")
+            logger.info(f"   GET  {api_url}/")
+            logger.info(f"   GET  {api_url}/docs")
+            logger.info(f"   GET  {api_url}/redoc")
+        else:
+            logger.warning("❌ Failed to start API server")
+    else:
+        logger.debug("API server is disabled in configuration")
     
     return app
 

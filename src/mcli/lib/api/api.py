@@ -3,6 +3,8 @@ import sys
 import json
 import inspect
 import functools
+import socket
+import random
 from typing import Dict, Any, Optional, Callable, List, Union
 from pathlib import Path
 import click
@@ -17,6 +19,7 @@ from contextlib import asynccontextmanager
 
 # Import existing utilities
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.toml.toml import read_from_toml
 
 logger = get_logger(__name__)
 
@@ -24,6 +27,83 @@ logger = get_logger(__name__)
 _api_app: Optional[FastAPI] = None
 _api_server_thread: Optional[threading.Thread] = None
 _api_server_running = False
+
+def find_free_port(start_port: int = 8000, max_attempts: int = 100) -> int:
+    """
+    Find a free port starting from start_port.
+    
+    Args:
+        start_port: Starting port number
+        max_attempts: Maximum number of attempts to find a free port
+        
+    Returns:
+        A free port number
+    """
+    for attempt in range(max_attempts):
+        port = start_port + attempt
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('', port))
+                return port
+        except OSError:
+            continue
+    
+    # If no free port found, use a random port in a safe range
+    return random.randint(49152, 65535)
+
+def get_api_config() -> Dict[str, Any]:
+    """
+    Get API configuration from MCLI config files.
+    
+    Returns:
+        Dictionary with API configuration
+    """
+    config = {
+        "enabled": False,
+        "host": "0.0.0.0",
+        "port": None,  # Will be set to random port if None
+        "use_random_port": True,
+        "debug": False
+    }
+    
+    # Try to load from config.toml files
+    config_paths = [
+        Path("config.toml"),  # Current directory
+        Path.home() / ".config" / "mcli" / "config.toml",  # User config
+        Path(__file__).parent.parent.parent.parent.parent / "config.toml"  # Project root
+    ]
+    
+    for config_path in config_paths:
+        if config_path.exists():
+            try:
+                api_config = read_from_toml(str(config_path), "api")
+                if api_config:
+                    config.update(api_config)
+                    logger.debug(f"Loaded API config from {config_path}")
+                    break
+            except Exception as e:
+                logger.debug(f"Could not load API config from {config_path}: {e}")
+    
+    # Override with environment variables
+    if os.environ.get('MCLI_API_SERVER', 'false').lower() in ('true', '1', 'yes'):
+        config["enabled"] = True
+    
+    if os.environ.get('MCLI_API_HOST'):
+        config["host"] = os.environ.get('MCLI_API_HOST')
+    
+    if os.environ.get('MCLI_API_PORT'):
+        config["port"] = int(os.environ.get('MCLI_API_PORT'))
+        config["use_random_port"] = False
+    
+    if os.environ.get('MCLI_API_DEBUG', 'false').lower() in ('true', '1', 'yes'):
+        config["debug"] = True
+    
+    # Set random port if needed
+    if config["enabled"] and config["use_random_port"] and config["port"] is None:
+        config["port"] = find_free_port()
+        logger.info(f"Using random port: {config['port']}")
+    
+    return config
 
 class ClickToAPIDecorator:
     """Decorator that makes Click commands also serve as API endpoints."""
@@ -264,9 +344,31 @@ def api_endpoint(endpoint_path: str = None,
     )
 
 
-def start_api_server(host: str = "0.0.0.0", port: int = 8000, debug: bool = False):
-    """Start the API server."""
+def start_api_server(host: str = None, port: int = None, debug: bool = None) -> str:
+    """Start the API server with configuration from MCLI config."""
     global _api_app, _api_server_thread, _api_server_running
+    
+    # Get configuration
+    config = get_api_config()
+    
+    # Override with parameters if provided
+    if host is not None:
+        config["host"] = host
+    if port is not None:
+        config["port"] = port
+        config["use_random_port"] = False
+    if debug is not None:
+        config["debug"] = debug
+    
+    # Check if API server should be enabled
+    if not config["enabled"]:
+        logger.info("API server is disabled in configuration")
+        return None
+    
+    # Find port if not specified
+    if config["port"] is None:
+        config["port"] = find_free_port()
+        logger.info(f"Using random port: {config['port']}")
     
     if _api_app is None:
         _api_app = FastAPI(
@@ -295,11 +397,17 @@ def start_api_server(host: str = "0.0.0.0", port: int = 8000, debug: bool = Fals
             return {
                 "service": "MCLI API",
                 "version": "1.0.0",
-                "status": "running"
+                "status": "running",
+                "config": {
+                    "host": config["host"],
+                    "port": config["port"],
+                    "debug": config["debug"]
+                }
             }
     
     def run_server():
-        uvicorn.run(_api_app, host=host, port=port, log_level="info" if not debug else "debug")
+        uvicorn.run(_api_app, host=config["host"], port=config["port"], 
+                   log_level="debug" if config["debug"] else "info")
     
     if not _api_server_running:
         _api_server_thread = threading.Thread(target=run_server, daemon=True)
@@ -309,10 +417,14 @@ def start_api_server(host: str = "0.0.0.0", port: int = 8000, debug: bool = Fals
         # Wait a moment for server to start
         time.sleep(1)
         
-        logger.info(f"API server started at http://{host}:{port}")
-        logger.info(f"Health check: http://{host}:{port}/health")
+        api_url = f"http://{config['host']}:{config['port']}"
+        logger.info(f"API server started at {api_url}")
+        logger.info(f"Health check: {api_url}/health")
+        logger.info(f"Documentation: {api_url}/docs")
+        
+        return api_url
     
-    return f"http://{host}:{port}"
+    return f"http://{config['host']}:{config['port']}"
 
 
 def stop_api_server():

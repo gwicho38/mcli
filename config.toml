@@ -4,3 +4,10 @@ included_dirs = [
     "workflow/daemon",
     "workflow/model_service",
 ]
+
+[api]
+enabled = false
+host = "0.0.0.0"
+port = null  # null means use random port
+use_random_port = true
+debug = false
