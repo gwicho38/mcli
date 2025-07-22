@@ -109,6 +109,13 @@ def discover_modules(
                         # Convert file path to module name with mcli prefix
                         relative_path = file_path.relative_to(base_path.parent)
                         module_name = str(relative_path).replace("/", ".").replace(".py", "")
+                        
+                        # Skip individual workflow submodules to avoid duplicate commands
+                        if module_name.startswith("mcli.workflow.") and module_name != "mcli.workflow.workflow":
+                            # Skip individual workflow submodules (e.g., mcli.workflow.daemon.daemon)
+                            # Only include the main workflow module
+                            continue
+                        
                         modules.append(module_name)
                         logger.debug(f"Found nested module: {module_name}")
         else:
@@ -123,6 +130,13 @@ def discover_modules(
                         # Convert file path to module name with mcli prefix
                         relative_path = file_path.relative_to(base_path.parent)
                         module_name = str(relative_path).replace("/", ".").replace(".py", "")
+                        
+                        # Skip individual workflow submodules to avoid duplicate commands
+                        if module_name.startswith("mcli.workflow.") and module_name != "mcli.workflow.workflow":
+                            # Skip individual workflow submodules (e.g., mcli.workflow.daemon.daemon)
+                            # Only include the main workflow module
+                            continue
+                        
                         modules.append(module_name)
                         logger.debug(f"Found module: {module_name}")
 
@@ -271,6 +285,15 @@ def create_app() -> click.Group:
     def find_parent(module_name: str) -> Optional[str]:
         """Return the parent module path if a parent group exists."""
         parts = module_name.split(".")
+        
+        # Check if this is a workflow subcommand (e.g., mcli.workflow.daemon.daemon)
+        if len(parts) >= 4 and parts[1] == "workflow" and parts[-1] == parts[-2]:
+            # Look for the workflow group
+            workflow_module = "mcli.workflow.workflow"
+            if workflow_module in groups:
+                return workflow_module
+        
+        # Original logic for other cases
         if len(parts) >= 4 and parts[-1] == parts[-2]:
             candidate = ".".join(parts[:-2] + [parts[-3]])
             if candidate in groups:
