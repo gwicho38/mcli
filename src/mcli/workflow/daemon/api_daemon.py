@@ -382,7 +382,9 @@ def api_daemon():
 @click.option('--host', help='Host to bind to')
 @click.option('--port', type=int, help='Port to bind to')
 @click.option('--debug', is_flag=True, help='Enable debug mode')
-def start(config: Optional[str], host: Optional[str], port: Optional[int], debug: bool):
+@click.option('--background', '-b', is_flag=True, help='Run daemon in background')
+@click.option('--pid-file', help='Path to PID file for background daemon')
+def start(config: Optional[str], host: Optional[str], port: Optional[int], debug: bool, background: bool, pid_file: Optional[str]):
     """Start the API daemon service"""
     daemon = APIDaemonService(config)
     
@@ -396,10 +398,84 @@ def start(config: Optional[str], host: Optional[str], port: Optional[int], debug
         daemon.config.debug = debug
     
     logger.info("Starting API daemon service...")
+    
+    if background:
+        # Run in background
+        import os
+        import sys
+        
+        # Fork the process
+        try:
+            pid = os.fork()
+            if pid > 0:
+                # Parent process - exit
+                logger.info(f"API daemon started in background with PID {pid}")
+                if pid_file:
+                    with open(pid_file, 'w') as f:
+                        f.write(str(pid))
+                    logger.info(f"PID written to {pid_file}")
+                sys.exit(0)
+            else:
+                # Child process - run daemon
+                # Detach from terminal
+                os.setsid()
+                os.chdir('/')
+                os.umask(0)
+                
+                # Redirect output to /dev/null
+                sys.stdout.flush()
+                sys.stderr.flush()
+                with open('/dev/null', 'r') as dev_null_r:
+                    os.dup2(dev_null_r.fileno(), sys.stdin.fileno())
+                with open('/dev/null', 'a+') as dev_null_w:
+                    os.dup2(dev_null_w.fileno(), sys.stdout.fileno())
+                    os.dup2(dev_null_w.fileno(), sys.stderr.fileno())
+                
+                # Start daemon
+                daemon.start()
+                
+                # Keep running in background
+                try:
+                    while daemon.running:
+                        time.sleep(1)
+                except KeyboardInterrupt:
+                    logger.info("Received interrupt, shutting down...")
+                    daemon.stop()
+        except OSError as e:
+            logger.error(f"Failed to start daemon in background: {e}")
+            sys.exit(1)
+    else:
+        # Run in foreground
+        daemon.start()
+        
+        try:
+            # Keep the main thread alive
+            while daemon.running:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            logger.info("Received interrupt, shutting down...")
+            daemon.stop()
+
+@api_daemon.command()
+@click.option('--pid-file', help='Path to PID file for background daemon')
+def restart(pid_file: Optional[str]):
+    """Restart the API daemon service"""
+    logger.info("Restarting API daemon service...")
+    
+    # Stop the daemon
+    stop(pid_file)
+    
+    # Wait a moment for shutdown
+    time.sleep(2)
+    
+    # Start the daemon again
+    # Note: This will start in foreground mode
+    # For background restart, user should use: start --background --pid-file <file>
+    logger.info("Starting daemon in foreground mode...")
+    daemon = APIDaemonService()
     daemon.start()
     
     try:
-        # Keep the main thread alive
         while daemon.running:
             time.sleep(1)
     except KeyboardInterrupt:
@@ -407,21 +483,53 @@ def start(config: Optional[str], host: Optional[str], port: Optional[int], debug
         daemon.stop()
 
 @api_daemon.command()
-def stop():
+@click.option('--pid-file', help='Path to PID file for background daemon')
+def stop(pid_file: Optional[str]):
     """Stop the API daemon service"""
-    # Try to stop via HTTP request
+    # Try to stop via HTTP request first
     try:
         response = requests.post("http://localhost:8000/daemon/stop")
         if response.status_code == 200:
-            logger.info("API daemon stopped successfully")
-        else:
-            logger.error("Failed to stop API daemon")
+            logger.info("API daemon stopped successfully via HTTP")
+            return
     except requests.exceptions.RequestException:
-        logger.error("Could not connect to API daemon")
+        logger.debug("Could not connect to API daemon via HTTP")
+    
+    # If HTTP stop failed, try PID file method
+    if pid_file and Path(pid_file).exists():
+        try:
+            with open(pid_file, 'r') as f:
+                pid = int(f.read().strip())
+            
+            # Send SIGTERM to the process
+            os.kill(pid, signal.SIGTERM)
+            logger.info(f"Sent SIGTERM to daemon process {pid}")
+            
+            # Wait a moment and check if process is still running
+            time.sleep(2)
+            try:
+                os.kill(pid, 0)  # Check if process exists
+                # Process still running, send SIGKILL
+                os.kill(pid, signal.SIGKILL)
+                logger.info(f"Sent SIGKILL to daemon process {pid}")
+            except OSError:
+                # Process already terminated
+                pass
+            
+            # Remove PID file
+            Path(pid_file).unlink()
+            logger.info(f"Removed PID file {pid_file}")
+            
+        except (ValueError, OSError) as e:
+            logger.error(f"Failed to stop daemon using PID file: {e}")
+    else:
+        logger.error("Could not stop API daemon - no PID file provided and HTTP connection failed")
 
 @api_daemon.command()
-def status():
+@click.option('--pid-file', help='Path to PID file for background daemon')
+def status(pid_file: Optional[str]):
     """Show API daemon status"""
+    # Check if daemon is running via HTTP
     try:
         response = requests.get("http://localhost:8000/status")
         if response.status_code == 200:
@@ -431,10 +539,38 @@ def status():
             logger.info(f"  Active Commands: {status_data['active_commands']}")
             logger.info(f"  Command History: {status_data['command_history_count']}")
             logger.info(f"  Config: {status_data['config']}")
-        else:
-            logger.error("Failed to get API daemon status")
+            return
     except requests.exceptions.RequestException:
-        logger.error("Could not connect to API daemon")
+        logger.debug("Could not connect to API daemon via HTTP")
+    
+    # Check if background daemon is running via PID file
+    if pid_file and Path(pid_file).exists():
+        try:
+            with open(pid_file, 'r') as f:
+                pid = int(f.read().strip())
+            
+            # Check if process is running
+            try:
+                os.kill(pid, 0)  # Check if process exists
+                logger.info(f"API Daemon Status:")
+                logger.info(f"  Running: True (PID: {pid})")
+                logger.info(f"  PID File: {pid_file}")
+                logger.info(f"  Note: Daemon is running in background mode")
+                return
+            except OSError:
+                logger.info(f"API Daemon Status:")
+                logger.info(f"  Running: False")
+                logger.info(f"  Note: PID file exists but process is not running")
+                # Remove stale PID file
+                Path(pid_file).unlink()
+                logger.info(f"  Removed stale PID file {pid_file}")
+                return
+        except (ValueError, OSError) as e:
+            logger.error(f"Failed to read PID file: {e}")
+    
+    logger.info("API Daemon Status:")
+    logger.info("  Running: False")
+    logger.info("  Note: No daemon process found")
 
 @api_daemon.command()
 def commands():
