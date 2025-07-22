@@ -143,6 +143,9 @@ def register_command_as_api_endpoint(command_func, module_name: str, command_nam
         # Create endpoint path based on module and command
         endpoint_path = f"/{module_name.replace('.', '/')}/{command_name}"
         
+        logger.info(f"Registering API endpoint: {endpoint_path} for command {command_name}")
+        logger.info(f"Command function: {command_func.__name__}")
+        
         # Register the command as an API endpoint
         register_command_as_api(
             command_func=command_func,
@@ -156,6 +159,8 @@ def register_command_as_api_endpoint(command_func, module_name: str, command_nam
         
     except Exception as e:
         logger.warning(f"Failed to register API endpoint for {command_name}: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
 
 
 def process_click_commands(obj, module_name: str, parent_name: str = ""):
@@ -167,21 +172,28 @@ def process_click_commands(obj, module_name: str, parent_name: str = ""):
         module_name: The module name
         parent_name: Parent command name for nesting
     """
+    logger.info(f"Processing Click object: {type(obj).__name__} with name: {getattr(obj, 'name', 'Unknown')}")
+    
     if hasattr(obj, 'commands'):
         # This is a Click group
+        logger.info(f"This is a Click group with {len(obj.commands)} commands")
         for name, command in obj.commands.items():
             full_name = f"{parent_name}/{name}" if parent_name else name
+            logger.info(f"Processing command: {name} -> {full_name}")
             
             # Register the command as an API endpoint
             register_command_as_api_endpoint(command.callback, module_name, full_name)
             
             # Recursively process nested commands
             if hasattr(command, 'commands'):
+                logger.info(f"Recursively processing nested commands for {name}")
                 process_click_commands(command, module_name, full_name)
     else:
         # This is a single command
+        logger.info(f"This is a single command: {getattr(obj, 'name', 'Unknown')}")
         if hasattr(obj, 'callback') and obj.callback:
             full_name = parent_name if parent_name else obj.name
+            logger.info(f"Registering single command: {full_name}")
             register_command_as_api_endpoint(obj.callback, module_name, full_name)
 
 

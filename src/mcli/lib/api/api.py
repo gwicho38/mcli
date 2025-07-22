@@ -155,8 +155,12 @@ class ClickToAPIDecorator:
         """Register the function as an API endpoint."""
         global _api_app
         
+        # Ensure API app exists
         if _api_app is None:
-            _api_app = self._create_fastapi_app()
+            _api_app = ensure_api_app()
+            if _api_app is None:
+                logger.warning("Could not create API app, skipping endpoint registration")
+                return
         
         # Determine endpoint path
         endpoint_path = self.endpoint_path or f"/{func.__name__}"
@@ -344,6 +348,59 @@ def api_endpoint(endpoint_path: str = None,
     )
 
 
+def ensure_api_app() -> Optional[FastAPI]:
+    """Ensure the API app is created and return it."""
+    global _api_app
+    
+    if _api_app is None:
+        # Get configuration
+        config = get_api_config()
+        
+        # Check if API server should be enabled
+        if not config["enabled"]:
+            logger.debug("API server is disabled in configuration")
+            return None
+        
+        # Create the API app
+        _api_app = FastAPI(
+            title="MCLI API",
+            description="API endpoints for MCLI commands",
+            version="1.0.0"
+        )
+        
+        # Add CORS middleware
+        _api_app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        
+        # Add health check endpoint
+        @_api_app.get("/health")
+        async def health_check():
+            return {"status": "healthy", "service": "MCLI API"}
+        
+        # Add root endpoint
+        @_api_app.get("/")
+        async def root():
+            return {
+                "service": "MCLI API",
+                "version": "1.0.0",
+                "status": "running",
+                "config": {
+                    "host": config.get("host", "0.0.0.0"),
+                    "port": config.get("port", "random"),
+                    "debug": config.get("debug", False)
+                }
+            }
+        
+        logger.debug("API app created successfully")
+    
+    return _api_app
+
+
 def start_api_server(host: str = None, port: int = None, debug: bool = None) -> str:
     """Start the API server with configuration from MCLI config."""
     global _api_app, _api_server_thread, _api_server_running
@@ -465,6 +522,16 @@ def register_command_as_api(command_func: Callable,
         description: API endpoint description
         tags: API tags for grouping
     """
+    logger.info(f"register_command_as_api called for: {command_func.__name__} with path: {endpoint_path}")
+    
+    # Ensure API app is created
+    api_app = ensure_api_app()
+    if api_app is None:
+        logger.debug("API app not available, skipping endpoint registration")
+        return
+    
+    logger.info(f"API app available, proceeding with registration")
+    
     decorator = ClickToAPIDecorator(
         endpoint_path=endpoint_path,
         http_method=http_method,
@@ -473,8 +540,9 @@ def register_command_as_api(command_func: Callable,
         tags=tags
     )
     
-    # Register the endpoint
-    decorator._register_api_endpoint(command_func, inspect.signature(command_func))
+    # Register the endpoint directly with the API app
+    sig = inspect.signature(command_func)
+    decorator._register_api_endpoint(command_func, sig)
     
     logger.info(f"Registered command as API endpoint: {http_method} {endpoint_path or f'/{command_func.__name__}'}")
 
