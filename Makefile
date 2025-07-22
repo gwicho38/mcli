@@ -1,5 +1,9 @@
 # Makefile for mcli build system with optimized caching
 
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
 # Python and UV configurations
 PYTHON := python3
 UV := uv
@@ -10,7 +14,7 @@ VERSION := $(shell grep -m 1 'version =' pyproject.toml | cut -d '"' -f 2)
 GIT_HASH := $(shell git rev-parse --short HEAD)
 PACKAGE_NAME := mcli
 
-# New variables for app installation
+# App installation variables
 APP_NAME = mcli
 APP_BUNDLE = $(APP_NAME).app
 APP_VERSION="2.1.0"
@@ -60,11 +64,39 @@ YELLOW := \033[33m
 RED := \033[31m
 RESET := \033[0m
 
+# =============================================================================
+# UTILITY TARGETS
+# =============================================================================
+
 # Initialize cache directory
 $(CACHE_DIR):
 	@mkdir -p $(CACHE_DIR)
 
-# Debug target
+.PHONY: help
+help: ## Show this help message
+	@echo "$(CYAN)MCLI Build System$(RESET)"
+	@echo "$(YELLOW)Usage: make [target]$(RESET)"
+	@echo ""
+	@echo "$(CYAN)Installation Targets:$(RESET)"
+	@echo "  $(CYAN)install$(RESET)              Install the package with caching"
+	@echo "  $(CYAN)install-binary$(RESET)        Install executable to system binary directory"
+	@echo "  $(CYAN)install-portable$(RESET)      Install portable executable to system"
+	@echo "  $(CYAN)setup$(RESET)                 Setup UV environment with caching"
+	@echo ""
+	@echo "$(CYAN)Build Targets:$(RESET)"
+	@echo "  $(CYAN)binary$(RESET)                Build Python binary executable (directory format)"
+	@echo "  $(CYAN)portable$(RESET)              Build Python executable from wheel"
+	@echo "  $(CYAN)wheel$(RESET)                 Build Python wheel package"
+	@echo ""
+	@echo "$(CYAN)Testing Targets:$(RESET)"
+	@echo "  $(CYAN)debug$(RESET)                 Show debug information"
+	@echo "  $(CYAN)test$(RESET)                  Test the installation"
+	@echo "  $(CYAN)test-binary$(RESET)           Test the built executable"
+	@echo ""
+	@echo "$(CYAN)Maintenance Targets:$(RESET)"
+	@echo "  $(CYAN)clean$(RESET)                 Clean all build artifacts"
+	@echo "  $(CYAN)uninstall$(RESET)             Remove installed app bundle and/or binary"
+
 .PHONY: debug
 debug: ## Show debug information
 	@echo "$(CYAN)Debug Information:$(RESET)"
@@ -79,7 +111,10 @@ debug: ## Show debug information
 	@echo "\nProject Dependencies:"
 	@uv pip list
 
-# Clean target with levels
+# =============================================================================
+# MAINTENANCE TARGETS
+# =============================================================================
+
 .PHONY: clean
 clean: ## Clean all build artifacts
 	@echo "$(CYAN)Cleaning build artifacts...$(RESET)"
@@ -99,6 +134,23 @@ clean: ## Clean all build artifacts
 	# Keep mcli_executable.py - it's our main executable
 	@echo "$(GREEN)Clean completed ✅$(RESET)"
 
+.PHONY: uninstall
+uninstall: ## Remove installed app bundle and/or binary
+	@echo "$(CYAN)Uninstalling $(APP_NAME)...$(RESET)"
+	@if [ -d "$(INSTALL_DIR)/$(APP_BUNDLE)" ]; then \
+		sudo rm -rf "$(INSTALL_DIR)/$(APP_BUNDLE)"; \
+		echo "$(GREEN)Removed app bundle from $(INSTALL_DIR)/$(APP_BUNDLE) ✅$(RESET)"; \
+	fi
+	@if [ -f "$(BIN_DIR)/$(APP_NAME)" ]; then \
+		sudo rm -f "$(BIN_DIR)/$(APP_NAME)"; \
+		echo "$(GREEN)Removed binary from $(BIN_DIR)/$(APP_NAME) ✅$(RESET)"; \
+	fi
+	@echo "$(GREEN)$(APP_NAME) uninstalled successfully ✅$(RESET)"
+
+# =============================================================================
+# SETUP TARGETS
+# =============================================================================
+
 # Setup target with caching
 $(UV_ENV_CACHE): $(DEPENDENCY_FILES) | $(CACHE_DIR)
 	@echo "$(CYAN)Setting up UV environment...$(RESET)"
@@ -116,6 +168,10 @@ setup: $(UV_ENV_CACHE) ## Setup UV environment with caching
 	@echo "Python version: $(PYTHON_VERSION)"
 	@echo "Platform: $(PLATFORM_SUFFIX)"
 	@echo "OS Version: $(OS_VERSION)"
+
+# =============================================================================
+# BUILD TARGETS
+# =============================================================================
 
 # Darwin build with caching
 $(WHEEL_CACHE): $(SRC_FILES) $(UV_ENV_CACHE) | $(CACHE_DIR)
@@ -139,34 +195,6 @@ $(WHEEL_CACHE): $(SRC_FILES) $(UV_ENV_CACHE) | $(CACHE_DIR)
 	@mkdir -p $(dir $@)
 	@touch $@
 	@echo "$(GREEN)macOS build completed ✅$(RESET)"
-
-.PHONY: install
-install: $(WHEEL_CACHE) ## Install the package with caching
-	@echo "$(CYAN)Installing package...$(RESET)"
-	$(PIP) install $(DIST_DIR)/*.whl --force-reinstall
-	@echo "$(GREEN)Installation completed ✅$(RESET)"
-
-# Uninstall either the app bundle or standalone binary based on what's installed
-.PHONY: uninstall
-uninstall: ## Remove installed app bundle and/or binary
-	@echo "$(CYAN)Uninstalling $(APP_NAME)...$(RESET)"
-	@if [ -d "$(INSTALL_DIR)/$(APP_BUNDLE)" ]; then \
-		sudo rm -rf "$(INSTALL_DIR)/$(APP_BUNDLE)"; \
-		echo "$(GREEN)Removed app bundle from $(INSTALL_DIR)/$(APP_BUNDLE) ✅$(RESET)"; \
-	fi
-	@if [ -f "$(BIN_DIR)/$(APP_NAME)" ]; then \
-		sudo rm -f "$(BIN_DIR)/$(APP_NAME)"; \
-		echo "$(GREEN)Removed binary from $(BIN_DIR)/$(APP_NAME) ✅$(RESET)"; \
-	fi
-	@echo "$(GREEN)$(APP_NAME) uninstalled successfully ✅$(RESET)"
-
-# Test the installation
-.PHONY: test
-test: install ## Test the installation
-	@echo "$(CYAN)Testing package...$(RESET)"
-	$(VENV_PYTHON) -c "from mcli.app.main import main; print('Import test passed ✅')"
-	.venv/bin/mcli --help || $(VENV_PYTHON) -m mcli --help
-	@echo "$(GREEN)Testing completed ✅$(RESET)"
 
 .PHONY: wheel
 wheel: $(WHEEL_CACHE) ## Build Python wheel package
@@ -220,7 +248,51 @@ binary: $(WHEEL_CACHE) $(PYTHON_EXEC) ## Build Python binary executable (directo
 		exit 1; \
 	fi
 
-# Test the executable
+# =============================================================================
+# INSTALLATION TARGETS
+# =============================================================================
+
+.PHONY: install
+install: $(WHEEL_CACHE) ## Install the package with caching
+	@echo "$(CYAN)Installing package...$(RESET)"
+	$(PIP) install $(DIST_DIR)/*.whl --force-reinstall
+	@echo "$(GREEN)Installation completed ✅$(RESET)"
+
+.PHONY: install-binary
+install-binary: portable ## Install executable to system binary directory
+	@echo "$(CYAN)Installing executable to system...$(RESET)"
+	@if [ -f "$(BINARY_DIR)/$(EXECUTABLE_NAME)" ]; then \
+		sudo cp "$(BINARY_DIR)/$(EXECUTABLE_NAME)" "$(BIN_DIR)/$(EXECUTABLE_NAME)"; \
+		sudo chmod +x "$(BIN_DIR)/$(EXECUTABLE_NAME)"; \
+		echo "$(GREEN)Executable installed to $(BIN_DIR)/$(EXECUTABLE_NAME) ✅$(RESET)"; \
+	else \
+		echo "$(RED)❌ Error: Executable not found$(RESET)"; \
+		exit 1; \
+	fi
+
+.PHONY: install-portable
+install-portable: portable ## Install portable executable to system
+	@echo "$(CYAN)Installing portable executable...$(RESET)"
+	@if [ -f "$(BINARY_DIR)/$(EXECUTABLE_NAME)" ]; then \
+		sudo cp "$(BINARY_DIR)/$(EXECUTABLE_NAME)" "$(BIN_DIR)/$(EXECUTABLE_NAME)"; \
+		sudo chmod +x "$(BINARY_DIR)/$(EXECUTABLE_NAME)"; \
+		echo "$(GREEN)Portable executable installed to $(BIN_DIR)/$(EXECUTABLE_NAME) ✅$(RESET)"; \
+	else \
+		echo "$(RED)❌ Error: Portable executable not found$(RESET)"; \
+		exit 1; \
+	fi
+
+# =============================================================================
+# TESTING TARGETS
+# =============================================================================
+
+.PHONY: test
+test: install ## Test the installation
+	@echo "$(CYAN)Testing package...$(RESET)"
+	$(VENV_PYTHON) -c "from mcli.app.main import main; print('Import test passed ✅')"
+	.venv/bin/mcli --help || $(VENV_PYTHON) -m mcli --help
+	@echo "$(GREEN)Testing completed ✅$(RESET)"
+
 .PHONY: test-binary
 test-binary: ## Test the built executable
 	@echo "$(CYAN)Testing executable...$(RESET)"
@@ -237,36 +309,3 @@ test-binary: ## Test the built executable
 		exit 1; \
 	fi
 	@echo "$(GREEN)Executable test completed ✅$(RESET)"
-
-# Install executable to system
-.PHONY: install-binary
-install-binary: portable ## Install executable to system binary directory
-	@echo "$(CYAN)Installing executable to system...$(RESET)"
-	@if [ -f "$(BINARY_DIR)/$(EXECUTABLE_NAME)" ]; then \
-		sudo cp "$(BINARY_DIR)/$(EXECUTABLE_NAME)" "$(BIN_DIR)/$(EXECUTABLE_NAME)"; \
-		sudo chmod +x "$(BIN_DIR)/$(EXECUTABLE_NAME)"; \
-		echo "$(GREEN)Executable installed to $(BIN_DIR)/$(EXECUTABLE_NAME) ✅$(RESET)"; \
-	else \
-		echo "$(RED)❌ Error: Executable not found$(RESET)"; \
-		exit 1; \
-	fi
-
-# Install portable executable
-.PHONY: install-portable
-install-portable: portable ## Install portable executable to system
-	@echo "$(CYAN)Installing portable executable...$(RESET)"
-	@if [ -f "$(BINARY_DIR)/$(EXECUTABLE_NAME)" ]; then \
-		sudo cp "$(BINARY_DIR)/$(EXECUTABLE_NAME)" "$(BIN_DIR)/$(EXECUTABLE_NAME)"; \
-		sudo chmod +x "$(BIN_DIR)/$(EXECUTABLE_NAME)"; \
-		echo "$(GREEN)Portable executable installed to $(BIN_DIR)/$(EXECUTABLE_NAME) ✅$(RESET)"; \
-	else \
-		echo "$(RED)❌ Error: Portable executable not found$(RESET)"; \
-		exit 1; \
-	fi
-
-.PHONY: help
-help: ## Show this help message
-	@echo "$(CYAN)Available targets:$(RESET)"
-	@echo "$(YELLOW)Usage: make [target]$(RESET)"
-	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
