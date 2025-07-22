@@ -8,3 +8,4 @@ which is the same entry point used by the Python wheel installation.
 if __name__ == "__main__":
     from mcli.app.main import main
     main()
+    
