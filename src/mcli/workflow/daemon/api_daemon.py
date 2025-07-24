@@ -573,6 +573,45 @@ def status(pid_file: Optional[str]):
     logger.info("  Note: No daemon process found")
 
 @api_daemon.command()
+@click.option('--command-name', help='Name of the command to execute')
+@click.option('--command-id', help='ID of the command to execute')
+@click.option('--args', '-a', multiple=True, help='Command arguments')
+@click.option('--timeout', type=int, help='Command timeout in seconds')
+def execute(command_name: Optional[str], command_id: Optional[str], args: tuple, timeout: Optional[int]):
+    """Execute a command via the API daemon"""
+    if not command_name and not command_id:
+        logger.error("Either --command-name or --command-id must be provided")
+        return
+    
+    try:
+        # Try to execute via HTTP API
+        response = requests.post("http://localhost:8000/execute", json={
+            "command_name": command_name,
+            "command_id": command_id,
+            "args": list(args),
+            "timeout": timeout
+        })
+        
+        if response.status_code == 200:
+            result = response.json()
+            if result.get("success"):
+                logger.info("✅ Command executed successfully")
+                if result.get("output"):
+                    logger.info("Output:")
+                    print(result["output"])
+            else:
+                logger.error("❌ Command execution failed")
+                if result.get("error"):
+                    logger.error(f"Error: {result['error']}")
+        else:
+            logger.error(f"Failed to execute command: {response.status_code}")
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Could not connect to API daemon: {e}")
+        logger.error("Make sure the API daemon is running")
+        logger.error("Start it with: python -m mcli workflow api-daemon start")
+
+@api_daemon.command()
 def commands():
     """List available commands"""
     try:

@@ -252,6 +252,9 @@ def create_app() -> click.Group:
         logger.error(f"Error adding self management commands: {e}")
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    # Note: Cron commands are now handled by the standalone cron_manager.py script
+    # to avoid recursion issues with the main Click application
         
     # First import all modules and collect Click groups
     groups = {}
