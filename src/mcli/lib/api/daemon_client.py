@@ -84,8 +84,12 @@ class APIDaemonClient:
         return self._make_request("GET", "/status")
     
     def list_commands(self) -> Dict[str, Any]:
-        """List available commands"""
+        """List available commands with metadata"""
         return self._make_request("GET", "/commands")
+    
+    def get_command_details(self, command_id: str) -> Optional[Dict[str, Any]]:
+        """Get detailed information about a specific command"""
+        return self._make_request("GET", f"/commands/{command_id}")
     
     def execute_command(self, command_id: Optional[str] = None, command_name: Optional[str] = None, 
                        args: Optional[List[str]] = None, timeout: Optional[int] = None) -> Dict[str, Any]:

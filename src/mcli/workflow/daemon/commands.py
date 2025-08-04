@@ -188,18 +188,22 @@ class CommandDatabase:
         finally:
             conn.close()
     
-    def get_all_commands(self) -> List[Command]:
-        """Get all active commands"""
+    def get_all_commands(self, include_inactive: bool = False) -> List[Command]:
+        """Get all commands with optional inactive inclusion"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
         try:
-            cursor.execute('''
+            query = '''
                 SELECT id, name, description, code, language, group_name, tags,
                        created_at, updated_at, execution_count, last_executed, is_active
-                FROM commands WHERE is_active = 1
-                ORDER BY name
-            ''')
+                FROM commands
+            '''
+            if not include_inactive:
+                query += " WHERE is_active = 1"
+            query += " ORDER BY name"
+            
+            cursor.execute(query)
             
             return [self._row_to_command(row) for row in cursor.fetchall()]
             
