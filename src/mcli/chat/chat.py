@@ -1,12 +1,18 @@
+import os
 import readline
-import argparse
 from typing import List, Dict, Optional
-from dataclasses import dataclass
+from dotenv import load_dotenv
 from mcli.lib.api.daemon_client import get_daemon_client
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.ui.styling import info, error, console
+from mcli.lib.ui.styling import console
 
+# Load environment variables
+load_dotenv()
 logger = get_logger(__name__)
+
+# Configure LLM provider
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "openai")
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4-turbo")
 
 class ChatClient:
     """Interactive chat client for MCLI command management"""
@@ -98,12 +104,55 @@ class ChatClient:
             console.print()
 
     def generate_llm_response(self, query: str):
-        """Generate response using LLM (to be implemented)"""
-        # TODO: Integrate with LLM for more sophisticated responses
-        console.print("[italic yellow]LLM integration coming soon![/italic yellow]")
-        console.print("For now, I can help you search and list commands. Try asking:")
-        console.print("- 'List all commands'")
-        console.print("- 'Search for git-related commands'")
+        """Generate response using LLM integration"""
+        try:
+            commands = self.daemon.list_commands().get("commands", [])
+            command_context = "\n".join(
+                f"Command: {cmd['name']}\nDescription: {cmd.get('description', '')}\nTags: {', '.join(cmd.get('tags', []))}"
+                for cmd in commands
+            )
+            
+            prompt = f"""SYSTEM: {os.getenv("SYSTEM_PROMPT")}
+            
+            Available Commands:
+            {command_context}
+            
+            USER QUERY: {query}
+            
+            Respond with:
+            1. A natural language answer
+            2. Relevant commands in markdown format
+            3. Example usage in a code block"""
+            
+            if LLM_PROVIDER == "openai":
+                from openai import OpenAI
+                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                response = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=float(os.getenv("TEMPERATURE", 0.7))
+                )
+                return console.print(response.choices[0].message.content)
+            
+            elif LLM_PROVIDER == "anthropic":
+                from anthropic import Anthropic
+                client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+                response = client.messages.create(
+                    model=MODEL_NAME,
+                    max_tokens=1000,
+                    temperature=float(os.getenv("TEMPERATURE", 0.7)),
+                    system=os.getenv("SYSTEM_PROMPT"),
+                    messages=[{"role": "user", "content": query}]
+                )
+                return console.print(response.content[0].text)
+            
+            else:
+                raise ValueError(f"Unsupported LLM provider: {LLM_PROVIDER}")
+            
+        except Exception as e:
+            logger.error(f"LLM Error: {e}")
+            console.print("[red]Error:[/red] Could not generate LLM response")
+            console.print("Please check your LLM configuration in .env file")
 
 if __name__ == "__main__":
     client = ChatClient()
