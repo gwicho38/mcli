@@ -8,9 +8,12 @@ the familiar Click interface. Users only need to import mcli and get everything.
 
 import functools
 import inspect
-from typing import Callable, Optional, Dict, Any, List, Union
 import os
+import time
 from pathlib import Path
+from typing import Callable, Optional, Dict, Any, List, Union
+
+import click
 
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
