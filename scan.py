@@ -6,7 +6,7 @@ from urllib.parse import urlparse, urljoin
 import re
 
 # Configuration
-TARGET_URL = "https://ethiovifans.com"
+TARGET_URL = "https://example.com"  # Replace with the target URL
 REPORT_FILE = "vulnerability_report.txt"
 NVD_API_URL = "https://services.nvd.nist.gov/rest/json/cves/1.0"
 COMMON_DIRECTORIES = [
