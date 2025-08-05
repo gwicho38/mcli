@@ -9,6 +9,8 @@ from functools import lru_cache
 import click
 import functools
 from mcli.lib.ui.styling import info, success
+# Import chat command group
+from mcli.app.chat_cmd import chat
 import tomli
 import os
 from mcli.lib.logger.logger import get_logger, enable_runtime_tracing, disable_runtime_tracing
@@ -93,7 +95,7 @@ def discover_modules(
 
     logger.debug(f"Included directories: {included_dirs}")
     for directory in included_dirs:
-        # Handle nested paths like "app/readiness"
+        # Handle nested paths like "app/foo"
         if "/" in directory:
             parts = directory.split("/")
             parent_dir = parts[0]
@@ -245,17 +247,19 @@ def create_app() -> click.Group:
         if 'self_app' in globals():
             app.add_command(self_app, name="self")
             logger.info("Added self management commands to mcli")
-            
             # Register self commands as API endpoints
             process_click_commands(self_app, "mcli.self", "self")
     except Exception as e:
         logger.error(f"Error adding self management commands: {e}")
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
-    
+
+    # Register the chat command group
+    app.add_command(chat, name="chat")
+
     # Note: Cron commands are now handled by the standalone cron_manager.py script
     # to avoid recursion issues with the main Click application
-        
+
     # First import all modules and collect Click groups
     groups = {}
     for module_name in module_names:
@@ -267,16 +271,12 @@ def create_app() -> click.Group:
                 if isinstance(obj, click.Group):
                     logger.info(f"Discovered group {obj.name} in {module_name}")
                     groups[module_name] = obj
-                    
                     # Register all commands in this group as API endpoints
-                    process_click_commands(obj, module_name, obj.name)
-                    
+                    process_click_commands(obj, module_name, str(obj.name) if obj.name is not None else "")
                 elif isinstance(obj, click.Command):
                     logger.info(f"Discovered command {obj.name} in {module_name}")
-                    
                     # Register single command as API endpoint
-                    register_command_as_api_endpoint(obj.callback, module_name, obj.name)
-                    
+                    register_command_as_api_endpoint(obj.callback, module_name, str(obj.name) if obj.name is not None else "")
         except ImportError as e:
             logger.warning(f"Could not import module {module_name}: {e}")
         except Exception as e:
@@ -288,14 +288,12 @@ def create_app() -> click.Group:
     def find_parent(module_name: str) -> Optional[str]:
         """Return the parent module path if a parent group exists."""
         parts = module_name.split(".")
-        
         # Check if this is a workflow subcommand (e.g., mcli.workflow.daemon.daemon)
         if len(parts) >= 4 and parts[1] == "workflow" and parts[-1] == parts[-2]:
             # Look for the workflow group
             workflow_module = "mcli.workflow.workflow"
             if workflow_module in groups:
                 return workflow_module
-        
         # Original logic for other cases
         if len(parts) >= 4 and parts[-1] == parts[-2]:
             candidate = ".".join(parts[:-2] + [parts[-3]])
@@ -312,7 +310,7 @@ def create_app() -> click.Group:
         else:
             logger.info(f"Adding top-level group {group.name}")
             app.add_command(group, name=group.name)
-    
+
     # Start API server if enabled in configuration
     api_config = get_api_config()
     if api_config["enabled"]:
@@ -328,7 +326,7 @@ def create_app() -> click.Group:
             logger.warning("❌ Failed to start API server")
     else:
         logger.debug("API server is disabled in configuration")
-    
+
     return app
 
 

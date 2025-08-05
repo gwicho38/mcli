@@ -32,7 +32,7 @@ def greet(name: str):
     return message
 
 @standardcli.command()
-@mcli.option('--file', type=mcli.Path(exists=True), required=True)
+@mcli.option('--file', type=mcli.Path(), required=True)
 def show_file_info(file: str):
     """Standard Click command - works exactly as in Click"""
     file_path = Path(file)

@@ -85,6 +85,7 @@ dependencies = [
   "reportlab>=4.4.2",
   "build>=1.2.2.post1",
   "dotenv>=0.9.9",
+  "anthropic>=0.60.0",
 ]
 
 [project.optional-dependencies]

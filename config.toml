@@ -15,7 +15,7 @@ debug = false
 [api_daemon]
 enabled = true
 host = "0.0.0.0"
-port = null  # null means use random port
+port = "5000"  
 use_random_port = true
 debug = false
 auto_start = false
@@ -23,3 +23,10 @@ command_timeout = 300  # 5 minutes
 max_concurrent_commands = 10
 enable_command_caching = true
 enable_command_history = true
+
+[llm]
+provider = "openai"
+model = "gpt-4-turbo"
+openai_api_key = "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"
+temperature = 0.7
+system_prompt = "You are the MCLI Chat Assistant."
