@@ -1,11 +1,11 @@
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 import click
 import os
 import json
 import sqlite3
-import hashlib
 import subprocess
 import tempfile
-import threading
 import time
 import signal
 import sys
@@ -13,18 +13,17 @@ from pathlib import Path
 from typing import Optional, Dict, List, Any, Union
 from datetime import datetime
 import uuid
-import shutil
 import psutil
 from dataclasses import dataclass, asdict
-import pickle
-import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-import logging
 
 # Import existing utilities
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
+from mcli.workflow.daemon import CommandDatabase
+
+
 
 logger = get_logger(__name__)
 
@@ -37,22 +36,72 @@ class Command:
     code: str
     language: str  # 'python', 'node', 'lua', 'shell'
     group: Optional[str] = None
-    tags: List[str] = None
-    created_at: datetime = None
-    updated_at: datetime = None
+    tags: Optional[List[str]] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     execution_count: int = 0
     last_executed: Optional[datetime] = None
     is_active: bool = True
     
-    def __post_init__(self):
-        if self.tags is None:
-            self.tags = []
-        if self.created_at is None:
-            self.created_at = datetime.now()
-        if self.updated_at is None:
-            self.updated_at = datetime.now()
+class CommandFileWatcher(FileSystemEventHandler):
+    """Watches a directory for command file changes and updates the registry."""
+    def __init__(self, db, watch_dir: str):
+        self.db = db
+        self.watch_dir = Path(watch_dir)
+        self.observer = Observer()
+        self.observer.schedule(self, str(self.watch_dir), recursive=False)
+        self.observer.start()
 
-class CommandDatabase:
+    def on_modified(self, event):
+        if event.is_directory:
+            return
+        self._reload_command_file(event.src_path)
+
+    def on_created(self, event):
+        if event.is_directory:
+            return
+        self._reload_command_file(event.src_path)
+
+    def on_deleted(self, event):
+        if event.is_directory:
+            return
+        # Remove command from DB if file deleted
+        cmd_id = Path(event.src_path).stem
+        self.db.delete_command(cmd_id)
+
+    def _reload_command_file(self, file_path):
+        # Example: expects each file to be a JSON with command fields
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            cmd = Command(
+                id=data['id'],
+                name=data['name'],
+                description=data.get('description', ''),
+                code=data['code'],
+                language=data['language'],
+                group=data.get('group'),
+                tags=data.get('tags', []),
+                created_at=datetime.fromisoformat(data['created_at']) if data.get('created_at') else datetime.now(),
+                updated_at=datetime.fromisoformat(data['updated_at']) if data.get('updated_at') else datetime.now(),
+                execution_count=data.get('execution_count', 0),
+                last_executed=datetime.fromisoformat(data['last_executed']) if data.get('last_executed') else None,
+                is_active=data.get('is_active', True)
+            )
+            # Upsert: try update, else add
+            if not self.db.update_command(cmd):
+                self.db.add_command(cmd)
+        except Exception as e:
+            logger.error(f"Failed to reload command file {file_path}: {e}")
+
+def start_command_file_watcher(db, watch_dir: str = None):
+    """Start a file watcher for command files (JSON) in a directory."""
+    if watch_dir is None:
+        watch_dir = str(Path.home() / ".local" / "mcli" / "daemon" / "commands")
+    Path(watch_dir).mkdir(parents=True, exist_ok=True)
+    watcher = CommandFileWatcher(db, watch_dir)
+    logger.info(f"Started command file watcher on {watch_dir}")
+    return watcher
     """Manages command storage and retrieval"""
     
     def __init__(self, db_path: Optional[str] = None):
@@ -189,21 +238,26 @@ class CommandDatabase:
         finally:
             conn.close()
     
-    def get_all_commands(self) -> List[Command]:
-        """Get all active commands"""
+    def get_all_commands(self, include_inactive: bool = False) -> List[Command]:
+        """Get all commands, optionally including inactive ones"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
         try:
-            cursor.execute('''
-                SELECT id, name, description, code, language, group_name, tags,
-                       created_at, updated_at, execution_count, last_executed, is_active
-                FROM commands WHERE is_active = 1
-                ORDER BY name
-            ''')
-            
+            if include_inactive:
+                cursor.execute('''
+                    SELECT id, name, description, code, language, group_name, tags,
+                           created_at, updated_at, execution_count, last_executed, is_active
+                    FROM commands
+                    ORDER BY name
+                ''')
+            else:
+                cursor.execute('''
+                    SELECT id, name, description, code, language, group_name, tags,
+                           created_at, updated_at, execution_count, last_executed, is_active
+                    FROM commands WHERE is_active = 1
+                    ORDER BY name
+                ''')
             return [self._row_to_command(row) for row in cursor.fetchall()]
-            
         finally:
             conn.close()
     
@@ -692,22 +746,88 @@ def stop():
     except Exception as e:
         click.echo(f"Error stopping daemon: {e}")
 
+
 @daemon.command()
 def status():
     """Show daemon status"""
     service = DaemonService()
     status_info = service.status()
-    
     if status_info['running']:
         click.echo(f"✅ Daemon is running (PID: {status_info['pid']})")
     else:
         click.echo("❌ Daemon is not running")
-    
     click.echo(f"PID file: {status_info['pid_file']}")
     click.echo(f"Socket file: {status_info['socket_file']}")
+
+
+# --- New CLI: list-commands ---
+@daemon.command('list-commands')
+@click.option('--json', 'as_json', is_flag=True, help='Output as JSON')
+@click.option('--all', 'show_all', is_flag=True, help='Show all commands, including inactive')
+def list_commands(as_json, show_all):
+    """List all available commands (optionally including inactive)"""
+    import sys
+    service = DaemonService()
+    commands = service.db.get_all_commands(include_inactive=show_all)
+    result = []
+    for cmd in commands:
+        result.append({
+            'id': cmd.id,
+            'name': cmd.name,
+            'description': cmd.description,
+            'language': cmd.language,
+            'group': cmd.group,
+            'tags': cmd.tags,
+            'created_at': cmd.created_at.isoformat() if cmd.created_at else None,
+            'updated_at': cmd.updated_at.isoformat() if cmd.updated_at else None,
+            'execution_count': cmd.execution_count,
+            'last_executed': cmd.last_executed.isoformat() if cmd.last_executed else None,
+            'is_active': cmd.is_active
+        })
+    if as_json:
+        import json
+        print(json.dumps({'commands': result}, indent=2))
+    else:
+        for cmd in result:
+            status = "[INACTIVE] " if not cmd['is_active'] else ""
+            click.echo(f"{status}- {cmd['name']} ({cmd['language']}) : {cmd['description']}")
+
+
+# --- New CLI: execute ---
+@daemon.command('execute')
+@click.argument('command_name')
+@click.argument('args', nargs=-1)
+@click.option('--json', 'as_json', is_flag=True, help='Output as JSON')
+def execute_command(command_name, args, as_json):
+    """Execute a command by name with optional arguments"""
+    import sys
+    service = DaemonService()
+    # Find command by name
+    commands = service.db.get_all_commands()
+    cmd = next((c for c in commands if c.name == command_name), None)
+    if not cmd:
+        msg = f"Command '{command_name}' not found."
+        if as_json:
+            import json
+            print(json.dumps({'success': False, 'error': msg}))
+        else:
+            click.echo(msg)
+        return
+    result = service.executor.execute_command(cmd, list(args))
+    if as_json:
+        import json
+        print(json.dumps(result, indent=2))
+    else:
+        if result.get('success'):
+            click.echo(result.get('output', ''))
+        else:
+            click.echo(f"Error: {result.get('error', '')}")
 
 # Client commands - these will be moved to the client module
 # but we'll keep the core daemon service commands here
 
 if __name__ == '__main__':
-    daemon() 
+    # Start file watcher for hot-reloading file-based commands
+    db = CommandDatabase()
+    start_command_file_watcher(db)
+    daemon()

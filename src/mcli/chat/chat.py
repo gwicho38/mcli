@@ -7,13 +7,21 @@ from mcli.lib.logger.logger import get_logger
 from mcli.lib.ui.styling import console
 
 
+
 # Load config from config.toml
 CONFIG_PATH = "config.toml"
 config = {}
 try:
     config = read_from_toml(CONFIG_PATH, "llm") or {}
-except Exception:
+except Exception as e:
+    print(f"[chat.py] Failed to load config.toml: {e}")
     config = {}
+
+if not config or not config.get("openai_api_key"):
+    print(f"[chat.py] LLM config not loaded or missing openai_api_key: {config}")
+    raise RuntimeError("[chat.py] LLM configuration missing or incomplete. Please check your config.toml [llm] section.")
+
+print(f"[chat.py] Loaded LLM config: {config}")
 
 logger = get_logger(__name__)
 
@@ -57,39 +65,83 @@ class ChatClient:
 
     def process_input(self, user_input: str):
         """Process user input and generate response"""
-        # Store interaction
         self.history.append({"user": user_input})
-        
-        # First check for command-related queries
-        if any(keyword in user_input.lower() for keyword in ["command", "list", "show", "find", "search"]):
+
+        # Check for 'run <command> [args...]' pattern (raw shell command)
+        if user_input.lower().startswith("run "):
+            from mcli.lib.api.daemon_client import execute_shell_command_via_flask
+            command = user_input[4:].strip()
+            if command:
+                try:
+                    result = execute_shell_command_via_flask(command)
+                    stdout = result.get("stdout", "")
+                    stderr = result.get("stderr", "")
+                    returncode = result.get("returncode", "")
+                    console.print(f"[green]Shell Command Output:[/green]\n[bold]STDOUT:[/bold] {stdout}\n[bold]STDERR:[/bold] {stderr}\n[bold]RETURNCODE:[/bold] {returncode}")
+                except Exception as e:
+                    console.print(f"[red]Failed to execute shell command:[/red] {e}")
+            else:
+                console.print("[red]No command provided after 'run'.[/red]")
+            return
+
+        # Try to check for command-related queries, but fallback gracefully if daemon is unavailable
+        try:
+            daemon_available = True
+            _ = self.daemon.list_commands()
+        except Exception as e:
+            daemon_available = False
+            print(f"[chat.py] Warning: Daemon unavailable, running in LLM-only mode. Details: {e}")
+
+        if daemon_available and any(keyword in user_input.lower() for keyword in ["command", "list", "show", "find", "search"]):
             self.handle_command_queries(user_input)
         else:
             self.generate_llm_response(user_input)
 
+    def execute_command_via_daemon(self, command_name: str, args: Optional[list] = None):
+        """Execute a command via the daemon and print the result."""
+        try:
+            result = self.daemon.execute_command(command_name=command_name, args=args or [])
+            output = result.get("output") or result.get("result") or str(result)
+            console.print(f"[green]Command Output:[/green]\n{output}")
+        except Exception as e:
+            console.print(f"[red]Failed to execute command:[/red] {e}")
+
     def handle_command_queries(self, query: str):
         """Handle command-related queries using existing command registry"""
-        commands = self.daemon.list_commands().get("commands", [])
-        
+        try:
+            # Always fetch all commands (active and inactive)
+            result = self.daemon.list_commands(all=True)
+            if isinstance(result, dict):
+                commands = result.get("commands", [])
+            elif isinstance(result, list):
+                commands = result
+            else:
+                commands = []
+        except Exception as e:
+            print(f"[chat.py] Warning: Could not fetch commands from daemon: {e}\nFalling back to LLM-only mode.")
+            return self.generate_llm_response(query)
+
         # Simple keyword matching for initial implementation
-        if "list commands" in query.lower():
+        lowered = query.lower()
+        if "list command" in lowered or "show command" in lowered or "available command" in lowered or "what can i do" in lowered or "commands" in lowered:
             self.list_commands(commands)
-        elif "search" in query.lower() or "find" in query.lower():
+        elif "search" in lowered or "find" in lowered:
             self.search_commands(query, commands)
         else:
             self.generate_llm_response(query)
 
     def list_commands(self, commands: List[Dict]):
-        """List available commands"""
+        """List available commands (active and inactive)"""
         if not commands:
             console.print("No commands found")
             return
-            
-        console.print("[bold]Available Commands:[/bold]")
+        console.print("[bold]Available Commands (including inactive):[/bold]")
         for cmd in commands:
-            console.print(f"• [green]{cmd['name']}[/green] ({cmd['language']})")
-            if cmd['description']:
+            status = "[INACTIVE] " if not cmd.get('is_active', True) else ""
+            console.print(f"{status}• [green]{cmd['name']}[/green] ({cmd['language']})")
+            if cmd.get('description'):
                 console.print(f"  {cmd['description']}")
-            if cmd['tags']:
+            if cmd.get('tags'):
                 console.print(f"  Tags: {', '.join(cmd['tags'])}")
             console.print()
 
@@ -116,43 +168,78 @@ class ChatClient:
     def generate_llm_response(self, query: str):
         """Generate response using LLM integration"""
         try:
-            commands = self.daemon.list_commands().get("commands", [])
+            # Try to get all commands, including inactive
+            try:
+                result = self.daemon.list_commands(all=True)
+                if isinstance(result, dict):
+                    commands = result.get("commands", [])
+                elif isinstance(result, list):
+                    commands = result
+                else:
+                    commands = []
+            except Exception:
+                commands = []
+
             command_context = "\n".join(
-                f"Command: {cmd['name']}\nDescription: {cmd.get('description', '')}\nTags: {', '.join(cmd.get('tags', []))}"
+                f"Command: {cmd['name']}\nDescription: {cmd.get('description', '')}\nTags: {', '.join(cmd.get('tags', []))}\nStatus: {'INACTIVE' if not cmd.get('is_active', True) else 'ACTIVE'}"
                 for cmd in commands
-            )
-            
-            prompt = f"""SYSTEM: {SYSTEM_PROMPT}\n\nAvailable Commands:\n{command_context}\n\nUSER QUERY: {query}\n\nRespond with:\n1. A natural language answer\n2. Relevant commands in markdown format\n3. Example usage in a code block"""
+            ) if commands else "(No command context available)"
+
+            prompt = f"""SYSTEM: {SYSTEM_PROMPT}\n\nAvailable Commands (including inactive):\n{command_context}\n\nUSER QUERY: {query}\n\nRespond with:\n1. A natural language answer\n2. Relevant commands in markdown format\n3. Example usage in a code block"""
 
             if LLM_PROVIDER == "openai":
                 from openai import OpenAI
                 api_key = OPENAI_API_KEY or "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"
                 client = OpenAI(api_key=api_key)
-                response = client.chat.completions.create(
-                    model=MODEL_NAME,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=TEMPERATURE
-                )
-                return console.print(response.choices[0].message.content)
+                try:
+                    response = client.chat.completions.create(
+                        model=MODEL_NAME,
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=TEMPERATURE
+                    )
+                    print(f"[chat.py] OpenAI raw response: {response}")
+                    # Only print the first section (natural language answer) before any markdown/code block
+                    content = response.choices[0].message.content
+                    # Split on '```' or '2.' or 'Relevant commands' to avoid printing command/code blocks
+                    import re
+                    # Try to split on numbered sections or code block
+                    split_patterns = [r'\n2\.', r'\n```', r'\nRelevant commands', r'\n3\.', r'\n- \*\*Command']
+                    split_idx = len(content)
+                    for pat in split_patterns:
+                        m = re.search(pat, content)
+                        if m:
+                            split_idx = min(split_idx, m.start())
+                    main_answer = content[:split_idx].strip()
+                    return console.print(main_answer)
+                except Exception as api_exc:
+                    print(f"[chat.py] OpenAI API error: {api_exc}")
+                    raise
 
             elif LLM_PROVIDER == "anthropic":
                 from anthropic import Anthropic
                 api_key = config.get("anthropic_api_key", None)
                 client = Anthropic(api_key=api_key)
-                response = client.messages.create(
-                    model=MODEL_NAME,
-                    max_tokens=1000,
-                    temperature=TEMPERATURE,
-                    system=SYSTEM_PROMPT or "",
-                    messages=[{"role": "user", "content": query}]
-                )
-                return console.print(response.content)
+                try:
+                    response = client.messages.create(
+                        model=MODEL_NAME,
+                        max_tokens=1000,
+                        temperature=TEMPERATURE,
+                        system=SYSTEM_PROMPT or "",
+                        messages=[{"role": "user", "content": query}]
+                    )
+                    print(f"[chat.py] Anthropic response: {response}")
+                    return console.print(response.content)
+                except Exception as api_exc:
+                    print(f"[chat.py] Anthropic API error: {api_exc}")
+                    raise
 
             else:
                 raise ValueError(f"Unsupported LLM provider: {LLM_PROVIDER}")
-            
+
         except Exception as e:
-            logger.error(f"LLM Error: {e}")
+            import traceback
+            logger.error(f"LLM Error: {e}\n{traceback.format_exc()}")
+            print(f"[chat.py] LLM Error: {e}\n{traceback.format_exc()}")
             console.print("[red]Error:[/red] Could not generate LLM response")
             console.print("Please check your LLM configuration in .env file")
 

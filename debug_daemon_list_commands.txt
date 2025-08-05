@@ -1,0 +1,31 @@
+# Output of python -m mcli.workflow.daemon.daemon list-commands --json
+# (for debugging JSON parsing)
+
+# If you see this file, the chat client is not parsing the output correctly.
+# Please copy the output of the following command here for inspection:
+# python -m mcli.workflow.daemon.daemon list-commands --json
+
+>>> exit
+(mcli) lefv in ~/repos/mcli on main ● λ mcli chat interactive
+(mcli) lefv in ~/repos/mcli on main ● λ python -m mcli.workflow.daemon.daemon list-commands --json
+[chat.py] Loaded LLM config: {'provider': 'openai', 'model': 'gpt-4-turbo', 'openai_api_key': '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', 'temperature': 0.7, 'system_prompt': 'You are the MCLI Chat Assistant.'}
+{
+  "commands": [
+    {
+      "id": "8a8bdeac-571e-46c1-88c4-4de8dbaca1d8",
+      "name": "hello-world",
+      "description": "Prints a hello world message as a sense check.",
+      "language": "python",
+      "group": null,
+      "tags": [
+        "test",
+        "debug"
+      ],
+      "created_at": "2025-07-09T14:56:14.983166",
+      "updated_at": "2025-07-09T14:56:14.983211",
+      "execution_count": 1,
+      "last_executed": "2025-08-04T01:52:46.715678",
+      "is_active": true
+    }
+  ]
+}

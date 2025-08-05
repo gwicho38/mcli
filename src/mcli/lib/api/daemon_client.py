@@ -20,12 +20,32 @@ class DaemonClientConfig:
     retry_delay: float = 1.0
 
 class APIDaemonClient:
-    """Client for interacting with the MCLI API Daemon"""
+    """Client for interacting with the MCLI API Daemon or Flask shell daemon"""
     
-    def __init__(self, config: Optional[DaemonClientConfig] = None):
+    def __init__(self, config: Optional[DaemonClientConfig] = None, shell_mode: bool = False):
         self.config = config or self._load_config()
-        self.base_url = f"http://{self.config.host}:{self.config.port}"
+        self.shell_mode = shell_mode
+        # If shell_mode, always use Flask test server at 0.0.0.0:5005
+        if shell_mode:
+            self.base_url = "http://localhost:5005"
+        else:
+            self.base_url = f"http://{self.config.host}:{self.config.port}"
         self.session = requests.Session()
+    def execute_shell_command(self, command: str) -> Dict[str, Any]:
+        """Execute a raw shell command via the Flask test server"""
+        url = f"http://localhost:5005/execute"
+        try:
+            response = self.session.post(url, json={"command": command}, timeout=self.config.timeout)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to connect to Flask shell daemon at {url}: {e}")
+
+# Convenience functions for easy usage
+def execute_shell_command_via_flask(command: str) -> Dict[str, Any]:
+    """Execute a raw shell command via the Flask test server (convenience function)"""
+    client = APIDaemonClient(shell_mode=True)
+    return client.execute_shell_command(command)
     
     def _load_config(self) -> DaemonClientConfig:
         """Load configuration from config files"""
@@ -54,19 +74,27 @@ class APIDaemonClient:
         
         return config
     
-    def _make_request(self, method: str, endpoint: str, data: Optional[Dict] = None, **kwargs) -> Dict[str, Any]:
+    def _make_request(self, method: str, endpoint: str, data: Optional[Dict] = None, params: Optional[Dict] = None, **kwargs) -> Dict[str, Any]:
         """Make HTTP request to daemon with retry logic"""
         url = f"{self.base_url}{endpoint}"
-        
         for attempt in range(self.config.retry_attempts):
             try:
-                response = self.session.request(
-                    method=method,
-                    url=url,
-                    json=data,
-                    timeout=self.config.timeout,
-                    **kwargs
-                )
+                if method.upper() == "GET":
+                    response = self.session.request(
+                        method=method,
+                        url=url,
+                        params=params,
+                        timeout=self.config.timeout,
+                        **kwargs
+                    )
+                else:
+                    response = self.session.request(
+                        method=method,
+                        url=url,
+                        json=data,
+                        timeout=self.config.timeout,
+                        **kwargs
+                    )
                 response.raise_for_status()
                 return response.json()
             except requests.exceptions.RequestException as e:
@@ -74,6 +102,7 @@ class APIDaemonClient:
                     raise Exception(f"Failed to connect to API daemon at {url}: {e}")
                 logger.warning(f"Attempt {attempt + 1} failed, retrying in {self.config.retry_delay}s...")
                 time.sleep(self.config.retry_delay)
+        return {}  # Always return a dict
     
     def health_check(self) -> Dict[str, Any]:
         """Check daemon health"""
@@ -83,9 +112,10 @@ class APIDaemonClient:
         """Get daemon status"""
         return self._make_request("GET", "/status")
     
-    def list_commands(self) -> Dict[str, Any]:
-        """List available commands with metadata"""
-        return self._make_request("GET", "/commands")
+    def list_commands(self, all: bool = False) -> Dict[str, Any]:
+        """List available commands with metadata. If all=True, include inactive."""
+        params = {"all": str(all).lower()} if all else None
+        return self._make_request("GET", "/commands", params=params)
     
     def get_command_details(self, command_id: str) -> Optional[Dict[str, Any]]:
         """Get detailed information about a specific command"""
@@ -100,14 +130,12 @@ class APIDaemonClient:
         data = {
             "args": args or [],
         }
-        
-        if command_id:
+        if command_id is not None:
             data["command_id"] = command_id
-        if command_name:
+        if command_name is not None:
             data["command_name"] = command_name
-        if timeout:
+        if timeout is not None:
             data["timeout"] = timeout
-        
         return self._make_request("POST", "/execute", data=data)
     
     def start_daemon(self) -> Dict[str, Any]:

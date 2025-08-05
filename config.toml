@@ -15,7 +15,7 @@ debug = false
 [api_daemon]
 enabled = true
 host = "0.0.0.0"
-port = "5000"  
+port = "5005"  
 use_random_port = true
 debug = false
 auto_start = false
