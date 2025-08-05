@@ -287,7 +287,7 @@ def get_app():
     This allows users to use mcli.get_app instead of click.get_app.
     """
     import click
-    return click.get_app()
+    return click.get_app
 
 def launch(url, wait=False, locate=False):
     """
@@ -309,12 +309,12 @@ def open_file(filename, mode='r', encoding=None, errors='strict', lazy=False, at
 
 def get_os_args():
     """
-    Re-export Click's get_os_args function.
+    Re-export Click's get_os_args object.
     
     This allows users to use mcli.get_os_args instead of click.get_os_args.
     """
     import click
-    return click.get_os_args()
+    return click.get_os_args
 
 def get_binary_stream(name):
     """
@@ -424,14 +424,44 @@ def prompt(text, default=None, hide_input=False, confirmation_prompt=False, type
     import click
     return click.prompt(text, default, hide_input, confirmation_prompt, type, value_proc, prompt_suffix, show_default, err, show_choices)
 
-def progressbar(iterable=None, length=None, label=None, show_eta=True, show_percent=None, show_pos=False, item_show_func=None, fill_char='#', empty_char='-', bar_template='%(label)s  [%(bar)s]  %(info)s', info_sep='  ', width=36, file=None, color=None):
+def progressbar(iterable=None, 
+                length=None, 
+                label=None, 
+                show_eta=True, 
+                show_percent=True, 
+                show_pos=False, 
+                item_show_func=None, 
+                fill_char='#', 
+                empty_char='-', 
+                bar_template='%(label)s  [%(bar)s]  %(info)s', 
+                info_sep='  ', 
+                width=36, 
+                file=None, 
+                color=None):
     """
     Re-export Click's progressbar function.
     
     This allows users to use mcli.progressbar instead of click.progressbar.
     """
     import click
-    return click.progressbar(iterable, length, label, show_eta, show_percent, show_pos, item_show_func, fill_char, empty_char, bar_template, info_sep, width, file, color)
+    # Ensure show_eta is always a bool (default True if None)
+    show_eta_bool = True if show_eta is None else bool(show_eta)
+    return click.progressbar(
+        iterable=iterable,
+        length=length,
+        label=label,
+        show_eta=show_eta_bool,
+        show_percent=show_percent,
+        show_pos=show_pos,
+        item_show_func=item_show_func,
+        fill_char=fill_char,
+        empty_char=empty_char,
+        bar_template=bar_template,
+        info_sep=info_sep,
+        width=width,
+        file=file,
+        color=color
+    )
 
 def get_terminal_size():
     """
@@ -440,7 +470,7 @@ def get_terminal_size():
     This allows users to use mcli.get_terminal_size instead of click.get_terminal_size.
     """
     import click
-    return click.get_terminal_size()
+    return click.get_terminal_size
 
 def get_app_dir(app_name, roaming=True, force_posix=False):
     """
@@ -458,7 +488,7 @@ def get_network_credentials():
     This allows users to use mcli.get_network_credentials instead of click.get_network_credentials.
     """
     import click
-    return click.get_network_credentials()
+    return click.get_network_credentials
 
 # Re-export Click types and classes
 def _get_click_types():
@@ -559,9 +589,8 @@ def background_command(
 def api(
     endpoint_path: Optional[str] = None,
     http_method: str = "POST",
-    response_model = None,
-    description: str = None,
-    tags: List[str] = None,
+    description: Optional[str] = None,
+    tags: Optional[List[str]] = None,
     enable_background: bool = True,
     background_timeout: Optional[int] = None
 ):
@@ -623,9 +652,8 @@ def background(
 def cli_with_api(
     endpoint_path: Optional[str] = None,
     http_method: str = "POST",
-    response_model = None,
-    description: str = None,
-    tags: List[str] = None,
+    description: Optional[str] = None,
+    tags: Optional[List[str]] = None,
     enable_background: bool = True,
     background_timeout: Optional[int] = None
 ):
@@ -678,7 +706,10 @@ def start_server(
             my_cli()
     """
     try:
-        server_url = start_api_server(host=host, port=port, debug=debug)
+        if port is not None:
+            server_url = start_api_server(host=host, port=port, debug=debug)
+        else:
+            server_url = start_api_server(host=host, debug=debug)
         logger.info(f"API server started at: {server_url}")
         return server_url
     except Exception as e:
@@ -747,8 +778,9 @@ def get_api_config() -> Dict[str, Any]:
     if os.environ.get('MCLI_API_HOST'):
         config["host"] = os.environ.get('MCLI_API_HOST')
     
-    if os.environ.get('MCLI_API_PORT'):
-        config["port"] = int(os.environ.get('MCLI_API_PORT'))
+    port_env = os.environ.get('MCLI_API_PORT')
+    if port_env is not None:
+        config["port"] = int(port_env)
         config["use_random_port"] = False
     
     if os.environ.get('MCLI_API_DEBUG', 'false').lower() in ('true', '1', 'yes'):
@@ -821,7 +853,9 @@ class ChatCommandGroup(click.Group):
         self.chat_client.start_interactive_session()
         return ""
 
-def chat(**kwargs) -> click.Group:
+from typing import Callable, Any
+
+def chat(**kwargs) -> Callable[[Callable[..., Any]], click.Group]:
     """Create a chat command group that provides an interactive LLM-powered interface"""
     kwargs.setdefault("invoke_without_command", True)
     kwargs.setdefault("no_args_is_help", False)

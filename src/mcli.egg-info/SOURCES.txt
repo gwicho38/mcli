@@ -10,6 +10,7 @@ setup.cfg
 src/mcli/README.md
 src/mcli/__init__.py
 src/mcli/__main__.py
+src/mcli/cli.py
 src/mcli/app/__init__.py
 src/mcli/app/globals.py
 src/mcli/app/main.py
@@ -17,12 +18,14 @@ src/mcli/app/model/__init__.py
 src/mcli/app/model/model.py
 src/mcli/app/video/__init__.py
 src/mcli/app/video/video.py
+src/mcli/chat/chat.py
 src/mcli/lib/__init__.py
 src/mcli/lib/lib.py
 src/mcli/lib/api/__init__.py
 src/mcli/lib/api/api.py
 src/mcli/lib/api/daemon_client.py
 src/mcli/lib/api/daemon_decorator.py
+src/mcli/lib/api/mcli_decorators.py
 src/mcli/lib/auth/__init__.py
 src/mcli/lib/auth/auth.py
 src/mcli/lib/auth/aws_manager.py

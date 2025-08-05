@@ -84,6 +84,7 @@ dependencies = [
   "beautifulsoup4>=4.13.4",
   "reportlab>=4.4.2",
   "build>=1.2.2.post1",
+  "dotenv>=0.9.9",
 ]
 
 [project.optional-dependencies]
