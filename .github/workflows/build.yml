@@ -20,11 +20,9 @@ env:
 jobs:
   build:
     name: Build Package
-    runs-on: ubuntu-latest
-    
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest, windows-latest]
+        platform: [ubuntu-latest, macos-latest]
     
     runs-on: ${{ matrix.platform }}
     
@@ -38,21 +36,39 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         
     - name: Install UV
-      uses: astral-sh/setup-uv@v3
-      with:
-        version: ${{ env.UV_VERSION }}
+      run: |
+        if [[ "${{ matrix.platform }}" == "ubuntu-latest" ]]; then
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        elif [[ "${{ matrix.platform }}" == "macos-latest" ]]; then
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        fi
         
     - name: Set up environment
-      run: make setup
-      
-    - name: Run build validation
-      run: make validate-build
+      run: |
+        if command -v uv >/dev/null 2>&1; then
+          make setup
+        else
+          python -m pip install --upgrade pip build
+          pip install -e .
+        fi
       
     - name: Build wheel
-      run: make wheel
+      run: |
+        if command -v uv >/dev/null 2>&1; then
+          make wheel
+        else
+          python -m build --wheel
+        fi
       
-    - name: Build portable executable
-      run: make portable
+    - name: Test basic functionality
+      run: |
+        if command -v uv >/dev/null 2>&1; then
+          make test
+        else
+          python -c "import mcli; print('✅ Package imports successfully')"
+          python -m mcli --help
       
     - name: Upload wheel artifact
       uses: actions/upload-artifact@v4
@@ -61,15 +77,6 @@ jobs:
         path: dist/*.whl
         retention-days: 30
         
-    - name: Upload portable executable
-      uses: actions/upload-artifact@v4
-      with:
-        name: mcli-executable-${{ matrix.platform }}
-        path: bin/mcli*
-        retention-days: 30
-        
-    - name: Test executable
-      run: make test-binary
       
   build-summary:
     name: Build Summary

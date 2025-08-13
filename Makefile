@@ -465,7 +465,7 @@ ci-logs-build: ## Show logs from the latest build workflow run
 		echo "Visit: https://cli.github.com/"; \
 		exit 1; \
 	fi
-	gh run view --log -w build.yml
+	gh run list --workflow build.yml --limit 1 --json databaseId --jq '.[0].databaseId' | xargs gh run view --log
 
 .PHONY: ci-logs-test
 ci-logs-test: ## Show logs from the latest test workflow run
@@ -475,4 +475,4 @@ ci-logs-test: ## Show logs from the latest test workflow run
 		echo "Visit: https://cli.github.com/"; \
 		exit 1; \
 	fi
-	gh run view --log -w test.yml
+	gh run list --workflow test.yml --limit 1 --json databaseId --jq '.[0].databaseId' | xargs gh run view --log
