@@ -61,6 +61,7 @@ jobs:
         else
           python -m pip install --upgrade pip
           pip install -e .
+        fi
       
     - name: Run basic tests
       run: |
@@ -69,6 +70,7 @@ jobs:
         else
           python -c "import mcli; print('✅ Package imports successfully')"
           python -m mcli --help
+        fi
         
     - name: Upload test results
       uses: actions/upload-artifact@v4
