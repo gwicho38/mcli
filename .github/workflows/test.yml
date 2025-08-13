@@ -1,0 +1,151 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - cli-only
+        - specific
+      specific_test:
+        description: 'Specific test pattern (if test_type is specific)'
+        required: false
+        default: ''
+
+env:
+  PYTHON_VERSION: '3.11'
+  UV_VERSION: 'latest'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+    
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install UV
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: ${{ env.UV_VERSION }}
+        
+    - name: Set up environment
+      run: make setup
+      
+    - name: Install package
+      run: make install
+      
+    - name: Run basic tests
+      run: make test
+      
+    - name: Run CLI tests
+      if: ${{ github.event.inputs.test_type == 'cli-only' || github.event.inputs.test_type == 'all' || github.event.inputs.test_type == '' }}
+      run: make test-cli
+      
+    - name: Run complete test suite
+      if: ${{ github.event.inputs.test_type == 'all' || github.event.inputs.test_type == '' }}
+      run: make test-all
+      
+    - name: Run specific test
+      if: ${{ github.event.inputs.test_type == 'specific' && github.event.inputs.specific_test != '' }}
+      run: |
+        cd tests
+        python3 run_tests.py ${{ github.event.inputs.specific_test }}
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-${{ matrix.platform }}-py${{ matrix.python-version }}
+        path: |
+          tests/*.xml
+          tests/*.log
+        retention-days: 30
+        
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install UV
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: ${{ env.UV_VERSION }}
+        
+    - name: Set up environment
+      run: make setup
+      
+    - name: Install dev dependencies
+      run: uv pip install -e ".[dev]"
+      
+    - name: Check import structure
+      run: |
+        .venv/bin/python -c "import mcli; print('✅ Package imports successfully')"
+        
+    - name: Check CLI functionality
+      run: |
+        .venv/bin/mcli --help
+        
+    - name: Validate dependencies
+      run: |
+        uv pip check
+        
+  test-summary:
+    name: Test Summary
+    needs: [test, code-quality]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Test Results Summary
+      run: |
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "### Test Matrix Results" >> $GITHUB_STEP_SUMMARY
+        echo "| Platform | Python | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Ubuntu | 3.9 | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Ubuntu | 3.10 | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Ubuntu | 3.11 | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Ubuntu | 3.12 | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS | 3.9 | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS | 3.10 | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS | 3.11 | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS | 3.12 | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Code Quality: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.test.result }}" = "success" ] && [ "${{ needs.code-quality.result }}" = "success" ]; then
+          echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Some tests failed. Check the logs for details." >> $GITHUB_STEP_SUMMARY
+        fi

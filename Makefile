@@ -92,10 +92,24 @@ help: ## Show this help message
 	@echo "  $(CYAN)debug$(RESET)                 Show debug information"
 	@echo "  $(CYAN)test$(RESET)                  Test the installation"
 	@echo "  $(CYAN)test-binary$(RESET)           Test the built executable"
+	@echo "  $(CYAN)test-all$(RESET)              Run complete test suite"
+	@echo "  $(CYAN)test-cli$(RESET)              Run CLI-specific tests only"
+	@echo "  $(CYAN)validate-build$(RESET)        Validate application for binary/wheel packaging"
 	@echo ""
 	@echo "$(CYAN)Maintenance Targets:$(RESET)"
 	@echo "  $(CYAN)clean$(RESET)                 Clean all build artifacts"
 	@echo "  $(CYAN)uninstall$(RESET)             Remove installed app bundle and/or binary"
+	@echo ""
+	@echo "$(CYAN)CI/CD Targets:$(RESET)"
+	@echo "  $(CYAN)ci-trigger-build$(RESET)      Trigger GitHub Actions build workflow"
+	@echo "  $(CYAN)ci-trigger-test$(RESET)       Trigger GitHub Actions test workflow"
+	@echo "  $(CYAN)ci-trigger-test-cli$(RESET)   Trigger GitHub Actions CLI tests"
+	@echo "  $(CYAN)ci-trigger-test-specific$(RESET) Trigger specific test (TEST=name)"
+	@echo "  $(CYAN)ci-watch$(RESET)              Watch GitHub Actions runs in real-time"
+	@echo "  $(CYAN)ci-status$(RESET)             Show GitHub Actions run status"
+	@echo "  $(CYAN)ci-logs$(RESET)               Show latest GitHub Actions logs"
+	@echo "  $(CYAN)ci-logs-build$(RESET)         Show latest build workflow logs"
+	@echo "  $(CYAN)ci-logs-test$(RESET)          Show latest test workflow logs"
 
 .PHONY: debug
 debug: ## Show debug information
@@ -309,3 +323,156 @@ test-binary: ## Test the built executable
 		exit 1; \
 	fi
 	@echo "$(GREEN)Executable test completed ✅$(RESET)"
+
+.PHONY: test-all
+test-all: ## Run complete test suite
+	@echo "$(CYAN)Running complete test suite...$(RESET)"
+	$(VENV_PYTHON) tests/run_tests.py
+	@echo "$(GREEN)Test suite completed ✅$(RESET)"
+
+.PHONY: test-cli
+test-cli: ## Run CLI-specific tests only
+	@echo "$(CYAN)Running CLI tests...$(RESET)"
+	$(VENV_PYTHON) tests/run_tests.py --cli-only
+	@echo "$(GREEN)CLI tests completed ✅$(RESET)"
+
+# =============================================================================
+# BUILD VALIDATION TARGETS
+# =============================================================================
+
+.PHONY: validate-build
+validate-build: $(UV_ENV_CACHE) ## Validate application is ready for binary/wheel packaging
+	@echo "$(CYAN)Validating build readiness...$(RESET)"
+	@echo "$(YELLOW)Step 1: Dependencies check$(RESET)"
+	$(UV) pip check
+	@echo "$(YELLOW)Step 2: Import validation$(RESET)"
+	$(VENV_PYTHON) -c "import mcli; print('✅ Package imports successfully')"
+	@echo "$(YELLOW)Step 3: CLI functionality check$(RESET)"
+	$(VENV_PYTHON) -m mcli --help > /dev/null && echo "✅ CLI help works" || (echo "❌ CLI help failed" && exit 1)
+	@echo "$(YELLOW)Step 4: Build wheel$(RESET)"
+	$(MAKE) wheel
+	@echo "$(YELLOW)Step 5: Test wheel installation$(RESET)"
+	@temp_venv=$$(mktemp -d); \
+	python3 -m venv "$$temp_venv"; \
+	"$$temp_venv/bin/pip" install $(DIST_DIR)/*.whl; \
+	"$$temp_venv/bin/mcli" --help > /dev/null && echo "✅ Wheel installation works" || (echo "❌ Wheel installation failed" && exit 1); \
+	rm -rf "$$temp_venv"
+	@echo "$(YELLOW)Step 6: Build portable executable$(RESET)"
+	$(MAKE) portable
+	@echo "$(YELLOW)Step 7: Test portable executable$(RESET)"
+	$(MAKE) test-binary
+	@echo "$(YELLOW)Step 8: Basic functionality test$(RESET)"
+	$(MAKE) test
+	@echo "$(GREEN)✅ Build validation completed successfully!$(RESET)"
+	@echo "$(GREEN)Application is ready for binary/wheel distribution$(RESET)"
+
+# =============================================================================
+# GITHUB ACTIONS CI/CD TARGETS
+# =============================================================================
+
+.PHONY: ci-trigger-build
+ci-trigger-build: ## Trigger GitHub Actions build workflow
+	@echo "$(CYAN)Triggering GitHub Actions build workflow...$(RESET)"
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Please install it first.$(RESET)"; \
+		echo "Visit: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	gh workflow run build.yml
+	@echo "$(GREEN)✅ Build workflow triggered$(RESET)"
+
+.PHONY: ci-trigger-test
+ci-trigger-test: ## Trigger GitHub Actions test workflow
+	@echo "$(CYAN)Triggering GitHub Actions test workflow...$(RESET)"
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Please install it first.$(RESET)"; \
+		echo "Visit: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	gh workflow run test.yml
+	@echo "$(GREEN)✅ Test workflow triggered$(RESET)"
+
+.PHONY: ci-trigger-test-cli
+ci-trigger-test-cli: ## Trigger GitHub Actions test workflow (CLI tests only)
+	@echo "$(CYAN)Triggering GitHub Actions test workflow (CLI only)...$(RESET)"
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Please install it first.$(RESET)"; \
+		echo "Visit: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	gh workflow run test.yml -f test_type=cli-only
+	@echo "$(GREEN)✅ CLI test workflow triggered$(RESET)"
+
+.PHONY: ci-trigger-test-specific
+ci-trigger-test-specific: ## Trigger GitHub Actions test workflow for specific test (usage: make ci-trigger-test-specific TEST=test_name)
+	@echo "$(CYAN)Triggering GitHub Actions test workflow for specific test...$(RESET)"
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Please install it first.$(RESET)"; \
+		echo "Visit: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	@if [ -z "$(TEST)" ]; then \
+		echo "$(RED)❌ TEST variable not set. Usage: make ci-trigger-test-specific TEST=test_name$(RESET)"; \
+		exit 1; \
+	fi
+	gh workflow run test.yml -f test_type=specific -f specific_test=$(TEST)
+	@echo "$(GREEN)✅ Specific test workflow triggered for: $(TEST)$(RESET)"
+
+.PHONY: ci-watch
+ci-watch: ## Watch GitHub Actions workflow runs in real-time
+	@echo "$(CYAN)Watching GitHub Actions workflows...$(RESET)"
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Please install it first.$(RESET)"; \
+		echo "Visit: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)Press Ctrl+C to stop watching$(RESET)"
+	@echo "$(YELLOW)Available commands while watching:$(RESET)"
+	@echo "  - 'q' to quit"
+	@echo "  - 'r' to refresh"
+	@echo "  - Enter to see details"
+	gh run watch
+
+.PHONY: ci-status
+ci-status: ## Show status of recent GitHub Actions runs
+	@echo "$(CYAN)GitHub Actions Status:$(RESET)"
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Please install it first.$(RESET)"; \
+		echo "Visit: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	@echo "$(YELLOW)Recent workflow runs:$(RESET)"
+	gh run list --limit 10
+	@echo ""
+	@echo "$(YELLOW)Workflow status:$(RESET)"
+	gh workflow list
+
+.PHONY: ci-logs
+ci-logs: ## Show logs from the latest GitHub Actions run
+	@echo "$(CYAN)Fetching latest GitHub Actions logs...$(RESET)"
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Please install it first.$(RESET)"; \
+		echo "Visit: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	gh run view --log
+
+.PHONY: ci-logs-build
+ci-logs-build: ## Show logs from the latest build workflow run
+	@echo "$(CYAN)Fetching latest build workflow logs...$(RESET)"
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Please install it first.$(RESET)"; \
+		echo "Visit: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	gh run view --log -w build.yml
+
+.PHONY: ci-logs-test
+ci-logs-test: ## Show logs from the latest test workflow run
+	@echo "$(CYAN)Fetching latest test workflow logs...$(RESET)"
+	@if ! command -v gh >/dev/null 2>&1; then \
+		echo "$(RED)❌ GitHub CLI (gh) not found. Please install it first.$(RESET)"; \
+		echo "Visit: https://cli.github.com/"; \
+		exit 1; \
+	fi
+	gh run view --log -w test.yml

@@ -55,7 +55,10 @@ def run_cli_tests():
         'test_workflow_integration.py',
         'test_main_app.py',
         'test_all_cli.py',
-        'test_daemon.py'
+        'test_daemon.py',
+        'test_harness.py',
+        'test_uv_compatibility.py',
+        'test_rich.py'
     ]
     
     # Run CLI tests

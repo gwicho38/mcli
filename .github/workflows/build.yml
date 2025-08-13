@@ -1,0 +1,94 @@
+name: Build and Package
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Enable debug mode'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  UV_VERSION: 'latest'
+
+jobs:
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    
+    runs-on: ${{ matrix.platform }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Install UV
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: ${{ env.UV_VERSION }}
+        
+    - name: Set up environment
+      run: make setup
+      
+    - name: Run build validation
+      run: make validate-build
+      
+    - name: Build wheel
+      run: make wheel
+      
+    - name: Build portable executable
+      run: make portable
+      
+    - name: Upload wheel artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: mcli-wheel-${{ matrix.platform }}
+        path: dist/*.whl
+        retention-days: 30
+        
+    - name: Upload portable executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: mcli-executable-${{ matrix.platform }}
+        path: bin/mcli*
+        retention-days: 30
+        
+    - name: Test executable
+      run: make test-binary
+      
+  build-summary:
+    name: Build Summary
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Build Status Summary
+      run: |
+        echo "## Build Results" >> $GITHUB_STEP_SUMMARY
+        echo "| Platform | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Ubuntu | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| macOS | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Windows | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.build.result }}" = "success" ]; then
+          echo "✅ All builds completed successfully!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Some builds failed. Check the logs for details." >> $GITHUB_STEP_SUMMARY
+        fi
