@@ -3,6 +3,8 @@ included_dirs = [
     "workflow",
     "workflow/daemon",
     "workflow/model_service",
+    "self",
+    "app",
 ]
 
 [api]
@@ -27,6 +29,6 @@ enable_command_history = true
 [llm]
 provider = "openai"
 model = "gpt-4-turbo"
-openai_api_key = "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"
+openai_api_key = "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"  # Set your OpenAI API key here or via environment variable
 temperature = 0.7
 system_prompt = "You are the MCLI Chat Assistant."

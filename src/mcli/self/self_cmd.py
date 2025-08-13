@@ -660,6 +660,14 @@ def plugin_update(plugin_name):
 
     return 0
 
+@self_app.command("hello")
+@click.argument("name", default="World")
+def hello(name: str):
+    """A simple hello command for testing."""
+    message = f"Hello, {name}! This is the MCLI hello command."
+    logger.info(message)
+    console.print(f"[green]{message}[/green]")
+
 @self_app.command("logs")
 @click.option("--type", "-t", type=click.Choice(['main', 'system', 'trace', 'all']), default='main', 
               help="Type of logs to display")
