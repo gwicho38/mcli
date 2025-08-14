@@ -34,6 +34,7 @@ import functools
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
 from mcli.lib.api.api import get_api_config, find_free_port
+from .process_manager import ProcessManager
 
 logger = get_logger(__name__)
 
@@ -69,6 +70,9 @@ class APIDaemonService:
         
         # Load command database
         self.db = CommandDatabase()
+        
+        # Initialize process manager
+        self.process_manager = ProcessManager()
         
         logger.info(f"API Daemon initialized with config: {self.config}")
     
@@ -152,6 +156,11 @@ class APIDaemonService:
                     "/status",
                     "/commands",
                     "/execute",
+                    "/processes",
+                    "/processes/{process_id}",
+                    "/processes/{process_id}/start",
+                    "/processes/{process_id}/stop",
+                    "/processes/{process_id}/logs",
                     "/daemon/start",
                     "/daemon/stop"
                 ]
@@ -217,6 +226,146 @@ class APIDaemonService:
                 
             except Exception as e:
                 logger.error(f"Error executing command: {e}")
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        # Process management endpoints (Docker-like API)
+        @self.app.get("/processes")
+        async def list_processes(request: Request):
+            """List all processes (like 'docker ps')"""
+            all_processes = request.query_params.get('all', 'false').lower() == 'true'
+            processes = self.process_manager.list_processes(all_processes=all_processes)
+            return {
+                "processes": processes,
+                "total": len(processes)
+            }
+        
+        @self.app.post("/processes")
+        async def create_process(request: Request):
+            """Create a new process container"""
+            try:
+                body = await request.json()
+                name = body.get("name", "unnamed")
+                command = body.get("command")
+                args = body.get("args", [])
+                working_dir = body.get("working_dir")
+                environment = body.get("environment")
+                auto_start = body.get("auto_start", False)
+                
+                if not command:
+                    raise HTTPException(status_code=400, detail="Command is required")
+                
+                process_id = self.process_manager.create(
+                    name=name,
+                    command=command,
+                    args=args,
+                    working_dir=working_dir,
+                    environment=environment
+                )
+                
+                if auto_start:
+                    self.process_manager.start(process_id)
+                
+                return {
+                    "id": process_id,
+                    "name": name,
+                    "status": "created" if not auto_start else "starting"
+                }
+                
+            except Exception as e:
+                logger.error(f"Error creating process: {e}")
+                raise HTTPException(status_code=500, detail=str(e))
+        
+        @self.app.get("/processes/{process_id}")
+        async def inspect_process(process_id: str):
+            """Get detailed information about a process (like 'docker inspect')"""
+            info = self.process_manager.inspect(process_id)
+            if info is None:
+                raise HTTPException(status_code=404, detail="Process not found")
+            return info
+        
+        @self.app.post("/processes/{process_id}/start")
+        async def start_process(process_id: str):
+            """Start a process container"""
+            success = self.process_manager.start(process_id)
+            if not success:
+                raise HTTPException(status_code=404, detail="Process not found or failed to start")
+            return {"status": "started"}
+        
+        @self.app.post("/processes/{process_id}/stop")
+        async def stop_process(process_id: str, request: Request):
+            """Stop a process container"""
+            body = await request.json() if request.headers.get("content-type") == "application/json" else {}
+            timeout = body.get("timeout", 10)
+            
+            success = self.process_manager.stop(process_id, timeout)
+            if not success:
+                raise HTTPException(status_code=404, detail="Process not found")
+            return {"status": "stopped"}
+        
+        @self.app.post("/processes/{process_id}/kill")
+        async def kill_process(process_id: str):
+            """Kill a process container"""
+            success = self.process_manager.kill(process_id)
+            if not success:
+                raise HTTPException(status_code=404, detail="Process not found")
+            return {"status": "killed"}
+        
+        @self.app.delete("/processes/{process_id}")
+        async def remove_process(process_id: str, request: Request):
+            """Remove a process container"""
+            force = request.query_params.get('force', 'false').lower() == 'true'
+            success = self.process_manager.remove(process_id, force)
+            if not success:
+                raise HTTPException(status_code=404, detail="Process not found")
+            return {"status": "removed"}
+        
+        @self.app.get("/processes/{process_id}/logs")
+        async def get_process_logs(process_id: str, request: Request):
+            """Get logs from a process container (like 'docker logs')"""
+            lines = request.query_params.get('lines')
+            if lines:
+                try:
+                    lines = int(lines)
+                except ValueError:
+                    lines = None
+            
+            logs = self.process_manager.logs(process_id, lines)
+            if logs is None:
+                raise HTTPException(status_code=404, detail="Process not found")
+            return logs
+        
+        @self.app.post("/processes/run")
+        async def run_process(request: Request):
+            """Create and start a process in one step (like 'docker run')"""
+            try:
+                body = await request.json()
+                name = body.get("name", "unnamed")
+                command = body.get("command")
+                args = body.get("args", [])
+                working_dir = body.get("working_dir")
+                environment = body.get("environment")
+                detach = body.get("detach", True)
+                
+                if not command:
+                    raise HTTPException(status_code=400, detail="Command is required")
+                
+                process_id = self.process_manager.run(
+                    name=name,
+                    command=command,
+                    args=args,
+                    working_dir=working_dir,
+                    environment=environment,
+                    detach=detach
+                )
+                
+                return {
+                    "id": process_id,
+                    "name": name,
+                    "status": "running"
+                }
+                
+            except Exception as e:
+                logger.error(f"Error running process: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
         
         # Daemon control endpoints
@@ -327,8 +476,9 @@ class APIDaemonService:
             uvicorn.run(
                 self.app,
                 host=self.config.host,
-                port=port,
-                log_level="debug" if self.config.debug else "info"
+                port=int(port),
+                log_level="error",  # Suppress info messages
+                access_log=False   # Suppress access logs
             )
         
         self.server_thread = threading.Thread(target=run_server, daemon=True)

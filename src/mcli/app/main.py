@@ -214,19 +214,13 @@ def process_click_commands(obj, module_name: str, parent_name: str = ""):
 
 
 def create_app() -> click.Group:
-    """Create and configure the Click application with dynamically loaded commands."""
+    """Create and configure the Click application with clean top-level commands."""
     
     logger.debug("create_app")
     
     app = click.Group(name="mcli")
 
-    @app.command()
-    def hello():
-        """Test command to verify CLI is working"""
-        message = "Hello from mcli!"
-        logger.info(message)
-        success(message)
-
+    # Clean top-level commands
     @app.command()
     @click.option("--verbose", "-v", is_flag=True, help="Show additional system information")
     def version(verbose: bool):
@@ -235,97 +229,45 @@ def create_app() -> click.Group:
         logger.info(message)
         info(message)
 
-    # Get the base path (mcli root)
-    base_path = Path(__file__).parent.parent  # Updated to point to src/mcli instead of src/mcli/app
-
-    # # Discover modules
-    module_names = discover_modules(base_path)
-    logger.debug(f"Discovered modules: {module_names}")
-
-    # Add self commands explicitly
+    # Import and add core command groups
     try:
+        # Chat commands
+        from mcli.app.chat_cmd import chat
+        app.add_command(chat, name="chat")
+        
+        # Commands management
+        from mcli.app.commands_cmd import commands
+        app.add_command(commands, name="commands")
+        
+        # Self management commands
         if 'self_app' in globals():
             app.add_command(self_app, name="self")
             logger.info("Added self management commands to mcli")
-            # Register self commands as API endpoints
-            process_click_commands(self_app, "mcli.self", "self")
+        
+        # Workflow commands (only if needed)
+        try:
+            from mcli.workflow.workflow import workflow
+            app.add_command(workflow, name="workflow")
+            logger.info("Added workflow commands to mcli")
+        except ImportError as e:
+            logger.debug(f"Workflow module not found or disabled: {e}")
+            
     except Exception as e:
-        logger.error(f"Error adding self management commands: {e}")
+        logger.error(f"Error adding command groups: {e}")
         import traceback
         logger.error(f"Traceback: {traceback.format_exc()}")
 
-    # Register the chat command group
-    app.add_command(chat, name="chat")
-
-    # Note: Cron commands are now handled by the standalone cron_manager.py script
-    # to avoid recursion issues with the main Click application
-
-    # First import all modules and collect Click groups
-    groups = {}
-    for module_name in module_names:
-        try:
-            logger.debug(f"Processing module: {module_name}")
-            module = importlib.import_module(module_name)
-
-            for name, obj in inspect.getmembers(module):
-                if isinstance(obj, click.Group):
-                    logger.info(f"Discovered group {obj.name} in {module_name}")
-                    groups[module_name] = obj
-                    # Register all commands in this group as API endpoints
-                    process_click_commands(obj, module_name, str(obj.name) if obj.name is not None else "")
-                elif isinstance(obj, click.Command):
-                    logger.info(f"Discovered command {obj.name} in {module_name}")
-                    # Register single command as API endpoint
-                    register_command_as_api_endpoint(obj.callback, module_name, str(obj.name) if obj.name is not None else "")
-        except ImportError as e:
-            logger.warning(f"Could not import module {module_name}: {e}")
-        except Exception as e:
-            logger.error(f"Error processing module {module_name}: {e}")
-
-    logger.info(f"Total groups found: {len(groups)}")
-    logger.info(f"Group modules: {list(groups.keys())}")
-
-    def find_parent(module_name: str) -> Optional[str]:
-        """Return the parent module path if a parent group exists."""
-        parts = module_name.split(".")
-        # Check if this is a workflow subcommand (e.g., mcli.workflow.daemon.daemon)
-        if len(parts) >= 4 and parts[1] == "workflow" and parts[-1] == parts[-2]:
-            # Look for the workflow group
-            workflow_module = "mcli.workflow.workflow"
-            if workflow_module in groups:
-                return workflow_module
-        # Original logic for other cases
-        if len(parts) >= 4 and parts[-1] == parts[-2]:
-            candidate = ".".join(parts[:-2] + [parts[-3]])
-            if candidate in groups:
-                return candidate
-        return None
-
-    # Register groups with proper nesting
-    for module_name, group in groups.items():
-        parent = find_parent(module_name)
-        if parent:
-            logger.info(f"Nesting group {group.name} under {groups[parent].name}")
-            groups[parent].add_command(group, name=group.name)
-        else:
-            logger.info(f"Adding top-level group {group.name}")
-            app.add_command(group, name=group.name)
-
-    # Start API server if enabled in configuration
-    api_config = get_api_config()
-    if api_config["enabled"]:
-        api_url = start_api_server()
-        if api_url:
-            logger.info(f"✅ API server started at {api_url}")
-            logger.info(f"📋 Available endpoints:")
-            logger.info(f"   GET  {api_url}/health")
-            logger.info(f"   GET  {api_url}/")
-            logger.info(f"   GET  {api_url}/docs")
-            logger.info(f"   GET  {api_url}/redoc")
-        else:
-            logger.warning("❌ Failed to start API server")
-    else:
-        logger.debug("API server is disabled in configuration")
+    # Auto-start daemon if needed
+    try:
+        from mcli.lib.api.daemon_client import get_daemon_client
+        client = get_daemon_client()
+        if not client.is_running():
+            # Silently start daemon in background
+            from mcli.workflow.daemon.api_daemon import APIDaemonService
+            daemon = APIDaemonService()
+            daemon.start()
+    except Exception as e:
+        logger.debug(f"Could not auto-start daemon: {e}")
 
     return app
 

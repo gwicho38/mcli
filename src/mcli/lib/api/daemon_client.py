@@ -40,12 +40,6 @@ class APIDaemonClient:
             return response.json()
         except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to connect to Flask shell daemon at {url}: {e}")
-
-# Convenience functions for easy usage
-def execute_shell_command_via_flask(command: str) -> Dict[str, Any]:
-    """Execute a raw shell command via the Flask test server (convenience function)"""
-    client = APIDaemonClient(shell_mode=True)
-    return client.execute_shell_command(command)
     
     def _load_config(self) -> DaemonClientConfig:
         """Load configuration from config files"""
@@ -73,7 +67,7 @@ def execute_shell_command_via_flask(command: str) -> Dict[str, Any]:
                     logger.debug(f"Could not load daemon client config from {path}: {e}")
         
         return config
-    
+
     def _make_request(self, method: str, endpoint: str, data: Optional[Dict] = None, params: Optional[Dict] = None, **kwargs) -> Dict[str, Any]:
         """Make HTTP request to daemon with retry logic"""
         url = f"{self.base_url}{endpoint}"
@@ -164,6 +158,11 @@ def execute_shell_command_via_flask(command: str) -> Dict[str, Any]:
         return False
 
 # Convenience functions for easy usage
+def execute_shell_command_via_flask(command: str) -> Dict[str, Any]:
+    """Execute a raw shell command via the Flask test server (convenience function)"""
+    client = APIDaemonClient(shell_mode=True)
+    return client.execute_shell_command(command)
+
 def get_daemon_client() -> APIDaemonClient:
     """Get a configured daemon client"""
     return APIDaemonClient()

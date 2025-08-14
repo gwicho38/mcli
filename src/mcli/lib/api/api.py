@@ -464,7 +464,7 @@ def start_api_server(host: str = None, port: int = None, debug: bool = None) -> 
     
     def run_server():
         uvicorn.run(_api_app, host=config["host"], port=config["port"], 
-                   log_level="debug" if config["debug"] else "info")
+                   log_level="error", access_log=False)
     
     if not _api_server_running:
         _api_server_thread = threading.Thread(target=run_server, daemon=True)

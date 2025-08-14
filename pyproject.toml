@@ -1,111 +1,63 @@
 [project]
 name = "mcli"
 version = "5.0.0"
-description = "Add your description here"
+description = "A modern CLI framework with chat capabilities and command management"
 readme = "README.md"
 requires-python = ">=3.9"
-authors = [{ name = "mcli", email = "luis@lefv.io" }]
-maintainers = [
-  { name = "Luis Fernandez de la Vara", email = "luis@lefv.io" },
-]
+authors = [{ name = "Luis Fernandez de la Vara", email = "luis@lefv.io" }]
 license = "MIT"
-keywords = ["cli", "shell", "mcli", "sh"]
+keywords = ["cli", "command-line", "framework", "chat", "assistant"]
 classifiers = [
-  "Topic :: Software Development :: Build Tools",
-  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: System :: Shells",
+  "Topic :: Utilities",
 ]
 dependencies = [
+  # Core dependencies
   "click>=8.1.7,<9.0.0",
-  "ipython>=8.12.0,<9.0.0",
-  "pandoc>=2.3,<3.0",
-  "ptpython>=3.0.23,<4.0.0",
-  "setuptools>=65.0.0,<66.0.0",
-  "watchdog>=3.0.0,<4.0.0",
-  "openai>=1.3.0,<2.0.0",
-  "gitpython>=3.1.40,<4.0.0",
-  "pygithub>=1.59.0,<2.0.0",
-  "numpy>=1.24.0,<2.0.0",
-  "flask>=2.3.0,<3.0.0",
-  "keras>=2.15.0,<3.0.0",
-  "scikit-learn>=1.3.0,<2.0.0",
-  "docker>=6.1.0,<7.0.0",
-  "fuzzywuzzy>=0.18.0,<0.19.0",
-  "pandas>=2.0.3,<3.0.0",
-  "openpyxl>=3.1.2,<4.0.0",
-  "cachetools>=5.3.2,<6.0.0",
-  "ipywidgets>=8.1.1,<9.0.0",
-  "inquirerpy>=0.3.4,<0.4.0",
+  "rich>=14.0.0",
   "requests>=2.31.0,<3.0.0",
-  "cython>=3.0.0,<4.0.0",
+  "tomli>=2.2.1",
+  
+  # Chat and AI capabilities
+  "openai>=1.3.0,<2.0.0",
+  "anthropic>=0.60.0",
+  
+  # Utilities
+  "watchdog>=3.0.0,<4.0.0",
   "tqdm>=4.66.1,<5.0.0",
   "humanize>=4.9.0,<5.0.0",
-  "matplotlib>=3.7.3,<4.0.0",
-  "networkx>=3.1,<4.0.0",
-  "python-levenshtein>=0.27.1,<0.28.0",
-  "nuitka>=2.6.8,<3.0.0",
-  "rich>=14.0.0",
-  "timeout>=0.1.2",
-  "pydot>=3.0.4",
   "psutil>=5.9.0,<6.0.0",
-  "pytest>=8.3.5",
-  "ipykernel>=6.29.5",
-  "opencv-python>=4.11.0.86",
-  "pillow>=11.2.1",
-  "graphviz>=0.20.3",
-  "scikit-image>=0.24.0",
-  "scipy>=1.13.1",
-  "cryptography>=44.0.2",
-  "tomli>=2.2.1",
-  "csvkit>=2.1.0",
-  "xlsxwriter>=3.2.3",
-  "pymupdf>=1.26.1",
-  "umap>=0.1.1",
-  "mammoth>=1.9.1",
-  "fpdf>=1.7.2",
-  "fastapi>=0.116.1",
-  "uvicorn>=0.35.0",
-  # Model service dependencies
-  "pydantic>=2.5.0",
-  "torch>=2.1.0",
-  "transformers>=4.35.0",
-  "accelerate>=0.24.1",
-  "sentencepiece>=0.1.99,<0.2.0",
-  "protobuf>=4.25.0",
-  "python-multipart>=0.0.6",
-  "huggingface-hub>=0.19.0",
-  "pypdf2>=3.0.1",
-  "sentence-transformers>=5.0.0",
-  "faiss-cpu>=1.11.0.post1",
-  "python-docx>=1.2.0",
-  "beautifulsoup4>=4.13.4",
-  "reportlab>=4.4.2",
-  "build>=1.2.2.post1",
-  "dotenv>=0.9.9",
-  "anthropic>=0.60.0",
-  "toml>=0.10.2",
+  
+  # Development and interactive features
+  "ipython>=8.12.0,<9.0.0",
+  "inquirerpy>=0.3.4,<0.4.0",
+  
+  # Additional dependencies used by the code
+  "flask>=2.3.0,<3.0.0",
+  "gitpython>=3.1.40,<4.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
+  "pytest>=8.3.5",
   "pytest-cov>=4.1.0,<5.0.0",
+  "black>=23.0.0",
   "isort>=5.12.0,<6.0.0",
   "mypy>=1.7.1,<2.0.0",
-  "pylint>=3.0.2,<4.0.0",
-  "pytest-asyncio>=0.21.0",
-  "httpx>=0.25.0",
+  "build>=1.2.2.post1",
 ]
-model-service = [
-  "diffusers>=0.24.0",
-  "opencv-python>=4.8.0",
-  "scikit-learn>=1.3.2",
-  "scipy>=1.11.4",
-]
-build = [
-  "cython>=3.0.0,<4.0.0",
+video = [
+  "opencv-python>=4.11.0.86",
+  "pillow>=11.2.1",
   "numpy>=1.24.0,<2.0.0",
 ]
 
@@ -132,23 +84,15 @@ multi_line_output = 3
 line_length = 100
 
 [build-system]
-requires = ["setuptools>=65.0.0", "wheel>=0.40.0", "Cython>=0.29.33"]
+requires = ["setuptools>=65.0.0", "wheel>=0.40.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = { find = { where = ["src"] } }
 include-package-data = true
 
-[tool.setuptools.package-data]
-mcli = ["**/*.so", "private/lpy/**/*", "public/mcli/**/*"]
-
 [tool.setuptools.exclude-package-data]
 mcli = ["**/tests/**/*", "**/__pycache__/**/*"]
-
-[tool.uv.workspace]
-members = [
-    "src/mcli/workflow/professional",
-]
 
 [project.scripts]
 mcli = "mcli.app.main:main"
