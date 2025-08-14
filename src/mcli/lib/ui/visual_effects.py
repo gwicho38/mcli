@@ -251,7 +251,7 @@ class VisualTable:
             status_emoji = "✅" if success else "❌"
             status_text = "Active" if success else "Disabled"
             
-            details = status_data.get('reason', 'Running optimally') if not success else "Loaded successfully"
+            details = status_data.get('reason', 'Not available') if not success else status_data.get('reason', 'Loaded successfully')
             
             table.add_row(
                 name,

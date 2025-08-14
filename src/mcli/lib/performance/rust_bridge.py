@@ -376,27 +376,37 @@ def print_performance_summary():
             'rust': {'success': status['available'], 'extensions': status},
             'uvloop': {'success': False},
             'redis': {'success': False}, 
-            'aiosqlite': {'success': False}
+            'aiosqlite': {'success': False},
+            'python': {'success': True, 'reason': 'GC tuning, bytecode optimization, recursion limit adjustment'}
         }
         
         # Check UVLoop
         try:
             import uvloop
             optimization_data['uvloop']['success'] = True
+            optimization_data['uvloop']['reason'] = 'High-performance event loop active'
         except ImportError:
             optimization_data['uvloop']['reason'] = 'Package not installed'
         
         # Check Redis
         try:
             import redis
+            # Try to ping Redis server
+            client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+            client.ping()
+            client.close()
             optimization_data['redis']['success'] = True
+            optimization_data['redis']['reason'] = 'Cache server connected'
         except ImportError:
             optimization_data['redis']['reason'] = 'Package not installed'
+        except Exception:
+            optimization_data['redis']['reason'] = 'Server not available'
         
         # Check AIOSQLite
         try:
             import aiosqlite
             optimization_data['aiosqlite']['success'] = True
+            optimization_data['aiosqlite']['reason'] = 'Async database operations enabled'
         except ImportError:
             optimization_data['aiosqlite']['reason'] = 'Package not installed'
         
