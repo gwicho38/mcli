@@ -15,6 +15,10 @@ import tomli
 import os
 from mcli.lib.logger.logger import get_logger, enable_runtime_tracing, disable_runtime_tracing
 
+# Initialize performance optimizations early
+from mcli.lib.performance.optimizer import apply_optimizations
+_optimization_results = apply_optimizations()
+
 # Import API decorator
 from mcli.lib.api.api import api_endpoint, start_api_server, register_command_as_api, get_api_config
 

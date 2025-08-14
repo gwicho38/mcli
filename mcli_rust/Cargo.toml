@@ -1,0 +1,27 @@
+[package]
+name = "mcli_rust"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "mcli_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module"] }
+tokio = { version = "1.0", features = ["full"] }
+notify = "6.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "1.0"
+rayon = "1.8"
+rustc-hash = "1.1"
+regex = "1.10"
+unicode-normalization = "0.1"
+smallvec = "1.11"
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[build-dependencies]
+pyo3-build-config = "0.22"

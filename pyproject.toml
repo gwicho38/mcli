@@ -26,24 +26,27 @@ dependencies = [
   "rich>=14.0.0",
   "requests>=2.31.0,<3.0.0",
   "tomli>=2.2.1",
-  
   # Chat and AI capabilities
   "openai>=1.3.0,<2.0.0",
   "anthropic>=0.60.0",
-  
+  # Async and performance
+  "fastapi>=0.110.0",
+  "uvicorn>=0.27.0",
+  "uvloop>=0.19.0",
+  "aiosqlite>=0.20.0",
+  "redis>=5.0.0",
   # Utilities
   "watchdog>=3.0.0,<4.0.0",
   "tqdm>=4.66.1,<5.0.0",
   "humanize>=4.9.0,<5.0.0",
   "psutil>=5.9.0,<6.0.0",
-  
   # Development and interactive features
   "ipython>=8.12.0,<9.0.0",
   "inquirerpy>=0.3.4,<0.4.0",
-  
   # Additional dependencies used by the code
   "flask>=2.3.0,<3.0.0",
   "gitpython>=3.1.40,<4.0.0",
+  "maturin>=1.9.3",
 ]
 
 [project.optional-dependencies]

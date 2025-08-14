@@ -53,8 +53,13 @@ src/mcli/lib/fs/__init__.py
 src/mcli/lib/fs/fs.py
 src/mcli/lib/logger/__init__.py
 src/mcli/lib/logger/logger.py
+src/mcli/lib/performance/__init__.py
+src/mcli/lib/performance/optimizer.py
+src/mcli/lib/performance/rust_bridge.py
+src/mcli/lib/performance/uvloop_config.py
 src/mcli/lib/pickles/__init__.py
 src/mcli/lib/pickles/pickles.py
+src/mcli/lib/search/cached_vectorizer.py
 src/mcli/lib/shell/__init__.py
 src/mcli/lib/shell/shell.py
 src/mcli/lib/toml/__init__.py
@@ -71,10 +76,13 @@ src/mcli/workflow/__init__.py
 src/mcli/workflow/workflow.py
 src/mcli/workflow/daemon/__init__.py
 src/mcli/workflow/daemon/api_daemon.py
+src/mcli/workflow/daemon/async_command_database.py
+src/mcli/workflow/daemon/async_process_manager.py
 src/mcli/workflow/daemon/client.py
 src/mcli/workflow/daemon/commands.py
 src/mcli/workflow/daemon/daemon.py
 src/mcli/workflow/daemon/daemon_api.py
+src/mcli/workflow/daemon/enhanced_daemon.py
 src/mcli/workflow/daemon/process_cli.py
 src/mcli/workflow/daemon/process_manager.py
 src/mcli/workflow/daemon/test_daemon.py
