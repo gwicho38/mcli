@@ -248,6 +248,11 @@ def create_app() -> click.Group:
             app.add_command(self_app, name="self")
             logger.info("Added self management commands to mcli")
         
+        # Visual effects commands
+        from mcli.app.visual_cmd import visual
+        app.add_command(visual, name="visual")
+        logger.info("Added visual effects commands to mcli")
+        
         # Workflow commands (only if needed)
         try:
             from mcli.workflow.workflow import workflow

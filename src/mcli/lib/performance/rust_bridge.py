@@ -355,41 +355,107 @@ class PythonCommandMatcher:
 _RUST_EXTENSIONS_STATUS = check_rust_extensions()
 
 def print_performance_summary():
-    """Print a summary of available performance optimizations"""
-    status = check_rust_extensions()
-    
-    print("\n🚀 MCLI Performance Optimizations Summary:")
-    print("=" * 50)
-    
-    if status['available']:
-        print("✅ Rust extensions loaded successfully!")
-        print(f"   • TF-IDF Vectorizer: {'✅' if status['tfidf'] else '❌'}")
-        print(f"   • File Watcher: {'✅' if status['file_watcher'] else '❌'}")
-        print(f"   • Command Matcher: {'✅' if status['command_matcher'] else '❌'}")
-        print(f"   • Process Manager: {'✅' if status['process_manager'] else '❌'}")
-    else:
-        print("⚠️  Rust extensions not available - using Python fallbacks")
-    
-    # Check other optimizations
+    """Print a stunning visual summary of available performance optimizations"""
     try:
-        import uvloop
-        print("✅ UVLoop available for async performance")
+        from mcli.lib.ui.visual_effects import (
+            MCLIBanner, VisualTable, ColorfulOutput, console
+        )
+        from rich.rule import Rule
+        from rich.columns import Columns
+        from rich.panel import Panel
+        from rich.text import Text
+        
+        status = check_rust_extensions()
+        
+        console.print()
+        console.print(Rule("🚀 MCLI Performance Optimizations Summary", style="bright_green"))
+        console.print()
+        
+        # Check all optimization status
+        optimization_data = {
+            'rust': {'success': status['available'], 'extensions': status},
+            'uvloop': {'success': False},
+            'redis': {'success': False}, 
+            'aiosqlite': {'success': False}
+        }
+        
+        # Check UVLoop
+        try:
+            import uvloop
+            optimization_data['uvloop']['success'] = True
+        except ImportError:
+            optimization_data['uvloop']['reason'] = 'Package not installed'
+        
+        # Check Redis
+        try:
+            import redis
+            optimization_data['redis']['success'] = True
+        except ImportError:
+            optimization_data['redis']['reason'] = 'Package not installed'
+        
+        # Check AIOSQLite
+        try:
+            import aiosqlite
+            optimization_data['aiosqlite']['success'] = True
+        except ImportError:
+            optimization_data['aiosqlite']['reason'] = 'Package not installed'
+        
+        # Show performance table
+        performance_table = VisualTable.create_performance_table(optimization_data)
+        console.print(performance_table)
+        console.print()
+        
+        # Show Rust extensions details if available
+        if status['available']:
+            rust_table = VisualTable.create_rust_extensions_table(status)
+            console.print(rust_table)
+            console.print()
+            
+            # Show celebration
+            ColorfulOutput.success("All Rust extensions loaded - Maximum performance activated!")
+        else:
+            ColorfulOutput.warning("Rust extensions not available - Using Python fallbacks")
+            console.print()
+        
+        console.print(Rule("System Ready", style="bright_blue"))
+        console.print()
+        
     except ImportError:
-        print("⚠️  UVLoop not available - using default asyncio")
-    
-    try:
-        import redis
-        print("✅ Redis available for caching")
-    except ImportError:
-        print("⚠️  Redis not available - caching disabled")
-    
-    try:
-        import aiosqlite
-        print("✅ AIOSQLite available for async database operations")
-    except ImportError:
-        print("⚠️  AIOSQLite not available - using sync SQLite")
-    
-    print()
+        # Fallback to original simple output if visual effects not available
+        status = check_rust_extensions()
+        
+        print("\n🚀 MCLI Performance Optimizations Summary:")
+        print("=" * 50)
+        
+        if status['available']:
+            print("✅ Rust extensions loaded successfully!")
+            print(f"   • TF-IDF Vectorizer: {'✅' if status['tfidf'] else '❌'}")
+            print(f"   • File Watcher: {'✅' if status['file_watcher'] else '❌'}")
+            print(f"   • Command Matcher: {'✅' if status['command_matcher'] else '❌'}")
+            print(f"   • Process Manager: {'✅' if status['process_manager'] else '❌'}")
+        else:
+            print("⚠️  Rust extensions not available - using Python fallbacks")
+        
+        # Check other optimizations
+        try:
+            import uvloop
+            print("✅ UVLoop available for async performance")
+        except ImportError:
+            print("⚠️  UVLoop not available - using default asyncio")
+        
+        try:
+            import redis
+            print("✅ Redis available for caching")
+        except ImportError:
+            print("⚠️  Redis not available - caching disabled")
+        
+        try:
+            import aiosqlite
+            print("✅ AIOSQLite available for async database operations")
+        except ImportError:
+            print("⚠️  AIOSQLite not available - using sync SQLite")
+        
+        print()
 
 # Print summary when module is imported (can be disabled with env var)
 if os.environ.get('MCLI_SHOW_PERFORMANCE_SUMMARY', '1').lower() not in ('0', 'false', 'no'):
