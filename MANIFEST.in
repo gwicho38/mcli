@@ -1,0 +1,41 @@
+# Include important documentation
+include README.md
+include LICENSE
+include PERFORMANCE_OPTIMIZATIONS.md
+
+# Include configuration files
+include pyproject.toml
+include setup.cfg
+recursive-include src/mcli *.toml
+
+# Include Rust extensions
+recursive-include mcli_rust *.rs
+include mcli_rust/Cargo.toml
+include mcli_rust/Cargo.lock
+
+# Include GitHub workflows and configuration
+recursive-include .github *.yml *.yaml
+
+# Include tests (optional, for development)
+recursive-include tests *.py
+include tests/*.ini
+
+# Exclude build artifacts
+prune build/
+prune dist/
+prune *.egg-info/
+prune mcli_rust/target/
+
+# Exclude cache and temporary files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.pyd
+global-exclude __pycache__
+global-exclude *.so
+global-exclude .DS_Store
+global-exclude *.log
+
+# Include package data
+recursive-include src/mcli/lib *.py
+recursive-include src/mcli/workflow *.py
+recursive-include src/mcli/app *.py

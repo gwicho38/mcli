@@ -1,0 +1,91 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 5.0.0)'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes (optional)'
+        required: false
+        type: string
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Validate version format
+      run: |
+        if [[ ! "${{ github.event.inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Error: Version must be in format X.Y.Z (e.g., 5.0.0)"
+          exit 1
+        fi
+        
+    - name: Check if version exists in pyproject.toml
+      run: |
+        current_version=$(grep '^version = ' pyproject.toml | sed 's/version = "//' | sed 's/"//')
+        if [ "$current_version" != "${{ github.event.inputs.version }}" ]; then
+          echo "Error: Version in pyproject.toml ($current_version) doesn't match input (${{ github.event.inputs.version }})"
+          echo "Please update pyproject.toml first"
+          exit 1
+        fi
+        
+    - name: Create git tag
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git tag -a "v${{ github.event.inputs.version }}" -m "Release v${{ github.event.inputs.version }}"
+        git push origin "v${{ github.event.inputs.version }}"
+        
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        if [ -n "${{ github.event.inputs.release_notes }}" ]; then
+          echo "notes=${{ github.event.inputs.release_notes }}" >> $GITHUB_OUTPUT
+        else
+          # Generate automatic release notes from commits since last tag
+          last_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$last_tag" ]; then
+            echo "notes<<EOF" >> $GITHUB_OUTPUT
+            echo "## 🚀 What's New in v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            git log ${last_tag}..HEAD --pretty=format:"- %s" --reverse >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "## 🎯 Key Features" >> $GITHUB_OUTPUT
+            echo "- High-performance Rust extensions for 10-100x speedup" >> $GITHUB_OUTPUT
+            echo "- Beautiful visual CLI with ASCII art and animations" >> $GITHUB_OUTPUT
+            echo "- Advanced chat capabilities with multiple AI providers" >> $GITHUB_OUTPUT
+            echo "- Comprehensive performance monitoring and optimization" >> $GITHUB_OUTPUT
+            echo "- Interactive visual effects and progress indicators" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "## 📦 Installation" >> $GITHUB_OUTPUT
+            echo "\`\`\`bash" >> $GITHUB_OUTPUT
+            echo "pip install mcli==${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "\`\`\`" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "notes=Release v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+        fi
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: "v${{ github.event.inputs.version }}"
+        name: "MCLI v${{ github.event.inputs.version }}"
+        body: ${{ steps.release_notes.outputs.notes }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

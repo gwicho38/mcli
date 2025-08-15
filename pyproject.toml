@@ -1,24 +1,39 @@
 [project]
 name = "mcli"
 version = "5.0.0"
-description = "A modern CLI framework with chat capabilities and command management"
+description = "🚀 High-performance CLI framework with Rust extensions, AI chat, and stunning visuals"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "Luis Fernandez de la Vara", email = "luis@lefv.io" }]
-license = "MIT"
-keywords = ["cli", "command-line", "framework", "chat", "assistant"]
+maintainers = [{ name = "Luis Fernandez de la Vara", email = "luis@lefv.io" }]
+license = { text = "MIT" }
+keywords = [
+  "cli", "command-line", "framework", "chat", "assistant", "rust", "performance",
+  "visual", "tui", "terminal", "ai", "openai", "anthropic", "productivity"
+]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Environment :: Console",
   "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Rust",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: System :: Shells",
+  "Topic :: System :: Systems Administration",
+  "Topic :: Terminals",
   "Topic :: Utilities",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Typing :: Typed",
 ]
 dependencies = [
   # Core dependencies
@@ -48,6 +63,14 @@ dependencies = [
   "gitpython>=3.1.40,<4.0.0",
   "maturin>=1.9.3",
 ]
+
+[project.urls]
+"Homepage" = "https://github.com/lefv/mcli"
+"Repository" = "https://github.com/lefv/mcli"
+"Documentation" = "https://github.com/lefv/mcli#readme"
+"Issues" = "https://github.com/lefv/mcli/issues"
+"Changelog" = "https://github.com/lefv/mcli/releases"
+"Source" = "https://github.com/lefv/mcli"
 
 [project.optional-dependencies]
 dev = [
