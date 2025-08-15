@@ -8,10 +8,10 @@ include pyproject.toml
 include setup.cfg
 recursive-include src/mcli *.toml
 
-# Include Rust extensions
-recursive-include mcli_rust *.rs
+# Include Rust source for reference (but not for building)
+# Rust extensions will be built separately with maturin
+graft mcli_rust/src
 include mcli_rust/Cargo.toml
-include mcli_rust/Cargo.lock
 
 # Include GitHub workflows and configuration
 recursive-include .github *.yml *.yaml

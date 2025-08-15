@@ -1,21 +1,39 @@
 Metadata-Version: 2.4
 Name: mcli
 Version: 5.0.0
-Summary: A modern CLI framework with chat capabilities and command management
+Summary: 🚀 High-performance CLI framework with Rust extensions, AI chat, and stunning visuals
 Author-email: Luis Fernandez de la Vara <luis@lefv.io>
-License-Expression: MIT
-Keywords: cli,command-line,framework,chat,assistant
+Maintainer-email: Luis Fernandez de la Vara <luis@lefv.io>
+License: MIT
+Project-URL: Homepage, https://github.com/lefv/mcli
+Project-URL: Repository, https://github.com/lefv/mcli
+Project-URL: Documentation, https://github.com/lefv/mcli#readme
+Project-URL: Issues, https://github.com/lefv/mcli/issues
+Project-URL: Changelog, https://github.com/lefv/mcli/releases
+Project-URL: Source, https://github.com/lefv/mcli
+Keywords: cli,command-line,framework,chat,assistant,rust,performance,visual,tui,terminal,ai,openai,anthropic,productivity
 Classifier: Development Status :: 4 - Beta
 Classifier: Environment :: Console
 Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.9
 Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
 Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Rust
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Classifier: Topic :: System :: Shells
+Classifier: Topic :: System :: Systems Administration
+Classifier: Topic :: Terminals
 Classifier: Topic :: Utilities
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Typing :: Typed
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
@@ -39,6 +57,7 @@ Requires-Dist: inquirerpy<0.4.0,>=0.3.4
 Requires-Dist: flask<3.0.0,>=2.3.0
 Requires-Dist: gitpython<4.0.0,>=3.1.40
 Requires-Dist: maturin>=1.9.3
+Requires-Dist: build>=1.2.2.post1
 Provides-Extra: dev
 Requires-Dist: pytest>=8.3.5; extra == "dev"
 Requires-Dist: pytest-cov<5.0.0,>=4.1.0; extra == "dev"

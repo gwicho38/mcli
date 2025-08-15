@@ -18,6 +18,7 @@ inquirerpy<0.4.0,>=0.3.4
 flask<3.0.0,>=2.3.0
 gitpython<4.0.0,>=3.1.40
 maturin>=1.9.3
+build>=1.2.2.post1
 
 [dev]
 pytest>=8.3.5

@@ -62,6 +62,7 @@ dependencies = [
   "flask>=2.3.0,<3.0.0",
   "gitpython>=3.1.40,<4.0.0",
   "maturin>=1.9.3",
+  "build>=1.2.2.post1",
 ]
 
 [project.urls]
