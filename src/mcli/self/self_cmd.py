@@ -15,6 +15,7 @@ import tomli
 import os
 import hashlib
 import json
+import time
 from datetime import datetime
 
 try:
@@ -919,6 +920,95 @@ def logs(type: str, lines: int, follow: bool, date: str, grep: str, level: str):
         except Exception as e:
             click.echo(f"❌ Error following logs: {e}", err=True)
 
+
+@self_app.command("performance")
+@click.option("--detailed", "-d", is_flag=True, help="Show detailed performance information")
+@click.option("--benchmark", "-b", is_flag=True, help="Run performance benchmarks")
+def performance(detailed: bool, benchmark: bool):
+    """🚀 Show performance optimization status and benchmarks"""
+    try:
+        from mcli.lib.performance.rust_bridge import print_performance_summary
+        from mcli.lib.performance.optimizer import get_global_optimizer
+        
+        # Always show the performance summary
+        print_performance_summary()
+        
+        if detailed:
+            console.print("\n📊 Detailed Performance Information:")
+            console.print("─" * 60)
+            
+            optimizer = get_global_optimizer()
+            summary = optimizer.get_optimization_summary()
+            
+            table = Table(title="Detailed Optimization Results", show_header=True, header_style="bold magenta")
+            table.add_column("Optimization", style="cyan", width=20)
+            table.add_column("Status", justify="center", width=10)
+            table.add_column("Details", style="white", width=40)
+            
+            for name, details in summary['details'].items():
+                status = "✅" if details.get('success') else "❌"
+                detail_text = details.get('performance_gain', 'N/A')
+                if details.get('optimizations'):
+                    opts = details['optimizations']
+                    detail_text += f"\n{len(opts)} optimizations applied"
+                
+                table.add_row(name.replace('_', ' ').title(), status, detail_text)
+            
+            console.print(table)
+            
+            console.print(f"\n🎯 Estimated Performance Gain: {summary['estimated_performance_gain']}")
+        
+        if benchmark:
+            console.print("\n🏁 Running Performance Benchmarks...")
+            console.print("─" * 60)
+            
+            try:
+                from mcli.lib.ui.visual_effects import MCLIProgressBar
+                
+                progress = MCLIProgressBar.create_fancy_progress()
+                with progress:
+                    # Benchmark task
+                    task = progress.add_task("🔥 Running TF-IDF benchmark...", total=100)
+                    
+                    optimizer = get_global_optimizer()
+                    
+                    # Update progress
+                    for i in range(20):
+                        progress.update(task, advance=5)
+                        time.sleep(0.05)
+                    
+                    # Run actual benchmark
+                    benchmark_results = optimizer.benchmark_performance("medium")
+                    
+                    progress.update(task, advance=100)
+                
+                # Display results
+                if benchmark_results:
+                    console.print("\n📈 Benchmark Results:")
+                    
+                    tfidf_results = benchmark_results.get('tfidf_benchmark', {})
+                    if tfidf_results.get('rust') and tfidf_results.get('python'):
+                        speedup = tfidf_results['python'] / tfidf_results['rust']
+                        console.print(f"   🦀 Rust TF-IDF: {tfidf_results['rust']:.3f}s")
+                        console.print(f"   🐍 Python TF-IDF: {tfidf_results['python']:.3f}s")
+                        console.print(f"   ⚡ Speedup: {speedup:.1f}x faster with Rust!")
+                    
+                    system_info = benchmark_results.get('system_info', {})
+                    if system_info:
+                        console.print(f"\n💻 System Info:")
+                        console.print(f"   Platform: {system_info.get('platform', 'Unknown')}")
+                        console.print(f"   CPUs: {system_info.get('cpu_count', 'Unknown')}")
+                        console.print(f"   Memory: {system_info.get('memory_total', 0) // (1024**3):.1f}GB")
+                
+            except ImportError:
+                click.echo("📊 Benchmark functionality requires additional dependencies")
+                click.echo("💡 Install with: pip install rich")
+    
+    except ImportError as e:
+        click.echo(f"❌ Performance monitoring not available: {e}")
+        click.echo("💡 Try installing dependencies: pip install rich psutil")
+    except Exception as e:
+        click.echo(f"❌ Error showing performance status: {e}")
 
 # Register the plugin group with self_app
 self_app.add_command(plugin)

@@ -467,6 +467,6 @@ def print_performance_summary():
         
         print()
 
-# Print summary when module is imported (can be disabled with env var)
-if os.environ.get('MCLI_SHOW_PERFORMANCE_SUMMARY', '1').lower() not in ('0', 'false', 'no'):
+# Print summary when module is imported (can be enabled with env var)
+if os.environ.get('MCLI_SHOW_PERFORMANCE_SUMMARY', '0').lower() not in ('0', 'false', 'no'):
     print_performance_summary()

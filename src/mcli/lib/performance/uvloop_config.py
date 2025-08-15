@@ -32,17 +32,22 @@ def install_uvloop(force: bool = False) -> bool:
         loop.close()
         
         if is_uvloop:
-            print("✓ UVLoop installed successfully for enhanced async performance")
+            # Only print if explicitly requested
+            if os.environ.get('MCLI_VERBOSE_UVLOOP', '0').lower() in ('1', 'true', 'yes'):
+                print("✓ UVLoop installed successfully for enhanced async performance")
             return True
         else:
-            print("⚠ UVLoop installation failed - using default asyncio")
+            if os.environ.get('MCLI_VERBOSE_UVLOOP', '0').lower() in ('1', 'true', 'yes'):
+                print("⚠ UVLoop installation failed - using default asyncio")
             return False
             
     except ImportError:
-        print("⚠ UVLoop not available - install with: pip install uvloop")
+        if os.environ.get('MCLI_VERBOSE_UVLOOP', '0').lower() in ('1', 'true', 'yes'):
+            print("⚠ UVLoop not available - install with: pip install uvloop")
         return False
     except Exception as e:
-        print(f"⚠ UVLoop installation failed: {e}")
+        if os.environ.get('MCLI_VERBOSE_UVLOOP', '0').lower() in ('1', 'true', 'yes'):
+            print(f"⚠ UVLoop installation failed: {e}")
         return False
 
 def should_use_uvloop() -> bool:
