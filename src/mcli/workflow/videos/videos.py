@@ -7,27 +7,53 @@ import os
 app_video_path = Path(__file__).parent.parent.parent / "app" / "video"
 sys.path.insert(0, str(app_video_path))
 
-try:
-    from mcli.app.video.video import VideoProcessor, EnhancedVideoProcessor, IntelligentVideoProcessor, CONFIG
-except ImportError:
+# Lazy import variables
+_video_module = None
+_import_error = None
+
+def _get_video_module():
+    """Lazy import of video processing module."""
+    global _video_module, _import_error
+    
+    if _video_module is not None:
+        return _video_module
+    
+    if _import_error is not None:
+        raise _import_error
+    
     try:
-        # Fallback import
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("video", app_video_path / "video.py")
-        video_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(video_module)
-        
-        VideoProcessor = video_module.VideoProcessor
-        EnhancedVideoProcessor = video_module.EnhancedVideoProcessor
-        IntelligentVideoProcessor = video_module.IntelligentVideoProcessor
-        CONFIG = video_module.CONFIG
-    except Exception as e:
-        click.echo(click.style(f"❌ Error: Could not import video processing modules: {e}", fg="red"))
-        # Provide basic functionality without video processing
-        VideoProcessor = None
-        EnhancedVideoProcessor = None
-        IntelligentVideoProcessor = None
-        CONFIG = {"temp_dir": "./temp", "output_dir": "./output"}
+        from mcli.app.video.video import VideoProcessor, EnhancedVideoProcessor, IntelligentVideoProcessor, CONFIG
+        _video_module = {
+            'VideoProcessor': VideoProcessor,
+            'EnhancedVideoProcessor': EnhancedVideoProcessor,
+            'IntelligentVideoProcessor': IntelligentVideoProcessor,
+            'CONFIG': CONFIG
+        }
+    except ImportError:
+        try:
+            # Fallback import
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("video", app_video_path / "video.py")
+            video_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(video_module)
+            
+            _video_module = {
+                'VideoProcessor': video_module.VideoProcessor,
+                'EnhancedVideoProcessor': video_module.EnhancedVideoProcessor,
+                'IntelligentVideoProcessor': video_module.IntelligentVideoProcessor,
+                'CONFIG': video_module.CONFIG
+            }
+        except Exception as e:
+            _import_error = ImportError(f"Could not import video processing modules: {e}")
+            # Return basic fallback
+            _video_module = {
+                'VideoProcessor': None,
+                'EnhancedVideoProcessor': None,
+                'IntelligentVideoProcessor': None,
+                'CONFIG': {"temp_dir": "./temp", "output_dir": "./output"}
+            }
+    
+    return _video_module
 
 
 @click.group()
@@ -46,6 +72,16 @@ def videos():
 @click.option('--dry-run', is_flag=True, help='Only extract frames and analyze video')
 def remove_overlay(input_video, output, fps, context, method, dry_run):
     """Remove overlays from videos with intelligent content reconstruction."""
+    
+    try:
+        video_module = _get_video_module()
+    except ImportError as e:
+        click.echo(click.style(f"❌ Video processing modules not available: {e}", fg="red"))
+        return
+    
+    VideoProcessor = video_module['VideoProcessor']
+    EnhancedVideoProcessor = video_module['EnhancedVideoProcessor']
+    IntelligentVideoProcessor = video_module['IntelligentVideoProcessor']
     
     if VideoProcessor is None:
         click.echo(click.style("❌ Video processing modules not available. Please install required dependencies.", fg="red"))
@@ -102,6 +138,14 @@ def remove_overlay(input_video, output, fps, context, method, dry_run):
 def extract_frames(input_video, output, fps):
     """Extract frames from video to timestamped directory."""
     
+    try:
+        video_module = _get_video_module()
+    except ImportError as e:
+        click.echo(click.style(f"❌ Video processing modules not available: {e}", fg="red"))
+        return
+    
+    VideoProcessor = video_module['VideoProcessor']
+    
     if VideoProcessor is None:
         click.echo(click.style("❌ Video processing modules not available. Please install required dependencies.", fg="red"))
         return
@@ -124,6 +168,14 @@ def extract_frames(input_video, output, fps):
 @click.option('--fps', '-f', default=30.0, help='Output video FPS (default: 30)')
 def frames_to_video(frame_directory, output, fps):
     """Convert frames back to video."""
+    
+    try:
+        video_module = _get_video_module()
+    except ImportError as e:
+        click.echo(click.style(f"❌ Video processing modules not available: {e}", fg="red"))
+        return
+    
+    VideoProcessor = video_module['VideoProcessor']
     
     if VideoProcessor is None:
         click.echo(click.style("❌ Video processing modules not available. Please install required dependencies.", fg="red"))

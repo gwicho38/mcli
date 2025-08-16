@@ -15,12 +15,10 @@ import tomli
 import os
 from mcli.lib.logger.logger import get_logger, enable_runtime_tracing, disable_runtime_tracing
 
-# Initialize performance optimizations early
-from mcli.lib.performance.optimizer import apply_optimizations
-_optimization_results = apply_optimizations()
+# Defer performance optimizations until needed
+_optimization_results = None
 
-# Import API decorator
-from mcli.lib.api.api import api_endpoint, start_api_server, register_command_as_api, get_api_config
+# Defer API imports until needed
 
 # Get logger
 logger = get_logger(__name__)
@@ -39,14 +37,7 @@ if trace_level:
         
 logger.debug("About to import readiness module")
 
-# Import self management commands
-try:
-    from mcli.self.self_cmd import self_app
-    logger.debug("Successfully imported self management module")
-except ImportError as e:
-    logger.error(f"Error importing self management module: {e}")
-    import traceback
-    logger.error(f"Traceback: {traceback.format_exc()}")
+# Defer self management commands import
 
 logger.debug("main")
 
@@ -217,6 +208,77 @@ def process_click_commands(obj, module_name: str, parent_name: str = ""):
             register_command_as_api_endpoint(obj.callback, module_name, full_name)
 
 
+class LazyCommand(click.Command):
+    """A Click command that loads its implementation lazily."""
+    
+    def __init__(self, name, import_path, *args, **kwargs):
+        self.import_path = import_path
+        self._loaded_command = None
+        super().__init__(name, *args, **kwargs)
+    
+    def _load_command(self):
+        """Load the actual command on first use."""
+        if self._loaded_command is None:
+            try:
+                module_path, attr_name = self.import_path.rsplit('.', 1)
+                module = importlib.import_module(module_path)
+                self._loaded_command = getattr(module, attr_name)
+                logger.debug(f"Lazily loaded command: {self.name}")
+            except Exception as e:
+                logger.error(f"Failed to load command {self.name}: {e}")
+                # Return a dummy command that shows an error
+                def error_callback():
+                    click.echo(f"Error: Command {self.name} is not available")
+                self._loaded_command = click.Command(self.name, callback=error_callback)
+        return self._loaded_command
+    
+    def invoke(self, ctx):
+        """Invoke the lazily loaded command."""
+        cmd = self._load_command()
+        return cmd.invoke(ctx)
+    
+    def get_params(self, ctx):
+        """Get parameters from the lazily loaded command."""
+        cmd = self._load_command()
+        return cmd.get_params(ctx)
+
+
+def _add_lazy_commands(app: click.Group):
+    """Add command groups with lazy loading."""
+    # Essential commands - load immediately for fast access
+    try:
+        from mcli.app.commands_cmd import commands
+        app.add_command(commands, name="commands")
+        logger.debug("Added commands group")
+    except ImportError as e:
+        logger.debug(f"Could not load commands group: {e}")
+    
+    # Self management - load immediately as it's commonly used
+    try:
+        from mcli.self.self_cmd import self_app
+        app.add_command(self_app, name="self")
+        logger.debug("Added self management commands")
+    except Exception as e:
+        logger.debug(f"Could not load self commands: {e}")
+    
+    # Lazy load heavy commands that are used less frequently
+    lazy_commands = {
+        'chat': 'mcli.app.chat_cmd.chat',
+        'visual': 'mcli.app.visual_cmd.visual',
+        'workflow': 'mcli.workflow.workflow.workflow',
+    }
+    
+    for cmd_name, import_path in lazy_commands.items():
+        lazy_cmd = LazyCommand(
+            name=cmd_name,
+            import_path=import_path,
+            callback=lambda: None,  # Placeholder
+            help=f"{cmd_name.title()} commands (loaded on demand)"
+        )
+        app.add_command(lazy_cmd)
+        logger.debug(f"Added lazy command: {cmd_name}")
+
+
 def create_app() -> click.Group:
     """Create and configure the Click application with clean top-level commands."""
     
@@ -233,50 +295,8 @@ def create_app() -> click.Group:
         logger.info(message)
         info(message)
 
-    # Import and add core command groups
-    try:
-        # Chat commands
-        from mcli.app.chat_cmd import chat
-        app.add_command(chat, name="chat")
-        
-        # Commands management
-        from mcli.app.commands_cmd import commands
-        app.add_command(commands, name="commands")
-        
-        # Self management commands
-        if 'self_app' in globals():
-            app.add_command(self_app, name="self")
-            logger.info("Added self management commands to mcli")
-        
-        # Visual effects commands
-        from mcli.app.visual_cmd import visual
-        app.add_command(visual, name="visual")
-        logger.info("Added visual effects commands to mcli")
-        
-        # Workflow commands (only if needed)
-        try:
-            from mcli.workflow.workflow import workflow
-            app.add_command(workflow, name="workflow")
-            logger.info("Added workflow commands to mcli")
-        except ImportError as e:
-            logger.debug(f"Workflow module not found or disabled: {e}")
-            
-    except Exception as e:
-        logger.error(f"Error adding command groups: {e}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-
-    # Auto-start daemon if needed
-    try:
-        from mcli.lib.api.daemon_client import get_daemon_client
-        client = get_daemon_client()
-        if not client.is_running():
-            # Silently start daemon in background
-            from mcli.workflow.daemon.api_daemon import APIDaemonService
-            daemon = APIDaemonService()
-            daemon.start()
-    except Exception as e:
-        logger.debug(f"Could not auto-start daemon: {e}")
+    # Add lazy-loaded command groups
+    _add_lazy_commands(app)
 
     return app
 
