@@ -70,3 +70,7 @@ output/**/*
 
 temp/
 node_modules/
+
+# Rust build artifacts
+**/target/
+**/Cargo.lock

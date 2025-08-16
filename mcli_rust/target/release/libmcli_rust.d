@@ -1,1 +1,0 @@
-/Users/lefv/repos/mcli/mcli_rust/target/release/libmcli_rust.dylib: /Users/lefv/repos/mcli/mcli_rust/src/command_parser.rs /Users/lefv/repos/mcli/mcli_rust/src/file_watcher.rs /Users/lefv/repos/mcli/mcli_rust/src/lib.rs /Users/lefv/repos/mcli/mcli_rust/src/process_manager.rs /Users/lefv/repos/mcli/mcli_rust/src/tfidf.rs
