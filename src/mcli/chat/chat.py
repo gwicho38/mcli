@@ -137,6 +137,11 @@ class ChatClient:
                 console.print("[red]Usage: start <process_id>[/red]")
             return
         
+        # Check for command creation requests
+        if self.is_command_creation_request(user_input):
+            self.handle_command_creation(user_input)
+            return
+        
         # Check for 'run <command> [args...]' pattern (containerized execution)
         if user_input.lower().startswith("run "):
             command_part = user_input[4:].strip()
@@ -625,13 +630,35 @@ class ChatClient:
                 for cmd in commands
             ) if commands else "(No command context available)"
 
-            prompt = f"""You are the MCLI Chat Assistant, a helpful AI assistant for the MCLI (Machine Learning Command Line Interface) tool. You help users understand and use MCLI commands, answer questions about programming and machine learning, and provide general assistance.
+            # Check if this is a command creation request
+            is_creation_request = any(keyword in query.lower() for keyword in [
+                'create command', 'create a command', 'new command', 'make command',
+                'integrate', 'add command', 'build command', 'generate command'
+            ])
+            
+            if is_creation_request:
+                prompt = f"""{SYSTEM_PROMPT}
+
+Available MCLI Commands: {command_context}
+
+User Request: {query}
+
+This appears to be a command creation request. Please:
+1. Generate appropriate Python code using Click framework
+2. Provide clear implementation with error handling
+3. Include proper command structure and help text
+4. Suggest where to save the command file
+5. Explain how to test and use the new command
+
+Focus on practical, working code that follows MCLI patterns."""
+            else:
+                prompt = f"""{SYSTEM_PROMPT}
 
 Available MCLI Commands: {command_context}
 
 User Question: {query}
 
-Please provide a helpful, concise response. If the user is asking about MCLI commands, reference the available commands above."""
+Please provide a helpful, detailed response. Reference available commands when relevant."""
 
             if LLM_PROVIDER == "local":
                 # Use Ollama for local model inference
@@ -757,6 +784,36 @@ Please provide a helpful, concise response. If the user is asking about MCLI com
             logger.error(f"LLM Error: {e}\n{traceback.format_exc()}")
             console.print("[red]Error:[/red] Could not generate LLM response")
             console.print("Please check your LLM configuration in .env file")
+    
+    def is_command_creation_request(self, user_input: str) -> bool:
+        """Check if user input is requesting to create a new command."""
+        lower_input = user_input.lower()
+        creation_keywords = [
+            'create command', 'create a command', 'new command', 'make command',
+            'integrate', 'add command', 'build command', 'generate command',
+            'can you create', 'help me create', 'make a new', 'build a new',
+            'integrate the code', 'add a new command'
+        ]
+        return any(keyword in lower_input for keyword in creation_keywords)
+    
+    def handle_command_creation(self, user_input: str):
+        """Handle command creation requests by generating code and guidance."""
+        console.print("[bold green]🛠️  Command Creation Mode[/bold green]")
+        console.print("I'll help you create a new MCLI command!")
+        console.print()
+        
+        # Use the enhanced LLM generation with creation context
+        self.generate_llm_response(user_input)
+        
+        # Provide additional guidance
+        console.print()
+        console.print("[bold cyan]💡 Next Steps:[/bold cyan]")
+        console.print("1. Copy the generated code to a new Python file")
+        console.print("2. Save it in the appropriate MCLI module directory")
+        console.print("3. Test the command with: [yellow]mcli <your-command>[/yellow]")
+        console.print("4. Use [yellow]mcli commands list[/yellow] to verify it's available")
+        console.print()
+        console.print("[dim]Tip: Commands are automatically discovered when placed in the correct directories[/dim]")
 
 if __name__ == "__main__":
     client = ChatClient()
