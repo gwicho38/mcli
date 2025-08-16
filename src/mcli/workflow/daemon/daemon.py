@@ -21,7 +21,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 # Import existing utilities
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
-from mcli.workflow.daemon import CommandDatabase
+from mcli.workflow.daemon.commands import CommandDatabase
 
 
 

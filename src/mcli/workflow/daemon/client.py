@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 
 # Import the daemon classes
-from .daemon import CommandDatabase, Command, CommandExecutor
+from .commands import CommandDatabase, Command, CommandExecutor
 
 @click.group()
 def client():

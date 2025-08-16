@@ -521,7 +521,7 @@ class APIDaemonService:
         }
 
 # Import the existing Command and CommandDatabase classes
-from mcli.workflow.daemon.daemon import Command, CommandDatabase, CommandExecutor
+from mcli.workflow.daemon.commands import Command, CommandDatabase, CommandExecutor
 
 @click.group(name="api-daemon")
 def api_daemon():
