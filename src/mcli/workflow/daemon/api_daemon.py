@@ -19,9 +19,6 @@ import shutil
 import psutil
 from dataclasses import dataclass, asdict
 import pickle
-import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 import logging
 import requests
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
@@ -484,15 +481,25 @@ class APIDaemonService:
         self.server_thread = threading.Thread(target=run_server, daemon=True)
         self.server_thread.start()
         
-        # Wait for server to start
-        time.sleep(2)
+        # Wait for server to be ready by checking health endpoint
+        server_url = f"http://{self.config.host}:{port}"
+        max_wait = 10  # Maximum wait time in seconds
+        wait_interval = 0.5  # Check every 0.5 seconds
         
-        self.running = True
-        logger.info(f"API daemon started on http://{self.config.host}:{port}")
+        for attempt in range(int(max_wait / wait_interval)):
+            time.sleep(wait_interval)
+            try:
+                response = requests.get(f"{server_url}/health", timeout=1)
+                if response.status_code == 200:
+                    self.running = True
+                    logger.info(f"API daemon started on {server_url}")
+                    return
+            except requests.exceptions.RequestException:
+                continue  # Server not ready yet
         
-        # Register signal handlers
-        signal.signal(signal.SIGINT, self._signal_handler)
-        signal.signal(signal.SIGTERM, self._signal_handler)
+        # If we get here, the server didn't start properly
+        logger.error(f"Failed to start API daemon on {server_url} after {max_wait} seconds")
+        self.running = False
     
     def stop(self):
         """Stop the API daemon server"""
@@ -502,12 +509,6 @@ class APIDaemonService:
         
         self.running = False
         logger.info("API daemon stopped")
-    
-    def _signal_handler(self, signum, frame):
-        """Handle shutdown signals"""
-        logger.info(f"Received signal {signum}, shutting down API daemon")
-        self.stop()
-        sys.exit(0)
     
     def status(self) -> Dict[str, Any]:
         """Get daemon status"""
