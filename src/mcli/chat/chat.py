@@ -813,23 +813,30 @@ Provide accurate information. Only reference commands that actually exist in the
         return any(keyword in lower_input for keyword in creation_keywords)
     
     def handle_command_creation(self, user_input: str):
-        """Handle command creation requests by generating code and guidance."""
+        """Handle command creation requests with complete end-to-end implementation."""
         console.print("[bold green]🛠️  Command Creation Mode[/bold green]")
-        console.print("I'll help you create a new MCLI command!")
+        console.print("I'll create a complete working MCLI command for you!")
         console.print()
         
-        # Use the enhanced LLM generation with creation context
-        self.generate_llm_response(user_input)
-        
-        # Provide additional guidance
-        console.print()
-        console.print("[bold cyan]💡 Next Steps:[/bold cyan]")
-        console.print("1. Copy the generated code to a new Python file")
-        console.print("2. Save it in the appropriate MCLI module directory")
-        console.print("3. Test the command with: [yellow]mcli <your-command>[/yellow]")
-        console.print("4. Use [yellow]mcli commands list[/yellow] to verify it's available")
-        console.print()
-        console.print("[dim]Tip: Commands are automatically discovered when placed in the correct directories[/dim]")
+        # Ask user if they want full automation or just guidance
+        try:
+            console.print("[bold cyan]Choose your approach:[/bold cyan]")
+            console.print("1. [green]Full automation[/green] - I'll create, save, and test the command")
+            console.print("2. [yellow]Code only[/yellow] - I'll just generate code for you to implement")
+            console.print()
+            
+            choice = console.input("[bold cyan]Enter choice (1 or 2, default=1): [/bold cyan]").strip()
+            if choice == "2":
+                # Original behavior - just generate code
+                self._generate_code_only(user_input)
+            else:
+                # New behavior - complete automation
+                self._create_complete_command(user_input)
+                
+        except (EOFError, KeyboardInterrupt):
+            # Default to full automation if input fails
+            console.print("Defaulting to full automation...")
+            self._create_complete_command(user_input)
     
     def validate_and_correct_response(self, response_text: str, available_commands: list) -> str:
         """Validate AI response and correct any hallucinated commands."""
@@ -878,6 +885,205 @@ Provide accurate information. Only reference commands that actually exist in the
                 break
         
         return corrected_response
+    
+    def _generate_code_only(self, user_input: str):
+        """Generate code only without creating files."""
+        # Use the enhanced LLM generation with creation context
+        self.generate_llm_response(user_input)
+        
+        # Provide additional guidance
+        console.print()
+        console.print("[bold cyan]💡 Next Steps:[/bold cyan]")
+        console.print("1. Copy the generated code to a new Python file")
+        console.print("2. Save it in the appropriate MCLI module directory")
+        console.print("3. Test the command with: [yellow]mcli <your-command>[/yellow]")
+        console.print("4. Use [yellow]mcli commands list[/yellow] to verify it's available")
+        console.print()
+        console.print("[dim]Tip: Commands are automatically discovered when placed in the correct directories[/dim]")
+    
+    def _create_complete_command(self, user_input: str):
+        """Create a complete working command with full automation."""
+        import os
+        import re
+        from pathlib import Path
+        
+        console.print("[bold blue]🤖 Starting automated command creation...[/bold blue]")
+        console.print()
+        
+        # Step 1: Generate code with AI
+        console.print("1. [cyan]Generating command code...[/cyan]")
+        code_response = self._get_command_code_from_ai(user_input)
+        
+        if not code_response:
+            console.print("[red]❌ Failed to generate code. Falling back to code-only mode.[/red]")
+            self._generate_code_only(user_input)
+            return
+        
+        # Step 2: Extract command info and code
+        command_info = self._parse_command_response(code_response)
+        if not command_info:
+            console.print("[red]❌ Could not parse command information. Showing generated code:[/red]")
+            console.print(code_response)
+            return
+        
+        # Step 3: Create the file
+        console.print(f"2. [cyan]Creating command file: {command_info['filename']}[/cyan]")
+        file_path = self._create_command_file(command_info)
+        
+        if not file_path:
+            console.print("[red]❌ Failed to create command file.[/red]")
+            return
+            
+        # Step 4: Test the command
+        console.print(f"3. [cyan]Testing command: {command_info['name']}[/cyan]")
+        test_result = self._test_command(command_info['name'])
+        
+        # Step 5: Show results
+        console.print()
+        if test_result:
+            console.print("[bold green]✅ Command created successfully![/bold green]")
+            console.print(f"📁 File: [green]{file_path}[/green]")
+            console.print(f"🚀 Usage: [yellow]mcli {command_info['name']} --help[/yellow]")
+            console.print(f"📋 Test: [yellow]mcli {command_info['name']}[/yellow]")
+        else:
+            console.print("[yellow]⚠️  Command created but may need debugging[/yellow]")
+            console.print(f"📁 File: [yellow]{file_path}[/yellow]")
+            console.print("💡 Check the file and test manually")
+        
+        console.print()
+        console.print("[dim]Command is now available in MCLI![/dim]")
+    
+    def _get_command_code_from_ai(self, user_input: str) -> str:
+        """Get command code from AI with specific formatting requirements."""
+        # Enhanced prompt for structured code generation
+        try:
+            commands = self.daemon.list_commands()
+        except Exception:
+            commands = []
+        
+        command_context = "\n".join(
+            f"Command: {cmd['name']}\nDescription: {cmd.get('description', '')}"
+            for cmd in commands
+        ) if commands else "(No command context available)"
+        
+        prompt = f"""You are creating a complete MCLI command. Generate ONLY the Python code with this exact structure:
+
+COMMAND_NAME: [single word command name]
+FILENAME: [snake_case_filename.py]
+DESCRIPTION: [brief description]
+CODE:
+```python
+import click
+
+@click.command()
+@click.option('--example', help='Example option')
+@click.argument('input_arg', required=False)
+def command_name(example, input_arg):
+    '''Command description here'''
+    # Implementation here
+    click.echo("Command works!")
+
+if __name__ == '__main__':
+    command_name()
+```
+
+User request: {user_input}
+
+Available commands for reference: {command_context}
+
+Generate a working command that implements the requested functionality. Use proper Click decorators, error handling, and helpful output."""
+
+        if LLM_PROVIDER == "local":
+            try:
+                response = requests.post(
+                    f"{OLLAMA_BASE_URL}/api/generate",
+                    json={
+                        "model": MODEL_NAME,
+                        "prompt": prompt,
+                        "temperature": 0.3,  # Lower temperature for more consistent code
+                        "stream": False
+                    },
+                    timeout=60
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    return data.get("response", "")
+            except Exception as e:
+                logger.error(f"AI code generation error: {e}")
+                
+        return None
+    
+    def _parse_command_response(self, response: str) -> dict:
+        """Parse AI response to extract command information."""
+        import re
+        
+        # Extract command name
+        name_match = re.search(r'COMMAND_NAME:\s*([a-zA-Z_][a-zA-Z0-9_-]*)', response)
+        if not name_match:
+            return None
+        
+        # Extract filename
+        filename_match = re.search(r'FILENAME:\s*([a-zA-Z_][a-zA-Z0-9_.-]*\.py)', response)
+        filename = filename_match.group(1) if filename_match else f"{name_match.group(1)}.py"
+        
+        # Extract description
+        desc_match = re.search(r'DESCRIPTION:\s*(.+)', response)
+        description = desc_match.group(1).strip() if desc_match else "Auto-generated command"
+        
+        # Extract code
+        code_match = re.search(r'```python\n(.*?)\n```', response, re.DOTALL)
+        if not code_match:
+            # Try without python specifier
+            code_match = re.search(r'```\n(.*?)\n```', response, re.DOTALL)
+        
+        if not code_match:
+            return None
+            
+        return {
+            'name': name_match.group(1),
+            'filename': filename,
+            'description': description,
+            'code': code_match.group(1).strip()
+        }
+    
+    def _create_command_file(self, command_info: dict) -> str:
+        """Create the command file in the appropriate directory."""
+        from pathlib import Path
+        
+        # Choose directory based on command type
+        base_dir = Path(__file__).parent.parent.parent  # mcli src directory
+        
+        # Create in public directory for user-generated commands
+        commands_dir = base_dir / "mcli" / "public" / "commands"
+        commands_dir.mkdir(parents=True, exist_ok=True)
+        
+        file_path = commands_dir / command_info['filename']
+        
+        try:
+            with open(file_path, 'w') as f:
+                f.write(command_info['code'])
+            return str(file_path)
+        except Exception as e:
+            logger.error(f"Failed to create command file: {e}")
+            return None
+    
+    def _test_command(self, command_name: str) -> bool:
+        """Test if the command works by trying to import and run help."""
+        try:
+            # Try to run the command help to see if it's recognized
+            import subprocess
+            result = subprocess.run(
+                ['mcli', 'commands', 'list'], 
+                capture_output=True, 
+                text=True, 
+                timeout=10
+            )
+            # Check if our command appears in the output
+            return command_name in result.stdout
+        except Exception as e:
+            logger.debug(f"Command test failed: {e}")
+            return False
 
 if __name__ == "__main__":
     client = ChatClient()
