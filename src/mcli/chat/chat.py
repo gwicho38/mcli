@@ -639,26 +639,38 @@ class ChatClient:
             if is_creation_request:
                 prompt = f"""{SYSTEM_PROMPT}
 
-Available MCLI Commands: {command_context}
+IMPORTANT CONTEXT:
+- Available MCLI Commands: {command_context}
+- The above list shows ALL currently available commands
+- If a command is NOT in this list, it does NOT exist and needs to be created
+- DO NOT suggest non-existent commands like 'mcli ls' or 'mcli list-files'
+- ALWAYS generate new code when asked to create functionality
 
 User Request: {query}
 
-This appears to be a command creation request. Please:
-1. Generate appropriate Python code using Click framework
-2. Provide clear implementation with error handling
-3. Include proper command structure and help text
-4. Suggest where to save the command file
-5. Explain how to test and use the new command
+This is a command creation request. You must:
+1. Check if the requested functionality exists in the available commands above
+2. If it DOES NOT exist, generate NEW Python code using Click framework
+3. Provide complete, working implementation with error handling
+4. Include proper command structure and help text
+5. Suggest specific file paths and explain testing
 
-Focus on practical, working code that follows MCLI patterns."""
+NEVER suggest commands that don't exist. ALWAYS create new code for missing functionality."""
             else:
                 prompt = f"""{SYSTEM_PROMPT}
 
-Available MCLI Commands: {command_context}
+IMPORTANT: These are ALL the currently available MCLI commands:
+{command_context}
+
+RULES:
+- ONLY suggest commands from the above list
+- If a command is NOT listed above, it does NOT exist
+- DO NOT make up or hallucinate commands
+- If functionality doesn't exist, clearly state it needs to be created
 
 User Question: {query}
 
-Please provide a helpful, detailed response. Reference available commands when relevant."""
+Provide accurate information. Only reference commands that actually exist in the list above."""
 
             if LLM_PROVIDER == "local":
                 # Use Ollama for local model inference
@@ -687,7 +699,9 @@ Please provide a helpful, detailed response. Reference available commands when r
                             if m:
                                 split_idx = min(split_idx, m.start())
                         main_answer = content[:split_idx].strip()
-                        return console.print(main_answer)
+                        # Validate and correct any hallucinated commands
+                        corrected_response = self.validate_and_correct_response(main_answer, commands)
+                        return console.print(corrected_response)
                         
                     elif response.status_code == 404:
                         console.print(f"[yellow]Model '{MODEL_NAME}' not found. Attempting to pull it...[/yellow]")
@@ -714,7 +728,9 @@ Please provide a helpful, detailed response. Reference available commands when r
                                 if m:
                                     split_idx = min(split_idx, m.start())
                             main_answer = content[:split_idx].strip()
-                            return console.print(main_answer)
+                            # Validate and correct any hallucinated commands
+                            corrected_response = self.validate_and_correct_response(main_answer, commands)
+                            return console.print(corrected_response)
                         else:
                             raise Exception(f"Failed to generate response after pulling model: HTTP {response.status_code}")
                     else:
@@ -814,6 +830,54 @@ Please provide a helpful, detailed response. Reference available commands when r
         console.print("4. Use [yellow]mcli commands list[/yellow] to verify it's available")
         console.print()
         console.print("[dim]Tip: Commands are automatically discovered when placed in the correct directories[/dim]")
+    
+    def validate_and_correct_response(self, response_text: str, available_commands: list) -> str:
+        """Validate AI response and correct any hallucinated commands."""
+        import re
+        
+        # Extract command names from available commands
+        real_commands = set()
+        if available_commands:
+            for cmd in available_commands:
+                if isinstance(cmd, dict) and 'name' in cmd:
+                    real_commands.add(cmd['name'])
+        
+        # Common hallucinated commands to catch
+        hallucinated_patterns = [
+            r'mcli ls\b',
+            r'mcli list\b', 
+            r'mcli list-files\b',
+            r'mcli dir\b',
+            r'mcli files\b',
+            r'mcli show\b'
+        ]
+        
+        corrected_response = response_text
+        
+        # Check for hallucinated commands and correct them
+        for pattern in hallucinated_patterns:
+            if re.search(pattern, corrected_response, re.IGNORECASE):
+                # Add warning about non-existent command
+                correction = "\n\n⚠️  **Note**: The command mentioned above does not exist in MCLI. To create this functionality, you would need to implement a new command. Would you like me to help you create it?"
+                corrected_response = re.sub(
+                    pattern, 
+                    f"**[Command Does Not Exist]** {pattern.replace('\\b', '')}",
+                    corrected_response,
+                    flags=re.IGNORECASE
+                ) + correction
+                break
+        
+        # Look for any "mcli [word]" patterns that aren't in real commands
+        mcli_commands = re.findall(r'mcli\s+([a-zA-Z][a-zA-Z0-9_-]*)', corrected_response)
+        for cmd in mcli_commands:
+            if cmd not in real_commands:
+                # This might be a hallucination
+                warning = f"\n\n⚠️  **Note**: 'mcli {cmd}' does not exist. Available commands can be listed with the 'commands' chat command."
+                if warning not in corrected_response:
+                    corrected_response += warning
+                break
+        
+        return corrected_response
 
 if __name__ == "__main__":
     client = ChatClient()
