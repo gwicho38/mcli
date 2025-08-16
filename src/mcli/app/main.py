@@ -263,17 +263,26 @@ def _add_lazy_commands(app: click.Group):
     
     # Lazy load heavy commands that are used less frequently
     lazy_commands = {
-        'chat': 'mcli.app.chat_cmd.chat',
-        'visual': 'mcli.app.visual_cmd.visual',
-        'workflow': 'mcli.workflow.workflow.workflow',
+        'chat': {
+            'import_path': 'mcli.app.chat_cmd.chat',
+            'help': 'Start an interactive chat session with the MCLI Chat Assistant.'
+        },
+        'visual': {
+            'import_path': 'mcli.app.visual_cmd.visual',
+            'help': '🎨 Visual effects and enhancements showcase'
+        },
+        'workflow': {
+            'import_path': 'mcli.workflow.workflow.workflow',
+            'help': 'Workflow commands for automation, video processing, and daemon management'
+        },
     }
     
-    for cmd_name, import_path in lazy_commands.items():
+    for cmd_name, cmd_info in lazy_commands.items():
         lazy_cmd = LazyCommand(
             name=cmd_name,
-            import_path=import_path,
+            import_path=cmd_info['import_path'],
             callback=lambda: None,  # Placeholder
-            help=f"{cmd_name.title()} commands (loaded on demand)"
+            help=cmd_info['help']
         )
         app.add_command(lazy_cmd)
         logger.debug(f"Added lazy command: {cmd_name}")

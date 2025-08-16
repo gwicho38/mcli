@@ -99,6 +99,11 @@ class ChatClient:
         """Process user input and generate response"""
         self.history.append({"user": user_input})
 
+        # Check for commands list request
+        if user_input.lower().strip() == "commands":
+            self.handle_commands_list()
+            return
+        
         # Check for process management commands
         if user_input.lower().startswith("ps") or user_input.lower().startswith("docker ps"):
             self.handle_process_list()
@@ -343,6 +348,51 @@ class ChatClient:
         
         if len(results) > 10:
             console.print(f"[dim]... and {len(results) - 10} more results[/dim]")
+    
+    def handle_commands_list(self):
+        """Handle 'commands' command to list available functions"""
+        try:
+            # Get commands from daemon
+            if hasattr(self.daemon, 'list_commands'):
+                commands = self.daemon.list_commands()
+                
+                if not commands:
+                    console.print("[yellow]No commands available through daemon[/yellow]")
+                    return
+                
+                console.print(f"[bold green]Available Commands ({len(commands)}):[/bold green]")
+                
+                for i, cmd in enumerate(commands[:20]):  # Show first 20 commands
+                    name = cmd.get('name', 'Unknown')
+                    description = cmd.get('description', cmd.get('help', 'No description'))
+                    
+                    # Truncate long descriptions
+                    if len(description) > 80:
+                        description = description[:77] + "..."
+                    
+                    console.print(f"• [cyan]{name}[/cyan]")
+                    if description:
+                        console.print(f"  {description}")
+                
+                if len(commands) > 20:
+                    console.print(f"[dim]... and {len(commands) - 20} more commands[/dim]")
+                    console.print("[dim]Use natural language to ask about specific commands[/dim]")
+                    
+            else:
+                # Fallback - try to get commands another way
+                console.print("[yellow]Command listing not available - daemon may not be running[/yellow]")
+                console.print("Try starting the daemon with: [cyan]mcli workflow daemon start[/cyan]")
+                
+        except Exception as e:
+            logger.debug(f"Error listing commands: {e}")
+            console.print("[yellow]Could not retrieve commands list[/yellow]")
+            console.print("Available built-in chat commands:")
+            console.print("• [cyan]commands[/cyan] - This command")
+            console.print("• [cyan]ps[/cyan] - List running processes")
+            console.print("• [cyan]run <command>[/cyan] - Execute a command")
+            console.print("• [cyan]logs <id>[/cyan] - View process logs")
+            console.print("• [cyan]inspect <id>[/cyan] - Detailed process info")
+            console.print("• [cyan]start/stop <id>[/cyan] - Control process lifecycle")
     
     def handle_process_list(self):
         """Handle 'ps' command to list running processes"""
