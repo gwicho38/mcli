@@ -1,5 +1,6 @@
 import os
 import readline
+import requests
 from typing import List, Dict, Optional
 from mcli.lib.toml.toml import read_from_toml
 from mcli.lib.api.daemon_client import get_daemon_client
@@ -18,23 +19,32 @@ except Exception:
     # Silently handle config loading errors
     config = {}
 
-if not config or not config.get("openai_api_key"):
-    # Silently set defaults - don't expose config details
+if not config:
+    # Default to local model for better performance and privacy
     config = {
-        "provider": "openai",
-        "model": "gpt-4-turbo", 
+        "provider": "local",
+        "model": "phi3:3.8b", 
         "temperature": 0.7,
-        "system_prompt": "You are the MCLI Chat Assistant."
+        "system_prompt": "You are the MCLI Chat Assistant, a helpful AI assistant for the MCLI tool.",
+        "ollama_base_url": "http://localhost:11434"
     }
+elif not config.get("openai_api_key") and config.get("provider", "openai") == "openai":
+    # If openai provider but no API key, switch to local
+    config["provider"] = "local"
+    if not config.get("model"):
+        config["model"] = "phi3:3.8b"
+    if not config.get("ollama_base_url"):
+        config["ollama_base_url"] = "http://localhost:11434"
 
 logger = get_logger(__name__)
 
 # Fallbacks if not set in config.toml
-LLM_PROVIDER = config.get("provider", "openai")
-MODEL_NAME = config.get("model", "gpt-4-turbo")
+LLM_PROVIDER = config.get("provider", "local")
+MODEL_NAME = config.get("model", "phi3:3.8b")
 OPENAI_API_KEY = config.get("openai_api_key", None)
+OLLAMA_BASE_URL = config.get("ollama_base_url", "http://localhost:11434")
 TEMPERATURE = float(config.get("temperature", 0.7))
-SYSTEM_PROMPT = config.get("system_prompt", None)
+SYSTEM_PROMPT = config.get("system_prompt", "You are the MCLI Chat Assistant, a helpful AI assistant for the MCLI tool.")
 
 class ChatClient:
     """Interactive chat client for MCLI command management"""
@@ -48,6 +58,15 @@ class ChatClient:
     def start_interactive_session(self):
         """Start the chat interface"""
         console.print("[bold green]MCLI Chat Assistant[/bold green] (type 'exit' to quit)")
+        
+        # Show current configuration
+        if LLM_PROVIDER == "local":
+            console.print(f"[dim]Using local model: {MODEL_NAME} via Ollama[/dim]")
+        elif LLM_PROVIDER == "openai":
+            console.print(f"[dim]Using OpenAI model: {MODEL_NAME}[/dim]")
+        elif LLM_PROVIDER == "anthropic":
+            console.print(f"[dim]Using Anthropic model: {MODEL_NAME}[/dim]")
+        
         console.print("How can I help you with your MCLI commands today?")
         console.print("\n[bold cyan]Available Commands:[/bold cyan]")
         console.print("• [yellow]commands[/yellow] - List available functions")
@@ -164,9 +183,10 @@ class ChatClient:
         """Check if user input is requesting to execute a command."""
         lower_input = user_input.lower()
         execution_keywords = [
-            "call the", "execute the", "run the", "call", "execute", 
+            "call the", "execute the", "run the", "execute command", 
             "hello world", "hello-world", "helloworld"
         ]
+        # Be more specific - avoid matching on single words like "execute" or "call"
         return any(keyword in lower_input for keyword in execution_keywords)
 
     def extract_command_name(self, user_input: str) -> Optional[str]:
@@ -509,6 +529,32 @@ class ChatClient:
             console.print(f"[red]❌ Could not start daemon: {e}[/red]")
             console.print("[yellow]Try starting manually: mcli workflow api-daemon start[/yellow]")
 
+    def _pull_model_if_needed(self, model_name: str):
+        """Pull the model from Ollama if it doesn't exist locally"""
+        try:
+            console.print(f"[yellow]Downloading model '{model_name}'. This may take a few minutes...[/yellow]")
+            
+            import subprocess
+            result = subprocess.run(
+                ["ollama", "pull", model_name], 
+                capture_output=True, 
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            
+            if result.returncode == 0:
+                console.print(f"[green]✅ Model '{model_name}' downloaded successfully[/green]")
+            else:
+                console.print(f"[red]❌ Failed to download model '{model_name}': {result.stderr}[/red]")
+                
+        except subprocess.TimeoutExpired:
+            console.print(f"[red]❌ Download of model '{model_name}' timed out[/red]")
+        except FileNotFoundError:
+            console.print("[red]❌ Ollama command not found. Please install Ollama first:[/red]")
+            console.print("  brew install ollama")
+        except Exception as e:
+            console.print(f"[red]❌ Error downloading model '{model_name}': {e}[/red]")
+
     def generate_llm_response(self, query: str):
         """Generate response using LLM integration"""
         try:
@@ -529,9 +575,87 @@ class ChatClient:
                 for cmd in commands
             ) if commands else "(No command context available)"
 
-            prompt = f"""SYSTEM: {SYSTEM_PROMPT}\n\nAvailable Commands (including inactive):\n{command_context}\n\nUSER QUERY: {query}\n\nRespond with:\n1. A natural language answer\n2. Relevant commands in markdown format\n3. Example usage in a code block"""
+            prompt = f"""You are the MCLI Chat Assistant, a helpful AI assistant for the MCLI (Machine Learning Command Line Interface) tool. You help users understand and use MCLI commands, answer questions about programming and machine learning, and provide general assistance.
 
-            if LLM_PROVIDER == "openai":
+Available MCLI Commands: {command_context}
+
+User Question: {query}
+
+Please provide a helpful, concise response. If the user is asking about MCLI commands, reference the available commands above."""
+
+            if LLM_PROVIDER == "local":
+                # Use Ollama for local model inference
+                try:
+                    response = requests.post(
+                        f"{OLLAMA_BASE_URL}/api/generate",
+                        json={
+                            "model": MODEL_NAME,
+                            "prompt": prompt,
+                            "temperature": TEMPERATURE,
+                            "stream": False
+                        },
+                        timeout=60
+                    )
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        content = data.get("response", "")
+                        
+                        # Clean up response like we do for OpenAI
+                        import re
+                        split_patterns = [r'\n2\.', r'\n```', r'\nRelevant commands', r'\n3\.', r'\n- \*\*Command']
+                        split_idx = len(content)
+                        for pat in split_patterns:
+                            m = re.search(pat, content)
+                            if m:
+                                split_idx = min(split_idx, m.start())
+                        main_answer = content[:split_idx].strip()
+                        return console.print(main_answer)
+                        
+                    elif response.status_code == 404:
+                        console.print(f"[yellow]Model '{MODEL_NAME}' not found. Attempting to pull it...[/yellow]")
+                        self._pull_model_if_needed(MODEL_NAME)
+                        # Retry the request
+                        response = requests.post(
+                            f"{OLLAMA_BASE_URL}/api/generate",
+                            json={
+                                "model": MODEL_NAME,
+                                "prompt": prompt,
+                                "temperature": TEMPERATURE,
+                                "stream": False
+                            },
+                            timeout=60
+                        )
+                        if response.status_code == 200:
+                            data = response.json()
+                            content = data.get("response", "")
+                            import re
+                            split_patterns = [r'\n2\.', r'\n```', r'\nRelevant commands', r'\n3\.', r'\n- \*\*Command']
+                            split_idx = len(content)
+                            for pat in split_patterns:
+                                m = re.search(pat, content)
+                                if m:
+                                    split_idx = min(split_idx, m.start())
+                            main_answer = content[:split_idx].strip()
+                            return console.print(main_answer)
+                        else:
+                            raise Exception(f"Failed to generate response after pulling model: HTTP {response.status_code}")
+                    else:
+                        raise Exception(f"HTTP {response.status_code}: {response.text}")
+                        
+                except requests.exceptions.ConnectionError:
+                    console.print("[red]Could not connect to Ollama. Please ensure Ollama is running:[/red]")
+                    console.print("  brew install ollama")
+                    console.print("  ollama serve")
+                    console.print(f"  Visit: {OLLAMA_BASE_URL}")
+                    return
+                except requests.exceptions.Timeout:
+                    console.print("[yellow]Request timed out. The model might be processing a complex query.[/yellow]")
+                    return
+                except Exception as api_exc:
+                    raise
+
+            elif LLM_PROVIDER == "openai":
                 from openai import OpenAI
                 if not OPENAI_API_KEY:
                     console.print("[red]OpenAI API key not configured. Please set it in config.toml[/red]")

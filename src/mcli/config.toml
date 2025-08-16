@@ -1,2 +1,19 @@
 [paths]
 included_dirs = ["app", "self", "workflow", "public"]
+
+# Chat configuration with local model defaults
+[llm]
+provider = "local"
+model = "phi3:3.8b"
+temperature = 0.7
+system_prompt = "You are the MCLI Chat Assistant, a helpful AI assistant for the MCLI (Machine Learning Command Line Interface) tool. You help users understand MCLI commands, answer programming questions, and provide general technical assistance."
+ollama_base_url = "http://localhost:11434"
+
+# Alternative providers (uncomment to use)
+# provider = "openai"
+# model = "gpt-4-turbo"
+# openai_api_key = "your-api-key-here"
+
+# provider = "anthropic"  
+# model = "claude-3-sonnet"
+# anthropic_api_key = "your-api-key-here"
