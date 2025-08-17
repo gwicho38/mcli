@@ -244,11 +244,11 @@ class CommandDatabase:
                        created_at, updated_at, execution_count, last_executed, is_active
                 FROM commands 
                 WHERE is_active = 1 
-                AND (name LIKE ? OR description LIKE ? OR tags LIKE ?)
+                AND (name LIKE ? OR description LIKE ? OR tags LIKE ? OR language LIKE ?)
                 ORDER BY name
                 LIMIT ?
             """,
-                (search_term, search_term, search_term, limit),
+                (search_term, search_term, search_term, search_term, limit),
             )
 
             return [self._row_to_command(row) for row in cursor.fetchall()]
@@ -258,8 +258,8 @@ class CommandDatabase:
 
     def find_similar_commands(self, query: str, limit: int = 5) -> List[tuple]:
         """Find similar commands using cosine similarity"""
-        commands = self.get_all_commands()
-        if not commands:
+        cmd_list = self.get_all_commands()
+        if not cmd_list:
             return []
 
         # Prepare query text
@@ -267,7 +267,7 @@ class CommandDatabase:
 
         # Get command texts for comparison
         command_texts = []
-        for cmd in commands:
+        for cmd in cmd_list:
             text_parts = [cmd.name, cmd.description or ""]
             text_parts.extend(cmd.tags or [])
             command_texts.append(" ".join(text_parts).lower())
@@ -277,21 +277,39 @@ class CommandDatabase:
 
         # Calculate similarities
         try:
-            # Transform query and commands
-            query_vector = self.vectorizer.transform([query_text])
-            command_vectors = self.vectorizer.transform(command_texts)
-
-            # Calculate cosine similarities
-            similarities = cosine_similarity(query_vector, command_vectors).flatten()
-
-            # Sort by similarity
-            command_similarities = list(zip(commands, similarities))
-            command_similarities.sort(key=lambda x: x[1], reverse=True)
-
-            return command_similarities[:limit]
+            # Re-fit vectorizer with current commands if needed
+            if len(command_texts) > 0:
+                # Create a temporary vectorizer for this search
+                temp_vectorizer = TfidfVectorizer(
+                    max_features=1000, stop_words="english", ngram_range=(1, 2)
+                )
+                
+                # Fit on current command texts
+                all_texts = command_texts + [query_text]
+                temp_vectorizer.fit(all_texts)
+                
+                # Transform query and commands
+                query_vector = temp_vectorizer.transform([query_text])
+                command_vectors = temp_vectorizer.transform(command_texts)
+                
+                # Calculate cosine similarities
+                similarities = cosine_similarity(query_vector, command_vectors).flatten()
+                
+                # Sort by similarity - avoid using 'commands' variable name
+                cmd_similarities = []
+                for i, similarity_score in enumerate(similarities):
+                    cmd_similarities.append((cmd_list[i], similarity_score))
+                
+                cmd_similarities.sort(key=lambda x: x[1], reverse=True)
+                
+                return cmd_similarities[:limit]
+            else:
+                return []
 
         except Exception as e:
             logger.error(f"Error calculating similarities: {e}")
+            import traceback
+            traceback.print_exc()
             return []
 
     def update_command(self, command: Command) -> bool:
@@ -454,12 +472,17 @@ class CommandExecutor:
 
             execution_time = int((time.time() - start_time) * 1000)
 
+            # Check if execution was successful
+            returncode = result.get("returncode", 0)
+            success = returncode == 0
+            status = "completed" if success else "failed"
+
             return {
-                "success": True,
+                "success": success,
                 "output": result.get("output", ""),
                 "error": result.get("error", ""),
                 "execution_time_ms": execution_time,
-                "status": "completed",
+                "status": status,
             }
 
         except Exception as e:
@@ -499,7 +522,11 @@ resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024, 256*1024*1024))  # 256MB 
                 cwd=self.temp_dir,
             )
 
-            return {"output": result.stdout, "error": result.stderr}
+            return {
+                "output": result.stdout, 
+                "error": result.stderr,
+                "returncode": result.returncode
+            }
 
         finally:
             # Clean up
@@ -522,7 +549,11 @@ resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024, 256*1024*1024))  # 256MB 
                 cwd=self.temp_dir,
             )
 
-            return {"output": result.stdout, "error": result.stderr}
+            return {
+                "output": result.stdout, 
+                "error": result.stderr,
+                "returncode": result.returncode
+            }
 
         finally:
             if script_file.exists():
@@ -544,7 +575,11 @@ resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024, 256*1024*1024))  # 256MB 
                 cwd=self.temp_dir,
             )
 
-            return {"output": result.stdout, "error": result.stderr}
+            return {
+                "output": result.stdout, 
+                "error": result.stderr,
+                "returncode": result.returncode
+            }
 
         finally:
             if script_file.exists():
@@ -570,7 +605,11 @@ resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024, 256*1024*1024))  # 256MB 
                 cwd=self.temp_dir,
             )
 
-            return {"output": result.stdout, "error": result.stderr}
+            return {
+                "output": result.stdout, 
+                "error": result.stderr,
+                "returncode": result.returncode
+            }
 
         finally:
             if script_file.exists():

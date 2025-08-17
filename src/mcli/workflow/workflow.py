@@ -4,6 +4,7 @@ from .daemon.api_daemon import api_daemon
 from .daemon.commands import daemon
 from .file.file import file
 from .videos.videos import videos
+from .scheduler.commands import scheduler
 
 
 @click.group(name="workflow")
@@ -18,6 +19,7 @@ def register_workflow_commands():
     workflow.add_command(videos)
     workflow.add_command(daemon)
     workflow.add_command(api_daemon)
+    workflow.add_command(scheduler)
 
 
 register_workflow_commands()

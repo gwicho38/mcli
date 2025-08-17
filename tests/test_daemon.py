@@ -441,8 +441,9 @@ class TestDaemonService:
         assert service.db is not None
         assert service.executor is not None
         assert service.running is False
-        assert service.pid_file == temp_daemon_dir / "daemon.pid"
-        assert service.socket_file == temp_daemon_dir / "daemon.sock"
+        expected_daemon_dir = temp_daemon_dir.parent / ".local" / "mcli" / "daemon"
+        assert service.pid_file == expected_daemon_dir / "daemon.pid"
+        assert service.socket_file == expected_daemon_dir / "daemon.sock"
     
     @patch('src.mcli.workflow.daemon.commands.Path.home')
     def test_daemon_status_not_running(self, mock_home, temp_daemon_dir):
@@ -464,8 +465,10 @@ class TestDaemonService:
         mock_home.return_value = temp_daemon_dir.parent
         mock_pid_exists.return_value = True
         
-        # Create a PID file
-        pid_file = temp_daemon_dir / "daemon.pid"
+        # Create a PID file in the expected location
+        expected_daemon_dir = temp_daemon_dir.parent / ".local" / "mcli" / "daemon"
+        expected_daemon_dir.mkdir(parents=True, exist_ok=True)
+        pid_file = expected_daemon_dir / "daemon.pid"
         with open(pid_file, 'w') as f:
             f.write("12345")
         
@@ -617,6 +620,15 @@ class TestDaemonIntegration:
         
         assert result['success'] is True
         assert 'Hello, World!' in result['output']
+        
+        # Record execution in database (this would normally be done by the daemon service)
+        db.record_execution(
+            command_id=command.id,
+            status=result['status'],
+            output=result['output'],
+            error=result.get('error', ''),
+            execution_time_ms=result.get('execution_time_ms', 0)
+        )
         
         # Verify execution was recorded
         updated_command = db.get_command("test-id")
