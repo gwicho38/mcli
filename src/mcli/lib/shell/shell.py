@@ -1,11 +1,12 @@
+import json
+import logging
 import os
+import shutil
 import subprocess
 import sys
-import shutil
-import json
 from pathlib import Path
-from typing import Optional, Dict, List, Any
-import logging
+from typing import Any, Dict, List, Optional
+
 from mcli.lib.logger.logger import get_logger, register_subprocess
 
 logger = get_logger(__name__)
@@ -17,7 +18,7 @@ def shell_exec(script_path: str, function_name: str, *args) -> Dict[str, Any]:
     script_path = Path(script_path).resolve()
     if not script_path.exists():
         raise FileNotFoundError(f"Script not found: {script_path}")
-    
+
     # Prepare the full command with the shell script, function name, and arguments
     command = [str(script_path), function_name]
     result = {"success": False, "stdout": "", "stderr": ""}
@@ -27,24 +28,24 @@ def shell_exec(script_path: str, function_name: str, *args) -> Dict[str, Any]:
         proc = subprocess.Popen(
             command + list(args), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
         )
-        
+
         # Register the process for system monitoring
         register_subprocess(proc)
-        
+
         # Wait for the process to complete and get output
         stdout, stderr = proc.communicate()
-        
+
         # Check return code
         if proc.returncode != 0:
             raise subprocess.CalledProcessError(proc.returncode, command, stdout, stderr)
-            
+
         # Store the result for later reference
         result = subprocess.CompletedProcess(command, proc.returncode, stdout, stderr)
-        
+
         # Output from the shell script
         if result.stdout:
             logger.info(f"Script output stdout:\n{result.stdout}")
-        
+
         if result.stderr:
             logger.info(f"Script output stderr:\n{result.stderr}")
         # return output  # Should contain the "result" key with the list of files
@@ -108,15 +109,13 @@ def execute_os_command(command, fail_on_error=True, stdin=None):
         stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
     )
-    
+
     # Register the process for system monitoring
     register_subprocess(process)
-    
+
     if stdin is not None:
         stdin = stdin.encode()
-    stdout, stderr = [
-        stream.decode().strip() for stream in process.communicate(input=stdin)
-    ]
+    stdout, stderr = [stream.decode().strip() for stream in process.communicate(input=stdin)]
 
     logger.debug("rc    > %s", process.returncode)
     if stdout:

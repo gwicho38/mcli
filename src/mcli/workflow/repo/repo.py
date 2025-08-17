@@ -1,12 +1,13 @@
-import os
 import csv
+import os
+
 import click
 import pandas as pd
-from openpyxl.styles import Alignment
 from openai import OpenAI
+from openpyxl.styles import Alignment
+
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.shell.shell import get_shell_script_path, shell_exec
-
 
 logger = get_logger(__name__)
 
@@ -81,19 +82,14 @@ def _analyze(path: str):
             dirs[:] = [d for d in dirs if d not in exclude_files]
             for file in files:
                 # Exclude specified files and extensions
-                if (
-                    any(file.endswith(ext) for ext in exclude_extensions)
-                    or file in exclude_files
-                ):
+                if any(file.endswith(ext) for ext in exclude_extensions) or file in exclude_files:
                     continue
                 for ext, ext_name in extensions.items():
                     if file.endswith(ext_name):
                         sloc_count[ext]["files"] += 1
                         file_path = os.path.join(root, file)
                         with open(file_path, "r", errors="ignore") as f:
-                            sloc = sum(
-                                1 for line in f if line.strip() and line.strip() != "\n"
-                            )
+                            sloc = sum(1 for line in f if line.strip() and line.strip() != "\n")
                             sloc_count[ext]["sloc"] += sloc
                             sloc_count[ext]["details"].append(
                                 {"filename": file, "filepath": file_path, "sloc": sloc}
@@ -148,6 +144,7 @@ def _analyze(path: str):
     # Write the results to CSV and Excel files
     write_results_to_files(sloc_counts, csv_file, excel_file)
 
+
 @repo.command(name="wt")
 def worktree():
     """Create and manage worktrees"""
@@ -167,6 +164,7 @@ def revert():
     scripts_path = get_shell_script_path("repo", __file__)
     shell_exec(scripts_path, "revert")
 
+
 @repo.command(name="migration-loe")
 @click.argument("branch-a")
 @click.argument("branch-b")
@@ -180,7 +178,7 @@ def loe(branch_a: str, branch_b: str):
     # Extract the list of files from the result
     logger.info(result)
     return
-    file_list = result.get('result', [])
+    file_list = result.get("result", [])
 
     # Format the file list as a string for the prompt
     file_summary = "\n".join(file_list)
@@ -194,7 +192,9 @@ def loe(branch_a: str, branch_b: str):
 
     try:
         # Initialize the OpenAI client
-        client = OpenAI(api_key="***REMOVED***")
+        client = OpenAI(
+            api_key="***REMOVED***"
+        )
 
         # Call the GPT-4 model using the client
         chat_completion = client.chat.completions.create(

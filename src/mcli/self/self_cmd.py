@@ -2,24 +2,27 @@
 Self-management commands for mcli.
 Provides utilities for maintaining and extending the CLI itself.
 """
+
+import hashlib
 import importlib
 import inspect
-from pathlib import Path
-from typing import List, Dict, Any, Optional
-import re
-import click
-from rich.console import Console
-from rich.table import Table
-from rich.prompt import Prompt
-import tomli
-import os
-import hashlib
 import json
+import os
+import re
 import time
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import click
+import tomli
+from rich.console import Console
+from rich.prompt import Prompt
+from rich.table import Table
 
 try:
     import warnings
+
     # Suppress the warning about python-Levenshtein
     warnings.filterwarnings("ignore", message="Using slow pure-python SequenceMatcher")
     from fuzzywuzzy import process
@@ -30,6 +33,7 @@ from mcli.lib.logger.logger import get_logger
 
 logger = get_logger()
 
+
 # Create a Click command group instead of Typer
 @click.group(name="self", help="Manage and extend the mcli application")
 def self_app():
@@ -38,11 +42,13 @@ def self_app():
     """
     pass
 
+
 console = Console()
 
 LOCKFILE_PATH = Path.home() / ".local" / "mcli" / "command_lock.json"
 
 # Utility functions for command state lockfile
+
 
 def get_current_command_state():
     """Collect all command metadata (names, groups, etc.)"""
@@ -50,12 +56,14 @@ def get_current_command_state():
     # For now, use the collect_commands() function
     return collect_commands()
 
+
 def hash_command_state(commands):
     """Hash the command state for fast comparison."""
     # Sort for deterministic hash
-    commands_sorted = sorted(commands, key=lambda c: (c.get('group') or '', c['name']))
+    commands_sorted = sorted(commands, key=lambda c: (c.get("group") or "", c["name"]))
     state_json = json.dumps(commands_sorted, sort_keys=True)
-    return hashlib.sha256(state_json.encode('utf-8')).hexdigest()
+    return hashlib.sha256(state_json.encode("utf-8")).hexdigest()
+
 
 def load_lockfile():
     if LOCKFILE_PATH.exists():
@@ -63,21 +71,25 @@ def load_lockfile():
             return json.load(f)
     return []
 
+
 def save_lockfile(states):
     with open(LOCKFILE_PATH, "w") as f:
         json.dump(states, f, indent=2, default=str)
+
 
 def append_lockfile(new_state):
     states = load_lockfile()
     states.append(new_state)
     save_lockfile(states)
 
+
 def find_state_by_hash(hash_value):
     states = load_lockfile()
     for state in states:
-        if state['hash'] == hash_value:
+        if state["hash"] == hash_value:
             return state
     return None
+
 
 def restore_command_state(hash_value):
     state = find_state_by_hash(hash_value)
@@ -85,8 +97,9 @@ def restore_command_state(hash_value):
         return False
     # Here you would implement logic to restore the command registry to this state
     # For now, just print the commands
-    print(json.dumps(state['commands'], indent=2))
+    print(json.dumps(state["commands"], indent=2))
     return True
+
 
 # Create a Click group for all command management
 @self_app.group("commands")
@@ -94,11 +107,13 @@ def commands_group():
     """Manage CLI commands and command state."""
     pass
 
+
 # Move the command-state group under commands_group
 @commands_group.group("state")
 def command_state():
     """Manage command state lockfile and history."""
     pass
+
 
 @command_state.command("list")
 def list_states():
@@ -112,8 +127,9 @@ def list_states():
     table.add_column("Timestamp", style="green")
     table.add_column("# Commands", style="yellow")
     for state in states:
-        table.add_row(state['hash'][:8], state['timestamp'], str(len(state['commands'])))
+        table.add_row(state["hash"][:8], state["timestamp"], str(len(state["commands"])))
     console.print(table)
+
 
 @command_state.command("restore")
 @click.argument("hash_value")
@@ -124,17 +140,19 @@ def restore_state(hash_value):
     else:
         click.echo(f"State {hash_value[:8]} not found.", err=True)
 
+
 @command_state.command("write")
 @click.argument("json_file", required=False, type=click.Path(exists=False))
 def write_state(json_file):
     """Write a new command state to the lockfile from a JSON file or the current app state."""
     import traceback
+
     print("[DEBUG] write_state called")
     print(f"[DEBUG] LOCKFILE_PATH: {LOCKFILE_PATH}")
     try:
         if json_file:
             print(f"[DEBUG] Loading command state from file: {json_file}")
-            with open(json_file, 'r') as f:
+            with open(json_file, "r") as f:
                 commands = json.load(f)
             click.echo(f"Loaded command state from {json_file}.")
         else:
@@ -142,9 +160,9 @@ def write_state(json_file):
             commands = get_current_command_state()
         state_hash = hash_command_state(commands)
         new_state = {
-            'hash': state_hash,
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
-            'commands': commands
+            "hash": state_hash,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "commands": commands,
         }
         append_lockfile(new_state)
         print(f"[DEBUG] Wrote new command state {state_hash[:8]} to lockfile at {LOCKFILE_PATH}")
@@ -154,30 +172,34 @@ def write_state(json_file):
         print(traceback.format_exc())
         click.echo(f"[ERROR] Failed to write command state: {e}", err=True)
 
+
 # On CLI startup, check and update lockfile if needed
+
 
 def check_and_update_command_lockfile():
     current_commands = get_current_command_state()
     current_hash = hash_command_state(current_commands)
     states = load_lockfile()
-    if states and states[-1]['hash'] == current_hash:
+    if states and states[-1]["hash"] == current_hash:
         # No change
         return
     # New state, append
     new_state = {
-        'hash': current_hash,
-        'timestamp': datetime.utcnow().isoformat() + 'Z',
-        'commands': current_commands
+        "hash": current_hash,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "commands": current_commands,
     }
     append_lockfile(new_state)
     logger.info(f"Appended new command state {current_hash[:8]} to lockfile.")
 
+
 # Call this at the top of your CLI entrypoint (main.py or similar)
 # check_and_update_command_lockfile()
 
+
 def get_command_template(name: str, group: Optional[str] = None) -> str:
     """Generate template code for a new command."""
-    
+
     if group:
         # Template for a command in a group using Click
         template = f'''"""
@@ -222,8 +244,9 @@ def {name}_command(name: str = "World"):
     logger.info(f"Hello, {{name}}! This is the {name} command.")
     click.echo(f"Hello, {{name}}! This is the {name} command.")
 '''
-    
+
     return template
+
 
 @self_app.command("search")
 @click.argument("query", required=False)
@@ -231,15 +254,15 @@ def {name}_command(name: str = "World"):
 def search(query, full):
     """
     Search for available commands using fuzzy matching.
-    
+
     Similar to telescope in neovim, this allows quick fuzzy searching
     through all available commands in mcli.
-    
+
     If no query is provided, lists all commands.
     """
     # Collect all commands from the application
     commands = collect_commands()
-    
+
     # Display the commands in a table
     table = Table(title="mcli Commands")
     table.add_column("Command", style="green")
@@ -247,80 +270,81 @@ def search(query, full):
     if full:
         table.add_column("Path", style="dim")
         table.add_column("Description", style="yellow")
-    
+
     if query:
         filtered_commands = []
-        
+
         # Try to use fuzzywuzzy for better matching if available
         if process:
             # Extract command names for matching
-            command_names = [f"{cmd['group']}.{cmd['name']}" if cmd['group'] else cmd['name'] for cmd in commands]
+            command_names = [
+                f"{cmd['group']}.{cmd['name']}" if cmd["group"] else cmd["name"] for cmd in commands
+            ]
             matches = process.extract(query, command_names, limit=10)
-            
+
             # Filter to matched commands
             match_indices = [command_names.index(match[0]) for match in matches if match[1] > 50]
             filtered_commands = [commands[i] for i in match_indices]
         else:
             # Fallback to simple substring matching
             filtered_commands = [
-                cmd for cmd in commands 
-                if query.lower() in cmd['name'].lower() or 
-                (cmd['group'] and query.lower() in cmd['group'].lower())
+                cmd
+                for cmd in commands
+                if query.lower() in cmd["name"].lower()
+                or (cmd["group"] and query.lower() in cmd["group"].lower())
             ]
-        
+
         commands = filtered_commands
-    
+
     # Sort commands by group then name
-    commands.sort(key=lambda c: (c['group'] if c['group'] else '', c['name']))
-    
+    commands.sort(key=lambda c: (c["group"] if c["group"] else "", c["name"]))
+
     # Add rows to the table
     for cmd in commands:
         if full:
             table.add_row(
-                cmd['name'], 
-                cmd['group'] if cmd['group'] else "-", 
-                cmd['path'],
-                cmd['help'] if cmd['help'] else ""
+                cmd["name"],
+                cmd["group"] if cmd["group"] else "-",
+                cmd["path"],
+                cmd["help"] if cmd["help"] else "",
             )
         else:
-            table.add_row(
-                cmd['name'], 
-                cmd['group'] if cmd['group'] else "-"
-            )
-    
+            table.add_row(cmd["name"], cmd["group"] if cmd["group"] else "-")
+
     console.print(table)
-    
+
     if not commands:
         logger.info("No commands found matching the search query")
         click.echo("No commands found matching the search query")
-    
+
     return 0
+
 
 def collect_commands() -> List[Dict[str, Any]]:
     """Collect all commands from the mcli application."""
     commands = []
-    
+
     # Look for command modules in the mcli package
     mcli_path = Path(__file__).parent.parent
-    
+
     # This finds command groups as directories under mcli
     for item in mcli_path.iterdir():
         if item.is_dir() and not item.name.startswith("__") and not item.name.startswith("."):
             group_name = item.name
-            
+
             # Recursively find all Python files that might define commands
             for py_file in item.glob("**/*.py"):
                 if py_file.name.startswith("__"):
                     continue
-                
+
                 # Convert file path to module path
                 relative_path = py_file.relative_to(mcli_path.parent)
                 module_name = ".".join(relative_path.with_suffix("").parts)
-                
+
                 try:
                     # Try to import the module
                     module = importlib.import_module(module_name)
-                    
+
                     # Extract command and group objects
                     for name, obj in inspect.getmembers(module):
                         # Handle Click commands and groups
@@ -328,65 +352,80 @@ def collect_commands() -> List[Dict[str, Any]]:
                             if isinstance(obj, click.Group):
                                 # Found a Click group
                                 app_info = {
-                                    'name': obj.name,
-                                    'group': group_name,
-                                    'path': module_name,
-                                    'help': obj.help
+                                    "name": obj.name,
+                                    "group": group_name,
+                                    "path": module_name,
+                                    "help": obj.help,
                                 }
                                 commands.append(app_info)
-                                
+
                                 # Add subcommands if any
                                 for cmd_name, cmd in obj.commands.items():
-                                    commands.append({
-                                        'name': cmd_name,
-                                        'group': f"{group_name}.{app_info['name']}",
-                                        'path': f"{module_name}.{cmd_name}",
-                                        'help': cmd.help
-                                    })
+                                    commands.append(
+                                        {
+                                            "name": cmd_name,
+                                            "group": f"{group_name}.{app_info['name']}",
+                                            "path": f"{module_name}.{cmd_name}",
+                                            "help": cmd.help,
+                                        }
+                                    )
                             else:
                                 # Found a standalone Click command
-                                commands.append({
-                                    'name': obj.name,
-                                    'group': group_name,
-                                    'path': f"{module_name}.{obj.name}",
-                                    'help': obj.help
-                                })
+                                commands.append(
+                                    {
+                                        "name": obj.name,
+                                        "group": group_name,
+                                        "path": f"{module_name}.{obj.name}",
+                                        "help": obj.help,
+                                    }
+                                )
                 except (ImportError, AttributeError) as e:
                     logger.debug(f"Skipping {module_name}: {e}")
-    
+
     return commands
+
 
 @self_app.command("add-command")
 @click.argument("command_name", required=True)
 @click.option("--group", "-g", help="Optional command group to create under")
-def add_command (command_name, group):
+def add_command(command_name, group):
     """
     Generate a new command template that can be used by mcli.
-    
+
     Example:
         mcli self add my_command
         mcli self add feature_command --group features
     """
     command_name = command_name.lower().replace("-", "_")
-    
+
     # Validate command name
-    if not re.match(r'^[a-z][a-z0-9_]*$', command_name):
-        logger.error(f"Invalid command name: {command_name}. Use lowercase letters, numbers, and underscores (starting with a letter).")
-        click.echo(f"Invalid command name: {command_name}. Use lowercase letters, numbers, and underscores (starting with a letter).", err=True)
+    if not re.match(r"^[a-z][a-z0-9_]*$", command_name):
+        logger.error(
+            f"Invalid command name: {command_name}. Use lowercase letters, numbers, and underscores (starting with a letter)."
+        )
+        click.echo(
+            f"Invalid command name: {command_name}. Use lowercase letters, numbers, and underscores (starting with a letter).",
+            err=True,
+        )
         return 1
-    
+
     mcli_path = Path(__file__).parent.parent
-    
+
     if group:
         # Creating under a specific group
         command_group = group.lower().replace("-", "_")
-        
+
         # Validate group name
-        if not re.match(r'^[a-z][a-z0-9_]*$', command_group):
-            logger.error(f"Invalid group name: {command_group}. Use lowercase letters, numbers, and underscores (starting with a letter).")
-            click.echo(f"Invalid group name: {command_group}. Use lowercase letters, numbers, and underscores (starting with a letter).", err=True)
+        if not re.match(r"^[a-z][a-z0-9_]*$", command_group):
+            logger.error(
+                f"Invalid group name: {command_group}. Use lowercase letters, numbers, and underscores (starting with a letter)."
+            )
+            click.echo(
+                f"Invalid group name: {command_group}. Use lowercase letters, numbers, and underscores (starting with a letter).",
+                err=True,
+            )
             return 1
-            
+
         # Check if group exists, create if needed
         group_path = mcli_path / command_group
         if not group_path.exists():
@@ -396,54 +435,67 @@ def add_command (command_name, group):
                 f.write(f'"""\n{command_group.capitalize()} commands for mcli.\n"""')
             logger.info(f"Created new command group directory: {command_group}")
             click.echo(f"Created new command group directory: {command_group}")
-        
+
         # Create command file
         command_file_path = group_path / f"{command_name}.py"
         if command_file_path.exists():
             logger.warning(f"Command file already exists: {command_file_path}")
-            should_override = Prompt.ask("File already exists. Override?", choices=["y", "n"], default="n")
+            should_override = Prompt.ask(
+                "File already exists. Override?", choices=["y", "n"], default="n"
+            )
             if should_override.lower() != "y":
                 logger.info("Command creation aborted.")
                 click.echo("Command creation aborted.")
                 return 1
-                
+
         # Generate command file
         with open(command_file_path, "w") as f:
             f.write(get_command_template(command_name, command_group))
-            
+
         logger.info(f"Created new command: {command_name} in group: {command_group}")
         click.echo(f"Created new command: {command_name} in group: {command_group}")
         click.echo(f"File created: {command_file_path}")
-        click.echo(f"To use this command, add 'from mcli.{command_group}.{command_name} import {command_name}_group' to your main imports")
-        click.echo(f"Then add '{command_name}_group to your main CLI group using app.add_command({command_name}_group)'")
-        
+        click.echo(
+            f"To use this command, add 'from mcli.{command_group}.{command_name} import {command_name}_group' to your main imports"
+        )
+        click.echo(
+            f"Then add '{command_name}_group to your main CLI group using app.add_command({command_name}_group)'"
+        )
+
     else:
         # Creating directly under self
         command_file_path = mcli_path / "self" / f"{command_name}.py"
-        
+
         if command_file_path.exists():
             logger.warning(f"Command file already exists: {command_file_path}")
-            should_override = Prompt.ask("File already exists. Override?", choices=["y", "n"], default="n")
+            should_override = Prompt.ask(
+                "File already exists. Override?", choices=["y", "n"], default="n"
+            )
             if should_override.lower() != "y":
                 logger.info("Command creation aborted.")
                 click.echo("Command creation aborted.")
                 return 1
-        
+
         # Generate command file
         with open(command_file_path, "w") as f:
             f.write(get_command_template(command_name))
-            
+
         # Update self_cmd.py to import and register the new command
         with open(Path(__file__), "r") as f:
             content = f.read()
-            
+
         # Add import statement if not exists
         import_statement = f"from mcli.self.{command_name} import {command_name}_command"
         if import_statement not in content:
             import_section_end = content.find("logger = get_logger()")
             if import_section_end != -1:
-                updated_content = content[:import_section_end] + import_statement + "\n" + content[import_section_end:]
-                
+                updated_content = (
+                    content[:import_section_end]
+                    + import_statement
+                    + "\n"
+                    + content[import_section_end:]
+                )
+
                 # Add command registration (Click syntax)
                 registration = f"@self_app.command('{command_name}')\ndef {command_name}(name=\"World\"):\n    return {command_name}_command(name)\n"
                 registration_point = updated_content.rfind("def ")
@@ -451,18 +503,22 @@ def add_command (command_name, group):
                     # Find the end of the last function
                     last_func_end = updated_content.find("\n\n", registration_point)
                     if last_func_end != -1:
-                        updated_content = updated_content[:last_func_end + 2] + registration + updated_content[last_func_end + 2:]
+                        updated_content = (
+                            updated_content[: last_func_end + 2]
+                            + registration
+                            + updated_content[last_func_end + 2 :]
+                        )
                     else:
                         updated_content += "\n\n" + registration
-                
+
                 with open(Path(__file__), "w") as f:
                     f.write(updated_content)
-            
+
         logger.info(f"Created new command: {command_name} in self module")
         click.echo(f"Created new command: {command_name} in self module")
         click.echo(f"File created: {command_file_path}")
         click.echo(f"Command has been automatically registered with self_app")
-        
+
     return 0
 
 
@@ -475,6 +531,7 @@ def plugin():
     """
     logger.info("Plugin management commands loaded")
     pass
+
 
 @plugin.command("add")
 @click.argument("plugin_name")
@@ -500,7 +557,10 @@ def plugin_add(plugin_name, repo_url=None):
                 config_path = top_level_config
 
     if not config_path or not config_path.exists():
-        click.echo("Config file not found in $MCLI_CONFIG, $HOME/.config/mcli/config.toml, or project root.", err=True)
+        click.echo(
+            "Config file not found in $MCLI_CONFIG, $HOME/.config/mcli/config.toml, or project root.",
+            err=True,
+        )
         return 1
 
     with open(config_path, "rb") as f:
@@ -532,6 +592,7 @@ def plugin_add(plugin_name, repo_url=None):
     # Download the repo if a URL is provided
     if repo_url:
         import subprocess
+
         dest = plugin_path / plugin_name
         if dest.exists():
             click.echo(f"Plugin directory already exists at {dest}. Aborting download.", err=True)
@@ -549,6 +610,7 @@ def plugin_add(plugin_name, repo_url=None):
     # TODO: Optionally update config.toml to register the new plugin
 
     return 0
+
 
 @plugin.command("remove")
 @click.argument("plugin_name")
@@ -571,7 +633,10 @@ def plugin_remove(plugin_name):
                 config_path = top_level_config
 
     if not config_path or not config_path.exists():
-        click.echo("Config file not found in $MCLI_CONFIG, $HOME/.config/mcli/config.toml, or project root.", err=True)
+        click.echo(
+            "Config file not found in $MCLI_CONFIG, $HOME/.config/mcli/config.toml, or project root.",
+            err=True,
+        )
         return 1
 
     with open(config_path, "rb") as f:
@@ -593,6 +658,7 @@ def plugin_remove(plugin_name):
         return 1
 
     import shutil
+
     try:
         shutil.rmtree(dest)
         click.echo(f"Plugin '{plugin_name}' removed from {dest}")
@@ -603,6 +669,7 @@ def plugin_remove(plugin_name):
     # TODO: Optionally update config.toml to unregister the plugin
 
     return 0
+
 
 @plugin.command("update")
 @click.argument("plugin_name")
@@ -629,7 +696,10 @@ def plugin_update(plugin_name):
                 config_path = top_level_config
 
     if not config_path or not config_path.exists():
-        click.echo("Config file not found in $MCLI_CONFIG, $HOME/.config/mcli/config.toml, or project root.", err=True)
+        click.echo(
+            "Config file not found in $MCLI_CONFIG, $HOME/.config/mcli/config.toml, or project root.",
+            err=True,
+        )
         return 1
 
     with open(config_path, "rb") as f:
@@ -651,6 +721,7 @@ def plugin_update(plugin_name):
         return 1
 
     import subprocess
+
     try:
         click.echo(f"Updating plugin '{plugin_name}' in {dest} ...")
         subprocess.run(["git", "-C", str(dest), "pull"], check=True)
@@ -661,6 +732,7 @@ def plugin_update(plugin_name):
 
     return 0
 
+
 @self_app.command("hello")
 @click.argument("name", default="World")
 def hello(name: str):
@@ -669,59 +741,65 @@ def hello(name: str):
     logger.info(message)
     console.print(f"[green]{message}[/green]")
 
+
 @self_app.command("logs")
-@click.option("--type", "-t", type=click.Choice(['main', 'system', 'trace', 'all']), default='main', 
-              help="Type of logs to display")
+@click.option(
+    "--type",
+    "-t",
+    type=click.Choice(["main", "system", "trace", "all"]),
+    default="main",
+    help="Type of logs to display",
+)
 @click.option("--lines", "-n", default=50, help="Number of lines to show (default: 50)")
 @click.option("--follow", "-f", is_flag=True, help="Follow log output in real-time")
 @click.option("--date", "-d", help="Show logs for specific date (YYYYMMDD format)")
 @click.option("--grep", "-g", help="Filter logs by pattern")
-@click.option("--level", "-l", type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']), 
-              help="Filter logs by minimum level")
+@click.option(
+    "--level",
+    "-l",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+    help="Filter logs by minimum level",
+)
 def logs(type: str, lines: int, follow: bool, date: str, grep: str, level: str):
     """
     Display runtime logs of the mcli application.
-    
+
     Shows the most recent log entries from the application's logging system.
     Supports filtering by log type, date, content, and log level.
-    
+
     Log files are named as mcli_YYYYMMDD.log, mcli_system_YYYYMMDD.log, mcli_trace_YYYYMMDD.log.
     """
-    from pathlib import Path
-    import subprocess
     import re
+    import subprocess
     from datetime import datetime
-    
+    from pathlib import Path
+
     # Find the logs directory
     current_file = Path(__file__)
     # Go up 5 levels: file -> self -> mcli -> src -> repo_root
     project_root = current_file.parents[4]
     logs_dir = project_root / "logs"
-    
+
     # Alternative: try current working directory first
     if not logs_dir.exists():
         logs_dir = Path.cwd() / "logs"
-    
+
     if not logs_dir.exists():
         click.echo("❌ Logs directory not found", err=True)
         return
-    
+
     # Determine which log files to read
     log_files = []
-    
-    if type == 'all':
+
+    if type == "all":
         # Get all log files for the specified date or latest
         if date:
             # Look for files like mcli_20250709.log, mcli_system_20250709.log, mcli_trace_20250709.log
-            patterns = [
-                f"mcli_{date}.log",
-                f"mcli_system_{date}.log",
-                f"mcli_trace_{date}.log"
-            ]
+            patterns = [f"mcli_{date}.log", f"mcli_system_{date}.log", f"mcli_trace_{date}.log"]
         else:
             # Get the most recent log files
             patterns = ["mcli_*.log"]
-        
+
         log_files = []
         for pattern in patterns:
             files = list(logs_dir.glob(pattern))
@@ -729,46 +807,46 @@ def logs(type: str, lines: int, follow: bool, date: str, grep: str, level: str):
                 # Sort by modification time (newest first)
                 files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
                 log_files.extend(files)
-        
+
         # Remove duplicates and take only the most recent files of each type
         seen_types = set()
         filtered_files = []
         for log_file in log_files:
             # Extract log type from filename
             # mcli_20250709 -> main
-            # mcli_system_20250709 -> system  
+            # mcli_system_20250709 -> system
             # mcli_trace_20250709 -> trace
-            if log_file.name.startswith('mcli_system_'):
-                log_type = 'system'
-            elif log_file.name.startswith('mcli_trace_'):
-                log_type = 'trace'
+            if log_file.name.startswith("mcli_system_"):
+                log_type = "system"
+            elif log_file.name.startswith("mcli_trace_"):
+                log_type = "trace"
             else:
-                log_type = 'main'
-            
+                log_type = "main"
+
             if log_type not in seen_types:
                 seen_types.add(log_type)
                 filtered_files.append(log_file)
-        
+
         log_files = filtered_files
     else:
         # Get specific log type
         if date:
-            if type == 'main':
+            if type == "main":
                 filename = f"mcli_{date}.log"
             else:
                 filename = f"mcli_{type}_{date}.log"
         else:
             # Find the most recent file for this type
-            if type == 'main':
+            if type == "main":
                 pattern = "mcli_*.log"
                 # Exclude system and trace files
                 exclude_patterns = ["mcli_system_*.log", "mcli_trace_*.log"]
             else:
                 pattern = f"mcli_{type}_*.log"
                 exclude_patterns = []
-            
+
             files = list(logs_dir.glob(pattern))
-            
+
             # Filter out excluded patterns
             if exclude_patterns:
                 filtered_files = []
@@ -781,7 +859,7 @@ def logs(type: str, lines: int, follow: bool, date: str, grep: str, level: str):
                     if not excluded:
                         filtered_files.append(file)
                 files = filtered_files
-            
+
             if files:
                 # Sort by modification time and take the most recent
                 files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
@@ -789,90 +867,98 @@ def logs(type: str, lines: int, follow: bool, date: str, grep: str, level: str):
             else:
                 click.echo(f"❌ No {type} log files found", err=True)
                 return
-        
+
         log_file = logs_dir / filename
         if log_file.exists():
             log_files = [log_file]
         else:
             click.echo(f"❌ Log file not found: {filename}", err=True)
             return
-    
+
     if not log_files:
         click.echo("❌ No log files found", err=True)
         return
-    
+
     # Display log file information
     click.echo(f"📋 Showing logs from {len(log_files)} file(s):")
     for log_file in log_files:
         size_mb = log_file.stat().st_size / (1024 * 1024)
         modified = datetime.fromtimestamp(log_file.stat().st_mtime)
-        click.echo(f"   📄 {log_file.name} ({size_mb:.1f}MB, modified {modified.strftime('%Y-%m-%d %H:%M:%S')})")
+        click.echo(
+            f"   📄 {log_file.name} ({size_mb:.1f}MB, modified {modified.strftime('%Y-%m-%d %H:%M:%S')})"
+        )
     click.echo()
-    
+
     # Process each log file
     for log_file in log_files:
         click.echo(f"🔍 Reading: {log_file.name}")
         click.echo("─" * 80)
-        
+
         try:
             # Read the file content
-            with open(log_file, 'r') as f:
+            with open(log_file, "r") as f:
                 content = f.readlines()
-            
+
             # Apply filters
             filtered_lines = []
             for line in content:
                 # Apply grep filter
                 if grep and grep.lower() not in line.lower():
                     continue
-                
+
                 # Apply level filter
                 if level:
-                    level_pattern = rf'\b{level}\b'
+                    level_pattern = rf"\b{level}\b"
                     if not re.search(level_pattern, line, re.IGNORECASE):
                         # Check if line has a lower level than requested
-                        level_order = {'DEBUG': 0, 'INFO': 1, 'WARNING': 2, 'ERROR': 3, 'CRITICAL': 4}
+                        level_order = {
+                            "DEBUG": 0,
+                            "INFO": 1,
+                            "WARNING": 2,
+                            "ERROR": 3,
+                            "CRITICAL": 4,
+                        }
                         requested_level = level_order.get(level.upper(), 0)
-                        
+
                         # Check if line contains any log level
                         found_level = None
                         for log_level in level_order:
                             if log_level in line.upper():
                                 found_level = level_order[log_level]
                                 break
-                        
+
                         if found_level is None or found_level < requested_level:
                             continue
-                
+
                 filtered_lines.append(line)
-            
+
             # Show the last N lines
             if lines > 0:
                 filtered_lines = filtered_lines[-lines:]
-            
+
             # Display the lines
             for line in filtered_lines:
                 # Colorize log levels
                 colored_line = line
-                if 'ERROR' in line or 'CRITICAL' in line:
-                    colored_line = click.style(line, fg='red')
-                elif 'WARNING' in line:
-                    colored_line = click.style(line, fg='yellow')
-                elif 'INFO' in line:
-                    colored_line = click.style(line, fg='green')
-                elif 'DEBUG' in line:
-                    colored_line = click.style(line, fg='blue')
-                
+                if "ERROR" in line or "CRITICAL" in line:
+                    colored_line = click.style(line, fg="red")
+                elif "WARNING" in line:
+                    colored_line = click.style(line, fg="yellow")
+                elif "INFO" in line:
+                    colored_line = click.style(line, fg="green")
+                elif "DEBUG" in line:
+                    colored_line = click.style(line, fg="blue")
+
                 click.echo(colored_line.rstrip())
-            
+
             if not filtered_lines:
                 click.echo("(No matching log entries found)")
-            
+
         except Exception as e:
             click.echo(f"❌ Error reading log file {log_file.name}: {e}", err=True)
-        
+
         click.echo()
-    
+
     if follow:
         click.echo("🔄 Following log output... (Press Ctrl+C to stop)")
         try:
@@ -883,38 +969,38 @@ def logs(type: str, lines: int, follow: bool, date: str, grep: str, level: str):
                     ["tail", "-f", str(log_file)],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    text=True
+                    text=True,
                 )
-                
+
                 try:
                     if process.stdout:
                         for line in process.stdout:
                             # Apply filters to real-time output
                             if grep and grep.lower() not in line.lower():
                                 continue
-                            
+
                             if level:
-                                level_pattern = rf'\b{level}\b'
+                                level_pattern = rf"\b{level}\b"
                                 if not re.search(level_pattern, line, re.IGNORECASE):
                                     continue
-                            
+
                             # Colorize and display
                             colored_line = line
-                            if 'ERROR' in line or 'CRITICAL' in line:
-                                colored_line = click.style(line, fg='red')
-                            elif 'WARNING' in line:
-                                colored_line = click.style(line, fg='yellow')
-                            elif 'INFO' in line:
-                                colored_line = click.style(line, fg='green')
-                            elif 'DEBUG' in line:
-                                colored_line = click.style(line, fg='blue')
-                            
+                            if "ERROR" in line or "CRITICAL" in line:
+                                colored_line = click.style(line, fg="red")
+                            elif "WARNING" in line:
+                                colored_line = click.style(line, fg="yellow")
+                            elif "INFO" in line:
+                                colored_line = click.style(line, fg="green")
+                            elif "DEBUG" in line:
+                                colored_line = click.style(line, fg="blue")
+
                             click.echo(colored_line.rstrip())
-                        
+
                 except KeyboardInterrupt:
                     process.terminate()
                     break
-                    
+
         except KeyboardInterrupt:
             click.echo("\n🛑 Stopped following logs")
         except Exception as e:
@@ -927,88 +1013,95 @@ def logs(type: str, lines: int, follow: bool, date: str, grep: str, level: str):
 def performance(detailed: bool, benchmark: bool):
     """🚀 Show performance optimization status and benchmarks"""
     try:
-        from mcli.lib.performance.rust_bridge import print_performance_summary
         from mcli.lib.performance.optimizer import get_global_optimizer
-        
+        from mcli.lib.performance.rust_bridge import print_performance_summary
+
         # Always show the performance summary
         print_performance_summary()
-        
+
         if detailed:
             console.print("\n📊 Detailed Performance Information:")
             console.print("─" * 60)
-            
+
             optimizer = get_global_optimizer()
             summary = optimizer.get_optimization_summary()
-            
-            table = Table(title="Detailed Optimization Results", show_header=True, header_style="bold magenta")
+
+            table = Table(
+                title="Detailed Optimization Results", show_header=True, header_style="bold magenta"
+            )
             table.add_column("Optimization", style="cyan", width=20)
             table.add_column("Status", justify="center", width=10)
             table.add_column("Details", style="white", width=40)
-            
-            for name, details in summary['details'].items():
-                status = "✅" if details.get('success') else "❌"
-                detail_text = details.get('performance_gain', 'N/A')
-                if details.get('optimizations'):
-                    opts = details['optimizations']
+
+            for name, details in summary["details"].items():
+                status = "✅" if details.get("success") else "❌"
+                detail_text = details.get("performance_gain", "N/A")
+                if details.get("optimizations"):
+                    opts = details["optimizations"]
                     detail_text += f"\n{len(opts)} optimizations applied"
-                
-                table.add_row(name.replace('_', ' ').title(), status, detail_text)
-            
+
+                table.add_row(name.replace("_", " ").title(), status, detail_text)
+
             console.print(table)
-            
-            console.print(f"\n🎯 Estimated Performance Gain: {summary['estimated_performance_gain']}")
-        
+
+            console.print(
+                f"\n🎯 Estimated Performance Gain: {summary['estimated_performance_gain']}"
+            )
+
         if benchmark:
             console.print("\n🏁 Running Performance Benchmarks...")
             console.print("─" * 60)
-            
+
             try:
                 from mcli.lib.ui.visual_effects import MCLIProgressBar
-                
+
                 progress = MCLIProgressBar.create_fancy_progress()
                 with progress:
                     # Benchmark task
                     task = progress.add_task("🔥 Running TF-IDF benchmark...", total=100)
-                    
+
                     optimizer = get_global_optimizer()
-                    
+
                     # Update progress
                     for i in range(20):
                         progress.update(task, advance=5)
                         time.sleep(0.05)
-                    
+
                     # Run actual benchmark
                     benchmark_results = optimizer.benchmark_performance("medium")
-                    
+
                     progress.update(task, advance=100)
-                
+
                 # Display results
                 if benchmark_results:
                     console.print("\n📈 Benchmark Results:")
-                    
-                    tfidf_results = benchmark_results.get('tfidf_benchmark', {})
-                    if tfidf_results.get('rust') and tfidf_results.get('python'):
-                        speedup = tfidf_results['python'] / tfidf_results['rust']
+
+                    tfidf_results = benchmark_results.get("tfidf_benchmark", {})
+                    if tfidf_results.get("rust") and tfidf_results.get("python"):
+                        speedup = tfidf_results["python"] / tfidf_results["rust"]
                         console.print(f"   🦀 Rust TF-IDF: {tfidf_results['rust']:.3f}s")
                         console.print(f"   🐍 Python TF-IDF: {tfidf_results['python']:.3f}s")
                         console.print(f"   ⚡ Speedup: {speedup:.1f}x faster with Rust!")
-                    
-                    system_info = benchmark_results.get('system_info', {})
+
+                    system_info = benchmark_results.get("system_info", {})
                     if system_info:
                         console.print(f"\n💻 System Info:")
                         console.print(f"   Platform: {system_info.get('platform', 'Unknown')}")
                         console.print(f"   CPUs: {system_info.get('cpu_count', 'Unknown')}")
-                        console.print(f"   Memory: {system_info.get('memory_total', 0) // (1024**3):.1f}GB")
-                
+                        console.print(
+                            f"   Memory: {system_info.get('memory_total', 0) // (1024**3):.1f}GB"
+                        )
+
             except ImportError:
                 click.echo("📊 Benchmark functionality requires additional dependencies")
                 click.echo("💡 Install with: pip install rich")
-    
+
     except ImportError as e:
         click.echo(f"❌ Performance monitoring not available: {e}")
         click.echo("💡 Try installing dependencies: pip install rich psutil")
     except Exception as e:
         click.echo(f"❌ Error showing performance status: {e}")
+
 
 # Register the plugin group with self_app
 self_app.add_command(plugin)

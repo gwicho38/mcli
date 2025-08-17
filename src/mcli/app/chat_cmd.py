@@ -1,5 +1,7 @@
 import click
+
 from mcli.chat.chat import ChatClient
+
 
 @click.command()
 def chat():

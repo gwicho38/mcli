@@ -1,5 +1,7 @@
-import click
 from typing import Optional
+
+import click
+
 from .token_manager import TokenManager
 
 

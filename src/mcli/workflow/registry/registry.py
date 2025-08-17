@@ -1,6 +1,7 @@
-import requests
-import click
 import warnings
+
+import click
+import requests
 
 # Suppress the warning about python-Levenshtein
 warnings.filterwarnings("ignore", message="Using slow pure-python SequenceMatcher")
@@ -36,9 +37,7 @@ class DockerClient:
     def search_repository(self, repository):
         catalog = self.get_catalog()
         if catalog:
-            return [
-                repo for repo in catalog.get("repositories", []) if repository in repo
-            ]
+            return [repo for repo in catalog.get("repositories", []) if repository in repo]
         return []
 
     def search_all_repositories(self, token: str):

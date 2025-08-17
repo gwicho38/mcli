@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.workflow.repo.repo import repo
+from mcli.workflow.repo.repo import repo
 
 
 def test_repo_group_help():

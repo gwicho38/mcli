@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.workflow.registry.registry import registry
+from mcli.workflow.registry.registry import registry
 import os
 from pathlib import Path
 

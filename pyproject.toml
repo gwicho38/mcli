@@ -70,6 +70,11 @@ dependencies = [
   "scikit-image>=0.24.0",
   "pypdf2>=3.0.1",
   "pymupdf>=1.26.3",
+  "pydot>=4.0.1",
+  "graphviz>=0.21",
+  "fuzzywuzzy>=0.18.0",
+  "pandas>=2.3.1",
+  "openpyxl>=3.1.5",
 ]
 
 [project.urls]
@@ -120,6 +125,15 @@ line_length = 100
 [build-system]
 requires = ["setuptools>=65.0.0", "wheel>=0.40.0"]
 build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "isort>=5.13.2",
+    "mypy>=1.16.1",
+    "pytest>=8.4.1",
+    "pytest-cov>=4.1.0",
+]
 
 [tool.setuptools]
 packages = { find = { where = ["src"] } }

@@ -1,9 +1,10 @@
 import click
-from .webapp.webapp import webapp
+
+from .daemon.api_daemon import api_daemon
+from .daemon.commands import daemon
 from .file.file import file
 from .videos.videos import videos
-from .daemon.commands import daemon
-from .daemon.api_daemon import api_daemon
+from .webapp.webapp import webapp
 
 
 @click.group(name="workflow")

@@ -1,14 +1,15 @@
+import base64
 import json
 import math
-import time
-import base64
 import os
+import time
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from mcli.lib.fs import get_absolute_path
 from mcli.lib.config import DEV_SECRETS_ROOT
+from mcli.lib.fs import get_absolute_path
 from mcli.lib.logger.logger import get_logger
+
 logger = get_logger(__name__)
 
 
@@ -18,9 +19,7 @@ class CredentialManager:
     with secure file handling and permissions.
     """
 
-    def __init__(
-        self, app_name: str = "mcli", config_filename: str = "mcli.key.config.json"
-    ):
+    def __init__(self, app_name: str = "mcli", config_filename: str = "mcli.key.config.json"):
         """
         Initialize the CredentialManager.
 
@@ -137,9 +136,7 @@ class CredentialManager:
         except Exception as e:
             raise Exception(f"Failed to update configuration: {str(e)}")
 
-    def get_config_value(
-        self, key: str, default: Optional[Any] = None
-    ) -> Optional[Any]:
+    def get_config_value(self, key: str, default: Optional[Any] = None) -> Optional[Any]:
         """
         Retrieve a specific value from the configuration.
 
@@ -178,9 +175,7 @@ class CredentialManager:
 
     @staticmethod
     def persist_generic_creds(thirdPartyApiKind, creds):
-        filepath = get_absolute_path(
-            DEV_SECRETS_ROOT + "thirdParty/" + thirdPartyApiKind + ".txt"
-        )
+        filepath = get_absolute_path(DEV_SECRETS_ROOT + "thirdParty/" + thirdPartyApiKind + ".txt")
         with open(filepath, "w") as f:
             f.write(json.dumps(str(creds)))
         logger.info(thirdPartyApiKind + " secrets have been persisted into:", filepath)

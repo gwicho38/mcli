@@ -1,15 +1,16 @@
-import fitz  # PyMuPDF
 import click
+import fitz  # PyMuPDF
 
 
 @click.group(name="file")
 def file():
     """Personal file utility to use with custom and/or default file system paths."""
-    pass 
+    pass
+
 
 @file.command()
-@click.argument('input_oxps', type=click.Path(exists=True))
-@click.argument('output_pdf', type=click.Path())
+@click.argument("input_oxps", type=click.Path(exists=True))
+@click.argument("output_pdf", type=click.Path())
 def oxps_to_pdf(input_oxps, output_pdf):
     """Converts an OXPS file (INPUT_OXPS) to a PDF file (OUTPUT_PDF)."""
     try:
@@ -31,27 +32,22 @@ def oxps_to_pdf(input_oxps, output_pdf):
         click.echo(f"Error converting file: {e}", err=True)
 
 
-
-
-import subprocess
 import os
+import subprocess
 from pathlib import Path
 from typing import List, Optional
 
-DEFAULT_DIRS = [
-    "~/repos/lefv-vault",
-    "~/Documents/OneDrive",
-    "~/Documents/Documents"
-]
+DEFAULT_DIRS = ["~/repos/lefv-vault", "~/Documents/OneDrive", "~/Documents/Documents"]
+
 
 @file.command(name="search")
-@click.argument('search-string', type=str)
-@click.argument('search-dirs', default=DEFAULT_DIRS)
-@click.argument('context-lines', default=3, type=int)
+@click.argument("search-string", type=str)
+@click.argument("search-dirs", default=DEFAULT_DIRS)
+@click.argument("context-lines", default=3, type=int)
 def find_string_with_fzf(
     search_string: str = "foo",
     search_dirs: Optional[List[str]] = DEFAULT_DIRS,
-    context_lines: int = 3
+    context_lines: int = 3,
 ) -> List[str]:
     """
     Search for a string with ripgrep in given directories and select matches with fzf.
@@ -76,21 +72,10 @@ def find_string_with_fzf(
         raise FileNotFoundError("None of the provided or default directories exist")
 
     # Run ripgrep with context lines
-    rg_command = [
-        "rg",
-        "--color=always",
-        f"-C{context_lines}",
-        search_string,
-        *valid_dirs
-    ]
+    rg_command = ["rg", "--color=always", f"-C{context_lines}", search_string, *valid_dirs]
 
     try:
-        rg_proc = subprocess.run(
-            rg_command,
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        rg_proc = subprocess.run(rg_command, capture_output=True, text=True, check=True)
     except subprocess.CalledProcessError as e:
         print("No matches found or error running rg.")
         return []
@@ -102,7 +87,7 @@ def find_string_with_fzf(
             input=rg_proc.stdout,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         )
         selections = fzf_proc.stdout.strip().split("\n")
         return [s for s in selections if s.strip()]
@@ -110,6 +95,6 @@ def find_string_with_fzf(
         # User exited fzf without selection
         return []
 
-        
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     file()

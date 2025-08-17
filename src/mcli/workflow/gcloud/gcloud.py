@@ -1,6 +1,8 @@
 import click
+
 # from mcli.public.mcli.lib.shell.shell import shell_exec, get_shell_script_path
-from mcli.lib.shell.shell import shell_exec, get_shell_script_path
+from mcli.lib.shell.shell import get_shell_script_path, shell_exec
+
 
 # Click CLI group renamed to 'gcloud'
 @click.group()

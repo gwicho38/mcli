@@ -1,6 +1,9 @@
 from typing import Optional
-from .credential_manager import CredentialManager
+
 from mcli.lib.logger.logger import get_logger
+
+from .credential_manager import CredentialManager
+
 logger = get_logger(__name__)
 
 

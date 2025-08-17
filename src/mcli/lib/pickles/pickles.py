@@ -1,17 +1,15 @@
-import click
-import pickle
 import os
+import pickle
 from pathlib import Path
-from typing import TypeVar, Type, Generic, Callable
+from typing import Callable, Generic, Type, TypeVar
 
+import click
 
 T = TypeVar("T")
 
 
 class ObjectCache(Generic[T]):
-    def __init__(
-        self, class_type: Type[T], app_name: str, factory: Callable[[], T] = None
-    ):
+    def __init__(self, class_type: Type[T], app_name: str, factory: Callable[[], T] = None):
         self.class_type = class_type
         self.app_name = app_name
         self.factory = factory or class_type

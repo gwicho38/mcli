@@ -1,5 +1,6 @@
 import click
-from mcli.lib.shell.shell import shell_exec, get_shell_script_path
+
+from mcli.lib.shell.shell import get_shell_script_path, shell_exec
 
 
 @click.group(name="oi")

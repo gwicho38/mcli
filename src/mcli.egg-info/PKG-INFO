@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: mcli
-Version: 5.0.0
+Version: 5.3.1
 Summary: 🚀 High-performance CLI framework with Rust extensions, AI chat, and stunning visuals
 Author-email: Luis Fernandez de la Vara <luis@lefv.io>
 Maintainer-email: Luis Fernandez de la Vara <luis@lefv.io>
@@ -65,6 +65,11 @@ Requires-Dist: opencv-python>=4.11.0.86
 Requires-Dist: scikit-image>=0.24.0
 Requires-Dist: pypdf2>=3.0.1
 Requires-Dist: pymupdf>=1.26.3
+Requires-Dist: pydot>=4.0.1
+Requires-Dist: graphviz>=0.21
+Requires-Dist: fuzzywuzzy>=0.18.0
+Requires-Dist: pandas>=2.3.1
+Requires-Dist: openpyxl>=3.1.5
 Provides-Extra: dev
 Requires-Dist: pytest>=8.3.5; extra == "dev"
 Requires-Dist: pytest-cov<5.0.0,>=4.1.0; extra == "dev"

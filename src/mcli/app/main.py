@@ -1,19 +1,21 @@
-import sys
-import platform
-import inspect
-import importlib
-from pathlib import Path
-from typing import Optional, List
-from importlib.metadata import version, metadata
-from functools import lru_cache
-import click
 import functools
-from mcli.lib.ui.styling import info, success
+import importlib
+import inspect
+import os
+import platform
+import sys
+from functools import lru_cache
+from importlib.metadata import metadata, version
+from pathlib import Path
+from typing import List, Optional
+
+import click
+import tomli
+
 # Import chat command group
 from mcli.app.chat_cmd import chat
-import tomli
-import os
-from mcli.lib.logger.logger import get_logger, enable_runtime_tracing, disable_runtime_tracing
+from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_tracing, get_logger
+from mcli.lib.ui.styling import info, success
 
 # Defer performance optimizations until needed
 _optimization_results = None
@@ -24,7 +26,7 @@ _optimization_results = None
 logger = get_logger(__name__)
 
 # Enable runtime tracing if environment variable is set
-trace_level = os.environ.get('MCLI_TRACE_LEVEL')
+trace_level = os.environ.get("MCLI_TRACE_LEVEL")
 if trace_level:
     try:
         # Convert to integer (1=function calls, 2=line by line, 3=verbose)
@@ -34,32 +36,31 @@ if trace_level:
     except ValueError:
         logger.warning(f"Invalid MCLI_TRACE_LEVEL value: {trace_level}. Using default level 1.")
         enable_runtime_tracing(level=1)
-        
+
 logger.debug("About to import readiness module")
 
 # Defer self management commands import
 
 logger.debug("main")
 
-def discover_modules(
-    base_path: Path, config_path: Optional[Path] = None
-) -> List[str]:
+
+def discover_modules(base_path: Path, config_path: Optional[Path] = None) -> List[str]:
     """
     Discovers Python modules in specified paths.
     Paths must omit trailing backslash.
     """
     modules = []
-    
+
     # Try different config file locations
     if config_path is None:
         # Try local config.toml first
         config_paths = [
             Path("config.toml"),  # Current directory
             base_path / "config.toml",  # mcli directory
-            base_path.parent.parent / "config.toml"  # Repository root
+            base_path.parent.parent / "config.toml",  # Repository root
         ]
         logger.info(f"Config paths: {config_paths}")
-        
+
         for path in config_paths:
             if path.exists():
                 config_path = path
@@ -68,7 +69,7 @@ def discover_modules(
             # No config file found, use default
             logger.warning("No config file found, using default configuration")
             config_path = None
-    
+
     # Read the TOML configuration file or use default
     logger.info(f"Config path: {config_path.exists() if config_path else 'None'}")
     if config_path and config_path.exists():
@@ -97,7 +98,7 @@ def discover_modules(
             sub_dir = "/".join(parts[1:])
             search_path = base_path / parent_dir / sub_dir
             logger.debug(f"Searching in nested path: {search_path}")
-            
+
             if search_path.exists():
                 for file_path in search_path.rglob("*.py"):
                     if file_path.name not in excluded_files and not any(
@@ -106,19 +107,22 @@ def discover_modules(
                         # Convert file path to module name with mcli prefix
                         relative_path = file_path.relative_to(base_path.parent)
                         module_name = str(relative_path).replace("/", ".").replace(".py", "")
-                        
+
                         # Skip individual workflow submodules to avoid duplicate commands
-                        if module_name.startswith("mcli.workflow.") and module_name != "mcli.workflow.workflow":
+                        if (
+                            module_name.startswith("mcli.workflow.")
+                            and module_name != "mcli.workflow.workflow"
+                        ):
                             # Skip individual workflow submodules (e.g., mcli.workflow.daemon.daemon)
                             # Only include the main workflow module
                             continue
-                        
+
                         modules.append(module_name)
                         logger.debug(f"Found nested module: {module_name}")
         else:
             search_path = base_path / directory
             logger.debug(f"Searching in path: {search_path}")
-            
+
             if search_path.exists():
                 for file_path in search_path.rglob("*.py"):
                     if file_path.name not in excluded_files and not any(
@@ -127,13 +131,16 @@ def discover_modules(
                         # Convert file path to module name with mcli prefix
                         relative_path = file_path.relative_to(base_path.parent)
                         module_name = str(relative_path).replace("/", ".").replace(".py", "")
-                        
+
                         # Skip individual workflow submodules to avoid duplicate commands
-                        if module_name.startswith("mcli.workflow.") and module_name != "mcli.workflow.workflow":
+                        if (
+                            module_name.startswith("mcli.workflow.")
+                            and module_name != "mcli.workflow.workflow"
+                        ):
                             # Skip individual workflow submodules (e.g., mcli.workflow.daemon.daemon)
                             # Only include the main workflow module
                             continue
-                        
+
                         modules.append(module_name)
                         logger.debug(f"Found module: {module_name}")
 
@@ -144,7 +151,7 @@ def discover_modules(
 def register_command_as_api_endpoint(command_func, module_name: str, command_name: str):
     """
     Register a Click command as an API endpoint.
-    
+
     Args:
         command_func: The Click command function
         module_name: The module name for grouping
@@ -153,56 +160,59 @@ def register_command_as_api_endpoint(command_func, module_name: str, command_nam
     try:
         # Create endpoint path based on module and command
         endpoint_path = f"/{module_name.replace('.', '/')}/{command_name}"
-        
+
         logger.info(f"Registering API endpoint: {endpoint_path} for command {command_name}")
         logger.info(f"Command function: {command_func.__name__}")
-        
+
         # Register the command as an API endpoint
         register_command_as_api(
             command_func=command_func,
             endpoint_path=endpoint_path,
             http_method="POST",
             description=f"API endpoint for {command_name} command from {module_name}",
-            tags=[module_name.split('.')[-1]]  # Use last part of module name as tag
+            tags=[module_name.split(".")[-1]],  # Use last part of module name as tag
         )
-        
+
         logger.debug(f"Registered API endpoint: {endpoint_path} for command {command_name}")
-        
+
     except Exception as e:
         logger.warning(f"Failed to register API endpoint for {command_name}: {e}")
         import traceback
+
         logger.error(f"Traceback: {traceback.format_exc()}")
 
 
 def process_click_commands(obj, module_name: str, parent_name: str = ""):
     """
     Recursively process Click commands and groups to register them as API endpoints.
-    
+
     Args:
         obj: Click command or group object
         module_name: The module name
         parent_name: Parent command name for nesting
     """
-    logger.info(f"Processing Click object: {type(obj).__name__} with name: {getattr(obj, 'name', 'Unknown')}")
-    
-    if hasattr(obj, 'commands'):
+    logger.info(
+        f"Processing Click object: {type(obj).__name__} with name: {getattr(obj, 'name', 'Unknown')}"
+    )
+
+    if hasattr(obj, "commands"):
         # This is a Click group
         logger.info(f"This is a Click group with {len(obj.commands)} commands")
         for name, command in obj.commands.items():
             full_name = f"{parent_name}/{name}" if parent_name else name
             logger.info(f"Processing command: {name} -> {full_name}")
-            
+
             # Register the command as an API endpoint
             register_command_as_api_endpoint(command.callback, module_name, full_name)
-            
+
             # Recursively process nested commands
-            if hasattr(command, 'commands'):
+            if hasattr(command, "commands"):
                 logger.info(f"Recursively processing nested commands for {name}")
                 process_click_commands(command, module_name, full_name)
     else:
         # This is a single command
         logger.info(f"This is a single command: {getattr(obj, 'name', 'Unknown')}")
-        if hasattr(obj, 'callback') and obj.callback:
+        if hasattr(obj, "callback") and obj.callback:
             full_name = parent_name if parent_name else obj.name
             logger.info(f"Registering single command: {full_name}")
             register_command_as_api_endpoint(obj.callback, module_name, full_name)
@@ -210,33 +220,35 @@ def process_click_commands(obj, module_name: str, parent_name: str = ""):
 
 class LazyCommand(click.Command):
     """A Click command that loads its implementation lazily."""
-    
+
     def __init__(self, name, import_path, *args, **kwargs):
         self.import_path = import_path
         self._loaded_command = None
         super().__init__(name, *args, **kwargs)
-    
+
     def _load_command(self):
         """Load the actual command on first use."""
         if self._loaded_command is None:
             try:
-                module_path, attr_name = self.import_path.rsplit('.', 1)
+                module_path, attr_name = self.import_path.rsplit(".", 1)
                 module = importlib.import_module(module_path)
                 self._loaded_command = getattr(module, attr_name)
                 logger.debug(f"Lazily loaded command: {self.name}")
             except Exception as e:
                 logger.error(f"Failed to load command {self.name}: {e}")
+
                 # Return a dummy command that shows an error
                 def error_callback():
                     click.echo(f"Error: Command {self.name} is not available")
+
                 self._loaded_command = click.Command(self.name, callback=error_callback)
         return self._loaded_command
-    
+
     def invoke(self, ctx):
         """Invoke the lazily loaded command."""
         cmd = self._load_command()
         return cmd.invoke(ctx)
-    
+
     def get_params(self, ctx):
         """Get parameters from the lazily loaded command."""
         cmd = self._load_command()
@@ -248,41 +260,43 @@ def _add_lazy_commands(app: click.Group):
     # Essential commands - load immediately for fast access
     try:
         from mcli.app.commands_cmd import commands
+
         app.add_command(commands, name="commands")
         logger.debug("Added commands group")
     except ImportError as e:
         logger.debug(f"Could not load commands group: {e}")
-    
+
     # Self management - load immediately as it's commonly used
     try:
         from mcli.self.self_cmd import self_app
+
         app.add_command(self_app, name="self")
         logger.debug("Added self management commands")
     except Exception as e:
         logger.debug(f"Could not load self commands: {e}")
-    
+
     # Lazy load heavy commands that are used less frequently
     lazy_commands = {
-        'chat': {
-            'import_path': 'mcli.app.chat_cmd.chat',
-            'help': 'Start an interactive chat session with the MCLI Chat Assistant.'
+        "chat": {
+            "import_path": "mcli.app.chat_cmd.chat",
+            "help": "Start an interactive chat session with the MCLI Chat Assistant.",
         },
-        'visual': {
-            'import_path': 'mcli.app.visual_cmd.visual',
-            'help': '🎨 Visual effects and enhancements showcase'
+        "visual": {
+            "import_path": "mcli.app.visual_cmd.visual",
+            "help": "🎨 Visual effects and enhancements showcase",
         },
-        'workflow': {
-            'import_path': 'mcli.workflow.workflow.workflow',
-            'help': 'Workflow commands for automation, video processing, and daemon management'
+        "workflow": {
+            "import_path": "mcli.workflow.workflow.workflow",
+            "help": "Workflow commands for automation, video processing, and daemon management",
         },
     }
-    
+
     for cmd_name, cmd_info in lazy_commands.items():
         lazy_cmd = LazyCommand(
             name=cmd_name,
-            import_path=cmd_info['import_path'],
+            import_path=cmd_info["import_path"],
             callback=lambda: None,  # Placeholder
-            help=cmd_info['help']
+            help=cmd_info["help"],
         )
         app.add_command(lazy_cmd)
         logger.debug(f"Added lazy command: {cmd_name}")
@@ -290,9 +304,9 @@ def _add_lazy_commands(app: click.Group):
 
 def create_app() -> click.Group:
     """Create and configure the Click application with clean top-level commands."""
-    
+
     logger.debug("create_app")
-    
+
     app = click.Group(name="mcli")
 
     # Clean top-level commands
@@ -320,7 +334,7 @@ def get_version_info(verbose: bool = False) -> str:
         info = [f"mcli version {mcli_version}"]
 
         if verbose:
-                info.extend(
+            info.extend(
                 [
                     f"\nPython: {sys.version.split()[0]}",
                     f"Platform: {platform.platform()}",
@@ -344,11 +358,12 @@ def main():
     except Exception as e:
         logger.error(f"Error in main function: {e}")
         import traceback
+
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise
     finally:
         # Make sure tracing is disabled on exit
-        if os.environ.get('MCLI_TRACE_LEVEL'):
+        if os.environ.get("MCLI_TRACE_LEVEL"):
             logger.debug("Disabling runtime tracing on exit")
             disable_runtime_tracing()
 

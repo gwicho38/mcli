@@ -1,6 +1,7 @@
 import importlib.util
-import click
 import sys
+
+import click
 
 
 def import_public_module(module_name: str):
@@ -8,6 +9,7 @@ def import_public_module(module_name: str):
     spec = importlib.util.find_spec(prefix + module_name)
     if spec is None:
         from mcli.lib.logger.logger import get_logger
+
         logger = get_logger()
         logger.error("Module is not available")
         logger.error("Please install the module or consult current import statements")
@@ -25,4 +27,3 @@ def lib():
 
 if __name__ == "__main__":
     lib()
-

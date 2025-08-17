@@ -86,6 +86,7 @@ src/mcli/lib/watcher/__init__.py
 src/mcli/lib/watcher/watcher.py
 src/mcli/public/__init__.py
 src/mcli/public/public.py
+src/mcli/public/commands/__init__.py
 src/mcli/public/oi/oi.py
 src/mcli/self/__init__.py
 src/mcli/self/self_cmd.py

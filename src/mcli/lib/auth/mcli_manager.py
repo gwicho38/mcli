@@ -5,17 +5,20 @@ from pathlib import Path
 from urllib.request import urlopen
 
 import click
+
 from mcli.lib.logger.logger import get_logger
 
 logger = get_logger(__name__)
+
 
 class MCLIManager:
     """
     Class for managing MCLI cluster connections and authentication.
     """
+
     def __init__(self, env_url: str):
         self.env_url = env_url
-        
+
     def create_mcli_basic_auth_token(self):
         """Create a basic auth token for MCLI authentication"""
         basic_content_bytes = "BA:BA".encode("ASCII")
@@ -41,12 +44,14 @@ class MCLIManager:
         mcli = self.mcli_as_dev_user(url, basicAuthHeader)
         return mcli
 
+
 class MCLIConnectionParams:
     """A picklable class to store MCLI connection parameters"""
 
     def __init__(self, url, auth_token):
         self.url = url
         self.auth_token = auth_token
+
 
 class MCLIInstance:
     def __init__(self, url, auth_token):
@@ -81,6 +86,7 @@ class MCLIInstance:
 
     def __getattr__(self, name):
         return getattr(self._mcli, name)
+
 
 def create_mcli_instance(url, token):
     """Returns mcli remote type system for python."""

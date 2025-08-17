@@ -1,10 +1,13 @@
+from typing import List, Optional
+
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
-from typing import List, Optional
+
 from mcli.workflow.daemon.daemon import DaemonService
 
 app = FastAPI(title="MCLI Daemon API")
 service = DaemonService()
+
 
 class CommandOut(BaseModel):
     id: str
@@ -19,9 +22,11 @@ class CommandOut(BaseModel):
     last_executed: Optional[str]
     is_active: bool
 
+
 class ExecuteRequest(BaseModel):
     command_name: str
     args: Optional[List[str]] = []
+
 
 @app.get("/commands", response_model=List[CommandOut])
 def list_commands(all: bool = Query(False, description="Show all commands, including inactive")):
@@ -38,9 +43,11 @@ def list_commands(all: bool = Query(False, description="Show all commands, inclu
             updated_at=cmd.updated_at.isoformat() if cmd.updated_at else None,
             execution_count=cmd.execution_count,
             last_executed=cmd.last_executed.isoformat() if cmd.last_executed else None,
-            is_active=cmd.is_active
-        ) for cmd in commands
+            is_active=cmd.is_active,
+        )
+        for cmd in commands
     ]
+
 
 @app.post("/execute")
 def execute_command(req: ExecuteRequest):
