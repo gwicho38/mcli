@@ -1,14 +1,14 @@
 use pyo3::prelude::*;
 
-mod tfidf;
-mod file_watcher;
 mod command_parser;
+mod file_watcher;
 mod process_manager;
+mod tfidf;
 
-use tfidf::TfIdfVectorizer;
-use file_watcher::FileWatcher;
 use command_parser::CommandMatcher;
+use file_watcher::FileWatcher;
 use process_manager::ProcessManager;
+use tfidf::TfIdfVectorizer;
 
 #[pymodule]
 fn mcli_rust(m: &Bound<'_, PyModule>) -> PyResult<()> {

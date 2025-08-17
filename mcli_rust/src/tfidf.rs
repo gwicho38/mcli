@@ -1,10 +1,10 @@
 use pyo3::prelude::*;
-use rustc_hash::{FxHashMap, FxHashSet};
 use rayon::prelude::*;
 use regex::Regex;
-use unicode_normalization::UnicodeNormalization;
-use std::collections::BinaryHeap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::cmp::Ordering;
+use std::collections::BinaryHeap;
+use unicode_normalization::UnicodeNormalization;
 
 #[derive(Clone)]
 struct Document {
@@ -70,10 +70,10 @@ impl TfIdfVectorizer {
 
         // Build vocabulary
         self.build_vocabulary();
-        
+
         // Calculate IDF scores
         self.calculate_idf_scores();
-        
+
         Ok(())
     }
 
@@ -95,7 +95,7 @@ impl TfIdfVectorizer {
     pub fn similarity(&self, query: String, documents: Vec<String>) -> PyResult<Vec<f64>> {
         let query_doc = self.preprocess_document(0, &query);
         let query_vector = self.document_to_vector(&query_doc);
-        
+
         let doc_vectors: Vec<Vec<f64>> = documents
             .par_iter()
             .enumerate()
@@ -114,7 +114,9 @@ impl TfIdfVectorizer {
     }
 
     pub fn get_feature_names(&self) -> Vec<String> {
-        let mut vocab_vec: Vec<(String, usize)> = self.vocabulary.iter()
+        let mut vocab_vec: Vec<(String, usize)> = self
+            .vocabulary
+            .iter()
             .map(|(term, &idx)| (term.clone(), idx))
             .collect();
         vocab_vec.sort_by_key(|(_, idx)| *idx);
@@ -126,9 +128,10 @@ impl TfIdfVectorizer {
     fn preprocess_document(&self, id: usize, text: &str) -> Document {
         // Normalize unicode and convert to lowercase
         let normalized: String = text.nfc().collect::<String>().to_lowercase();
-        
+
         // Tokenize
-        let tokens: Vec<String> = self.tokenizer
+        let tokens: Vec<String> = self
+            .tokenizer
             .find_iter(&normalized)
             .map(|m| m.as_str().to_string())
             .filter(|token| !self.stop_words.contains(token) && token.len() > 1)
@@ -136,7 +139,7 @@ impl TfIdfVectorizer {
 
         // Generate n-grams
         let ngrams = self.generate_ngrams(&tokens);
-        
+
         // Count tokens
         let mut token_counts = FxHashMap::default();
         for token in &ngrams {
@@ -152,7 +155,7 @@ impl TfIdfVectorizer {
 
     fn generate_ngrams(&self, tokens: &[String]) -> Vec<String> {
         let mut ngrams = Vec::new();
-        
+
         for n in self.ngram_range.0..=self.ngram_range.1 {
             if tokens.len() >= n {
                 for window in tokens.windows(n) {
@@ -160,14 +163,14 @@ impl TfIdfVectorizer {
                 }
             }
         }
-        
+
         ngrams
     }
 
     fn build_vocabulary(&mut self) {
         // Count document frequencies
         let mut doc_frequencies: FxHashMap<String, usize> = FxHashMap::default();
-        
+
         for doc in &self.documents {
             let unique_tokens: FxHashSet<String> = doc.tokens.iter().cloned().collect();
             for token in unique_tokens {
@@ -178,7 +181,7 @@ impl TfIdfVectorizer {
         // Filter by min_df and max_df
         let num_docs = self.documents.len() as f64;
         let max_df_count = (self.max_df * num_docs) as usize;
-        
+
         let mut valid_terms: Vec<(String, usize)> = doc_frequencies
             .into_iter()
             .filter(|(_, freq)| *freq >= self.min_df && *freq <= max_df_count)
@@ -205,11 +208,12 @@ impl TfIdfVectorizer {
         self.idf_scores = vec![0.0; self.vocabulary.len()];
 
         for (term, &idx) in &self.vocabulary {
-            let doc_freq = self.documents
+            let doc_freq = self
+                .documents
                 .iter()
                 .filter(|doc| doc.token_counts.contains_key(term))
                 .count() as f64;
-            
+
             // IDF = log(N / df) + 1 (smooth IDF)
             self.idf_scores[idx] = (num_docs / doc_freq).ln() + 1.0;
         }
@@ -254,14 +258,13 @@ fn cosine_similarity(vec1: &[f64], vec2: &[f64]) -> f64 {
 
 // Common English stop words
 const DEFAULT_STOP_WORDS: &[&str] = &[
-    "a", "an", "and", "are", "as", "at", "be", "been", "by", "for", "from",
-    "has", "he", "in", "is", "it", "its", "of", "on", "that", "the", "to",
-    "was", "will", "with", "the", "this", "but", "they", "have", "had", "what",
-    "said", "each", "which", "their", "time", "if", "up", "out", "many", "then",
-    "them", "these", "so", "some", "her", "would", "make", "like", "into", "him",
-    "has", "two", "more", "very", "after", "our", "just", "first", "all", "any",
-    "my", "now", "such", "before", "here", "through", "when", "where", "how",
-    "your", "most", "other", "take", "than", "only", "think", "also", "back",
-    "could", "good", "should", "still", "being", "made", "much", "new", "way",
-    "well", "own", "see", "get", "may", "say", "come", "use", "during", "without"
+    "a", "an", "and", "are", "as", "at", "be", "been", "by", "for", "from", "has", "he", "in",
+    "is", "it", "its", "of", "on", "that", "the", "to", "was", "will", "with", "the", "this",
+    "but", "they", "have", "had", "what", "said", "each", "which", "their", "time", "if", "up",
+    "out", "many", "then", "them", "these", "so", "some", "her", "would", "make", "like", "into",
+    "him", "has", "two", "more", "very", "after", "our", "just", "first", "all", "any", "my",
+    "now", "such", "before", "here", "through", "when", "where", "how", "your", "most", "other",
+    "take", "than", "only", "think", "also", "back", "could", "good", "should", "still", "being",
+    "made", "much", "new", "way", "well", "own", "see", "get", "may", "say", "come", "use",
+    "during", "without",
 ];

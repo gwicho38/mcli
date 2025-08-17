@@ -1,11 +1,11 @@
+use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use pyo3::prelude::*;
-use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, Config};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-use serde::{Deserialize, Serialize};
 
 #[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -51,7 +51,7 @@ impl FileWatcher {
     pub fn start_watching(&mut self, paths: Vec<String>, recursive: Option<bool>) -> PyResult<()> {
         if self.is_watching {
             return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
-                "Watcher is already running"
+                "Watcher is already running",
             ));
         }
 
@@ -64,21 +64,23 @@ impl FileWatcher {
             .with_compare_contents(false); // Fast mode - only check metadata
 
         let mut watcher = RecommendedWatcher::new(
-            move |res: Result<Event, notify::Error>| {
-                match res {
-                    Ok(event) => {
-                        if let Some(file_event) = convert_notify_event(event) {
-                            if let Ok(sender) = tx.lock() {
-                                let _ = sender.send(file_event);
-                            }
+            move |res: Result<Event, notify::Error>| match res {
+                Ok(event) => {
+                    if let Some(file_event) = convert_notify_event(event) {
+                        if let Ok(sender) = tx.lock() {
+                            let _ = sender.send(file_event);
                         }
                     }
-                    Err(e) => eprintln!("File watcher error: {:?}", e),
                 }
+                Err(e) => eprintln!("File watcher error: {:?}", e),
             },
             config,
-        ).map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("Failed to create watcher: {}", e))
+        )
+        .map_err(|e| {
+            PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!(
+                "Failed to create watcher: {}",
+                e
+            ))
         })?;
 
         // Watch specified paths
@@ -92,14 +94,15 @@ impl FileWatcher {
             let path = Path::new(path_str);
             if !path.exists() {
                 return Err(PyErr::new::<pyo3::exceptions::PyFileNotFoundError, _>(
-                    format!("Path does not exist: {}", path_str)
+                    format!("Path does not exist: {}", path_str),
                 ));
             }
 
             watcher.watch(path, recursive_mode).map_err(|e| {
-                PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
-                    format!("Failed to watch path {}: {}", path_str, e)
-                )
+                PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!(
+                    "Failed to watch path {}: {}",
+                    path_str, e
+                ))
             })?;
 
             self.watch_paths.push(path.to_path_buf());
@@ -144,7 +147,7 @@ impl FileWatcher {
         match rx.recv_timeout(timeout) {
             Ok(event) => {
                 events.push(event);
-                
+
                 // Collect any additional events without blocking
                 while let Ok(event) = rx.try_recv() {
                     events.push(event);
@@ -155,7 +158,7 @@ impl FileWatcher {
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
                 return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
-                    "Event receiver disconnected"
+                    "Event receiver disconnected",
                 ));
             }
         }
@@ -176,7 +179,11 @@ impl FileWatcher {
 
     // Batch event processing for high-throughput scenarios
     #[pyo3(signature = (max_events=None, timeout_ms=None))]
-    pub fn get_events_batch(&self, max_events: Option<usize>, timeout_ms: Option<u64>) -> PyResult<Vec<FileEvent>> {
+    pub fn get_events_batch(
+        &self,
+        max_events: Option<usize>,
+        timeout_ms: Option<u64>,
+    ) -> PyResult<Vec<FileEvent>> {
         if !self.is_watching {
             return Ok(Vec::new());
         }
@@ -195,7 +202,7 @@ impl FileWatcher {
         match rx.recv_timeout(timeout) {
             Ok(event) => {
                 events.push(event);
-                
+
                 // Collect additional events without blocking
                 while events.len() < max_events {
                     match rx.try_recv() {
@@ -209,7 +216,7 @@ impl FileWatcher {
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
                 return Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
-                    "Event receiver disconnected"
+                    "Event receiver disconnected",
                 ));
             }
         }
@@ -219,9 +226,13 @@ impl FileWatcher {
 
     // Filter events by file extension
     #[pyo3(signature = (extensions, timeout_ms=None))]
-    pub fn get_filtered_events(&self, extensions: Vec<String>, timeout_ms: Option<u64>) -> PyResult<Vec<FileEvent>> {
+    pub fn get_filtered_events(
+        &self,
+        extensions: Vec<String>,
+        timeout_ms: Option<u64>,
+    ) -> PyResult<Vec<FileEvent>> {
         let all_events = self.get_events(timeout_ms)?;
-        
+
         if extensions.is_empty() {
             return Ok(all_events);
         }
@@ -233,8 +244,8 @@ impl FileWatcher {
                 if let Some(ext) = path.extension() {
                     let ext_str = ext.to_string_lossy().to_lowercase();
                     extensions.iter().any(|filter_ext| {
-                        filter_ext.to_lowercase() == ext_str || 
-                        filter_ext.to_lowercase() == format!(".{}", ext_str)
+                        filter_ext.to_lowercase() == ext_str
+                            || filter_ext.to_lowercase() == format!(".{}", ext_str)
                     })
                 } else {
                     false

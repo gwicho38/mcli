@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
+use rayon::prelude::*;
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
-use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use unicode_normalization::UnicodeNormalization;
@@ -69,7 +69,12 @@ pub struct MatchResult {
 #[pymethods]
 impl MatchResult {
     #[new]
-    pub fn new(command: Command, score: f64, match_type: String, matched_fields: Vec<String>) -> Self {
+    pub fn new(
+        command: Command,
+        score: f64,
+        match_type: String,
+        matched_fields: Vec<String>,
+    ) -> Self {
         Self {
             command,
             score,
@@ -113,7 +118,7 @@ impl CommandMatcher {
 
     pub fn add_command(&mut self, command: Command) -> PyResult<()> {
         let index = self.commands.len();
-        
+
         // Index by name
         let normalized_name = normalize_text(&command.name);
         self.name_index
@@ -207,11 +212,11 @@ impl CommandMatcher {
             if score >= self.fuzzy_threshold {
                 let mut matched_fields = Vec::new();
                 let command = &self.commands[idx];
-                
+
                 // Check which fields matched
                 let name_words = self.extract_words(&command.name);
                 let desc_words = self.extract_words(&command.description);
-                
+
                 for word in &query_words {
                     if name_words.contains(word) {
                         matched_fields.push("name".to_string());
@@ -238,9 +243,7 @@ impl CommandMatcher {
         results.extend(fuzzy_matches);
 
         // Remove duplicates and sort by score
-        results.sort_by(|a, b| {
-            b.score.partial_cmp(&a.score).unwrap_or(Ordering::Equal)
-        });
+        results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(Ordering::Equal));
 
         // Remove duplicates by command ID
         let mut seen_ids: FxHashSet<String> = FxHashSet::default();
@@ -252,7 +255,11 @@ impl CommandMatcher {
         Ok(results)
     }
 
-    pub fn search_by_tags(&self, tags: Vec<String>, limit: Option<usize>) -> PyResult<Vec<MatchResult>> {
+    pub fn search_by_tags(
+        &self,
+        tags: Vec<String>,
+        limit: Option<usize>,
+    ) -> PyResult<Vec<MatchResult>> {
         let limit = limit.unwrap_or(10);
         let mut results: Vec<MatchResult> = Vec::new();
         let mut command_scores: FxHashMap<usize, (f64, Vec<String>)> = FxHashMap::default();
@@ -261,7 +268,8 @@ impl CommandMatcher {
             let normalized_tag = normalize_text(tag);
             if let Some(indices) = self.tag_index.get(&normalized_tag) {
                 for &idx in indices {
-                    let (score, matched_tags) = command_scores.entry(idx).or_insert((0.0, Vec::new()));
+                    let (score, matched_tags) =
+                        command_scores.entry(idx).or_insert((0.0, Vec::new()));
                     *score += 1.0 / tags.len() as f64;
                     matched_tags.push(tag.clone());
                 }
@@ -283,11 +291,16 @@ impl CommandMatcher {
         Ok(results)
     }
 
-    pub fn search_by_group(&self, group: String, limit: Option<usize>) -> PyResult<Vec<MatchResult>> {
+    pub fn search_by_group(
+        &self,
+        group: String,
+        limit: Option<usize>,
+    ) -> PyResult<Vec<MatchResult>> {
         let limit = limit.unwrap_or(10);
         let normalized_group = normalize_text(&group);
-        
-        let results: Vec<MatchResult> = self.commands
+
+        let results: Vec<MatchResult> = self
+            .commands
             .iter()
             .filter(|cmd| {
                 cmd.group
@@ -296,12 +309,14 @@ impl CommandMatcher {
                     .unwrap_or(false)
             })
             .take(limit)
-            .map(|cmd| MatchResult::new(
-                cmd.clone(),
-                1.0,
-                "group_match".to_string(),
-                vec!["group".to_string()],
-            ))
+            .map(|cmd| {
+                MatchResult::new(
+                    cmd.clone(),
+                    1.0,
+                    "group_match".to_string(),
+                    vec!["group".to_string()],
+                )
+            })
             .collect();
 
         Ok(results)
@@ -309,7 +324,8 @@ impl CommandMatcher {
 
     pub fn get_popular_commands(&self, limit: Option<usize>) -> PyResult<Vec<MatchResult>> {
         let limit = limit.unwrap_or(10);
-        let mut commands_with_scores: Vec<_> = self.commands
+        let mut commands_with_scores: Vec<_> = self
+            .commands
             .iter()
             .map(|cmd| (cmd, cmd.execution_count as f64))
             .collect();
@@ -319,12 +335,14 @@ impl CommandMatcher {
         let results: Vec<MatchResult> = commands_with_scores
             .into_iter()
             .take(limit)
-            .map(|(cmd, score)| MatchResult::new(
-                cmd.clone(),
-                score / 100.0, // Normalize score
-                "popularity".to_string(),
-                vec!["execution_count".to_string()],
-            ))
+            .map(|(cmd, score)| {
+                MatchResult::new(
+                    cmd.clone(),
+                    score / 100.0, // Normalize score
+                    "popularity".to_string(),
+                    vec!["execution_count".to_string()],
+                )
+            })
             .collect();
 
         Ok(results)
@@ -374,9 +392,9 @@ impl CommandMatcher {
         for (idx, command) in self.commands.iter().enumerate() {
             let name_score = fuzzy_score(&query_chars, &command.name);
             let desc_score = fuzzy_score(&query_chars, &command.description);
-            
+
             let max_score = name_score.max(desc_score);
-            
+
             if max_score >= self.fuzzy_threshold {
                 let matched_fields = if name_score >= desc_score {
                     vec!["name".to_string()]
@@ -410,14 +428,14 @@ fn normalize_text(text: &str) -> String {
 
 fn fuzzy_score(query_chars: &[char], target: &str) -> f64 {
     let target_chars: Vec<char> = normalize_text(target).chars().collect();
-    
+
     if query_chars.is_empty() || target_chars.is_empty() {
         return 0.0;
     }
 
     let mut query_idx = 0;
     let mut matches = 0;
-    
+
     for target_char in &target_chars {
         if query_idx < query_chars.len() && *target_char == query_chars[query_idx] {
             matches += 1;
