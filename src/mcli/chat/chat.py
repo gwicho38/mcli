@@ -804,13 +804,27 @@ Provide accurate information. Only reference commands that actually exist in the
     def is_command_creation_request(self, user_input: str) -> bool:
         """Check if user input is requesting to create a new command."""
         lower_input = user_input.lower()
-        creation_keywords = [
-            'create command', 'create a command', 'new command', 'make command',
-            'integrate', 'add command', 'build command', 'generate command',
-            'can you create', 'help me create', 'make a new', 'build a new',
-            'integrate the code', 'add a new command'
+        
+        # Primary creation patterns
+        creation_patterns = [
+            r'\bcreate\s+.*command',  # "create a command", "create simple command", etc.
+            r'\bmake\s+.*command',    # "make a command", "make new command", etc.
+            r'\bbuild\s+.*command',   # "build a command", "build new command", etc.
+            r'\bgenerate\s+.*command', # "generate a command", etc.
+            r'\badd\s+.*command',     # "add a command", "add new command", etc.
+            r'\bnew\s+command',       # "new command"
+            r'\bcommand\s+.*create',  # "command to create", etc.
+            r'\bintegrate.*code',     # "integrate code", "integrate the code", etc.
+            r'\bcan\s+you\s+create',  # "can you create"
+            r'\bhelp\s+me\s+create',  # "help me create"
         ]
-        return any(keyword in lower_input for keyword in creation_keywords)
+        
+        import re
+        for pattern in creation_patterns:
+            if re.search(pattern, lower_input):
+                return True
+        
+        return False
     
     def handle_command_creation(self, user_input: str):
         """Handle command creation requests with complete end-to-end implementation."""
@@ -818,15 +832,23 @@ Provide accurate information. Only reference commands that actually exist in the
         console.print("I'll create a complete working MCLI command for you!")
         console.print()
         
+        # Check if user already specified their preference in the input
+        if any(phrase in user_input.lower() for phrase in ['code only', 'just code', 'show code']):
+            console.print("[yellow]Code-only mode selected[/yellow]")
+            self._generate_code_only(user_input)
+            return
+        
         # Ask user if they want full automation or just guidance
         try:
             console.print("[bold cyan]Choose your approach:[/bold cyan]")
             console.print("1. [green]Full automation[/green] - I'll create, save, and test the command")
             console.print("2. [yellow]Code only[/yellow] - I'll just generate code for you to implement")
             console.print()
+            console.print("[dim]Tip: You can also say 'code only' in your original request[/dim]")
+            console.print()
             
             choice = console.input("[bold cyan]Enter choice (1 or 2, default=1): [/bold cyan]").strip()
-            if choice == "2":
+            if choice == "2" or choice.lower() in ['code only', 'code', 'just code']:
                 # Original behavior - just generate code
                 self._generate_code_only(user_input)
             else:
