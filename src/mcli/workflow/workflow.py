@@ -4,7 +4,6 @@ from .daemon.api_daemon import api_daemon
 from .daemon.commands import daemon
 from .file.file import file
 from .videos.videos import videos
-from .webapp.webapp import webapp
 
 
 @click.group(name="workflow")
@@ -15,7 +14,6 @@ def workflow():
 
 # Add subcommands
 def register_workflow_commands():
-    workflow.add_command(webapp)
     workflow.add_command(file)
     workflow.add_command(videos)
     workflow.add_command(daemon)

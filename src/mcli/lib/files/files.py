@@ -1,18 +1,35 @@
+import hashlib
+import base64
+import os
+from mcli.lib.logger.logger import get_logger
+
+logger = get_logger(__name__)
+
 IN_MEMORY_FILE_FINGERPRINTS = {}
 NO_CHANGE_TO_FILE = -1
 
-# TODO: Function needs to be finished
-
 
 def encode_content(path):
-    logger.info("encode_content")
-    logger.info(path)
-    with open(path, "rb") as file:
-        logger.info(file)
-        # content = file.read()
-    # fingerlogger.info = hashlib.md5(content).hexdigest()
-
-    return NO_CHANGE_TO_FILE
+    """Encode file content and track changes using MD5 fingerprints"""
+    logger.debug(f"encode_content: {path}")
+    
+    try:
+        with open(path, "rb") as file:
+            content = file.read()
+        
+        # Calculate MD5 fingerprint
+        fingerprint = hashlib.md5(content).hexdigest()
+        
+        # Check if file has changed
+        if IN_MEMORY_FILE_FINGERPRINTS.get(path) != fingerprint:
+            IN_MEMORY_FILE_FINGERPRINTS[path] = fingerprint
+            return base64.b64encode(content).decode('utf-8')
+        else:
+            return NO_CHANGE_TO_FILE
+            
+    except Exception as e:
+        logger.error(f"Error encoding content from {path}: {e}")
+        return NO_CHANGE_TO_FILE
 
 
 def merge_txt_files(folder_path, file_type=".mcli", output_file="merged_output.txt"):
@@ -51,10 +68,8 @@ def merge_txt_files(folder_path, file_type=".mcli", output_file="merged_output.t
     logger.info(f"Merged {len(mcli_files)} files into {output_file}")
 
 
-if __name__ == "__name__":
-    pass
-# if IN_MEMORY_FILE_FINGERlogger.infoS.get(path) != fingerlogger.info:
-#     IN_MEMORY_FILE_FINGERlogger.infoS[path] = fingerlogger.info
-#     return base64.b64encode(content).decode('utf-8')
-# else:
-#     return NO_CHANGE_TO_FILE
+if __name__ == "__main__":
+    # Example usage
+    print("File utilities module")
+    print("Use encode_content() to track file changes")
+    print("Use merge_txt_files() to merge files of a specific type")

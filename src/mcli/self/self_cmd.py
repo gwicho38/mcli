@@ -1103,6 +1103,32 @@ def performance(detailed: bool, benchmark: bool):
         click.echo(f"❌ Error showing performance status: {e}")
 
 
+@self_app.command()
+@click.option("--refresh", "-r", default=2.0, help="Refresh interval in seconds")
+@click.option("--once", is_flag=True, help="Show dashboard once and exit")
+def dashboard(refresh: float, once: bool):
+    """📊 Launch live system dashboard"""
+    try:
+        from mcli.lib.ui.visual_effects import LiveDashboard
+
+        dashboard = LiveDashboard()
+        
+        if once:
+            # Show dashboard once
+            console.clear()
+            layout = dashboard.create_full_dashboard()
+            console.print(layout)
+        else:
+            # Start live updating dashboard
+            dashboard.start_live_dashboard(refresh_interval=refresh)
+            
+    except ImportError as e:
+        console.print("[red]Dashboard module not available[/red]")
+        console.print(f"Error: {e}")
+    except Exception as e:
+        console.print(f"[red]Error launching dashboard: {e}[/red]")
+
+
 # Register the plugin group with self_app
 self_app.add_command(plugin)
 

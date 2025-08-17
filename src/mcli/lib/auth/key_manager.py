@@ -62,20 +62,37 @@ class KeyManager(CredentialManager):
         """
         self.clear_config()
 
-    def create_key_pair(self) -> Optional[str]:
+    def get_environment_url(self) -> Optional[str]:
         """
-        Create a key pair (placeholder method).
         Retrieve environment URL from configuration.
 
         Returns:
             Optional[str]: Environment URL or None if not found.
         """
         try:
-            logger.info("getting url")
+            logger.info("getting environment url")
             return self.get_config_value("env_url")
         except Exception as e:
             logger.info(f"Warning: Error retrieving environment URL: {str(e)}")
             return None
+
+    def create_key_pair(self) -> dict:
+        """
+        Create a key pair for secure authentication.
+        This is a placeholder implementation - should be replaced with actual crypto.
+
+        Returns:
+            dict: Dictionary containing public and private key information
+        """
+        logger.info("Creating key pair - placeholder implementation")
+        # In a real implementation, this would use cryptographic libraries
+        # like cryptography or pycryptodome to generate actual key pairs
+        return {
+            "public_key": "placeholder_public_key",
+            "private_key": "placeholder_private_key",
+            "algorithm": "placeholder_rsa",
+            "created_at": logger.info.__code__.co_filename  # Placeholder timestamp
+        }
 
     @staticmethod
     def allowed_action(action: str) -> bool:

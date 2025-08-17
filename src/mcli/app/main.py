@@ -255,6 +255,53 @@ class LazyCommand(click.Command):
         return cmd.get_params(ctx)
 
 
+class LazyGroup(click.Group):
+    """A Click group that loads its implementation lazily."""
+
+    def __init__(self, name, import_path, *args, **kwargs):
+        self.import_path = import_path
+        self._loaded_group = None
+        super().__init__(name, *args, **kwargs)
+
+    def _load_group(self):
+        """Load the actual group on first use."""
+        if self._loaded_group is None:
+            try:
+                module_path, attr_name = self.import_path.rsplit(".", 1)
+                module = importlib.import_module(module_path)
+                self._loaded_group = getattr(module, attr_name)
+                logger.debug(f"Lazily loaded group: {self.name}")
+            except Exception as e:
+                logger.error(f"Failed to load group {self.name}: {e}")
+
+                # Return a dummy group that shows an error
+                def error_callback():
+                    click.echo(f"Error: Command group {self.name} is not available")
+
+                self._loaded_group = click.Group(self.name, callback=error_callback)
+        return self._loaded_group
+
+    def invoke(self, ctx):
+        """Invoke the lazily loaded group."""
+        group = self._load_group()
+        return group.invoke(ctx)
+
+    def get_command(self, ctx, cmd_name):
+        """Get a command from the lazily loaded group."""
+        group = self._load_group()
+        return group.get_command(ctx, cmd_name)
+
+    def list_commands(self, ctx):
+        """List commands from the lazily loaded group."""
+        group = self._load_group()
+        return group.list_commands(ctx)
+
+    def get_params(self, ctx):
+        """Get parameters from the lazily loaded group."""
+        group = self._load_group()
+        return group.get_params(ctx)
+
+
 def _add_lazy_commands(app: click.Group):
     """Add command groups with lazy loading."""
     # Essential commands - load immediately for fast access
@@ -292,12 +339,21 @@ def _add_lazy_commands(app: click.Group):
     }
 
     for cmd_name, cmd_info in lazy_commands.items():
-        lazy_cmd = LazyCommand(
-            name=cmd_name,
-            import_path=cmd_info["import_path"],
-            callback=lambda: None,  # Placeholder
-            help=cmd_info["help"],
-        )
+        if cmd_name == "workflow":
+            # Use LazyGroup for workflow since it has subcommands
+            lazy_cmd = LazyGroup(
+                name=cmd_name,
+                import_path=cmd_info["import_path"],
+                help=cmd_info["help"],
+            )
+        else:
+            # Use LazyCommand for simple commands
+            lazy_cmd = LazyCommand(
+                name=cmd_name,
+                import_path=cmd_info["import_path"],
+                callback=lambda: None,  # Placeholder
+                help=cmd_info["help"],
+            )
         app.add_command(lazy_cmd)
         logger.debug(f"Added lazy command: {cmd_name}")
 

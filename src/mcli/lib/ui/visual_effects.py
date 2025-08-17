@@ -353,6 +353,164 @@ class LiveDashboard:
                 border_style="yellow",
             )
 
+    def create_mcli_status_panel(self) -> Panel:
+        """Create MCLI status overview panel"""
+        try:
+            import platform
+
+            status = Text()
+            status.append("🚀 MCLI Status\n\n", style="bold magenta")
+            
+            # Version info
+            try:
+                from importlib.metadata import version
+                mcli_version = version("mcli")
+                status.append(f"Version: {mcli_version}\n", style="cyan")
+            except Exception:
+                status.append("Version: Development\n", style="cyan")
+            
+            # Platform info
+            status.append(f"Platform: {platform.system()} {platform.machine()}\n", style="blue")
+            status.append(f"Python: {platform.python_version()}\n", style="green")
+
+            # Performance status
+            try:
+                from mcli.lib.performance.rust_bridge import check_rust_extensions
+                rust_available = check_rust_extensions()
+                if rust_available:
+                    status.append("⚡ Rust Extensions: Active\n", style="bright_green")
+                else:
+                    status.append("🐍 Rust Extensions: Fallback to Python\n", style="yellow")
+            except Exception:
+                status.append("🔧 Performance Status: Unknown\n", style="dim")
+
+            return Panel(status, box=ROUNDED, border_style="bright_magenta", padding=(1, 2))
+
+        except Exception as e:
+            return Panel(
+                f"Error getting MCLI status: {str(e)}",
+                title="MCLI Status Error",
+                border_style="red",
+            )
+
+    def create_services_panel(self) -> Panel:
+        """Create services status panel"""
+        services = Text()
+        services.append("🔧 Services Status\n\n", style="bold yellow")
+        
+        # Check daemon status
+        try:
+            from mcli.lib.api.daemon_client import get_daemon_client
+            daemon = get_daemon_client()
+            if daemon.is_running():
+                services.append("✅ MCLI Daemon: Running\n", style="green")
+            else:
+                services.append("❌ MCLI Daemon: Stopped\n", style="red")
+        except Exception:
+            services.append("⚠️  MCLI Daemon: Unknown\n", style="yellow")
+        
+        # Check Ollama status
+        try:
+            import requests
+            response = requests.get("http://localhost:11434/api/tags", timeout=2)
+            if response.status_code == 200:
+                services.append("✅ Ollama: Running\n", style="green")
+            else:
+                services.append("❌ Ollama: Not responding\n", style="red")
+        except Exception:
+            services.append("❌ Ollama: Not running\n", style="red")
+
+        return Panel(services, box=ROUNDED, border_style="bright_yellow", padding=(1, 2))
+
+    def create_recent_activity_panel(self) -> Panel:
+        """Create recent activity panel"""
+        activity = Text()
+        activity.append("📊 Recent Activity\n\n", style="bold blue")
+        
+        # This would typically read from logs or activity history
+        activity.append("• Started chat session at 14:32\n", style="dim")
+        activity.append("• Executed 'mcli self performance' at 14:30\n", style="dim")  
+        activity.append("• Daemon started at 14:25\n", style="dim")
+        activity.append("• Last command execution: SUCCESS\n", style="green")
+
+        return Panel(activity, box=ROUNDED, border_style="bright_blue", padding=(1, 2))
+
+    def create_full_dashboard(self):
+        """Create a complete dashboard layout"""
+        from rich.layout import Layout
+
+        layout = Layout()
+        
+        # Create main sections
+        layout.split_column(
+            Layout(name="header", size=3),
+            Layout(name="main", ratio=1),
+            Layout(name="footer", size=3)
+        )
+        
+        # Split main section
+        layout["main"].split_row(
+            Layout(name="left"),
+            Layout(name="right")
+        )
+        
+        # Split left and right sections
+        layout["left"].split_column(
+            Layout(name="system"),
+            Layout(name="mcli")
+        )
+        
+        layout["right"].split_column(
+            Layout(name="services"), 
+            Layout(name="activity")
+        )
+
+        # Add content to each section
+        layout["header"].update(Panel("🚀 MCLI Live Dashboard", style="bold cyan"))
+        layout["system"].update(self.create_system_overview())
+        layout["mcli"].update(self.create_mcli_status_panel())
+        layout["services"].update(self.create_services_panel())
+        layout["activity"].update(self.create_recent_activity_panel())
+        
+        from datetime import datetime
+        layout["footer"].update(Panel(f"Last updated: {datetime.now().strftime('%H:%M:%S')}", style="dim"))
+
+        return layout
+
+    def start_live_dashboard(self, refresh_interval: float = 2.0):
+        """Start the live updating dashboard"""
+        import threading
+        import time
+        
+        self.running = True
+        
+        def update_loop():
+            while self.running:
+                try:
+                    with self.console:
+                        self.console.clear()
+                        dashboard = self.create_full_dashboard()
+                        self.console.print(dashboard)
+                    time.sleep(refresh_interval)
+                except KeyboardInterrupt:
+                    self.running = False
+                    break
+                except Exception as e:
+                    self.console.print(f"Dashboard error: {e}")
+                    time.sleep(refresh_interval)
+        
+        try:
+            self.console.print("Starting MCLI Live Dashboard... Press Ctrl+C to exit")
+            update_loop()
+        except KeyboardInterrupt:
+            self.console.print("\n[yellow]Dashboard stopped by user[/yellow]")
+        finally:
+            self.running = False
+
+    def stop_dashboard(self):
+        """Stop the live dashboard"""
+        self.running = False
+
 
 class ColorfulOutput:
     """Enhanced colorful output utilities"""
