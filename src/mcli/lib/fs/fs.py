@@ -81,6 +81,7 @@ def get_file_size(path):
 def list_files(directory, pattern="*"):
     """List files in a directory matching a pattern"""
     import glob
+
     directory = get_absolute_path(directory)
     if os.path.exists(directory):
         pattern_path = os.path.join(directory, pattern)

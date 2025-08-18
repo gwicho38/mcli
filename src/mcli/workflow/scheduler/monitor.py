@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 class JobMonitor:
     """Monitors running jobs and handles timeouts, retries, and status updates"""
-    
+
     def __init__(self, status_callback: Optional[Callable] = None):
         self.running_jobs: Dict[str, threading.Thread] = {}
         self.job_start_times: Dict[str, datetime] = {}
@@ -28,7 +28,7 @@ class JobMonitor:
         """Start the monitoring thread"""
         if self.monitoring:
             return
-            
+
         self.monitoring = True
         self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self.monitor_thread.start()
@@ -55,21 +55,21 @@ class JobMonitor:
         with self.lock:
             current_time = datetime.now()
             jobs_to_remove = []
-            
+
             for job_id, thread in self.running_jobs.items():
                 start_time = self.job_start_times.get(job_id)
-                
+
                 if start_time:
                     runtime = (current_time - start_time).total_seconds()
-                    
+
                     # Check if thread is still alive
                     if not thread.is_alive():
                         jobs_to_remove.append(job_id)
                         logger.debug(f"Job {job_id} completed, removing from monitor")
-                    
+
                     # Note: Timeout handling would need job reference for max_runtime
                     # This is a simplified implementation
-            
+
             # Clean up completed jobs
             for job_id in jobs_to_remove:
                 self._remove_job(job_id)
@@ -122,15 +122,17 @@ class JobMonitor:
                 "monitoring": self.monitoring,
                 "running_jobs_count": len(self.running_jobs),
                 "running_job_ids": list(self.running_jobs.keys()),
-                "monitor_thread_alive": self.monitor_thread.is_alive() if self.monitor_thread else False
+                "monitor_thread_alive": (
+                    self.monitor_thread.is_alive() if self.monitor_thread else False
+                ),
             }
-            
+
             # Add runtime info for each job
             current_time = datetime.now()
             job_runtimes = {}
             for job_id, start_time in self.job_start_times.items():
                 runtime = (current_time - start_time).total_seconds()
                 job_runtimes[job_id] = int(runtime)
-            
+
             stats["job_runtimes"] = job_runtimes
             return stats

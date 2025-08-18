@@ -15,8 +15,9 @@ logger = get_logger(__name__)
 
 class JobStatus(Enum):
     """Job execution status"""
+
     PENDING = "pending"
-    RUNNING = "running" 
+    RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
@@ -25,17 +26,18 @@ class JobStatus(Enum):
 
 class JobType(Enum):
     """Types of jobs that can be scheduled"""
-    COMMAND = "command"           # Execute shell commands
-    PYTHON = "python"             # Execute Python code
-    CLEANUP = "cleanup"           # File system cleanup tasks
-    SYSTEM = "system"             # System maintenance tasks
-    API_CALL = "api_call"         # HTTP API calls
-    CUSTOM = "custom"             # Custom user-defined jobs
+
+    COMMAND = "command"  # Execute shell commands
+    PYTHON = "python"  # Execute Python code
+    CLEANUP = "cleanup"  # File system cleanup tasks
+    SYSTEM = "system"  # System maintenance tasks
+    API_CALL = "api_call"  # HTTP API calls
+    CUSTOM = "custom"  # Custom user-defined jobs
 
 
 class ScheduledJob:
     """Represents a scheduled job with all its metadata"""
-    
+
     def __init__(
         self,
         name: str,
@@ -46,12 +48,12 @@ class ScheduledJob:
         enabled: bool = True,
         max_runtime: int = 3600,  # 1 hour default
         retry_count: int = 0,
-        retry_delay: int = 60,    # 1 minute default
+        retry_delay: int = 60,  # 1 minute default
         environment: Optional[Dict[str, str]] = None,
         working_directory: Optional[str] = None,
         output_format: str = "json",
         notifications: Optional[Dict[str, Any]] = None,
-        job_id: Optional[str] = None
+        job_id: Optional[str] = None,
     ):
         self.id = job_id or str(uuid.uuid4())
         self.name = name
@@ -67,7 +69,7 @@ class ScheduledJob:
         self.working_directory = working_directory
         self.output_format = output_format
         self.notifications = notifications or {}
-        
+
         # Runtime tracking
         self.status = JobStatus.PENDING
         self.created_at = datetime.now()
@@ -108,7 +110,7 @@ class ScheduledJob:
             "last_output": self.last_output,
             "last_error": self.last_error,
             "runtime_seconds": self.runtime_seconds,
-            "current_retry": self.current_retry
+            "current_retry": self.current_retry,
         }
 
     @classmethod
@@ -128,9 +130,9 @@ class ScheduledJob:
             working_directory=data.get("working_directory"),
             output_format=data.get("output_format", "json"),
             notifications=data.get("notifications", {}),
-            job_id=data.get("id")
+            job_id=data.get("id"),
         )
-        
+
         # Restore runtime state
         job.status = JobStatus(data.get("status", "pending"))
         job.created_at = datetime.fromisoformat(data["created_at"])
@@ -143,7 +145,7 @@ class ScheduledJob:
         job.last_error = data.get("last_error", "")
         job.runtime_seconds = data.get("runtime_seconds", 0)
         job.current_retry = data.get("current_retry", 0)
-        
+
         return job
 
     def update_status(self, status: JobStatus, output: str = "", error: str = ""):
@@ -151,7 +153,7 @@ class ScheduledJob:
         self.status = status
         self.last_output = output
         self.last_error = error
-        
+
         if status == JobStatus.RUNNING:
             self.last_run = datetime.now()
             self.run_count += 1
@@ -163,10 +165,7 @@ class ScheduledJob:
 
     def should_retry(self) -> bool:
         """Check if job should be retried after failure"""
-        return (
-            self.status == JobStatus.FAILED 
-            and self.current_retry < self.retry_count
-        )
+        return self.status == JobStatus.FAILED and self.current_retry < self.retry_count
 
     def get_next_retry_time(self) -> datetime:
         """Calculate next retry time"""

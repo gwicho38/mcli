@@ -8,7 +8,12 @@ from datetime import datetime
 from typing import Optional
 
 from mcli.lib.logger.logger import get_logger
-from .scheduler import JobScheduler, create_desktop_cleanup_job, create_temp_cleanup_job, create_system_backup_job
+from .scheduler import (
+    JobScheduler,
+    create_desktop_cleanup_job,
+    create_temp_cleanup_job,
+    create_system_backup_job,
+)
 from .job import ScheduledJob, JobType, JobStatus
 from .cron_parser import CronExpression, get_next_run_times, validate_cron_expression
 
@@ -40,7 +45,7 @@ def scheduler():
 def control(start: bool, stop: bool, restart: bool, status: bool):
     """Control the scheduler daemon"""
     sched = get_scheduler()
-    
+
     if restart:
         click.echo("Restarting scheduler...")
         sched.stop()
@@ -68,7 +73,13 @@ def control(start: bool, stop: bool, restart: bool, status: bool):
 @click.argument("name")
 @click.argument("cron_expression")
 @click.argument("command")
-@click.option("--type", "job_type", type=click.Choice([t.value for t in JobType]), default="command", help="Job type")
+@click.option(
+    "--type",
+    "job_type",
+    type=click.Choice([t.value for t in JobType]),
+    default="command",
+    help="Job type",
+)
 @click.option("--description", default="", help="Job description")
 @click.option("--enabled/--disabled", default=True, help="Enable/disable job")
 @click.option("--max-runtime", default=3600, help="Maximum runtime in seconds")
@@ -76,16 +87,26 @@ def control(start: bool, stop: bool, restart: bool, status: bool):
 @click.option("--retry-delay", default=60, help="Delay between retries in seconds")
 @click.option("--working-dir", help="Working directory for job execution")
 @click.option("--env", multiple=True, help="Environment variables (KEY=VALUE)")
-def add(name: str, cron_expression: str, command: str, job_type: str, description: str,
-        enabled: bool, max_runtime: int, retry_count: int, retry_delay: int,
-        working_dir: Optional[str], env: tuple):
+def add(
+    name: str,
+    cron_expression: str,
+    command: str,
+    job_type: str,
+    description: str,
+    enabled: bool,
+    max_runtime: int,
+    retry_count: int,
+    retry_delay: int,
+    working_dir: Optional[str],
+    env: tuple,
+):
     """Add a new scheduled job"""
-    
+
     # Validate cron expression
     if not validate_cron_expression(cron_expression):
         click.echo(f"Error: Invalid cron expression: {cron_expression}", err=True)
         return
-    
+
     # Parse environment variables
     environment = {}
     for env_var in env:
@@ -94,7 +115,7 @@ def add(name: str, cron_expression: str, command: str, job_type: str, descriptio
             environment[key] = value
         else:
             click.echo(f"Warning: Invalid environment variable format: {env_var}")
-    
+
     # Create job
     job = ScheduledJob(
         name=name,
@@ -107,14 +128,14 @@ def add(name: str, cron_expression: str, command: str, job_type: str, descriptio
         retry_count=retry_count,
         retry_delay=retry_delay,
         working_directory=working_dir,
-        environment=environment
+        environment=environment,
     )
-    
+
     # Add to scheduler
     sched = get_scheduler()
     if sched.add_job(job):
         click.echo(f"Added job: {name} ({job.id})")
-        
+
         # Show next run times
         try:
             cron = CronExpression(cron_expression)
@@ -135,7 +156,7 @@ def add(name: str, cron_expression: str, command: str, job_type: str, descriptio
 def remove(job_id: str):
     """Remove a scheduled job"""
     sched = get_scheduler()
-    
+
     # Find job by ID or name
     job = sched.get_job(job_id)
     if not job:
@@ -144,11 +165,11 @@ def remove(job_id: str):
             if j.name == job_id:
                 job = j
                 break
-    
+
     if not job:
         click.echo(f"Job not found: {job_id}", err=True)
         return
-    
+
     if sched.remove_job(job.id):
         click.echo(f"Removed job: {job.name}")
     else:
@@ -156,14 +177,20 @@ def remove(job_id: str):
 
 
 @scheduler.command()
-@click.option("--format", "output_format", type=click.Choice(["table", "json"]), default="table", help="Output format")
+@click.option(
+    "--format",
+    "output_format",
+    type=click.Choice(["table", "json"]),
+    default="table",
+    help="Output format",
+)
 @click.option("--status", "filter_status", help="Filter by job status")
 @click.option("--enabled-only", is_flag=True, help="Show only enabled jobs")
 def list(output_format: str, filter_status: Optional[str], enabled_only: bool):
     """List all scheduled jobs"""
     sched = get_scheduler()
     jobs = sched.get_all_jobs()
-    
+
     # Apply filters
     if filter_status:
         try:
@@ -172,14 +199,14 @@ def list(output_format: str, filter_status: Optional[str], enabled_only: bool):
         except ValueError:
             click.echo(f"Invalid status: {filter_status}", err=True)
             return
-    
+
     if enabled_only:
         jobs = [job for job in jobs if job.enabled]
-    
+
     if not jobs:
         click.echo("No jobs found")
         return
-    
+
     if output_format == "json":
         job_data = [job.to_dict() for job in jobs]
         click.echo(json.dumps(job_data, indent=2))
@@ -187,10 +214,10 @@ def list(output_format: str, filter_status: Optional[str], enabled_only: bool):
         # Table format
         from rich.console import Console
         from rich.table import Table
-        
+
         console = Console()
         table = Table(show_header=True, header_style="bold magenta")
-        
+
         table.add_column("Name", style="cyan")
         table.add_column("Schedule", style="green")
         table.add_column("Type", style="yellow")
@@ -198,12 +225,12 @@ def list(output_format: str, filter_status: Optional[str], enabled_only: bool):
         table.add_column("Enabled", style="blue")
         table.add_column("Last Run", style="dim")
         table.add_column("Next Run", style="dim")
-        
+
         for job in jobs:
             enabled_str = "✓" if job.enabled else "✗"
             last_run = job.last_run.strftime("%m-%d %H:%M") if job.last_run else "Never"
             next_run = job.next_run.strftime("%m-%d %H:%M") if job.next_run else "Unknown"
-            
+
             table.add_row(
                 job.name[:20],
                 job.cron_expression[:15],
@@ -211,9 +238,9 @@ def list(output_format: str, filter_status: Optional[str], enabled_only: bool):
                 job.status.value,
                 enabled_str,
                 last_run,
-                next_run
+                next_run,
             )
-        
+
         console.print(table)
 
 
@@ -224,7 +251,7 @@ def list(output_format: str, filter_status: Optional[str], enabled_only: bool):
 def show(job_id: str, history: bool, verbose: bool):
     """Show detailed information about a job"""
     sched = get_scheduler()
-    
+
     # Find job by ID or name
     job = sched.get_job(job_id)
     if not job:
@@ -232,11 +259,11 @@ def show(job_id: str, history: bool, verbose: bool):
             if j.name == job_id:
                 job = j
                 break
-    
+
     if not job:
         click.echo(f"Job not found: {job_id}", err=True)
         return
-    
+
     # Show basic info
     click.echo(f"Job: {job.name}")
     click.echo(f"ID: {job.id}")
@@ -246,40 +273,40 @@ def show(job_id: str, history: bool, verbose: bool):
     click.echo(f"Status: {job.status.value}")
     click.echo(f"Enabled: {'Yes' if job.enabled else 'No'}")
     click.echo(f"Created: {job.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
-    
+
     if job.last_run:
         click.echo(f"Last Run: {job.last_run.strftime('%Y-%m-%d %H:%M:%S')}")
     if job.next_run:
         click.echo(f"Next Run: {job.next_run.strftime('%Y-%m-%d %H:%M:%S')}")
-    
+
     click.echo(f"Run Count: {job.run_count}")
     click.echo(f"Success Count: {job.success_count}")
     click.echo(f"Failure Count: {job.failure_count}")
-    
+
     if verbose:
         click.echo(f"\nCommand: {job.command}")
         click.echo(f"Max Runtime: {job.max_runtime}s")
         click.echo(f"Retry Count: {job.retry_count}")
         click.echo(f"Retry Delay: {job.retry_delay}s")
-        
+
         if job.working_directory:
             click.echo(f"Working Directory: {job.working_directory}")
-        
+
         if job.environment:
             click.echo("Environment Variables:")
             for key, value in job.environment.items():
                 click.echo(f"  {key}={value}")
-        
+
         if job.last_output:
             click.echo(f"\nLast Output:\n{job.last_output}")
-        
+
         if job.last_error:
             click.echo(f"\nLast Error:\n{job.last_error}")
-    
+
     if history:
         click.echo(f"\nExecution History:")
         job_history = sched.storage.get_job_history(job.id, limit=10)
-        
+
         if not job_history:
             click.echo("  No execution history")
         else:
@@ -297,11 +324,17 @@ def show(job_id: str, history: bool, verbose: bool):
 @click.option("--command", help="Update command")
 @click.option("--description", help="Update description")
 @click.option("--max-runtime", type=int, help="Update max runtime")
-def update(job_id: str, enabled: Optional[bool], cron: Optional[str], 
-           command: Optional[str], description: Optional[str], max_runtime: Optional[int]):
+def update(
+    job_id: str,
+    enabled: Optional[bool],
+    cron: Optional[str],
+    command: Optional[str],
+    description: Optional[str],
+    max_runtime: Optional[int],
+):
     """Update a scheduled job"""
     sched = get_scheduler()
-    
+
     # Find job
     job = sched.get_job(job_id)
     if not job:
@@ -309,36 +342,36 @@ def update(job_id: str, enabled: Optional[bool], cron: Optional[str],
             if j.name == job_id:
                 job = j
                 break
-    
+
     if not job:
         click.echo(f"Job not found: {job_id}", err=True)
         return
-    
+
     # Update fields
     updated = False
     if enabled is not None:
         job.enabled = enabled
         updated = True
-    
+
     if cron:
         if not validate_cron_expression(cron):
             click.echo(f"Error: Invalid cron expression: {cron}", err=True)
             return
         job.cron_expression = cron
         updated = True
-    
+
     if command:
         job.command = command
         updated = True
-    
+
     if description is not None:
         job.description = description
         updated = True
-    
+
     if max_runtime:
         job.max_runtime = max_runtime
         updated = True
-    
+
     if updated:
         sched.storage.save_job(job)
         click.echo(f"Updated job: {job.name}")
@@ -354,12 +387,12 @@ def test_cron(cron_expression: str, count: int):
     if not validate_cron_expression(cron_expression):
         click.echo(f"Error: Invalid cron expression: {cron_expression}", err=True)
         return
-    
+
     try:
         cron = CronExpression(cron_expression)
         click.echo(f"Cron Expression: {cron_expression}")
         click.echo(f"Description: {cron.get_description()}")
-        
+
         if cron.is_reboot:
             click.echo("This is a @reboot job (runs only at scheduler startup)")
         else:
@@ -380,7 +413,7 @@ def status(output_json: bool):
     """Show scheduler status and statistics"""
     sched = get_scheduler()
     stats = sched.get_scheduler_stats()
-    
+
     if output_json:
         response = sched.create_json_response()
         click.echo(json.dumps(response, indent=2))
@@ -389,12 +422,12 @@ def status(output_json: bool):
         click.echo(f"Total Jobs: {stats['total_jobs']}")
         click.echo(f"Enabled Jobs: {stats['enabled_jobs']}")
         click.echo(f"Currently Running: {stats['running_jobs']}")
-        
-        monitor_stats = stats.get('monitor_stats', {})
-        if monitor_stats.get('running_job_ids'):
+
+        monitor_stats = stats.get("monitor_stats", {})
+        if monitor_stats.get("running_job_ids"):
             click.echo(f"Running Job IDs: {', '.join(monitor_stats['running_job_ids'])}")
-        
-        storage_info = stats.get('storage_info', {})
+
+        storage_info = stats.get("storage_info", {})
         if storage_info:
             click.echo(f"Storage Directory: {storage_info.get('storage_dir', 'Unknown')}")
             click.echo(f"Jobs in Storage: {storage_info.get('jobs_count', 0)}")
@@ -413,7 +446,7 @@ def presets():
 def desktop_cleanup(cron: str, enabled: bool):
     """Add desktop file organization job"""
     job = create_desktop_cleanup_job("Desktop Organization", cron, enabled)
-    
+
     sched = get_scheduler()
     if sched.add_job(job):
         click.echo(f"Added desktop cleanup job: {job.name}")
@@ -429,7 +462,7 @@ def desktop_cleanup(cron: str, enabled: bool):
 def temp_cleanup(path: str, days: int, cron: str, enabled: bool):
     """Add temporary file cleanup job"""
     job = create_temp_cleanup_job("Temp File Cleanup", cron, path, days, enabled)
-    
+
     sched = get_scheduler()
     if sched.add_job(job):
         click.echo(f"Added temp cleanup job: {job.name}")
@@ -444,7 +477,7 @@ def temp_cleanup(path: str, days: int, cron: str, enabled: bool):
 def system_backup(backup_command: str, cron: str, enabled: bool):
     """Add system backup job"""
     job = create_system_backup_job("System Backup", cron, backup_command, enabled)
-    
+
     sched = get_scheduler()
     if sched.add_job(job):
         click.echo(f"Added system backup job: {job.name}")

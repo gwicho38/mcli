@@ -46,7 +46,7 @@ OPENAI_API_KEY = config.get("openai_api_key", None)
 OLLAMA_BASE_URL = config.get("ollama_base_url", "http://localhost:11434")
 TEMPERATURE = float(config.get("temperature", 0.7))
 SYSTEM_PROMPT = config.get(
-    "system_prompt", 
+    "system_prompt",
     """You are the MCLI Personal Assistant, an intelligent agent that helps manage your computer and tasks.
 
 I am a true personal assistant with these capabilities:
@@ -63,7 +63,7 @@ I maintain awareness of:
 - User preferences and routine patterns
 
 I can proactively suggest optimizations, schedule maintenance, and automate repetitive tasks.
-I'm designed to be your digital assistant that keeps things running smoothly."""
+I'm designed to be your digital assistant that keeps things running smoothly.""",
 )
 
 
@@ -100,8 +100,12 @@ class ChatClient:
         console.print("• [yellow]logs <id>[/yellow] - View process logs")
         console.print("• [yellow]inspect <id>[/yellow] - Detailed process info")
         console.print("• [yellow]start/stop <id>[/yellow] - Control process lifecycle")
-        console.print("• [yellow]System Control[/yellow] - Control applications (e.g., 'open TextEdit', 'take screenshot')")
-        console.print("• [yellow]Job Scheduling[/yellow] - Schedule tasks (e.g., 'schedule cleanup daily', 'what's my status?')")
+        console.print(
+            "• [yellow]System Control[/yellow] - Control applications (e.g., 'open TextEdit', 'take screenshot')"
+        )
+        console.print(
+            "• [yellow]Job Scheduling[/yellow] - Schedule tasks (e.g., 'schedule cleanup daily', 'what's my status?')"
+        )
         console.print("• Ask questions about functions and codebase\n")
 
         while self.session_active:
@@ -1067,7 +1071,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                 corrected_response = (
                     re.sub(
                         pattern,
-                        "**[Command Does Not Exist]** " + pattern.replace('\\b', ''),
+                        "**[Command Does Not Exist]** " + pattern.replace("\\b", ""),
                         corrected_response,
                         flags=re.IGNORECASE,
                     )
@@ -1295,53 +1299,100 @@ Generate a working command that implements the requested functionality. Use prop
     def is_system_control_request(self, user_input: str) -> bool:
         """Check if user input is requesting system control functionality"""
         lower_input = user_input.lower()
-        
+
         # System control keywords
         system_keywords = [
-            'open', 'close', 'launch', 'quit', 'textedit', 'text edit',
-            'screenshot', 'screen capture', 'calculator', 'safari', 'finder',
-            'take screenshot', 'write', 'type', 'save as', 'file', 'application',
+            "open",
+            "close",
+            "launch",
+            "quit",
+            "textedit",
+            "text edit",
+            "screenshot",
+            "screen capture",
+            "calculator",
+            "safari",
+            "finder",
+            "take screenshot",
+            "write",
+            "type",
+            "save as",
+            "file",
+            "application",
             # System information keywords
-            'system time', 'what time', 'current time', 'system info', 'system information',
-            'system specs', 'hardware info', 'memory usage', 'ram usage', 'how much memory',
-            'how much ram', 'disk usage', 'disk space', 'storage space', 'how much space',
-            'clear cache', 'clean cache', 'clear system cache', 'system cache',
+            "system time",
+            "what time",
+            "current time",
+            "system info",
+            "system information",
+            "system specs",
+            "hardware info",
+            "memory usage",
+            "ram usage",
+            "how much memory",
+            "how much ram",
+            "disk usage",
+            "disk space",
+            "storage space",
+            "how much space",
+            "clear cache",
+            "clean cache",
+            "clear system cache",
+            "system cache",
             # Navigation and shell keywords
-            'navigate to', 'go to', 'change to', 'cd to', 'move to',
-            'list', 'show files', 'ls', 'dir', 'what\'s in',
-            'clean simulator', 'simulator data', 'clean ios', 'clean watchos',
-            'run command', 'execute', 'shell', 'terminal',
-            'where am i', 'current directory', 'pwd', 'current path'
+            "navigate to",
+            "go to",
+            "change to",
+            "cd to",
+            "move to",
+            "list",
+            "show files",
+            "ls",
+            "dir",
+            "what's in",
+            "clean simulator",
+            "simulator data",
+            "clean ios",
+            "clean watchos",
+            "run command",
+            "execute",
+            "shell",
+            "terminal",
+            "where am i",
+            "current directory",
+            "pwd",
+            "current path",
         ]
-        
+
         # Check for system control patterns
         system_patterns = [
-            r'\bopen\s+\w+',  # "open something"
-            r'\bclose\s+\w+',  # "close something" 
-            r'\btake\s+screenshot',  # "take screenshot"
-            r'\bwrite\s+.*\bin\s+\w+',  # "write something in app"
-            r'\bopen\s+.*\band\s+write',  # "open app and write"
-            r'\btextedit',  # any textedit mention
-            r'\btext\s+edit',  # "text edit"
+            r"\bopen\s+\w+",  # "open something"
+            r"\bclose\s+\w+",  # "close something"
+            r"\btake\s+screenshot",  # "take screenshot"
+            r"\bwrite\s+.*\bin\s+\w+",  # "write something in app"
+            r"\bopen\s+.*\band\s+write",  # "open app and write"
+            r"\btextedit",  # any textedit mention
+            r"\btext\s+edit",  # "text edit"
             # System information patterns
-            r'\bwhat\s+time',  # "what time"
-            r'\bsystem\s+time',  # "system time"
-            r'\bcurrent\s+time',  # "current time"
-            r'\bsystem\s+info',  # "system info"
-            r'\bsystem\s+specs',  # "system specs"
-            r'\bhow\s+much\s+(ram|memory)',  # "how much ram/memory"
-            r'\bmemory\s+usage',  # "memory usage"
-            r'\bram\s+usage',  # "ram usage"
-            r'\bdisk\s+usage',  # "disk usage"
-            r'\bdisk\s+space',  # "disk space"
-            r'\bclear\s+(cache|system)',  # "clear cache" or "clear system"
+            r"\bwhat\s+time",  # "what time"
+            r"\bsystem\s+time",  # "system time"
+            r"\bcurrent\s+time",  # "current time"
+            r"\bsystem\s+info",  # "system info"
+            r"\bsystem\s+specs",  # "system specs"
+            r"\bhow\s+much\s+(ram|memory)",  # "how much ram/memory"
+            r"\bmemory\s+usage",  # "memory usage"
+            r"\bram\s+usage",  # "ram usage"
+            r"\bdisk\s+usage",  # "disk usage"
+            r"\bdisk\s+space",  # "disk space"
+            r"\bclear\s+(cache|system)",  # "clear cache" or "clear system"
         ]
-        
+
         import re
+
         for pattern in system_patterns:
             if re.search(pattern, lower_input):
                 return True
-        
+
         # Simple keyword check as fallback
         return any(keyword in lower_input for keyword in system_keywords)
 
@@ -1349,44 +1400,46 @@ Generate a working command that implements the requested functionality. Use prop
         """Handle system control requests with intelligent reasoning and suggestions"""
         try:
             console.print("[dim]🤖 Processing system control request...[/dim]")
-            
+
             # Use the system integration to handle the request
             result = handle_system_request(user_input)
-            
+
             if result["success"]:
                 message = result.get("message", "✅ System operation completed successfully!")
                 console.print(f"[green]{message}[/green]")
-                
+
                 # Provide intelligent follow-up suggestions based on the result
                 self._provide_intelligent_suggestions(user_input, result)
-                
+
                 # Show output if available
                 if result.get("output") and result["output"].strip():
-                    output_lines = result["output"].strip().split('\n')
+                    output_lines = result["output"].strip().split("\n")
                     console.print("[dim]Output:[/dim]")
                     for line in output_lines[:10]:  # Show first 10 lines
                         console.print(f"  {line}")
                     if len(output_lines) > 10:
                         console.print(f"  [dim]... ({len(output_lines) - 10} more lines)[/dim]")
-                
+
                 # Show special file paths for screenshots, etc.
                 if result.get("screenshot_path"):
-                    console.print(f"[cyan]📸 Screenshot saved to: {result['screenshot_path']}[/cyan]")
-                
+                    console.print(
+                        f"[cyan]📸 Screenshot saved to: {result['screenshot_path']}[/cyan]"
+                    )
+
             else:
                 error_msg = result.get("error", "Unknown error occurred")
                 console.print(f"[red]❌ {error_msg}[/red]")
-                
+
                 # Show suggestions if available
                 if result.get("suggestion"):
                     console.print(f"[yellow]💡 {result['suggestion']}[/yellow]")
-                
+
                 # Show available functions if this was an unknown request
                 if result.get("available_functions"):
                     console.print("[dim]Available system functions:[/dim]")
                     for func in result["available_functions"][:5]:
                         console.print(f"  • {func}")
-        
+
         except Exception as e:
             console.print(f"[red]Error processing system control request: {e}[/red]")
             console.print("[yellow]Examples of system control commands:[/yellow]")
@@ -1394,210 +1447,230 @@ Generate a working command that implements the requested functionality. Use prop
             console.print("  • 'Take a screenshot'")
             console.print("  • 'Open Calculator'")
             console.print("  • 'Close TextEdit'")
-    
+
     def _provide_intelligent_suggestions(self, user_input: str, result: dict):
         """Provide intelligent suggestions based on system control results"""
         try:
             lower_input = user_input.lower()
             data = result.get("data", {})
-            
+
             # Disk usage suggestions
             if "disk" in lower_input or "space" in lower_input:
                 self._suggest_disk_cleanup(data)
-            
-            # Memory usage suggestions  
+
+            # Memory usage suggestions
             elif "memory" in lower_input or "ram" in lower_input:
                 self._suggest_memory_optimization(data)
-            
+
             # System info suggestions
             elif "system" in lower_input and ("info" in lower_input or "specs" in lower_input):
                 self._suggest_system_actions(data)
-            
+
             # Time-based suggestions
             elif "time" in lower_input:
                 self._suggest_time_actions(data)
-                
+
         except Exception as e:
             # Don't let suggestion errors break the main flow
             pass
-    
+
     def _suggest_disk_cleanup(self, disk_data: dict):
         """Suggest disk cleanup actions based on usage"""
         if not disk_data:
             return
-            
+
         suggestions = []
-        
+
         # Check main disk usage
         if disk_data.get("total_disk_gb", 0) > 0:
             usage_pct = (disk_data.get("total_used_gb", 0) / disk_data["total_disk_gb"]) * 100
-            
+
             if usage_pct > 85:
                 suggestions.append("Your disk is getting full! I can help you clear system caches.")
                 suggestions.append("Try: 'clear system caches' to free up space")
             elif usage_pct > 70:
                 suggestions.append("You're using quite a bit of disk space. Consider cleaning up.")
                 suggestions.append("I can help with: 'clear system caches'")
-        
+
         # Check for large simulator volumes
         partitions = disk_data.get("partitions", [])
         simulator_partitions = [p for p in partitions if "CoreSimulator" in p.get("mountpoint", "")]
-        
+
         if simulator_partitions:
             total_sim_space = sum(p.get("used_gb", 0) for p in simulator_partitions)
             if total_sim_space > 50:  # More than 50GB in simulators
-                suggestions.append(f"📱 You have {total_sim_space:.1f}GB in iOS/watchOS simulators.")
+                suggestions.append(
+                    f"📱 You have {total_sim_space:.1f}GB in iOS/watchOS simulators."
+                )
                 suggestions.append("Consider cleaning old simulator data if you don't need it.")
-        
+
         # Show suggestions
         if suggestions:
             console.print("\n[cyan]💡 Suggestions:[/cyan]")
             for suggestion in suggestions:
                 console.print(f"  {suggestion}")
-    
+
     def _suggest_memory_optimization(self, memory_data: dict):
         """Suggest memory optimization actions"""
         if not memory_data:
             return
-            
+
         suggestions = []
         vm = memory_data.get("virtual_memory", {})
         swap = memory_data.get("swap_memory", {})
-        
+
         if vm.get("usage_percent", 0) > 85:
             suggestions.append("Your memory usage is quite high!")
             suggestions.append("Consider closing unused applications to free up RAM.")
-        
+
         if swap.get("usage_percent", 0) > 70:
             suggestions.append("High swap usage detected - your system is using disk as memory.")
             suggestions.append("This can slow things down. Try closing memory-intensive apps.")
-        
+
         # Suggest system monitoring
         suggestions.append("Want to monitor your system? Try: 'show system specs'")
-        
+
         if suggestions:
             console.print("\n[cyan]💡 Memory Tips:[/cyan]")
             for suggestion in suggestions:
                 console.print(f"  {suggestion}")
-    
+
     def _suggest_system_actions(self, system_data: dict):
         """Suggest system-related actions"""
         if not system_data:
             return
-            
+
         suggestions = []
         cpu = system_data.get("cpu", {})
         memory = system_data.get("memory", {})
-        
+
         # CPU suggestions
         cpu_usage = cpu.get("cpu_usage_percent", 0)
         if cpu_usage > 80:
-            suggestions.append(f"CPU usage is high ({cpu_usage}%). Check what's running with Activity Monitor.")
-        
+            suggestions.append(
+                f"CPU usage is high ({cpu_usage}%). Check what's running with Activity Monitor."
+            )
+
         # Memory suggestions
         memory_pct = memory.get("usage_percent", 0)
         if memory_pct > 80:
             suggestions.append("Memory usage is high. Consider closing unused applications.")
-        
+
         # Uptime suggestions
         uptime_hours = system_data.get("uptime_hours", 0)
         if uptime_hours > 72:  # More than 3 days
             suggestions.append(f"Your system has been up for {uptime_hours:.1f} hours.")
             suggestions.append("Consider restarting to refresh system performance.")
-        
+
         # General suggestions
         suggestions.append("I can help you with:")
         suggestions.append("• 'how much RAM do I have?' - Check memory usage")
         suggestions.append("• 'how much disk space do I have?' - Check storage")
         suggestions.append("• 'clear system caches' - Free up space")
-        
+
         if suggestions:
             console.print("\n[cyan]💡 System Insights:[/cyan]")
             for suggestion in suggestions:
                 console.print(f"  {suggestion}")
-    
+
     def _suggest_time_actions(self, time_data: dict):
         """Suggest time-related actions"""
         if not time_data:
             return
-            
+
         suggestions = []
         current_time = time_data.get("current_time", "")
-        
+
         if current_time:
             import datetime
+
             try:
                 # Parse the time to get hour
                 time_obj = datetime.datetime.strptime(current_time, "%Y-%m-%d %H:%M:%S")
                 hour = time_obj.hour
-                
+
                 if 22 <= hour or hour <= 6:  # Late night/early morning
                     suggestions.append("🌙 It's quite late! Consider taking a break.")
                 elif 9 <= hour <= 17:  # Work hours
                     suggestions.append("⏰ It's work time! Stay productive.")
                 elif 17 < hour < 22:  # Evening
                     suggestions.append("🌆 Good evening! Wrapping up for the day?")
-                    
+
             except:
                 pass
-        
+
         suggestions.append("I can also help you schedule tasks with the workflow system!")
-        
+
         if suggestions:
             console.print("\n[cyan]💡 Time Tips:[/cyan]")
             for suggestion in suggestions:
                 console.print(f"  {suggestion}")
-    
+
     def _is_system_help_request(self, query: str) -> bool:
         """Detect if this is a request for system help or cleanup"""
         lower_query = query.lower()
-        
+
         help_patterns = [
-            r'help.*free.*space',
-            r'help.*clean.*up',
-            r'help.*disk.*space',
-            r'help.*memory',
-            r'can you.*free',
-            r'can you.*clean',
-            r'can you.*help.*space',
-            r'can you help.*free',
-            r'yikes.*help',
-            r'how.*clean',
-            r'how.*free.*space',
-            r'what.*clean',
-            r'what.*free.*space',
-            r'help me.*free',
-            r'help me.*clean',
+            r"help.*free.*space",
+            r"help.*clean.*up",
+            r"help.*disk.*space",
+            r"help.*memory",
+            r"can you.*free",
+            r"can you.*clean",
+            r"can you.*help.*space",
+            r"can you help.*free",
+            r"yikes.*help",
+            r"how.*clean",
+            r"how.*free.*space",
+            r"what.*clean",
+            r"what.*free.*space",
+            r"help me.*free",
+            r"help me.*clean",
         ]
-        
+
         import re
+
         for pattern in help_patterns:
             if re.search(pattern, lower_query):
                 return True
-                
+
         return False
-    
+
     def _handle_system_help_request(self, query: str):
         """Handle requests for system help and cleanup"""
         lower_query = query.lower()
-        
+
         console.print("[dim]🤖 I can definitely help you with system cleanup![/dim]")
-        
+
         # Provide contextual help based on the query
         if "space" in lower_query or "disk" in lower_query:
             console.print("\n[green]💽 Here's what I can help you with for disk space:[/green]")
-            console.print("• [cyan]'clear system caches'[/cyan] - Clear system cache files and temporary data")
-            console.print("• [cyan]'how much disk space do I have?'[/cyan] - Get detailed disk usage breakdown")
-            console.print("• I can also identify large iOS simulator files that might be taking up space")
-            
-            console.print("\n[yellow]💡 Quick tip:[/yellow] Try 'clear system caches' to start freeing up space!")
-            
+            console.print(
+                "• [cyan]'clear system caches'[/cyan] - Clear system cache files and temporary data"
+            )
+            console.print(
+                "• [cyan]'how much disk space do I have?'[/cyan] - Get detailed disk usage breakdown"
+            )
+            console.print(
+                "• I can also identify large iOS simulator files that might be taking up space"
+            )
+
+            console.print(
+                "\n[yellow]💡 Quick tip:[/yellow] Try 'clear system caches' to start freeing up space!"
+            )
+
         elif "memory" in lower_query or "ram" in lower_query:
             console.print("\n[green]💾 Here's what I can help you with for memory:[/green]")
-            console.print("• [cyan]'how much RAM do I have?'[/cyan] - Check memory usage and get recommendations")
-            console.print("• [cyan]'show system specs'[/cyan] - Get full system overview including memory")
-            console.print("• I can identify if you need to close applications or restart your system")
-            
+            console.print(
+                "• [cyan]'how much RAM do I have?'[/cyan] - Check memory usage and get recommendations"
+            )
+            console.print(
+                "• [cyan]'show system specs'[/cyan] - Get full system overview including memory"
+            )
+            console.print(
+                "• I can identify if you need to close applications or restart your system"
+            )
+
         else:
             # General system help
             console.print("\n[green]🛠️ I can help you with various system tasks:[/green]")
@@ -1607,126 +1680,143 @@ Generate a working command that implements the requested functionality. Use prop
             console.print("• [cyan]'show system specs'[/cyan] - Get full system overview")
             console.print("• [cyan]'open Calculator'[/cyan] - Open applications")
             console.print("• [cyan]'take screenshot'[/cyan] - Take and save screenshots")
-            
-        console.print("\n[dim]Just ask me to do any of these tasks and I'll handle them for you![/dim]")
-    
+
+        console.print(
+            "\n[dim]Just ask me to do any of these tasks and I'll handle them for you![/dim]"
+        )
+
     def _load_scheduled_jobs(self):
         """Load and start monitoring existing scheduled jobs"""
         try:
             # Lazy import to avoid circular dependencies
             from mcli.workflow.scheduler.persistence import JobStorage
             from mcli.workflow.scheduler.job import JobStatus
-            
+
             job_storage = JobStorage()
             jobs = job_storage.load_jobs()
-            
+
             active_count = 0
             for job_data in jobs:
                 if job_data.get("status") in [JobStatus.PENDING.value, JobStatus.RUNNING.value]:
                     active_count += 1
-            
+
             if active_count > 0:
                 console.print(f"[dim]📅 {active_count} scheduled jobs loaded[/dim]")
-                
+
         except Exception as e:
             # Silently handle import/loading errors at startup
             pass
-    
+
     def _is_job_management_request(self, query: str) -> bool:
         """Detect if this is a job/schedule management request"""
         lower_query = query.lower()
-        
+
         job_patterns = [
-            r'schedule.*',
-            r'every.*',
-            r'daily.*',
-            r'weekly.*', 
-            r'remind.*',
-            r'job.*',
-            r'task.*',
-            r'my.*jobs',
-            r'what.*running',
-            r'status.*',
-            r'cancel.*',
-            r'stop.*job',
-            r'list.*jobs',
-            r'show.*jobs',
-            r'cron.*',
-            r'at.*am|pm',
-            r'in.*minutes|hours|days',
+            r"schedule.*",
+            r"every.*",
+            r"daily.*",
+            r"weekly.*",
+            r"remind.*",
+            r"job.*",
+            r"task.*",
+            r"my.*jobs",
+            r"what.*running",
+            r"status.*",
+            r"cancel.*",
+            r"stop.*job",
+            r"list.*jobs",
+            r"show.*jobs",
+            r"cron.*",
+            r"at.*am|pm",
+            r"in.*minutes|hours|days",
         ]
-        
+
         import re
+
         for pattern in job_patterns:
             if re.search(pattern, lower_query):
                 return True
-                
+
         return False
-    
+
     def _handle_job_management(self, query: str):
         """Handle job scheduling and management requests"""
         lower_query = query.lower()
-        
+
         console.print("[dim]🤖 Processing job management request...[/dim]")
-        
+
         try:
             # List jobs
-            if any(phrase in lower_query for phrase in ["list jobs", "show jobs", "my jobs", "what's running", "status"]):
+            if any(
+                phrase in lower_query
+                for phrase in ["list jobs", "show jobs", "my jobs", "what's running", "status"]
+            ):
                 self._show_agent_status()
                 return
-            
+
             # Cancel/stop job
             if any(phrase in lower_query for phrase in ["cancel", "stop", "remove"]):
                 self._handle_job_cancellation(query)
                 return
-            
+
             # Schedule new job
-            if any(phrase in lower_query for phrase in ["schedule", "every", "daily", "weekly", "remind", "at"]):
+            if any(
+                phrase in lower_query
+                for phrase in ["schedule", "every", "daily", "weekly", "remind", "at"]
+            ):
                 self._handle_job_scheduling(query)
                 return
-                
+
             # General job help
             console.print("[green]📅 I can help you with job scheduling![/green]")
-            console.print("• [cyan]'schedule system cleanup daily at 2am'[/cyan] - Schedule recurring tasks")
-            console.print("• [cyan]'remind me to check disk space every week'[/cyan] - Set reminders")
+            console.print(
+                "• [cyan]'schedule system cleanup daily at 2am'[/cyan] - Schedule recurring tasks"
+            )
+            console.print(
+                "• [cyan]'remind me to check disk space every week'[/cyan] - Set reminders"
+            )
             console.print("• [cyan]'list my jobs'[/cyan] - Show all scheduled tasks")
             console.print("• [cyan]'what's my status?'[/cyan] - Agent status overview")
             console.print("• [cyan]'cancel job cleanup'[/cyan] - Remove scheduled tasks")
-            
+
         except Exception as e:
             console.print(f"[red]❌ Error handling job request: {e}[/red]")
-    
+
     def _show_agent_status(self):
         """Show comprehensive agent status including jobs, system state, and context"""
         console.print("\n[bold cyan]🤖 Personal Assistant Status Report[/bold cyan]")
-        
+
         # Jobs and schedules
         try:
             from mcli.workflow.scheduler.persistence import JobStorage
             from mcli.workflow.scheduler.job import JobStatus, ScheduledJob
-            
+
             job_storage = JobStorage()
             jobs = job_storage.load_jobs()
-            
+
             # Convert ScheduledJob objects to dictionaries for easier processing
             job_dicts = []
             active_jobs = []
             completed_jobs = []
             failed_jobs = []
-            
+
             for job in jobs:
-                if hasattr(job, 'to_dict'):
+                if hasattr(job, "to_dict"):
                     job_dict = job.to_dict()
                 else:
                     # If it's already a dict or has dict-like access
                     job_dict = {
-                        'name': getattr(job, 'name', 'Unknown'),
-                        'status': getattr(job, 'status', JobStatus.PENDING).value if hasattr(job, 'status') else 'pending',
-                        'cron_expression': getattr(job, 'cron_expression', 'Unknown'),
-                        'next_run': getattr(job, 'next_run', None)
+                        "name": getattr(job, "name", "Unknown"),
+                        "status": (
+                            getattr(job, "status", JobStatus.PENDING).value
+                            if hasattr(job, "status")
+                            else "pending"
+                        ),
+                        "cron_expression": getattr(job, "cron_expression", "Unknown"),
+                        "next_run": getattr(job, "next_run", None),
                     }
                 job_dicts.append(job_dict)
-                
+
                 status = job_dict.get("status")
                 if status in [JobStatus.PENDING.value, JobStatus.RUNNING.value]:
                     active_jobs.append(job_dict)
@@ -1734,19 +1824,21 @@ Generate a working command that implements the requested functionality. Use prop
                     completed_jobs.append(job_dict)
                 elif status == JobStatus.FAILED.value:
                     failed_jobs.append(job_dict)
-                    
+
         except Exception as e:
             jobs = []
             active_jobs = []
             completed_jobs = []
             failed_jobs = []
-        
+
         console.print(f"\n[green]📅 Scheduled Jobs:[/green]")
         if active_jobs:
             for job_data in active_jobs[:5]:  # Show first 5
                 try:
                     job = Job.from_dict(job_data)
-                    console.print(f"  • [cyan]{job.name}[/cyan] - {job.cron_expression} ({job.status.value})")
+                    console.print(
+                        f"  • [cyan]{job.name}[/cyan] - {job.cron_expression} ({job.status.value})"
+                    )
                     if job.next_run:
                         console.print(f"    Next run: {job.next_run}")
                 except Exception:
@@ -1756,10 +1848,10 @@ Generate a working command that implements the requested functionality. Use prop
                     console.print(f"  • [cyan]{name}[/cyan] - {cron}")
         else:
             console.print("  No active scheduled jobs")
-        
+
         if len(active_jobs) > 5:
             console.print(f"  ... and {len(active_jobs) - 5} more active jobs")
-        
+
         # Recent activity
         if completed_jobs or failed_jobs:
             console.print(f"\n[blue]📊 Recent Activity:[/blue]")
@@ -1767,30 +1859,36 @@ Generate a working command that implements the requested functionality. Use prop
                 console.print(f"  ✅ {len(completed_jobs)} completed jobs")
             if failed_jobs:
                 console.print(f"  ❌ {len(failed_jobs)} failed jobs")
-        
+
         # System context - get current system state
         try:
             from mcli.chat.system_controller import system_controller
-            
+
             # Quick system overview
             memory_result = system_controller.get_memory_usage()
             disk_result = system_controller.get_disk_usage()
-            
+
             console.print(f"\n[yellow]💻 System Context:[/yellow]")
-            
+
             if memory_result.get("success"):
                 mem_data = memory_result["data"]["virtual_memory"]
-                console.print(f"  💾 Memory: {mem_data['usage_percent']:.1f}% used ({mem_data['used_gb']:.1f}GB/{mem_data['total_gb']:.1f}GB)")
-            
+                console.print(
+                    f"  💾 Memory: {mem_data['usage_percent']:.1f}% used ({mem_data['used_gb']:.1f}GB/{mem_data['total_gb']:.1f}GB)"
+                )
+
             if disk_result.get("success"):
                 disk_data = disk_result["data"]
                 if disk_data.get("total_disk_gb", 0) > 0:
-                    usage_pct = (disk_data.get("total_used_gb", 0) / disk_data["total_disk_gb"]) * 100
-                    console.print(f"  💽 Disk: {usage_pct:.1f}% used ({disk_data.get('total_free_gb', 0):.1f}GB free)")
-                    
+                    usage_pct = (
+                        disk_data.get("total_used_gb", 0) / disk_data["total_disk_gb"]
+                    ) * 100
+                    console.print(
+                        f"  💽 Disk: {usage_pct:.1f}% used ({disk_data.get('total_free_gb', 0):.1f}GB free)"
+                    )
+
         except Exception:
             console.print(f"\n[yellow]💻 System Context: Unable to get current status[/yellow]")
-        
+
         # Agent capabilities reminder
         console.print(f"\n[magenta]🛠️ I can help you with:[/magenta]")
         console.print("  • System monitoring and cleanup")
@@ -1798,13 +1896,15 @@ Generate a working command that implements the requested functionality. Use prop
         console.print("  • Scheduled tasks and reminders")
         console.print("  • File management and organization")
         console.print("  • Process monitoring and management")
-        
-        console.print("\n[dim]Ask me to schedule tasks, check system status, or automate any routine![/dim]")
-    
+
+        console.print(
+            "\n[dim]Ask me to schedule tasks, check system status, or automate any routine![/dim]"
+        )
+
     def _handle_job_scheduling(self, query: str):
         """Handle requests to schedule new jobs"""
         console.print("[green]📅 Let me help you schedule that task![/green]")
-        
+
         # For now, provide guidance on scheduling
         # TODO: Implement natural language job scheduling parser
         console.print("\n[cyan]Here are some scheduling examples:[/cyan]")
@@ -1812,74 +1912,82 @@ Generate a working command that implements the requested functionality. Use prop
         console.print("• [yellow]'remind me to check disk space every Monday'[/yellow]")
         console.print("• [yellow]'run backup every day at 11pm'[/yellow]")
         console.print("• [yellow]'check memory usage every 2 hours'[/yellow]")
-        
+
         console.print("\n[blue]💡 I can schedule:[/blue]")
         console.print("  • System maintenance tasks")
         console.print("  • File cleanup operations")
         console.print("  • Health checks and monitoring")
         console.print("  • Automated backups")
         console.print("  • Custom reminders")
-        
-        console.print("\n[dim]The job scheduler is ready - just tell me what you'd like to automate![/dim]")
-    
+
+        console.print(
+            "\n[dim]The job scheduler is ready - just tell me what you'd like to automate![/dim]"
+        )
+
     def _handle_job_cancellation(self, query: str):
         """Handle requests to cancel jobs"""
         try:
             from mcli.workflow.scheduler.persistence import JobStorage
             from mcli.workflow.scheduler.job import JobStatus
-            
+
             job_storage = JobStorage()
             jobs = job_storage.load_jobs()
-            
+
             active_jobs = []
             for job in jobs:
-                if hasattr(job, 'status') and job.status.value in [JobStatus.PENDING.value, JobStatus.RUNNING.value]:
+                if hasattr(job, "status") and job.status.value in [
+                    JobStatus.PENDING.value,
+                    JobStatus.RUNNING.value,
+                ]:
                     active_jobs.append(job)
-                    
+
         except Exception:
             jobs = []
             active_jobs = []
-        
+
         if not active_jobs:
             console.print("[yellow]📅 No active jobs to cancel[/yellow]")
             return
-        
+
         console.print("[blue]📅 Active jobs that can be cancelled:[/blue]")
         for i, job_data in enumerate(active_jobs, 1):
             job = Job.from_dict(job_data)
             console.print(f"  {i}. [cyan]{job.name}[/cyan] - {job.cron_expression}")
-        
+
         console.print("\n[dim]To cancel a specific job, use: 'cancel job [name]'[/dim]")
-    
+
     def _show_startup_status(self):
         """Show proactive status update when assistant starts"""
         try:
             # Quick system check
             from mcli.chat.system_controller import system_controller
-            
+
             # Get basic system state
             memory_result = system_controller.get_memory_usage()
-            
+
             # Check for active jobs
             try:
                 from mcli.workflow.scheduler.persistence import JobStorage
                 from mcli.workflow.scheduler.job import JobStatus
-                
+
                 job_storage = JobStorage()
                 jobs = job_storage.load_jobs()
-                
+
                 # Count active jobs
                 active_jobs = []
                 for job in jobs:
-                    if hasattr(job, 'status') and job.status.value in [JobStatus.PENDING.value, JobStatus.RUNNING.value]:
+                    if hasattr(job, "status") and job.status.value in [
+                        JobStatus.PENDING.value,
+                        JobStatus.RUNNING.value,
+                    ]:
                         active_jobs.append(job)
-                        
+
             except Exception:
                 jobs = []
                 active_jobs = []
-            
+
             status_items = []
-            
+
             # Memory alert if high
             if memory_result.get("success"):
                 mem_data = memory_result["data"]["virtual_memory"]
@@ -1887,27 +1995,27 @@ Generate a working command that implements the requested functionality. Use prop
                     status_items.append(f"⚠️ High memory usage: {mem_data['usage_percent']:.1f}%")
                 elif mem_data.get("usage_percent", 0) > 75:
                     status_items.append(f"💾 Memory: {mem_data['usage_percent']:.1f}% used")
-            
+
             # Active jobs
             if active_jobs:
                 status_items.append(f"📅 {len(active_jobs)} scheduled jobs running")
-            
+
             # Recent failures (check for failed jobs in last 24 hours)
             failed_jobs = [j for j in jobs if j.get("status") == JobStatus.FAILED.value]
             if failed_jobs:
                 status_items.append(f"❌ {len(failed_jobs)} recent job failures")
-            
+
             # Show status if there's something to report
             if status_items:
                 console.print("\n[cyan]🤖 Assistant Status:[/cyan]")
                 for item in status_items[:3]:  # Show max 3 items
                     console.print(f"  {item}")
-                
+
                 if len(active_jobs) > 0 or len(failed_jobs) > 0:
                     console.print("  [dim]Say 'what's my status?' for detailed report[/dim]")
             else:
                 console.print("\n[green]🤖 All systems running smoothly![/green]")
-                
+
         except Exception as e:
             console.print(f"\n[yellow]🤖 Assistant ready (status check unavailable)[/yellow]")
 

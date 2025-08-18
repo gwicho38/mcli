@@ -283,25 +283,25 @@ class CommandDatabase:
                 temp_vectorizer = TfidfVectorizer(
                     max_features=1000, stop_words="english", ngram_range=(1, 2)
                 )
-                
+
                 # Fit on current command texts
                 all_texts = command_texts + [query_text]
                 temp_vectorizer.fit(all_texts)
-                
+
                 # Transform query and commands
                 query_vector = temp_vectorizer.transform([query_text])
                 command_vectors = temp_vectorizer.transform(command_texts)
-                
+
                 # Calculate cosine similarities
                 similarities = cosine_similarity(query_vector, command_vectors).flatten()
-                
+
                 # Sort by similarity - avoid using 'commands' variable name
                 cmd_similarities = []
                 for i, similarity_score in enumerate(similarities):
                     cmd_similarities.append((cmd_list[i], similarity_score))
-                
+
                 cmd_similarities.sort(key=lambda x: x[1], reverse=True)
-                
+
                 return cmd_similarities[:limit]
             else:
                 return []
@@ -309,6 +309,7 @@ class CommandDatabase:
         except Exception as e:
             logger.error(f"Error calculating similarities: {e}")
             import traceback
+
             traceback.print_exc()
             return []
 
@@ -523,9 +524,9 @@ resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024, 256*1024*1024))  # 256MB 
             )
 
             return {
-                "output": result.stdout, 
+                "output": result.stdout,
                 "error": result.stderr,
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
 
         finally:
@@ -550,9 +551,9 @@ resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024, 256*1024*1024))  # 256MB 
             )
 
             return {
-                "output": result.stdout, 
+                "output": result.stdout,
                 "error": result.stderr,
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
 
         finally:
@@ -576,9 +577,9 @@ resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024, 256*1024*1024))  # 256MB 
             )
 
             return {
-                "output": result.stdout, 
+                "output": result.stdout,
                 "error": result.stderr,
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
 
         finally:
@@ -606,9 +607,9 @@ resource.setrlimit(resource.RLIMIT_AS, (256*1024*1024, 256*1024*1024))  # 256MB 
             )
 
             return {
-                "output": result.stdout, 
+                "output": result.stdout,
                 "error": result.stderr,
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
 
         finally:

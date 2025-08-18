@@ -91,7 +91,7 @@ class KeyManager(CredentialManager):
             "public_key": "placeholder_public_key",
             "private_key": "placeholder_private_key",
             "algorithm": "placeholder_rsa",
-            "created_at": logger.info.__code__.co_filename  # Placeholder timestamp
+            "created_at": logger.info.__code__.co_filename,  # Placeholder timestamp
         }
 
     @staticmethod

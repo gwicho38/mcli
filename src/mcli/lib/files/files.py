@@ -12,21 +12,21 @@ NO_CHANGE_TO_FILE = -1
 def encode_content(path):
     """Encode file content and track changes using MD5 fingerprints"""
     logger.debug(f"encode_content: {path}")
-    
+
     try:
         with open(path, "rb") as file:
             content = file.read()
-        
+
         # Calculate MD5 fingerprint
         fingerprint = hashlib.md5(content).hexdigest()
-        
+
         # Check if file has changed
         if IN_MEMORY_FILE_FINGERPRINTS.get(path) != fingerprint:
             IN_MEMORY_FILE_FINGERPRINTS[path] = fingerprint
-            return base64.b64encode(content).decode('utf-8')
+            return base64.b64encode(content).decode("utf-8")
         else:
             return NO_CHANGE_TO_FILE
-            
+
     except Exception as e:
         logger.error(f"Error encoding content from {path}: {e}")
         return NO_CHANGE_TO_FILE

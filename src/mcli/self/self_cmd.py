@@ -1112,7 +1112,7 @@ def dashboard(refresh: float, once: bool):
         from mcli.lib.ui.visual_effects import LiveDashboard
 
         dashboard = LiveDashboard()
-        
+
         if once:
             # Show dashboard once
             console.clear()
@@ -1121,7 +1121,7 @@ def dashboard(refresh: float, once: bool):
         else:
             # Start live updating dashboard
             dashboard.start_live_dashboard(refresh_interval=refresh)
-            
+
     except ImportError as e:
         console.print("[red]Dashboard module not available[/red]")
         console.print(f"Error: {e}")
