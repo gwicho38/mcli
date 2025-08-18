@@ -2,8 +2,6 @@ use pyo3::prelude::*;
 use rayon::prelude::*;
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::cmp::Ordering;
-use std::collections::BinaryHeap;
 use unicode_normalization::UnicodeNormalization;
 
 #[derive(Clone)]

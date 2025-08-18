@@ -1,5 +1,4 @@
 use pyo3::prelude::*;
-use rayon::prelude::*;
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::{Deserialize, Serialize};
@@ -30,6 +29,7 @@ pub struct Command {
 #[pymethods]
 impl Command {
     #[new]
+    #[pyo3(signature = (id, name, description, code, language, group=None, tags=None, execution_count=None))]
     pub fn new(
         id: String,
         name: String,
@@ -149,6 +149,7 @@ impl CommandMatcher {
         Ok(())
     }
 
+    #[pyo3(signature = (query, limit=None))]
     pub fn search(&self, query: String, limit: Option<usize>) -> PyResult<Vec<MatchResult>> {
         if self.commands.is_empty() {
             return Ok(Vec::new());
@@ -255,6 +256,7 @@ impl CommandMatcher {
         Ok(results)
     }
 
+    #[pyo3(signature = (tags, limit=None))]
     pub fn search_by_tags(
         &self,
         tags: Vec<String>,
@@ -291,6 +293,7 @@ impl CommandMatcher {
         Ok(results)
     }
 
+    #[pyo3(signature = (group, limit=None))]
     pub fn search_by_group(
         &self,
         group: String,
@@ -322,6 +325,7 @@ impl CommandMatcher {
         Ok(results)
     }
 
+    #[pyo3(signature = (limit=None))]
     pub fn get_popular_commands(&self, limit: Option<usize>) -> PyResult<Vec<MatchResult>> {
         let limit = limit.unwrap_or(10);
         let mut commands_with_scores: Vec<_> = self
