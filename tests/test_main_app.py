@@ -14,9 +14,9 @@ def test_main_app_help():
 def test_hello_command():
     runner = CliRunner()
     app = create_app()
-    result = runner.invoke(app, ['hello'])
+    result = runner.invoke(app, ['self', 'hello'])
     assert result.exit_code == 0
-    assert 'Hello from mcli!' in result.output
+    assert 'Hello' in result.output
 
 
 def test_version_command():

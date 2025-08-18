@@ -6,7 +6,7 @@ from unittest.mock import patch, MagicMock
 
 class TestGenerateGraph(unittest.TestCase):
     def test_load_graph_data_with_valid_file(self):
-        from src.mcli.app.readiness.generate_graph import load_graph_data
+        from src.mcli.lib.erd.generate_graph import load_graph_data
         
         # Create a temporary valid JSON file
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
@@ -28,14 +28,14 @@ class TestGenerateGraph(unittest.TestCase):
             os.unlink(f.name)
 
     def test_load_graph_data_with_missing_file(self):
-        from src.mcli.app.readiness.generate_graph import load_graph_data
+        from src.mcli.lib.erd.generate_graph import load_graph_data
         
         # Test with a non-existent file
         with self.assertRaises(FileNotFoundError):
             load_graph_data("nonexistent_file.json")
 
     def test_build_adjacency_list_with_valid_data(self):
-        from src.mcli.app.readiness.generate_graph import build_adjacency_list
+        from src.mcli.lib.erd.generate_graph import build_adjacency_list
         
         # Create valid graph data
         graph_data = {
@@ -65,7 +65,7 @@ class TestGenerateGraph(unittest.TestCase):
         self.assertEqual(adj_list["node2"], [])
 
     def test_build_adjacency_list_with_invalid_data(self):
-        from src.mcli.app.readiness.generate_graph import build_adjacency_list
+        from src.mcli.lib.erd.generate_graph import build_adjacency_list
         
         # Test with invalid data structure
         invalid_data = {"graph": {}}
