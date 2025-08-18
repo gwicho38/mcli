@@ -1067,7 +1067,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                 corrected_response = (
                     re.sub(
                         pattern,
-                        f"**[Command Does Not Exist]** {pattern.replace('\\b', '')}",
+                        "**[Command Does Not Exist]** " + pattern.replace('\\b', ''),
                         corrected_response,
                         flags=re.IGNORECASE,
                     )
