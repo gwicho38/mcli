@@ -328,6 +328,14 @@ def _add_lazy_commands(app: click.Group):
             "import_path": "mcli.app.chat_cmd.chat",
             "help": "Start an interactive chat session with the MCLI Chat Assistant.",
         },
+        "model": {
+            "import_path": "mcli.app.model_cmd.model",
+            "help": "Model management commands for offline and online model usage",
+        },
+        "cron-test": {
+            "import_path": "mcli.app.cron_test_cmd.cron_test",
+            "help": "🕒 Validate and test MCLI cron/scheduler functionality with comprehensive tests.",
+        },
         "visual": {
             "import_path": "mcli.app.visual_cmd.visual",
             "help": "🎨 Visual effects and enhancements showcase",
@@ -339,8 +347,8 @@ def _add_lazy_commands(app: click.Group):
     }
 
     for cmd_name, cmd_info in lazy_commands.items():
-        if cmd_name == "workflow":
-            # Use LazyGroup for workflow since it has subcommands
+        if cmd_name in ["workflow", "model"]:
+            # Use LazyGroup for commands that have subcommands
             lazy_cmd = LazyGroup(
                 name=cmd_name,
                 import_path=cmd_info["import_path"],

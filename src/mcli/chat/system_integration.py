@@ -207,6 +207,13 @@ class ChatSystemIntegration:
             for phrase in ["system info", "system information", "system specs", "hardware info"]
         ):
             return self._handle_system_info_request(request)
+        
+        # Hardware devices requests
+        elif any(
+            phrase in request_lower
+            for phrase in ["hardware devices", "connected devices", "list hardware", "show devices", "connected hardware"]
+        ):
+            return self._handle_hardware_devices_request(request)
 
         elif any(
             phrase in request_lower
@@ -252,9 +259,11 @@ class ChatSystemIntegration:
         ):
             return self._handle_navigation_request(request)
 
-        # Directory listing requests
+        # Directory listing requests (more specific to avoid false positives)
         elif any(
-            phrase in request_lower for phrase in ["list", "show files", "ls", "dir", "what's in"]
+            phrase in request_lower for phrase in [
+                "list files", "list directory", "show files", "ls", "dir", "what's in"
+            ]
         ):
             return self._handle_directory_listing_request(request)
 
@@ -552,6 +561,111 @@ class ChatSystemIntegration:
             return {
                 "success": False,
                 "error": f"Error getting system information: {e}",
+                "request": request,
+            }
+
+    def _handle_hardware_devices_request(self, request: str) -> Dict[str, Any]:
+        """Handle hardware devices listing requests"""
+        try:
+            # Use shell command to get hardware information
+            import subprocess
+            
+            summary = ["🔌 Connected Hardware Devices:"]
+            
+            try:
+                # Get USB devices
+                result = subprocess.run(
+                    ["system_profiler", "SPUSBDataType"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                
+                if result.returncode == 0:
+                    usb_lines = result.stdout.split('\n')
+                    usb_devices = []
+                    for line in usb_lines:
+                        line = line.strip()
+                        if ':' in line and not line.startswith('USB') and len(line) < 100:
+                            if any(keyword in line.lower() for keyword in ['mouse', 'keyboard', 'disk', 'camera', 'audio', 'hub']):
+                                device_name = line.split(':')[0].strip()
+                                if device_name and len(device_name) > 3:
+                                    usb_devices.append(device_name)
+                    
+                    if usb_devices:
+                        summary.append("💾 USB Devices:")
+                        for device in usb_devices[:8]:  # Limit to 8 devices
+                            summary.append(f"  • {device}")
+                    
+            except Exception:
+                pass
+            
+            try:
+                # Get network interfaces
+                result = subprocess.run(
+                    ["ifconfig", "-a"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                
+                if result.returncode == 0:
+                    interfaces = []
+                    for line in result.stdout.split('\n'):
+                        if line and not line.startswith('\t') and not line.startswith(' '):
+                            interface_name = line.split(':')[0].strip()
+                            if interface_name and interface_name not in ['lo0', 'gif0', 'stf0']:
+                                interfaces.append(interface_name)
+                    
+                    if interfaces:
+                        summary.append("🌐 Network Interfaces:")
+                        for interface in interfaces[:6]:  # Limit to 6 interfaces
+                            summary.append(f"  • {interface}")
+                            
+            except Exception:
+                pass
+            
+            try:
+                # Get audio devices
+                result = subprocess.run(
+                    ["system_profiler", "SPAudioDataType"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                
+                if result.returncode == 0:
+                    audio_devices = []
+                    for line in result.stdout.split('\n'):
+                        line = line.strip()
+                        if ':' in line and ('Built-in' in line or 'USB' in line or 'Bluetooth' in line):
+                            device_name = line.split(':')[0].strip()
+                            if device_name and len(device_name) > 3:
+                                audio_devices.append(device_name)
+                    
+                    if audio_devices:
+                        summary.append("🔊 Audio Devices:")
+                        for device in audio_devices[:4]:  # Limit to 4 devices
+                            summary.append(f"  • {device}")
+                            
+            except Exception:
+                pass
+            
+            if len(summary) == 1:  # Only has header
+                summary.append("ℹ️  No specific hardware devices detected via system profiler")
+                summary.append("💡 Try: 'system info' for general hardware information")
+            
+            return {
+                "success": True,
+                "message": "\n".join(summary),
+                "description": "List connected hardware devices",
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Error getting hardware devices: {e}",
+                "suggestion": "Try 'system info' for general hardware information",
                 "request": request,
             }
 

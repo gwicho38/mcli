@@ -21,29 +21,29 @@ except Exception:
     config = {}
 
 if not config:
-    # Default to local model for better performance and privacy
+    # Default to lightweight local model for better performance and privacy
     config = {
         "provider": "local",
-        "model": "phi3:3.8b",
+        "model": "prajjwal1/bert-tiny",
         "temperature": 0.7,
         "system_prompt": "You are the MCLI Chat Assistant, a helpful AI assistant for the MCLI tool.",
-        "ollama_base_url": "http://localhost:11434",
+        "ollama_base_url": "http://localhost:8080",  # Use lightweight model server
     }
 elif not config.get("openai_api_key") and config.get("provider", "openai") == "openai":
-    # If openai provider but no API key, switch to local
+    # If openai provider but no API key, switch to local lightweight models
     config["provider"] = "local"
     if not config.get("model"):
-        config["model"] = "phi3:3.8b"
+        config["model"] = "prajjwal1/bert-tiny"  # Use lightweight model
     if not config.get("ollama_base_url"):
-        config["ollama_base_url"] = "http://localhost:11434"
+        config["ollama_base_url"] = "http://localhost:8080"  # Use lightweight model server
 
 logger = get_logger(__name__)
 
 # Fallbacks if not set in config.toml
 LLM_PROVIDER = config.get("provider", "local")
-MODEL_NAME = config.get("model", "phi3:3.8b")
+MODEL_NAME = config.get("model", "prajjwal1/bert-tiny")  # Default to lightweight model
 OPENAI_API_KEY = config.get("openai_api_key", None)
-OLLAMA_BASE_URL = config.get("ollama_base_url", "http://localhost:11434")
+OLLAMA_BASE_URL = config.get("ollama_base_url", "http://localhost:8080")  # Default to lightweight server
 TEMPERATURE = float(config.get("temperature", 0.7))
 SYSTEM_PROMPT = config.get(
     "system_prompt",
@@ -70,19 +70,125 @@ I'm designed to be your digital assistant that keeps things running smoothly."""
 class ChatClient:
     """Interactive chat client for MCLI command management"""
 
-    def __init__(self):
+    def __init__(self, use_remote: bool = False, model_override: str = None):
         self.daemon = get_daemon_client()
         self.history = []
         self.session_active = True
+        self.use_remote = use_remote
+        self.model_override = model_override
+        self._configure_model_settings()
         self._ensure_daemon_running()
         self._load_scheduled_jobs()
+
+    def _configure_model_settings(self):
+        """Configure model settings based on remote/local preferences"""
+        global LLM_PROVIDER, MODEL_NAME, OLLAMA_BASE_URL
+        
+        if not self.use_remote:
+            # Default to lightweight local models
+            LLM_PROVIDER = "local"
+            MODEL_NAME = self.model_override or "prajjwal1/bert-tiny"
+            OLLAMA_BASE_URL = "http://localhost:8080"  # Use lightweight model server port
+            
+            # Update the config dictionary too
+            config["provider"] = "local"
+            config["model"] = MODEL_NAME
+            config["ollama_base_url"] = OLLAMA_BASE_URL
+            
+            # Ensure lightweight model server is running
+            self._ensure_lightweight_model_server()
+        else:
+            # Use remote models from config
+            if self.model_override:
+                MODEL_NAME = self.model_override
+            # Keep existing provider settings from config
+
+    def _ensure_lightweight_model_server(self):
+        """Ensure the lightweight model server is running"""
+        import requests
+        import time
+        
+        try:
+            # Check if server is already running
+            response = requests.get(f"{OLLAMA_BASE_URL}/health", timeout=2)
+            if response.status_code == 200:
+                console.print("[green]✅ Lightweight model server already running[/green]")
+                # Server is running, but check if our model is loaded
+                try:
+                    models_response = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=2)
+                    if models_response.status_code == 200:
+                        models_data = models_response.json()
+                        loaded_models = [m.get("name", "") for m in models_data.get("models", [])]
+                        if MODEL_NAME in loaded_models:
+                            console.print(f"[green]✅ Model {MODEL_NAME} already loaded[/green]")
+                            return  # Server is running and model is loaded
+                        else:
+                            console.print(f"[yellow]Model {MODEL_NAME} not loaded, will auto-load on first use[/yellow]")
+                            return  # Server will auto-load model when needed
+                except:
+                    # If we can't check models, assume server will handle it
+                    return
+        except:
+            pass
+        
+        # Try to start the server automatically
+        console.print("[yellow]Starting lightweight model server...[/yellow]")
+        
+        try:
+            import threading
+            from mcli.workflow.model_service.lightweight_model_server import LightweightModelServer
+            
+            # Get configured model
+            model_name = MODEL_NAME
+            
+            # Start server in background thread
+            server = LightweightModelServer(port=8080)
+            
+            # Download and load model if needed
+            if server.download_and_load_model(model_name):
+                # Start server in background thread
+                def start_server_thread():
+                    try:
+                        server.start_server()
+                    except Exception as e:
+                        console.print(f"[red]Server thread error: {e}[/red]")
+                
+                server_thread = threading.Thread(target=start_server_thread, daemon=True)
+                server_thread.start()
+                
+                # Wait longer for server to start and verify it's working
+                max_retries = 10
+                for i in range(max_retries):
+                    time.sleep(1)
+                    try:
+                        response = requests.get(f"{OLLAMA_BASE_URL}/health", timeout=1)
+                        if response.status_code == 200:
+                            console.print(f"[green]✅ Lightweight model server started with {model_name}[/green]")
+                            return
+                    except:
+                        pass
+                    
+                console.print(f"[yellow]⚠️ Server started but health check failed[/yellow]")
+                console.print("Falling back to remote models...")
+                self.use_remote = True
+            else:
+                console.print(f"[yellow]⚠️ Could not download/load model {model_name}[/yellow]")
+                console.print("Falling back to remote models...")
+                self.use_remote = True
+                
+        except Exception as e:
+            console.print(f"[yellow]⚠️ Could not start lightweight model server: {e}[/yellow]")
+            console.print("Falling back to remote models...")
+            self.use_remote = True
 
     def start_interactive_session(self):
         """Start the chat interface"""
         console.print("[bold green]MCLI Personal Assistant[/bold green] (type 'exit' to quit)")
 
         # Show current configuration
-        if LLM_PROVIDER == "local":
+        if not self.use_remote:
+            console.print(f"[dim]Using lightweight local model: {MODEL_NAME} (offline mode)[/dim]")
+        elif LLM_PROVIDER == "local":
             console.print(f"[dim]Using local model: {MODEL_NAME} via Ollama[/dim]")
         elif LLM_PROVIDER == "openai":
             console.print(f"[dim]Using OpenAI model: {MODEL_NAME}[/dim]")
@@ -173,14 +279,15 @@ class ChatClient:
             self.handle_command_creation(user_input)
             return
 
+        # Check for job management requests BEFORE system control
+        # This prevents "list my jobs" from being caught by system control
+        if self._is_job_management_request(user_input):
+            self._handle_job_management(user_input)
+            return
+
         # Check for system control requests
         if self.is_system_control_request(user_input):
             self.handle_system_control(user_input)
-            return
-
-        # Check for job management requests (agent capabilities)
-        if self._is_job_management_request(user_input):
-            self._handle_job_management(user_input)
             return
 
         # Check for 'run <command> [args...]' pattern (containerized execution)
@@ -848,48 +955,93 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                         return console.print(corrected_response)
 
                     elif response.status_code == 404:
-                        console.print(
-                            f"[yellow]Model '{MODEL_NAME}' not found. Attempting to pull it...[/yellow]"
-                        )
-                        self._pull_model_if_needed(MODEL_NAME)
-                        # Retry the request
-                        response = requests.post(
-                            f"{OLLAMA_BASE_URL}/api/generate",
-                            json={
-                                "model": MODEL_NAME,
-                                "prompt": prompt,
-                                "temperature": TEMPERATURE,
-                                "stream": False,
-                            },
-                            timeout=60,
-                        )
-                        if response.status_code == 200:
-                            data = response.json()
-                            content = data.get("response", "")
-                            import re
+                        if not self.use_remote:
+                            # In lightweight mode, model not found means we need to ensure server is running
+                            console.print(f"[yellow]Model '{MODEL_NAME}' not found on lightweight server.[/yellow]")
+                            console.print("[yellow]Ensuring lightweight model server is running...[/yellow]")
+                            self._ensure_lightweight_model_server()
+                            # Retry the request
+                            response = requests.post(
+                                f"{OLLAMA_BASE_URL}/api/generate",
+                                json={
+                                    "model": MODEL_NAME,
+                                    "prompt": prompt,
+                                    "temperature": TEMPERATURE,
+                                    "stream": False,
+                                },
+                                timeout=60,
+                            )
+                            if response.status_code == 200:
+                                data = response.json()
+                                content = data.get("response", "")
+                                import re
 
-                            split_patterns = [
-                                r"\n2\.",
-                                r"\n```",
-                                r"\nRelevant commands",
-                                r"\n3\.",
-                                r"\n- \*\*Command",
-                            ]
-                            split_idx = len(content)
-                            for pat in split_patterns:
-                                m = re.search(pat, content)
-                                if m:
-                                    split_idx = min(split_idx, m.start())
-                            main_answer = content[:split_idx].strip()
-                            # Validate and correct any hallucinated commands
-                            corrected_response = self.validate_and_correct_response(
-                                main_answer, commands
-                            )
-                            return console.print(corrected_response)
+                                split_patterns = [
+                                    r"\n2\.",
+                                    r"\n```",
+                                    r"\nRelevant commands",
+                                    r"\n3\.",
+                                    r"\n- \*\*Command",
+                                ]
+                                split_idx = len(content)
+                                for pat in split_patterns:
+                                    m = re.search(pat, content)
+                                    if m:
+                                        split_idx = min(split_idx, m.start())
+                                main_answer = content[:split_idx].strip()
+                                # Validate and correct any hallucinated commands
+                                corrected_response = self.validate_and_correct_response(
+                                    main_answer, commands
+                                )
+                                return console.print(corrected_response)
+                            else:
+                                raise Exception(
+                                    f"Failed to generate response after restarting lightweight server: HTTP {response.status_code}"
+                                )
                         else:
-                            raise Exception(
-                                f"Failed to generate response after pulling model: HTTP {response.status_code}"
+                            # In remote mode, try to pull the model with Ollama
+                            console.print(
+                                f"[yellow]Model '{MODEL_NAME}' not found. Attempting to pull it...[/yellow]"
                             )
+                            self._pull_model_if_needed(MODEL_NAME)
+                            # Retry the request
+                            response = requests.post(
+                                f"{OLLAMA_BASE_URL}/api/generate",
+                                json={
+                                    "model": MODEL_NAME,
+                                    "prompt": prompt,
+                                    "temperature": TEMPERATURE,
+                                    "stream": False,
+                                },
+                                timeout=60,
+                            )
+                            if response.status_code == 200:
+                                data = response.json()
+                                content = data.get("response", "")
+                                import re
+
+                                split_patterns = [
+                                    r"\n2\.",
+                                    r"\n```",
+                                    r"\nRelevant commands",
+                                    r"\n3\.",
+                                    r"\n- \*\*Command",
+                                ]
+                                split_idx = len(content)
+                                for pat in split_patterns:
+                                    m = re.search(pat, content)
+                                    if m:
+                                        split_idx = min(split_idx, m.start())
+                                main_answer = content[:split_idx].strip()
+                                # Validate and correct any hallucinated commands
+                                corrected_response = self.validate_and_correct_response(
+                                    main_answer, commands
+                                )
+                                return console.print(corrected_response)
+                            else:
+                                raise Exception(
+                                    f"Failed to generate response after pulling model: HTTP {response.status_code}"
+                                )
                     else:
                         raise Exception(f"HTTP {response.status_code}: {response.text}")
 
@@ -1729,6 +1881,16 @@ Generate a working command that implements the requested functionality. Use prop
             r"cron.*",
             r"at.*am|pm",
             r"in.*minutes|hours|days",
+            r"run.*cron.*test",
+            r"cron.*test",
+            r"show.*failed.*jobs",
+            r"failed.*jobs",
+            r"job.*details",
+            r"job.*completion", 
+            r"completion.*details",
+            r"performance.*metrics",
+            r"execution.*history",
+            r".*completion.*",
         ]
 
         import re
@@ -1746,6 +1908,21 @@ Generate a working command that implements the requested functionality. Use prop
         console.print("[dim]🤖 Processing job management request...[/dim]")
 
         try:
+            # Run cron test
+            if any(phrase in lower_query for phrase in ["run cron test", "cron test"]):
+                self._handle_cron_test(query)
+                return
+                
+            # Show failed jobs
+            if any(phrase in lower_query for phrase in ["show failed jobs", "failed jobs"]):
+                self._show_failed_jobs()
+                return
+                
+            # Show job details/completion analysis
+            if any(phrase in lower_query for phrase in ["job details", "job completion", "completion details", "performance metrics", "execution history"]):
+                self._show_job_completion_details()
+                return
+            
             # List jobs
             if any(
                 phrase in lower_query
@@ -1768,16 +1945,17 @@ Generate a working command that implements the requested functionality. Use prop
                 return
 
             # General job help
-            console.print("[green]📅 I can help you with job scheduling![/green]")
-            console.print(
-                "• [cyan]'schedule system cleanup daily at 2am'[/cyan] - Schedule recurring tasks"
-            )
-            console.print(
-                "• [cyan]'remind me to check disk space every week'[/cyan] - Set reminders"
-            )
-            console.print("• [cyan]'list my jobs'[/cyan] - Show all scheduled tasks")
-            console.print("• [cyan]'what's my status?'[/cyan] - Agent status overview")
-            console.print("• [cyan]'cancel job cleanup'[/cyan] - Remove scheduled tasks")
+            console.print("[green]📅 I can help you with job scheduling and monitoring![/green]")
+            console.print("\n[cyan]🕒 Cron & Job Management:[/cyan]")
+            console.print("• [yellow]'run cron test'[/yellow] - Validate cron system functionality")
+            console.print("• [yellow]'list my jobs'[/yellow] - Show all scheduled tasks")
+            console.print("• [yellow]'what's my status?'[/yellow] - Agent status overview")
+            console.print("• [yellow]'show failed jobs'[/yellow] - Analyze job failures")
+            console.print("• [yellow]'job completion details'[/yellow] - Performance metrics")
+            console.print("\n[cyan]📋 Job Scheduling:[/cyan]")
+            console.print("• [yellow]'schedule system cleanup daily at 2am'[/yellow] - Schedule recurring tasks")
+            console.print("• [yellow]'remind me to check disk space every week'[/yellow] - Set reminders")
+            console.print("• [yellow]'cancel job cleanup'[/yellow] - Remove scheduled tasks")
 
         except Exception as e:
             console.print(f"[red]❌ Error handling job request: {e}[/red]")
@@ -2017,7 +2195,182 @@ Generate a working command that implements the requested functionality. Use prop
                 console.print("\n[green]🤖 All systems running smoothly![/green]")
 
         except Exception as e:
-            console.print(f"\n[yellow]🤖 Assistant ready (status check unavailable)[/yellow]")
+            console.print(f"\n[green]🤖 All systems running smoothly![/green]")
+
+    def _handle_cron_test(self, query: str):
+        """Handle cron test execution requests"""
+        console.print("[green]🕒 Running MCLI Cron Validation Test...[/green]")
+        
+        try:
+            import subprocess
+            import sys
+            
+            # Determine test type from query
+            is_verbose = "verbose" in query.lower() or "detailed" in query.lower()
+            is_quick = "quick" in query.lower() or "fast" in query.lower()
+            
+            # Build command
+            cmd = [sys.executable, "-m", "mcli.app.cron_test_cmd"]
+            
+            if is_quick:
+                cmd.append("--quick")
+            if is_verbose:
+                cmd.append("--verbose")
+            cmd.append("--cleanup")  # Always cleanup in chat mode
+            
+            # Run the cron test
+            console.print("[dim]Executing cron validation...[/dim]")
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            
+            if result.returncode == 0:
+                # Show successful output
+                console.print(result.stdout)
+            else:
+                console.print(f"[red]❌ Cron test failed:[/red]")
+                console.print(result.stderr if result.stderr else result.stdout)
+                
+        except subprocess.TimeoutExpired:
+            console.print("[red]❌ Cron test timed out after 2 minutes[/red]")
+        except Exception as e:
+            console.print(f"[red]❌ Failed to run cron test: {e}[/red]")
+            console.print("\n[yellow]💡 Try running directly:[/yellow]")
+            console.print("  mcli cron-test --quick --verbose")
+
+    def _show_failed_jobs(self):
+        """Show detailed information about failed jobs"""
+        console.print("[red]❌ Analyzing Failed Jobs...[/red]")
+        
+        try:
+            from mcli.workflow.scheduler.persistence import JobStorage
+            from mcli.workflow.scheduler.job import JobStatus
+            
+            storage = JobStorage()
+            all_jobs = storage.load_jobs()
+            
+            # Find failed jobs
+            failed_jobs = [job for job in all_jobs if hasattr(job, 'status') and job.status == JobStatus.FAILED]
+            
+            if not failed_jobs:
+                console.print("[green]✅ No failed jobs found![/green]")
+                console.print("All scheduled jobs are running successfully.")
+                return
+            
+            console.print(f"[yellow]Found {len(failed_jobs)} failed jobs:[/yellow]")
+            
+            for i, job in enumerate(failed_jobs[:10], 1):  # Show max 10 failed jobs
+                console.print(f"\n[red]{i}. {job.name}[/red]")
+                console.print(f"   Status: {job.status.value}")
+                console.print(f"   Type: {job.job_type.value}")
+                console.print(f"   Schedule: {job.cron_expression}")
+                
+                if hasattr(job, 'last_error') and job.last_error:
+                    error_preview = job.last_error[:100] + "..." if len(job.last_error) > 100 else job.last_error
+                    console.print(f"   Error: {error_preview}")
+                    
+                if hasattr(job, 'run_count'):
+                    console.print(f"   Attempts: {job.run_count}")
+                    
+                if hasattr(job, 'last_run') and job.last_run:
+                    console.print(f"   Last attempt: {job.last_run.strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            if len(failed_jobs) > 10:
+                console.print(f"\n[dim]... and {len(failed_jobs) - 10} more failed jobs[/dim]")
+            
+            # Show helpful actions
+            console.print(f"\n[cyan]💡 Recommended Actions:[/cyan]")
+            console.print("• Check job commands and file paths")
+            console.print("• Verify system permissions")
+            console.print("• Review error messages above")
+            console.print("• Try: 'cancel job <name>' to remove problematic jobs")
+            
+        except Exception as e:
+            console.print(f"[red]❌ Failed to analyze jobs: {e}[/red]")
+
+    def _show_job_completion_details(self):
+        """Show comprehensive job completion analysis"""
+        console.print("[blue]📊 Job Completion Analysis...[/blue]")
+        
+        try:
+            from mcli.workflow.scheduler.persistence import JobStorage
+            from mcli.workflow.scheduler.job import JobStatus
+            from datetime import datetime, timedelta
+            
+            storage = JobStorage()
+            all_jobs = storage.load_jobs()
+            
+            if not all_jobs:
+                console.print("[yellow]No jobs found in the system.[/yellow]")
+                return
+            
+            # Categorize jobs
+            completed_jobs = []
+            running_jobs = []
+            failed_jobs = []
+            pending_jobs = []
+            
+            for job in all_jobs:
+                if hasattr(job, 'status'):
+                    if job.status == JobStatus.COMPLETED:
+                        completed_jobs.append(job)
+                    elif job.status == JobStatus.RUNNING:
+                        running_jobs.append(job)
+                    elif job.status == JobStatus.FAILED:
+                        failed_jobs.append(job)
+                    else:
+                        pending_jobs.append(job)
+            
+            # Status summary
+            console.print(f"\n[green]📈 Job Status Summary:[/green]")
+            console.print(f"  ✅ Completed: {len(completed_jobs)}")
+            console.print(f"  🔄 Running: {len(running_jobs)}")
+            console.print(f"  ❌ Failed: {len(failed_jobs)}")
+            console.print(f"  ⏳ Pending: {len(pending_jobs)}")
+            
+            # Performance metrics
+            total_runs = sum(getattr(job, 'run_count', 0) for job in all_jobs)
+            total_successes = sum(getattr(job, 'success_count', 0) for job in all_jobs)
+            total_failures = sum(getattr(job, 'failure_count', 0) for job in all_jobs)
+            
+            if total_runs > 0:
+                success_rate = (total_successes / total_runs * 100)
+                console.print(f"\n[cyan]⚡ Performance Metrics:[/cyan]")
+                console.print(f"  Total Executions: {total_runs}")
+                console.print(f"  Success Rate: {success_rate:.1f}%")
+                console.print(f"  Successful: {total_successes}")
+                console.print(f"  Failed: {total_failures}")
+            
+            # Recent completions (last 5)
+            recent_completed = sorted(
+                [job for job in completed_jobs if hasattr(job, 'last_run') and job.last_run],
+                key=lambda j: j.last_run,
+                reverse=True
+            )[:5]
+            
+            if recent_completed:
+                console.print(f"\n[green]🎯 Recent Completions:[/green]")
+                for job in recent_completed:
+                    runtime = f" ({job.runtime_seconds:.2f}s)" if hasattr(job, 'runtime_seconds') and job.runtime_seconds > 0 else ""
+                    console.print(f"  • {job.name}: {job.last_run.strftime('%H:%M:%S')}{runtime}")
+            
+            # Job type breakdown
+            job_types = {}
+            for job in all_jobs:
+                job_type = job.job_type.value if hasattr(job, 'job_type') else 'unknown'
+                job_types[job_type] = job_types.get(job_type, 0) + 1
+            
+            if job_types:
+                console.print(f"\n[blue]📋 Job Types:[/blue]")
+                for job_type, count in sorted(job_types.items()):
+                    console.print(f"  {job_type}: {count} jobs")
+            
+            # Helpful commands
+            console.print(f"\n[yellow]🔧 Available Commands:[/yellow]")
+            console.print("• 'show failed jobs' - Analyze job failures")
+            console.print("• 'run cron test' - Validate cron system")
+            console.print("• 'cancel job <name>' - Remove specific job")
+            
+        except Exception as e:
+            console.print(f"[red]❌ Failed to analyze job completions: {e}[/red]")
 
 
 if __name__ == "__main__":
