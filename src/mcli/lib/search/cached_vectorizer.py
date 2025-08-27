@@ -51,6 +51,13 @@ class CachedTfIdfVectorizer:
     async def _init_redis(self):
         """Initialize Redis connection"""
         try:
+            # Try to ensure Redis is running through the service manager
+            try:
+                from mcli.lib.services.redis_service import ensure_redis_running
+                await ensure_redis_running()
+            except ImportError:
+                logger.debug("Redis service manager not available")
+            
             self.redis_client = redis.from_url(self.redis_url)
             await self.redis_client.ping()
             logger.info("Connected to Redis for TF-IDF caching")
@@ -100,14 +107,22 @@ class CachedTfIdfVectorizer:
         self.cache_misses += 1
 
         # Compute TF-IDF vectors
-        if hasattr(self.vectorizer, "fit_transform"):
+        if hasattr(self.vectorizer, "fit_transform") and hasattr(self.vectorizer, "get_feature_names_out"):
             # sklearn implementation
             vectors = self.vectorizer.fit_transform(documents).toarray()
             feature_names = self.vectorizer.get_feature_names_out().tolist()
         else:
             # Rust implementation
-            vectors = np.array(self.vectorizer.fit_transform(documents))
-            feature_names = self.vectorizer.get_feature_names()
+            result = self.vectorizer.fit_transform(documents)
+            if isinstance(result, list):
+                vectors = np.array(result)
+            else:
+                vectors = result.toarray() if hasattr(result, 'toarray') else np.array(result)
+            
+            if hasattr(self.vectorizer, "get_feature_names"):
+                feature_names = self.vectorizer.get_feature_names()
+            else:
+                feature_names = [f"feature_{i}" for i in range(vectors.shape[1] if len(vectors.shape) > 1 else len(vectors))]
 
         self.is_fitted = True
 
@@ -133,12 +148,16 @@ class CachedTfIdfVectorizer:
         self.cache_misses += 1
 
         # Compute vectors
-        if hasattr(self.vectorizer, "transform"):
+        if hasattr(self.vectorizer, "transform") and hasattr(self.vectorizer, "get_feature_names_out"):
             # sklearn implementation
             vectors = self.vectorizer.transform(documents).toarray()
         else:
             # Rust implementation
-            vectors = np.array(self.vectorizer.transform(documents))
+            result = self.vectorizer.transform(documents)
+            if isinstance(result, list):
+                vectors = np.array(result)
+            else:
+                vectors = result.toarray() if hasattr(result, 'toarray') else np.array(result)
 
         # Cache the result
         await self._cache_result(cache_key, vectors)
