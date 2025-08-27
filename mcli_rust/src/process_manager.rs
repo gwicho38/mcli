@@ -55,6 +55,7 @@ pub struct ProcessInfo {
 #[pymethods]
 impl ProcessInfo {
     #[new]
+    #[pyo3(signature = (name, command, args, working_dir=None, environment=None))]
     pub fn new(
         name: String,
         command: String,
@@ -126,6 +127,7 @@ impl ProcessManager {
         })
     }
 
+    #[pyo3(signature = (name, command, args, working_dir=None, environment=None, timeout_seconds=None))]
     pub fn start_process(
         &self,
         name: String,
@@ -136,7 +138,7 @@ impl ProcessManager {
         timeout_seconds: Option<u64>,
     ) -> PyResult<String> {
         let process_info = ProcessInfo::new(name, command, args, working_dir, environment);
-        let process_id = process_info.id.clone();
+        let _process_id = process_info.id.clone();
 
         let processes = self.processes.clone();
         let timeout_duration = timeout_seconds.map(Duration::from_secs);

@@ -393,7 +393,7 @@ impl CommandMatcher {
         let query_chars: Vec<char> = query.chars().collect();
         let mut matches = Vec::new();
 
-        for (idx, command) in self.commands.iter().enumerate() {
+        for (_idx, command) in self.commands.iter().enumerate() {
             let name_score = fuzzy_score(&query_chars, &command.name);
             let desc_score = fuzzy_score(&query_chars, &command.description);
 
