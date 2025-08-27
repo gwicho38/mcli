@@ -348,10 +348,14 @@ def _add_lazy_commands(app: click.Group):
             "import_path": "mcli.app.redis_cmd.redis_group",
             "help": "🗄️  Manage Redis cache service for performance optimization",
         },
+        "logs": {
+            "import_path": "mcli.app.logs_cmd.logs_group",
+            "help": "📋 Stream and manage MCLI log files with real-time updates",
+        },
     }
 
     for cmd_name, cmd_info in lazy_commands.items():
-        if cmd_name in ["workflow", "model", "redis"]:
+        if cmd_name in ["workflow", "model", "redis", "logs"]:
             # Use LazyGroup for commands that have subcommands
             lazy_cmd = LazyGroup(
                 name=cmd_name,
