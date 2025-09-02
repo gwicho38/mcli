@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 import psutil
 import redis.asyncio as redis
@@ -59,21 +59,18 @@ class RedisService:
 
             # Generate Redis configuration
             config_file = await self._generate_config()
-            
+
             # Start Redis process through the process manager
-            command_args = [
-                str(redis_server_path),
-                str(config_file)
-            ]
+            command_args = [str(redis_server_path), str(config_file)]
 
             logger.info(f"Starting Redis server: {' '.join(command_args)}")
-            
+
             self.process_id = await self.process_manager.start_process(
                 name="redis-server",
                 command=str(redis_server_path),
                 args=command_args[1:],  # Skip the executable name
                 working_dir=str(self.data_dir),
-                environment={"REDIS_PORT": str(self.port)}
+                environment={"REDIS_PORT": str(self.port)},
             )
 
             # Wait a moment for startup
@@ -129,9 +126,9 @@ class RedisService:
                     port=self.port,
                     decode_responses=True,
                     socket_connect_timeout=2,
-                    socket_timeout=2
+                    socket_timeout=2,
                 )
-            
+
             await self.redis_client.ping()
             return True
         except (redis.ConnectionError, redis.TimeoutError, asyncio.TimeoutError):
@@ -170,15 +167,17 @@ class RedisService:
             # Get Redis server info
             if self.redis_client:
                 info = await self.redis_client.info()
-                status.update({
-                    "memory_usage": info.get("used_memory_human", "unknown"),
-                    "connected_clients": info.get("connected_clients", 0),
-                    "uptime": info.get("uptime_in_seconds", 0),
-                    "version": info.get("redis_version", "unknown"),
-                    "total_commands": info.get("total_commands_processed", 0),
-                    "keyspace_hits": info.get("keyspace_hits", 0),
-                    "keyspace_misses": info.get("keyspace_misses", 0),
-                })
+                status.update(
+                    {
+                        "memory_usage": info.get("used_memory_human", "unknown"),
+                        "connected_clients": info.get("connected_clients", 0),
+                        "uptime": info.get("uptime_in_seconds", 0),
+                        "version": info.get("redis_version", "unknown"),
+                        "total_commands": info.get("total_commands_processed", 0),
+                        "keyspace_hits": info.get("keyspace_hits", 0),
+                        "keyspace_misses": info.get("keyspace_misses", 0),
+                    }
+                )
 
         except Exception as e:
             logger.debug(f"Failed to get Redis status details: {e}")
@@ -196,45 +195,42 @@ class RedisService:
 
         try:
             start_time = time.perf_counter()
-            
+
             # Test basic operations
             test_key = "mcli:test:connection"
             await self.redis_client.set(test_key, "test_value", ex=10)
             value = await self.redis_client.get(test_key)
             await self.redis_client.delete(test_key)
-            
+
             latency = (time.perf_counter() - start_time) * 1000  # ms
 
             return {
                 "status": "success",
                 "latency_ms": round(latency, 2),
                 "connection_url": await self.get_connection_url(),
-                "test_result": value == "test_value"
+                "test_result": value == "test_value",
             }
 
         except Exception as e:
             return {
-                "status": "failed", 
+                "status": "failed",
                 "error": str(e),
-                "connection_url": await self.get_connection_url()
+                "connection_url": await self.get_connection_url(),
             }
 
     def _find_redis_server(self) -> Optional[Path]:
         """Find Redis server executable"""
         possible_paths = [
             "/opt/homebrew/bin/redis-server",  # Homebrew on Apple Silicon
-            "/usr/local/bin/redis-server",     # Homebrew on Intel
-            "/usr/bin/redis-server",           # System install
+            "/usr/local/bin/redis-server",  # Homebrew on Intel
+            "/usr/bin/redis-server",  # System install
             Path.home() / ".local/bin/redis-server",  # Local install
         ]
 
         # Check PATH first
         try:
             result = subprocess.run(
-                ["which", "redis-server"], 
-                capture_output=True, 
-                text=True, 
-                timeout=5
+                ["which", "redis-server"], capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0:
                 path = Path(result.stdout.strip())
@@ -299,7 +295,7 @@ auto-aof-rewrite-min-size 64mb
         config_file = self.data_dir / "redis.conf"
         config_file.write_text(config_content.strip())
         self.config_file = config_file
-        
+
         logger.info(f"Generated Redis config: {config_file}")
         return config_file
 
@@ -308,11 +304,11 @@ auto-aof-rewrite-min-size 64mb
         try:
             # Find Redis processes
             redis_processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+            for proc in psutil.process_iter(["pid", "name", "cmdline"]):
                 try:
-                    if proc.info['name'] == 'redis-server':
+                    if proc.info["name"] == "redis-server":
                         # Check if it's our instance by port
-                        cmdline = proc.info.get('cmdline', [])
+                        cmdline = proc.info.get("cmdline", [])
                         if any(str(self.port) in arg for arg in cmdline):
                             redis_processes.append(proc)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -370,11 +366,11 @@ async def get_redis_service() -> RedisService:
 async def ensure_redis_running() -> bool:
     """Ensure Redis is running, start if needed"""
     service = await get_redis_service()
-    
+
     if await service.is_running():
         logger.info("Redis already running")
         return True
-    
+
     logger.info("Starting Redis service...")
     return await service.start()
 
@@ -382,14 +378,10 @@ async def ensure_redis_running() -> bool:
 async def get_redis_connection() -> Optional[redis.Redis]:
     """Get Redis connection, starting service if needed"""
     service = await get_redis_service()
-    
+
     if not await service.is_running():
         success = await service.start()
         if not success:
             return None
-    
-    return redis.Redis(
-        host=service.host,
-        port=service.port,
-        decode_responses=True
-    )
+
+    return redis.Redis(host=service.host, port=service.port, decode_responses=True)

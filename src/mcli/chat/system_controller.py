@@ -3,13 +3,13 @@ System Controller for MCLI Chat
 Allows the chat interface to directly control system applications and execute commands
 """
 
-import subprocess
 import os
-import time
 import platform
+import subprocess
+import time
 from datetime import datetime
-from typing import Dict, Any, List, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from mcli.lib.logger.logger import get_logger
 
@@ -214,9 +214,10 @@ class SystemController:
     def get_system_info(self) -> Dict[str, Any]:
         """Get comprehensive system information"""
         try:
-            import psutil
             import platform
             from datetime import datetime
+
+            import psutil
 
             # Basic system info
             info = {
@@ -366,8 +367,8 @@ class SystemController:
     def get_system_time(self) -> Dict[str, Any]:
         """Get current system time and timezone information"""
         try:
-            from datetime import datetime
             import time
+            from datetime import datetime
 
             now = datetime.now()
 

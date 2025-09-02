@@ -155,7 +155,7 @@ class LightweightModelDownloader:
             ("config", model_info["config_url"], model_dir / "config.json"),
             ("model", model_info["model_url"], model_dir / "pytorch_model.bin"),
         ]
-        
+
         # Determine tokenizer filename based on URL
         tokenizer_url = model_info["tokenizer_url"]
         if tokenizer_url.endswith("vocab.txt"):
@@ -166,7 +166,7 @@ class LightweightModelDownloader:
             tokenizer_filename = "tokenizer_config.json"
         else:
             tokenizer_filename = "tokenizer.json"  # default
-            
+
         optional_files = [
             ("tokenizer", tokenizer_url, model_dir / tokenizer_filename),
         ]
@@ -175,7 +175,7 @@ class LightweightModelDownloader:
         for file_type, url, filepath in required_files:
             if not self.download_file(url, filepath, file_type):
                 return None
-        
+
         # Try to download optional files
         for file_type, url, filepath in optional_files:
             try:
@@ -192,11 +192,13 @@ class LightweightModelDownloader:
         models = []
         # Check for nested structure like prajjwal1/bert-tiny
         for org_dir in self.models_dir.iterdir():
-            if org_dir.is_dir() and not org_dir.name.startswith('.'):
+            if org_dir.is_dir() and not org_dir.name.startswith("."):
                 for model_dir in org_dir.iterdir():
-                    if (model_dir.is_dir() and 
-                        (model_dir / "pytorch_model.bin").exists() and 
-                        (model_dir / "config.json").exists()):
+                    if (
+                        model_dir.is_dir()
+                        and (model_dir / "pytorch_model.bin").exists()
+                        and (model_dir / "config.json").exists()
+                    ):
                         models.append(f"{org_dir.name}/{model_dir.name}")
         return models
 
@@ -337,19 +339,23 @@ class LightweightModelServer:
 
                     model_name = request_data.get("model", "")
                     prompt = request_data.get("prompt", "")
-                    
+
                     if not model_name:
                         self._send_response(400, {"error": "No model specified"})
                         return
-                    
+
                     if not prompt:
                         self._send_response(400, {"error": "No prompt provided"})
                         return
 
                     loaded_models = getattr(self.server_instance, "loaded_models", {})
-                    
+
                     # If no models loaded, try to auto-load the requested model
-                    if not loaded_models and model_name in LIGHTWEIGHT_MODELS and self.server_instance:
+                    if (
+                        not loaded_models
+                        and model_name in LIGHTWEIGHT_MODELS
+                        and self.server_instance
+                    ):
                         print(f"Auto-loading model: {model_name}")
                         try:
                             success = self.server_instance.download_and_load_model(model_name)
@@ -357,20 +363,25 @@ class LightweightModelServer:
                                 loaded_models = getattr(self.server_instance, "loaded_models", {})
                         except Exception as e:
                             print(f"Failed to auto-load model: {e}")
-                    
+
                     # Try to find the model (exact match or partial match)
                     available_model = None
                     for loaded_model in loaded_models.keys():
                         if model_name == loaded_model or model_name in loaded_model:
                             available_model = loaded_model
                             break
-                    
+
                     if not available_model:
                         # Use the first available model as fallback
                         if loaded_models:
                             available_model = list(loaded_models.keys())[0]
                         else:
-                            self._send_response(404, {"error": f"Model '{model_name}' not found and no models loaded. Available models: {list(LIGHTWEIGHT_MODELS.keys())}"})
+                            self._send_response(
+                                404,
+                                {
+                                    "error": f"Model '{model_name}' not found and no models loaded. Available models: {list(LIGHTWEIGHT_MODELS.keys())}"
+                                },
+                            )
                             return
 
                     # Generate an intelligent response based on the prompt
@@ -381,68 +392,85 @@ class LightweightModelServer:
                         "model": available_model,
                         "created_at": "2025-01-01T00:00:00.000Z",
                         "response": response_text,
-                        "done": True
+                        "done": True,
                     }
-                    
+
                     self._send_response(200, response)
 
                 except Exception as e:
                     self._send_response(500, {"error": str(e)})
-                    
+
             def _handle_ollama_tags(self):
                 """Handle Ollama-compatible model listing requests"""
                 try:
                     loaded_models = getattr(self.server_instance, "loaded_models", {})
-                    
+
                     models = []
                     for model_name, model_info in loaded_models.items():
-                        models.append({
-                            "name": model_name,
-                            "model": model_name,
-                            "modified_at": "2025-01-01T00:00:00.000Z",
-                            "size": model_info.get("size_mb", 0) * 1024 * 1024,  # Convert to bytes
-                            "digest": f"sha256:{'0' * 64}",  # Placeholder digest
-                            "details": {
-                                "parent_model": "",
-                                "format": "gguf",
-                                "family": "bert",
-                                "families": ["bert"],
-                                "parameter_size": model_info.get("parameters", "0M"),
-                                "quantization_level": "Q8_0"
+                        models.append(
+                            {
+                                "name": model_name,
+                                "model": model_name,
+                                "modified_at": "2025-01-01T00:00:00.000Z",
+                                "size": model_info.get("size_mb", 0)
+                                * 1024
+                                * 1024,  # Convert to bytes
+                                "digest": f"sha256:{'0' * 64}",  # Placeholder digest
+                                "details": {
+                                    "parent_model": "",
+                                    "format": "gguf",
+                                    "family": "bert",
+                                    "families": ["bert"],
+                                    "parameter_size": model_info.get("parameters", "0M"),
+                                    "quantization_level": "Q8_0",
+                                },
                             }
-                        })
-                    
+                        )
+
                     response = {"models": models}
                     self._send_response(200, response)
-                    
+
                 except Exception as e:
                     self._send_response(500, {"error": str(e)})
-                    
+
             def _generate_response(self, prompt: str, model_name: str) -> str:
                 """Generate a response based on the prompt and model"""
                 # For now, provide intelligent responses based on prompt analysis
                 prompt_lower = prompt.lower()
-                
+
                 # System information requests
-                if any(keyword in prompt_lower for keyword in ["system", "memory", "ram", "disk", "space", "time"]):
+                if any(
+                    keyword in prompt_lower
+                    for keyword in ["system", "memory", "ram", "disk", "space", "time"]
+                ):
                     return "I'm a lightweight AI assistant running locally. I can help you with system tasks, command management, and general assistance. What would you like to know or do?"
-                
+
                 # Command-related requests
-                elif any(keyword in prompt_lower for keyword in ["command", "mcli", "list", "help"]):
+                elif any(
+                    keyword in prompt_lower for keyword in ["command", "mcli", "list", "help"]
+                ):
                     return "I can help you discover and manage MCLI commands. Try asking me to list commands, create new ones, or execute existing functionality. I'm running locally for privacy and speed."
-                
+
                 # General assistance
-                elif any(keyword in prompt_lower for keyword in ["hello", "hi", "help", "how are you"]):
+                elif any(
+                    keyword in prompt_lower for keyword in ["hello", "hi", "help", "how are you"]
+                ):
                     return f"Hello! I'm your local AI assistant powered by the {model_name} model. I'm running entirely on your machine for privacy and speed. I can help you with system tasks, command management, file operations, and more. What can I help you with today?"
-                
+
                 # Task and productivity requests
-                elif any(keyword in prompt_lower for keyword in ["schedule", "task", "job", "remind", "automation"]):
+                elif any(
+                    keyword in prompt_lower
+                    for keyword in ["schedule", "task", "job", "remind", "automation"]
+                ):
                     return "I can help you schedule tasks, set up automation, and manage your workflow. I have job scheduling capabilities and can help with system maintenance, reminders, and recurring tasks. What would you like to automate?"
-                
+
                 # File and system operations
-                elif any(keyword in prompt_lower for keyword in ["file", "folder", "directory", "ls", "list"]):
+                elif any(
+                    keyword in prompt_lower
+                    for keyword in ["file", "folder", "directory", "ls", "list"]
+                ):
                     return "I can help you with file operations, directory navigation, and system management. I have access to system control functions for managing applications, files, and processes. What file or system operation do you need help with?"
-                
+
                 # Default response
                 else:
                     return f"I'm your local AI assistant running the {model_name} model. I can help with system management, command creation, file operations, task scheduling, and general assistance. I'm designed to be helpful while running entirely on your machine for privacy. How can I assist you today?"
@@ -458,7 +486,7 @@ class LightweightModelServer:
         # Create custom handler class with server instance
         def create_handler(*args, **kwargs):
             return ModelHandler(*args, server_instance=self, **kwargs)
-        
+
         Handler = create_handler
 
         try:

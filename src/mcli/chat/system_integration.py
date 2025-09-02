@@ -4,22 +4,23 @@ Provides system control capabilities directly within chat conversations
 """
 
 import json
-from typing import Dict, Any, List
-from .system_controller import (
-    system_controller,
-    open_textedit_and_write,
-    control_app,
-    execute_system_command,
-    take_screenshot,
-    open_file_or_url,
-    change_directory,
-    list_directory,
-    clean_simulator_data,
-    execute_shell_command,
-    get_current_directory,
-)
+from typing import Any, Dict, List
 
 from mcli.lib.logger.logger import get_logger
+
+from .system_controller import (
+    change_directory,
+    clean_simulator_data,
+    control_app,
+    execute_shell_command,
+    execute_system_command,
+    get_current_directory,
+    list_directory,
+    open_file_or_url,
+    open_textedit_and_write,
+    system_controller,
+    take_screenshot,
+)
 
 logger = get_logger(__name__)
 
@@ -207,11 +208,17 @@ class ChatSystemIntegration:
             for phrase in ["system info", "system information", "system specs", "hardware info"]
         ):
             return self._handle_system_info_request(request)
-        
+
         # Hardware devices requests
         elif any(
             phrase in request_lower
-            for phrase in ["hardware devices", "connected devices", "list hardware", "show devices", "connected hardware"]
+            for phrase in [
+                "hardware devices",
+                "connected devices",
+                "list hardware",
+                "show devices",
+                "connected hardware",
+            ]
         ):
             return self._handle_hardware_devices_request(request)
 
@@ -261,9 +268,8 @@ class ChatSystemIntegration:
 
         # Directory listing requests (more specific to avoid false positives)
         elif any(
-            phrase in request_lower for phrase in [
-                "list files", "list directory", "show files", "ls", "dir", "what's in"
-            ]
+            phrase in request_lower
+            for phrase in ["list files", "list directory", "show files", "ls", "dir", "what's in"]
         ):
             return self._handle_directory_listing_request(request)
 
@@ -569,98 +575,104 @@ class ChatSystemIntegration:
         try:
             # Use shell command to get hardware information
             import subprocess
-            
+
             summary = ["🔌 Connected Hardware Devices:"]
-            
+
             try:
                 # Get USB devices
                 result = subprocess.run(
-                    ["system_profiler", "SPUSBDataType"],
-                    capture_output=True,
-                    text=True,
-                    timeout=10
+                    ["system_profiler", "SPUSBDataType"], capture_output=True, text=True, timeout=10
                 )
-                
+
                 if result.returncode == 0:
-                    usb_lines = result.stdout.split('\n')
+                    usb_lines = result.stdout.split("\n")
                     usb_devices = []
                     for line in usb_lines:
                         line = line.strip()
-                        if ':' in line and not line.startswith('USB') and len(line) < 100:
-                            if any(keyword in line.lower() for keyword in ['mouse', 'keyboard', 'disk', 'camera', 'audio', 'hub']):
-                                device_name = line.split(':')[0].strip()
+                        if ":" in line and not line.startswith("USB") and len(line) < 100:
+                            if any(
+                                keyword in line.lower()
+                                for keyword in [
+                                    "mouse",
+                                    "keyboard",
+                                    "disk",
+                                    "camera",
+                                    "audio",
+                                    "hub",
+                                ]
+                            ):
+                                device_name = line.split(":")[0].strip()
                                 if device_name and len(device_name) > 3:
                                     usb_devices.append(device_name)
-                    
+
                     if usb_devices:
                         summary.append("💾 USB Devices:")
                         for device in usb_devices[:8]:  # Limit to 8 devices
                             summary.append(f"  • {device}")
-                    
+
             except Exception:
                 pass
-            
+
             try:
                 # Get network interfaces
                 result = subprocess.run(
-                    ["ifconfig", "-a"],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
+                    ["ifconfig", "-a"], capture_output=True, text=True, timeout=5
                 )
-                
+
                 if result.returncode == 0:
                     interfaces = []
-                    for line in result.stdout.split('\n'):
-                        if line and not line.startswith('\t') and not line.startswith(' '):
-                            interface_name = line.split(':')[0].strip()
-                            if interface_name and interface_name not in ['lo0', 'gif0', 'stf0']:
+                    for line in result.stdout.split("\n"):
+                        if line and not line.startswith("\t") and not line.startswith(" "):
+                            interface_name = line.split(":")[0].strip()
+                            if interface_name and interface_name not in ["lo0", "gif0", "stf0"]:
                                 interfaces.append(interface_name)
-                    
+
                     if interfaces:
                         summary.append("🌐 Network Interfaces:")
                         for interface in interfaces[:6]:  # Limit to 6 interfaces
                             summary.append(f"  • {interface}")
-                            
+
             except Exception:
                 pass
-            
+
             try:
                 # Get audio devices
                 result = subprocess.run(
                     ["system_profiler", "SPAudioDataType"],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
-                
+
                 if result.returncode == 0:
                     audio_devices = []
-                    for line in result.stdout.split('\n'):
+                    for line in result.stdout.split("\n"):
                         line = line.strip()
-                        if ':' in line and ('Built-in' in line or 'USB' in line or 'Bluetooth' in line):
-                            device_name = line.split(':')[0].strip()
+                        if ":" in line and (
+                            "Built-in" in line or "USB" in line or "Bluetooth" in line
+                        ):
+                            device_name = line.split(":")[0].strip()
                             if device_name and len(device_name) > 3:
                                 audio_devices.append(device_name)
-                    
+
                     if audio_devices:
                         summary.append("🔊 Audio Devices:")
                         for device in audio_devices[:4]:  # Limit to 4 devices
                             summary.append(f"  • {device}")
-                            
+
             except Exception:
                 pass
-            
+
             if len(summary) == 1:  # Only has header
                 summary.append("ℹ️  No specific hardware devices detected via system profiler")
                 summary.append("💡 Try: 'system info' for general hardware information")
-            
+
             return {
                 "success": True,
                 "message": "\n".join(summary),
                 "description": "List connected hardware devices",
             }
-            
+
         except Exception as e:
             return {
                 "success": False,

@@ -37,8 +37,6 @@ if trace_level:
         logger.warning(f"Invalid MCLI_TRACE_LEVEL value: {trace_level}. Using default level 1.")
         enable_runtime_tracing(level=1)
 
-logger.debug("About to import readiness module")
-
 # Defer self management commands import
 
 logger.debug("main")

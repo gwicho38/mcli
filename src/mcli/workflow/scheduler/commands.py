@@ -2,20 +2,22 @@
 CLI commands for the MCLI scheduler system
 """
 
-import click
 import json
 from datetime import datetime
 from typing import Optional
 
+import click
+
 from mcli.lib.logger.logger import get_logger
+
+from .cron_parser import CronExpression, get_next_run_times, validate_cron_expression
+from .job import JobStatus, JobType, ScheduledJob
 from .scheduler import (
     JobScheduler,
     create_desktop_cleanup_job,
-    create_temp_cleanup_job,
     create_system_backup_job,
+    create_temp_cleanup_job,
 )
-from .job import ScheduledJob, JobType, JobStatus
-from .cron_parser import CronExpression, get_next_run_times, validate_cron_expression
 
 logger = get_logger(__name__)
 

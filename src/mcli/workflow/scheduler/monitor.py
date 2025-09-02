@@ -5,10 +5,11 @@ Job monitoring and execution tracking for the MCLI scheduler
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Callable
+from typing import Callable, Dict, List, Optional
 
 from mcli.lib.logger.logger import get_logger
-from .job import ScheduledJob, JobStatus
+
+from .job import JobStatus, ScheduledJob
 
 logger = get_logger(__name__)
 

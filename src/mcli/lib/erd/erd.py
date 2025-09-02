@@ -292,7 +292,7 @@ def do_erd(max_depth=1, type_system: Optional[TypeSystem] = None):
         # Use the new hierarchical model approach
         try:
             # Import the modified_do_erd function from generate_graph
-            from mcli.app.readiness.generate_graph import modified_do_erd
+            from mcli.app.main.generate_graph import modified_do_erd
 
             logger.info("Generating ERD using realGraph.json...")
             result = modified_do_erd(max_depth=max_depth)
@@ -1107,7 +1107,7 @@ def find_top_nodes_in_graph(graph_data: Dict, top_n: int = 5) -> List[Tuple[str,
             top_n = 5
 
         # Build adjacency list from the graph data
-        from mcli.app.readiness.generate_graph import build_adjacency_list, count_descendants
+        from mcli.app.main.generate_graph import build_adjacency_list, count_descendants
 
         logger.info("START INVOKE | build_adjacency_list")
         node_map, adj_list = build_adjacency_list(graph_data)
@@ -1176,7 +1176,7 @@ def generate_erd_for_top_nodes(
         )
 
         # Generate ERDs for each top node
-        from mcli.app.readiness.generate_graph import (
+        from mcli.app.main.generate_graph import (
             build_adjacency_list,
             build_hierarchical_graph,
             create_dot_graph,
@@ -1292,7 +1292,7 @@ def analyze_graph_for_hierarchical_exports(graph_file_path: str, top_n: int = 5)
         logger.info(f"Found {len(top_nodes)} top nodes")
 
         # Build adjacency list from the graph data
-        from mcli.app.readiness.generate_graph import build_adjacency_list
+        from mcli.app.main.generate_graph import build_adjacency_list
 
         logger.info("Building adjacency list from graph data")
         node_map, adj_list = build_adjacency_list(graph_data)
