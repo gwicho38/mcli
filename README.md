@@ -10,6 +10,7 @@ A modern CLI framework with chat capabilities, command management, and extensibl
 - 🎨 **Rich UI**: Colorful, interactive command-line experience
 - 📦 **Easy Extension**: Simple framework for adding custom commands
 - 🛠️ **Developer Tools**: IPython integration for interactive development
+- ⚡ **Shell Completion**: Full tab completion for bash, zsh, and fish shells
 
 ## Quick Start
 
@@ -66,6 +67,25 @@ mcli self --help
 # List available commands
 mcli commands
 ```
+
+### Shell Completion (Optional)
+
+Enable tab completion for faster command discovery:
+
+```bash
+# Install completion for your shell (auto-detects bash/zsh/fish)
+mcli completion install
+
+# Check completion status
+mcli completion status
+```
+
+After installation, you'll have full tab completion:
+- `mcli <TAB>` → shows all available commands
+- `mcli workflow <TAB>` → shows workflow subcommands  
+- `mcli workflow politician-trading <TAB>` → shows politician-trading options
+
+See [SHELL_COMPLETION.md](SHELL_COMPLETION.md) for detailed setup and troubleshooting.
 
 ## Development Workflow
 

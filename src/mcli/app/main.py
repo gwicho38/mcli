@@ -251,6 +251,13 @@ class LazyCommand(click.Command):
         """Get parameters from the lazily loaded command."""
         cmd = self._load_command()
         return cmd.get_params(ctx)
+    
+    def shell_complete(self, ctx, param, incomplete):
+        """Provide shell completion for the lazily loaded command."""
+        cmd = self._load_command()
+        if hasattr(cmd, 'shell_complete'):
+            return cmd.shell_complete(ctx, param, incomplete)
+        return []
 
 
 class LazyGroup(click.Group):
@@ -298,6 +305,13 @@ class LazyGroup(click.Group):
         """Get parameters from the lazily loaded group."""
         group = self._load_group()
         return group.get_params(ctx)
+    
+    def shell_complete(self, ctx, param, incomplete):
+        """Provide shell completion for the lazily loaded group."""
+        group = self._load_group()
+        if hasattr(group, 'shell_complete'):
+            return group.shell_complete(ctx, param, incomplete)
+        return []
 
 
 def _add_lazy_commands(app: click.Group):
@@ -319,8 +333,34 @@ def _add_lazy_commands(app: click.Group):
         logger.debug("Added self management commands")
     except Exception as e:
         logger.debug(f"Could not load self commands: {e}")
+    
+    # Shell completion - load immediately as it's lightweight and useful
+    try:
+        from mcli.app.completion_cmd import completion
+        
+        app.add_command(completion, name="completion")
+        logger.debug("Added completion commands")
+    except ImportError as e:
+        logger.debug(f"Could not load completion commands: {e}")
 
-    # Lazy load heavy commands that are used less frequently
+    # Add workflow with completion-aware lazy loading
+    try:
+        from mcli.app.completion_helpers import create_completion_aware_lazy_group
+        workflow_group = create_completion_aware_lazy_group(
+            "workflow", 
+            "mcli.workflow.workflow.workflow",
+            "Workflow commands for automation, video processing, and daemon management"
+        )
+        app.add_command(workflow_group, name="workflow")
+        logger.debug("Added completion-aware workflow group")
+    except ImportError as e:
+        logger.debug(f"Could not load completion helpers, using standard lazy group: {e}")
+        # Fallback to standard lazy group
+        workflow_group = LazyGroup("workflow", "mcli.workflow.workflow.workflow", 
+                                 help="Workflow commands for automation, video processing, and daemon management")
+        app.add_command(workflow_group, name="workflow")
+
+    # Lazy load other heavy commands that are used less frequently
     lazy_commands = {
         "chat": {
             "import_path": "mcli.app.chat_cmd.chat",
@@ -338,10 +378,6 @@ def _add_lazy_commands(app: click.Group):
             "import_path": "mcli.app.visual_cmd.visual",
             "help": "🎨 Visual effects and enhancements showcase",
         },
-        "workflow": {
-            "import_path": "mcli.workflow.workflow.workflow",
-            "help": "Workflow commands for automation, video processing, and daemon management",
-        },
         "redis": {
             "import_path": "mcli.app.redis_cmd.redis_group",
             "help": "🗄️  Manage Redis cache service for performance optimization",
@@ -353,13 +389,26 @@ def _add_lazy_commands(app: click.Group):
     }
 
     for cmd_name, cmd_info in lazy_commands.items():
-        if cmd_name in ["workflow", "model", "redis", "logs"]:
-            # Use LazyGroup for commands that have subcommands
-            lazy_cmd = LazyGroup(
-                name=cmd_name,
-                import_path=cmd_info["import_path"],
-                help=cmd_info["help"],
-            )
+        # Skip workflow since we already added it with completion support
+        if cmd_name == "workflow":
+            continue
+            
+        if cmd_name in ["model", "redis", "logs"]:
+            # Use completion-aware LazyGroup for commands that have subcommands
+            try:
+                from mcli.app.completion_helpers import create_completion_aware_lazy_group
+                lazy_cmd = create_completion_aware_lazy_group(
+                    cmd_name,
+                    cmd_info["import_path"], 
+                    cmd_info["help"]
+                )
+            except ImportError:
+                # Fallback to standard LazyGroup
+                lazy_cmd = LazyGroup(
+                    name=cmd_name,
+                    import_path=cmd_info["import_path"],
+                    help=cmd_info["help"],
+                )
         else:
             # Use LazyCommand for simple commands
             lazy_cmd = LazyCommand(

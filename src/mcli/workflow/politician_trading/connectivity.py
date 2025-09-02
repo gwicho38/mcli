@@ -98,13 +98,26 @@ class SupabaseConnectivityValidator:
     async def _test_basic_connection(self) -> Dict[str, Any]:
         """Test basic database connection"""
         try:
-            # Simple ping test
-            result = await self.db.client.rpc("now").execute()
-            return {
-                "success": True,
-                "message": "Basic connection successful",
-                "server_time": result.data if result.data else None,
-            }
+            # Test basic REST API connectivity instead of RPC
+            import httpx
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    self.config.supabase.url + '/rest/v1/',
+                    headers={'apikey': self.config.supabase.key},
+                    timeout=30.0
+                )
+                
+                if response.status_code == 200:
+                    return {
+                        "success": True,
+                        "message": "Basic connection successful",
+                        "status_code": response.status_code,
+                    }
+                else:
+                    return {
+                        "success": False, 
+                        "error": f"HTTP {response.status_code}: {response.text[:100]}"
+                    }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -114,27 +127,44 @@ class SupabaseConnectivityValidator:
             # Try reading from multiple tables
             tables_to_test = [
                 "politicians",
-                "trading_disclosures",
+                "trading_disclosures", 
                 "data_pull_jobs",
                 "data_sources",
             ]
             read_results = {}
+            schema_missing = False
 
             for table in tables_to_test:
                 try:
-                    result = await self.db.client.table(table).select("count").limit(1).execute()
+                    result = self.db.client.table(table).select("*").limit(1).execute()
                     read_results[table] = "accessible"
                 except Exception as e:
-                    read_results[table] = f"error: {str(e)}"
+                    error_msg = str(e)
+                    if "Could not find" in error_msg and "schema cache" in error_msg:
+                        read_results[table] = "table_missing"
+                        schema_missing = True
+                    else:
+                        read_results[table] = f"error: {error_msg[:50]}..."
 
-            success = all("error" not in status for status in read_results.values())
-            return {
-                "success": success,
-                "tables_tested": read_results,
-                "accessible_tables": sum(
-                    1 for status in read_results.values() if status == "accessible"
-                ),
-            }
+            accessible_count = sum(1 for status in read_results.values() if status == "accessible")
+            missing_count = sum(1 for status in read_results.values() if status == "table_missing")
+            
+            if schema_missing and accessible_count == 0:
+                return {
+                    "success": False,
+                    "tables_tested": read_results,
+                    "accessible_tables": accessible_count,
+                    "missing_tables": missing_count,
+                    "message": "Database schema not set up. Run 'mcli workflow politician-trading setup --generate-schema' to get setup instructions."
+                }
+            else:
+                success = accessible_count > 0
+                return {
+                    "success": success,
+                    "tables_tested": read_results,
+                    "accessible_tables": accessible_count,
+                    "missing_tables": missing_count,
+                }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -144,47 +174,62 @@ class SupabaseConnectivityValidator:
             test_job_id = f"connectivity_test_{int(time.time())}"
 
             # Create a test job record
-            insert_result = (
-                await self.db.client.table("data_pull_jobs")
-                .insert(
-                    {
-                        "id": test_job_id,
-                        "job_type": "connectivity_test",
-                        "status": "running",
-                        "started_at": datetime.utcnow().isoformat(),
-                        "config_snapshot": {
-                            "test": True,
-                            "validator": "SupabaseConnectivityValidator",
-                        },
-                    }
+            try:
+                insert_result = (
+                    self.db.client.table("data_pull_jobs")
+                    .insert(
+                        {
+                            "job_type": "connectivity_test",
+                            "status": "running",
+                            "started_at": datetime.utcnow().isoformat(),
+                            "config_snapshot": {
+                                "test": True,
+                                "validator": "SupabaseConnectivityValidator",
+                            },
+                        }
+                    )
+                    .execute()
                 )
-                .execute()
-            )
-
-            # Update the record
-            update_result = (
-                await self.db.client.table("data_pull_jobs")
-                .update(
-                    {
-                        "status": "completed",
-                        "completed_at": datetime.utcnow().isoformat(),
-                        "records_processed": 1,
+            except Exception as e:
+                if "Could not find" in str(e) and "schema cache" in str(e):
+                    return {
+                        "success": False,
+                        "error": "Table 'data_pull_jobs' not found",
+                        "message": "Database schema not set up. Run schema setup first."
                     }
-                )
-                .eq("id", test_job_id)
-                .execute()
-            )
+                else:
+                    raise e
 
-            # Read it back
-            read_result = (
-                await self.db.client.table("data_pull_jobs")
-                .select("*")
-                .eq("id", test_job_id)
-                .execute()
-            )
+            # Get the inserted record ID
+            if insert_result.data and len(insert_result.data) > 0:
+                inserted_id = insert_result.data[0]['id']
+                
+                # Update the record
+                update_result = (
+                    self.db.client.table("data_pull_jobs")
+                    .update(
+                        {
+                            "status": "completed",
+                            "completed_at": datetime.utcnow().isoformat(),
+                            "records_processed": 1,
+                        }
+                    )
+                    .eq("id", inserted_id)
+                    .execute()
+                )
+
+                # Read it back
+                read_result = (
+                    self.db.client.table("data_pull_jobs")
+                    .select("*")
+                    .eq("id", inserted_id)
+                    .execute()
+                )
+            else:
+                return {"success": False, "error": "Failed to get inserted record ID"}
 
             # Clean up test record
-            await self.db.client.table("data_pull_jobs").delete().eq("id", test_job_id).execute()
+            self.db.client.table("data_pull_jobs").delete().eq("id", inserted_id).execute()
 
             return {
                 "success": True,
@@ -212,7 +257,7 @@ class SupabaseConnectivityValidator:
                 try:
                     # Test table structure
                     result = (
-                        await self.db.client.table(table_name)
+                        self.db.client.table(table_name)
                         .select(",".join(required_columns))
                         .limit(1)
                         .execute()
@@ -243,7 +288,7 @@ class SupabaseConnectivityValidator:
         try:
             # Get recent jobs
             recent_jobs = (
-                await self.db.client.table("data_pull_jobs")
+                self.db.client.table("data_pull_jobs")
                 .select("*")
                 .order("created_at", desc=True)
                 .limit(5)
@@ -251,7 +296,7 @@ class SupabaseConnectivityValidator:
             )
 
             # Get job statistics
-            job_stats = await self.db.client.table("data_pull_jobs").select("status").execute()
+            job_stats = self.db.client.table("data_pull_jobs").select("status").execute()
 
             status_counts = {}
             if job_stats.data:
@@ -277,9 +322,8 @@ class SupabaseConnectivityValidator:
             test_source_id = f"rt_test_{int(time.time())}"
 
             # Insert
-            await self.db.client.table("data_sources").insert(
+            insert_result = self.db.client.table("data_sources").insert(
                 {
-                    "id": test_source_id,
                     "name": "Real-time Test Source",
                     "url": "https://test.example.com",
                     "source_type": "test",
@@ -289,16 +333,21 @@ class SupabaseConnectivityValidator:
                 }
             ).execute()
 
-            # Immediate read-back
-            result = (
-                await self.db.client.table("data_sources")
-                .select("*")
-                .eq("id", test_source_id)
-                .execute()
-            )
+            if insert_result.data and len(insert_result.data) > 0:
+                inserted_id = insert_result.data[0]['id']
+                
+                # Immediate read-back
+                result = (
+                    self.db.client.table("data_sources")
+                    .select("*")
+                    .eq("id", inserted_id)
+                    .execute()
+                )
 
-            # Clean up
-            await self.db.client.table("data_sources").delete().eq("id", test_source_id).execute()
+                # Clean up
+                self.db.client.table("data_sources").delete().eq("id", inserted_id).execute()
+            else:
+                return {"success": False, "error": "Failed to insert test record"}
 
             sync_successful = len(result.data) > 0 if result.data else False
 
