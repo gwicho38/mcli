@@ -4,7 +4,7 @@ Monitoring and status reporting for politician trading data collection
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 
 from rich.console import Console
@@ -69,7 +69,7 @@ class PoliticianTradingMonitor:
         """Check database connectivity and basic operations"""
         try:
             # Test connection with a simple query
-            result = await self.db.client.table("data_pull_jobs").select("count").execute()
+            result = self.db.client.table("data_pull_jobs").select("count").execute()
 
             return {
                 "status": "healthy",
@@ -90,7 +90,7 @@ class PoliticianTradingMonitor:
         try:
             # Get most recent disclosure
             recent_disclosures = (
-                await self.db.client.table("trading_disclosures")
+                self.db.client.table("trading_disclosures")
                 .select("created_at")
                 .order("created_at", desc=True)
                 .limit(1)
@@ -99,7 +99,7 @@ class PoliticianTradingMonitor:
 
             # Get most recent successful job
             recent_jobs = (
-                await self.db.client.table("data_pull_jobs")
+                self.db.client.table("data_pull_jobs")
                 .select("completed_at")
                 .eq("status", "completed")
                 .order("completed_at", desc=True)
@@ -107,7 +107,7 @@ class PoliticianTradingMonitor:
                 .execute()
             )
 
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             status = "healthy"
 
             # Check if we have recent data
@@ -157,10 +157,10 @@ class PoliticianTradingMonitor:
         """Check recent job execution status"""
         try:
             # Get jobs from last 24 hours
-            yesterday = datetime.utcnow() - timedelta(hours=24)
+            yesterday = datetime.now(timezone.utc) - timedelta(hours=24)
 
             recent_jobs = (
-                await self.db.client.table("data_pull_jobs")
+                self.db.client.table("data_pull_jobs")
                 .select("*")
                 .gte("started_at", yesterday.isoformat())
                 .order("started_at", desc=True)
@@ -201,25 +201,25 @@ class PoliticianTradingMonitor:
         """Get detailed statistics about the data collection"""
         try:
             # Get total counts
-            politicians_result = await self.db.client.table("politicians").select("count").execute()
+            politicians_result = self.db.client.table("politicians").select("id").execute()
 
             disclosures_result = (
-                await self.db.client.table("trading_disclosures").select("count").execute()
+                self.db.client.table("trading_disclosures").select("id").execute()
             )
 
-            jobs_result = await self.db.client.table("data_pull_jobs").select("count").execute()
+            jobs_result = self.db.client.table("data_pull_jobs").select("id").execute()
 
             # Get breakdown by region/role
             us_politicians = (
-                await self.db.client.table("politicians")
-                .select("count")
+                self.db.client.table("politicians")
+                .select("id")
                 .in_("role", ["us_house_rep", "us_senator"])
                 .execute()
             )
 
             eu_politicians = (
-                await self.db.client.table("politicians")
-                .select("count")
+                self.db.client.table("politicians")
+                .select("id")
                 .eq("role", "eu_mep")
                 .execute()
             )
@@ -227,40 +227,33 @@ class PoliticianTradingMonitor:
             # Get recent activity (last 30 days)
             thirty_days_ago = datetime.utcnow() - timedelta(days=30)
             recent_disclosures = (
-                await self.db.client.table("trading_disclosures")
-                .select("count")
+                self.db.client.table("trading_disclosures")
+                .select("id")
                 .gte("created_at", thirty_days_ago.isoformat())
                 .execute()
             )
 
             # Get top assets by volume
             top_assets = (
-                await self.db.client.table("trading_disclosures")
-                .select("asset_ticker, count(*)")
+                self.db.client.table("trading_disclosures")
+                .select("asset_ticker")
                 .not_.is_("asset_ticker", "null")
-                .order("count", desc=True)
-                .limit(10)
+                .limit(100)
                 .execute()
             )
 
             return {
                 "total_counts": {
-                    "politicians": (
-                        politicians_result.count if hasattr(politicians_result, "count") else 0
-                    ),
-                    "disclosures": (
-                        disclosures_result.count if hasattr(disclosures_result, "count") else 0
-                    ),
-                    "jobs": jobs_result.count if hasattr(jobs_result, "count") else 0,
+                    "politicians": len(politicians_result.data) if politicians_result.data else 0,
+                    "disclosures": len(disclosures_result.data) if disclosures_result.data else 0,
+                    "jobs": len(jobs_result.data) if jobs_result.data else 0,
                 },
                 "politician_breakdown": {
-                    "us_total": us_politicians.count if hasattr(us_politicians, "count") else 0,
-                    "eu_total": eu_politicians.count if hasattr(eu_politicians, "count") else 0,
+                    "us_total": len(us_politicians.data) if us_politicians.data else 0,
+                    "eu_total": len(eu_politicians.data) if eu_politicians.data else 0,
                 },
                 "recent_activity": {
-                    "disclosures_last_30_days": (
-                        recent_disclosures.count if hasattr(recent_disclosures, "count") else 0
-                    )
+                    "disclosures_last_30_days": len(recent_disclosures.data) if recent_disclosures.data else 0
                 },
                 "top_assets": top_assets.data if top_assets.data else [],
                 "generated_at": datetime.utcnow().isoformat(),
@@ -371,14 +364,15 @@ class PoliticianTradingMonitor:
 
         # Top assets
         if stats.get("top_assets"):
-            assets_table = Table(title="Top Assets by Volume")
+            assets_table = Table(title="Recent Assets")
             assets_table.add_column("Asset Ticker", style="cyan")
-            assets_table.add_column("Disclosure Count", justify="right", style="green")
 
-            for asset in stats["top_assets"][:5]:  # Top 5
-                assets_table.add_row(
-                    asset.get("asset_ticker", "Unknown"), str(asset.get("count", 0))
-                )
+            # Group by asset ticker to count occurrences
+            from collections import Counter
+            asset_counts = Counter(asset.get("asset_ticker", "Unknown") for asset in stats["top_assets"])
+            
+            for asset_ticker, count in asset_counts.most_common(5):  # Top 5
+                assets_table.add_row(asset_ticker)
 
             console.print(assets_table)
 

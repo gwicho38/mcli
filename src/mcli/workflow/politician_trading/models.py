@@ -14,9 +14,27 @@ class PoliticianRole(Enum):
 
     US_HOUSE_REP = "us_house_representative"
     US_SENATOR = "us_senator"
+    UK_MP = "uk_member_of_parliament"
     EU_MEP = "eu_parliament_member"
     EU_COMMISSIONER = "eu_commissioner"
     EU_COUNCIL_MEMBER = "eu_council_member"
+    
+    # EU Member State Roles
+    GERMAN_BUNDESTAG = "german_bundestag_member"
+    FRENCH_DEPUTY = "french_national_assembly_deputy"
+    ITALIAN_DEPUTY = "italian_chamber_deputy"
+    ITALIAN_SENATOR = "italian_senate_member"
+    SPANISH_DEPUTY = "spanish_congress_deputy" 
+    DUTCH_MP = "dutch_tweede_kamer_member"
+    
+    # US State Roles
+    TEXAS_STATE_OFFICIAL = "texas_state_official"
+    NEW_YORK_STATE_OFFICIAL = "new_york_state_official"
+    FLORIDA_STATE_OFFICIAL = "florida_state_official"
+    ILLINOIS_STATE_OFFICIAL = "illinois_state_official"
+    PENNSYLVANIA_STATE_OFFICIAL = "pennsylvania_state_official"
+    MASSACHUSETTS_STATE_OFFICIAL = "massachusetts_state_official"
+    CALIFORNIA_STATE_OFFICIAL = "california_state_official"
 
 
 class TransactionType(Enum):

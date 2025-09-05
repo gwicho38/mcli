@@ -35,7 +35,7 @@ class SupabaseConfig:
 
 @dataclass
 class ScrapingConfig:
-    """Web scraping configuration"""
+    """Web scraping configuration with comprehensive data sources"""
 
     # Rate limiting
     request_delay: float = 1.0  # seconds between requests
@@ -45,25 +45,54 @@ class ScrapingConfig:
     # User agent for requests
     user_agent: str = "Mozilla/5.0 (compatible; MCLI-PoliticianTracker/1.0)"
 
-    # Data sources
+    # Enable/disable source categories
+    enable_us_federal: bool = True
+    enable_us_states: bool = True
+    enable_eu_parliament: bool = True
+    enable_eu_national: bool = True
+    enable_third_party: bool = True
+
+    # Legacy properties for backward compatibility
     us_congress_sources: list = None
     eu_sources: list = None
 
     def __post_init__(self):
+        # Maintain backward compatibility
         if self.us_congress_sources is None:
             self.us_congress_sources = [
-                "https://disclosures-clerk.house.gov/PublicDisclosure/FinancialDisclosure",
-                "https://efdsearch.senate.gov/search/",
-                # Third-party aggregators as fallback
-                "https://api.quiverquant.com/beta/live/congresstrading",  # Example API
+                "https://disclosures-clerk.house.gov/FinancialDisclosure",
+                "https://efd.senate.gov",
+                "https://api.quiverquant.com/beta/live/congresstrading",
             ]
 
         if self.eu_sources is None:
             self.eu_sources = [
-                # EU Parliament disclosure sources
                 "https://www.europarl.europa.eu/meps/en/declarations",
-                # Individual country sources would be added here
             ]
+
+    def get_active_sources(self):
+        """Get all active data sources based on configuration"""
+        from .data_sources import ALL_DATA_SOURCES
+        
+        active_sources = []
+        
+        if self.enable_us_federal:
+            active_sources.extend(ALL_DATA_SOURCES["us_federal"])
+        
+        if self.enable_us_states:
+            active_sources.extend(ALL_DATA_SOURCES["us_states"])
+            
+        if self.enable_eu_parliament:
+            active_sources.extend(ALL_DATA_SOURCES["eu_parliament"])
+            
+        if self.enable_eu_national:
+            active_sources.extend(ALL_DATA_SOURCES["eu_national"])
+            
+        if self.enable_third_party:
+            active_sources.extend(ALL_DATA_SOURCES["third_party"])
+        
+        # Filter to only active status sources
+        return [source for source in active_sources if source.status == "active"]
 
 
 @dataclass
@@ -83,3 +112,23 @@ class WorkflowConfig:
     def default(cls) -> "WorkflowConfig":
         """Create default configuration"""
         return cls(supabase=SupabaseConfig.from_env(), scraping=ScrapingConfig())
+
+    def to_serializable_dict(self) -> dict:
+        """Convert to a JSON-serializable dictionary"""
+        return {
+            "supabase": {
+                "url": self.supabase.url,
+                "has_service_key": bool(self.supabase.service_role_key),
+                # Don't include actual keys for security
+            },
+            "scraping": {
+                "request_delay": self.scraping.request_delay,
+                "max_retries": self.scraping.max_retries,
+                "timeout": self.scraping.timeout,
+                "user_agent": self.scraping.user_agent,
+                "us_congress_sources": self.scraping.us_congress_sources,
+                "eu_sources": self.scraping.eu_sources,
+            },
+            "cron_schedule": self.cron_schedule,
+            "retention_days": self.retention_days,
+        }

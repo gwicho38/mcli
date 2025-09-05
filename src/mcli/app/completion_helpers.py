@@ -22,14 +22,19 @@ LAZY_COMMAND_COMPLETIONS = {
             "subcommands": [
                 "connectivity",
                 "cron-job",
+                "data-sources",
+                "disclosures",
                 "health", 
+                "jobs",
                 "monitor",
+                "politicians",
                 "run",
                 "schema",
                 "setup",
                 "stats",
                 "status",
-                "test-workflow"
+                "test-workflow",
+                "verify"
             ],
             "cron-job": {
                 "options": ["--create", "--test"]
@@ -60,6 +65,21 @@ LAZY_COMMAND_COMPLETIONS = {
             },
             "schema": {
                 "options": ["--show-location", "--generate", "--output-dir"]
+            },
+            "data-sources": {
+                "options": ["--json"]
+            },
+            "jobs": {
+                "options": ["--json", "--limit"]
+            },
+            "politicians": {
+                "options": ["--json", "--limit", "--role", "--party", "--state", "--search"]
+            },
+            "disclosures": {
+                "options": ["--json", "--limit", "--politician", "--asset", "--transaction-type", "--amount-min", "--amount-max", "--days", "--details"]
+            },
+            "verify": {
+                "options": ["--json"]
             }
         },
         "scheduler": {

@@ -30,6 +30,8 @@ src/mcli.egg-info/top_level.txt
 src/mcli/app/__init__.py
 src/mcli/app/chat_cmd.py
 src/mcli/app/commands_cmd.py
+src/mcli/app/completion_cmd.py
+src/mcli/app/completion_helpers.py
 src/mcli/app/cron_test_cmd.py
 src/mcli/app/logs_cmd.py
 src/mcli/app/main.py
@@ -120,6 +122,8 @@ src/mcli/workflow/file/file.py
 src/mcli/workflow/gcloud/__init__.py
 src/mcli/workflow/gcloud/config.toml
 src/mcli/workflow/gcloud/gcloud.py
+src/mcli/workflow/git_commit/__init__.py
+src/mcli/workflow/git_commit/commands.py
 src/mcli/workflow/interview/__init__.py
 src/mcli/workflow/model_service/client.py
 src/mcli/workflow/model_service/download_and_run_efficient_models.py
@@ -138,11 +142,16 @@ src/mcli/workflow/politician_trading/__init__.py
 src/mcli/workflow/politician_trading/commands.py
 src/mcli/workflow/politician_trading/config.py
 src/mcli/workflow/politician_trading/connectivity.py
+src/mcli/workflow/politician_trading/data_sources.py
 src/mcli/workflow/politician_trading/database.py
 src/mcli/workflow/politician_trading/demo.py
 src/mcli/workflow/politician_trading/models.py
 src/mcli/workflow/politician_trading/monitoring.py
 src/mcli/workflow/politician_trading/scrapers.py
+src/mcli/workflow/politician_trading/scrapers_california.py
+src/mcli/workflow/politician_trading/scrapers_eu.py
+src/mcli/workflow/politician_trading/scrapers_uk.py
+src/mcli/workflow/politician_trading/scrapers_us_states.py
 src/mcli/workflow/politician_trading/supabase_functions.py
 src/mcli/workflow/politician_trading/workflow.py
 src/mcli/workflow/registry/__init__.py

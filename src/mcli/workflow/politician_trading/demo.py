@@ -4,6 +4,7 @@ Demonstration script showing politician trading workflow execution and data crea
 
 import asyncio
 import json
+import uuid
 from datetime import datetime
 from rich.console import Console
 from rich.table import Table
@@ -147,7 +148,7 @@ async def demonstrate_workflow_execution():
     console.print("\n💰 Sample Trading Disclosure Records:", style="bold")
     sample_disclosures = [
         {
-            "politician_id": "pol_1",
+            "politician_id": str(uuid.uuid4()),
             "transaction_date": "2024-08-15T00:00:00Z",
             "disclosure_date": "2024-08-20T00:00:00Z",
             "transaction_type": "purchase",
