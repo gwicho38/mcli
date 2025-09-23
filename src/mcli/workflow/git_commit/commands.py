@@ -7,14 +7,18 @@ import click
 
 from mcli.lib.logger.logger import get_logger
 
+from .ai_service import GitCommitAIService
+
 logger = get_logger(__name__)
 
 
 class GitCommitWorkflow:
     """Workflow for automatic git commit message generation"""
 
-    def __init__(self, repo_path: Optional[str] = None):
+    def __init__(self, repo_path: Optional[str] = None, use_ai: bool = True):
         self.repo_path = Path(repo_path) if repo_path else Path.cwd()
+        self.use_ai = use_ai
+        self.ai_service = GitCommitAIService() if use_ai else None
         self.validate_git_repo()
 
     def validate_git_repo(self):
@@ -104,11 +108,25 @@ class GitCommitWorkflow:
             return False
 
     def generate_commit_message(self, changes: Dict[str, Any], diff_content: str) -> str:
-        """Generate a commit message using AI based on changes and diff"""
+        """Generate a commit message using AI or fallback to rule-based generation"""
 
-        # For now, we'll create a simple rule-based commit message
-        # In a real implementation, you'd integrate with your AI model here
+        if self.use_ai and self.ai_service:
+            try:
+                logger.info("Generating AI-powered commit message...")
+                ai_message = self.ai_service.generate_commit_message(changes, diff_content)
+                if ai_message:
+                    return ai_message
+                else:
+                    logger.warning("AI service returned empty message, falling back to rule-based")
+            except Exception as e:
+                logger.error(f"AI commit message generation failed: {e}")
+                logger.info("Falling back to rule-based commit message generation")
 
+        # Fallback to rule-based generation
+        return self._generate_rule_based_message(changes)
+
+    def _generate_rule_based_message(self, changes: Dict[str, Any]) -> str:
+        """Generate rule-based commit message (original implementation)"""
         summary_parts = []
 
         # Analyze file changes
@@ -238,11 +256,17 @@ def git_commit_cli():
 @click.option(
     "--dry-run", is_flag=True, help="Show what would be committed without actually committing"
 )
-def auto(repo_path: Optional[str], dry_run: bool):
+@click.option("--no-ai", is_flag=True, help="Disable AI-powered commit message generation")
+@click.option("--model", type=str, help="Override AI model for commit message generation")
+def auto(repo_path: Optional[str], dry_run: bool, no_ai: bool, model: Optional[str]):
     """Automatically stage changes and create commit with AI-generated message"""
 
     try:
-        workflow = GitCommitWorkflow(repo_path)
+        workflow = GitCommitWorkflow(repo_path, use_ai=not no_ai)
+
+        # Override AI model if specified
+        if not no_ai and model and workflow.ai_service:
+            workflow.ai_service.model_name = model
 
         if dry_run:
             # Just show what would happen
@@ -372,6 +396,34 @@ def commit(message: str, repo_path: Optional[str], stage_all: bool):
 
     except Exception as e:
         click.echo(f"❌ Error: {e}")
+
+
+@git_commit_cli.command()
+@click.option("--model", type=str, help="Override AI model for testing")
+def test_ai(model: Optional[str]):
+    """Test the AI service for commit message generation"""
+
+    try:
+        from .ai_service import GitCommitAIService
+
+        ai_service = GitCommitAIService()
+
+        # Override model if specified
+        if model:
+            ai_service.model_name = model
+
+        click.echo(f"🧪 Testing AI service with model: {ai_service.model_name}")
+        click.echo(f"🌐 Ollama base URL: {ai_service.ollama_base_url}")
+        click.echo(f"🌡️  Temperature: {ai_service.temperature}")
+
+        # Test AI service
+        if ai_service.test_ai_service():
+            click.echo("✅ AI service test passed!")
+        else:
+            click.echo("❌ AI service test failed!")
+
+    except Exception as e:
+        click.echo(f"❌ Error testing AI service: {e}")
 
 
 if __name__ == "__main__":

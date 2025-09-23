@@ -77,23 +77,44 @@ help: ## Show this help message
 	@echo "$(CYAN)MCLI Build System$(RESET)"
 	@echo "$(YELLOW)Usage: make [target]$(RESET)"
 	@echo ""
-	@echo "$(CYAN)Installation Targets:$(RESET)"
-	@echo "  $(CYAN)install$(RESET)              Install the package with caching"
-	@echo "  $(CYAN)install-binary$(RESET)        Install executable to system binary directory"
-	@echo "  $(CYAN)install-portable$(RESET)      Install portable executable to system"
-	@echo "  $(CYAN)setup$(RESET)                 Setup UV environment with caching"
+	@echo "$(CYAN)Setup and Installation:$(RESET)"
+	@echo "  $(GREEN)setup$(RESET)                 Setup UV environment with caching"
+	@echo "  $(GREEN)install$(RESET)              Install the package with caching"
+	@echo "  $(GREEN)install-dev$(RESET)          Install development dependencies"
+	@echo "  $(GREEN)install-binary$(RESET)        Install executable to system binary directory"
+	@echo "  $(GREEN)install-portable$(RESET)      Install portable executable to system"
 	@echo ""
-	@echo "$(CYAN)Build Targets:$(RESET)"
-	@echo "  $(CYAN)binary$(RESET)                Build Python binary executable (directory format)"
-	@echo "  $(CYAN)portable$(RESET)              Build Python executable from wheel"
-	@echo "  $(CYAN)wheel$(RESET)                 Build Python wheel package"
+	@echo "$(CYAN)Code Quality:$(RESET)"
+	@echo "  $(GREEN)lint$(RESET)                  Run all linting tools (black, isort, flake8, mypy)"
+	@echo "  $(GREEN)format$(RESET)                Auto-format code (black, isort)"
+	@echo "  $(GREEN)type-check$(RESET)            Run mypy type checking"
+	@echo "  $(GREEN)security-check$(RESET)        Run security checks (bandit, safety)"
+	@echo "  $(GREEN)pre-commit-install$(RESET)    Install pre-commit hooks"
+	@echo "  $(GREEN)pre-commit-run$(RESET)        Run pre-commit hooks on all files"
 	@echo ""
-	@echo "$(CYAN)Testing Targets:$(RESET)"
-	@echo "  $(CYAN)debug$(RESET)                 Show debug information"
-	@echo "  $(CYAN)test$(RESET)                  Test the installation"
-	@echo "  $(CYAN)test-binary$(RESET)           Test the built executable"
-	@echo "  $(CYAN)test-all$(RESET)              Run complete test suite"
-	@echo "  $(CYAN)test-cli$(RESET)              Run CLI-specific tests only"
+	@echo "$(CYAN)Testing:$(RESET)"
+	@echo "  $(GREEN)test$(RESET)                  Test basic installation and functionality"
+	@echo "  $(GREEN)test-unit$(RESET)             Run unit tests"
+	@echo "  $(GREEN)test-cov$(RESET)              Run tests with coverage"
+	@echo "  $(GREEN)test-cov-report$(RESET)       Generate and open coverage report"
+	@echo "  $(GREEN)test-fast$(RESET)             Run fast tests only (skip slow tests)"
+	@echo "  $(GREEN)test-binary$(RESET)           Test the built executable"
+	@echo ""
+	@echo "$(CYAN)Building:$(RESET)"
+	@echo "  $(GREEN)wheel$(RESET)                 Build Python wheel package"
+	@echo "  $(GREEN)binary$(RESET)                Build Python binary executable"
+	@echo "  $(GREEN)portable$(RESET)              Build portable executable"
+	@echo "  $(GREEN)build$(RESET)                 Build all targets"
+	@echo ""
+	@echo "$(CYAN)Documentation:$(RESET)"
+	@echo "  $(GREEN)docs$(RESET)                  Generate documentation"
+	@echo "  $(GREEN)docs-serve$(RESET)            Serve documentation locally"
+	@echo ""
+	@echo "$(CYAN)Maintenance:$(RESET)"
+	@echo "  $(GREEN)clean$(RESET)                 Clean all build artifacts"
+	@echo "  $(GREEN)clean-pyc$(RESET)             Clean only Python cache files"
+	@echo "  $(GREEN)clean-build$(RESET)           Clean only build artifacts (keep venv)"
+	@echo "  $(GREEN)debug$(RESET)                 Show debug information"
 	@echo "  $(CYAN)validate-build$(RESET)        Validate application for binary/wheel packaging"
 	@echo ""
 	@echo "$(CYAN)Maintenance Targets:$(RESET)"
@@ -136,6 +157,28 @@ clean: ## Clean all build artifacts
 	-rm -rf $(BINARY_DIR)/ $(CACHE_DIR)/ $(DISTRIBUTION_DIR)/
 	-rm -rf .venv 2>/dev/null || true
 	-find . -type f -name "*.so" -delete
+	@echo "$(CYAN)Cleaning Python cache files...$(RESET)"
+	-find . -type d -name "__pycache__" -not -path "*/.venv/*" -not -path "*/venv/*" -exec rm -rf {} + 2>/dev/null || true
+	-find . -type f -name "*.pyc" -not -path "*/.venv/*" -not -path "*/venv/*" -delete 2>/dev/null || true
+	-find . -type f -name "*.pyo" -not -path "*/.venv/*" -not -path "*/venv/*" -delete 2>/dev/null || true
+	@echo "$(CYAN)Cleaning test and coverage artifacts...$(RESET)"
+	-rm -rf .pytest_cache/ .coverage htmlcov/ .tox/
+	@echo "$(GREEN)✓ Clean completed$(RESET)"
+
+clean-pyc: ## Clean only Python cache files
+	@echo "$(CYAN)Cleaning Python cache files...$(RESET)"
+	-find . -type d -name "__pycache__" -not -path "*/.venv/*" -not -path "*/venv/*" -exec rm -rf {} + 2>/dev/null || true
+	-find . -type f -name "*.pyc" -not -path "*/.venv/*" -not -path "*/venv/*" -delete 2>/dev/null || true
+	-find . -type f -name "*.pyo" -not -path "*/.venv/*" -not -path "*/venv/*" -delete 2>/dev/null || true
+	@echo "$(GREEN)✓ Python cache cleaned$(RESET)"
+
+clean-build: ## Clean only build artifacts (keep venv)
+	@echo "$(CYAN)Cleaning build artifacts...$(RESET)"
+	-rm -rf $(BUILD_DIR)/ $(DIST_DIR)/ *.egg-info/ $(TEMP_DIR)/
+	-rm -rf $(BINARY_DIR)/ $(CACHE_DIR)/ $(DISTRIBUTION_DIR)/
+	-find . -type f -name "*.so" -delete
+	-rm -rf .pytest_cache/ .coverage htmlcov/ .tox/
+	@echo "$(GREEN)✓ Build artifacts cleaned$(RESET)"
 	-find . -type f -name "*.cpp" -delete
 	-find . -type f -name "*.c" -delete
 	-find . -type f -name "*.html" -delete
@@ -306,6 +349,143 @@ test: install ## Test the installation
 	$(VENV_PYTHON) -c "from mcli.app.main import main; print('Import test passed ✅')"
 	.venv/bin/mcli --help || $(VENV_PYTHON) -m mcli --help
 	@echo "$(GREEN)Testing completed ✅$(RESET)"
+
+test-unit: setup ## Run unit tests
+	@echo "$(CYAN)Running unit tests...$(RESET)"
+	$(UV) run pytest tests/ -v
+	@echo "$(GREEN)Unit tests completed ✅$(RESET)"
+
+test-cov: setup ## Run tests with coverage
+	@echo "$(CYAN)Running tests with coverage...$(RESET)"
+	$(UV) run pytest tests/ --cov=src/mcli --cov-report=term-missing --cov-report=html --cov-report=xml
+	@echo "$(GREEN)Coverage tests completed ✅$(RESET)"
+	@echo "$(CYAN)Coverage report generated in htmlcov/index.html$(RESET)"
+
+test-cov-report: test-cov ## Generate and open coverage report
+	@echo "$(CYAN)Opening coverage report...$(RESET)"
+	@if command -v open >/dev/null 2>&1; then \
+		open htmlcov/index.html; \
+	elif command -v xdg-open >/dev/null 2>&1; then \
+		xdg-open htmlcov/index.html; \
+	else \
+		echo "$(YELLOW)Coverage report available at htmlcov/index.html$(RESET)"; \
+	fi
+
+test-fast: setup ## Run fast tests only (skip slow tests)
+	@echo "$(CYAN)Running fast tests...$(RESET)"
+	$(UV) run pytest tests/ -v -m "not slow"
+	@echo "$(GREEN)Fast tests completed ✅$(RESET)"
+
+# =============================================================================
+# CODE QUALITY TARGETS
+# =============================================================================
+
+.PHONY: lint
+lint: setup ## Run all linting tools
+	@echo "$(CYAN)Running linting tools...$(RESET)"
+	$(UV) run black --check src/ tests/
+	$(UV) run isort --check-only src/ tests/
+	$(UV) run flake8 src/ tests/
+	$(UV) run mypy src/
+	@echo "$(GREEN)Linting completed ✅$(RESET)"
+
+.PHONY: format
+format: setup ## Auto-format code
+	@echo "$(CYAN)Formatting code...$(RESET)"
+	$(UV) run black src/ tests/
+	$(UV) run isort src/ tests/
+	@echo "$(GREEN)Code formatting completed ✅$(RESET)"
+
+.PHONY: type-check
+type-check: setup ## Run mypy type checking
+	@echo "$(CYAN)Running type checking...$(RESET)"
+	$(UV) run mypy src/
+	@echo "$(GREEN)Type checking completed ✅$(RESET)"
+
+.PHONY: security-check
+security-check: setup ## Run security checks
+	@echo "$(CYAN)Running security checks...$(RESET)"
+	$(UV) run bandit -r src/
+	$(UV) run safety check
+	@echo "$(GREEN)Security checks completed ✅$(RESET)"
+
+.PHONY: pre-commit-install
+pre-commit-install: setup ## Install pre-commit hooks
+	@echo "$(CYAN)Installing pre-commit hooks...$(RESET)"
+	$(UV) run pre-commit install
+	@echo "$(GREEN)Pre-commit hooks installed ✅$(RESET)"
+
+.PHONY: pre-commit-run
+pre-commit-run: setup ## Run pre-commit hooks on all files
+	@echo "$(CYAN)Running pre-commit hooks...$(RESET)"
+	$(UV) run pre-commit run --all-files
+	@echo "$(GREEN)Pre-commit hooks completed ✅$(RESET)"
+
+.PHONY: pre-commit-update
+pre-commit-update: setup ## Update pre-commit hooks
+	@echo "$(CYAN)Updating pre-commit hooks...$(RESET)"
+	$(UV) run pre-commit autoupdate
+	@echo "$(GREEN)Pre-commit hooks updated ✅$(RESET)"
+
+# =============================================================================
+# DEVELOPMENT TARGETS
+# =============================================================================
+
+.PHONY: install-dev
+install-dev: setup ## Install development dependencies
+	@echo "$(CYAN)Installing development dependencies...$(RESET)"
+	$(UV) sync --group dev
+	@echo "$(GREEN)Development dependencies installed ✅$(RESET)"
+
+.PHONY: build
+build: wheel binary ## Build all targets (wheel and binary)
+	@echo "$(GREEN)All builds completed ✅$(RESET)"
+
+.PHONY: docs
+docs: setup ## Generate documentation
+	@echo "$(CYAN)Generating documentation...$(RESET)"
+	@echo "$(YELLOW)Documentation generation not yet configured$(RESET)"
+	@echo "$(CYAN)Consider adding sphinx or mkdocs configuration$(RESET)"
+
+.PHONY: docs-serve
+docs-serve: docs ## Serve documentation locally
+	@echo "$(CYAN)Serving documentation locally...$(RESET)"
+	@echo "$(YELLOW)Documentation serving not yet configured$(RESET)"
+	@echo "$(CYAN)Consider adding sphinx or mkdocs serve capability$(RESET)"
+
+.PHONY: bump-version
+bump-version: ## Bump version (requires VERSION argument, e.g., make bump-version VERSION=1.2.3)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "$(RED)Error: VERSION argument required. Usage: make bump-version VERSION=1.2.3$(RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(CYAN)Bumping version to $(VERSION)...$(RESET)"
+	@sed -i.bak 's/version = "[^"]*"/version = "$(VERSION)"/' pyproject.toml
+	@rm pyproject.toml.bak
+	@echo "$(GREEN)Version bumped to $(VERSION) ✅$(RESET)"
+
+.PHONY: publish
+publish: wheel ## Publish package to PyPI
+	@echo "$(CYAN)Publishing package to PyPI...$(RESET)"
+	@echo "$(YELLOW)Ensure you have set PYPI_TOKEN environment variable$(RESET)"
+	$(UV) run twine upload dist/*
+	@echo "$(GREEN)Package published ✅$(RESET)"
+
+.PHONY: publish-test
+publish-test: wheel ## Publish package to Test PyPI
+	@echo "$(CYAN)Publishing package to Test PyPI...$(RESET)"
+	$(UV) run twine upload --repository testpypi dist/*
+	@echo "$(GREEN)Package published to Test PyPI ✅$(RESET)"
+
+.PHONY: tox
+tox: setup ## Run tox multi-environment testing
+	@echo "$(CYAN)Running tox multi-environment testing...$(RESET)"
+	@if command -v tox >/dev/null 2>&1; then \
+		tox; \
+	else \
+		echo "$(YELLOW)Tox not installed. Install with: uv add tox$(RESET)"; \
+	fi
+	@echo "$(GREEN)Tox testing completed ✅$(RESET)"
 
 .PHONY: test-binary
 test-binary: ## Test the built executable

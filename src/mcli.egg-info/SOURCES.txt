@@ -9,14 +9,12 @@ setup.cfg
 .github/workflows/publish.yml
 .github/workflows/release.yml
 .github/workflows/test.yml
-mcli_rust/Cargo.lock
 mcli_rust/Cargo.toml
 mcli_rust/src/command_parser.rs
 mcli_rust/src/file_watcher.rs
 mcli_rust/src/lib.rs
 mcli_rust/src/process_manager.rs
 mcli_rust/src/tfidf.rs
-src/mcli/README.md
 src/mcli/__init__.py
 src/mcli/__main__.py
 src/mcli/cli.py
@@ -123,6 +121,7 @@ src/mcli/workflow/gcloud/__init__.py
 src/mcli/workflow/gcloud/config.toml
 src/mcli/workflow/gcloud/gcloud.py
 src/mcli/workflow/git_commit/__init__.py
+src/mcli/workflow/git_commit/ai_service.py
 src/mcli/workflow/git_commit/commands.py
 src/mcli/workflow/interview/__init__.py
 src/mcli/workflow/model_service/client.py

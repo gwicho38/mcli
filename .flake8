@@ -1,0 +1,80 @@
+[flake8]
+# Configuration for flake8 linting tool
+
+# Maximum line length (consistent with black)
+max-line-length = 100
+
+# Ignore specific error codes that conflict with black or are not relevant
+ignore =
+    # E203: whitespace before ':' (conflicts with black)
+    E203,
+    # W503: line break before binary operator (conflicts with black)
+    W503,
+    # E501: line too long (handled by black)
+    E501,
+    # W504: line break after binary operator (conflicts with W503)
+    W504
+
+# Directories and files to exclude from linting
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .env,
+    env,
+    build,
+    dist,
+    *.egg-info,
+    .tox,
+    .pytest_cache,
+    migrations,
+    .coverage,
+    htmlcov,
+    docs/_build,
+    node_modules,
+    .mypy_cache
+
+# File patterns to include in linting
+filename = *.py
+
+# Select specific error codes to check
+select =
+    # pycodestyle errors
+    E,
+    # pycodestyle warnings
+    W,
+    # pyflakes
+    F,
+    # flake8-bugbear
+    B,
+    # flake8-comprehensions
+    C4,
+    # flake8-simplify
+    SIM,
+    # flake8-docstrings
+    D
+
+# Docstring error codes to ignore
+per-file-ignores =
+    # Ignore missing docstrings in test files
+    tests/*:D100,D101,D102,D103,D104,D105,D106,D107
+    # Ignore missing docstrings in __init__.py files
+    */__init__.py:D104
+    # Ignore specific issues in scripts
+    scripts/*:D100,D101,D102,D103
+
+# Maximum complexity for McCabe complexity checker
+max-complexity = 10
+
+# Docstring conventions (google, numpy, pep257)
+docstring-convention = google
+
+# Show source code for each error
+show-source = True
+
+# Show pep8 statistics
+statistics = True
+
+# Count errors and warnings
+count = True

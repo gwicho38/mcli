@@ -41,6 +41,7 @@ aiohttp>=3.12.15
 beautifulsoup4>=4.13.5
 python-dotenv>=1.1.1
 pytest-asyncio>=1.1.0
+matplotlib>=3.9.4
 
 [dev]
 pytest>=8.3.5

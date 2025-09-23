@@ -94,12 +94,16 @@ This project uses [UV](https://docs.astral.sh/uv/) for fast, reliable Python pac
 ### Setup Development Environment
 
 ```bash
-# Set up the development environment
+# 1. Set up the development environment
 make setup
 
 # Or manually with UV
 uv venv
 uv pip install -e ".[dev]"
+
+# 2. Configure environment variables
+cp .env.example .env
+# Edit .env with your API keys and configuration
 ```
 
 ### Available Make Commands
@@ -174,16 +178,38 @@ mcli/
 
 ## Configuration
 
-MCLI can be configured through environment variables and configuration files:
+MCLI can be configured through environment variables and configuration files.
 
-```bash
-# Enable debug logging
-export MCLI_TRACE_LEVEL=1
+### Environment Setup
 
-# Set API keys for chat functionality
-export OPENAI_API_KEY="your-openai-key"
-export ANTHROPIC_API_KEY="your-anthropic-key"
-```
+1. **Copy the environment template:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Edit the `.env` file with your configuration:**
+   ```bash
+   # Required for AI chat functionality
+   OPENAI_API_KEY=your-openai-api-key-here
+   ANTHROPIC_API_KEY=your-anthropic-api-key-here
+
+   # Required for politician trading features
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_ANON_KEY=your-supabase-anon-key-here
+   SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key-here
+   ```
+
+3. **Optional development settings:**
+   ```bash
+   # Enable debug logging
+   MCLI_TRACE_LEVEL=1
+   MCLI_DEBUG=true
+
+   # Performance optimization
+   MCLI_AUTO_OPTIMIZE=true
+   ```
+
+See `.env.example` for a complete list of configuration options.
 
 ## Creating Custom Commands
 

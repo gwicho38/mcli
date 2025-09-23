@@ -46,10 +46,27 @@ _*.*
 **/.claude/settings.local.json
 nuitka-crash-report.xml
 
+# Environment files
 .env*
 .flaskenv*
 !.env.project
 !.env.vault
+!.env.example
+
+# Python build artifacts
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDE and editor files
+.idea/
+*.swp
+*.swo
+*~
 output
 output/**/*
 *.png

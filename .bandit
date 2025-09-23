@@ -1,0 +1,43 @@
+[bandit]
+# Bandit security linter configuration
+
+# Directories to exclude from scanning
+exclude_dirs = [
+    ".venv",
+    "venv",
+    ".env",
+    "env",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".tox",
+    ".pytest_cache",
+    "tests",
+    "docs",
+    "scripts",
+    "node_modules",
+    ".git",
+    "__pycache__"
+]
+
+# Tests to skip (by test ID)
+skips = [
+    "B101",  # Test for use of assert
+    "B601",  # Test for shell injection within subprocess calls with shell=True
+    "B603",  # Test for use of subprocess.call with shell keyword set to true
+]
+
+# Confidence levels: LOW, MEDIUM, HIGH
+confidence = "MEDIUM"
+
+# Severity levels: LOW, MEDIUM, HIGH
+severity = "MEDIUM"
+
+# Include only specific test IDs (if needed)
+# tests = ["B201", "B301"]
+
+# Output format: csv, json, txt, xml, yaml
+format = "txt"
+
+# Show only issues with high confidence
+# exclude_low_confidence = true
