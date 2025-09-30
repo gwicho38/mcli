@@ -58,16 +58,16 @@ jobs:
 
       - name: Install uv
         run: |
+          export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
           if ! command -v uv &> /dev/null; then
             curl -LsSf https://astral.sh/uv/install.sh | sh
-            export PATH="$HOME/.cargo/bin:$PATH"
           fi
           uv --version
 
       - name: Install dependencies
         run: |
           export PYENV_ROOT="$HOME/.pyenv"
-          export PATH="$PYENV_ROOT/bin:$HOME/.cargo/bin:$PATH"
+          export PATH="$PYENV_ROOT/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
           eval "$(pyenv init --path)" 2>/dev/null || true
           eval "$(pyenv init -)" 2>/dev/null || true
           uv venv --python python${{ matrix.python-version }}
@@ -77,7 +77,7 @@ jobs:
       - name: Run linting
         run: |
           export PYENV_ROOT="$HOME/.pyenv"
-          export PATH="$PYENV_ROOT/bin:$HOME/.cargo/bin:$PATH"
+          export PATH="$PYENV_ROOT/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
           eval "$(pyenv init --path)" 2>/dev/null || true
           eval "$(pyenv init -)" 2>/dev/null || true
           source .venv/bin/activate
@@ -87,7 +87,7 @@ jobs:
       - name: Run tests
         run: |
           export PYENV_ROOT="$HOME/.pyenv"
-          export PATH="$PYENV_ROOT/bin:$HOME/.cargo/bin:$PATH"
+          export PATH="$PYENV_ROOT/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
           eval "$(pyenv init --path)" 2>/dev/null || true
           eval "$(pyenv init -)" 2>/dev/null || true
           source .venv/bin/activate
