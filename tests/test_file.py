@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.workflow.file.file import file
+from mcli.workflow.file.file import file
 import os
 from pathlib import Path
 

@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.workflow.wakatime.wakatime import wakatime
+from mcli.workflow.wakatime.wakatime import wakatime
 
 
 def test_wakatime_group_help():

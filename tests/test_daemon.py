@@ -9,7 +9,7 @@ from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
 
 # Import daemon classes
-from src.mcli.workflow.daemon.commands import (
+from mcli.workflow.daemon.commands import (
     Command, CommandDatabase, CommandExecutor, DaemonService, daemon
 )
 

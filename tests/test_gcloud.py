@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.workflow.gcloud.gcloud import gcloud
+from mcli.workflow.gcloud.gcloud import gcloud
 
 
 def test_gcloud_group_help():

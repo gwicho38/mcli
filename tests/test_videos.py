@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.workflow.videos.videos import videos
+from mcli.workflow.videos.videos import videos
 
 
 def test_videos_group_help():

@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.self.self_cmd import self_app
+from mcli.self.self_cmd import self_app
 
 
 def test_self_group_help():

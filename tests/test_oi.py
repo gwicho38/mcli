@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.public.oi.oi import oi
+from mcli.public.oi.oi import oi
 
 
 def test_oi_group_help():

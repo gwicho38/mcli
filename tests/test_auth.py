@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.lib.auth.auth import auth
+from mcli.lib.auth.auth import auth
 
 
 def test_auth_group_help():

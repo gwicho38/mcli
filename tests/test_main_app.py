@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.app.main import create_app
+from mcli.app.main import create_app
 
 
 def test_main_app_help():

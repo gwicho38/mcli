@@ -1,6 +1,6 @@
 import pytest
 from click.testing import CliRunner
-from src.mcli.lib.lib import lib
+from mcli.lib.lib import lib
 
 
 def test_lib_group_help():

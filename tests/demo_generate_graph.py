@@ -22,7 +22,7 @@ sys.path.insert(0, project_root)
 from test_harness import SAMPLE_GRAPH_DATA, create_mock_graph_json
 
 # Import the modules to test
-from src.mcli.app.main import generate_graph
+from mcli.app.main import generate_graph
 
 
 def demo_generate_graph_with_mock_data():
