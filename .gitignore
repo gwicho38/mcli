@@ -46,12 +46,18 @@ _*.*
 **/.claude/settings.local.json
 nuitka-crash-report.xml
 
-# Environment files
-.env*
-.flaskenv*
+# Environment files - NEVER commit .env with real credentials
+.env
+.env.local
+.env.*.local
+.flaskenv
+.flaskenv.local
+
+# Allow example environment files
+!.env.example
+!.env.*.example
 !.env.project
 !.env.vault
-!.env.example
 
 # Python build artifacts
 *.egg-info/
