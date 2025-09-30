@@ -61,7 +61,7 @@ dependencies = [
   "fuzzywuzzy>=0.18.0",
 
   # Chat and AI capabilities
-  "openai>=1.3.0,<2.0.0",
+  "openai>=1.3.0,<3.0.0",
   "anthropic>=0.60.0",
   "ollama>=0.5.3",
   "ipython>=8.12.0,<9.0.0",
