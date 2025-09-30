@@ -58,10 +58,10 @@ jobs:
 
       - name: Install uv
         run: |
-          export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
           if ! command -v uv &> /dev/null; then
             curl -LsSf https://astral.sh/uv/install.sh | sh
           fi
+          export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
           uv --version
 
       - name: Install dependencies
