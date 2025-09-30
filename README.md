@@ -24,17 +24,17 @@ A modern CLI framework with chat capabilities, command management, and extensibl
 The easiest way to install mcli is from PyPI:
 
 ```bash
-# Install latest stable version
+# Install latest version (includes all features)
 pip install mcli
 
 # Or with UV (recommended)
 uv pip install mcli
 
-# Install with optional features
-pip install "mcli[chat]"          # AI chat capabilities
-pip install "mcli[ml]"            # Machine learning features
-pip install "mcli[all]"           # All features
+# Optional: GPU support (CUDA required)
+pip install "mcli[gpu]"
 ```
+
+**Note:** As of v7.0.0, all features are included by default. GPU support is optional as it requires CUDA.
 
 **Self-Update Feature:** Once installed from PyPI, you can update mcli to the latest version with:
 

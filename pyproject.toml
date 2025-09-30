@@ -1,6 +1,6 @@
 [project]
 name = "mcli"
-version = "6.0.1"
+version = "7.0.0"
 description = "🚀 High-performance CLI framework with Rust extensions, AI chat, and stunning visuals"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -59,27 +59,14 @@ dependencies = [
   # Data parsing
   "beautifulsoup4>=4.13.5",
   "fuzzywuzzy>=0.18.0",
-]
 
-[project.urls]
-"Homepage" = "https://github.com/lefv/mcli"
-"Repository" = "https://github.com/lefv/mcli"
-"Documentation" = "https://github.com/lefv/mcli#readme"
-"Issues" = "https://github.com/lefv/mcli/issues"
-"Changelog" = "https://github.com/lefv/mcli/releases"
-"Source" = "https://github.com/lefv/mcli"
-
-[project.optional-dependencies]
-# Chat and AI capabilities (optional)
-chat = [
+  # Chat and AI capabilities
   "openai>=1.3.0,<2.0.0",
   "anthropic>=0.60.0",
   "ollama>=0.5.3",
   "ipython>=8.12.0,<9.0.0",
-]
 
-# Enhanced async/performance features (optional)
-async-extras = [
+  # Enhanced async/performance features
   "fastapi>=0.110.0",
   "uvicorn>=0.27.0",
   "uvloop>=0.19.0",
@@ -87,51 +74,39 @@ async-extras = [
   "redis>=5.0.0",
   "aiohttp-sse-client>=0.2.1",
   "asyncio-mqtt>=0.13.0",
-]
 
-# Video processing (optional)
-video = [
+  # Video processing
   "opencv-python>=4.11.0.86",
   "pillow>=11.2.1",
   "numpy>=1.24.0,<2.0.0",
   "scikit-image>=0.24.0",
   "scipy>=1.10.0",
-]
 
-# Document processing (optional)
-documents = [
+  # Document processing
   "pypdf2>=3.0.1",
   "pymupdf>=1.26.3",
   "pandas>=2.3.1",
   "openpyxl>=3.1.5",
-]
 
-# Visualization (optional)
-viz = [
+  # Visualization
   "matplotlib>=3.9.4",
   "pydot>=4.0.1",
   "graphviz>=0.21",
   "seaborn>=0.13.0",
   "plotly>=5.17.0",
-]
 
-# Database support (optional)
-database = [
+  # Database support
   "supabase>=2.18.1",
   "sqlalchemy>=2.0.0",
   "alembic>=1.12.0",
   "psycopg2-binary>=2.9.7",
   "asyncpg>=0.29.0",
-]
 
-# ML/Trading features (optional)
-ml = [
+  # ML/Trading features
   "torch>=2.0.0",
   "torchvision>=0.15.0",
   "pytorch-lightning>=2.0.0",
   "scikit-learn>=1.3.0,<2.0.0",
-  "numpy>=1.24.0,<2.0.0",
-  "scipy>=1.10.0",
   "mlflow>=2.8.0",
   "dvc>=3.0.0",
   "polars>=0.19.0",
@@ -150,44 +125,55 @@ ml = [
   "jupyter>=1.0.0",
   "jupyterlab>=4.0.0",
   "ipykernel>=6.27.0",
-]
 
-# GPU support (optional)
-gpu = [
-  "cupy-cuda12x>=12.3.0",
-  "nvidia-ml-py>=12.535.0",
-]
-
-# Production monitoring (optional)
-monitoring = [
+  # Production monitoring
   "prometheus-client>=0.19.0",
   "structlog>=23.2.0",
   "gunicorn>=21.2.0",
   "newrelic>=9.2.0",
   "datadog>=0.49.0",
   "orjson>=3.9.0",
-]
 
-# Streaming/messaging (optional)
-streaming = [
+  # Streaming/messaging
   "kafka-python>=2.0.2",
-]
 
-# Dashboard (optional)
-dashboard = [
+  # Dashboard
   "streamlit>=1.50.0",
-  "plotly>=5.17.0",
   "altair>=4.2.1,<5.0.0",
   "streamlit-autorefresh>=1.0.1",
   "typer>=0.9.0",
+
+  # Web framework
+  "flask>=2.3.0,<3.0.0",
 ]
 
-# Web framework (optional)
-web = [
-  "flask>=2.3.0,<3.0.0",
-  "fastapi>=0.110.0",
-  "uvicorn>=0.27.0",
+[project.urls]
+"Homepage" = "https://github.com/lefv/mcli"
+"Repository" = "https://github.com/lefv/mcli"
+"Documentation" = "https://github.com/lefv/mcli#readme"
+"Issues" = "https://github.com/lefv/mcli/issues"
+"Changelog" = "https://github.com/lefv/mcli/releases"
+"Source" = "https://github.com/lefv/mcli"
+
+[project.optional-dependencies]
+# GPU support (optional - system specific)
+gpu = [
+  "cupy-cuda12x>=12.3.0",
+  "nvidia-ml-py>=12.535.0",
 ]
+
+# Legacy extras for backward compatibility (all features now included by default)
+chat = []
+async-extras = []
+video = []
+documents = []
+viz = []
+database = []
+ml = []
+monitoring = []
+streaming = []
+dashboard = []
+web = []
 
 # Development tools
 dev = [
