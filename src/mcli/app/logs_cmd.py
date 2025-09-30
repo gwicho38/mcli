@@ -16,6 +16,8 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.text import Text
 
+from mcli.lib.paths import get_logs_dir
+
 console = Console()
 
 
@@ -23,6 +25,24 @@ console = Console()
 def logs_group():
     """Stream and manage MCLI log files"""
     pass
+
+
+@logs_group.command(name="location")
+def show_location():
+    """Show the location of the logs directory"""
+    logs_dir = get_logs_dir()
+    console.print(f"📁 [cyan]Logs directory:[/cyan] {logs_dir}")
+    console.print(f"   [dim]Set MCLI_HOME environment variable to change location[/dim]")
+
+    # Show if directory exists and has files
+    if logs_dir.exists():
+        log_files = list(logs_dir.glob("mcli*.log"))
+        if log_files:
+            console.print(f"   [green]✓ {len(log_files)} log file(s) found[/green]")
+        else:
+            console.print(f"   [yellow]⚠ Directory exists but no log files yet[/yellow]")
+    else:
+        console.print(f"   [yellow]⚠ Directory will be created on first use[/yellow]")
 
 
 @logs_group.command(name="stream")
@@ -49,13 +69,7 @@ def stream_logs(type: str, lines: int, follow: bool):
     Shows log output with syntax highlighting and real-time updates.
     Similar to 'tail -f' but with enhanced formatting for MCLI logs.
     """
-    logs_dir = Path("logs")
-
-    if not logs_dir.exists():
-        console.print(
-            "❌ No logs directory found. Run some MCLI commands to generate logs.", style="red"
-        )
-        return
+    logs_dir = get_logs_dir()
 
     # Get today's log files
     today = datetime.now().strftime("%Y%m%d")
@@ -98,12 +112,7 @@ def stream_logs(type: str, lines: int, follow: bool):
 @click.option("--date", "-d", help="Show logs for specific date (YYYYMMDD format)")
 def list_logs(date: Optional[str]):
     """List available log files"""
-    logs_dir = Path("logs")
-
-    if not logs_dir.exists():
-        console.print("❌ No logs directory found", style="red")
-        return
-
+    logs_dir = get_logs_dir()
     _list_available_logs(logs_dir, date)
 
 
@@ -113,11 +122,9 @@ def list_logs(date: Optional[str]):
 @click.option("--date", "-d", help="Date for log file (YYYYMMDD format, default: today)")
 def tail_logs(log_type: str, lines: int, date: Optional[str]):
     """Show the last N lines of a specific log file"""
-    logs_dir = Path("logs")
+    logs_dir = get_logs_dir()
 
-    if not logs_dir.exists():
-        console.print("❌ No logs directory found", style="red")
-        return
+    # Note: get_logs_dir() creates the directory automatically
 
     # Use provided date or default to today
     log_date = date or datetime.now().strftime("%Y%m%d")
@@ -168,11 +175,7 @@ def tail_logs(log_type: str, lines: int, date: Optional[str]):
 )
 def grep_logs(pattern: str, type: str, date: Optional[str], context: int):
     """Search for patterns in log files"""
-    logs_dir = Path("logs")
-
-    if not logs_dir.exists():
-        console.print("❌ No logs directory found", style="red")
-        return
+    logs_dir = get_logs_dir()
 
     # Use provided date or default to today
     log_date = date or datetime.now().strftime("%Y%m%d")
@@ -216,11 +219,7 @@ def grep_logs(pattern: str, type: str, date: Optional[str], context: int):
 @click.option("--confirm", "-y", is_flag=True, help="Skip confirmation prompt")
 def clear_logs(older_than: Optional[int], confirm: bool):
     """Clear old log files"""
-    logs_dir = Path("logs")
-
-    if not logs_dir.exists():
-        console.print("❌ No logs directory found", style="red")
-        return
+    logs_dir = get_logs_dir()
 
     # Find log files
     log_files = list(logs_dir.glob("mcli*.log"))

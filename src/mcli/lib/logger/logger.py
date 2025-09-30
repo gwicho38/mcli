@@ -208,13 +208,11 @@ class McliLogger:
 
         # Set up file handler with path resolution
         try:
-            # Find the project root directory (where logs dir should be)
-            # Start with the current file and navigate up the directory structure
-            current_file = Path(__file__)
-            # Go up 5 levels: file -> logger -> lib -> mcli -> src -> repo_root
-            project_root = current_file.parents[4]
-            log_dir = project_root / "logs"
-            log_dir.mkdir(exist_ok=True)
+            # Import paths utility for consistent path resolution
+            from mcli.lib.paths import get_logs_dir
+
+            # Get logs directory (e.g., ~/.mcli/logs)
+            log_dir = get_logs_dir()
 
             # Create daily log file
             timestamp = datetime.now().strftime("%Y%m%d")
