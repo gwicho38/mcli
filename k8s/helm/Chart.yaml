@@ -1,0 +1,41 @@
+apiVersion: v2
+name: ml-system
+description: ML System for Politician Trading Analysis
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+dependencies:
+  - name: postgresql
+    version: 12.1.9
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+
+  - name: redis
+    version: 17.3.14
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+
+  - name: prometheus
+    version: 19.0.2
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: monitoring.prometheus.enabled
+
+  - name: grafana
+    version: 6.48.0
+    repository: https://grafana.github.io/helm-charts
+    condition: monitoring.grafana.enabled
+
+keywords:
+  - machine-learning
+  - pytorch
+  - mlops
+  - trading
+
+maintainers:
+  - name: ML Team
+    email: ml-team@example.com
+
+home: https://github.com/example/ml-system
+sources:
+  - https://github.com/example/ml-system

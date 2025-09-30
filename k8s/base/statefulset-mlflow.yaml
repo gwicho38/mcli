@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mlflow-server
+  namespace: ml-system
+spec:
+  serviceName: mlflow-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+        component: experiment-tracking
+    spec:
+      containers:
+      - name: mlflow
+        image: ml-system/mlflow:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+          name: http
+        env:
+        - name: BACKEND_STORE_URI
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)"
+        - name: DEFAULT_ARTIFACT_ROOT
+          value: "s3://$(AWS_S3_BUCKET)/mlflow-artifacts"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: ml-secrets
+              key: AWS_ACCESS_KEY_ID
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ml-secrets
+              key: AWS_SECRET_ACCESS_KEY
+        envFrom:
+        - secretRef:
+            name: ml-secrets
+        command:
+        - mlflow
+        - server
+        - --host
+        - "0.0.0.0"
+        - --port
+        - "5000"
+        - --backend-store-uri
+        - "$(BACKEND_STORE_URI)"
+        - --default-artifact-root
+        - "$(DEFAULT_ARTIFACT_ROOT)"
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: mlflow-data
+          mountPath: /mlflow
+  volumeClaimTemplates:
+  - metadata:
+      name: mlflow-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow-service
+  namespace: ml-system
+spec:
+  type: ClusterIP
+  selector:
+    app: mlflow
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000

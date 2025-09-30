@@ -10,7 +10,14 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-import redis.asyncio as redis
+
+# Optional redis import - gracefully handle if not installed
+try:
+    import redis.asyncio as redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+    redis = None  # type: ignore
 
 from mcli.lib.logger.logger import get_logger
 
@@ -35,7 +42,7 @@ class CachedTfIdfVectorizer:
         self.cache_prefix = cache_prefix
         self.use_rust = use_rust
 
-        self.redis_client: Optional[redis.Redis] = None
+        self.redis_client: Optional[Any] = None  # redis.Redis when available
         self.vectorizer = None
         self.is_fitted = False
 
@@ -50,6 +57,11 @@ class CachedTfIdfVectorizer:
 
     async def _init_redis(self):
         """Initialize Redis connection"""
+        if not REDIS_AVAILABLE:
+            logger.warning("Redis is not installed. Caching disabled.")
+            self.redis_client = None
+            return
+
         try:
             # Try to ensure Redis is running through the service manager
             try:
@@ -59,7 +71,7 @@ class CachedTfIdfVectorizer:
             except ImportError:
                 logger.debug("Redis service manager not available")
 
-            self.redis_client = redis.from_url(self.redis_url)
+            self.redis_client = redis.from_url(self.redis_url)  # type: ignore
             await self.redis_client.ping()
             logger.info("Connected to Redis for TF-IDF caching")
         except Exception as e:

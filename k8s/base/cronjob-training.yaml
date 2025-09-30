@@ -1,0 +1,191 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ml-training-job
+  namespace: ml-system
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: ml-training
+            component: training
+        spec:
+          serviceAccountName: ml-service-account
+          restartPolicy: OnFailure
+          containers:
+          - name: training
+            image: ml-system/training:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - python
+            - -m
+            - ml.mlops.pipeline_orchestrator
+            - --mode
+            - train
+            - --experiment
+            - daily_training
+            env:
+            - name: JOB_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: JOB_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            envFrom:
+            - configMapRef:
+                name: ml-config
+            - secretRef:
+                name: ml-secrets
+            resources:
+              requests:
+                memory: "8Gi"
+                cpu: "4000m"
+                nvidia.com/gpu: "2"
+              limits:
+                memory: "16Gi"
+                cpu: "8000m"
+                nvidia.com/gpu: "2"
+            volumeMounts:
+            - name: data-storage
+              mountPath: /data
+            - name: model-storage
+              mountPath: /models
+            - name: dvc-cache
+              mountPath: /dvc-cache
+          volumes:
+          - name: data-storage
+            persistentVolumeClaim:
+              claimName: data-storage-pvc
+          - name: model-storage
+            persistentVolumeClaim:
+              claimName: model-storage-pvc
+          - name: dvc-cache
+            persistentVolumeClaim:
+              claimName: dvc-cache-pvc
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ml-data-ingestion
+  namespace: ml-system
+spec:
+  schedule: "*/30 * * * *"  # Every 30 minutes
+  concurrencyPolicy: Replace
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: ml-ingestion
+            component: data-pipeline
+        spec:
+          serviceAccountName: ml-service-account
+          restartPolicy: OnFailure
+          containers:
+          - name: ingestion
+            image: ml-system/ingestion:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - python
+            - -m
+            - ml.data_ingestion.data_pipeline
+            - --mode
+            - batch
+            env:
+            - name: JOB_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            envFrom:
+            - configMapRef:
+                name: ml-config
+            - secretRef:
+                name: ml-secrets
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1000m"
+              limits:
+                memory: "4Gi"
+                cpu: "2000m"
+            volumeMounts:
+            - name: data-storage
+              mountPath: /data
+          volumes:
+          - name: data-storage
+            persistentVolumeClaim:
+              claimName: data-storage-pvc
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ml-backtest
+  namespace: ml-system
+spec:
+  schedule: "0 6 * * 1"  # Weekly on Monday at 6 AM
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: ml-backtest
+            component: backtesting
+        spec:
+          serviceAccountName: ml-service-account
+          restartPolicy: OnFailure
+          containers:
+          - name: backtest
+            image: ml-system/backtesting:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - python
+            - -m
+            - ml.backtesting.backtest_engine
+            - --mode
+            - full
+            - --period
+            - "6M"
+            envFrom:
+            - configMapRef:
+                name: ml-config
+            - secretRef:
+                name: ml-secrets
+            resources:
+              requests:
+                memory: "4Gi"
+                cpu: "2000m"
+              limits:
+                memory: "8Gi"
+                cpu: "4000m"
+            volumeMounts:
+            - name: data-storage
+              mountPath: /data
+            - name: model-storage
+              mountPath: /models
+            - name: reports
+              mountPath: /reports
+          volumes:
+          - name: data-storage
+            persistentVolumeClaim:
+              claimName: data-storage-pvc
+          - name: model-storage
+            persistentVolumeClaim:
+              claimName: model-storage-pvc
+          - name: reports
+            persistentVolumeClaim:
+              claimName: reports-pvc

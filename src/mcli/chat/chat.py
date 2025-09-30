@@ -2,8 +2,15 @@ import os
 import readline
 from typing import Dict, List, Optional
 
-import ollama
 import requests
+
+# Optional ollama import - gracefully handle if not installed
+try:
+    import ollama
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    OLLAMA_AVAILABLE = False
+    ollama = None  # type: ignore
 
 from mcli.chat.system_integration import handle_system_request
 from mcli.lib.api.daemon_client import get_daemon_client
@@ -924,9 +931,19 @@ User Question: {query}
 Respond naturally and helpfully, considering both MCLI commands and system control capabilities."""
 
             if LLM_PROVIDER == "local":
+                # Check if ollama is available
+                if not OLLAMA_AVAILABLE:
+                    console.print("[red]Error: ollama is not installed.[/red]")
+                    console.print("[yellow]For local model support, install ollama:[/yellow]")
+                    console.print("  pip install ollama")
+                    console.print("\n[yellow]Or switch to OpenAI by configuring:[/yellow]")
+                    console.print("  provider = \"openai\"")
+                    console.print("  openai_api_key = \"your-key-here\"")
+                    return
+
                 # Use Ollama SDK for local model inference
                 try:
-                    response = ollama.generate(
+                    response = ollama.generate(  # type: ignore
                         model=MODEL_NAME,
                         prompt=prompt,
                         options={
@@ -955,7 +972,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                     corrected_response = self.validate_and_correct_response(main_answer, commands)
                     return console.print(corrected_response)
 
-                except ollama.ResponseError as e:
+                except ollama.ResponseError as e:  # type: ignore
                     if "model" in str(e).lower() and "not found" in str(e).lower():
                         if not self.use_remote:
                             # In lightweight mode, model not found means we need to ensure server is running
@@ -1041,7 +1058,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                     else:
                         raise Exception(f"Ollama API error: {e}")
 
-                except (requests.exceptions.ConnectionError, ollama.RequestError):
+                except (requests.exceptions.ConnectionError, ollama.RequestError if OLLAMA_AVAILABLE else Exception):  # type: ignore
                     console.print(
                         "[red]Could not connect to Ollama. Please ensure Ollama is running:[/red]"
                     )

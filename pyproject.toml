@@ -1,6 +1,6 @@
 [project]
 name = "mcli"
-version = "5.6.1"
+version = "5.7.0"
 description = "🚀 High-performance CLI framework with Rust extensions, AI chat, and stunning visuals"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -90,6 +90,37 @@ dependencies = [
   "python-dotenv>=1.1.1",
   "pytest-asyncio>=1.1.0",
   "matplotlib>=3.9.4",
+  # ML & Trading specific dependencies
+  "torch>=2.0.0",
+  "torchvision>=0.15.0",
+  "pytorch-lightning>=2.0.0",
+  "scikit-learn>=1.3.0",
+  "scipy>=1.10.0",
+  "mlflow>=2.8.0",
+  "dvc>=3.0.0",
+  "polars>=0.19.0",
+  "pyarrow>=14.0.0",
+  "yfinance>=0.2.18",
+  "alpha-vantage>=2.3.1",
+  "cvxpy>=1.4.0",
+  "sqlalchemy>=2.0.0",
+  "alembic>=1.12.0",
+  "psycopg2-binary>=2.9.7",
+  "asyncpg>=0.29.0",
+  "python-jose[cryptography]>=3.3.0",
+  "passlib[bcrypt]>=1.7.4",
+  "pydantic-settings>=2.1.0",
+  "dynaconf>=3.2.0",
+  "prometheus-client>=0.19.0",
+  "structlog>=23.2.0",
+  "pandera>=0.17.0",
+  "seaborn>=0.13.0",
+  "plotly>=5.17.0",
+  "typer>=0.9.0",
+  "pendulum>=2.1.2",
+  "kafka-python>=2.0.2",
+  "websockets>=12.0",
+  "streamlit>=1.50.0",
 ]
 
 [project.urls]
@@ -113,6 +144,35 @@ video = [
   "opencv-python>=4.11.0.86",
   "pillow>=11.2.1",
   "numpy>=1.24.0,<2.0.0",
+]
+ml = [
+  # Additional ML dependencies
+  "optuna>=3.4.0",
+  "PyPortfolioOpt>=1.5.5",
+  "quantlib>=1.32",
+  "great-expectations>=0.18.0",
+  "jupyter>=1.0.0",
+  "jupyterlab>=4.0.0",
+  "ipykernel>=6.27.0",
+]
+gpu = [
+  # GPU-specific dependencies
+  "cupy-cuda12x>=12.3.0",
+  "nvidia-ml-py>=12.535.0",
+]
+prod = [
+  # Production monitoring
+  "gunicorn>=21.2.0",
+  "newrelic>=9.2.0",
+  "datadog>=0.49.0",
+  "orjson>=3.9.0",
+]
+dashboard = [
+  # Dashboard dependencies
+  "streamlit>=1.28.0",
+  "plotly>=5.17.0",
+  "altair>=4.2.1,<5.0.0",
+  "streamlit-autorefresh>=1.0.1",
 ]
 
 [tool.black]
@@ -301,3 +361,8 @@ filterwarnings = [
 
 [project.scripts]
 mcli = "mcli.app.main:main"
+mcli-train = "mcli.ml.training.train:main"
+mcli-serve = "mcli.ml.serving.serve:main"
+mcli-backtest = "mcli.ml.backtesting.run:main"
+mcli-optimize = "mcli.ml.optimization.optimize:main"
+mcli-dashboard = "mcli.ml.dashboard:main"

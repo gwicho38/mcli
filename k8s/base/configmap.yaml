@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-config
+  namespace: ml-system
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  MODEL_SERVING_PORT: "8000"
+  METRICS_PORT: "9090"
+
+  # ML Configuration
+  MODEL_PATH: "/models"
+  DATA_PATH: "/data"
+  BATCH_SIZE: "32"
+  MAX_WORKERS: "4"
+
+  # API Configuration
+  API_RATE_LIMIT: "100"
+  API_TIMEOUT: "30"
+
+  # Database Configuration
+  POSTGRES_DB: "ml_system"
+  REDIS_DB: "0"
+
+  # MLflow Configuration
+  MLFLOW_TRACKING_URI: "http://mlflow:5000"
+  MLFLOW_EXPERIMENT_NAME: "politician_trading"
+
+  # Feature Store Configuration
+  FEATURE_STORE_URI: "feast://feature-store:6565"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-scripts
+  namespace: ml-system
+data:
+  healthcheck.sh: |
+    #!/bin/bash
+    curl -f http://localhost:8000/health || exit 1
+
+  startup.sh: |
+    #!/bin/bash
+    echo "Starting ML service..."
+    python -m uvicorn ml.mlops.model_serving:app --host 0.0.0.0 --port 8000
+
+  train.sh: |
+    #!/bin/bash
+    echo "Starting training job..."
+    python -m ml.mlops.pipeline_orchestrator --mode train
