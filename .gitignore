@@ -50,6 +50,8 @@ nuitka-crash-report.xml
 .env
 .env.local
 .env.*.local
+.env.backup
+.env.*.backup
 .flaskenv
 .flaskenv.local
 

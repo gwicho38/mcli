@@ -19,7 +19,41 @@ A modern CLI framework with chat capabilities, command management, and extensibl
 - Python 3.9 or higher
 - [UV](https://docs.astral.sh/uv/) (recommended) or pip
 
-### Installation with UV
+### Installation from PyPI (Recommended)
+
+The easiest way to install mcli is from PyPI:
+
+```bash
+# Install latest stable version
+pip install mcli
+
+# Or with UV (recommended)
+uv pip install mcli
+
+# Install with optional features
+pip install "mcli[chat]"          # AI chat capabilities
+pip install "mcli[ml]"            # Machine learning features
+pip install "mcli[all]"           # All features
+```
+
+**Self-Update Feature:** Once installed from PyPI, you can update mcli to the latest version with:
+
+```bash
+# Check for updates
+mcli self update --check
+
+# Install updates automatically
+mcli self update
+
+# Install with confirmation
+mcli self update --yes
+```
+
+### Installation from Source
+
+For development or if you want to customize mcli:
+
+#### With UV
 
 ```bash
 # Clone the repository
@@ -34,7 +68,7 @@ uv pip install -e .
 uv pip install -e ".[dev]"
 ```
 
-### Installation with pip
+#### With pip
 
 ```bash
 # Clone the repository

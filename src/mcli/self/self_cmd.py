@@ -1129,6 +1129,115 @@ def dashboard(refresh: float, once: bool):
         console.print(f"[red]Error launching dashboard: {e}[/red]")
 
 
+@self_app.command()
+@click.option("--check", is_flag=True, help="Only check for updates, don't install")
+@click.option("--pre", is_flag=True, help="Include pre-release versions")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+def update(check: bool, pre: bool, yes: bool):
+    """🔄 Check for and install mcli updates from PyPI"""
+    import subprocess
+    import sys
+    from importlib.metadata import version as get_version
+
+    try:
+        import requests
+    except ImportError:
+        console.print("[red]❌ Error: 'requests' module not found[/red]")
+        console.print("[yellow]Install it with: pip install requests[/yellow]")
+        return
+
+    try:
+        # Get current version
+        try:
+            current_version = get_version("mcli")
+        except Exception:
+            console.print("[yellow]⚠️  Could not determine current version[/yellow]")
+            current_version = "unknown"
+
+        console.print(f"[cyan]Current version:[/cyan] {current_version}")
+        console.print("[cyan]Checking PyPI for updates...[/cyan]")
+
+        # Check PyPI for latest version
+        try:
+            response = requests.get("https://pypi.org/pypi/mcli/json", timeout=10)
+            response.raise_for_status()
+            pypi_data = response.json()
+        except requests.RequestException as e:
+            console.print(f"[red]❌ Error fetching version info from PyPI: {e}[/red]")
+            return
+
+        # Get latest version
+        if pre:
+            # Include pre-releases
+            all_versions = list(pypi_data["releases"].keys())
+            latest_version = max(all_versions, key=lambda v: [int(x) for x in v.split(".")] if v[0].isdigit() else [0])
+        else:
+            # Only stable releases
+            latest_version = pypi_data["info"]["version"]
+
+        console.print(f"[cyan]Latest version:[/cyan] {latest_version}")
+
+        # Compare versions
+        if current_version == latest_version:
+            console.print("[green]✅ You're already on the latest version![/green]")
+            return
+
+        # Parse versions for comparison
+        def parse_version(v):
+            try:
+                return tuple(int(x) for x in v.split(".") if x.isdigit())
+            except:
+                return (0, 0, 0)
+
+        current_parsed = parse_version(current_version)
+        latest_parsed = parse_version(latest_version)
+
+        if current_parsed >= latest_parsed:
+            console.print(f"[green]✅ Your version ({current_version}) is up to date or newer[/green]")
+            return
+
+        console.print(f"[yellow]⬆️  Update available: {current_version} → {latest_version}[/yellow]")
+
+        # Show release notes if available
+        if "urls" in pypi_data["info"] and pypi_data["info"].get("project_urls"):
+            project_urls = pypi_data["info"]["project_urls"]
+            if "Changelog" in project_urls:
+                console.print(f"[dim]📝 Changelog: {project_urls['Changelog']}[/dim]")
+
+        if check:
+            console.print("[cyan]ℹ️  Run 'mcli self update' to install the update[/cyan]")
+            return
+
+        # Ask for confirmation unless --yes flag is used
+        if not yes:
+            from rich.prompt import Confirm
+            if not Confirm.ask(f"[yellow]Install mcli {latest_version}?[/yellow]"):
+                console.print("[yellow]Update cancelled[/yellow]")
+                return
+
+        # Install update
+        console.print(f"[cyan]📦 Installing mcli {latest_version}...[/cyan]")
+
+        # Use pip to upgrade
+        cmd = [sys.executable, "-m", "pip", "install", "--upgrade", "mcli"]
+        if pre:
+            cmd.append("--pre")
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode == 0:
+            console.print(f"[green]✅ Successfully updated to mcli {latest_version}![/green]")
+            console.print("[yellow]ℹ️  Restart your terminal or run 'hash -r' to use the new version[/yellow]")
+        else:
+            console.print(f"[red]❌ Update failed:[/red]")
+            console.print(result.stderr)
+
+    except Exception as e:
+        console.print(f"[red]❌ Error during update: {e}[/red]")
+        import traceback
+        console.print(f"[dim]{traceback.format_exc()}[/dim]")
+
+
 # Register the plugin group with self_app
 self_app.add_command(plugin)
 

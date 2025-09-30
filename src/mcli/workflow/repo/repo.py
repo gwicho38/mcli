@@ -191,10 +191,13 @@ def loe(branch_a: str, branch_b: str):
     """
 
     try:
-        # Initialize the OpenAI client
-        client = OpenAI(
-            api_key="***REMOVED***"
-        )
+        # Initialize the OpenAI client - API key from environment
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            logger.error("OPENAI_API_KEY environment variable not set")
+            return
+
+        client = OpenAI(api_key=api_key)
 
         # Call the GPT-4 model using the client
         chat_completion = client.chat.completions.create(
