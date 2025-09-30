@@ -173,8 +173,50 @@ mcli/
 - **inquirerpy**: Interactive command-line prompts
 
 ### Optional Dependencies
-- **Video processing**: `uv pip install -e ".[video]"` (opencv-python, pillow, numpy)
-- **Development tools**: `uv pip install -e ".[dev]"` (pytest, black, mypy, etc.)
+
+MCLI has been optimized with minimal core dependencies. Install only what you need:
+
+```bash
+# Chat and AI features
+uv pip install -e ".[chat]"
+
+# Video processing
+uv pip install -e ".[video]"
+
+# Document processing (PDF, Excel, etc.)
+uv pip install -e ".[documents]"
+
+# ML/Trading features
+uv pip install -e ".[ml]"
+
+# Database support
+uv pip install -e ".[database]"
+
+# Web dashboards
+uv pip install -e ".[dashboard]"
+
+# Development tools
+uv pip install -e ".[dev]"
+
+# Everything
+uv pip install -e ".[all]"
+```
+
+Available extras:
+- `chat` - OpenAI, Anthropic, Ollama support
+- `async-extras` - FastAPI, Redis, advanced async features
+- `video` - OpenCV, image processing
+- `documents` - PDF, Excel processing
+- `viz` - Matplotlib, Plotly visualization
+- `database` - Supabase, SQLAlchemy, PostgreSQL
+- `ml` - PyTorch, MLflow, DVC, trading features
+- `gpu` - CUDA support
+- `monitoring` - Prometheus, Datadog
+- `streaming` - Kafka support
+- `dashboard` - Streamlit dashboards
+- `web` - Flask, FastAPI web frameworks
+- `dev` - Testing, linting, type checking
+- `all` - All optional features
 
 ## Configuration
 

@@ -134,6 +134,7 @@ src/mcli/ml/dashboard/__init__.py
 src/mcli/ml/dashboard/app.py
 src/mcli/ml/dashboard/app_integrated.py
 src/mcli/ml/dashboard/app_supabase.py
+src/mcli/ml/dashboard/app_training.py
 src/mcli/ml/dashboard/cli.py
 src/mcli/ml/data_ingestion/__init__.py
 src/mcli/ml/data_ingestion/api_connectors.py
@@ -175,6 +176,7 @@ src/mcli/ml/preprocessing/test_preprocessing.py
 src/mcli/ml/scripts/__init__.py
 src/mcli/ml/scripts/populate_sample_data.py
 src/mcli/ml/tests/test_integration.py
+src/mcli/ml/tests/test_training_dashboard.py
 src/mcli/public/__init__.py
 src/mcli/public/public.py
 src/mcli/public/commands/__init__.py
@@ -287,6 +289,7 @@ tests/test_ml_auth.py
 tests/test_ml_models.py
 tests/test_ml_pipeline.py
 tests/test_oi.py
+tests/test_optional_dependencies.py
 tests/test_politician_trading_integration.py
 tests/test_registry.py
 tests/test_repo.py

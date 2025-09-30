@@ -41,111 +41,113 @@ Requires-Dist: click<9.0.0,>=8.1.7
 Requires-Dist: rich>=14.0.0
 Requires-Dist: requests<3.0.0,>=2.31.0
 Requires-Dist: tomli>=2.2.1
-Requires-Dist: openai<2.0.0,>=1.3.0
-Requires-Dist: anthropic>=0.60.0
-Requires-Dist: fastapi>=0.110.0
-Requires-Dist: uvicorn>=0.27.0
-Requires-Dist: uvloop>=0.19.0
-Requires-Dist: aiosqlite>=0.20.0
-Requires-Dist: redis>=5.0.0
-Requires-Dist: aiohttp>=3.9.0
-Requires-Dist: aiohttp-sse-client>=0.2.1
-Requires-Dist: asyncio-mqtt>=0.13.0
+Requires-Dist: python-dotenv>=1.1.1
 Requires-Dist: watchdog<4.0.0,>=3.0.0
 Requires-Dist: tqdm<5.0.0,>=4.66.1
 Requires-Dist: humanize<5.0.0,>=4.9.0
 Requires-Dist: psutil<6.0.0,>=5.9.0
-Requires-Dist: ipython<9.0.0,>=8.12.0
 Requires-Dist: inquirerpy<0.4.0,>=0.3.4
-Requires-Dist: flask<3.0.0,>=2.3.0
 Requires-Dist: gitpython<4.0.0,>=3.1.40
-Requires-Dist: maturin>=1.9.3
-Requires-Dist: build>=1.2.2.post1
-Requires-Dist: scikit-learn<2.0.0,>=1.3.0
-Requires-Dist: numpy<2.0.0,>=1.24.0
-Requires-Dist: pillow>=11.2.1
-Requires-Dist: opencv-python>=4.11.0.86
-Requires-Dist: scikit-image>=0.24.0
-Requires-Dist: pypdf2>=3.0.1
-Requires-Dist: pymupdf>=1.26.3
-Requires-Dist: pydot>=4.0.1
-Requires-Dist: graphviz>=0.21
-Requires-Dist: fuzzywuzzy>=0.18.0
-Requires-Dist: pandas>=2.3.1
-Requires-Dist: openpyxl>=3.1.5
-Requires-Dist: ollama>=0.5.3
-Requires-Dist: pytest>=8.4.1
-Requires-Dist: pytest-cov>=4.1.0
-Requires-Dist: pytest-mock>=3.14.1
-Requires-Dist: supabase>=2.18.1
+Requires-Dist: aiohttp>=3.9.0
 Requires-Dist: httpx>=0.28.1
-Requires-Dist: aiohttp>=3.12.15
-Requires-Dist: beautifulsoup4>=4.13.5
-Requires-Dist: python-dotenv>=1.1.1
-Requires-Dist: pytest-asyncio>=1.1.0
-Requires-Dist: matplotlib>=3.9.4
-Requires-Dist: torch>=2.0.0
-Requires-Dist: torchvision>=0.15.0
-Requires-Dist: pytorch-lightning>=2.0.0
-Requires-Dist: scikit-learn>=1.3.0
-Requires-Dist: scipy>=1.10.0
-Requires-Dist: mlflow>=2.8.0
-Requires-Dist: dvc>=3.0.0
-Requires-Dist: polars>=0.19.0
-Requires-Dist: pyarrow>=14.0.0
-Requires-Dist: yfinance>=0.2.18
-Requires-Dist: alpha-vantage>=2.3.1
-Requires-Dist: cvxpy>=1.4.0
-Requires-Dist: sqlalchemy>=2.0.0
-Requires-Dist: alembic>=1.12.0
-Requires-Dist: psycopg2-binary>=2.9.7
-Requires-Dist: asyncpg>=0.29.0
-Requires-Dist: python-jose[cryptography]>=3.3.0
-Requires-Dist: passlib[bcrypt]>=1.7.4
-Requires-Dist: pydantic-settings>=2.1.0
-Requires-Dist: dynaconf>=3.2.0
-Requires-Dist: prometheus-client>=0.19.0
-Requires-Dist: structlog>=23.2.0
-Requires-Dist: pandera>=0.17.0
-Requires-Dist: seaborn>=0.13.0
-Requires-Dist: plotly>=5.17.0
-Requires-Dist: typer>=0.9.0
-Requires-Dist: pendulum>=2.1.2
-Requires-Dist: kafka-python>=2.0.2
 Requires-Dist: websockets>=12.0
-Requires-Dist: streamlit>=1.50.0
-Provides-Extra: dev
-Requires-Dist: pytest>=8.3.5; extra == "dev"
-Requires-Dist: pytest-cov<5.0.0,>=4.1.0; extra == "dev"
-Requires-Dist: black>=23.0.0; extra == "dev"
-Requires-Dist: isort<6.0.0,>=5.12.0; extra == "dev"
-Requires-Dist: mypy<2.0.0,>=1.7.1; extra == "dev"
-Requires-Dist: build>=1.2.2.post1; extra == "dev"
+Requires-Dist: beautifulsoup4>=4.13.5
+Requires-Dist: fuzzywuzzy>=0.18.0
+Provides-Extra: chat
+Requires-Dist: openai<2.0.0,>=1.3.0; extra == "chat"
+Requires-Dist: anthropic>=0.60.0; extra == "chat"
+Requires-Dist: ollama>=0.5.3; extra == "chat"
+Requires-Dist: ipython<9.0.0,>=8.12.0; extra == "chat"
+Provides-Extra: async-extras
+Requires-Dist: fastapi>=0.110.0; extra == "async-extras"
+Requires-Dist: uvicorn>=0.27.0; extra == "async-extras"
+Requires-Dist: uvloop>=0.19.0; extra == "async-extras"
+Requires-Dist: aiosqlite>=0.20.0; extra == "async-extras"
+Requires-Dist: redis>=5.0.0; extra == "async-extras"
+Requires-Dist: aiohttp-sse-client>=0.2.1; extra == "async-extras"
+Requires-Dist: asyncio-mqtt>=0.13.0; extra == "async-extras"
 Provides-Extra: video
 Requires-Dist: opencv-python>=4.11.0.86; extra == "video"
 Requires-Dist: pillow>=11.2.1; extra == "video"
 Requires-Dist: numpy<2.0.0,>=1.24.0; extra == "video"
+Requires-Dist: scikit-image>=0.24.0; extra == "video"
+Requires-Dist: scipy>=1.10.0; extra == "video"
+Provides-Extra: documents
+Requires-Dist: pypdf2>=3.0.1; extra == "documents"
+Requires-Dist: pymupdf>=1.26.3; extra == "documents"
+Requires-Dist: pandas>=2.3.1; extra == "documents"
+Requires-Dist: openpyxl>=3.1.5; extra == "documents"
+Provides-Extra: viz
+Requires-Dist: matplotlib>=3.9.4; extra == "viz"
+Requires-Dist: pydot>=4.0.1; extra == "viz"
+Requires-Dist: graphviz>=0.21; extra == "viz"
+Requires-Dist: seaborn>=0.13.0; extra == "viz"
+Requires-Dist: plotly>=5.17.0; extra == "viz"
+Provides-Extra: database
+Requires-Dist: supabase>=2.18.1; extra == "database"
+Requires-Dist: sqlalchemy>=2.0.0; extra == "database"
+Requires-Dist: alembic>=1.12.0; extra == "database"
+Requires-Dist: psycopg2-binary>=2.9.7; extra == "database"
+Requires-Dist: asyncpg>=0.29.0; extra == "database"
 Provides-Extra: ml
+Requires-Dist: torch>=2.0.0; extra == "ml"
+Requires-Dist: torchvision>=0.15.0; extra == "ml"
+Requires-Dist: pytorch-lightning>=2.0.0; extra == "ml"
+Requires-Dist: scikit-learn<2.0.0,>=1.3.0; extra == "ml"
+Requires-Dist: numpy<2.0.0,>=1.24.0; extra == "ml"
+Requires-Dist: scipy>=1.10.0; extra == "ml"
+Requires-Dist: mlflow>=2.8.0; extra == "ml"
+Requires-Dist: dvc>=3.0.0; extra == "ml"
+Requires-Dist: polars>=0.19.0; extra == "ml"
+Requires-Dist: pyarrow>=14.0.0; extra == "ml"
+Requires-Dist: yfinance>=0.2.18; extra == "ml"
+Requires-Dist: alpha-vantage>=2.3.1; extra == "ml"
+Requires-Dist: cvxpy>=1.4.0; extra == "ml"
+Requires-Dist: python-jose[cryptography]>=3.3.0; extra == "ml"
+Requires-Dist: passlib[bcrypt]>=1.7.4; extra == "ml"
+Requires-Dist: pydantic-settings>=2.1.0; extra == "ml"
+Requires-Dist: dynaconf>=3.2.0; extra == "ml"
+Requires-Dist: pandera>=0.17.0; extra == "ml"
+Requires-Dist: pendulum>=2.1.2; extra == "ml"
 Requires-Dist: optuna>=3.4.0; extra == "ml"
 Requires-Dist: PyPortfolioOpt>=1.5.5; extra == "ml"
-Requires-Dist: quantlib>=1.32; extra == "ml"
-Requires-Dist: great-expectations>=0.18.0; extra == "ml"
 Requires-Dist: jupyter>=1.0.0; extra == "ml"
 Requires-Dist: jupyterlab>=4.0.0; extra == "ml"
 Requires-Dist: ipykernel>=6.27.0; extra == "ml"
 Provides-Extra: gpu
 Requires-Dist: cupy-cuda12x>=12.3.0; extra == "gpu"
 Requires-Dist: nvidia-ml-py>=12.535.0; extra == "gpu"
-Provides-Extra: prod
-Requires-Dist: gunicorn>=21.2.0; extra == "prod"
-Requires-Dist: newrelic>=9.2.0; extra == "prod"
-Requires-Dist: datadog>=0.49.0; extra == "prod"
-Requires-Dist: orjson>=3.9.0; extra == "prod"
+Provides-Extra: monitoring
+Requires-Dist: prometheus-client>=0.19.0; extra == "monitoring"
+Requires-Dist: structlog>=23.2.0; extra == "monitoring"
+Requires-Dist: gunicorn>=21.2.0; extra == "monitoring"
+Requires-Dist: newrelic>=9.2.0; extra == "monitoring"
+Requires-Dist: datadog>=0.49.0; extra == "monitoring"
+Requires-Dist: orjson>=3.9.0; extra == "monitoring"
+Provides-Extra: streaming
+Requires-Dist: kafka-python>=2.0.2; extra == "streaming"
 Provides-Extra: dashboard
-Requires-Dist: streamlit>=1.28.0; extra == "dashboard"
+Requires-Dist: streamlit>=1.50.0; extra == "dashboard"
 Requires-Dist: plotly>=5.17.0; extra == "dashboard"
 Requires-Dist: altair<5.0.0,>=4.2.1; extra == "dashboard"
 Requires-Dist: streamlit-autorefresh>=1.0.1; extra == "dashboard"
+Requires-Dist: typer>=0.9.0; extra == "dashboard"
+Provides-Extra: web
+Requires-Dist: flask<3.0.0,>=2.3.0; extra == "web"
+Requires-Dist: fastapi>=0.110.0; extra == "web"
+Requires-Dist: uvicorn>=0.27.0; extra == "web"
+Provides-Extra: dev
+Requires-Dist: pytest>=8.4.1; extra == "dev"
+Requires-Dist: pytest-cov<5.0.0,>=4.1.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.14.1; extra == "dev"
+Requires-Dist: pytest-asyncio>=1.1.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: isort<6.0.0,>=5.12.0; extra == "dev"
+Requires-Dist: mypy<2.0.0,>=1.7.1; extra == "dev"
+Requires-Dist: build>=1.2.2.post1; extra == "dev"
+Requires-Dist: maturin>=1.9.3; extra == "dev"
+Provides-Extra: all
+Requires-Dist: mcli[async-extras,chat,dashboard,database,documents,gpu,ml,monitoring,streaming,video,viz,web]; extra == "all"
 Dynamic: license-file
 
 # MCLI
