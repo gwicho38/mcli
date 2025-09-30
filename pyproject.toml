@@ -1,5 +1,5 @@
 [project]
-name = "mcli"
+name = "mcli-framework"
 version = "7.0.0"
 description = "🚀 High-performance CLI framework with Rust extensions, AI chat, and stunning visuals"
 readme = "README.md"

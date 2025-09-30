@@ -168,7 +168,7 @@ jobs:
     runs-on: self-hosted
     environment:
       name: test-pypi
-      url: https://test.pypi.org/p/mcli
+      url: https://test.pypi.org/p/mcli-framework
 
     steps:
       - name: Download distributions
@@ -195,7 +195,7 @@ jobs:
     runs-on: self-hosted
     environment:
       name: pypi
-      url: https://pypi.org/p/mcli
+      url: https://pypi.org/p/mcli-framework
 
     steps:
       - name: Download distributions

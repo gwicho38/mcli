@@ -25,13 +25,13 @@ The easiest way to install mcli is from PyPI:
 
 ```bash
 # Install latest version (includes all features)
-pip install mcli
+pip install mcli-framework
 
 # Or with UV (recommended)
-uv pip install mcli
+uv pip install mcli-framework
 
 # Optional: GPU support (CUDA required)
-pip install "mcli[gpu]"
+pip install "mcli-framework[gpu]"
 ```
 
 **Note:** As of v7.0.0, all features are included by default. GPU support is optional as it requires CUDA.

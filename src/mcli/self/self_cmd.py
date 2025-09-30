@@ -1149,7 +1149,7 @@ def update(check: bool, pre: bool, yes: bool):
     try:
         # Get current version
         try:
-            current_version = get_version("mcli")
+            current_version = get_version("mcli-framework")
         except Exception:
             console.print("[yellow]⚠️  Could not determine current version[/yellow]")
             current_version = "unknown"
@@ -1159,7 +1159,7 @@ def update(check: bool, pre: bool, yes: bool):
 
         # Check PyPI for latest version
         try:
-            response = requests.get("https://pypi.org/pypi/mcli/json", timeout=10)
+            response = requests.get("https://pypi.org/pypi/mcli-framework/json", timeout=10)
             response.raise_for_status()
             pypi_data = response.json()
         except requests.RequestException as e:
@@ -1219,7 +1219,7 @@ def update(check: bool, pre: bool, yes: bool):
         console.print(f"[cyan]📦 Installing mcli {latest_version}...[/cyan]")
 
         # Use pip to upgrade
-        cmd = [sys.executable, "-m", "pip", "install", "--upgrade", "mcli"]
+        cmd = [sys.executable, "-m", "pip", "install", "--upgrade", "mcli-framework"]
         if pre:
             cmd.append("--pre")
 
