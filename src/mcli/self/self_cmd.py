@@ -1129,11 +1129,53 @@ def dashboard(refresh: float, once: bool):
         console.print(f"[red]Error launching dashboard: {e}[/red]")
 
 
+def check_ci_status(version: str) -> tuple[bool, Optional[str]]:
+    """
+    Check GitHub Actions CI status for the main branch.
+    Returns (passing, url) tuple.
+    """
+    try:
+        import requests
+
+        response = requests.get(
+            "https://api.github.com/repos/gwicho38/mcli/actions/runs",
+            params={"per_page": 5},
+            headers={
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "mcli-cli"
+            },
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            runs = data.get("workflow_runs", [])
+
+            # Find the most recent completed run for main branch
+            main_runs = [
+                run for run in runs
+                if run.get("head_branch") == "main" and run.get("status") == "completed"
+            ]
+
+            if main_runs:
+                latest_run = main_runs[0]
+                passing = latest_run.get("conclusion") == "success"
+                url = latest_run.get("html_url")
+                return (passing, url)
+
+        # If we can't check CI, don't block the update
+        return (True, None)
+    except Exception:
+        # On error, don't block the update
+        return (True, None)
+
+
 @self_app.command()
 @click.option("--check", is_flag=True, help="Only check for updates, don't install")
 @click.option("--pre", is_flag=True, help="Include pre-release versions")
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
-def update(check: bool, pre: bool, yes: bool):
+@click.option("--skip-ci-check", is_flag=True, help="Skip CI status check and install anyway")
+def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
     """🔄 Check for and install mcli updates from PyPI"""
     import subprocess
     import sys
@@ -1214,6 +1256,21 @@ def update(check: bool, pre: bool, yes: bool):
             if not Confirm.ask(f"[yellow]Install mcli {latest_version}?[/yellow]"):
                 console.print("[yellow]Update cancelled[/yellow]")
                 return
+
+        # Check CI status before installing (unless skipped)
+        if not skip_ci_check:
+            console.print("[cyan]🔍 Checking CI status...[/cyan]")
+            ci_passing, ci_url = check_ci_status(latest_version)
+
+            if not ci_passing:
+                console.print("[red]✗ CI build is failing for the latest version[/red]")
+                if ci_url:
+                    console.print(f"[yellow]  View CI status: {ci_url}[/yellow]")
+                console.print("[yellow]⚠️  Update blocked to prevent installing a broken version[/yellow]")
+                console.print("[dim]  Use --skip-ci-check to install anyway (not recommended)[/dim]")
+                return
+            else:
+                console.print("[green]✓ CI build is passing[/green]")
 
         # Install update
         console.print(f"[cyan]📦 Installing mcli {latest_version}...[/cyan]")
