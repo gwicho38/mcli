@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 
 import click
+import psutil
 
 from mcli.lib.logger.logger import get_logger
 from mcli.workflow.model_service.lightweight_model_server import (
@@ -221,6 +222,107 @@ def status(port: int):
         click.echo(f"⏰ Server on port {port} is not responding")
     except Exception as e:
         click.echo(f"❌ Error checking server: {e}")
+
+
+@model.command()
+@click.option("--port", "-p", default=8080, help="Port where server is running")
+def stop(port: int):
+    """Stop the lightweight model server."""
+    import requests
+    import psutil
+
+    try:
+        # First check if server is running
+        try:
+            response = requests.get(f"http://localhost:{port}/health", timeout=2)
+            if response.status_code != 200:
+                click.echo(f"❌ No server running on port {port}")
+                return
+        except requests.exceptions.ConnectionError:
+            click.echo(f"❌ No server running on port {port}")
+            return
+
+        # Find and kill the process using the port
+        for proc in psutil.process_iter(["pid", "name", "connections"]):
+            try:
+                connections = proc.info.get("connections")
+                if connections:
+                    for conn in connections:
+                        if hasattr(conn, "laddr") and conn.laddr.port == port:
+                            click.echo(f"🛑 Stopping server (PID: {proc.pid})...")
+                            proc.terminate()
+                            proc.wait(timeout=5)
+                            click.echo("✅ Server stopped successfully")
+                            return
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.TimeoutExpired):
+                continue
+
+        click.echo("⚠️  Could not find server process")
+
+    except Exception as e:
+        click.echo(f"❌ Error stopping server: {e}")
+
+
+@model.command()
+@click.argument("model_name")
+def pull(model_name: str):
+    """Pull (download) a specific lightweight model."""
+    if model_name not in LIGHTWEIGHT_MODELS:
+        click.echo(f"❌ Model '{model_name}' not found.")
+        click.echo("Available models:")
+        for key in LIGHTWEIGHT_MODELS.keys():
+            click.echo(f"  • {key}")
+        sys.exit(1)
+
+    server = LightweightModelServer()
+
+    click.echo(f"Pulling model: {model_name}")
+    success = server.download_and_load_model(model_name)
+
+    if success:
+        click.echo(f"✅ Successfully pulled {model_name}")
+    else:
+        click.echo(f"❌ Failed to pull {model_name}")
+        sys.exit(1)
+
+
+@model.command()
+@click.argument("model_name")
+@click.option("--force", "-f", is_flag=True, help="Force deletion without confirmation")
+def delete(model_name: str, force: bool):
+    """Delete a downloaded lightweight model."""
+    server = LightweightModelServer()
+    downloaded_models = server.downloader.get_downloaded_models()
+
+    if model_name not in downloaded_models:
+        click.echo(f"❌ Model '{model_name}' not found.")
+        click.echo("Downloaded models:")
+        if downloaded_models:
+            for model in downloaded_models:
+                click.echo(f"  • {model}")
+        else:
+            click.echo("  (none)")
+        sys.exit(1)
+
+    # Confirm deletion unless --force is used
+    if not force:
+        model_info = LIGHTWEIGHT_MODELS.get(model_name, {})
+        name = model_info.get("name", model_name)
+        size = model_info.get("size_mb", "unknown")
+        click.echo(f"⚠️  About to delete:")
+        click.echo(f"   Model: {name}")
+        click.echo(f"   Size: {size} MB")
+        if not click.confirm("Are you sure you want to delete this model?"):
+            click.echo("❌ Deletion cancelled")
+            return
+
+    success = server.delete_model(model_name)
+
+    if success:
+        click.echo(f"✅ Successfully deleted {model_name}")
+    else:
+        click.echo(f"❌ Failed to delete {model_name}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

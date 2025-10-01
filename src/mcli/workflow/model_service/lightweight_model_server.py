@@ -566,6 +566,43 @@ class LightweightModelServer:
         else:
             return "distilbert-base-uncased"  # Standard small model
 
+    def stop_server(self) -> bool:
+        """Stop the lightweight server"""
+        if not self.running:
+            print("⚠️  Server is not running")
+            return False
+
+        try:
+            self.running = False
+            print("🛑 Server stopped")
+            return True
+        except Exception as e:
+            print(f"❌ Error stopping server: {e}")
+            return False
+
+    def delete_model(self, model_key: str) -> bool:
+        """Delete a downloaded model"""
+        try:
+            model_dir = self.models_dir / model_key
+
+            if not model_dir.exists():
+                print(f"⚠️  Model '{model_key}' not found")
+                return False
+
+            # Remove from loaded models if present
+            if model_key in self.loaded_models:
+                del self.loaded_models[model_key]
+                print(f"✅ Unloaded model: {model_key}")
+
+            # Delete the model directory
+            shutil.rmtree(model_dir)
+            print(f"✅ Deleted model: {model_key}")
+            return True
+
+        except Exception as e:
+            print(f"❌ Error deleting model {model_key}: {e}")
+            return False
+
 
 def create_simple_client():
     """Create a simple client script for testing"""

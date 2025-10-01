@@ -137,8 +137,12 @@ LAZY_COMMAND_COMPLETIONS = {
         "subcommands": [
             "download",
             "list",
-            "remove",
-            "info"
+            "start",
+            "stop",
+            "pull",
+            "delete",
+            "recommend",
+            "status"
         ]
     },
     "cron-test": {
