@@ -774,18 +774,15 @@ def logs(type: str, lines: int, follow: bool, date: str, grep: str, level: str):
     from datetime import datetime
     from pathlib import Path
 
-    # Find the logs directory
-    current_file = Path(__file__)
-    # Go up 5 levels: file -> self -> mcli -> src -> repo_root
-    project_root = current_file.parents[4]
-    logs_dir = project_root / "logs"
+    # Import get_logs_dir to get the correct logs directory
+    from mcli.lib.paths import get_logs_dir
 
-    # Alternative: try current working directory first
-    if not logs_dir.exists():
-        logs_dir = Path.cwd() / "logs"
+    # Get the logs directory (creates it if it doesn't exist)
+    logs_dir = get_logs_dir()
 
     if not logs_dir.exists():
         click.echo("❌ Logs directory not found", err=True)
+        click.echo(f"Expected location: {logs_dir}", err=True)
         return
 
     # Determine which log files to read

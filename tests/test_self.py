@@ -77,4 +77,35 @@ def test_plugin_update_missing_required():
     runner = CliRunner()
     result = runner.invoke(self_app, ['plugin', 'update'])
     assert result.exit_code != 0
-    assert 'Missing argument' in result.output 
+    assert 'Missing argument' in result.output
+
+
+def test_logs_help():
+    """Test that logs command shows help text"""
+    runner = CliRunner()
+    result = runner.invoke(self_app, ['logs', '--help'])
+    assert result.exit_code == 0
+    assert 'Display runtime logs' in result.output
+
+
+def test_logs_uses_correct_directory():
+    """Test that logs command uses get_logs_dir() from mcli.lib.paths"""
+    from mcli.lib.paths import get_logs_dir
+    from pathlib import Path
+    import tempfile
+
+    runner = CliRunner()
+
+    # Get the expected logs directory
+    expected_logs_dir = get_logs_dir()
+
+    # The logs directory should be in ~/.mcli/logs
+    assert expected_logs_dir.exists()
+    assert str(expected_logs_dir).endswith('.mcli/logs') or str(expected_logs_dir).endswith('.mcli\\logs')
+
+    # Run the logs command - it should not error even if no log files exist
+    # (it will just show no logs, which is fine)
+    result = runner.invoke(self_app, ['logs'])
+
+    # Should not show "Logs directory not found" error
+    assert 'Logs directory not found' not in result.output
