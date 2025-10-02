@@ -293,6 +293,251 @@ class TestModelCommands:
         mock_server.download_and_load_model.assert_called()
 
 
+class TestModelCommandEdgeCases:
+    """Test suite for model command edge cases and error paths"""
+
+    def setup_method(self):
+        """Setup test environment"""
+        self.runner = CliRunner()
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_list_with_system_info_flag(self, mock_server_class):
+        """Test list command with --system-info flag"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.get_system_info.return_value = {
+            'cpu_count': 8,
+            'memory_gb': 16.0,
+            'disk_free_gb': 200.0
+        }
+        mock_server.recommend_model.return_value = "distilbert-base-uncased"
+        mock_server.downloader.get_downloaded_models.return_value = []
+
+        result = self.runner.invoke(model, ['list', '--system-info'])
+
+        assert result.exit_code == 0
+        assert 'System Information' in result.output
+        assert 'CPU Cores: 8' in result.output
+        assert 'RAM: 16.0 GB' in result.output
+        assert 'Recommended Model: distilbert-base-uncased' in result.output
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_list_with_list_downloaded_flag(self, mock_server_class):
+        """Test list command with --list-downloaded flag"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.downloader.get_downloaded_models.return_value = ['distilbert-base-uncased']
+
+        result = self.runner.invoke(model, ['list', '--list-downloaded'])
+
+        assert result.exit_code == 0
+        assert 'Downloaded Models' in result.output
+        assert 'DistilBERT' in result.output
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_list_with_no_downloaded_models(self, mock_server_class):
+        """Test list command when no models are downloaded"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.downloader.get_downloaded_models.return_value = []
+
+        result = self.runner.invoke(model, ['list', '--list-downloaded'])
+
+        assert result.exit_code == 0
+        assert 'No models downloaded yet' in result.output
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_recommend_model_not_downloaded(self, mock_server_class):
+        """Test recommend command when model is not downloaded"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.recommend_model.return_value = "distilbert-base-uncased"
+        mock_server.get_system_info.return_value = {
+            'cpu_count': 4,
+            'memory_gb': 8.0,
+            'disk_free_gb': 100.0
+        }
+        mock_server.downloader.get_downloaded_models.return_value = []
+
+        result = self.runner.invoke(model, ['recommend'])
+
+        assert result.exit_code == 0
+        assert 'To download' in result.output
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_recommend_model_already_downloaded(self, mock_server_class):
+        """Test recommend command when model is already downloaded"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.recommend_model.return_value = "distilbert-base-uncased"
+        mock_server.get_system_info.return_value = {
+            'cpu_count': 4,
+            'memory_gb': 8.0,
+            'disk_free_gb': 100.0
+        }
+        mock_server.downloader.get_downloaded_models.return_value = ['distilbert-base-uncased']
+
+        result = self.runner.invoke(model, ['recommend'])
+
+        assert result.exit_code == 0
+        assert 'already downloaded' in result.output
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_start_with_invalid_model(self, mock_server_class):
+        """Test start command with invalid model name"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+
+        result = self.runner.invoke(model, ['start', '--model', 'invalid-model'])
+
+        assert result.exit_code == 1
+        assert 'not found' in result.output
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_start_without_auto_download_and_model_not_downloaded(self, mock_server_class):
+        """Test start command when model not downloaded and auto-download disabled"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.recommend_model.return_value = "distilbert-base-uncased"
+        mock_server.downloader.get_downloaded_models.return_value = []
+
+        result = self.runner.invoke(model, ['start', '--no-auto-download'])
+
+        assert result.exit_code != 0  # Should fail (could be 1 or 2 depending on click version)
+        assert 'not found locally' in result.output or 'auto-download' in result.output
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_start_with_explicit_port(self, mock_server_class):
+        """Test start command with explicit port option"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.recommend_model.return_value = "distilbert-base-uncased"
+        mock_server.downloader.get_downloaded_models.return_value = ['distilbert-base-uncased']
+        mock_server.download_and_load_model.return_value = True
+
+        # Use signal to interrupt the infinite loop quickly
+        import signal
+
+        def timeout_handler(signum, frame):
+            raise KeyboardInterrupt()
+
+        old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(1)
+
+        try:
+            result = self.runner.invoke(model, ['start', '--port', '9999'])
+        except KeyboardInterrupt:
+            pass
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
+
+        # Verify the server was created with the specified port (click passes as string)
+        mock_server_class.assert_called_with(port='9999')
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_start_model_load_failure(self, mock_server_class):
+        """Test start command when model loading fails"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.recommend_model.return_value = "distilbert-base-uncased"
+        mock_server.downloader.get_downloaded_models.return_value = ['distilbert-base-uncased']
+        mock_server.download_and_load_model.return_value = False
+
+        result = self.runner.invoke(model, ['start'])
+
+        assert result.exit_code == 1
+        assert 'Failed to load' in result.output
+
+    def test_status_with_timeout(self):
+        """Test status command when server times out"""
+        import requests
+
+        with patch('requests.get') as mock_get:
+            mock_get.side_effect = requests.exceptions.Timeout()
+
+            result = self.runner.invoke(model, ['status'])
+
+            assert result.exit_code == 0
+            assert 'not responding' in result.output
+
+    def test_status_with_exception(self):
+        """Test status command with unexpected exception"""
+        with patch('requests.get') as mock_get:
+            mock_get.side_effect = Exception("Unexpected error")
+
+            result = self.runner.invoke(model, ['status'])
+
+            assert result.exit_code == 0
+            assert 'Error checking server' in result.output
+
+    def test_status_with_no_models_loaded(self):
+        """Test status command when server has no models loaded"""
+        with patch('requests.get') as mock_get:
+            mock_health = Mock()
+            mock_health.status_code = 200
+
+            mock_models = Mock()
+            mock_models.status_code = 200
+            mock_models.json.return_value = {"models": []}
+
+            mock_get.side_effect = [mock_health, mock_models]
+
+            result = self.runner.invoke(model, ['status'])
+
+            assert result.exit_code == 0
+            assert 'No models currently loaded' in result.output
+
+    def test_status_with_non_200_response(self):
+        """Test status command when server returns non-200 status"""
+        with patch('requests.get') as mock_get:
+            mock_response = Mock()
+            mock_response.status_code = 500
+
+            mock_get.return_value = mock_response
+
+            result = self.runner.invoke(model, ['status'])
+
+            assert result.exit_code == 0
+            assert 'responded with status 500' in result.output
+
+    def test_stop_with_explicit_port(self):
+        """Test stop command with explicit port option"""
+        import requests
+
+        with patch('requests.get') as mock_get:
+            mock_get.side_effect = requests.exceptions.ConnectionError()
+
+            result = self.runner.invoke(model, ['stop', '--port', '9999'])
+
+            assert result.exit_code == 0
+            # Should try to connect to the specified port
+            assert any('9999' in str(call) for call in mock_get.call_args_list)
+
+    def test_stop_with_server_exception(self):
+        """Test stop command with unexpected exception"""
+        with patch('requests.get') as mock_get:
+            mock_get.side_effect = Exception("Unexpected error")
+
+            result = self.runner.invoke(model, ['stop'])
+
+            assert result.exit_code == 0
+            assert 'Error stopping server' in result.output
+
+    @patch('mcli.app.model_cmd.LightweightModelServer')
+    def test_delete_with_no_downloaded_models(self, mock_server_class):
+        """Test delete command when no models are downloaded"""
+        mock_server = Mock()
+        mock_server_class.return_value = mock_server
+        mock_server.downloader.get_downloaded_models.return_value = []
+
+        result = self.runner.invoke(model, ['delete', 'distilbert-base-uncased', '--force'])
+
+        assert result.exit_code == 1
+        assert 'not found' in result.output
+        assert '(none)' in result.output
+
+
 class TestModelCommandHelp:
     """Test suite for model command help text"""
 
