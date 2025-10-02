@@ -375,3 +375,95 @@ def test_update_installation_failure(mock_pypi_response):
 
         assert result.exit_code == 0
         assert "Update failed" in result.output or "failed" in result.output.lower()
+
+
+def test_update_uses_uv_tool_when_detected(mock_pypi_response):
+    """Test update uses 'uv tool install' when running from uv tool environment"""
+    from unittest.mock import patch, Mock
+    import sys
+
+    runner = CliRunner()
+
+    with patch('importlib.metadata.version') as mock_version, \
+         patch('requests.get') as mock_get, \
+         patch('subprocess.run') as mock_subprocess, \
+         patch('mcli.self.self_cmd.check_ci_status') as mock_ci, \
+         patch('sys.executable', '/Users/test/.local/share/uv/tools/mcli-framework/bin/python'):
+
+        # Mock current version older than latest
+        mock_version.return_value = "7.0.4"
+
+        # Mock PyPI response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = mock_pypi_response
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        # Mock CI passing
+        mock_ci.return_value = (True, None)
+
+        # Mock successful subprocess
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stderr = ""
+        mock_subprocess.return_value = mock_result
+
+        result = runner.invoke(self_app, ['update', '--yes'])
+
+        assert result.exit_code == 0
+        assert "Successfully updated" in result.output
+
+        # Verify uv tool install was called
+        mock_subprocess.assert_called_once()
+        call_args = mock_subprocess.call_args[0][0]
+        assert call_args[0] == "uv"
+        assert call_args[1] == "tool"
+        assert call_args[2] == "install"
+        assert "--force" in call_args
+
+
+def test_update_uses_pip_when_not_uv_tool(mock_pypi_response):
+    """Test update uses pip when not running from uv tool environment"""
+    from unittest.mock import patch, Mock
+    import sys
+
+    runner = CliRunner()
+
+    with patch('importlib.metadata.version') as mock_version, \
+         patch('requests.get') as mock_get, \
+         patch('subprocess.run') as mock_subprocess, \
+         patch('mcli.self.self_cmd.check_ci_status') as mock_ci, \
+         patch('sys.executable', '/usr/local/bin/python3'):
+
+        # Mock current version older than latest
+        mock_version.return_value = "7.0.4"
+
+        # Mock PyPI response
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = mock_pypi_response
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        # Mock CI passing
+        mock_ci.return_value = (True, None)
+
+        # Mock successful subprocess
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stderr = ""
+        mock_subprocess.return_value = mock_result
+
+        result = runner.invoke(self_app, ['update', '--yes'])
+
+        assert result.exit_code == 0
+        assert "Successfully updated" in result.output
+
+        # Verify pip was called
+        mock_subprocess.assert_called_once()
+        call_args = mock_subprocess.call_args[0][0]
+        assert "-m" in call_args
+        assert "pip" in call_args
+        assert "install" in call_args
+        assert "--upgrade" in call_args
