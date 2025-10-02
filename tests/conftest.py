@@ -2,6 +2,7 @@
 Pytest configuration and fixtures for MCLI tests.
 
 This file provides common fixtures and configuration for all tests.
+Shared fixtures from tests/fixtures/ are automatically imported and available globally.
 """
 
 import os
@@ -10,6 +11,16 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+
+# Import shared fixtures to make them globally available
+# These fixtures can now be used in any test without explicit imports
+pytest_plugins = [
+    "fixtures.model_fixtures",
+    "fixtures.chat_fixtures",
+    "fixtures.cli_fixtures",
+    "fixtures.data_fixtures",
+    "fixtures.db_fixtures",
+]
 
 # Add src directory to Python path
 project_root = Path(__file__).parent.parent
@@ -109,6 +120,9 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
     config.addinivalue_line("markers", "integration: marks tests as integration tests")
     config.addinivalue_line("markers", "unit: marks tests as unit tests")
+    config.addinivalue_line("markers", "e2e: marks tests as end-to-end tests")
+    config.addinivalue_line("markers", "cli: marks tests as CLI tests")
+    config.addinivalue_line("markers", "api: marks tests as API tests (require network/credentials)")
     config.addinivalue_line("markers", "requires_api: marks tests requiring API credentials")
     config.addinivalue_line("markers", "requires_db: marks tests requiring database")
 
