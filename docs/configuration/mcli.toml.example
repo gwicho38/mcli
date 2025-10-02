@@ -1,0 +1,40 @@
+# MCLI Framework Configuration Example
+# Copy this file to ~/.mcli/config.toml to customize settings
+
+[model]
+# Port for the lightweight model server
+# Default: 51234 (ephemeral port range to avoid conflicts)
+# Can be overridden with --port flag
+server_port = 51234
+
+# Default model to use if not specified
+# default_model = "distilbert-base-uncased"
+
+[chat]
+# Default LLM provider: openai, anthropic, ollama
+provider = "openai"
+
+# Model for chat completions
+model = "gpt-4"
+
+# Temperature for responses (0.0 - 2.0)
+temperature = 0.7
+
+# Maximum tokens in response
+max_tokens = 2000
+
+[paths]
+# Custom paths for mcli data
+# logs_dir = "~/.mcli/logs"
+# cache_dir = "~/.mcli/cache"
+# models_dir = "~/.mcli/models"
+
+[general]
+# Log level: DEBUG, INFO, WARNING, ERROR
+log_level = "INFO"
+
+# Color theme: default, dark, light
+theme = "default"
+
+# Enable experimental features
+# experimental = false

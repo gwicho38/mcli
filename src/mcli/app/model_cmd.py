@@ -100,15 +100,24 @@ def download(model_name: str):
 
 @model.command()
 @click.option("--model", "-m", help="Specific model to use")
-@click.option("--port", "-p", default=8080, help="Port to run server on")
+@click.option("--port", "-p", default=None, help="Port to run server on (default: from config or 51234)")
 @click.option(
     "--auto-download",
     is_flag=True,
     default=True,
     help="Automatically download model if not available",
 )
-def start(model: Optional[str], port: int, auto_download: bool):
+def start(model: Optional[str], port: Optional[int], auto_download: bool):
     """Start the lightweight model server."""
+    # Load port from config if not specified
+    if port is None:
+        try:
+            from mcli.lib.config.config import load_config
+            config = load_config()
+            port = config.get("model", {}).get("server_port", 51234)
+        except Exception:
+            port = 51234  # Default ephemeral port
+
     server = LightweightModelServer(port=port)
 
     # Determine which model to use
@@ -192,9 +201,18 @@ def recommend():
 
 
 @model.command()
-@click.option("--port", "-p", default=8080, help="Port where server is running")
-def status(port: int):
+@click.option("--port", "-p", default=None, help="Port where server is running (default: from config or 51234)")
+def status(port: Optional[int]):
     """Check status of the lightweight model server."""
+    # Load port from config if not specified
+    if port is None:
+        try:
+            from mcli.lib.config.config import load_config
+            config = load_config()
+            port = config.get("model", {}).get("server_port", 51234)
+        except Exception:
+            port = 51234  # Default ephemeral port
+
     import requests
 
     try:
@@ -225,9 +243,18 @@ def status(port: int):
 
 
 @model.command()
-@click.option("--port", "-p", default=8080, help="Port where server is running")
-def stop(port: int):
+@click.option("--port", "-p", default=None, help="Port where server is running (default: from config or 51234)")
+def stop(port: Optional[int]):
     """Stop the lightweight model server."""
+    # Load port from config if not specified
+    if port is None:
+        try:
+            from mcli.lib.config.config import load_config
+            config = load_config()
+            port = config.get("model", {}).get("server_port", 51234)
+        except Exception:
+            port = 51234  # Default ephemeral port
+
     import requests
     import psutil
 
