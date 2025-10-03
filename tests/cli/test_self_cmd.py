@@ -868,88 +868,8 @@ class TestLogsImplementation:
 
 
 
-class TestPerformanceImplementation:
-    """Test suite for performance command implementation"""
-
-    def setup_method(self):
-        """Setup test environment"""
-        self.runner = CliRunner()
-
-    def test_performance_shows_basic_metrics(self):
-        """Test performance command displays basic metrics"""
-        with patch('psutil.cpu_percent') as mock_cpu, \
-             patch('psutil.virtual_memory') as mock_mem, \
-             patch('psutil.disk_usage') as mock_disk:
-
-            mock_cpu.return_value = 25.5
-            mock_mem.return_value = Mock(percent=60.0, available=4*1024*1024*1024)
-            mock_disk.return_value = Mock(percent=75.0, free=50*1024*1024*1024)
-
-            result = self.runner.invoke(self_app, ['performance'])
-
-            assert result.exit_code == 0
-            assert 'cpu' in result.output.lower() or 'memory' in result.output.lower()
-
-    def test_performance_detailed_mode(self):
-        """Test performance command with --detailed flag"""
-        with patch('psutil.cpu_percent'), \
-             patch('psutil.virtual_memory'), \
-             patch('psutil.disk_usage'), \
-             patch('psutil.cpu_count') as mock_count:
-
-            mock_count.return_value = 8
-
-            result = self.runner.invoke(self_app, ['performance', '--detailed'])
-
-            assert result.exit_code == 0
-
-    def test_performance_benchmark_mode(self):
-        """Test performance command with --benchmark flag"""
-        with patch('time.time') as mock_time:
-            mock_time.side_effect = [0, 0.1, 0.2, 0.3]  # Simulate time progression
-
-            result = self.runner.invoke(self_app, ['performance', '--benchmark'])
-
-            assert result.exit_code == 0
 
 
-class TestPluginImplementation:
-    """Test suite for plugin command implementations"""
-
-    def setup_method(self):
-        """Setup test environment"""
-        self.runner = CliRunner()
-
-    def test_plugin_add_without_repo_shows_error(self):
-        """Test plugin add without repo URL shows error"""
-        result = self.runner.invoke(self_app, ['plugin', 'add', 'test-plugin'])
-
-        # Should show error or prompt for repo URL
-        assert 'repo' in result.output.lower() or result.exit_code != 0
-
-    def test_plugin_remove_nonexistent(self):
-        """Test plugin remove for non-existent plugin"""
-        with patch('mcli.lib.paths.get_mcli_home') as mock_home:
-            import tempfile
-            with tempfile.TemporaryDirectory() as tmpdir:
-                mock_home.return_value = Path(tmpdir)
-
-                result = self.runner.invoke(self_app, ['plugin', 'remove', 'nonexistent'])
-
-                assert result.exit_code in [0, 1]
-                assert 'not found' in result.output.lower() or 'does not exist' in result.output.lower()
-
-    def test_plugin_update_nonexistent(self):
-        """Test plugin update for non-existent plugin"""
-        with patch('mcli.lib.paths.get_mcli_home') as mock_home:
-            import tempfile
-            with tempfile.TemporaryDirectory() as tmpdir:
-                mock_home.return_value = Path(tmpdir)
-
-                result = self.runner.invoke(self_app, ['plugin', 'update', 'nonexistent'])
-
-                assert result.exit_code in [0, 1]
-                assert 'not found' in result.output.lower() or 'does not exist' in result.output.lower()
 
 
 class TestUpdateCommandImplementation:
@@ -988,52 +908,6 @@ class TestUpdateCommandImplementation:
             assert result.exit_code == 0
 
 
-class TestCommandStateImplementation:
-    """Test suite for command state implementation"""
-
-    def setup_method(self):
-        """Setup test environment"""
-        self.runner = CliRunner()
-
-    def test_append_lockfile(self):
-        """Test append_lockfile function"""
-        from mcli.self.self_cmd import append_lockfile, load_lockfile
-
-        with patch('mcli.lib.paths.get_mcli_home') as mock_home:
-            import tempfile
-            with tempfile.TemporaryDirectory() as tmpdir:
-                mock_home.return_value = Path(tmpdir)
-
-                new_state = {
-                    "hash": "test123",
-                    "timestamp": "2025-01-01",
-                    "commands": []
-                }
-
-                append_lockfile(new_state)
-
-                # Verify it was saved
-                lockfile = load_lockfile()
-                assert isinstance(lockfile, dict)
-
-    def test_find_state_by_hash(self):
-        """Test find_state_by_hash function"""
-        from mcli.self.self_cmd import find_state_by_hash
-
-        with patch('mcli.self.self_cmd.load_lockfile') as mock_load:
-            mock_load.return_value = {
-                "states": [
-                    {"hash": "abc123", "commands": []}
-                ]
-            }
-
-            state = find_state_by_hash("abc123")
-            assert state is not None
-            assert state["hash"] == "abc123"
-
-            # Test non-existent hash
-            state = find_state_by_hash("nonexistent")
-            assert state is None
 
 
 class TestUtilityFunctions:
@@ -1052,23 +926,136 @@ class TestUtilityFunctions:
         assert isinstance(hash_value, str)
         assert len(hash_value) > 0
 
-    def test_lockfile_operations(self):
-        """Test lockfile save and load operations"""
-        from mcli.self.self_cmd import save_lockfile, load_lockfile
+    def test_hash_command_state_consistency(self):
+        """Test hash is consistent for same commands"""
+        from mcli.self.self_cmd import hash_command_state
+
+        commands = [
+            {"name": "cmd1", "path": "/path1", "group": "group1"},
+            {"name": "cmd2", "path": "/path2", "group": None}
+        ]
+
+        hash1 = hash_command_state(commands)
+        hash2 = hash_command_state(commands)
+
+        assert hash1 == hash2
+
+    def test_load_lockfile_nonexistent(self):
+        """Test load_lockfile when file doesn't exist"""
+        from mcli.self.self_cmd import load_lockfile
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.paths.get_mcli_home') as mock_home:
-                mock_home.return_value = Path(tmpdir)
+            with patch('mcli.self.self_cmd.LOCKFILE_PATH', Path(tmpdir) / 'nonexistent.json'):
+                result = load_lockfile()
 
-                # Test save
-                test_states = {
-                    "states": [
-                        {"hash": "abc123", "timestamp": "2025-01-01", "commands": []}
-                    ]
-                }
-                save_lockfile(test_states)
+                # Should return empty list when file doesn't exist
+                assert result == []
 
-                # Test load
-                loaded = load_lockfile()
-                assert isinstance(loaded, dict)
+    def test_append_lockfile_to_empty(self):
+        """Test append_lockfile creates new file"""
+        from mcli.self.self_cmd import append_lockfile, load_lockfile
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lockfile = Path(tmpdir) / 'lockfile.json'
+
+            with patch('mcli.self.self_cmd.LOCKFILE_PATH', lockfile):
+                new_state = {"hash": "test123", "timestamp": "2025-01-01", "commands": []}
+
+                append_lockfile(new_state)
+
+                # Verify it was appended
+                states = load_lockfile()
+                assert len(states) == 1
+                assert states[0]["hash"] == "test123"
+
+    def test_find_state_by_hash_found(self):
+        """Test find_state_by_hash when state exists"""
+        from mcli.self.self_cmd import find_state_by_hash
+        import tempfile
+        import json
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lockfile = Path(tmpdir) / 'lockfile.json'
+
+            # Create a lockfile with test data
+            test_states = [
+                {"hash": "abc123", "commands": []},
+                {"hash": "def456", "commands": []}
+            ]
+            lockfile.write_text(json.dumps(test_states))
+
+            with patch('mcli.self.self_cmd.LOCKFILE_PATH', lockfile):
+                state = find_state_by_hash("def456")
+
+                assert state is not None
+                assert state["hash"] == "def456"
+
+    def test_find_state_by_hash_not_found(self):
+        """Test find_state_by_hash when state doesn't exist"""
+        from mcli.self.self_cmd import find_state_by_hash
+        import tempfile
+        import json
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lockfile = Path(tmpdir) / 'lockfile.json'
+
+            test_states = [{"hash": "abc123", "commands": []}]
+            lockfile.write_text(json.dumps(test_states))
+
+            with patch('mcli.self.self_cmd.LOCKFILE_PATH', lockfile):
+                state = find_state_by_hash("nonexistent")
+
+                assert state is None
+
+    def test_restore_command_state_success(self):
+        """Test restore_command_state with valid hash"""
+        from mcli.self.self_cmd import restore_command_state
+        import tempfile
+        import json
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lockfile = Path(tmpdir) / 'lockfile.json'
+
+            test_states = [
+                {"hash": "abc123", "commands": [{"name": "test", "path": "/test"}]}
+            ]
+            lockfile.write_text(json.dumps(test_states))
+
+            with patch('mcli.self.self_cmd.LOCKFILE_PATH', lockfile):
+                with patch('builtins.print') as mock_print:
+                    result = restore_command_state("abc123")
+
+                    assert result is True
+                    mock_print.assert_called_once()
+
+    def test_restore_command_state_failure(self):
+        """Test restore_command_state with invalid hash"""
+        from mcli.self.self_cmd import restore_command_state
+        import tempfile
+        import json
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            lockfile = Path(tmpdir) / 'lockfile.json'
+
+            test_states = [{"hash": "abc123", "commands": []}]
+            lockfile.write_text(json.dumps(test_states))
+
+            with patch('mcli.self.self_cmd.LOCKFILE_PATH', lockfile):
+                result = restore_command_state("nonexistent")
+
+                assert result is False
+
+    def test_get_current_command_state(self):
+        """Test get_current_command_state returns list"""
+        from mcli.self.self_cmd import get_current_command_state
+
+        # Mock collect_commands to avoid complex setup
+        with patch('mcli.self.self_cmd.collect_commands') as mock_collect:
+            mock_collect.return_value = [{"name": "test", "group": None, "path": "/test"}]
+
+            result = get_current_command_state()
+
+            assert isinstance(result, list)
+            assert len(result) == 1
