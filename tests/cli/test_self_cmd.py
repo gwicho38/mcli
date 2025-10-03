@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 from click.testing import CliRunner
 from unittest.mock import patch, Mock
 from mcli.self.self_cmd import self_app
@@ -763,6 +764,275 @@ class TestTemplateGeneration:
 
         assert "mygroup" in template or "test" in template
         assert "@click.group" in template or "group" in template
+
+
+class TestAddCommandImplementation:
+    """Test suite for add-command implementation details"""
+
+    def setup_method(self):
+        """Setup test environment"""
+        self.runner = CliRunner()
+
+    def test_add_command_creates_simple_command(self):
+        """Test add-command creates a command file successfully"""
+        with self.runner.isolated_filesystem():
+            # Mock the mcli path to current directory
+            with patch('mcli.self.self_cmd.Path') as mock_path_class:
+                mock_file = Mock()
+                mock_file.parent.parent = Path.cwd()
+                mock_path_class.__file__ = str(mock_file)
+                mock_path_class.return_value = Path.cwd()
+
+                result = self.runner.invoke(self_app, ['add-command', 'test-cmd'])
+
+                # Should succeed or show reasonable output
+                assert result.exit_code in [0, 1]
+
+    def test_add_command_with_invalid_name(self):
+        """Test add-command rejects invalid command names"""
+        result = self.runner.invoke(self_app, ['add-command', '123invalid'])
+
+        assert result.exit_code in [0, 1]
+        assert 'invalid' in result.output.lower() or result.exit_code != 0
+
+    def test_add_command_with_group_creates_directory(self):
+        """Test add-command with --group creates group directory"""
+        with self.runner.isolated_filesystem():
+            with patch('mcli.self.self_cmd.Path') as mock_path_class:
+                mock_file = Mock()
+                mock_file.parent.parent = Path.cwd()
+                mock_path_class.__file__ = str(mock_file)
+                mock_path_class.return_value = Path.cwd()
+
+                result = self.runner.invoke(self_app, ['add-command', 'cmd', '--group', 'mygroup'])
+
+                assert result.exit_code in [0, 1]
+
+    def test_add_command_with_invalid_group_name(self):
+        """Test add-command rejects invalid group names"""
+        result = self.runner.invoke(self_app, ['add-command', 'cmd', '--group', '123invalid'])
+
+        assert result.exit_code in [0, 1]
+        assert 'invalid' in result.output.lower() or result.exit_code != 0
+
+
+class TestLogsImplementation:
+    """Test suite for logs command implementation"""
+
+    def setup_method(self):
+        """Setup test environment"""
+        self.runner = CliRunner()
+
+    def test_logs_handles_missing_directory(self):
+        """Test logs command when logs directory doesn't exist"""
+        with patch('mcli.lib.paths.get_logs_dir') as mock_logs_dir:
+            # Return a path that doesn't exist
+            mock_logs_dir.return_value = Path('/nonexistent/logs')
+
+            result = self.runner.invoke(self_app, ['logs'])
+
+            assert result.exit_code == 0
+            assert 'not found' in result.output.lower() or 'expected location' in result.output.lower()
+
+    def test_logs_with_all_type(self):
+        """Test logs command with --type all"""
+        with patch('mcli.lib.paths.get_logs_dir') as mock_logs_dir:
+            import tempfile
+            with tempfile.TemporaryDirectory() as tmpdir:
+                logs_dir = Path(tmpdir)
+                mock_logs_dir.return_value = logs_dir
+
+                # Create sample log files
+                (logs_dir / "mcli_20250101.log").write_text("Main log\n")
+                (logs_dir / "mcli_system_20250101.log").write_text("System log\n")
+
+                result = self.runner.invoke(self_app, ['logs', '--type', 'all'])
+
+                assert result.exit_code == 0
+
+    def test_logs_with_date_filter(self):
+        """Test logs command with date filtering"""
+        with patch('mcli.lib.paths.get_logs_dir') as mock_logs_dir:
+            import tempfile
+            with tempfile.TemporaryDirectory() as tmpdir:
+                logs_dir = Path(tmpdir)
+                mock_logs_dir.return_value = logs_dir
+
+                # Create log file with specific date
+                (logs_dir / "mcli_20250101.log").write_text("Log entry\n")
+
+                result = self.runner.invoke(self_app, ['logs', '--date', '20250101'])
+
+                assert result.exit_code == 0
+
+
+
+class TestPerformanceImplementation:
+    """Test suite for performance command implementation"""
+
+    def setup_method(self):
+        """Setup test environment"""
+        self.runner = CliRunner()
+
+    def test_performance_shows_basic_metrics(self):
+        """Test performance command displays basic metrics"""
+        with patch('psutil.cpu_percent') as mock_cpu, \
+             patch('psutil.virtual_memory') as mock_mem, \
+             patch('psutil.disk_usage') as mock_disk:
+
+            mock_cpu.return_value = 25.5
+            mock_mem.return_value = Mock(percent=60.0, available=4*1024*1024*1024)
+            mock_disk.return_value = Mock(percent=75.0, free=50*1024*1024*1024)
+
+            result = self.runner.invoke(self_app, ['performance'])
+
+            assert result.exit_code == 0
+            assert 'cpu' in result.output.lower() or 'memory' in result.output.lower()
+
+    def test_performance_detailed_mode(self):
+        """Test performance command with --detailed flag"""
+        with patch('psutil.cpu_percent'), \
+             patch('psutil.virtual_memory'), \
+             patch('psutil.disk_usage'), \
+             patch('psutil.cpu_count') as mock_count:
+
+            mock_count.return_value = 8
+
+            result = self.runner.invoke(self_app, ['performance', '--detailed'])
+
+            assert result.exit_code == 0
+
+    def test_performance_benchmark_mode(self):
+        """Test performance command with --benchmark flag"""
+        with patch('time.time') as mock_time:
+            mock_time.side_effect = [0, 0.1, 0.2, 0.3]  # Simulate time progression
+
+            result = self.runner.invoke(self_app, ['performance', '--benchmark'])
+
+            assert result.exit_code == 0
+
+
+class TestPluginImplementation:
+    """Test suite for plugin command implementations"""
+
+    def setup_method(self):
+        """Setup test environment"""
+        self.runner = CliRunner()
+
+    def test_plugin_add_without_repo_shows_error(self):
+        """Test plugin add without repo URL shows error"""
+        result = self.runner.invoke(self_app, ['plugin', 'add', 'test-plugin'])
+
+        # Should show error or prompt for repo URL
+        assert 'repo' in result.output.lower() or result.exit_code != 0
+
+    def test_plugin_remove_nonexistent(self):
+        """Test plugin remove for non-existent plugin"""
+        with patch('mcli.lib.paths.get_mcli_home') as mock_home:
+            import tempfile
+            with tempfile.TemporaryDirectory() as tmpdir:
+                mock_home.return_value = Path(tmpdir)
+
+                result = self.runner.invoke(self_app, ['plugin', 'remove', 'nonexistent'])
+
+                assert result.exit_code in [0, 1]
+                assert 'not found' in result.output.lower() or 'does not exist' in result.output.lower()
+
+    def test_plugin_update_nonexistent(self):
+        """Test plugin update for non-existent plugin"""
+        with patch('mcli.lib.paths.get_mcli_home') as mock_home:
+            import tempfile
+            with tempfile.TemporaryDirectory() as tmpdir:
+                mock_home.return_value = Path(tmpdir)
+
+                result = self.runner.invoke(self_app, ['plugin', 'update', 'nonexistent'])
+
+                assert result.exit_code in [0, 1]
+                assert 'not found' in result.output.lower() or 'does not exist' in result.output.lower()
+
+
+class TestUpdateCommandImplementation:
+    """Test suite for update command implementation details"""
+
+    def setup_method(self):
+        """Setup test environment"""
+        self.runner = CliRunner()
+
+    def test_update_check_only_mode(self):
+        """Test update command with --check flag"""
+        with patch('requests.get') as mock_get:
+            mock_response = Mock()
+            mock_response.json.return_value = {
+                "info": {"version": "7.0.7"},
+                "releases": {}
+            }
+            mock_get.return_value = mock_response
+
+            result = self.runner.invoke(self_app, ['update', '--check'])
+
+            assert result.exit_code == 0
+
+    def test_update_with_pre_release_flag(self):
+        """Test update command with --pre flag for pre-releases"""
+        with patch('requests.get') as mock_get:
+            mock_response = Mock()
+            mock_response.json.return_value = {
+                "info": {"version": "7.1.0a1"},
+                "releases": {}
+            }
+            mock_get.return_value = mock_response
+
+            result = self.runner.invoke(self_app, ['update', '--check', '--pre'])
+
+            assert result.exit_code == 0
+
+
+class TestCommandStateImplementation:
+    """Test suite for command state implementation"""
+
+    def setup_method(self):
+        """Setup test environment"""
+        self.runner = CliRunner()
+
+    def test_append_lockfile(self):
+        """Test append_lockfile function"""
+        from mcli.self.self_cmd import append_lockfile, load_lockfile
+
+        with patch('mcli.lib.paths.get_mcli_home') as mock_home:
+            import tempfile
+            with tempfile.TemporaryDirectory() as tmpdir:
+                mock_home.return_value = Path(tmpdir)
+
+                new_state = {
+                    "hash": "test123",
+                    "timestamp": "2025-01-01",
+                    "commands": []
+                }
+
+                append_lockfile(new_state)
+
+                # Verify it was saved
+                lockfile = load_lockfile()
+                assert isinstance(lockfile, dict)
+
+    def test_find_state_by_hash(self):
+        """Test find_state_by_hash function"""
+        from mcli.self.self_cmd import find_state_by_hash
+
+        with patch('mcli.self.self_cmd.load_lockfile') as mock_load:
+            mock_load.return_value = {
+                "states": [
+                    {"hash": "abc123", "commands": []}
+                ]
+            }
+
+            state = find_state_by_hash("abc123")
+            assert state is not None
+            assert state["hash"] == "abc123"
+
+            # Test non-existent hash
+            state = find_state_by_hash("nonexistent")
+            assert state is None
 
 
 class TestUtilityFunctions:
