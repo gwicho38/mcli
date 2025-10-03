@@ -1,3 +1,4 @@
+import os
 import pytest
 from pathlib import Path
 from click.testing import CliRunner
@@ -1055,7 +1056,6 @@ class TestUtilityFunctions:
         """Test lockfile save and load operations"""
         from mcli.self.self_cmd import save_lockfile, load_lockfile
         import tempfile
-        from pathlib import Path
 
         with tempfile.TemporaryDirectory() as tmpdir:
             with patch('mcli.lib.paths.get_mcli_home') as mock_home:
