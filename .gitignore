@@ -99,3 +99,8 @@ node_modules/
 # Rust build artifacts
 **/target/
 **/Cargo.lock
+
+# Coverage reports
+coverage.json
+.coverage
+htmlcov/
