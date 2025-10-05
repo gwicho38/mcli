@@ -6,14 +6,15 @@ import asyncio
 import json
 import uuid
 from datetime import datetime
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.json import JSON
 
-from .workflow import run_politician_trading_collection
+from rich.console import Console
+from rich.json import JSON
+from rich.panel import Panel
+from rich.table import Table
+
 from .connectivity import SupabaseConnectivityValidator
 from .monitoring import run_health_check, run_stats_report
+from .workflow import run_politician_trading_collection
 
 console = Console()
 

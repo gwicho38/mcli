@@ -1,11 +1,12 @@
 """Configuration management for ML system"""
 
+import logging
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -1,22 +1,23 @@
 """Populate database with sample data for dashboard testing."""
 
 import asyncio
-from datetime import datetime, timedelta
 import random
+from datetime import datetime, timedelta
+
 import numpy as np
 
-from mcli.ml.database.session import SessionLocal, init_db
-from mcli.ml.database.models import (
-    User,
-    Model,
-    Prediction,
-    Portfolio,
-    Trade,
-    StockData,
-    BacktestResult,
-    ModelStatus,
-)
 from mcli.ml.config import settings
+from mcli.ml.database.models import (
+    BacktestResult,
+    Model,
+    ModelStatus,
+    Portfolio,
+    Prediction,
+    StockData,
+    Trade,
+    User,
+)
+from mcli.ml.database.session import SessionLocal, init_db
 
 
 def populate_sample_data():

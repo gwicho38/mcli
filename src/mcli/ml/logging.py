@@ -1,11 +1,11 @@
 """Logging configuration for ML system"""
 
+import json
 import logging
 import sys
-from pathlib import Path
-from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
-import json
 from datetime import datetime
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from pathlib import Path
 
 from mcli.ml.config import settings
 

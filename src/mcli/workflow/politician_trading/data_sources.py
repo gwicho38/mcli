@@ -8,8 +8,8 @@ Based on 2025 research of available public databases and APIs.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Literal
 from enum import Enum
+from typing import Dict, List, Literal, Optional
 
 
 class DisclosureType(Enum):

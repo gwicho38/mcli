@@ -1,18 +1,18 @@
 """Prediction API routes"""
 
-from typing import List, Optional
 from datetime import datetime, timedelta
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
+from mcli.ml.api.schemas import BatchPredictionRequest, PredictionRequest, PredictionResponse
 from mcli.ml.auth import get_current_active_user
+from mcli.ml.cache import cache_set, cached
+from mcli.ml.database.models import Model, Prediction, StockData, User
 from mcli.ml.database.session import get_db
-from mcli.ml.database.models import User, Prediction, Model, StockData
-from mcli.ml.api.schemas import PredictionRequest, PredictionResponse, BatchPredictionRequest
-from mcli.ml.cache import cached, cache_set
 from mcli.ml.models import get_model_by_id
 
 router = APIRouter()

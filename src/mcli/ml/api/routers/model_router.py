@@ -1,18 +1,18 @@
 """Model management API routes"""
 
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from mcli.ml.auth import get_current_active_user, require_role, Permission
-from mcli.ml.database.session import get_db, get_async_db
-from mcli.ml.database.models import User, Model, ModelStatus, UserRole
-from mcli.ml.api.schemas import ModelCreate, ModelResponse, ModelUpdate, ModelMetrics
+from mcli.ml.api.schemas import ModelCreate, ModelMetrics, ModelResponse, ModelUpdate
+from mcli.ml.auth import Permission, get_current_active_user, require_role
 from mcli.ml.cache import cached
+from mcli.ml.database.models import Model, ModelStatus, User, UserRole
+from mcli.ml.database.session import get_async_db, get_db
 from mcli.ml.tasks import train_model_task
 
 router = APIRouter()

@@ -6,8 +6,10 @@ for bash, zsh, and fish shells.
 """
 
 import os
-import click
 from pathlib import Path
+
+import click
+
 from mcli.lib.ui.styling import success
 
 

@@ -3,11 +3,12 @@ Prediction Engine for Politician Trading Analysis
 Generates stock predictions based on politician trading disclosures
 """
 
-import pandas as pd
-import numpy as np
+from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
-from collections import defaultdict
+
+import numpy as np
+import pandas as pd
 
 
 class PoliticianTradingPredictor:

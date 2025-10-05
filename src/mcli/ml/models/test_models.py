@@ -1,15 +1,16 @@
 """Test script for ensemble models"""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
+
+import logging
+from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
 import torch
-from datetime import datetime, timedelta
-import logging
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -143,13 +144,13 @@ def test_ensemble_models():
     logger.info("Testing ensemble models...")
 
     from ensemble_models import (
+        AttentionStockPredictor,
+        CNNFeatureExtractor,
         DeepEnsembleModel,
         EnsembleConfig,
-        ModelConfig,
-        AttentionStockPredictor,
-        TransformerStockModel,
         LSTMStockPredictor,
-        CNNFeatureExtractor,
+        ModelConfig,
+        TransformerStockModel,
     )
 
     # Generate test data
@@ -243,13 +244,13 @@ def test_recommendation_model():
     """Test recommendation model"""
     logger.info("Testing recommendation model...")
 
-    from recommendation_models import (
-        StockRecommendationModel,
-        RecommendationConfig,
-        PortfolioRecommendation,
-        RecommendationTrainer,
-    )
     from ensemble_models import EnsembleConfig, ModelConfig
+    from recommendation_models import (
+        PortfolioRecommendation,
+        RecommendationConfig,
+        RecommendationTrainer,
+        StockRecommendationModel,
+    )
 
     # Generate test data
     X = generate_mock_features(300, 120)
@@ -331,12 +332,12 @@ def test_model_training():
     """Test model training functionality"""
     logger.info("Testing model training...")
 
+    from ensemble_models import EnsembleConfig, EnsembleTrainer, ModelConfig
     from recommendation_models import (
-        StockRecommendationModel,
-        RecommendationTrainer,
         RecommendationConfig,
+        RecommendationTrainer,
+        StockRecommendationModel,
     )
-    from ensemble_models import EnsembleConfig, ModelConfig, EnsembleTrainer
 
     # Generate training data
     X_train = generate_mock_features(200, 80)
@@ -415,8 +416,9 @@ def test_model_persistence():
     """Test model saving and loading"""
     logger.info("Testing model persistence...")
 
-    from base_models import MLPBaseModel
     import tempfile
+
+    from base_models import MLPBaseModel
 
     # Create and test model
     model = MLPBaseModel(input_dim=50, hidden_dims=[64, 32])

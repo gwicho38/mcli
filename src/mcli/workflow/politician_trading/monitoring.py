@@ -5,15 +5,15 @@ Monitoring and status reporting for politician trading data collection
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
-from .database import PoliticianTradingDB
 from .config import WorkflowConfig
+from .database import PoliticianTradingDB
 
 logger = logging.getLogger(__name__)
 console = Console()

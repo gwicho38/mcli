@@ -3,16 +3,17 @@
 import asyncio
 import json
 import logging
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-from dataclasses import dataclass, asdict
 
 import pandas as pd
 
-from mcli.lib.services.data_pipeline import LSHDataPipeline, DataPipelineConfig
+from mcli.lib.services.data_pipeline import DataPipelineConfig, LSHDataPipeline
 from mcli.lib.services.lsh_client import LSHClient
 from mcli.ml.configs.mlops_manager import get_mlops_manager
+
 from .politician_trading_preprocessor import (
     PoliticianTradingPreprocessor,
     PreprocessingConfig,

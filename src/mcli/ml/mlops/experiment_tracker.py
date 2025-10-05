@@ -1,19 +1,20 @@
 """MLflow experiment tracking and model registry"""
 
+import json
+import logging
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
 import mlflow
 import mlflow.pytorch
 import mlflow.sklearn
-from mlflow.tracking import MlflowClient
-from mlflow.models.signature import ModelSignature, infer_signature
-import torch
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, Optional, List, Union
-from dataclasses import dataclass
-from pathlib import Path
-import json
-import logging
-from datetime import datetime
+import torch
+from mlflow.models.signature import ModelSignature, infer_signature
+from mlflow.tracking import MlflowClient
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urljoin
 
 import aiohttp

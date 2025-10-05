@@ -2,18 +2,19 @@
 
 import asyncio
 import json
-from typing import Dict, Any, Optional, List, Callable, AsyncIterator
+import logging
+import time
+from abc import ABC, abstractmethod
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import pandas as pd
+from typing import Any, AsyncIterator, Callable, Dict, List, Optional
+
 import numpy as np
-from abc import ABC, abstractmethod
-import logging
-from collections import deque
-import time
+import pandas as pd
+import websockets
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
-import websockets
 
 logger = logging.getLogger(__name__)
 

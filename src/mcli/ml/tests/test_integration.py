@@ -1,29 +1,30 @@
 """Integration tests for the complete ML pipeline"""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-import pytest
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-import tempfile
-from pathlib import Path
 import logging
+import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
+from ml.backtesting.backtest_engine import BacktestConfig, BacktestEngine, TradingStrategy
+from ml.backtesting.performance_metrics import PerformanceAnalyzer
+from ml.features.ensemble_features import EnsembleFeatureBuilder
+from ml.features.political_features import PoliticalInfluenceFeatures
+from ml.features.stock_features import StockRecommendationFeatures
+from ml.mlops.experiment_tracker import ExperimentTracker, MLflowConfig, ModelRegistry
+from ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig, PipelineExecutor
+from ml.models.ensemble_models import DeepEnsembleModel, EnsembleConfig, ModelConfig
+from ml.models.recommendation_models import RecommendationConfig, StockRecommendationModel
 
 # Import all components
 from ml.preprocessing.data_processor import DataProcessor, ProcessingConfig
-from ml.features.stock_features import StockRecommendationFeatures
-from ml.features.political_features import PoliticalInfluenceFeatures
-from ml.features.ensemble_features import EnsembleFeatureBuilder
-from ml.models.ensemble_models import DeepEnsembleModel, EnsembleConfig, ModelConfig
-from ml.models.recommendation_models import StockRecommendationModel, RecommendationConfig
-from ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig, PipelineExecutor
-from ml.mlops.experiment_tracker import ExperimentTracker, MLflowConfig, ModelRegistry
-from ml.backtesting.backtest_engine import BacktestEngine, BacktestConfig, TradingStrategy
-from ml.backtesting.performance_metrics import PerformanceAnalyzer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

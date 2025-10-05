@@ -1,29 +1,30 @@
 """Streamlit dashboard for ML system monitoring"""
 
-import streamlit as st
+import asyncio
+import time
+from datetime import datetime, timedelta
+
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import asyncio
 import requests
-import time
-from datetime import datetime, timedelta
-import numpy as np
+import streamlit as st
+from plotly.subplots import make_subplots
 
-from mcli.ml.database.session import SessionLocal
-from mcli.ml.database.models import (
-    Model,
-    Prediction,
-    Portfolio,
-    User,
-    Trade,
-    StockData,
-    BacktestResult,
-    ModelStatus,
-)
 from mcli.ml.cache import cache_manager
 from mcli.ml.config import settings
+from mcli.ml.database.models import (
+    BacktestResult,
+    Model,
+    ModelStatus,
+    Portfolio,
+    Prediction,
+    StockData,
+    Trade,
+    User,
+)
+from mcli.ml.database.session import SessionLocal
 
 # Page config
 st.set_page_config(

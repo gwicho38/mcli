@@ -1,21 +1,22 @@
 """Main preprocessor for politician trading data"""
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
 import logging
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
-import joblib
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from .data_cleaners import TradingDataCleaner, OutlierDetector, MissingValueHandler, CleaningStats
+import joblib
+import numpy as np
+import pandas as pd
+
+from .data_cleaners import CleaningStats, MissingValueHandler, OutlierDetector, TradingDataCleaner
 from .feature_extractors import (
-    PoliticianFeatureExtractor,
-    MarketFeatureExtractor,
-    TemporalFeatureExtractor,
-    SentimentFeatureExtractor,
     FeatureExtractionStats,
+    MarketFeatureExtractor,
+    PoliticianFeatureExtractor,
+    SentimentFeatureExtractor,
+    TemporalFeatureExtractor,
 )
 
 logger = logging.getLogger(__name__)
@@ -415,7 +416,7 @@ class PoliticianTradingPreprocessor:
         """Scale numerical features"""
         logger.info("Scaling features")
 
-        from sklearn.preprocessing import StandardScaler, LabelEncoder
+        from sklearn.preprocessing import LabelEncoder, StandardScaler
 
         numerical_features = self._identify_numerical_features(train_data)
         categorical_features = self._identify_categorical_features(train_data)

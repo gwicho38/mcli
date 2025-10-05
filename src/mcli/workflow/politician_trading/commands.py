@@ -8,28 +8,29 @@ import os
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 import click
 from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
 from rich.json import JSON
+from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 from mcli.lib.logger.logger import get_logger
-from .workflow import (
-    PoliticianTradingWorkflow,
-    run_politician_trading_collection,
-    check_politician_trading_status,
-)
+
 from .config import WorkflowConfig
-from .database import PoliticianTradingDB
-from .monitoring import PoliticianTradingMonitor, run_health_check, run_stats_report
 from .connectivity import (
     SupabaseConnectivityValidator,
     run_connectivity_validation,
     run_continuous_monitoring,
+)
+from .database import PoliticianTradingDB
+from .monitoring import PoliticianTradingMonitor, run_health_check, run_stats_report
+from .workflow import (
+    PoliticianTradingWorkflow,
+    check_politician_trading_status,
+    run_politician_trading_collection,
 )
 
 logger = get_logger(__name__)
@@ -620,8 +621,8 @@ def manage_schema(show_location: bool, generate: bool, output_dir: str):
     elif generate:
         # Reuse the setup command logic
         try:
-            from pathlib import Path
             import os
+            from pathlib import Path
 
             console.print("📄 Generating database schema files...", style="blue")
 
@@ -766,7 +767,7 @@ def view_data_sources(output_json: bool):
 
     try:
         from .config import WorkflowConfig
-        from .data_sources import ALL_DATA_SOURCES, TOTAL_SOURCES, ACTIVE_SOURCES
+        from .data_sources import ACTIVE_SOURCES, ALL_DATA_SOURCES, TOTAL_SOURCES
 
         config = WorkflowConfig.default()
         active_sources = config.scraping.get_active_sources()
@@ -885,8 +886,8 @@ def view_jobs(output_json: bool, limit: int):
     try:
 
         async def get_jobs():
-            from .database import PoliticianTradingDB
             from .config import WorkflowConfig
+            from .database import PoliticianTradingDB
 
             config = WorkflowConfig.default()
             db = PoliticianTradingDB(config)
@@ -996,8 +997,8 @@ def view_politicians(output_json: bool, limit: int, role: str, party: str, state
     try:
 
         async def get_politicians():
-            from .database import PoliticianTradingDB
             from .config import WorkflowConfig
+            from .database import PoliticianTradingDB
 
             config = WorkflowConfig.default()
             db = PoliticianTradingDB(config)
@@ -1101,9 +1102,10 @@ def view_disclosures(
     try:
 
         async def get_disclosures():
-            from .database import PoliticianTradingDB
-            from .config import WorkflowConfig
             from datetime import datetime, timedelta, timezone
+
+            from .config import WorkflowConfig
+            from .database import PoliticianTradingDB
 
             config = WorkflowConfig.default()
             db = PoliticianTradingDB(config)
@@ -1270,9 +1272,10 @@ def verify_database(output_json: bool):
     try:
 
         async def verify_data():
-            from .database import PoliticianTradingDB
-            from .config import WorkflowConfig
             from datetime import timedelta
+
+            from .config import WorkflowConfig
+            from .database import PoliticianTradingDB
 
             config = WorkflowConfig.default()
             db = PoliticianTradingDB(config)

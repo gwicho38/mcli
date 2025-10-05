@@ -1,33 +1,32 @@
 """Database models for ML system"""
 
 from datetime import datetime
-from typing import Optional, Dict, Any, List
 from enum import Enum as PyEnum
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Float,
-    DateTime,
-    Boolean,
-    Text,
-    ForeignKey,
     JSON,
-    Enum,
-    Index,
-    UniqueConstraint,
-    CheckConstraint,
-    Table,
-    event,
     BigInteger,
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Table,
+    Text,
+    UniqueConstraint,
+    event,
 )
-from sqlalchemy.orm import declarative_base, relationship, validates
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import declarative_base, relationship, validates
 from sqlalchemy.sql import func
-
 
 Base = declarative_base()
 

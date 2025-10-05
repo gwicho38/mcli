@@ -1,9 +1,10 @@
 """WebSocket API routes for real-time updates"""
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
-from typing import Dict, Set
-import json
 import asyncio
+import json
+from typing import Dict, Set
+
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
 from mcli.ml.logging import get_logger
 

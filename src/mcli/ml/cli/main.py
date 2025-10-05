@@ -1,22 +1,23 @@
 """Main CLI interface for ML system"""
 
-import typer
 import asyncio
 from pathlib import Path
-from typing import Optional, List
-from rich.console import Console
-from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from typing import List, Optional
 
-from mcli.ml.config import settings, create_settings
+import typer
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
+
+from mcli.ml.backtesting.backtest_engine import BacktestConfig, BacktestEngine
+from mcli.ml.config import create_settings, settings
+from mcli.ml.experimentation.ab_testing import ABTestingFramework
 from mcli.ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig
-from mcli.ml.backtesting.backtest_engine import BacktestEngine, BacktestConfig
+from mcli.ml.monitoring.drift_detection import ModelMonitor
 from mcli.ml.optimization.portfolio_optimizer import (
     AdvancedPortfolioOptimizer,
     OptimizationObjective,
 )
-from mcli.ml.monitoring.drift_detection import ModelMonitor
-from mcli.ml.experimentation.ab_testing import ABTestingFramework
 
 app = typer.Typer(
     name="mcli-ml",
@@ -121,6 +122,7 @@ def serve(
     console.print(f"Workers: {workers}")
 
     import uvicorn
+
     from mcli.ml.mlops.model_serving import app as serving_app
 
     uvicorn.run(

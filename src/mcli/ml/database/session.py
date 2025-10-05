@@ -1,16 +1,16 @@
 """Database session management"""
 
+from contextlib import asynccontextmanager, contextmanager
 from typing import AsyncGenerator, Generator
-from contextlib import contextmanager, asynccontextmanager
 
 from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import NullPool, StaticPool
 
 from mcli.ml.config import settings
-from .models import Base
 
+from .models import Base
 
 # Synchronous database setup
 engine = create_engine(

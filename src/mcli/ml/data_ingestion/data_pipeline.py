@@ -1,25 +1,27 @@
 """Complete data ingestion pipeline with validation and transformation"""
 
 import asyncio
-from typing import Dict, Any, Optional, List, Union, Callable
+import json
+import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-import pandas as pd
-import numpy as np
-import logging
 from pathlib import Path
-import json
-from abc import ABC, abstractmethod
+from typing import Any, Callable, Dict, List, Optional, Union
+
+import numpy as np
+import pandas as pd
 
 from .api_connectors import (
-    CongressionalDataAPI,
-    YahooFinanceConnector,
     AlphaVantageConnector,
+    CongressionalDataAPI,
+    DataAggregator,
     PolygonIOConnector,
     QuiverQuantConnector,
-    DataAggregator,
+    YahooFinanceConnector,
 )
-from .stream_processor import StreamProcessor, StreamConfig, DataAggregator as StreamAggregator
+from .stream_processor import DataAggregator as StreamAggregator
+from .stream_processor import StreamConfig, StreamProcessor
 
 logger = logging.getLogger(__name__)
 

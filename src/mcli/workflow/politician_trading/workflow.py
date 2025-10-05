@@ -6,19 +6,19 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 from .config import WorkflowConfig
 from .database import PoliticianTradingDB
-from .models import DataPullJob, Politician, TradingDisclosure, PoliticianRole
+from .models import DataPullJob, Politician, PoliticianRole, TradingDisclosure
 from .scrapers import (
     CongressTradingScraper,
-    QuiverQuantScraper,
     EUParliamentScraper,
     PoliticianMatcher,
-    run_uk_parliament_workflow,
+    QuiverQuantScraper,
     run_california_workflow,
     run_eu_member_states_workflow,
+    run_uk_parliament_workflow,
     run_us_states_workflow,
 )
 

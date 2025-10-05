@@ -144,10 +144,7 @@ impl CommandMatcher {
         let text = format!("{} {}", command.name, command.description);
         let words = self.extract_words(&text);
         for word in words {
-            self.word_index
-                .entry(word)
-                .or_default()
-                .push(index);
+            self.word_index.entry(word).or_default().push(index);
         }
 
         self.commands.push(command);

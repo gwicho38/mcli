@@ -4,9 +4,9 @@ Data models for politician trading information
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import List, Optional, Dict, Any
 from decimal import Decimal
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class PoliticianRole(Enum):

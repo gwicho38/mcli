@@ -2,21 +2,21 @@
 
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional, Union, Dict, Any
+from typing import Any, Dict, Optional, Union
 from uuid import UUID
 
 import bcrypt
 import jwt
-from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from mcli.ml.config import settings
 from mcli.ml.database.models import User, UserRole
 from mcli.ml.database.session import get_db
-from .models import UserCreate, UserLogin, TokenResponse, TokenData, UserResponse
 
+from .models import TokenData, TokenResponse, UserCreate, UserLogin, UserResponse
 
 # Security scheme
 security = HTTPBearer()
@@ -294,10 +294,11 @@ async def get_admin_user(current_user: User = Depends(get_current_user)) -> User
     return current_user
 
 
+import asyncio
+
 # Rate limiting
 from collections import defaultdict
 from datetime import datetime, timedelta
-import asyncio
 
 
 class RateLimiter:

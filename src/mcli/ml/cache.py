@@ -1,12 +1,12 @@
 """Redis caching layer for ML system"""
 
+import asyncio
+import hashlib
 import json
 import pickle
-import hashlib
-import asyncio
-from typing import Optional, Any, Union, Callable
-from functools import wraps
 from datetime import timedelta
+from functools import wraps
+from typing import Any, Callable, Optional, Union
 
 import redis
 from redis import asyncio as aioredis

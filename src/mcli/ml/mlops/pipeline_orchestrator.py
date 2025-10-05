@@ -1,41 +1,42 @@
 """End-to-end ML pipeline orchestrator"""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-from typing import Dict, Any, Optional, List, Callable, Union
+import json
+import logging
+import pickle
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-import pandas as pd
-import numpy as np
-import torch
-import logging
-from datetime import datetime
-import json
-import pickle
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from ml.preprocessing.data_processor import DataProcessor, ProcessingConfig
-from ml.features.stock_features import StockRecommendationFeatures
-from ml.features.political_features import PoliticalInfluenceFeatures
+import numpy as np
+import pandas as pd
+import torch
 from ml.features.ensemble_features import EnsembleFeatureBuilder
+from ml.features.political_features import PoliticalInfluenceFeatures
+from ml.features.recommendation_engine import RecommendationConfig as FeatureRecommendationConfig
 from ml.features.recommendation_engine import (
     StockRecommendationEngine,
-    RecommendationConfig as FeatureRecommendationConfig,
 )
+from ml.features.stock_features import StockRecommendationFeatures
 from ml.models.ensemble_models import (
     DeepEnsembleModel,
     EnsembleConfig,
-    ModelConfig,
     EnsembleTrainer,
+    ModelConfig,
 )
 from ml.models.recommendation_models import (
-    StockRecommendationModel,
     RecommendationConfig,
     RecommendationTrainer,
+    StockRecommendationModel,
 )
+from ml.preprocessing.data_processor import DataProcessor, ProcessingConfig
+
 from .experiment_tracker import ExperimentTracker, MLflowConfig
 
 logger = logging.getLogger(__name__)
@@ -391,9 +392,9 @@ class MLPipeline:
         # Calculate metrics
         from sklearn.metrics import (
             accuracy_score,
+            f1_score,
             precision_score,
             recall_score,
-            f1_score,
             roc_auc_score,
         )
 

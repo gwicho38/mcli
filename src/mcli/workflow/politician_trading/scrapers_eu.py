@@ -7,14 +7,15 @@ financial disclosure systems beyond the EU Parliament itself.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
-import aiohttp
 import re
+from datetime import datetime, timedelta
 from decimal import Decimal
+from typing import Any, Dict, List, Optional
 
+import aiohttp
+
+from .models import Politician, PoliticianRole, TradingDisclosure, TransactionType
 from .scrapers import BaseScraper
-from .models import TradingDisclosure, Politician, PoliticianRole, TransactionType
 
 logger = logging.getLogger(__name__)
 

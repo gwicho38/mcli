@@ -1,21 +1,21 @@
 """Advanced portfolio optimization for stock recommendations"""
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Tuple, Optional, Union, Any
+import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from pathlib import Path
-import logging
 from enum import Enum
-from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Optimization libraries
 import cvxpy as cp
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 from scipy.optimize import minimize
 from scipy.stats import norm
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 logger = logging.getLogger(__name__)
 

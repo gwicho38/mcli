@@ -74,8 +74,8 @@ def info():
 
     # Check if dependencies are installed
     try:
-        import streamlit
         import plotly
+        import streamlit
 
         click.echo("✅ Dashboard dependencies installed")
         click.echo(f"   Streamlit version: {streamlit.__version__}")

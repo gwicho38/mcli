@@ -270,8 +270,8 @@ def stop(port: Optional[int]):
         except Exception:
             port = 51234  # Default ephemeral port
 
-    import requests
     import psutil
+    import requests
 
     try:
         # First check if server is running

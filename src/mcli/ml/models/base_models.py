@@ -1,13 +1,14 @@
 """Base classes for ML models"""
 
-import torch
-import torch.nn as nn
+import logging
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple, Any, Union
-from dataclasses import dataclass
-from abc import ABC, abstractmethod
-import logging
+import torch
+import torch.nn as nn
 
 logger = logging.getLogger(__name__)
 
@@ -136,9 +137,9 @@ class BaseStockModel(nn.Module, ABC):
         """Calculate comprehensive model metrics"""
         from sklearn.metrics import (
             accuracy_score,
+            f1_score,
             precision_score,
             recall_score,
-            f1_score,
             roc_auc_score,
         )
 

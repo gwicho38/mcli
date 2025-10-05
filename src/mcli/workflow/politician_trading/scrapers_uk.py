@@ -8,11 +8,12 @@ to collect MP financial disclosure data.
 import asyncio
 import logging
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 import aiohttp
 
+from .models import Politician, PoliticianRole, TradingDisclosure, TransactionType
 from .scrapers import BaseScraper
-from .models import TradingDisclosure, Politician, PoliticianRole, TransactionType
 
 logger = logging.getLogger(__name__)
 

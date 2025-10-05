@@ -1,9 +1,10 @@
 """Authentication data models"""
 
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field, validator
+from typing import List, Optional
 from uuid import UUID
+
+from pydantic import BaseModel, EmailStr, Field, validator
 
 
 class UserCreate(BaseModel):

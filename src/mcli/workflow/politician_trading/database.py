@@ -5,14 +5,14 @@ Database client and schema management for politician trading data
 import asyncio
 import logging
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from supabase import create_client, Client
 from postgrest.exceptions import APIError
+from supabase import Client, create_client
 
 from .config import WorkflowConfig
-from .models import Politician, TradingDisclosure, DataPullJob, DataSource
+from .models import DataPullJob, DataSource, Politician, TradingDisclosure
 
 logger = logging.getLogger(__name__)
 
@@ -363,8 +363,9 @@ class PoliticianTradingDB:
 
     def _dict_to_disclosure(self, data: Dict[str, Any]) -> TradingDisclosure:
         """Convert dictionary to TradingDisclosure"""
-        from .models import TransactionType, DisclosureStatus
         from decimal import Decimal
+
+        from .models import DisclosureStatus, TransactionType
 
         return TradingDisclosure(
             id=data.get("id"),

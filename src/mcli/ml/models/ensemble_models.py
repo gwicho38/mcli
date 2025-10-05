@@ -1,13 +1,14 @@
 """Ensemble models for stock prediction"""
 
+import logging
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Tuple, Any, Union
-from dataclasses import dataclass
-import logging
 from base_models import BaseStockModel, ModelMetrics, ValidationResult
 
 logger = logging.getLogger(__name__)

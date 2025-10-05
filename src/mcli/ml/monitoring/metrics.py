@@ -1,6 +1,6 @@
 """Prometheus metrics for monitoring"""
 
-from prometheus_client import Counter, Histogram, Gauge, generate_latest
+from prometheus_client import Counter, Gauge, Histogram, generate_latest
 
 # API metrics
 api_requests_total = Counter(

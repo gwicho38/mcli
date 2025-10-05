@@ -1,6 +1,7 @@
 """Portfolio management API routes"""
 
 from fastapi import APIRouter, Depends
+
 from mcli.ml.auth import get_current_active_user
 from mcli.ml.database.models import User
 

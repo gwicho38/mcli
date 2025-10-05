@@ -1,17 +1,17 @@
 """Enhanced training dashboard with Bitcoin-style model comparison and analysis"""
 
-import streamlit as st
+from datetime import datetime, timedelta
+
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit as st
 from plotly.subplots import make_subplots
-import numpy as np
-from datetime import datetime, timedelta
 from scipy import stats
 
+from mcli.ml.database.models import Experiment, Model, ModelStatus
 from mcli.ml.database.session import SessionLocal
-from mcli.ml.database.models import Model, ModelStatus, Experiment
-
 
 st.set_page_config(
     page_title="MCLI Training Dashboard",

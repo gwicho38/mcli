@@ -1,10 +1,11 @@
 """Celery background tasks for ML system"""
 
+import asyncio
+from datetime import datetime, timedelta
+from typing import Any, Dict
+
 from celery import Celery, Task
 from celery.schedules import crontab
-from datetime import datetime, timedelta
-import asyncio
-from typing import Dict, Any
 
 from mcli.ml.config import settings
 from mcli.ml.logging import get_logger
@@ -81,9 +82,9 @@ def train_model_task(self, model_id: str, retrain: bool = False) -> Dict[str, An
     try:
         logger.info(f"Starting training for model {model_id}")
 
-        from mcli.ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig
-        from mcli.ml.database.session import SessionLocal
         from mcli.ml.database.models import Model, ModelStatus
+        from mcli.ml.database.session import SessionLocal
+        from mcli.ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig
 
         # Get model from database
         db = SessionLocal()
@@ -131,8 +132,8 @@ def update_stock_data_task(self, ticker: str = None) -> Dict[str, Any]:
         logger.info(f"Updating stock data{f' for {ticker}' if ticker else ''}")
 
         from mcli.ml.data_ingestion.api_connectors import YahooFinanceConnector
-        from mcli.ml.database.session import SessionLocal
         from mcli.ml.database.models import StockData
+        from mcli.ml.database.session import SessionLocal
 
         connector = YahooFinanceConnector()
         db = SessionLocal()
@@ -183,9 +184,9 @@ def check_model_drift_task() -> Dict[str, Any]:
     try:
         logger.info("Checking for model drift")
 
-        from mcli.ml.monitoring.drift_detection import ModelMonitor
-        from mcli.ml.database.session import SessionLocal
         from mcli.ml.database.models import Model, ModelStatus
+        from mcli.ml.database.session import SessionLocal
+        from mcli.ml.monitoring.drift_detection import ModelMonitor
 
         db = SessionLocal()
         deployed_models = db.query(Model).filter(Model.status == ModelStatus.DEPLOYED).all()
@@ -218,8 +219,8 @@ def cleanup_predictions_task() -> Dict[str, Any]:
     try:
         logger.info("Cleaning up old predictions")
 
-        from mcli.ml.database.session import SessionLocal
         from mcli.ml.database.models import Prediction
+        from mcli.ml.database.session import SessionLocal
 
         db = SessionLocal()
 
@@ -244,8 +245,8 @@ def retrain_models_task() -> Dict[str, Any]:
     try:
         logger.info("Starting scheduled model retraining")
 
-        from mcli.ml.database.session import SessionLocal
         from mcli.ml.database.models import Model, ModelStatus
+        from mcli.ml.database.session import SessionLocal
 
         db = SessionLocal()
 
@@ -281,8 +282,8 @@ def generate_daily_report_task() -> Dict[str, Any]:
     try:
         logger.info("Generating daily report")
 
+        from mcli.ml.database.models import Portfolio, Prediction, User
         from mcli.ml.database.session import SessionLocal
-        from mcli.ml.database.models import Prediction, Portfolio, User
 
         db = SessionLocal()
 
@@ -328,8 +329,8 @@ def fetch_politician_trades_task() -> Dict[str, Any]:
         logger.info("Fetching politician trades")
 
         from mcli.ml.data_ingestion.api_connectors import CongressionalTradingConnector
+        from mcli.ml.database.models import Politician, Trade
         from mcli.ml.database.session import SessionLocal
-        from mcli.ml.database.models import Trade, Politician
 
         connector = CongressionalTradingConnector()
         db = SessionLocal()
@@ -372,8 +373,9 @@ def process_batch_predictions_task(self, predictions: list) -> Dict[str, Any]:
     try:
         logger.info(f"Processing batch of {len(predictions)} predictions")
 
-        from mcli.ml.models import get_model_by_id
         import numpy as np
+
+        from mcli.ml.models import get_model_by_id
 
         results = []
         for pred in predictions:

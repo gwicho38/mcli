@@ -1,17 +1,18 @@
 """Streamlit dashboard for ML system monitoring - Supabase version"""
 
-import streamlit as st
+import asyncio
+import os
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import asyncio
-from datetime import datetime, timedelta
-import numpy as np
-from supabase import create_client, Client
-import os
-from pathlib import Path
+import streamlit as st
 from dotenv import load_dotenv
+from plotly.subplots import make_subplots
+from supabase import Client, create_client
 
 # Page config must come first
 st.set_page_config(

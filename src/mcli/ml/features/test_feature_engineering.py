@@ -1,14 +1,15 @@
 """Test script for feature engineering system"""
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -209,7 +210,7 @@ def test_recommendation_engine():
     """Test the full recommendation engine"""
     logger.info("Testing recommendation engine...")
 
-    from recommendation_engine import StockRecommendationEngine, RecommendationConfig
+    from recommendation_engine import RecommendationConfig, StockRecommendationEngine
 
     # Generate comprehensive test data
     trading_data = generate_mock_trading_data(100)
@@ -259,9 +260,9 @@ def test_feature_integration():
     """Test integration of all feature components"""
     logger.info("Testing feature integration...")
 
-    from stock_features import StockRecommendationFeatures
-    from political_features import PoliticalInfluenceFeatures
     from ensemble_features import EnsembleFeatureBuilder
+    from political_features import PoliticalInfluenceFeatures
+    from stock_features import StockRecommendationFeatures
 
     # Generate test data
     trading_data = generate_mock_trading_data(30)

@@ -1,17 +1,18 @@
 """Ensemble feature engineering and feature interaction systems"""
 
+import logging
+import warnings
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from itertools import combinations
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union, Callable
-from dataclasses import dataclass
-import logging
-from itertools import combinations
-import warnings
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 from sklearn.feature_selection import SelectKBest, f_regression, mutual_info_regression
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
 
 logger = logging.getLogger(__name__)
 

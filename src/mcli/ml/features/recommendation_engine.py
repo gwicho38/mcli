@@ -1,28 +1,29 @@
 """Stock recommendation engine that combines all feature engineering components"""
 
+import logging
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import joblib
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
-from dataclasses import dataclass, asdict
-import logging
-from pathlib import Path
-import joblib
 
-from .stock_features import (
-    StockRecommendationFeatures,
-    TechnicalIndicatorFeatures,
-    MarketRegimeFeatures,
-)
-from .political_features import (
-    PoliticalInfluenceFeatures,
-    CongressionalTrackingFeatures,
-    PolicyImpactFeatures,
-)
 from .ensemble_features import (
+    DynamicFeatureSelector,
     EnsembleFeatureBuilder,
     FeatureInteractionEngine,
-    DynamicFeatureSelector,
+)
+from .political_features import (
+    CongressionalTrackingFeatures,
+    PolicyImpactFeatures,
+    PoliticalInfluenceFeatures,
+)
+from .stock_features import (
+    MarketRegimeFeatures,
+    StockRecommendationFeatures,
+    TechnicalIndicatorFeatures,
 )
 
 logger = logging.getLogger(__name__)

@@ -8,14 +8,14 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 import click
 
 from mcli.lib.api import mcli_decorators as mcli
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.services.data_pipeline import DataPipelineConfig, LSHDataPipeline
 from mcli.lib.services.lsh_client import LSHClient, LSHEventProcessor
-from mcli.lib.services.data_pipeline import LSHDataPipeline, DataPipelineConfig
 
 logger = get_logger(__name__)
 

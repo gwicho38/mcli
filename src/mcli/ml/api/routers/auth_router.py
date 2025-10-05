@@ -3,24 +3,24 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from mcli.ml.auth import (
     AuthManager,
-    UserCreate,
-    UserLogin,
-    TokenResponse,
-    UserResponse,
     PasswordChange,
     PasswordReset,
-    get_current_user,
-    get_current_active_user,
+    TokenResponse,
+    UserCreate,
+    UserLogin,
+    UserResponse,
     check_rate_limit,
+    get_current_active_user,
+    get_current_user,
 )
-from mcli.ml.database.session import get_db
 from mcli.ml.database.models import User
+from mcli.ml.database.session import get_db
 
 router = APIRouter()
 auth_manager = AuthManager()

@@ -1,13 +1,14 @@
 """Unit tests for training dashboard functionality"""
 
-import pytest
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
-from mcli.ml.database.models import Model, ModelStatus, Experiment
+import numpy as np
+import pandas as pd
+import pytest
 from sqlalchemy.orm import Session
+
+from mcli.ml.database.models import Experiment, Model, ModelStatus
 
 
 class TestTrainingDashboard:

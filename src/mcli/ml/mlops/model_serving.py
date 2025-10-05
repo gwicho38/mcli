@@ -1,29 +1,29 @@
 """REST API for model serving"""
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, List, Union
-import torch
+import asyncio
+import json
+import logging
+import os
+import sys
+from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-import logging
-import asyncio
-from pathlib import Path
-import json
+import torch
 import uvicorn
-from contextlib import asynccontextmanager
-
-import sys
-import os
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-from ml.models.recommendation_models import StockRecommendationModel, PortfolioRecommendation
-from ml.features.stock_features import StockRecommendationFeatures
-from ml.features.political_features import PoliticalInfluenceFeatures
 from ml.features.ensemble_features import EnsembleFeatureBuilder
+from ml.features.political_features import PoliticalInfluenceFeatures
+from ml.features.stock_features import StockRecommendationFeatures
+from ml.models.recommendation_models import PortfolioRecommendation, StockRecommendationModel
 
 logger = logging.getLogger(__name__)
 

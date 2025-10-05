@@ -6,11 +6,12 @@ Handles ETL processes for data received from LSH daemon
 import asyncio
 import json
 import time
-from typing import Any, Dict, List, Optional, Callable
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
 from mcli.lib.logger.logger import get_logger
+
 from .lsh_client import LSHClient, LSHEventProcessor
 
 logger = get_logger(__name__)

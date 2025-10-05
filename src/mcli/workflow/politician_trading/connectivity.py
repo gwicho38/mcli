@@ -4,19 +4,19 @@ Continuous Supabase connectivity validation and monitoring
 
 import asyncio
 import json
+import logging
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
-import logging
+from typing import Any, Dict, Optional
 
 from rich.console import Console
 from rich.live import Live
-from rich.table import Table
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+from rich.table import Table
 
-from .database import PoliticianTradingDB
 from .config import WorkflowConfig
+from .database import PoliticianTradingDB
 
 logger = logging.getLogger(__name__)
 console = Console()

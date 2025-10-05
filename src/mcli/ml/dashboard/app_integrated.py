@@ -1,29 +1,30 @@
 """Integrated Streamlit dashboard for ML system with LSH daemon integration"""
 
-import streamlit as st
+import asyncio
+import json
+import os
+import pickle
+import subprocess
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import asyncio
-from datetime import datetime, timedelta
-import numpy as np
-from supabase import create_client, Client
-import os
 import requests
-import json
-from pathlib import Path
-import subprocess
-import pickle
+import streamlit as st
 from dotenv import load_dotenv
+from plotly.subplots import make_subplots
+from supabase import Client, create_client
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Add ML pipeline imports
 try:
-    from mcli.ml.preprocessing import PoliticianTradingPreprocessor, MLDataPipeline
     from mcli.ml.models import get_model_by_id
+    from mcli.ml.preprocessing import MLDataPipeline, PoliticianTradingPreprocessor
 
     HAS_ML_PIPELINE = True
 except ImportError:

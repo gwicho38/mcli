@@ -7,14 +7,14 @@ import logging
 import re
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import List, Dict, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
 import aiohttp
 from bs4 import BeautifulSoup
 
-from .models import Politician, TradingDisclosure, TransactionType, PoliticianRole
 from .config import ScrapingConfig
+from .models import Politician, PoliticianRole, TradingDisclosure, TransactionType
 
 logger = logging.getLogger(__name__)
 

@@ -1,36 +1,37 @@
 """FastAPI application factory and configuration"""
 
 from contextlib import asynccontextmanager
-from typing import Dict, Any
+from typing import Any, Dict
 
+import uvicorn
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
-import uvicorn
 
+from mcli.ml.cache import init_cache
 from mcli.ml.config import settings
 from mcli.ml.database.session import init_db
-from mcli.ml.cache import init_cache
-from mcli.ml.logging import setup_logging, get_logger
-from .routers import (
-    auth_router,
-    model_router,
-    prediction_router,
-    portfolio_router,
-    data_router,
-    trade_router,
-    backtest_router,
-    monitoring_router,
-    admin_router,
-    websocket_router,
-)
+from mcli.ml.logging import get_logger, setup_logging
+
 from .middleware import (
-    RequestLoggingMiddleware,
-    RateLimitMiddleware,
     ErrorHandlingMiddleware,
+    RateLimitMiddleware,
+    RequestLoggingMiddleware,
+)
+from .routers import (
+    admin_router,
+    auth_router,
+    backtest_router,
+    data_router,
+    model_router,
+    monitoring_router,
+    portfolio_router,
+    prediction_router,
+    trade_router,
+    websocket_router,
 )
 
 logger = get_logger(__name__)
@@ -136,8 +137,8 @@ def create_app() -> FastAPI:
     @app.get("/ready", tags=["Health"])
     async def ready_check():
         """Readiness check endpoint"""
-        from mcli.ml.database.session import check_database_health
         from mcli.ml.cache import check_cache_health
+        from mcli.ml.database.session import check_database_health
 
         db_healthy = await check_database_health()
         cache_healthy = await check_cache_health()
