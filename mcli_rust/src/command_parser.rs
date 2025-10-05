@@ -1,3 +1,5 @@
+#![allow(clippy::useless_conversion)]
+
 use pyo3::prelude::*;
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -30,6 +32,7 @@ pub struct Command {
 impl Command {
     #[new]
     #[pyo3(signature = (id, name, description, code, language, group=None, tags=None, execution_count=None))]
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: String,
         name: String,
@@ -109,6 +112,7 @@ impl CommandMatcher {
         }
     }
 
+    #[allow(clippy::useless_conversion)]
     pub fn add_commands(&mut self, commands: Vec<Command>) -> PyResult<()> {
         for command in commands {
             self.add_command(command)?;
@@ -116,6 +120,7 @@ impl CommandMatcher {
         Ok(())
     }
 
+    #[allow(clippy::useless_conversion)]
     pub fn add_command(&mut self, command: Command) -> PyResult<()> {
         let index = self.commands.len();
 
@@ -123,7 +128,7 @@ impl CommandMatcher {
         let normalized_name = normalize_text(&command.name);
         self.name_index
             .entry(normalized_name)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(index);
 
         // Index by tags
@@ -131,7 +136,7 @@ impl CommandMatcher {
             let normalized_tag = normalize_text(tag);
             self.tag_index
                 .entry(normalized_tag)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(index);
         }
 
@@ -141,7 +146,7 @@ impl CommandMatcher {
         for word in words {
             self.word_index
                 .entry(word)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push(index);
         }
 
@@ -150,6 +155,7 @@ impl CommandMatcher {
     }
 
     #[pyo3(signature = (query, limit=None))]
+    #[allow(clippy::useless_conversion)]
     pub fn search(&self, query: String, limit: Option<usize>) -> PyResult<Vec<MatchResult>> {
         if self.commands.is_empty() {
             return Ok(Vec::new());
@@ -257,6 +263,7 @@ impl CommandMatcher {
     }
 
     #[pyo3(signature = (tags, limit=None))]
+    #[allow(clippy::useless_conversion)]
     pub fn search_by_tags(
         &self,
         tags: Vec<String>,
@@ -294,6 +301,7 @@ impl CommandMatcher {
     }
 
     #[pyo3(signature = (group, limit=None))]
+    #[allow(clippy::useless_conversion)]
     pub fn search_by_group(
         &self,
         group: String,
@@ -326,6 +334,7 @@ impl CommandMatcher {
     }
 
     #[pyo3(signature = (limit=None))]
+    #[allow(clippy::useless_conversion)]
     pub fn get_popular_commands(&self, limit: Option<usize>) -> PyResult<Vec<MatchResult>> {
         let limit = limit.unwrap_or(10);
         let mut commands_with_scores: Vec<_> = self
@@ -352,6 +361,7 @@ impl CommandMatcher {
         Ok(results)
     }
 
+    #[allow(clippy::useless_conversion)]
     pub fn clear(&mut self) -> PyResult<()> {
         self.commands.clear();
         self.name_index.clear();
@@ -393,7 +403,7 @@ impl CommandMatcher {
         let query_chars: Vec<char> = query.chars().collect();
         let mut matches = Vec::new();
 
-        for (_idx, command) in self.commands.iter().enumerate() {
+        for command in self.commands.iter() {
             let name_score = fuzzy_score(&query_chars, &command.name);
             let desc_score = fuzzy_score(&query_chars, &command.description);
 

@@ -1,3 +1,6 @@
+#![allow(clippy::useless_conversion)]
+#![allow(clippy::uninlined_format_args)]
+
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -32,6 +35,12 @@ pub struct FileWatcher {
     event_receiver: Arc<Mutex<Option<Receiver<FileEvent>>>>,
     is_watching: bool,
     watch_paths: Vec<PathBuf>,
+}
+
+impl Default for FileWatcher {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[pymethods]

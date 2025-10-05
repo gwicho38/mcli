@@ -1,3 +1,6 @@
+#![allow(clippy::useless_conversion)]
+#![allow(clippy::uninlined_format_args)]
+
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -10,6 +13,7 @@ use tokio::time::{timeout, Duration};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub enum ProcessStatus {
     Created,
     Running,
@@ -100,7 +104,9 @@ impl ProcessInfo {
 struct ManagedProcess {
     info: Arc<Mutex<ProcessInfo>>,
     child: Option<Child>,
+    #[allow(dead_code)]
     stdout_receiver: Option<mpsc::Receiver<String>>,
+    #[allow(dead_code)]
     stderr_receiver: Option<mpsc::Receiver<String>>,
 }
 

@@ -1,3 +1,5 @@
+#![allow(clippy::useless_conversion)]
+
 use pyo3::prelude::*;
 use rayon::prelude::*;
 use regex::Regex;
@@ -6,6 +8,7 @@ use unicode_normalization::UnicodeNormalization;
 
 #[derive(Clone)]
 struct Document {
+    #[allow(dead_code)]
     id: usize,
     tokens: Vec<String>,
     token_counts: FxHashMap<String, usize>,
