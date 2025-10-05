@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Callable
 from urllib.parse import urljoin
 
 import aiohttp
-import asyncio_mqtt
+import aiomqtt
 from aiohttp_sse_client import client as sse_client
 
 from mcli.lib.logger.logger import get_logger

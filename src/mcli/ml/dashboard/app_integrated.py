@@ -169,7 +169,7 @@ def run_ml_pipeline(df_disclosures):
         return None, None, None
 
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=30, hash_funcs={pd.DataFrame: lambda x: x.to_json()})
 def get_politicians_data():
     """Get politicians data from Supabase"""
     client = get_supabase_client()
@@ -178,13 +178,19 @@ def get_politicians_data():
 
     try:
         response = client.table("politicians").select("*").execute()
-        return pd.DataFrame(response.data)
+        df = pd.DataFrame(response.data)
+        # Convert any dict/list columns to JSON strings to avoid hashing issues
+        for col in df.columns:
+            if df[col].dtype == 'object':
+                if any(isinstance(x, (dict, list)) for x in df[col].dropna()):
+                    df[col] = df[col].apply(lambda x: json.dumps(x) if isinstance(x, (dict, list)) else x)
+        return df
     except Exception as e:
         st.error(f"Error fetching politicians: {e}")
         return pd.DataFrame()
 
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=30, hash_funcs={pd.DataFrame: lambda x: x.to_json()})
 def get_disclosures_data():
     """Get trading disclosures from Supabase"""
     client = get_supabase_client()
@@ -193,7 +199,13 @@ def get_disclosures_data():
 
     try:
         response = client.table("trading_disclosures").select("*").order("disclosure_date", desc=True).limit(1000).execute()
-        return pd.DataFrame(response.data)
+        df = pd.DataFrame(response.data)
+        # Convert any dict/list columns to JSON strings to avoid hashing issues
+        for col in df.columns:
+            if df[col].dtype == 'object':
+                if any(isinstance(x, (dict, list)) for x in df[col].dropna()):
+                    df[col] = df[col].apply(lambda x: json.dumps(x) if isinstance(x, (dict, list)) else x)
+        return df
     except Exception as e:
         st.error(f"Error fetching disclosures: {e}")
         return pd.DataFrame()
@@ -377,7 +389,7 @@ def show_pipeline_overview():
         # Filter for ML-related jobs
         ml_jobs = lsh_jobs[lsh_jobs['job_name'].str.contains('ml|model|train|predict', case=False, na=False)]
         if not ml_jobs.empty:
-            st.dataframe(ml_jobs.head(10), use_container_width=True)
+            st.dataframe(ml_jobs.head(10), width='stretch')
         else:
             st.info("No ML pipeline jobs found in LSH logs")
     else:
@@ -401,12 +413,12 @@ def show_ml_processing():
 
             with tabs[0]:
                 st.subheader("Raw Disclosure Data")
-                st.dataframe(disclosures.head(100), use_container_width=True)
+                st.dataframe(disclosures.head(100), width='stretch')
                 st.metric("Total Records", len(disclosures))
 
             with tabs[1]:
                 st.subheader("Preprocessed Data")
-                st.dataframe(processed_data.head(100), use_container_width=True)
+                st.dataframe(processed_data.head(100), width='stretch')
 
                 # Data quality metrics
                 col1, col2, col3 = st.columns(3)
@@ -429,9 +441,9 @@ def show_ml_processing():
 
                     fig = px.bar(feature_importance, x='importance', y='feature', orientation='h',
                                title="Top 20 Feature Importance")
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
-                    st.dataframe(features.head(100), use_container_width=True)
+                    st.dataframe(features.head(100), width='stretch')
 
             with tabs[3]:
                 st.subheader("Model Predictions")
@@ -445,19 +457,19 @@ def show_ml_processing():
                             rec_dist = predictions['recommendation'].value_counts()
                             fig = px.pie(values=rec_dist.values, names=rec_dist.index,
                                        title="Recommendation Distribution")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width='stretch')
 
                     with col2:
                         # Confidence distribution
                         if 'confidence' in predictions:
                             fig = px.histogram(predictions, x='confidence', nbins=20,
                                              title="Prediction Confidence Distribution")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width='stretch')
 
                     # Top predictions
                     st.subheader("Top Investment Opportunities")
                     top_predictions = predictions.nlargest(10, 'predicted_return')
-                    st.dataframe(top_predictions, use_container_width=True)
+                    st.dataframe(top_predictions, width='stretch')
         else:
             st.error("Failed to process data through pipeline")
     else:
@@ -505,11 +517,11 @@ def show_model_performance():
         )
 
         fig.update_layout(height=400, showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
         # Model details table
         st.subheader("Model Details")
-        st.dataframe(model_metrics, use_container_width=True)
+        st.dataframe(model_metrics, width='stretch')
     else:
         st.info("No trained models found. Run the training pipeline to generate models.")
 
@@ -602,7 +614,7 @@ def show_predictions():
                     hover_data=['ticker'] if 'ticker' in filtered_predictions else None,
                     title="Risk-Return Analysis"
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
 
             with col2:
                 # Top movers
@@ -621,7 +633,7 @@ def show_predictions():
                         color_continuous_scale='RdYlGn',
                         title="Top Movers (Predicted)"
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
         else:
             st.warning("No predictions available. Check if the ML pipeline is running correctly.")
     else:
@@ -662,7 +674,7 @@ def show_lsh_jobs():
 
         # Recent jobs
         st.subheader("Recent Jobs")
-        st.dataframe(lsh_jobs.head(20), use_container_width=True)
+        st.dataframe(lsh_jobs.head(20), width='stretch')
 
         # Job timeline
         if 'timestamp' in lsh_jobs:
@@ -678,7 +690,7 @@ def show_lsh_jobs():
                     title="Job Executions Over Time",
                     labels={'x': 'Time', 'y': 'Job Count'}
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width='stretch')
             except:
                 pass
     else:
@@ -748,7 +760,7 @@ def show_system_health():
         columns=["Component", "Status"]
     )
 
-    st.dataframe(status_df, use_container_width=True)
+    st.dataframe(status_df, width='stretch')
 
     # Resource usage (mock data for now)
     st.subheader("Resource Usage")
@@ -774,7 +786,7 @@ def show_system_health():
     )
 
     fig.update_layout(height=500, showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 if __name__ == "__main__":

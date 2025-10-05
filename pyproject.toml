@@ -73,7 +73,7 @@ dependencies = [
   "aiosqlite>=0.20.0",
   "redis>=5.0.0",
   "aiohttp-sse-client>=0.2.1",
-  "asyncio-mqtt>=0.13.0",
+  "aiomqtt>=2.0.0",
 
   # Video processing
   "opencv-python>=4.11.0.86",
