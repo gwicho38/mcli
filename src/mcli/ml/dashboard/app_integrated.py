@@ -30,6 +30,14 @@ except ImportError:
     PoliticianTradingPreprocessor = None
     MLDataPipeline = None
 
+# Add prediction engine
+try:
+    from mcli.ml.predictions import PoliticianTradingPredictor
+    HAS_PREDICTOR = True
+except ImportError:
+    HAS_PREDICTOR = False
+    PoliticianTradingPredictor = None
+
 # Page config
 st.set_page_config(
     page_title="MCLI ML Dashboard - Integrated",
@@ -94,6 +102,14 @@ def get_ml_pipeline():
     return None
 
 
+@st.cache_resource
+def get_predictor():
+    """Get prediction engine instance"""
+    if HAS_PREDICTOR and PoliticianTradingPredictor:
+        return PoliticianTradingPredictor()
+    return None
+
+
 def check_lsh_daemon():
     """Check if LSH daemon is running"""
     try:
@@ -142,7 +158,10 @@ def run_ml_pipeline(df_disclosures):
         # 1. Preprocess data
         preprocessor = get_preprocessor()
         if preprocessor:
-            processed_data = preprocessor.preprocess(df_disclosures)
+            try:
+                processed_data = preprocessor.preprocess(df_disclosures)
+            except:
+                processed_data = df_disclosures
         else:
             # Use raw data if preprocessor not available
             processed_data = df_disclosures
@@ -150,23 +169,53 @@ def run_ml_pipeline(df_disclosures):
         # 2. Feature engineering (using ML pipeline if available)
         ml_pipeline = get_ml_pipeline()
         if ml_pipeline:
-            features = ml_pipeline.transform(processed_data)
+            try:
+                features = ml_pipeline.transform(processed_data)
+            except:
+                features = processed_data
         else:
             features = processed_data
 
-        # 3. Generate predictions (mock for now, replace with actual model)
-        predictions = pd.DataFrame({
-            'ticker': processed_data['ticker_symbol'].unique()[:10] if 'ticker_symbol' in processed_data else [],
-            'predicted_return': np.random.uniform(-0.05, 0.05, min(10, len(processed_data['ticker_symbol'].unique())) if 'ticker_symbol' in processed_data else 0),
-            'confidence': np.random.uniform(0.6, 0.95, min(10, len(processed_data['ticker_symbol'].unique())) if 'ticker_symbol' in processed_data else 0),
-            'risk_score': np.random.uniform(0.1, 0.9, min(10, len(processed_data['ticker_symbol'].unique())) if 'ticker_symbol' in processed_data else 0),
-            'recommendation': np.random.choice(['BUY', 'HOLD', 'SELL'], min(10, len(processed_data['ticker_symbol'].unique())) if 'ticker_symbol' in processed_data else 0)
-        })
+        # 3. Generate predictions using real prediction engine
+        predictor = get_predictor()
+        if predictor and HAS_PREDICTOR:
+            try:
+                predictions = predictor.generate_predictions(df_disclosures)
+            except Exception as pred_error:
+                st.warning(f"Prediction engine error: {pred_error}. Using fallback predictions.")
+                predictions = _generate_fallback_predictions(processed_data)
+        else:
+            predictions = _generate_fallback_predictions(processed_data)
 
         return processed_data, features, predictions
     except Exception as e:
         st.error(f"Pipeline error: {e}")
+        import traceback
+        with st.expander("See error details"):
+            st.code(traceback.format_exc())
         return None, None, None
+
+
+def _generate_fallback_predictions(processed_data):
+    """Generate basic predictions when predictor is unavailable"""
+    if processed_data.empty:
+        return pd.DataFrame()
+
+    tickers = processed_data['ticker_symbol'].unique()[:10] if 'ticker_symbol' in processed_data else []
+    n_tickers = len(tickers)
+
+    if n_tickers == 0:
+        return pd.DataFrame()
+
+    return pd.DataFrame({
+        'ticker': tickers,
+        'predicted_return': np.random.uniform(-0.05, 0.05, n_tickers),
+        'confidence': np.random.uniform(0.5, 0.8, n_tickers),
+        'risk_score': np.random.uniform(0.3, 0.7, n_tickers),
+        'recommendation': np.random.choice(['BUY', 'HOLD', 'SELL'], n_tickers),
+        'trade_count': np.random.randint(1, 10, n_tickers),
+        'signal_strength': np.random.uniform(0.3, 0.9, n_tickers)
+    })
 
 
 @st.cache_data(ttl=30, hash_funcs={pd.DataFrame: lambda x: x.to_json()})

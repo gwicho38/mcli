@@ -159,6 +159,19 @@ wheels = [
 ]
 
 [[package]]
+name = "aiomqtt"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "paho-mqtt" },
+    { name = "typing-extensions", marker = "python_full_version < '3.10'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/45/9a/863bc34c64bc4acb9720a9950bfc77d6f324640cdf1f420bb5d9ee624975/aiomqtt-2.4.0.tar.gz", hash = "sha256:ab0f18fc5b7ffaa57451c407417d674db837b00a9c7d953cccd02be64f046c17", size = 82718, upload-time = "2025-05-03T20:21:27.748Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/98/0c/2720665998d97d3a9521c03b138a22247e035ba54c4738e934da33c68699/aiomqtt-2.4.0-py3-none-any.whl", hash = "sha256:721296e2b79df5f6c7c4dfc91700ae0166953a4127735c92637859619dbd84e4", size = 15908, upload-time = "2025-05-03T20:21:26.337Z" },
+]
+
+[[package]]
 name = "aiosignal"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -405,18 +418,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a5/ae/136395dfbfe00dfc94da3f3e136d0b13f394cba8f4841120e34226265780/async_timeout-5.0.1.tar.gz", hash = "sha256:d9321a7a3d5a6a5e187e824d2fa0793ce379a202935782d555d6e9d2735677d3", size = 9274, upload-time = "2024-11-06T16:41:39.6Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fe/ba/e2081de779ca30d473f21f5b30e0e737c438205440784c7dfc81efc2b029/async_timeout-5.0.1-py3-none-any.whl", hash = "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c", size = 6233, upload-time = "2024-11-06T16:41:37.9Z" },
-]
-
-[[package]]
-name = "asyncio-mqtt"
-version = "0.16.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "paho-mqtt" },
-    { name = "typing-extensions", marker = "python_full_version < '3.10'" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/64/c8a8c2ed51f3c1f4b8d2f244424d3bad3fbd4333eb01589c6b00a6dd2c04/asyncio_mqtt-0.16.2-py3-none-any.whl", hash = "sha256:fe70ea2c648b248779a7ff3d9218262cdd739083743dfaa7c0d52ba458a8ad71", size = 17380, upload-time = "2023-06-26T19:46:48.342Z" },
 ]
 
 [[package]]
@@ -4236,17 +4237,17 @@ wheels = [
 
 [[package]]
 name = "mcli-framework"
-version = "7.0.6"
+version = "7.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "aiohttp-sse-client" },
+    { name = "aiomqtt" },
     { name = "aiosqlite" },
     { name = "alembic" },
     { name = "alpha-vantage" },
     { name = "altair" },
     { name = "anthropic" },
-    { name = "asyncio-mqtt" },
     { name = "asyncpg" },
     { name = "beautifulsoup4" },
     { name = "click", version = "8.1.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -4380,12 +4381,12 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.9.0" },
     { name = "aiohttp-sse-client", specifier = ">=0.2.1" },
+    { name = "aiomqtt", specifier = ">=2.0.0" },
     { name = "aiosqlite", specifier = ">=0.20.0" },
     { name = "alembic", specifier = ">=1.12.0" },
     { name = "alpha-vantage", specifier = ">=2.3.1" },
     { name = "altair", specifier = ">=4.2.1,<5.0.0" },
     { name = "anthropic", specifier = ">=0.60.0" },
-    { name = "asyncio-mqtt", specifier = ">=0.13.0" },
     { name = "asyncpg", specifier = ">=0.29.0" },
     { name = "beautifulsoup4", specifier = ">=4.13.5" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
