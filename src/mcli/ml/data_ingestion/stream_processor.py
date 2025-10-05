@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class StreamConfig:
     """Stream processing configuration"""
+
     buffer_size: int = 1000
     batch_size: int = 100
     flush_interval: int = 5  # seconds
@@ -108,10 +109,13 @@ class DataStream(ABC):
 class KafkaStream(DataStream):
     """Kafka stream consumer"""
 
-    def __init__(self, config: StreamConfig,
-                 bootstrap_servers: str,
-                 topic: str,
-                 group_id: str = "ml-processor"):
+    def __init__(
+        self,
+        config: StreamConfig,
+        bootstrap_servers: str,
+        topic: str,
+        group_id: str = "ml-processor",
+    ):
         super().__init__(config)
         self.bootstrap_servers = bootstrap_servers
         self.topic = topic
@@ -124,9 +128,9 @@ class KafkaStream(DataStream):
             self.topic,
             bootstrap_servers=self.bootstrap_servers,
             group_id=self.group_id,
-            value_deserializer=lambda x: json.loads(x.decode('utf-8')),
-            auto_offset_reset='latest',
-            enable_auto_commit=True
+            value_deserializer=lambda x: json.loads(x.decode("utf-8")),
+            auto_offset_reset="latest",
+            enable_auto_commit=True,
         )
         logger.info(f"Connected to Kafka topic: {self.topic}")
 
@@ -136,11 +140,7 @@ class KafkaStream(DataStream):
 
         while self.is_running:
             # Poll messages
-            messages = await loop.run_in_executor(
-                None,
-                self.consumer.poll,
-                1000  # timeout ms
-            )
+            messages = await loop.run_in_executor(None, self.consumer.poll, 1000)  # timeout ms
 
             for topic_partition, records in messages.items():
                 for record in records:
@@ -233,15 +233,18 @@ class StreamProcessor:
         return {
             "messages_processed": self.metrics.messages_processed,
             "throughput": self.metrics.throughput,
-            "last_update": self.metrics.last_update.isoformat() if self.metrics.last_update else None,
+            "last_update": (
+                self.metrics.last_update.isoformat() if self.metrics.last_update else None
+            ),
             "active_streams": len(self.streams),
-            "errors": self.metrics.errors
+            "errors": self.metrics.errors,
         }
 
 
 @dataclass
 class StreamMetrics:
     """Stream processing metrics"""
+
     messages_processed: int = 0
     throughput: float = 0  # messages per second
     last_update: Optional[datetime] = None
@@ -262,17 +265,14 @@ class DataAggregator:
         """Process batch of messages"""
         for message in batch:
             # Extract key fields
-            symbol = message.get('symbol') or message.get('ticker')
-            timestamp = message.get('timestamp', time.time())
+            symbol = message.get("symbol") or message.get("ticker")
+            timestamp = message.get("timestamp", time.time())
 
             if symbol:
                 if symbol not in self.data_buffer:
                     self.data_buffer[symbol] = []
 
-                self.data_buffer[symbol].append({
-                    'timestamp': timestamp,
-                    'data': message
-                })
+                self.data_buffer[symbol].append({"timestamp": timestamp, "data": message})
 
         # Aggregate if window expired
         if time.time() - self.last_aggregation > self.window_size:
@@ -287,28 +287,28 @@ class DataAggregator:
                 continue
 
             # Sort by timestamp
-            data_points.sort(key=lambda x: x['timestamp'])
+            data_points.sort(key=lambda x: x["timestamp"])
 
             # Extract prices
             prices = []
             volumes = []
             for point in data_points:
-                data = point['data']
-                if 'price' in data:
-                    prices.append(data['price'])
-                if 'volume' in data:
-                    volumes.append(data['volume'])
+                data = point["data"]
+                if "price" in data:
+                    prices.append(data["price"])
+                if "volume" in data:
+                    volumes.append(data["volume"])
 
             # Calculate aggregates
             self.aggregated_data[symbol] = {
-                'timestamp': self.last_aggregation,
-                'count': len(data_points),
-                'price_mean': np.mean(prices) if prices else None,
-                'price_std': np.std(prices) if prices else None,
-                'price_min': min(prices) if prices else None,
-                'price_max': max(prices) if prices else None,
-                'volume_sum': sum(volumes) if volumes else None,
-                'latest': data_points[-1]['data']
+                "timestamp": self.last_aggregation,
+                "count": len(data_points),
+                "price_mean": np.mean(prices) if prices else None,
+                "price_std": np.std(prices) if prices else None,
+                "price_min": min(prices) if prices else None,
+                "price_max": max(prices) if prices else None,
+                "volume_sum": sum(volumes) if volumes else None,
+                "latest": data_points[-1]["data"],
             }
 
         # Clear buffer
@@ -345,79 +345,73 @@ class StreamEnricher:
         enriched = message.copy()
 
         # Add processing metadata
-        enriched['processed_at'] = datetime.now().isoformat()
-        enriched['processor_version'] = '1.0.0'
+        enriched["processed_at"] = datetime.now().isoformat()
+        enriched["processor_version"] = "1.0.0"
 
         # Enrich based on message type
-        if 'politician' in message:
+        if "politician" in message:
             enriched = await self.enrich_political_data(enriched)
 
-        if 'ticker' in message or 'symbol' in message:
+        if "ticker" in message or "symbol" in message:
             enriched = await self.enrich_market_data(enriched)
 
         return enriched
 
     async def enrich_political_data(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Enrich political trading data"""
-        politician = message.get('politician')
+        politician = message.get("politician")
 
         if politician:
             # Check cache
             cache_key = f"politician_{politician}"
             if cache_key in self.enrichment_cache:
                 cached = self.enrichment_cache[cache_key]
-                if time.time() - cached['timestamp'] < self.cache_ttl:
-                    message['politician_info'] = cached['data']
+                if time.time() - cached["timestamp"] < self.cache_ttl:
+                    message["politician_info"] = cached["data"]
                     return message
 
             # Simulate enrichment (in production, would fetch from database)
             politician_info = {
-                'party': 'Independent',
-                'state': 'CA',
-                'committees': ['Finance', 'Technology'],
-                'trading_frequency': 'high',
-                'avg_trade_size': 50000
+                "party": "Independent",
+                "state": "CA",
+                "committees": ["Finance", "Technology"],
+                "trading_frequency": "high",
+                "avg_trade_size": 50000,
             }
 
             # Cache enrichment
-            self.enrichment_cache[cache_key] = {
-                'timestamp': time.time(),
-                'data': politician_info
-            }
+            self.enrichment_cache[cache_key] = {"timestamp": time.time(), "data": politician_info}
 
-            message['politician_info'] = politician_info
+            message["politician_info"] = politician_info
 
         return message
 
     async def enrich_market_data(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Enrich market data"""
-        symbol = message.get('ticker') or message.get('symbol')
+        symbol = message.get("ticker") or message.get("symbol")
 
         if symbol:
             # Check cache
             cache_key = f"market_{symbol}"
             if cache_key in self.enrichment_cache:
                 cached = self.enrichment_cache[cache_key]
-                if time.time() - cached['timestamp'] < self.cache_ttl:
-                    message['market_info'] = cached['data']
+                if time.time() - cached["timestamp"] < self.cache_ttl:
+                    message["market_info"] = cached["data"]
                     return message
 
             # Simulate enrichment
             market_info = {
-                'sector': 'Technology',
-                'market_cap': 'Large',
-                'beta': 1.2,
-                'pe_ratio': 25.5,
-                'dividend_yield': 0.015
+                "sector": "Technology",
+                "market_cap": "Large",
+                "beta": 1.2,
+                "pe_ratio": 25.5,
+                "dividend_yield": 0.015,
             }
 
             # Cache enrichment
-            self.enrichment_cache[cache_key] = {
-                'timestamp': time.time(),
-                'data': market_info
-            }
+            self.enrichment_cache[cache_key] = {"timestamp": time.time(), "data": market_info}
 
-            message['market_info'] = market_info
+            message["market_info"] = market_info
 
         return message
 
@@ -435,8 +429,8 @@ class KafkaConsumer:
         self.consumer = KafkaConsumer(
             *self.topics,
             bootstrap_servers=self.bootstrap_servers,
-            value_deserializer=lambda x: json.loads(x.decode('utf-8')),
-            auto_offset_reset='latest'
+            value_deserializer=lambda x: json.loads(x.decode("utf-8")),
+            auto_offset_reset="latest",
         )
 
     async def consume(self, handler: Callable):
@@ -471,13 +465,10 @@ class WebSocketConsumer:
 
 # Example usage
 if __name__ == "__main__":
+
     async def main():
         # Configure stream processor
-        config = StreamConfig(
-            buffer_size=1000,
-            batch_size=100,
-            flush_interval=5
-        )
+        config = StreamConfig(buffer_size=1000, batch_size=100, flush_interval=5)
 
         processor = StreamProcessor(config)
 
@@ -490,7 +481,7 @@ if __name__ == "__main__":
             config,
             bootstrap_servers="localhost:9092",
             topic="politician-trades",
-            group_id="ml-processor"
+            group_id="ml-processor",
         )
         processor.add_stream("trades", kafka_stream)
 

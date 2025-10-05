@@ -1137,11 +1137,8 @@ def check_ci_status(version: str) -> tuple[bool, Optional[str]]:
         response = requests.get(
             "https://api.github.com/repos/gwicho38/mcli/actions/runs",
             params={"per_page": 5},
-            headers={
-                "Accept": "application/vnd.github.v3+json",
-                "User-Agent": "mcli-cli"
-            },
-            timeout=10
+            headers={"Accept": "application/vnd.github.v3+json", "User-Agent": "mcli-cli"},
+            timeout=10,
         )
 
         if response.status_code == 200:
@@ -1150,7 +1147,8 @@ def check_ci_status(version: str) -> tuple[bool, Optional[str]]:
 
             # Find the most recent completed run for main branch
             main_runs = [
-                run for run in runs
+                run
+                for run in runs
                 if run.get("head_branch") == "main" and run.get("status") == "completed"
             ]
 
@@ -1209,7 +1207,10 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
         if pre:
             # Include pre-releases
             all_versions = list(pypi_data["releases"].keys())
-            latest_version = max(all_versions, key=lambda v: [int(x) for x in v.split(".")] if v[0].isdigit() else [0])
+            latest_version = max(
+                all_versions,
+                key=lambda v: [int(x) for x in v.split(".")] if v[0].isdigit() else [0],
+            )
         else:
             # Only stable releases
             latest_version = pypi_data["info"]["version"]
@@ -1232,7 +1233,9 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
         latest_parsed = parse_version(latest_version)
 
         if current_parsed >= latest_parsed:
-            console.print(f"[green]✅ Your version ({current_version}) is up to date or newer[/green]")
+            console.print(
+                f"[green]✅ Your version ({current_version}) is up to date or newer[/green]"
+            )
             return
 
         console.print(f"[yellow]⬆️  Update available: {current_version} → {latest_version}[/yellow]")
@@ -1250,6 +1253,7 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
         # Ask for confirmation unless --yes flag is used
         if not yes:
             from rich.prompt import Confirm
+
             if not Confirm.ask(f"[yellow]Install mcli {latest_version}?[/yellow]"):
                 console.print("[yellow]Update cancelled[/yellow]")
                 return
@@ -1263,8 +1267,12 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
                 console.print("[red]✗ CI build is failing for the latest version[/red]")
                 if ci_url:
                     console.print(f"[yellow]  View CI status: {ci_url}[/yellow]")
-                console.print("[yellow]⚠️  Update blocked to prevent installing a broken version[/yellow]")
-                console.print("[dim]  Use --skip-ci-check to install anyway (not recommended)[/dim]")
+                console.print(
+                    "[yellow]⚠️  Update blocked to prevent installing a broken version[/yellow]"
+                )
+                console.print(
+                    "[dim]  Use --skip-ci-check to install anyway (not recommended)[/dim]"
+                )
                 return
             else:
                 console.print("[green]✓ CI build is passing[/green]")
@@ -1277,9 +1285,9 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
         executable_path = str(sys.executable).replace("\\", "/")  # Normalize path separators
 
         is_uv_tool = (
-            "/uv/tools/" in executable_path or
-            "/.local/share/uv/tools/" in executable_path or
-            "\\AppData\\Local\\uv\\tools\\" in str(sys.executable)
+            "/uv/tools/" in executable_path
+            or "/.local/share/uv/tools/" in executable_path
+            or "\\AppData\\Local\\uv\\tools\\" in str(sys.executable)
         )
 
         if is_uv_tool:
@@ -1289,7 +1297,9 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
             if pre:
                 # For pre-releases, we'd need to specify the version explicitly
                 # For now, --pre is not supported with uv tool install in this context
-                console.print("[yellow]⚠️  Pre-release flag not supported with uv tool install[/yellow]")
+                console.print(
+                    "[yellow]⚠️  Pre-release flag not supported with uv tool install[/yellow]"
+                )
         else:
             # Use pip to upgrade for regular installations (requires pip in environment)
             cmd = [sys.executable, "-m", "pip", "install", "--upgrade", "mcli-framework"]
@@ -1301,9 +1311,13 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
         if result.returncode == 0:
             console.print(f"[green]✅ Successfully updated to mcli {latest_version}![/green]")
             if is_uv_tool:
-                console.print("[yellow]ℹ️  Run 'hash -r' to refresh your shell's command cache[/yellow]")
+                console.print(
+                    "[yellow]ℹ️  Run 'hash -r' to refresh your shell's command cache[/yellow]"
+                )
             else:
-                console.print("[yellow]ℹ️  Restart your terminal or run 'hash -r' to use the new version[/yellow]")
+                console.print(
+                    "[yellow]ℹ️  Restart your terminal or run 'hash -r' to use the new version[/yellow]"
+                )
         else:
             console.print(f"[red]❌ Update failed:[/red]")
             console.print(result.stderr)
@@ -1311,6 +1325,7 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
     except Exception as e:
         console.print(f"[red]❌ Error during update: {e}[/red]")
         import traceback
+
         console.print(f"[dim]{traceback.format_exc()}[/dim]")
 
 

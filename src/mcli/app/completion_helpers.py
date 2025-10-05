@@ -11,12 +11,12 @@ LAZY_COMMAND_COMPLETIONS = {
     "workflow": {
         "subcommands": [
             "api-daemon",
-            "daemon", 
+            "daemon",
             "file",
             "politician-trading",
             "scheduler",
             "sync",
-            "videos"
+            "videos",
         ],
         "politician-trading": {
             "subcommands": [
@@ -24,7 +24,7 @@ LAZY_COMMAND_COMPLETIONS = {
                 "cron-job",
                 "data-sources",
                 "disclosures",
-                "health", 
+                "health",
                 "jobs",
                 "monitor",
                 "politicians",
@@ -34,105 +34,50 @@ LAZY_COMMAND_COMPLETIONS = {
                 "stats",
                 "status",
                 "test-workflow",
-                "verify"
+                "verify",
             ],
-            "cron-job": {
-                "options": ["--create", "--test"]
-            },
+            "cron-job": {"options": ["--create", "--test"]},
             "setup": {
                 "options": ["--create-tables", "--verify", "--generate-schema", "--output-dir"]
             },
-            "run": {
-                "options": ["--full", "--us-only", "--eu-only"]
-            },
-            "connectivity": {
-                "options": ["--json", "--continuous", "--interval", "--duration"]
-            },
-            "health": {
-                "options": ["--json"]
-            },
-            "monitor": {
-                "options": ["--interval", "--count"]  
-            },
-            "status": {
-                "options": ["--json"]
-            },
-            "stats": {
-                "options": ["--json"]
-            },
-            "test-workflow": {
-                "options": ["--verbose", "--validate-writes"]
-            },
-            "schema": {
-                "options": ["--show-location", "--generate", "--output-dir"]
-            },
-            "data-sources": {
-                "options": ["--json"]
-            },
-            "jobs": {
-                "options": ["--json", "--limit"]
-            },
+            "run": {"options": ["--full", "--us-only", "--eu-only"]},
+            "connectivity": {"options": ["--json", "--continuous", "--interval", "--duration"]},
+            "health": {"options": ["--json"]},
+            "monitor": {"options": ["--interval", "--count"]},
+            "status": {"options": ["--json"]},
+            "stats": {"options": ["--json"]},
+            "test-workflow": {"options": ["--verbose", "--validate-writes"]},
+            "schema": {"options": ["--show-location", "--generate", "--output-dir"]},
+            "data-sources": {"options": ["--json"]},
+            "jobs": {"options": ["--json", "--limit"]},
             "politicians": {
                 "options": ["--json", "--limit", "--role", "--party", "--state", "--search"]
             },
             "disclosures": {
-                "options": ["--json", "--limit", "--politician", "--asset", "--transaction-type", "--amount-min", "--amount-max", "--days", "--details"]
+                "options": [
+                    "--json",
+                    "--limit",
+                    "--politician",
+                    "--asset",
+                    "--transaction-type",
+                    "--amount-min",
+                    "--amount-max",
+                    "--days",
+                    "--details",
+                ]
             },
-            "verify": {
-                "options": ["--json"]
-            }
+            "verify": {"options": ["--json"]},
         },
         "scheduler": {
-            "subcommands": [
-                "add",
-                "cancel", 
-                "list",
-                "monitor",
-                "remove",
-                "start",
-                "status",
-                "stop"
-            ]
+            "subcommands": ["add", "cancel", "list", "monitor", "remove", "start", "status", "stop"]
         },
-        "daemon": {
-            "subcommands": [
-                "start",
-                "stop", 
-                "status",
-                "logs"
-            ]
-        },
-        "api-daemon": {
-            "subcommands": [
-                "start",
-                "stop",
-                "status", 
-                "logs"
-            ]
-        },
-        "videos": {
-            "subcommands": [
-                "remove-overlay",
-                "extract-frames",
-                "create-video"
-            ]
-        },
-        "sync": {
-            "subcommands": [
-                "status",
-                "sync"
-            ]
-        },
-        "file": {
-            "subcommands": [
-                "search",
-                "organize"
-            ]
-        }
+        "daemon": {"subcommands": ["start", "stop", "status", "logs"]},
+        "api-daemon": {"subcommands": ["start", "stop", "status", "logs"]},
+        "videos": {"subcommands": ["remove-overlay", "extract-frames", "create-video"]},
+        "sync": {"subcommands": ["status", "sync"]},
+        "file": {"subcommands": ["search", "organize"]},
     },
-    "chat": {
-        "options": ["--model", "--system", "--temperature", "--max-tokens", "--stream"]
-    },
+    "chat": {"options": ["--model", "--system", "--temperature", "--max-tokens", "--stream"]},
     "model": {
         "subcommands": [
             "download",
@@ -142,79 +87,51 @@ LAZY_COMMAND_COMPLETIONS = {
             "pull",
             "delete",
             "recommend",
-            "status"
-        ]
-    },
-    "cron-test": {
-        "options": ["--quick", "--cleanup", "--verbose"]
-    },
-    "visual": {
-        "subcommands": [
-            "demo",
-            "spinner-test"
-        ]
-    },
-    "redis": {
-        "subcommands": [
-            "start",
-            "stop",
             "status",
-            "flush"
         ]
     },
-    "logs": {
-        "subcommands": [
-            "tail",
-            "view",
-            "clear"
-        ]
-    },
+    "cron-test": {"options": ["--quick", "--cleanup", "--verbose"]},
+    "visual": {"subcommands": ["demo", "spinner-test"]},
+    "redis": {"subcommands": ["start", "stop", "status", "flush"]},
+    "logs": {"subcommands": ["tail", "view", "clear"]},
     "completion": {
-        "subcommands": [
-            "bash",
-            "zsh", 
-            "fish",
-            "install",
-            "status"
-        ],
-        "install": {
-            "options": ["--shell"]
-        }
-    }
+        "subcommands": ["bash", "zsh", "fish", "install", "status"],
+        "install": {"options": ["--shell"]},
+    },
 }
 
 
 def get_completion_items(cmd_path: List[str], incomplete: str = "") -> List[CompletionItem]:
     """Get completion items for a given command path without loading modules"""
     items = []
-    
+
     # Navigate to the completion data for this path
     current_data = LAZY_COMMAND_COMPLETIONS
-    
+
     for part in cmd_path:
         if part in current_data:
             current_data = current_data[part]
         else:
             return items  # No completion data available
-    
+
     # Add subcommands
     if "subcommands" in current_data:
         for subcommand in current_data["subcommands"]:
             if subcommand.startswith(incomplete):
                 items.append(CompletionItem(subcommand))
-    
-    # Add options  
+
+    # Add options
     if "options" in current_data:
         for option in current_data["options"]:
             if option.startswith(incomplete):
                 items.append(CompletionItem(option))
-    
+
     return items
 
 
 class CompletionAwareLazyGroup(click.Group):
     """A Click group that provides completion without loading modules"""
-    
+
     def __init__(self, name, import_path, *args, **kwargs):
         self.import_path = import_path
         self._loaded_group = None
@@ -225,6 +142,7 @@ class CompletionAwareLazyGroup(click.Group):
         if self._loaded_group is None:
             try:
                 import importlib
+
                 module_path, attr_name = self.import_path.rsplit(".", 1)
                 module = importlib.import_module(module_path)
                 self._loaded_group = getattr(module, attr_name)
@@ -232,6 +150,7 @@ class CompletionAwareLazyGroup(click.Group):
                 # Return a dummy group that shows an error
                 def error_callback():
                     click.echo(f"Error: Command group {self.name} is not available")
+
                 self._loaded_group = click.Group(self.name, callback=error_callback)
         return self._loaded_group
 
@@ -252,13 +171,13 @@ class CompletionAwareLazyGroup(click.Group):
             data = LAZY_COMMAND_COMPLETIONS[self.name]
             if "subcommands" in data:
                 return sorted(data["subcommands"])
-        
+
         # Try to get from static completion data for other commands
         if self.name in LAZY_COMMAND_COMPLETIONS:
             data = LAZY_COMMAND_COMPLETIONS[self.name]
             if "subcommands" in data:
                 return sorted(data["subcommands"])
-        
+
         # Fallback to loading the actual group
         group = self._load_group()
         return group.list_commands(ctx)
@@ -274,10 +193,10 @@ class CompletionAwareLazyGroup(click.Group):
                     if subcommand.startswith(incomplete):
                         items.append(CompletionItem(subcommand))
                 return items
-        
+
         # Fallback to loading the actual group
         group = self._load_group()
-        if hasattr(group, 'shell_complete'):
+        if hasattr(group, "shell_complete"):
             return group.shell_complete(ctx, incomplete)
         return []
 
@@ -287,6 +206,8 @@ class CompletionAwareLazyGroup(click.Group):
         return group.get_params(ctx)
 
 
-def create_completion_aware_lazy_group(name: str, import_path: str, help_text: str = None) -> CompletionAwareLazyGroup:
+def create_completion_aware_lazy_group(
+    name: str, import_path: str, help_text: str = None
+) -> CompletionAwareLazyGroup:
     """Create a completion-aware lazy group"""
     return CompletionAwareLazyGroup(name, import_path, help=help_text)

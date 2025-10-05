@@ -29,9 +29,7 @@ security = HTTPBearer()
 
 @router.post("/register", response_model=UserResponse)
 async def register(
-    user_data: UserCreate,
-    db: Session = Depends(get_db),
-    _: bool = Depends(check_rate_limit)
+    user_data: UserCreate, db: Session = Depends(get_db), _: bool = Depends(check_rate_limit)
 ):
     """Register a new user"""
     try:
@@ -40,44 +38,32 @@ async def register(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
-    login_data: UserLogin,
-    db: Session = Depends(get_db),
-    _: bool = Depends(check_rate_limit)
+    login_data: UserLogin, db: Session = Depends(get_db), _: bool = Depends(check_rate_limit)
 ):
     """Login and receive access token"""
     return await auth_manager.login(login_data, db)
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(
-    refresh_token: str,
-    db: Session = Depends(get_db)
-):
+async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
     """Refresh access token using refresh token"""
     return await auth_manager.refresh_access_token(refresh_token, db)
 
 
 @router.post("/logout")
-async def logout(
-    current_user: User = Depends(get_current_active_user)
-):
+async def logout(current_user: User = Depends(get_current_active_user)):
     """Logout current user"""
     # In a real implementation, you might want to blacklist the token
     return {"message": "Successfully logged out"}
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(
-    current_user: User = Depends(get_current_active_user)
-):
+async def get_current_user_info(current_user: User = Depends(get_current_active_user)):
     """Get current user information"""
     return UserResponse.from_orm(current_user)
 
@@ -86,7 +72,7 @@ async def get_current_user_info(
 async def update_current_user(
     updates: dict,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update current user information"""
     # Update allowed fields
@@ -104,17 +90,13 @@ async def update_current_user(
 async def change_password(
     password_data: PasswordChange,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Change current user's password"""
     # Verify current password
-    if not auth_manager.verify_password(
-        password_data.current_password,
-        current_user.password_hash
-    ):
+    if not auth_manager.verify_password(password_data.current_password, current_user.password_hash):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Current password is incorrect"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect"
         )
 
     # Update password
@@ -126,9 +108,7 @@ async def change_password(
 
 @router.post("/reset-password")
 async def reset_password_request(
-    reset_data: PasswordReset,
-    db: Session = Depends(get_db),
-    _: bool = Depends(check_rate_limit)
+    reset_data: PasswordReset, db: Session = Depends(get_db), _: bool = Depends(check_rate_limit)
 ):
     """Request password reset"""
     # Find user by email
@@ -144,10 +124,7 @@ async def reset_password_request(
 
 
 @router.post("/verify-email/{token}")
-async def verify_email(
-    token: str,
-    db: Session = Depends(get_db)
-):
+async def verify_email(token: str, db: Session = Depends(get_db)):
     """Verify email address"""
     # In a real implementation, verify the token and update user
     return {"message": "Email verified successfully"}
@@ -155,8 +132,7 @@ async def verify_email(
 
 @router.get("/sessions")
 async def get_user_sessions(
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)
 ):
     """Get all active sessions for current user"""
     # In a real implementation, return active sessions from database
@@ -167,7 +143,7 @@ async def get_user_sessions(
                 "ip_address": "127.0.0.1",
                 "user_agent": "Mozilla/5.0",
                 "created_at": datetime.utcnow().isoformat(),
-                "last_active": datetime.utcnow().isoformat()
+                "last_active": datetime.utcnow().isoformat(),
             }
         ]
     }
@@ -177,7 +153,7 @@ async def get_user_sessions(
 async def revoke_session(
     session_id: str,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Revoke a specific session"""
     # In a real implementation, revoke the session
@@ -189,7 +165,7 @@ async def create_api_key(
     name: str,
     expires_in_days: Optional[int] = None,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new API key"""
     import secrets
@@ -209,15 +185,15 @@ async def create_api_key(
         "name": name,
         "created_at": datetime.utcnow().isoformat(),
         "expires_at": (
-            datetime.utcnow() + timedelta(days=expires_in_days)
-        ).isoformat() if expires_in_days else None
+            (datetime.utcnow() + timedelta(days=expires_in_days)).isoformat()
+            if expires_in_days
+            else None
+        ),
     }
 
 
 @router.get("/api-keys")
-async def list_api_keys(
-    current_user: User = Depends(get_current_active_user)
-):
+async def list_api_keys(current_user: User = Depends(get_current_active_user)):
     """List all API keys for current user"""
     # In a real implementation, return API keys from database
     return {
@@ -227,7 +203,7 @@ async def list_api_keys(
                 "name": "Production API",
                 "created_at": datetime.utcnow().isoformat(),
                 "last_used": datetime.utcnow().isoformat(),
-                "expires_at": None
+                "expires_at": None,
             }
         ]
     }
@@ -237,7 +213,7 @@ async def list_api_keys(
 async def revoke_api_key(
     key_id: str,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Revoke an API key"""
     # In a real implementation, revoke the API key

@@ -12,6 +12,7 @@ import json
 
 import sys
 import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from ml.models.recommendation_models import StockRecommendationModel, PortfolioRecommendation
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class OrderType(Enum):
     """Order types"""
+
     MARKET = "market"
     LIMIT = "limit"
     STOP = "stop"
@@ -29,6 +31,7 @@ class OrderType(Enum):
 
 class OrderSide(Enum):
     """Order side"""
+
     BUY = "buy"
     SELL = "sell"
 
@@ -36,6 +39,7 @@ class OrderSide(Enum):
 @dataclass
 class BacktestConfig:
     """Backtesting configuration"""
+
     initial_capital: float = 100000.0
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
@@ -54,6 +58,7 @@ class BacktestConfig:
 @dataclass
 class BacktestResult:
     """Backtesting results"""
+
     portfolio_value: pd.Series
     returns: pd.Series
     positions: pd.DataFrame
@@ -71,9 +76,9 @@ class TradingStrategy:
         self.current_positions = {}
         self.pending_orders = []
 
-    def generate_signals(self, data: pd.DataFrame,
-                        current_date: datetime,
-                        portfolio_value: float) -> List[Dict[str, Any]]:
+    def generate_signals(
+        self, data: pd.DataFrame, current_date: datetime, portfolio_value: float
+    ) -> List[Dict[str, Any]]:
         """Generate trading signals"""
         signals = []
 
@@ -89,7 +94,7 @@ class TradingStrategy:
                     "position_size": rec.position_size,
                     "entry_price": rec.entry_price,
                     "target_price": rec.target_price,
-                    "stop_loss": rec.stop_loss
+                    "stop_loss": rec.stop_loss,
                 }
                 signals.append(signal)
         else:
@@ -98,17 +103,18 @@ class TradingStrategy:
 
         return signals
 
-    def _get_model_recommendations(self, data: pd.DataFrame,
-                                  current_date: datetime) -> List[PortfolioRecommendation]:
+    def _get_model_recommendations(
+        self, data: pd.DataFrame, current_date: datetime
+    ) -> List[PortfolioRecommendation]:
         """Get recommendations from ML model"""
         # Filter data up to current date
-        historical_data = data[data['date'] <= current_date]
+        historical_data = data[data["date"] <= current_date]
 
         # Extract features (simplified)
         features = historical_data.select_dtypes(include=[np.number]).values[-1:, :]
 
         # Get unique tickers
-        tickers = historical_data['symbol'].unique()[:5]  # Limit to 5 for speed
+        tickers = historical_data["symbol"].unique()[:5]  # Limit to 5 for speed
 
         # Generate recommendations
         try:
@@ -118,42 +124,42 @@ class TradingStrategy:
             logger.warning(f"Model prediction failed: {e}")
             return []
 
-    def _momentum_strategy(self, data: pd.DataFrame,
-                          current_date: datetime) -> List[Dict[str, Any]]:
+    def _momentum_strategy(
+        self, data: pd.DataFrame, current_date: datetime
+    ) -> List[Dict[str, Any]]:
         """Simple momentum strategy"""
         signals = []
 
         # Get recent data
-        recent_data = data[data['date'] <= current_date].tail(20)
+        recent_data = data[data["date"] <= current_date].tail(20)
 
         if len(recent_data) < 20:
             return signals
 
         # Calculate momentum for each ticker
-        for ticker in recent_data['symbol'].unique():
-            ticker_data = recent_data[recent_data['symbol'] == ticker]
+        for ticker in recent_data["symbol"].unique():
+            ticker_data = recent_data[recent_data["symbol"] == ticker]
 
             if len(ticker_data) < 2:
                 continue
 
             # Simple momentum: compare current price to 20-day average
-            current_price = ticker_data['close'].iloc[-1]
-            avg_price = ticker_data['close'].mean()
+            current_price = ticker_data["close"].iloc[-1]
+            avg_price = ticker_data["close"].mean()
 
             if current_price > avg_price * 1.05:  # 5% above average
-                signals.append({
-                    "ticker": ticker,
-                    "action": "buy",
-                    "confidence": 0.6,
-                    "position_size": 0.05  # 5% position
-                })
+                signals.append(
+                    {
+                        "ticker": ticker,
+                        "action": "buy",
+                        "confidence": 0.6,
+                        "position_size": 0.05,  # 5% position
+                    }
+                )
             elif current_price < avg_price * 0.95:  # 5% below average
-                signals.append({
-                    "ticker": ticker,
-                    "action": "sell",
-                    "confidence": 0.6,
-                    "position_size": 0.05
-                })
+                signals.append(
+                    {"ticker": ticker, "action": "sell", "confidence": 0.6, "position_size": 0.05}
+                )
 
         return signals
 
@@ -167,8 +173,9 @@ class PositionManager:
         self.cash = config.initial_capital
         self.portfolio_value = config.initial_capital
 
-    def open_position(self, ticker: str, quantity: int, price: float,
-                     date: datetime, signal: Dict[str, Any]):
+    def open_position(
+        self, ticker: str, quantity: int, price: float, date: datetime, signal: Dict[str, Any]
+    ):
         """Open a new position"""
         cost = quantity * price * (1 + self.config.commission + self.config.slippage)
 
@@ -185,7 +192,7 @@ class PositionManager:
             "stop_loss": signal.get("stop_loss"),
             "take_profit": signal.get("target_price"),
             "unrealized_pnl": 0,
-            "realized_pnl": 0
+            "realized_pnl": 0,
         }
 
         logger.debug(f"Opened position: {ticker} - {quantity} shares @ ${price:.2f}")
@@ -271,21 +278,22 @@ class BacktestEngine:
         """Set trading strategy"""
         self.strategy = strategy
 
-    def run(self, price_data: pd.DataFrame,
-           trading_data: Optional[pd.DataFrame] = None) -> BacktestResult:
+    def run(
+        self, price_data: pd.DataFrame, trading_data: Optional[pd.DataFrame] = None
+    ) -> BacktestResult:
         """Run backtest"""
         logger.info("Starting backtest...")
 
         # Prepare data
-        price_data = price_data.sort_values('date')
+        price_data = price_data.sort_values("date")
 
         if self.config.start_date:
-            price_data = price_data[price_data['date'] >= self.config.start_date]
+            price_data = price_data[price_data["date"] >= self.config.start_date]
         if self.config.end_date:
-            price_data = price_data[price_data['date'] <= self.config.end_date]
+            price_data = price_data[price_data["date"] <= self.config.end_date]
 
         # Get unique dates
-        dates = price_data['date'].unique()
+        dates = price_data["date"].unique()
 
         # Initialize results
         portfolio_values = []
@@ -301,15 +309,16 @@ class BacktestEngine:
 
             # Handle stop loss or take profit triggers
             if trigger_ticker:
-                self._execute_exit(trigger_ticker, current_prices[trigger_ticker],
-                                  current_date, trigger_type)
+                self._execute_exit(
+                    trigger_ticker, current_prices[trigger_ticker], current_date, trigger_type
+                )
 
             # Generate signals (e.g., weekly rebalancing)
             if self._should_rebalance(i, current_date):
                 signals = self.strategy.generate_signals(
-                    price_data[price_data['date'] <= current_date],
+                    price_data[price_data["date"] <= current_date],
                     current_date,
-                    self.position_manager.get_portfolio_value(current_prices)
+                    self.position_manager.get_portfolio_value(current_prices),
                 )
 
                 # Execute signals
@@ -317,12 +326,14 @@ class BacktestEngine:
 
             # Record portfolio value
             portfolio_value = self.position_manager.get_portfolio_value(current_prices)
-            portfolio_values.append({
-                "date": current_date,
-                "value": portfolio_value,
-                "cash": self.position_manager.cash,
-                "positions_value": portfolio_value - self.position_manager.cash
-            })
+            portfolio_values.append(
+                {
+                    "date": current_date,
+                    "value": portfolio_value,
+                    "cash": self.position_manager.cash,
+                    "positions_value": portfolio_value - self.position_manager.cash,
+                }
+            )
 
             # Record positions
             position_snapshot = self._get_position_snapshot(current_date, current_prices)
@@ -330,10 +341,10 @@ class BacktestEngine:
 
         # Create results
         portfolio_df = pd.DataFrame(portfolio_values)
-        portfolio_df.set_index('date', inplace=True)
+        portfolio_df.set_index("date", inplace=True)
 
         # Calculate returns
-        portfolio_df['returns'] = portfolio_df['value'].pct_change().fillna(0)
+        portfolio_df["returns"] = portfolio_df["value"].pct_change().fillna(0)
 
         # Calculate metrics
         metrics = self._calculate_metrics(portfolio_df)
@@ -342,24 +353,25 @@ class BacktestEngine:
         benchmark_returns = self._get_benchmark_returns(price_data, dates)
 
         result = BacktestResult(
-            portfolio_value=portfolio_df['value'],
-            returns=portfolio_df['returns'],
+            portfolio_value=portfolio_df["value"],
+            returns=portfolio_df["returns"],
             positions=pd.DataFrame(daily_positions),
             trades=pd.DataFrame(self.trades),
             metrics=metrics,
             benchmark_returns=benchmark_returns,
-            strategy_name=self.strategy.__class__.__name__
+            strategy_name=self.strategy.__class__.__name__,
         )
 
         logger.info(f"Backtest complete. Total return: {metrics['total_return']:.2%}")
 
         return result
 
-    def _get_current_prices(self, price_data: pd.DataFrame,
-                           current_date: datetime) -> Dict[str, float]:
+    def _get_current_prices(
+        self, price_data: pd.DataFrame, current_date: datetime
+    ) -> Dict[str, float]:
         """Get current prices for all tickers"""
-        current_data = price_data[price_data['date'] == current_date]
-        return dict(zip(current_data['symbol'], current_data['close']))
+        current_data = price_data[price_data["date"] == current_date]
+        return dict(zip(current_data["symbol"], current_data["close"]))
 
     def _should_rebalance(self, day_index: int, current_date: datetime) -> bool:
         """Check if should rebalance portfolio"""
@@ -371,9 +383,12 @@ class BacktestEngine:
             return day_index % 21 == 0
         return False
 
-    def _execute_signals(self, signals: List[Dict[str, Any]],
-                        current_prices: Dict[str, float],
-                        current_date: datetime):
+    def _execute_signals(
+        self,
+        signals: List[Dict[str, Any]],
+        current_prices: Dict[str, float],
+        current_date: datetime,
+    ):
         """Execute trading signals"""
         for signal in signals:
             ticker = signal["ticker"]
@@ -399,52 +414,60 @@ class BacktestEngine:
                             )
 
                             if success:
-                                self.trades.append({
-                                    "date": current_date,
-                                    "ticker": ticker,
-                                    "action": "buy",
-                                    "quantity": quantity,
-                                    "price": price,
-                                    "value": quantity * price
-                                })
+                                self.trades.append(
+                                    {
+                                        "date": current_date,
+                                        "ticker": ticker,
+                                        "action": "buy",
+                                        "quantity": quantity,
+                                        "price": price,
+                                        "value": quantity * price,
+                                    }
+                                )
 
             elif signal["action"] == "sell":
                 if ticker in self.position_manager.positions:
                     pnl = self.position_manager.close_position(ticker, price, current_date)
 
-                    self.trades.append({
-                        "date": current_date,
-                        "ticker": ticker,
-                        "action": "sell",
-                        "quantity": self.position_manager.positions.get(ticker, {}).get("quantity", 0),
-                        "price": price,
-                        "pnl": pnl
-                    })
+                    self.trades.append(
+                        {
+                            "date": current_date,
+                            "ticker": ticker,
+                            "action": "sell",
+                            "quantity": self.position_manager.positions.get(ticker, {}).get(
+                                "quantity", 0
+                            ),
+                            "price": price,
+                            "pnl": pnl,
+                        }
+                    )
 
-    def _execute_exit(self, ticker: str, price: float,
-                     current_date: datetime, exit_type: str):
+    def _execute_exit(self, ticker: str, price: float, current_date: datetime, exit_type: str):
         """Execute position exit"""
         if ticker in self.position_manager.positions:
             position = self.position_manager.positions[ticker]
             pnl = self.position_manager.close_position(ticker, price, current_date)
 
-            self.trades.append({
-                "date": current_date,
-                "ticker": ticker,
-                "action": f"sell_{exit_type}",
-                "quantity": position["quantity"],
-                "price": price,
-                "pnl": pnl
-            })
+            self.trades.append(
+                {
+                    "date": current_date,
+                    "ticker": ticker,
+                    "action": f"sell_{exit_type}",
+                    "quantity": position["quantity"],
+                    "price": price,
+                    "pnl": pnl,
+                }
+            )
 
-    def _get_position_snapshot(self, date: datetime,
-                              current_prices: Dict[str, float]) -> Dict[str, Any]:
+    def _get_position_snapshot(
+        self, date: datetime, current_prices: Dict[str, float]
+    ) -> Dict[str, Any]:
         """Get current position snapshot"""
         snapshot = {
             "date": date,
             "num_positions": len(self.position_manager.positions),
             "cash": self.position_manager.cash,
-            "portfolio_value": self.position_manager.get_portfolio_value(current_prices)
+            "portfolio_value": self.position_manager.get_portfolio_value(current_prices),
         }
 
         # Add position weights
@@ -456,15 +479,17 @@ class BacktestEngine:
 
     def _calculate_metrics(self, portfolio_df: pd.DataFrame) -> Dict[str, float]:
         """Calculate performance metrics"""
-        returns = portfolio_df['returns']
+        returns = portfolio_df["returns"]
 
         # Basic metrics
-        total_return = (portfolio_df['value'].iloc[-1] / portfolio_df['value'].iloc[0]) - 1
+        total_return = (portfolio_df["value"].iloc[-1] / portfolio_df["value"].iloc[0]) - 1
         annualized_return = (1 + total_return) ** (252 / len(returns)) - 1
 
         # Risk metrics
         volatility = returns.std() * np.sqrt(252)
-        sharpe_ratio = (annualized_return - self.config.risk_free_rate) / volatility if volatility > 0 else 0
+        sharpe_ratio = (
+            (annualized_return - self.config.risk_free_rate) / volatility if volatility > 0 else 0
+        )
 
         # Drawdown
         cumulative = (1 + returns).cumprod()
@@ -485,18 +510,19 @@ class BacktestEngine:
             "max_drawdown": max_drawdown,
             "win_rate": win_rate,
             "total_trades": len(self.trades),
-            "final_value": portfolio_df['value'].iloc[-1],
-            "initial_value": self.config.initial_capital
+            "final_value": portfolio_df["value"].iloc[-1],
+            "initial_value": self.config.initial_capital,
         }
 
-    def _get_benchmark_returns(self, price_data: pd.DataFrame,
-                              dates: np.ndarray) -> Optional[pd.Series]:
+    def _get_benchmark_returns(
+        self, price_data: pd.DataFrame, dates: np.ndarray
+    ) -> Optional[pd.Series]:
         """Get benchmark returns"""
-        if self.config.benchmark not in price_data['symbol'].unique():
+        if self.config.benchmark not in price_data["symbol"].unique():
             return None
 
-        benchmark_data = price_data[price_data['symbol'] == self.config.benchmark]
-        benchmark_data = benchmark_data.set_index('date')['close']
+        benchmark_data = price_data[price_data["symbol"] == self.config.benchmark]
+        benchmark_data = benchmark_data.set_index("date")["close"]
         benchmark_returns = benchmark_data.pct_change().fillna(0)
 
         return benchmark_returns[benchmark_returns.index.isin(dates)]

@@ -100,13 +100,14 @@ class SupabaseConnectivityValidator:
         try:
             # Test basic REST API connectivity instead of RPC
             import httpx
+
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    self.config.supabase.url + '/rest/v1/',
-                    headers={'apikey': self.config.supabase.key},
-                    timeout=30.0
+                    self.config.supabase.url + "/rest/v1/",
+                    headers={"apikey": self.config.supabase.key},
+                    timeout=30.0,
                 )
-                
+
                 if response.status_code == 200:
                     return {
                         "success": True,
@@ -115,8 +116,8 @@ class SupabaseConnectivityValidator:
                     }
                 else:
                     return {
-                        "success": False, 
-                        "error": f"HTTP {response.status_code}: {response.text[:100]}"
+                        "success": False,
+                        "error": f"HTTP {response.status_code}: {response.text[:100]}",
                     }
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -127,7 +128,7 @@ class SupabaseConnectivityValidator:
             # Try reading from multiple tables
             tables_to_test = [
                 "politicians",
-                "trading_disclosures", 
+                "trading_disclosures",
                 "data_pull_jobs",
                 "data_sources",
             ]
@@ -148,14 +149,14 @@ class SupabaseConnectivityValidator:
 
             accessible_count = sum(1 for status in read_results.values() if status == "accessible")
             missing_count = sum(1 for status in read_results.values() if status == "table_missing")
-            
+
             if schema_missing and accessible_count == 0:
                 return {
                     "success": False,
                     "tables_tested": read_results,
                     "accessible_tables": accessible_count,
                     "missing_tables": missing_count,
-                    "message": "Database schema not set up. Run 'mcli workflow politician-trading setup --generate-schema' to get setup instructions."
+                    "message": "Database schema not set up. Run 'mcli workflow politician-trading setup --generate-schema' to get setup instructions.",
                 }
             else:
                 success = accessible_count > 0
@@ -195,15 +196,15 @@ class SupabaseConnectivityValidator:
                     return {
                         "success": False,
                         "error": "Table 'data_pull_jobs' not found",
-                        "message": "Database schema not set up. Run schema setup first."
+                        "message": "Database schema not set up. Run schema setup first.",
                     }
                 else:
                     raise e
 
             # Get the inserted record ID
             if insert_result.data and len(insert_result.data) > 0:
-                inserted_id = insert_result.data[0]['id']
-                
+                inserted_id = insert_result.data[0]["id"]
+
                 # Update the record
                 update_result = (
                     self.db.client.table("data_pull_jobs")
@@ -322,26 +323,27 @@ class SupabaseConnectivityValidator:
             test_source_id = f"rt_test_{int(time.time())}"
 
             # Insert
-            insert_result = self.db.client.table("data_sources").insert(
-                {
-                    "name": "Real-time Test Source",
-                    "url": "https://test.example.com",
-                    "source_type": "test",
-                    "region": "test",
-                    "is_active": True,
-                    "created_at": timestamp,
-                }
-            ).execute()
+            insert_result = (
+                self.db.client.table("data_sources")
+                .insert(
+                    {
+                        "name": "Real-time Test Source",
+                        "url": "https://test.example.com",
+                        "source_type": "test",
+                        "region": "test",
+                        "is_active": True,
+                        "created_at": timestamp,
+                    }
+                )
+                .execute()
+            )
 
             if insert_result.data and len(insert_result.data) > 0:
-                inserted_id = insert_result.data[0]['id']
-                
+                inserted_id = insert_result.data[0]["id"]
+
                 # Immediate read-back
                 result = (
-                    self.db.client.table("data_sources")
-                    .select("*")
-                    .eq("id", inserted_id)
-                    .execute()
+                    self.db.client.table("data_sources").select("*").eq("id", inserted_id).execute()
                 )
 
                 # Clean up

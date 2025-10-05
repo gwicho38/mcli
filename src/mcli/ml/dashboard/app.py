@@ -13,22 +13,26 @@ import numpy as np
 
 from mcli.ml.database.session import SessionLocal
 from mcli.ml.database.models import (
-    Model, Prediction, Portfolio, User, Trade,
-    StockData, BacktestResult, ModelStatus
+    Model,
+    Prediction,
+    Portfolio,
+    User,
+    Trade,
+    StockData,
+    BacktestResult,
+    ModelStatus,
 )
 from mcli.ml.cache import cache_manager
 from mcli.ml.config import settings
 
 # Page config
 st.set_page_config(
-    page_title="MCLI ML Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="MCLI ML Dashboard", page_icon="📊", layout="wide", initial_sidebar_state="expanded"
 )
 
 # Custom CSS
-st.markdown("""
+st.markdown(
+    """
 <style>
     .metric-card {
         background-color: #f0f2f6;
@@ -58,7 +62,9 @@ st.markdown("""
         border-radius: 0.25rem;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 @st.cache_data(ttl=30)
@@ -74,27 +80,31 @@ def get_system_metrics():
 
         # User metrics
         total_users = db.query(User).count()
-        active_users = db.query(User).filter(
-            User.last_login_at >= datetime.utcnow() - timedelta(days=1)
-        ).count()
+        active_users = (
+            db.query(User)
+            .filter(User.last_login_at >= datetime.utcnow() - timedelta(days=1))
+            .count()
+        )
 
         # Prediction metrics
-        predictions_today = db.query(Prediction).filter(
-            Prediction.prediction_date >= datetime.utcnow().date()
-        ).count()
+        predictions_today = (
+            db.query(Prediction)
+            .filter(Prediction.prediction_date >= datetime.utcnow().date())
+            .count()
+        )
 
         # Portfolio metrics
         active_portfolios = db.query(Portfolio).filter(Portfolio.is_active == True).count()
 
         return {
-            'total_models': total_models,
-            'deployed_models': deployed_models,
-            'training_models': training_models,
-            'total_users': total_users,
-            'active_users': active_users,
-            'predictions_today': predictions_today,
-            'active_portfolios': active_portfolios,
-            'timestamp': datetime.utcnow()
+            "total_models": total_models,
+            "deployed_models": deployed_models,
+            "training_models": training_models,
+            "total_users": total_users,
+            "active_users": active_users,
+            "predictions_today": predictions_today,
+            "active_portfolios": active_portfolios,
+            "timestamp": datetime.utcnow(),
         }
     finally:
         db.close()
@@ -110,12 +120,14 @@ def get_model_performance():
 
         data = []
         for model in models:
-            data.append({
-                'name': model.name,
-                'accuracy': model.test_accuracy or 0,
-                'created_at': model.created_at,
-                'last_updated': model.updated_at
-            })
+            data.append(
+                {
+                    "name": model.name,
+                    "accuracy": model.test_accuracy or 0,
+                    "created_at": model.created_at,
+                    "last_updated": model.updated_at,
+                }
+            )
 
         return pd.DataFrame(data)
     finally:
@@ -128,19 +140,21 @@ def get_recent_predictions():
     db = SessionLocal()
 
     try:
-        predictions = db.query(Prediction).order_by(
-            Prediction.prediction_date.desc()
-        ).limit(100).all()
+        predictions = (
+            db.query(Prediction).order_by(Prediction.prediction_date.desc()).limit(100).all()
+        )
 
         data = []
         for pred in predictions:
-            data.append({
-                'ticker': pred.ticker,
-                'predicted_return': pred.predicted_return,
-                'confidence': pred.confidence_score,
-                'prediction_date': pred.prediction_date,
-                'target_date': pred.target_date
-            })
+            data.append(
+                {
+                    "ticker": pred.ticker,
+                    "predicted_return": pred.predicted_return,
+                    "confidence": pred.confidence_score,
+                    "prediction_date": pred.prediction_date,
+                    "target_date": pred.target_date,
+                }
+            )
 
         return pd.DataFrame(data)
     finally:
@@ -157,13 +171,15 @@ def get_portfolio_performance():
 
         data = []
         for portfolio in portfolios:
-            data.append({
-                'name': portfolio.name,
-                'total_return': portfolio.total_return or 0,
-                'sharpe_ratio': portfolio.sharpe_ratio or 0,
-                'max_drawdown': portfolio.max_drawdown or 0,
-                'current_value': portfolio.current_value or 0
-            })
+            data.append(
+                {
+                    "name": portfolio.name,
+                    "total_return": portfolio.total_return or 0,
+                    "sharpe_ratio": portfolio.sharpe_ratio or 0,
+                    "max_drawdown": portfolio.max_drawdown or 0,
+                    "current_value": portfolio.current_value or 0,
+                }
+            )
 
         return pd.DataFrame(data)
     finally:
@@ -199,7 +215,7 @@ def main():
     st.sidebar.title("Navigation")
     page = st.sidebar.selectbox(
         "Choose a page",
-        ["Overview", "Models", "Predictions", "Portfolios", "System Health", "Live Monitoring"]
+        ["Overview", "Models", "Predictions", "Portfolios", "System Health", "Live Monitoring"],
     )
 
     # Auto-refresh toggle
@@ -241,28 +257,22 @@ def show_overview():
     with col1:
         st.metric(
             label="Deployed Models",
-            value=metrics['deployed_models'],
-            delta=f"{metrics['training_models']} training"
+            value=metrics["deployed_models"],
+            delta=f"{metrics['training_models']} training",
         )
 
     with col2:
         st.metric(
             label="Active Users",
-            value=metrics['active_users'],
-            delta=f"{metrics['total_users']} total"
+            value=metrics["active_users"],
+            delta=f"{metrics['total_users']} total",
         )
 
     with col3:
-        st.metric(
-            label="Predictions Today",
-            value=metrics['predictions_today']
-        )
+        st.metric(label="Predictions Today", value=metrics["predictions_today"])
 
     with col4:
-        st.metric(
-            label="Active Portfolios",
-            value=metrics['active_portfolios']
-        )
+        st.metric(label="Active Portfolios", value=metrics["active_portfolios"])
 
     # Charts
     col1, col2 = st.columns(2)
@@ -271,12 +281,7 @@ def show_overview():
         st.subheader("Model Performance")
         model_data = get_model_performance()
         if not model_data.empty:
-            fig = px.bar(
-                model_data,
-                x='name',
-                y='accuracy',
-                title="Model Accuracy Comparison"
-            )
+            fig = px.bar(model_data, x="name", y="accuracy", title="Model Accuracy Comparison")
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No model performance data available")
@@ -287,9 +292,7 @@ def show_overview():
         if not pred_data.empty:
             # Show confidence distribution
             fig = px.histogram(
-                pred_data,
-                x='confidence',
-                title="Prediction Confidence Distribution"
+                pred_data, x="confidence", title="Prediction Confidence Distribution"
             )
             st.plotly_chart(fig, use_container_width=True)
         else:
@@ -309,11 +312,7 @@ def show_models():
 
         # Model accuracy chart
         fig = px.line(
-            model_data,
-            x='created_at',
-            y='accuracy',
-            color='name',
-            title="Model Accuracy Over Time"
+            model_data, x="created_at", y="accuracy", color="name", title="Model Accuracy Over Time"
         )
         st.plotly_chart(fig, use_container_width=True)
     else:
@@ -332,23 +331,19 @@ def show_predictions():
         with col1:
             selected_tickers = st.multiselect(
                 "Filter by Ticker",
-                options=pred_data['ticker'].unique(),
-                default=pred_data['ticker'].unique()[:5]
+                options=pred_data["ticker"].unique(),
+                default=pred_data["ticker"].unique()[:5],
             )
 
         with col2:
             confidence_threshold = st.slider(
-                "Minimum Confidence",
-                min_value=0.0,
-                max_value=1.0,
-                value=0.5,
-                step=0.1
+                "Minimum Confidence", min_value=0.0, max_value=1.0, value=0.5, step=0.1
             )
 
         # Filter data
         filtered_data = pred_data[
-            (pred_data['ticker'].isin(selected_tickers)) &
-            (pred_data['confidence'] >= confidence_threshold)
+            (pred_data["ticker"].isin(selected_tickers))
+            & (pred_data["confidence"] >= confidence_threshold)
         ]
 
         # Display filtered data
@@ -361,21 +356,21 @@ def show_predictions():
         with col1:
             fig = px.scatter(
                 filtered_data,
-                x='confidence',
-                y='predicted_return',
-                color='ticker',
-                title="Confidence vs Predicted Return"
+                x="confidence",
+                y="predicted_return",
+                color="ticker",
+                title="Confidence vs Predicted Return",
             )
             st.plotly_chart(fig, use_container_width=True)
 
         with col2:
             # Group by ticker and show average return
-            avg_returns = filtered_data.groupby('ticker')['predicted_return'].mean().reset_index()
+            avg_returns = filtered_data.groupby("ticker")["predicted_return"].mean().reset_index()
             fig = px.bar(
                 avg_returns,
-                x='ticker',
-                y='predicted_return',
-                title="Average Predicted Return by Ticker"
+                x="ticker",
+                y="predicted_return",
+                title="Average Predicted Return by Ticker",
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -399,21 +394,18 @@ def show_portfolios():
 
         with col1:
             fig = px.bar(
-                portfolio_data,
-                x='name',
-                y='total_return',
-                title="Total Return by Portfolio"
+                portfolio_data, x="name", y="total_return", title="Total Return by Portfolio"
             )
             st.plotly_chart(fig, use_container_width=True)
 
         with col2:
             fig = px.scatter(
                 portfolio_data,
-                x='sharpe_ratio',
-                y='total_return',
-                size='current_value',
-                hover_data=['name'],
-                title="Risk-Return Analysis"
+                x="sharpe_ratio",
+                y="total_return",
+                size="current_value",
+                hover_data=["name"],
+                title="Risk-Return Analysis",
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -451,29 +443,26 @@ def show_system_health():
     st.subheader("System Metrics")
 
     # Generate sample time series data
-    times = pd.date_range(start=datetime.now() - timedelta(hours=24), end=datetime.now(), freq='H')
+    times = pd.date_range(start=datetime.now() - timedelta(hours=24), end=datetime.now(), freq="H")
     cpu_usage = np.random.normal(45, 10, len(times))
     memory_usage = np.random.normal(60, 15, len(times))
 
-    metrics_df = pd.DataFrame({
-        'time': times,
-        'cpu_usage': np.clip(cpu_usage, 0, 100),
-        'memory_usage': np.clip(memory_usage, 0, 100)
-    })
+    metrics_df = pd.DataFrame(
+        {
+            "time": times,
+            "cpu_usage": np.clip(cpu_usage, 0, 100),
+            "memory_usage": np.clip(memory_usage, 0, 100),
+        }
+    )
 
-    fig = make_subplots(
-        rows=2, cols=1,
-        subplot_titles=('CPU Usage (%)', 'Memory Usage (%)')
+    fig = make_subplots(rows=2, cols=1, subplot_titles=("CPU Usage (%)", "Memory Usage (%)"))
+
+    fig.add_trace(
+        go.Scatter(x=metrics_df["time"], y=metrics_df["cpu_usage"], name="CPU"), row=1, col=1
     )
 
     fig.add_trace(
-        go.Scatter(x=metrics_df['time'], y=metrics_df['cpu_usage'], name='CPU'),
-        row=1, col=1
-    )
-
-    fig.add_trace(
-        go.Scatter(x=metrics_df['time'], y=metrics_df['memory_usage'], name='Memory'),
-        row=2, col=1
+        go.Scatter(x=metrics_df["time"], y=metrics_df["memory_usage"], name="Memory"), row=2, col=1
     )
 
     fig.update_layout(height=500, title_text="System Resource Usage (24h)")
@@ -507,23 +496,25 @@ def show_live_monitoring():
                 with col2:
                     st.metric("Avg Confidence", f"{np.random.uniform(0.7, 0.9):.3f}")
                 with col3:
-                    st.metric("Active Models", metrics['deployed_models'])
+                    st.metric("Active Models", metrics["deployed_models"])
 
             # Simulate new predictions
             with prediction_placeholder.container():
-                new_preds = pd.DataFrame({
-                    'Ticker': np.random.choice(['AAPL', 'GOOGL', 'MSFT', 'TSLA'], 5),
-                    'Prediction': np.random.uniform(-0.05, 0.05, 5),
-                    'Confidence': np.random.uniform(0.6, 0.95, 5),
-                    'Time': [datetime.now() - timedelta(seconds=x*10) for x in range(5)]
-                })
+                new_preds = pd.DataFrame(
+                    {
+                        "Ticker": np.random.choice(["AAPL", "GOOGL", "MSFT", "TSLA"], 5),
+                        "Prediction": np.random.uniform(-0.05, 0.05, 5),
+                        "Confidence": np.random.uniform(0.6, 0.95, 5),
+                        "Time": [datetime.now() - timedelta(seconds=x * 10) for x in range(5)],
+                    }
+                )
                 st.dataframe(new_preds, use_container_width=True)
 
             # Model status
             with model_placeholder.container():
                 model_data = get_model_performance()
                 if not model_data.empty:
-                    st.dataframe(model_data[['name', 'accuracy']], use_container_width=True)
+                    st.dataframe(model_data[["name", "accuracy"]], use_container_width=True)
 
             time.sleep(5)
 

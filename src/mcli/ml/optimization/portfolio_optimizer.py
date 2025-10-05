@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class OptimizationObjective(Enum):
     """Portfolio optimization objectives"""
+
     MEAN_VARIANCE = "mean_variance"
     RISK_PARITY = "risk_parity"
     MINIMUM_VARIANCE = "minimum_variance"
@@ -35,6 +36,7 @@ class OptimizationObjective(Enum):
 @dataclass
 class OptimizationConstraints:
     """Portfolio optimization constraints"""
+
     # Weight constraints
     min_weight: float = 0.0
     max_weight: float = 1.0
@@ -65,6 +67,7 @@ class OptimizationConstraints:
 @dataclass
 class PortfolioAllocation:
     """Portfolio allocation result"""
+
     weights: Dict[str, float]
     expected_return: float
     expected_volatility: float
@@ -96,29 +99,39 @@ class BaseOptimizer(ABC):
         self.constraints = constraints
 
     @abstractmethod
-    def optimize(self, expected_returns: pd.Series,
-                covariance_matrix: pd.DataFrame,
-                **kwargs) -> PortfolioAllocation:
+    def optimize(
+        self, expected_returns: pd.Series, covariance_matrix: pd.DataFrame, **kwargs
+    ) -> PortfolioAllocation:
         """Optimize portfolio allocation"""
         pass
 
-    def _calculate_portfolio_metrics(self, weights: np.ndarray,
-                                   expected_returns: pd.Series,
-                                   covariance_matrix: pd.DataFrame,
-                                   risk_free_rate: float = 0.02) -> Tuple[float, float, float]:
+    def _calculate_portfolio_metrics(
+        self,
+        weights: np.ndarray,
+        expected_returns: pd.Series,
+        covariance_matrix: pd.DataFrame,
+        risk_free_rate: float = 0.02,
+    ) -> Tuple[float, float, float]:
         """Calculate portfolio return, volatility, and Sharpe ratio"""
         portfolio_return = np.dot(weights, expected_returns)
         portfolio_variance = np.dot(weights.T, np.dot(covariance_matrix, weights))
         portfolio_volatility = np.sqrt(portfolio_variance)
 
-        sharpe_ratio = (portfolio_return - risk_free_rate) / portfolio_volatility if portfolio_volatility > 0 else 0
+        sharpe_ratio = (
+            (portfolio_return - risk_free_rate) / portfolio_volatility
+            if portfolio_volatility > 0
+            else 0
+        )
 
         return portfolio_return, portfolio_volatility, sharpe_ratio
 
-    def _calculate_var_cvar(self, weights: np.ndarray,
-                           expected_returns: pd.Series,
-                           covariance_matrix: pd.DataFrame,
-                           confidence_level: float = 0.95) -> Tuple[float, float]:
+    def _calculate_var_cvar(
+        self,
+        weights: np.ndarray,
+        expected_returns: pd.Series,
+        covariance_matrix: pd.DataFrame,
+        confidence_level: float = 0.95,
+    ) -> Tuple[float, float]:
         """Calculate Value at Risk and Conditional Value at Risk"""
         portfolio_return = np.dot(weights, expected_returns)
         portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(covariance_matrix, weights)))
@@ -136,10 +149,13 @@ class BaseOptimizer(ABC):
 class MeanVarianceOptimizer(BaseOptimizer):
     """Modern Portfolio Theory mean-variance optimizer"""
 
-    def optimize(self, expected_returns: pd.Series,
-                covariance_matrix: pd.DataFrame,
-                risk_aversion: float = 1.0,
-                **kwargs) -> PortfolioAllocation:
+    def optimize(
+        self,
+        expected_returns: pd.Series,
+        covariance_matrix: pd.DataFrame,
+        risk_aversion: float = 1.0,
+        **kwargs,
+    ) -> PortfolioAllocation:
         """Optimize using mean-variance framework"""
         n_assets = len(expected_returns)
 
@@ -155,7 +171,7 @@ class MeanVarianceOptimizer(BaseOptimizer):
         constraints = [
             cp.sum(w) == self.constraints.sum_weights,  # Weights sum to 1
             w >= self.constraints.min_weight,  # Min weight
-            w <= self.constraints.max_weight   # Max weight
+            w <= self.constraints.max_weight,  # Max weight
         ]
 
         # Additional constraints
@@ -190,7 +206,7 @@ class MeanVarianceOptimizer(BaseOptimizer):
                 var_95=var_95,
                 cvar_95=cvar_95,
                 concentration=np.sum(np.square(optimal_weights)),  # Herfindahl index
-                optimization_method="mean_variance"
+                optimization_method="mean_variance",
             )
         else:
             raise ValueError(f"Optimization failed with status: {problem.status}")
@@ -199,9 +215,9 @@ class MeanVarianceOptimizer(BaseOptimizer):
 class RiskParityOptimizer(BaseOptimizer):
     """Risk parity portfolio optimizer"""
 
-    def optimize(self, expected_returns: pd.Series,
-                covariance_matrix: pd.DataFrame,
-                **kwargs) -> PortfolioAllocation:
+    def optimize(
+        self, expected_returns: pd.Series, covariance_matrix: pd.DataFrame, **kwargs
+    ) -> PortfolioAllocation:
         """Optimize using risk parity approach"""
 
         def risk_parity_objective(weights, cov_matrix):
@@ -218,13 +234,12 @@ class RiskParityOptimizer(BaseOptimizer):
         initial_weights = np.ones(n_assets) / n_assets
 
         # Constraints
-        constraints = [
-            {'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0}  # Weights sum to 1
-        ]
+        constraints = [{"type": "eq", "fun": lambda x: np.sum(x) - 1.0}]  # Weights sum to 1
 
         # Bounds
-        bounds = [(self.constraints.min_weight, self.constraints.max_weight)
-                 for _ in range(n_assets)]
+        bounds = [
+            (self.constraints.min_weight, self.constraints.max_weight) for _ in range(n_assets)
+        ]
 
         if not self.constraints.allow_short:
             bounds = [(0, self.constraints.max_weight) for _ in range(n_assets)]
@@ -234,9 +249,9 @@ class RiskParityOptimizer(BaseOptimizer):
             risk_parity_objective,
             initial_weights,
             args=(covariance_matrix.values,),
-            method='SLSQP',
+            method="SLSQP",
             bounds=bounds,
-            constraints=constraints
+            constraints=constraints,
         )
 
         if result.success:
@@ -260,7 +275,7 @@ class RiskParityOptimizer(BaseOptimizer):
                 var_95=var_95,
                 cvar_95=cvar_95,
                 concentration=np.sum(np.square(optimal_weights)),
-                optimization_method="risk_parity"
+                optimization_method="risk_parity",
             )
         else:
             raise ValueError(f"Risk parity optimization failed: {result.message}")
@@ -269,14 +284,17 @@ class RiskParityOptimizer(BaseOptimizer):
 class BlackLittermanOptimizer(BaseOptimizer):
     """Black-Litterman portfolio optimizer"""
 
-    def optimize(self, expected_returns: pd.Series,
-                covariance_matrix: pd.DataFrame,
-                market_caps: Optional[pd.Series] = None,
-                views: Optional[Dict[str, float]] = None,
-                view_uncertainties: Optional[Dict[str, float]] = None,
-                tau: float = 0.1,
-                risk_aversion: float = 3.0,
-                **kwargs) -> PortfolioAllocation:
+    def optimize(
+        self,
+        expected_returns: pd.Series,
+        covariance_matrix: pd.DataFrame,
+        market_caps: Optional[pd.Series] = None,
+        views: Optional[Dict[str, float]] = None,
+        view_uncertainties: Optional[Dict[str, float]] = None,
+        tau: float = 0.1,
+        risk_aversion: float = 3.0,
+        **kwargs,
+    ) -> PortfolioAllocation:
         """Optimize using Black-Litterman model"""
 
         # Market capitalization weights (if not provided, use equal weights)
@@ -323,7 +341,9 @@ class BlackLittermanOptimizer(BaseOptimizer):
 
             # New covariance matrix
             bl_cov = np.linalg.inv(M1 + M2)
-            bl_cov = pd.DataFrame(bl_cov, index=covariance_matrix.index, columns=covariance_matrix.columns)
+            bl_cov = pd.DataFrame(
+                bl_cov, index=covariance_matrix.index, columns=covariance_matrix.columns
+            )
 
         # Now optimize using mean-variance with BL inputs
         mv_optimizer = MeanVarianceOptimizer(self.constraints)
@@ -336,11 +356,14 @@ class BlackLittermanOptimizer(BaseOptimizer):
 class CVaROptimizer(BaseOptimizer):
     """Conditional Value at Risk optimizer"""
 
-    def optimize(self, expected_returns: pd.Series,
-                covariance_matrix: pd.DataFrame,
-                scenarios: Optional[pd.DataFrame] = None,
-                confidence_level: float = 0.95,
-                **kwargs) -> PortfolioAllocation:
+    def optimize(
+        self,
+        expected_returns: pd.Series,
+        covariance_matrix: pd.DataFrame,
+        scenarios: Optional[pd.DataFrame] = None,
+        confidence_level: float = 0.95,
+        **kwargs,
+    ) -> PortfolioAllocation:
         """Optimize portfolio to minimize CVaR"""
 
         if scenarios is None:
@@ -373,7 +396,7 @@ class CVaROptimizer(BaseOptimizer):
             w >= self.constraints.min_weight,
             w <= self.constraints.max_weight,
             u >= 0,
-            u >= alpha - portfolio_returns  # CVaR constraints
+            u >= alpha - portfolio_returns,  # CVaR constraints
         ]
 
         if not self.constraints.allow_short:
@@ -404,7 +427,7 @@ class CVaROptimizer(BaseOptimizer):
                 var_95=var_95,
                 cvar_95=cvar_95,
                 concentration=np.sum(np.square(optimal_weights)),
-                optimization_method="cvar"
+                optimization_method="cvar",
             )
         else:
             raise ValueError(f"CVaR optimization failed with status: {problem.status}")
@@ -413,9 +436,9 @@ class CVaROptimizer(BaseOptimizer):
 class KellyCriterionOptimizer(BaseOptimizer):
     """Kelly Criterion optimizer for growth-optimal portfolios"""
 
-    def optimize(self, expected_returns: pd.Series,
-                covariance_matrix: pd.DataFrame,
-                **kwargs) -> PortfolioAllocation:
+    def optimize(
+        self, expected_returns: pd.Series, covariance_matrix: pd.DataFrame, **kwargs
+    ) -> PortfolioAllocation:
         """Optimize using Kelly Criterion"""
 
         # Kelly optimal weights: w* = Σ^(-1) * μ
@@ -429,9 +452,9 @@ class KellyCriterionOptimizer(BaseOptimizer):
             if not self.constraints.allow_short:
                 kelly_weights = np.maximum(kelly_weights, 0)
 
-            kelly_weights = np.clip(kelly_weights,
-                                  self.constraints.min_weight,
-                                  self.constraints.max_weight)
+            kelly_weights = np.clip(
+                kelly_weights, self.constraints.min_weight, self.constraints.max_weight
+            )
 
             # Normalize to sum to 1
             if np.sum(kelly_weights) > 0:
@@ -459,7 +482,7 @@ class KellyCriterionOptimizer(BaseOptimizer):
                 var_95=var_95,
                 cvar_95=cvar_95,
                 concentration=np.sum(np.square(kelly_weights)),
-                optimization_method="kelly_criterion"
+                optimization_method="kelly_criterion",
             )
 
         except np.linalg.LinAlgError:
@@ -482,7 +505,7 @@ class KellyCriterionOptimizer(BaseOptimizer):
                 expected_return=port_return,
                 expected_volatility=port_vol,
                 sharpe_ratio=sharpe,
-                optimization_method="kelly_criterion_regularized"
+                optimization_method="kelly_criterion_regularized",
             )
 
 
@@ -498,16 +521,18 @@ class AdvancedPortfolioOptimizer:
             OptimizationObjective.RISK_PARITY: RiskParityOptimizer(self.constraints),
             OptimizationObjective.BLACK_LITTERMAN: BlackLittermanOptimizer(self.constraints),
             OptimizationObjective.CVaR: CVaROptimizer(self.constraints),
-            OptimizationObjective.KELLY_CRITERION: KellyCriterionOptimizer(self.constraints)
+            OptimizationObjective.KELLY_CRITERION: KellyCriterionOptimizer(self.constraints),
         }
 
         self.optimization_history = []
 
-    def optimize_portfolio(self,
-                          expected_returns: pd.Series,
-                          covariance_matrix: pd.DataFrame,
-                          objective: OptimizationObjective = OptimizationObjective.MEAN_VARIANCE,
-                          **optimizer_kwargs) -> PortfolioAllocation:
+    def optimize_portfolio(
+        self,
+        expected_returns: pd.Series,
+        covariance_matrix: pd.DataFrame,
+        objective: OptimizationObjective = OptimizationObjective.MEAN_VARIANCE,
+        **optimizer_kwargs,
+    ) -> PortfolioAllocation:
         """Optimize portfolio using specified objective"""
 
         if objective not in self.optimizers:
@@ -517,18 +542,22 @@ class AdvancedPortfolioOptimizer:
         allocation = optimizer.optimize(expected_returns, covariance_matrix, **optimizer_kwargs)
 
         # Add additional metrics
-        allocation = self._enhance_allocation_metrics(allocation, expected_returns, covariance_matrix)
+        allocation = self._enhance_allocation_metrics(
+            allocation, expected_returns, covariance_matrix
+        )
 
         # Store in history
         self.optimization_history.append(allocation)
 
         return allocation
 
-    def multi_objective_optimization(self,
-                                   expected_returns: pd.Series,
-                                   covariance_matrix: pd.DataFrame,
-                                   objectives: List[OptimizationObjective],
-                                   weights: Optional[List[float]] = None) -> PortfolioAllocation:
+    def multi_objective_optimization(
+        self,
+        expected_returns: pd.Series,
+        covariance_matrix: pd.DataFrame,
+        objectives: List[OptimizationObjective],
+        weights: Optional[List[float]] = None,
+    ) -> PortfolioAllocation:
         """Combine multiple optimization objectives"""
 
         if weights is None:
@@ -573,19 +602,19 @@ class AdvancedPortfolioOptimizer:
             var_95=var_95,
             cvar_95=cvar_95,
             concentration=np.sum(np.square(weights_array)),
-            optimization_method=f"multi_objective_{'+'.join([obj.value for obj in objectives])}"
+            optimization_method=f"multi_objective_{'+'.join([obj.value for obj in objectives])}",
         )
 
-    def efficient_frontier(self,
-                          expected_returns: pd.Series,
-                          covariance_matrix: pd.DataFrame,
-                          n_points: int = 20) -> pd.DataFrame:
+    def efficient_frontier(
+        self, expected_returns: pd.Series, covariance_matrix: pd.DataFrame, n_points: int = 20
+    ) -> pd.DataFrame:
         """Generate efficient frontier"""
 
         min_vol_allocation = self.optimize_portfolio(
-            expected_returns, covariance_matrix,
+            expected_returns,
+            covariance_matrix,
             OptimizationObjective.MEAN_VARIANCE,
-            risk_aversion=1000  # High risk aversion for min vol
+            risk_aversion=1000,  # High risk aversion for min vol
         )
 
         max_return = expected_returns.max()
@@ -609,7 +638,7 @@ class AdvancedPortfolioOptimizer:
                     cp.sum(w) == 1,
                     portfolio_return >= target_return,
                     w >= self.constraints.min_weight,
-                    w <= self.constraints.max_weight
+                    w <= self.constraints.max_weight,
                 ]
 
                 if not self.constraints.allow_short:
@@ -621,25 +650,32 @@ class AdvancedPortfolioOptimizer:
                 if problem.status not in ["infeasible", "unbounded"]:
                     optimal_weights = w.value
                     port_return = np.dot(optimal_weights, expected_returns)
-                    port_vol = np.sqrt(np.dot(optimal_weights.T,
-                                            np.dot(covariance_matrix.values, optimal_weights)))
+                    port_vol = np.sqrt(
+                        np.dot(optimal_weights.T, np.dot(covariance_matrix.values, optimal_weights))
+                    )
 
-                    frontier_data.append({
-                        'return': port_return,
-                        'volatility': port_vol,
-                        'sharpe': (port_return - 0.02) / port_vol if port_vol > 0 else 0
-                    })
+                    frontier_data.append(
+                        {
+                            "return": port_return,
+                            "volatility": port_vol,
+                            "sharpe": (port_return - 0.02) / port_vol if port_vol > 0 else 0,
+                        }
+                    )
 
             except Exception as e:
-                logger.warning(f"Failed to compute efficient frontier point for return {target_return}: {e}")
+                logger.warning(
+                    f"Failed to compute efficient frontier point for return {target_return}: {e}"
+                )
                 continue
 
         return pd.DataFrame(frontier_data)
 
-    def rebalance_portfolio(self,
-                           current_weights: Dict[str, float],
-                           target_allocation: PortfolioAllocation,
-                           rebalance_threshold: float = 0.05) -> Dict[str, Any]:
+    def rebalance_portfolio(
+        self,
+        current_weights: Dict[str, float],
+        target_allocation: PortfolioAllocation,
+        rebalance_threshold: float = 0.05,
+    ) -> Dict[str, Any]:
         """Calculate rebalancing trades"""
 
         trades = {}
@@ -655,24 +691,29 @@ class AdvancedPortfolioOptimizer:
             if deviation > rebalance_threshold:
                 trades[asset] = target_weight - current_weight
 
-        transaction_cost = sum(abs(trade) * self.constraints.transaction_costs
-                             for trade in trades.values())
+        transaction_cost = sum(
+            abs(trade) * self.constraints.transaction_costs for trade in trades.values()
+        )
 
         return {
-            'trades': trades,
-            'total_deviation': total_deviation,
-            'transaction_cost': transaction_cost,
-            'rebalance_needed': total_deviation > rebalance_threshold,
-            'net_trades': sum(trades.values())  # Should be close to 0
+            "trades": trades,
+            "total_deviation": total_deviation,
+            "transaction_cost": transaction_cost,
+            "rebalance_needed": total_deviation > rebalance_threshold,
+            "net_trades": sum(trades.values()),  # Should be close to 0
         }
 
-    def _enhance_allocation_metrics(self,
-                                  allocation: PortfolioAllocation,
-                                  expected_returns: pd.Series,
-                                  covariance_matrix: pd.DataFrame) -> PortfolioAllocation:
+    def _enhance_allocation_metrics(
+        self,
+        allocation: PortfolioAllocation,
+        expected_returns: pd.Series,
+        covariance_matrix: pd.DataFrame,
+    ) -> PortfolioAllocation:
         """Add additional metrics to allocation"""
 
-        weights_array = np.array([allocation.weights.get(asset, 0) for asset in expected_returns.index])
+        weights_array = np.array(
+            [allocation.weights.get(asset, 0) for asset in expected_returns.index]
+        )
 
         # Calculate max drawdown (simplified)
         returns_series = expected_returns.values
@@ -683,8 +724,9 @@ class AdvancedPortfolioOptimizer:
 
         return allocation
 
-    def plot_allocation(self, allocation: PortfolioAllocation,
-                       save_path: Optional[Path] = None) -> None:
+    def plot_allocation(
+        self, allocation: PortfolioAllocation, save_path: Optional[Path] = None
+    ) -> None:
         """Plot portfolio allocation"""
 
         # Filter out zero weights
@@ -701,35 +743,35 @@ class AdvancedPortfolioOptimizer:
         assets = list(non_zero_weights.keys())
         weights = list(non_zero_weights.values())
 
-        plt.pie(weights, labels=assets, autopct='%1.1f%%', startangle=90)
-        plt.title('Portfolio Allocation')
+        plt.pie(weights, labels=assets, autopct="%1.1f%%", startangle=90)
+        plt.title("Portfolio Allocation")
 
         # Bar chart of weights
         plt.subplot(2, 2, 2)
         plt.bar(range(len(assets)), weights)
         plt.xticks(range(len(assets)), assets, rotation=45)
-        plt.ylabel('Weight')
-        plt.title('Asset Weights')
+        plt.ylabel("Weight")
+        plt.title("Asset Weights")
 
         # Risk metrics
         plt.subplot(2, 2, 3)
-        metrics = ['Expected Return', 'Volatility', 'Sharpe Ratio', 'VaR 95%', 'CVaR 95%']
+        metrics = ["Expected Return", "Volatility", "Sharpe Ratio", "VaR 95%", "CVaR 95%"]
         values = [
             allocation.expected_return * 100,
             allocation.expected_volatility * 100,
             allocation.sharpe_ratio,
             allocation.var_95 * 100 if allocation.var_95 else 0,
-            allocation.cvar_95 * 100 if allocation.cvar_95 else 0
+            allocation.cvar_95 * 100 if allocation.cvar_95 else 0,
         ]
 
         plt.bar(metrics, values)
         plt.xticks(rotation=45)
-        plt.ylabel('Value (%)')
-        plt.title('Portfolio Metrics')
+        plt.ylabel("Value (%)")
+        plt.title("Portfolio Metrics")
 
         # Summary text
         plt.subplot(2, 2, 4)
-        plt.axis('off')
+        plt.axis("off")
         summary_text = f"""
         Optimization Method: {allocation.optimization_method}
         Expected Return: {allocation.expected_return:.3f}
@@ -738,12 +780,12 @@ class AdvancedPortfolioOptimizer:
         Concentration: {allocation.concentration:.3f}
         Number of Assets: {len(non_zero_weights)}
         """
-        plt.text(0.1, 0.5, summary_text, fontsize=10, verticalalignment='center')
+        plt.text(0.1, 0.5, summary_text, fontsize=10, verticalalignment="center")
 
         plt.tight_layout()
 
         if save_path:
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.savefig(save_path, dpi=300, bbox_inches="tight")
 
         plt.show()
 
@@ -753,14 +795,11 @@ if __name__ == "__main__":
     # Generate sample data
     np.random.seed(42)
 
-    assets = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']
+    assets = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
     n_assets = len(assets)
 
     # Expected returns (annual)
-    expected_returns = pd.Series(
-        np.random.uniform(0.05, 0.15, n_assets),
-        index=assets
-    )
+    expected_returns = pd.Series(np.random.uniform(0.05, 0.15, n_assets), index=assets)
 
     # Generate covariance matrix
     correlation_matrix = np.random.uniform(0.1, 0.7, (n_assets, n_assets))
@@ -773,9 +812,7 @@ if __name__ == "__main__":
 
     # Initialize optimizer
     constraints = OptimizationConstraints(
-        max_weight=0.4,
-        transaction_costs=0.001,
-        allow_short=False
+        max_weight=0.4, transaction_costs=0.001, allow_short=False
     )
 
     optimizer = AdvancedPortfolioOptimizer(constraints)
@@ -784,7 +821,7 @@ if __name__ == "__main__":
     objectives = [
         OptimizationObjective.MEAN_VARIANCE,
         OptimizationObjective.RISK_PARITY,
-        OptimizationObjective.KELLY_CRITERION
+        OptimizationObjective.KELLY_CRITERION,
     ]
 
     results = {}
@@ -799,7 +836,9 @@ if __name__ == "__main__":
             print(f"Volatility: {allocation.expected_volatility:.3f}")
             print(f"Sharpe Ratio: {allocation.sharpe_ratio:.3f}")
             print("Top 3 Holdings:")
-            sorted_weights = sorted(allocation.weights.items(), key=lambda x: abs(x[1]), reverse=True)
+            sorted_weights = sorted(
+                allocation.weights.items(), key=lambda x: abs(x[1]), reverse=True
+            )
             for asset, weight in sorted_weights[:3]:
                 print(f"  {asset}: {weight:.3f}")
 
@@ -809,9 +848,10 @@ if __name__ == "__main__":
     # Test multi-objective optimization
     try:
         multi_obj_allocation = optimizer.multi_objective_optimization(
-            expected_returns, covariance_matrix,
+            expected_returns,
+            covariance_matrix,
             objectives=[OptimizationObjective.MEAN_VARIANCE, OptimizationObjective.RISK_PARITY],
-            weights=[0.7, 0.3]
+            weights=[0.7, 0.3],
         )
 
         print(f"\nMULTI-OBJECTIVE Optimization:")

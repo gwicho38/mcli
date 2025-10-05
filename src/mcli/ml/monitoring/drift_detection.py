@@ -37,6 +37,7 @@ class AlertSeverity(Enum):
 @dataclass
 class DriftAlert:
     """Drift detection alert"""
+
     timestamp: datetime
     drift_type: DriftType
     severity: AlertSeverity
@@ -50,6 +51,7 @@ class DriftAlert:
 @dataclass
 class ModelMetrics:
     """Model performance metrics"""
+
     timestamp: datetime
     accuracy: float
     precision: float
@@ -65,6 +67,7 @@ class ModelMetrics:
 @dataclass
 class DataProfile:
     """Statistical profile of data"""
+
     feature_means: Dict[str, float]
     feature_stds: Dict[str, float]
     feature_mins: Dict[str, float]
@@ -77,9 +80,9 @@ class DataProfile:
 class StatisticalDriftDetector:
     """Detect statistical drift in data distributions"""
 
-    def __init__(self, reference_data: pd.DataFrame,
-                 significance_level: float = 0.05,
-                 min_samples: int = 100):
+    def __init__(
+        self, reference_data: pd.DataFrame, significance_level: float = 0.05, min_samples: int = 100
+    ):
         self.reference_data = reference_data
         self.reference_profile = self._create_data_profile(reference_data)
         self.significance_level = significance_level
@@ -96,7 +99,9 @@ class StatisticalDriftDetector:
         # Kolmogorov-Smirnov test for each feature
         ks_results = {}
         for feature in self.reference_data.columns:
-            if feature in current_data.columns and pd.api.types.is_numeric_dtype(current_data[feature]):
+            if feature in current_data.columns and pd.api.types.is_numeric_dtype(
+                current_data[feature]
+            ):
                 ref_values = self.reference_data[feature].dropna()
                 curr_values = current_data[feature].dropna()
 
@@ -105,7 +110,7 @@ class StatisticalDriftDetector:
                     ks_results[feature] = {
                         "ks_statistic": ks_stat,
                         "p_value": p_value,
-                        "drift_detected": p_value < self.significance_level
+                        "drift_detected": p_value < self.significance_level,
                     }
 
         # Population Stability Index (PSI)
@@ -123,9 +128,10 @@ class StatisticalDriftDetector:
             "feature_comparisons": feature_comparisons,
             "overall_drift_detected": any(
                 result.get("drift_detected", False) for result in ks_results.values()
-            ) or any(score > 0.25 for score in psi_results.values()),
+            )
+            or any(score > 0.25 for score in psi_results.values()),
             "reference_profile": asdict(self.reference_profile),
-            "current_profile": asdict(current_profile)
+            "current_profile": asdict(current_profile),
         }
 
         return drift_results
@@ -140,17 +146,22 @@ class StatisticalDriftDetector:
             feature_mins=numeric_data.min().to_dict(),
             feature_maxs=numeric_data.max().to_dict(),
             feature_nulls=data.isnull().sum().to_dict(),
-            correlation_matrix=numeric_data.corr().values if len(numeric_data.columns) > 1 else np.array([]),
-            timestamp=datetime.now()
+            correlation_matrix=(
+                numeric_data.corr().values if len(numeric_data.columns) > 1 else np.array([])
+            ),
+            timestamp=datetime.now(),
         )
 
-    def _calculate_psi(self, reference_data: pd.DataFrame,
-                       current_data: pd.DataFrame) -> Dict[str, float]:
+    def _calculate_psi(
+        self, reference_data: pd.DataFrame, current_data: pd.DataFrame
+    ) -> Dict[str, float]:
         """Calculate Population Stability Index for each feature"""
         psi_scores = {}
 
         for feature in reference_data.columns:
-            if feature in current_data.columns and pd.api.types.is_numeric_dtype(reference_data[feature]):
+            if feature in current_data.columns and pd.api.types.is_numeric_dtype(
+                reference_data[feature]
+            ):
                 ref_values = reference_data[feature].dropna()
                 curr_values = current_data[feature].dropna()
 
@@ -160,8 +171,7 @@ class StatisticalDriftDetector:
 
         return psi_scores
 
-    def _psi_score(self, reference: pd.Series, current: pd.Series,
-                   bins: int = 10) -> float:
+    def _psi_score(self, reference: pd.Series, current: pd.Series, bins: int = 10) -> float:
         """Calculate PSI score between two distributions"""
         try:
             # Create bins based on reference data
@@ -189,8 +199,9 @@ class StatisticalDriftDetector:
             logger.warning(f"Failed to calculate PSI: {e}")
             return 0.0
 
-    def _compare_feature_distributions(self, ref_profile: DataProfile,
-                                     curr_profile: DataProfile) -> Dict[str, Dict[str, float]]:
+    def _compare_feature_distributions(
+        self, ref_profile: DataProfile, curr_profile: DataProfile
+    ) -> Dict[str, Dict[str, float]]:
         """Compare feature distributions between profiles"""
         comparisons = {}
 
@@ -212,7 +223,7 @@ class StatisticalDriftDetector:
                     "mean_z_score": z_score,
                     "cv_change": cv_change,
                     "mean_shift_detected": z_score > 2.0,
-                    "variance_change_detected": cv_change > 0.5
+                    "variance_change_detected": cv_change > 0.5,
                 }
 
         return comparisons
@@ -221,8 +232,7 @@ class StatisticalDriftDetector:
 class ConceptDriftDetector:
     """Detect concept drift in model predictions"""
 
-    def __init__(self, window_size: int = 1000,
-                 detection_threshold: float = 0.05):
+    def __init__(self, window_size: int = 1000, detection_threshold: float = 0.05):
         self.window_size = window_size
         self.detection_threshold = detection_threshold
         self.historical_metrics = []
@@ -233,7 +243,7 @@ class ConceptDriftDetector:
 
         # Keep only recent metrics
         if len(self.historical_metrics) > self.window_size * 2:
-            self.historical_metrics = self.historical_metrics[-self.window_size:]
+            self.historical_metrics = self.historical_metrics[-self.window_size :]
 
     def detect_concept_drift(self) -> Dict[str, Any]:
         """Detect concept drift using model performance degradation"""
@@ -263,19 +273,21 @@ class ConceptDriftDetector:
                     relative_change = (recent_value - early_value) / early_value
                     if relative_change < -self.detection_threshold:
                         drift_detected = True
-                        degraded_metrics.append({
-                            "metric": metric_name,
-                            "early_value": early_value,
-                            "recent_value": recent_value,
-                            "relative_change": relative_change
-                        })
+                        degraded_metrics.append(
+                            {
+                                "metric": metric_name,
+                                "early_value": early_value,
+                                "recent_value": recent_value,
+                                "relative_change": relative_change,
+                            }
+                        )
 
         return {
             "drift_detected": drift_detected,
             "degraded_metrics": degraded_metrics,
             "early_performance": early_performance,
             "recent_performance": recent_performance,
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
 
     def _calculate_average_performance(self, metrics_list: List[ModelMetrics]) -> Dict[str, float]:
@@ -287,7 +299,7 @@ class ConceptDriftDetector:
             "accuracy": np.mean([m.accuracy for m in metrics_list]),
             "precision": np.mean([m.precision for m in metrics_list]),
             "recall": np.mean([m.recall for m in metrics_list]),
-            "f1_score": np.mean([m.f1_score for m in metrics_list])
+            "f1_score": np.mean([m.f1_score for m in metrics_list]),
         }
 
         # Add optional metrics if available
@@ -314,10 +326,7 @@ class OutlierDetector:
             logger.warning("No numeric features found for outlier detection")
             return
 
-        self.detector = IsolationForest(
-            contamination=self.contamination,
-            random_state=42
-        )
+        self.detector = IsolationForest(contamination=self.contamination, random_state=42)
         self.detector.fit(numeric_data.fillna(0))
         self.is_fitted = True
 
@@ -343,7 +352,7 @@ class OutlierDetector:
             "outlier_ratio": outlier_ratio,
             "outlier_scores": outlier_scores.tolist(),
             "outlier_indices": np.where(outliers_mask)[0].tolist(),
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
 
 
@@ -365,7 +374,7 @@ class ModelMonitor:
             "data_drift_psi": 0.25,
             "concept_drift_threshold": 0.05,
             "outlier_ratio_threshold": 0.2,
-            "performance_degradation": 0.1
+            "performance_degradation": 0.1,
         }
 
         # Alert handlers
@@ -382,15 +391,18 @@ class ModelMonitor:
         # Save reference data profile
         self._save_reference_profile(reference_data)
 
-    def monitor_batch(self, current_data: pd.DataFrame,
-                     predictions: np.ndarray,
-                     true_labels: Optional[np.ndarray] = None) -> Dict[str, Any]:
+    def monitor_batch(
+        self,
+        current_data: pd.DataFrame,
+        predictions: np.ndarray,
+        true_labels: Optional[np.ndarray] = None,
+    ) -> Dict[str, Any]:
         """Monitor a batch of data and predictions"""
         monitoring_result = {
             "timestamp": datetime.now(),
             "batch_size": len(current_data),
             "alerts": [],
-            "metrics": {}
+            "metrics": {},
         }
 
         # Data drift detection
@@ -407,7 +419,7 @@ class ModelMonitor:
                     value=1.0,
                     threshold=0.5,
                     description="Statistical drift detected in input features",
-                    metadata=drift_result
+                    metadata=drift_result,
                 )
                 monitoring_result["alerts"].append(alert)
 
@@ -424,7 +436,7 @@ class ModelMonitor:
                 value=outlier_result["outlier_ratio"],
                 threshold=self.thresholds["outlier_ratio_threshold"],
                 description=f"High outlier ratio detected: {outlier_result['outlier_ratio']:.3f}",
-                metadata=outlier_result
+                metadata=outlier_result,
             )
             monitoring_result["alerts"].append(alert)
 
@@ -453,7 +465,7 @@ class ModelMonitor:
                     value=performance_metrics.accuracy,
                     threshold=self.thresholds["performance_degradation"],
                     description="Model performance degradation detected",
-                    metadata=concept_drift_result
+                    metadata=concept_drift_result,
                 )
                 monitoring_result["alerts"].append(alert)
 
@@ -474,8 +486,7 @@ class ModelMonitor:
         """Get monitoring summary for the last N days"""
         cutoff_date = datetime.now() - timedelta(days=days)
         recent_results = [
-            result for result in self.monitoring_history
-            if result["timestamp"] >= cutoff_date
+            result for result in self.monitoring_history if result["timestamp"] >= cutoff_date
         ]
 
         if not recent_results:
@@ -497,7 +508,7 @@ class ModelMonitor:
                     "avg_accuracy": np.mean([p.accuracy for p in performance_data]),
                     "avg_precision": np.mean([p.precision for p in performance_data]),
                     "avg_recall": np.mean([p.recall for p in performance_data]),
-                    "avg_f1_score": np.mean([p.f1_score for p in performance_data])
+                    "avg_f1_score": np.mean([p.f1_score for p in performance_data]),
                 }
 
         return {
@@ -505,7 +516,7 @@ class ModelMonitor:
             "total_batches": len(recent_results),
             "alert_counts": alert_counts,
             "average_metrics": avg_metrics,
-            "latest_timestamp": recent_results[-1]["timestamp"] if recent_results else None
+            "latest_timestamp": recent_results[-1]["timestamp"] if recent_results else None,
         }
 
     def _analyze_predictions(self, predictions: np.ndarray) -> Dict[str, Any]:
@@ -515,11 +526,12 @@ class ModelMonitor:
             "std": float(np.std(predictions)),
             "min": float(np.min(predictions)),
             "max": float(np.max(predictions)),
-            "unique_values": len(np.unique(predictions))
+            "unique_values": len(np.unique(predictions)),
         }
 
-    def _calculate_performance_metrics(self, predictions: np.ndarray,
-                                     true_labels: np.ndarray) -> ModelMetrics:
+    def _calculate_performance_metrics(
+        self, predictions: np.ndarray, true_labels: np.ndarray
+    ) -> ModelMetrics:
         """Calculate model performance metrics"""
         # Convert to binary if needed
         if len(np.unique(true_labels)) == 2:
@@ -535,14 +547,16 @@ class ModelMonitor:
             accuracy = (tp + tn) / len(true_labels) if len(true_labels) > 0 else 0
             precision = tp / (tp + fp) if (tp + fp) > 0 else 0
             recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-            f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+            f1_score = (
+                2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+            )
 
             return ModelMetrics(
                 timestamp=datetime.now(),
                 accuracy=accuracy,
                 precision=precision,
                 recall=recall,
-                f1_score=f1_score
+                f1_score=f1_score,
             )
         else:
             # Regression metrics
@@ -556,13 +570,15 @@ class ModelMonitor:
                 recall=0.0,
                 f1_score=0.0,
                 mse=mse,
-                mae=mae
+                mae=mae,
             )
 
     def _handle_alert(self, alert: DriftAlert):
         """Handle drift alert"""
-        logger.warning(f"DRIFT ALERT: {alert.description} "
-                      f"(Type: {alert.drift_type.value}, Severity: {alert.severity.value})")
+        logger.warning(
+            f"DRIFT ALERT: {alert.description} "
+            f"(Type: {alert.drift_type.value}, Severity: {alert.severity.value})"
+        )
 
         # Call registered alert handlers
         for handler in self.alert_handlers:
@@ -579,7 +595,7 @@ class ModelMonitor:
         # Convert non-serializable objects
         serializable_result = self._make_serializable(result)
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(serializable_result, f, indent=2, default=str)
 
         self.monitoring_history.append(result)
@@ -592,7 +608,7 @@ class ModelMonitor:
         """Save reference data profile"""
         profile_file = self.storage_path / "reference_profile.pkl"
 
-        with open(profile_file, 'wb') as f:
+        with open(profile_file, "wb") as f:
             pickle.dump(reference_data, f)
 
     def _make_serializable(self, obj: Any) -> Any:
@@ -636,11 +652,13 @@ def slack_alert_handler(alert: DriftAlert):
 if __name__ == "__main__":
     # Generate sample data
     np.random.seed(42)
-    reference_data = pd.DataFrame({
-        'feature1': np.random.normal(0, 1, 1000),
-        'feature2': np.random.normal(5, 2, 1000),
-        'feature3': np.random.uniform(0, 10, 1000)
-    })
+    reference_data = pd.DataFrame(
+        {
+            "feature1": np.random.normal(0, 1, 1000),
+            "feature2": np.random.normal(5, 2, 1000),
+            "feature3": np.random.uniform(0, 10, 1000),
+        }
+    )
 
     # Initialize monitor
     monitor = ModelMonitor("stock_recommendation_model")
@@ -654,11 +672,13 @@ if __name__ == "__main__":
     for i in range(10):
         # Generate current data (with some drift)
         drift_factor = i * 0.1
-        current_data = pd.DataFrame({
-            'feature1': np.random.normal(drift_factor, 1, 100),
-            'feature2': np.random.normal(5 + drift_factor, 2, 100),
-            'feature3': np.random.uniform(0, 10 + drift_factor, 100)
-        })
+        current_data = pd.DataFrame(
+            {
+                "feature1": np.random.normal(drift_factor, 1, 100),
+                "feature2": np.random.normal(5 + drift_factor, 2, 100),
+                "feature3": np.random.uniform(0, 10 + drift_factor, 100),
+            }
+        )
 
         # Generate predictions and labels
         predictions = np.random.uniform(0, 1, 100)

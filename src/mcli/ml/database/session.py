@@ -125,6 +125,7 @@ def init_db() -> None:
 
     # Create additional indexes
     from .models import create_indexes
+
     create_indexes(engine)
 
 

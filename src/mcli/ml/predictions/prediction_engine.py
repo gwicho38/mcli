@@ -33,16 +33,16 @@ class PoliticianTradingPredictor:
             return pd.DataFrame()
 
         # Ensure required columns exist
-        required_cols = ['ticker_symbol', 'transaction_type', 'amount']
-        if not all(col in disclosures.columns for col in ['ticker_symbol']):
+        required_cols = ["ticker_symbol", "transaction_type", "amount"]
+        if not all(col in disclosures.columns for col in ["ticker_symbol"]):
             return pd.DataFrame()
 
         # Filter recent trades
-        if 'disclosure_date' in disclosures.columns:
+        if "disclosure_date" in disclosures.columns:
             try:
-                disclosures['disclosure_date'] = pd.to_datetime(disclosures['disclosure_date'])
+                disclosures["disclosure_date"] = pd.to_datetime(disclosures["disclosure_date"])
                 cutoff_date = datetime.now() - timedelta(days=self.recent_days)
-                recent_disclosures = disclosures[disclosures['disclosure_date'] >= cutoff_date]
+                recent_disclosures = disclosures[disclosures["disclosure_date"] >= cutoff_date]
             except:
                 recent_disclosures = disclosures
         else:
@@ -54,20 +54,32 @@ class PoliticianTradingPredictor:
         # Analyze trading patterns by ticker
         predictions = []
 
-        for ticker in recent_disclosures['ticker_symbol'].unique():
-            if pd.isna(ticker) or ticker == '':
+        for ticker in recent_disclosures["ticker_symbol"].unique():
+            if pd.isna(ticker) or ticker == "":
                 continue
 
-            ticker_trades = recent_disclosures[recent_disclosures['ticker_symbol'] == ticker]
+            ticker_trades = recent_disclosures[recent_disclosures["ticker_symbol"] == ticker]
 
             # Calculate trading metrics
             buy_count = 0
             sell_count = 0
             total_amount = 0
 
-            if 'transaction_type' in ticker_trades.columns:
-                buy_count = len(ticker_trades[ticker_trades['transaction_type'].str.contains('purchase|buy', case=False, na=False)])
-                sell_count = len(ticker_trades[ticker_trades['transaction_type'].str.contains('sale|sell', case=False, na=False)])
+            if "transaction_type" in ticker_trades.columns:
+                buy_count = len(
+                    ticker_trades[
+                        ticker_trades["transaction_type"].str.contains(
+                            "purchase|buy", case=False, na=False
+                        )
+                    ]
+                )
+                sell_count = len(
+                    ticker_trades[
+                        ticker_trades["transaction_type"].str.contains(
+                            "sale|sell", case=False, na=False
+                        )
+                    ]
+                )
 
             total_trades = buy_count + sell_count
 
@@ -75,10 +87,10 @@ class PoliticianTradingPredictor:
                 continue
 
             # Calculate amount if available
-            if 'amount' in ticker_trades.columns:
+            if "amount" in ticker_trades.columns:
                 try:
                     # Try to extract numeric values from amount
-                    amounts = ticker_trades['amount'].astype(str)
+                    amounts = ticker_trades["amount"].astype(str)
                     # This is a simplified extraction - adjust based on actual data format
                     total_amount = len(ticker_trades) * 50000  # Rough estimate
                 except:
@@ -92,11 +104,11 @@ class PoliticianTradingPredictor:
                 sell_count=sell_count,
                 total_trades=total_trades,
                 total_amount=total_amount,
-                ticker_trades=ticker_trades
+                ticker_trades=ticker_trades,
             )
 
             if prediction:
-                prediction['ticker'] = ticker
+                prediction["ticker"] = ticker
                 predictions.append(prediction)
 
         if not predictions:
@@ -104,7 +116,7 @@ class PoliticianTradingPredictor:
 
         # Convert to DataFrame and sort by confidence
         pred_df = pd.DataFrame(predictions)
-        pred_df = pred_df.sort_values('confidence', ascending=False)
+        pred_df = pred_df.sort_values("confidence", ascending=False)
 
         return pred_df.head(50)  # Return top 50 predictions
 
@@ -114,7 +126,7 @@ class PoliticianTradingPredictor:
         sell_count: int,
         total_trades: int,
         total_amount: float,
-        ticker_trades: pd.DataFrame
+        ticker_trades: pd.DataFrame,
     ) -> Optional[Dict]:
         """
         Calculate prediction metrics for a single ticker
@@ -128,23 +140,23 @@ class PoliticianTradingPredictor:
 
         # Determine recommendation based on trading pattern
         if buy_ratio > 0.7:
-            recommendation = 'BUY'
+            recommendation = "BUY"
             predicted_return = np.random.uniform(0.02, 0.15)  # Positive return for buy signal
             risk_score = 0.3 + (np.random.random() * 0.3)  # Lower risk for strong buy
         elif sell_ratio > 0.7:
-            recommendation = 'SELL'
+            recommendation = "SELL"
             predicted_return = np.random.uniform(-0.10, -0.02)  # Negative return for sell signal
             risk_score = 0.6 + (np.random.random() * 0.3)  # Higher risk for sell
         elif buy_ratio > sell_ratio:
-            recommendation = 'BUY'
+            recommendation = "BUY"
             predicted_return = np.random.uniform(0.01, 0.08)
             risk_score = 0.4 + (np.random.random() * 0.3)
         elif sell_ratio > buy_ratio:
-            recommendation = 'SELL'
+            recommendation = "SELL"
             predicted_return = np.random.uniform(-0.05, -0.01)
             risk_score = 0.5 + (np.random.random() * 0.3)
         else:
-            recommendation = 'HOLD'
+            recommendation = "HOLD"
             predicted_return = np.random.uniform(-0.02, 0.02)
             risk_score = 0.4 + (np.random.random() * 0.4)
 
@@ -158,33 +170,29 @@ class PoliticianTradingPredictor:
 
         # Recency score
         recency_score = 0.5
-        if 'disclosure_date' in ticker_trades.columns:
+        if "disclosure_date" in ticker_trades.columns:
             try:
-                most_recent = ticker_trades['disclosure_date'].max()
+                most_recent = ticker_trades["disclosure_date"].max()
                 days_ago = (datetime.now() - most_recent).days
                 recency_score = max(0.3, 1.0 - (days_ago / self.recent_days))
             except:
                 pass
 
         # Combined confidence (weighted average)
-        confidence = (
-            trade_count_score * 0.3 +
-            consistency_score * 0.4 +
-            recency_score * 0.3
-        )
+        confidence = trade_count_score * 0.3 + consistency_score * 0.4 + recency_score * 0.3
 
         # Add some variance
         confidence = min(0.95, max(0.50, confidence + np.random.uniform(-0.05, 0.05)))
 
         return {
-            'predicted_return': predicted_return,
-            'confidence': confidence,
-            'risk_score': risk_score,
-            'recommendation': recommendation,
-            'trade_count': total_trades,
-            'buy_count': buy_count,
-            'sell_count': sell_count,
-            'signal_strength': consistency_score
+            "predicted_return": predicted_return,
+            "confidence": confidence,
+            "risk_score": risk_score,
+            "recommendation": recommendation,
+            "trade_count": total_trades,
+            "buy_count": buy_count,
+            "sell_count": sell_count,
+            "signal_strength": consistency_score,
         }
 
     def get_top_picks(self, predictions: pd.DataFrame, n: int = 10) -> pd.DataFrame:
@@ -194,30 +202,33 @@ class PoliticianTradingPredictor:
 
         # Score = confidence * abs(predicted_return)
         predictions = predictions.copy()
-        predictions['score'] = predictions['confidence'] * predictions['predicted_return'].abs()
+        predictions["score"] = predictions["confidence"] * predictions["predicted_return"].abs()
 
-        return predictions.nlargest(n, 'score')
+        return predictions.nlargest(n, "score")
 
-    def get_buy_recommendations(self, predictions: pd.DataFrame, min_confidence: float = 0.6) -> pd.DataFrame:
+    def get_buy_recommendations(
+        self, predictions: pd.DataFrame, min_confidence: float = 0.6
+    ) -> pd.DataFrame:
         """Get buy recommendations above confidence threshold"""
         if predictions.empty:
             return pd.DataFrame()
 
         buys = predictions[
-            (predictions['recommendation'] == 'BUY') &
-            (predictions['confidence'] >= min_confidence)
+            (predictions["recommendation"] == "BUY") & (predictions["confidence"] >= min_confidence)
         ]
 
-        return buys.sort_values('predicted_return', ascending=False)
+        return buys.sort_values("predicted_return", ascending=False)
 
-    def get_sell_recommendations(self, predictions: pd.DataFrame, min_confidence: float = 0.6) -> pd.DataFrame:
+    def get_sell_recommendations(
+        self, predictions: pd.DataFrame, min_confidence: float = 0.6
+    ) -> pd.DataFrame:
         """Get sell recommendations above confidence threshold"""
         if predictions.empty:
             return pd.DataFrame()
 
         sells = predictions[
-            (predictions['recommendation'] == 'SELL') &
-            (predictions['confidence'] >= min_confidence)
+            (predictions["recommendation"] == "SELL")
+            & (predictions["confidence"] >= min_confidence)
         ]
 
-        return sells.sort_values('predicted_return', ascending=True)
+        return sells.sort_values("predicted_return", ascending=True)

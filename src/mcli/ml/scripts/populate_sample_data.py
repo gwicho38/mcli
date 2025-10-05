@@ -7,10 +7,17 @@ import numpy as np
 
 from mcli.ml.database.session import SessionLocal, init_db
 from mcli.ml.database.models import (
-    User, Model, Prediction, Portfolio, Trade, StockData,
-    BacktestResult, ModelStatus
+    User,
+    Model,
+    Prediction,
+    Portfolio,
+    Trade,
+    StockData,
+    BacktestResult,
+    ModelStatus,
 )
 from mcli.ml.config import settings
+
 
 def populate_sample_data():
     """Populate database with sample data."""
@@ -41,7 +48,7 @@ def populate_sample_data():
                 email=f"user{i+1}@example.com",
                 role="user" if i > 0 else "admin",
                 is_active=True,
-                last_login_at=datetime.utcnow() - timedelta(hours=random.randint(1, 48))
+                last_login_at=datetime.utcnow() - timedelta(hours=random.randint(1, 48)),
             )
             users.append(user)
             db.add(user)
@@ -51,7 +58,13 @@ def populate_sample_data():
         # Create sample models
         print("Creating sample models...")
         models = []
-        model_names = ["LSTM Predictor", "Transformer Model", "Ensemble Model", "CNN Extractor", "Attention Model"]
+        model_names = [
+            "LSTM Predictor",
+            "Transformer Model",
+            "Ensemble Model",
+            "CNN Extractor",
+            "Attention Model",
+        ]
         for i, name in enumerate(model_names):
             model = Model(
                 name=name,
@@ -63,7 +76,7 @@ def populate_sample_data():
                 test_max_drawdown=random.uniform(0.05, 0.15),
                 created_at=datetime.utcnow() - timedelta(days=random.randint(1, 30)),
                 updated_at=datetime.utcnow() - timedelta(hours=random.randint(1, 24)),
-                created_by_id=random.choice(users).id
+                created_by_id=random.choice(users).id,
             )
             models.append(model)
             db.add(model)
@@ -73,7 +86,13 @@ def populate_sample_data():
         # Create sample portfolios
         print("Creating sample portfolios...")
         portfolios = []
-        portfolio_names = ["Growth Portfolio", "Value Portfolio", "AI Picks", "Risk Parity", "Momentum Strategy"]
+        portfolio_names = [
+            "Growth Portfolio",
+            "Value Portfolio",
+            "AI Picks",
+            "Risk Parity",
+            "Momentum Strategy",
+        ]
         for i, name in enumerate(portfolio_names):
             portfolio = Portfolio(
                 name=name,
@@ -84,7 +103,7 @@ def populate_sample_data():
                 sharpe_ratio=random.uniform(0.8, 2.0),
                 max_drawdown=random.uniform(0.05, 0.20),
                 is_active=i < 4,
-                created_by_id=random.choice(users).id
+                created_by_id=random.choice(users).id,
             )
             portfolios.append(portfolio)
             db.add(portfolio)
@@ -102,7 +121,7 @@ def populate_sample_data():
                 target_date=datetime.utcnow().date() + timedelta(days=random.randint(1, 30)),
                 predicted_return=random.uniform(-0.05, 0.05),
                 confidence_score=random.uniform(0.5, 0.95),
-                model_id=random.choice(models).id
+                model_id=random.choice(models).id,
             )
             db.add(prediction)
 
@@ -114,7 +133,7 @@ def populate_sample_data():
                 target_date=datetime.utcnow().date() + timedelta(days=7),
                 predicted_return=random.uniform(-0.03, 0.03),
                 confidence_score=random.uniform(0.6, 0.9),
-                model_id=random.choice(models).id
+                model_id=random.choice(models).id,
             )
             db.add(prediction)
 
@@ -134,7 +153,7 @@ def populate_sample_data():
                     low=base_price * random.uniform(0.97, 0.99),
                     close=base_price * random.uniform(0.98, 1.02),
                     volume=random.randint(1000000, 50000000),
-                    adjusted_close=base_price * random.uniform(0.98, 1.02)
+                    adjusted_close=base_price * random.uniform(0.98, 1.02),
                 )
                 db.add(stock_data)
                 base_price = stock_data.close  # Random walk
@@ -152,7 +171,7 @@ def populate_sample_data():
                         trade_type=random.choice(["buy", "sell"]),
                         quantity=random.randint(10, 100),
                         price=random.uniform(50, 500),
-                        executed_at=datetime.utcnow() - timedelta(days=random.randint(0, 30))
+                        executed_at=datetime.utcnow() - timedelta(days=random.randint(0, 30)),
                     )
                     db.add(trade)
 
@@ -173,7 +192,7 @@ def populate_sample_data():
                     max_drawdown=random.uniform(0.05, 0.25),
                     win_rate=random.uniform(0.45, 0.65),
                     profit_factor=random.uniform(0.9, 2.0),
-                    total_trades=random.randint(50, 200)
+                    total_trades=random.randint(50, 200),
                 )
                 db.add(backtest)
 

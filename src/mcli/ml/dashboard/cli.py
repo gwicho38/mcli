@@ -9,6 +9,7 @@ from rich.console import Console
 app = typer.Typer()
 console = Console()
 
+
 @app.command()
 def launch(
     port: int = typer.Option(8501, "--port", "-p", help="Port to run dashboard on"),
@@ -26,11 +27,17 @@ def launch(
 
     # Build streamlit command
     cmd = [
-        sys.executable, "-m", "streamlit", "run",
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
         str(dashboard_path),
-        "--server.port", str(port),
-        "--server.address", host,
-        "--browser.gatherUsageStats", "false"
+        "--server.port",
+        str(port),
+        "--server.address",
+        host,
+        "--browser.gatherUsageStats",
+        "false",
     ]
 
     if debug:
@@ -46,6 +53,7 @@ def launch(
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Failed to start dashboard: {e}[/red]")
         raise typer.Exit(1)
+
 
 if __name__ == "__main__":
     app()

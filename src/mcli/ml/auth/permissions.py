@@ -60,7 +60,6 @@ class Permission(Enum):
 # Role-based permission mapping
 ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
     UserRole.ADMIN: set(Permission),  # Admin has all permissions
-
     UserRole.ANALYST: {
         Permission.MODEL_VIEW,
         Permission.MODEL_CREATE,
@@ -76,7 +75,6 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
         Permission.DATA_EDIT,
         Permission.SYSTEM_STATUS,
     },
-
     UserRole.USER: {
         Permission.MODEL_VIEW,
         Permission.PREDICTION_VIEW,
@@ -88,7 +86,6 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
         Permission.DATA_VIEW,
         Permission.SYSTEM_STATUS,
     },
-
     UserRole.VIEWER: {
         Permission.MODEL_VIEW,
         Permission.PREDICTION_VIEW,
@@ -109,8 +106,7 @@ def check_permission(user: User, permission: Permission) -> None:
     """Check permission and raise exception if not allowed"""
     if not has_permission(user, permission):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Permission denied: {permission.value}"
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Permission denied: {permission.value}"
         )
 
 
@@ -121,12 +117,11 @@ def require_permission(permission: Permission):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             # Extract user from kwargs (assumes it's passed as current_user)
-            current_user = kwargs.get('current_user')
+            current_user = kwargs.get("current_user")
 
             if not current_user:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Authentication required"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
                 )
 
             check_permission(current_user, permission)
@@ -143,18 +138,17 @@ def require_any_permission(*permissions: Permission):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            current_user = kwargs.get('current_user')
+            current_user = kwargs.get("current_user")
 
             if not current_user:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Authentication required"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
                 )
 
             if not any(has_permission(current_user, p) for p in permissions):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Permission denied. Required: {[p.value for p in permissions]}"
+                    detail=f"Permission denied. Required: {[p.value for p in permissions]}",
                 )
 
             return await func(*args, **kwargs)
@@ -170,12 +164,11 @@ def require_all_permissions(*permissions: Permission):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            current_user = kwargs.get('current_user')
+            current_user = kwargs.get("current_user")
 
             if not current_user:
                 raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Authentication required"
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required"
                 )
 
             for permission in permissions:
@@ -257,7 +250,7 @@ class AuditLogger:
         action: str,
         success: bool,
         details: Dict[str, Any] = None,
-        db: Session = None
+        db: Session = None,
     ):
         """Log access attempt"""
         log_entry = {
@@ -267,7 +260,7 @@ class AuditLogger:
             "action": action,
             "success": success,
             "timestamp": datetime.utcnow(),
-            "details": details or {}
+            "details": details or {},
         }
 
         # In production, save to database or logging service

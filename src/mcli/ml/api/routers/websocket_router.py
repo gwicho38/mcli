@@ -67,10 +67,12 @@ async def websocket_prices(websocket: WebSocket):
         while True:
             await asyncio.sleep(1)
             # Send mock price update
-            await websocket.send_json({
-                "type": "price_update",
-                "ticker": "AAPL",
-                "price": 150.00 + (asyncio.get_event_loop().time() % 10)
-            })
+            await websocket.send_json(
+                {
+                    "type": "price_update",
+                    "ticker": "AAPL",
+                    "price": 150.00 + (asyncio.get_event_loop().time() % 10),
+                }
+            )
     except WebSocketDisconnect:
         manager.disconnect(websocket, "prices")

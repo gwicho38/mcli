@@ -14,6 +14,7 @@ import numpy as np
 # Optional redis import - gracefully handle if not installed
 try:
     import redis.asyncio as redis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False

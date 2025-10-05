@@ -161,7 +161,9 @@ def tail_logs(log_type: str, lines: int, date: Optional[str], follow: bool):
 
             # Use tail -f for real-time following
             cmd = ["tail", f"-n{lines}", "-f", str(log_file)]
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
 
             try:
                 for line in iter(process.stdout.readline, ""):
@@ -179,7 +181,9 @@ def tail_logs(log_type: str, lines: int, date: Optional[str], follow: bool):
                 tail_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
 
             # Display with formatting
-            console.print(f"\n📋 **Last {len(tail_lines)} lines from {log_file.name}**\n", style="cyan")
+            console.print(
+                f"\n📋 **Last {len(tail_lines)} lines from {log_file.name}**\n", style="cyan"
+            )
 
             for line in tail_lines:
                 formatted_line = _format_log_line(line.rstrip())

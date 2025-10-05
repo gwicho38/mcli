@@ -24,6 +24,7 @@ if config.config_file_name is not None:
 # Add model's MetaData object for 'autogenerate'
 target_metadata = Base.metadata
 
+
 # Override database URL from settings
 def get_url():
     """Get database URL from settings or environment"""

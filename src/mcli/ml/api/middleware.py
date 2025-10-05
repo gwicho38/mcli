@@ -34,8 +34,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         # Log response
         process_time = time.time() - start_time
         logger.info(
-            f"Response {request_id}: status={response.status_code} "
-            f"duration={process_time:.3f}s"
+            f"Response {request_id}: status={response.status_code} " f"duration={process_time:.3f}s"
         )
 
         # Add headers
@@ -67,8 +66,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # Clean old requests
         self.clients[client_ip] = [
-            req_time for req_time in self.clients[client_ip]
-            if req_time > minute_ago
+            req_time for req_time in self.clients[client_ip] if req_time > minute_ago
         ]
 
         # Check if limit exceeded
@@ -77,7 +75,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return JSONResponse(
                 status_code=429,
                 content={"detail": "Rate limit exceeded. Please try again later."},
-                headers={"Retry-After": "60"}
+                headers={"Retry-After": "60"},
             )
 
         # Record request
@@ -102,18 +100,12 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             # Log unexpected errors
             request_id = getattr(request.state, "request_id", "unknown")
-            logger.error(
-                f"Unhandled exception in request {request_id}: {str(e)}",
-                exc_info=True
-            )
+            logger.error(f"Unhandled exception in request {request_id}: {str(e)}", exc_info=True)
 
             # Return generic error response
             return JSONResponse(
                 status_code=500,
-                content={
-                    "detail": "An internal error occurred",
-                    "request_id": request_id
-                }
+                content={"detail": "An internal error occurred", "request_id": request_id},
             )
 
 

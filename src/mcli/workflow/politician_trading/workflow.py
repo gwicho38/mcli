@@ -79,7 +79,9 @@ class PoliticianTradingWorkflow:
             # Run EU member states collection
             eu_states_results = await self._collect_eu_member_states_data()
             results["jobs"]["eu_member_states"] = eu_states_results
-            results["summary"]["total_new_disclosures"] += eu_states_results.get("new_disclosures", 0)
+            results["summary"]["total_new_disclosures"] += eu_states_results.get(
+                "new_disclosures", 0
+            )
             results["summary"]["total_updated_disclosures"] += eu_states_results.get(
                 "updated_disclosures", 0
             )
@@ -87,7 +89,9 @@ class PoliticianTradingWorkflow:
             # Run US states collection
             us_states_results = await self._collect_us_states_data()
             results["jobs"]["us_states"] = us_states_results
-            results["summary"]["total_new_disclosures"] += us_states_results.get("new_disclosures", 0)
+            results["summary"]["total_new_disclosures"] += us_states_results.get(
+                "new_disclosures", 0
+            )
             results["summary"]["total_updated_disclosures"] += us_states_results.get(
                 "updated_disclosures", 0
             )
@@ -147,7 +151,9 @@ class PoliticianTradingWorkflow:
 
     async def _collect_us_congress_data(self) -> Dict[str, Any]:
         """Collect US Congress trading data"""
-        job_id = await self.db.create_data_pull_job("us_congress", self.config.to_serializable_dict())
+        job_id = await self.db.create_data_pull_job(
+            "us_congress", self.config.to_serializable_dict()
+        )
 
         job_result = {
             "job_id": job_id,
@@ -198,19 +204,21 @@ class PoliticianTradingWorkflow:
                         logger.warning("Skipping disclosure with empty politician name")
                         job.records_failed += 1
                         continue
-                    
+
                     # Filter out obviously invalid politician names
                     if self._is_invalid_politician_name(politician_name):
-                        logger.warning(f"Skipping disclosure with invalid politician name: {politician_name}")
+                        logger.warning(
+                            f"Skipping disclosure with invalid politician name: {politician_name}"
+                        )
                         job.records_failed += 1
                         continue
-                        
+
                     politician = matcher.find_politician(politician_name)
 
                     if not politician:
                         # Create new politician with real name from scraper
                         logger.info(f"Creating new politician for: {politician_name}")
-                        
+
                         # Parse real name into first/last components
                         name_parts = politician_name.strip().split()
                         if len(name_parts) >= 2:
@@ -219,7 +227,7 @@ class PoliticianTradingWorkflow:
                         else:
                             first_name = politician_name.strip()
                             last_name = ""
-                        
+
                         # Create politician with real name - use generic role for now
                         new_politician = Politician(
                             first_name=first_name,
@@ -283,7 +291,9 @@ class PoliticianTradingWorkflow:
 
     async def _collect_eu_parliament_data(self) -> Dict[str, Any]:
         """Collect EU Parliament trading/financial data"""
-        job_id = await self.db.create_data_pull_job("eu_parliament", self.config.to_serializable_dict())
+        job_id = await self.db.create_data_pull_job(
+            "eu_parliament", self.config.to_serializable_dict()
+        )
 
         job_result = {
             "job_id": job_id,
@@ -358,7 +368,9 @@ class PoliticianTradingWorkflow:
 
     async def _collect_uk_parliament_data(self) -> Dict[str, Any]:
         """Collect UK Parliament financial interests data"""
-        job_id = await self.db.create_data_pull_job("uk_parliament", self.config.to_serializable_dict())
+        job_id = await self.db.create_data_pull_job(
+            "uk_parliament", self.config.to_serializable_dict()
+        )
 
         job_result = {
             "job_id": job_id,
@@ -379,9 +391,9 @@ class PoliticianTradingWorkflow:
             # Collect UK Parliament financial interests
             logger.info("Starting UK Parliament financial interests collection")
             uk_disclosures = await run_uk_parliament_workflow(self.config.scraping)
-            
+
             job.records_found = len(uk_disclosures)
-            
+
             # Process each disclosure
             matcher = PoliticianMatcher(self.politicians)
 
@@ -391,11 +403,13 @@ class PoliticianTradingWorkflow:
                     if not disclosure.politician_id:
                         # Extract real politician name from raw data
                         politician_name = disclosure.raw_data.get("politician_name", "")
-                        
+
                         if not politician_name or politician_name.strip() == "":
                             # Fallback to using member ID if no name available
                             if disclosure.raw_data.get("uk_member_id"):
-                                logger.warning(f"Using member ID as fallback for UK disclosure: {disclosure.raw_data.get('uk_member_id')}")
+                                logger.warning(
+                                    f"Using member ID as fallback for UK disclosure: {disclosure.raw_data.get('uk_member_id')}"
+                                )
                                 uk_politician = Politician(
                                     first_name="UK",
                                     last_name="MP",
@@ -406,19 +420,23 @@ class PoliticianTradingWorkflow:
                                 politician_id = await self.db.upsert_politician(uk_politician)
                                 disclosure.politician_id = politician_id
                             else:
-                                logger.warning("Skipping UK disclosure with no politician name or member ID")
+                                logger.warning(
+                                    "Skipping UK disclosure with no politician name or member ID"
+                                )
                                 job.records_failed += 1
                                 continue
                         else:
                             # Filter out obviously invalid politician names
                             if self._is_invalid_politician_name(politician_name):
-                                logger.warning(f"Skipping UK disclosure with invalid politician name: {politician_name}")
+                                logger.warning(
+                                    f"Skipping UK disclosure with invalid politician name: {politician_name}"
+                                )
                                 job.records_failed += 1
                                 continue
-                            
+
                             # Try to find existing politician
                             politician = matcher.find_politician(politician_name)
-                            
+
                             if not politician:
                                 # Create new politician with real name from scraper
                                 # Parse real name into first/last components
@@ -429,7 +447,7 @@ class PoliticianTradingWorkflow:
                                 else:
                                     first_name = politician_name.strip()
                                     last_name = ""
-                                
+
                                 # Create politician with REAL name
                                 uk_politician = Politician(
                                     first_name=first_name,
@@ -478,7 +496,9 @@ class PoliticianTradingWorkflow:
 
     async def _collect_california_data(self) -> Dict[str, Any]:
         """Collect California NetFile and state disclosure data"""
-        job_id = await self.db.create_data_pull_job("california", self.config.to_serializable_dict())
+        job_id = await self.db.create_data_pull_job(
+            "california", self.config.to_serializable_dict()
+        )
 
         job_result = {
             "job_id": job_id,
@@ -499,9 +519,9 @@ class PoliticianTradingWorkflow:
             # Collect California financial disclosures
             logger.info("Starting California financial disclosures collection")
             california_disclosures = await run_california_workflow(self.config.scraping)
-            
+
             job.records_found = len(california_disclosures)
-            
+
             # Process each disclosure
             matcher = PoliticianMatcher(self.politicians)
 
@@ -557,11 +577,13 @@ class PoliticianTradingWorkflow:
 
     async def _collect_eu_member_states_data(self) -> Dict[str, Any]:
         """Collect EU member states financial disclosure data"""
-        job_id = await self.db.create_data_pull_job("eu_member_states", self.config.to_serializable_dict())
+        job_id = await self.db.create_data_pull_job(
+            "eu_member_states", self.config.to_serializable_dict()
+        )
 
         job_result = {
             "job_id": job_id,
-            "status": "running", 
+            "status": "running",
             "new_disclosures": 0,
             "updated_disclosures": 0,
             "errors": [],
@@ -578,9 +600,9 @@ class PoliticianTradingWorkflow:
             # Collect EU member states financial disclosures
             logger.info("Starting EU member states financial disclosures collection")
             eu_states_disclosures = await run_eu_member_states_workflow(self.config.scraping)
-            
+
             job.records_found = len(eu_states_disclosures)
-            
+
             # Process each disclosure
             matcher = PoliticianMatcher(self.politicians)
 
@@ -591,18 +613,18 @@ class PoliticianTradingWorkflow:
                         # Extract politician details from raw data
                         country = disclosure.raw_data.get("country", "Unknown")
                         source = disclosure.raw_data.get("source", "unknown")
-                        
+
                         # Map country to appropriate role
                         role_map = {
                             "Germany": PoliticianRole.GERMAN_BUNDESTAG,
                             "France": PoliticianRole.FRENCH_DEPUTY,
                             "Italy": PoliticianRole.ITALIAN_DEPUTY,
                             "Spain": PoliticianRole.SPANISH_DEPUTY,
-                            "Netherlands": PoliticianRole.DUTCH_MP
+                            "Netherlands": PoliticianRole.DUTCH_MP,
                         }
-                        
+
                         politician_role = role_map.get(country, PoliticianRole.EU_MEP)
-                        
+
                         # Create placeholder politician
                         eu_politician = Politician(
                             first_name=country,
@@ -652,7 +674,7 @@ class PoliticianTradingWorkflow:
 
         job_result = {
             "job_id": job_id,
-            "status": "running", 
+            "status": "running",
             "new_disclosures": 0,
             "updated_disclosures": 0,
             "errors": [],
@@ -669,9 +691,9 @@ class PoliticianTradingWorkflow:
             # Collect US states financial disclosures
             logger.info("Starting US states financial disclosures collection")
             us_states_disclosures = await run_us_states_workflow(self.config.scraping)
-            
+
             job.records_found = len(us_states_disclosures)
-            
+
             # Process each disclosure
             matcher = PoliticianMatcher(self.politicians)
 
@@ -682,24 +704,28 @@ class PoliticianTradingWorkflow:
                         # Extract real politician name from raw data
                         politician_name = disclosure.raw_data.get("politician_name", "")
                         if not politician_name or politician_name.strip() == "":
-                            logger.warning("Skipping US states disclosure with empty politician name")
+                            logger.warning(
+                                "Skipping US states disclosure with empty politician name"
+                            )
                             job.records_failed += 1
                             continue
-                        
+
                         # Filter out obviously invalid politician names
                         if self._is_invalid_politician_name(politician_name):
-                            logger.warning(f"Skipping US states disclosure with invalid politician name: {politician_name}")
+                            logger.warning(
+                                f"Skipping US states disclosure with invalid politician name: {politician_name}"
+                            )
                             job.records_failed += 1
                             continue
-                        
+
                         # Try to find existing politician
                         politician = matcher.find_politician(politician_name)
-                        
+
                         if not politician:
                             # Create new politician with real name from scraper
                             state = disclosure.raw_data.get("state", "Unknown")
                             source = disclosure.raw_data.get("source", "unknown")
-                            
+
                             # Map state to appropriate role
                             role_map = {
                                 "Texas": PoliticianRole.TEXAS_STATE_OFFICIAL,
@@ -708,11 +734,11 @@ class PoliticianTradingWorkflow:
                                 "Illinois": PoliticianRole.ILLINOIS_STATE_OFFICIAL,
                                 "Pennsylvania": PoliticianRole.PENNSYLVANIA_STATE_OFFICIAL,
                                 "Massachusetts": PoliticianRole.MASSACHUSETTS_STATE_OFFICIAL,
-                                "California": PoliticianRole.CALIFORNIA_STATE_OFFICIAL
+                                "California": PoliticianRole.CALIFORNIA_STATE_OFFICIAL,
                             }
-                            
+
                             politician_role = role_map.get(state, PoliticianRole.US_HOUSE_REP)
-                            
+
                             # Parse real name into first/last components
                             name_parts = politician_name.strip().split()
                             if len(name_parts) >= 2:
@@ -721,7 +747,7 @@ class PoliticianTradingWorkflow:
                             else:
                                 first_name = politician_name.strip()
                                 last_name = ""
-                            
+
                             # Create politician with REAL name
                             state_politician = Politician(
                                 first_name=first_name,
@@ -795,47 +821,48 @@ class PoliticianTradingWorkflow:
         """Check if a name is obviously not a politician name"""
         if not name or len(name.strip()) < 2:
             return True
-            
+
         # Check for proper name structure first (before converting to uppercase)
         original_name = name.strip()
         import re
-        if not re.search(r'[A-Za-z]', original_name):  # Should have at least one letter
+
+        if not re.search(r"[A-Za-z]", original_name):  # Should have at least one letter
             return True
-        if re.search(r'^\d+', original_name):  # Starting with numbers
+        if re.search(r"^\d+", original_name):  # Starting with numbers
             return True
-            
+
         # Now convert to uppercase for pattern matching
         name = original_name.upper()
-        
+
         # Filter out obvious non-names
         invalid_patterns = [
             # Asset tickers and financial instruments
-            r'^-.*CT$',  # -ETHEREUMCT, -DOGCT patterns
-            r'^[A-Z]{2,5}$',  # Short all-caps (likely tickers)
-            r'^\$',  # Starting with $
+            r"^-.*CT$",  # -ETHEREUMCT, -DOGCT patterns
+            r"^[A-Z]{2,5}$",  # Short all-caps (likely tickers)
+            r"^\$",  # Starting with $
             # Municipal and financial terms
-            r'MUNICIPAL',
-            r'BOND',
-            r'TRUST',
-            r'FUND',
-            r'CORP',
-            r'INC\.$',
-            r'LLC$',
-            r'LP$',
+            r"MUNICIPAL",
+            r"BOND",
+            r"TRUST",
+            r"FUND",
+            r"CORP",
+            r"INC\.$",
+            r"LLC$",
+            r"LP$",
             # Common non-name patterns
-            r'^UNKNOWN',
-            r'^TEST',
-            r'^SAMPLE',
+            r"^UNKNOWN",
+            r"^TEST",
+            r"^SAMPLE",
             # Crypto/financial asset patterns
-            r'ETHEREUM',
-            r'BITCOIN',
-            r'CRYPTO',
+            r"ETHEREUM",
+            r"BITCOIN",
+            r"CRYPTO",
         ]
-        
+
         for pattern in invalid_patterns:
             if re.search(pattern, name):
                 return True
-                
+
         return False
 
 

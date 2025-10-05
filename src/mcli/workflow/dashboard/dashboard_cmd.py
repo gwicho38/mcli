@@ -36,11 +36,17 @@ def launch(port, host, debug):
 
     # Build streamlit command
     cmd = [
-        sys.executable, "-m", "streamlit", "run",
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
         str(dashboard_path),
-        "--server.port", str(port),
-        "--server.address", host,
-        "--browser.gatherUsageStats", "false"
+        "--server.port",
+        str(port),
+        "--server.address",
+        host,
+        "--browser.gatherUsageStats",
+        "false",
     ]
 
     if debug:
@@ -81,6 +87,7 @@ def info():
     # Check database connection
     try:
         from mcli.ml.config import settings
+
         click.echo(f"\n📁 Database URL: {settings.database.url}")
         click.echo(f"📍 Redis URL: {settings.redis.url}")
     except Exception as e:

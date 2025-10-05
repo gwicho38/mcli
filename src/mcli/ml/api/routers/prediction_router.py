@@ -30,7 +30,7 @@ async def create_prediction(
     request: PredictionInput,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new prediction"""
 
@@ -38,20 +38,20 @@ async def create_prediction(
     if request.model_id:
         model = db.query(Model).filter(Model.id == request.model_id).first()
         if not model:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Model not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
     else:
         # Get default deployed model
-        model = db.query(Model).filter(
-            Model.status == "deployed"
-        ).order_by(Model.deployed_at.desc()).first()
+        model = (
+            db.query(Model)
+            .filter(Model.status == "deployed")
+            .order_by(Model.deployed_at.desc())
+            .first()
+        )
 
         if not model:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="No deployed model available"
+                detail="No deployed model available",
             )
 
     # Load model
@@ -59,6 +59,7 @@ async def create_prediction(
 
     # Make prediction
     import numpy as np
+
     features_array = np.array(list(request.features.values())).reshape(1, -1)
     predicted_return = float(ml_model.predict(features_array)[0])
 
@@ -74,7 +75,7 @@ async def create_prediction(
         target_date=datetime.utcnow() + timedelta(days=request.horizon),
         predicted_return=predicted_return,
         confidence_score=confidence_score,
-        feature_importance=request.features
+        feature_importance=request.features,
     )
 
     db.add(prediction)
@@ -95,7 +96,7 @@ async def create_prediction(
         confidence_score=prediction.confidence_score,
         target_date=prediction.target_date,
         model_id=model.id,
-        model_name=model.name
+        model_name=model.name,
     )
 
 
@@ -104,7 +105,7 @@ async def create_batch_predictions(
     request: BatchPredictionRequest,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create predictions for multiple tickers"""
     predictions = []
@@ -114,15 +115,10 @@ async def create_batch_predictions(
             ticker=ticker_data.ticker,
             features=ticker_data.features,
             model_id=request.model_id,
-            horizon=request.horizon
+            horizon=request.horizon,
         )
 
-        pred = await create_prediction(
-            pred_input,
-            background_tasks,
-            current_user,
-            db
-        )
+        pred = await create_prediction(pred_input, background_tasks, current_user, db)
         predictions.append(pred)
 
     return predictions
@@ -137,7 +133,7 @@ async def list_predictions(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """List user's predictions"""
     query = db.query(Prediction).filter(Prediction.user_id == current_user.id)
@@ -151,9 +147,7 @@ async def list_predictions(
     if end_date:
         query = query.filter(Prediction.prediction_date <= end_date)
 
-    predictions = query.order_by(
-        Prediction.prediction_date.desc()
-    ).offset(skip).limit(limit).all()
+    predictions = query.order_by(Prediction.prediction_date.desc()).offset(skip).limit(limit).all()
 
     return [PredictionResponse.from_orm(p) for p in predictions]
 
@@ -163,19 +157,17 @@ async def list_predictions(
 async def get_prediction(
     prediction_id: UUID,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get specific prediction details"""
-    prediction = db.query(Prediction).filter(
-        Prediction.id == prediction_id,
-        Prediction.user_id == current_user.id
-    ).first()
+    prediction = (
+        db.query(Prediction)
+        .filter(Prediction.id == prediction_id, Prediction.user_id == current_user.id)
+        .first()
+    )
 
     if not prediction:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Prediction not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prediction not found")
 
     return PredictionResponse.from_orm(prediction)
 
@@ -184,26 +176,24 @@ async def get_prediction(
 async def get_prediction_outcome(
     prediction_id: UUID,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get actual outcome of a prediction"""
-    prediction = db.query(Prediction).filter(
-        Prediction.id == prediction_id,
-        Prediction.user_id == current_user.id
-    ).first()
+    prediction = (
+        db.query(Prediction)
+        .filter(Prediction.id == prediction_id, Prediction.user_id == current_user.id)
+        .first()
+    )
 
     if not prediction:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Prediction not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prediction not found")
 
     # Check if target date has passed
     if prediction.target_date > datetime.utcnow():
         return {
             "status": "pending",
             "message": "Target date has not been reached yet",
-            "target_date": prediction.target_date
+            "target_date": prediction.target_date,
         }
 
     # Get actual return (mock for now)
@@ -219,7 +209,7 @@ async def get_prediction_outcome(
         "predicted_return": prediction.predicted_return,
         "actual_return": actual_return,
         "error": abs(prediction.predicted_return - actual_return),
-        "accuracy": 1 - abs(prediction.predicted_return - actual_return) / abs(actual_return)
+        "accuracy": 1 - abs(prediction.predicted_return - actual_return) / abs(actual_return),
     }
 
 
@@ -229,17 +219,20 @@ async def get_latest_recommendations(
     limit: int = Query(10, le=50),
     min_confidence: float = Query(0.7, ge=0, le=1),
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get latest stock recommendations"""
     # Get recent predictions with high confidence
-    predictions = db.query(Prediction).filter(
-        Prediction.confidence_score >= min_confidence,
-        Prediction.prediction_date >= datetime.utcnow() - timedelta(days=1)
-    ).order_by(
-        Prediction.confidence_score.desc(),
-        Prediction.predicted_return.desc()
-    ).limit(limit).all()
+    predictions = (
+        db.query(Prediction)
+        .filter(
+            Prediction.confidence_score >= min_confidence,
+            Prediction.prediction_date >= datetime.utcnow() - timedelta(days=1),
+        )
+        .order_by(Prediction.confidence_score.desc(), Prediction.predicted_return.desc())
+        .limit(limit)
+        .all()
+    )
 
     recommendations = []
     for pred in predictions:
@@ -247,13 +240,15 @@ async def get_latest_recommendations(
         if pred.predicted_return < -0.02:
             action = "sell"
 
-        recommendations.append({
-            "ticker": pred.ticker,
-            "action": action,
-            "predicted_return": pred.predicted_return,
-            "confidence": pred.confidence_score,
-            "target_date": pred.target_date
-        })
+        recommendations.append(
+            {
+                "ticker": pred.ticker,
+                "action": action,
+                "predicted_return": pred.predicted_return,
+                "confidence": pred.confidence_score,
+                "target_date": pred.target_date,
+            }
+        )
 
     return recommendations
 

@@ -114,105 +114,139 @@ class CongressTradingScraper(BaseScraper):
 
         try:
             logger.info("Starting House disclosures scrape from official database")
-            
+
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=self.config.timeout),
-                headers={'User-Agent': self.config.user_agent}
+                headers={"User-Agent": self.config.user_agent},
             ) as session:
-                
+
                 # Get the ViewSearch form page
                 view_search_url = f"{base_url}/FinancialDisclosure/ViewSearch"
                 async with session.get(view_search_url) as response:
                     if response.status == 200:
                         html = await response.text()
                         logger.info("Successfully accessed House financial disclosure search form")
-                        
+
                         # Extract form data for ASPX
-                        soup = BeautifulSoup(html, 'html.parser')
-                        
+                        soup = BeautifulSoup(html, "html.parser")
+
                         # Look for common ASPX form fields
                         form_fields = {}
-                        for field_name in ['__VIEWSTATE', '__VIEWSTATEGENERATOR', '__EVENTVALIDATION', '__REQUESTVERIFICATIONTOKEN']:
-                            field = soup.find('input', {'name': field_name})
-                            if field and field.get('value'):
-                                form_fields[field_name] = field['value']
-                        
-                        if '__VIEWSTATE' in form_fields:
+                        for field_name in [
+                            "__VIEWSTATE",
+                            "__VIEWSTATEGENERATOR",
+                            "__EVENTVALIDATION",
+                            "__REQUESTVERIFICATIONTOKEN",
+                        ]:
+                            field = soup.find("input", {"name": field_name})
+                            if field and field.get("value"):
+                                form_fields[field_name] = field["value"]
+
+                        if "__VIEWSTATE" in form_fields:
                             logger.info("Found required ASPX form fields")
-                            
+
                             # Search for recent disclosures - try different form field names
                             current_year = str(datetime.now().year)
-                            
+
                             # Search for common politician last names to get real data
-                            common_names = ['Smith', 'Johnson', 'Brown', 'Davis', 'Wilson', 'Miller', 'Garcia']
-                            
+                            common_names = [
+                                "Smith",
+                                "Johnson",
+                                "Brown",
+                                "Davis",
+                                "Wilson",
+                                "Miller",
+                                "Garcia",
+                            ]
+
                             # Try different form patterns with actual names
                             possible_form_data_sets = []
-                            
+
                             for name in common_names:
-                                possible_form_data_sets.extend([
-                                    {
-                                        **form_fields,
-                                        'ctl00$MainContent$txtLastName': name,
-                                        'ctl00$MainContent$ddlFilingYear': current_year,
-                                        'ctl00$MainContent$btnSearch': 'Search'
-                                    },
-                                    {
-                                        **form_fields,
-                                        'ctl00$ContentPlaceHolder1$txtLastName': name,
-                                        'ctl00$ContentPlaceHolder1$ddlFilingYear': current_year,
-                                        'ctl00$ContentPlaceHolder1$btnSearch': 'Search'
-                                    },
-                                    {
-                                        **form_fields,
-                                        'LastName': name,
-                                        'FilingYear': current_year,
-                                        'Search': 'Search'
-                                    }
-                                ])
-                            
+                                possible_form_data_sets.extend(
+                                    [
+                                        {
+                                            **form_fields,
+                                            "ctl00$MainContent$txtLastName": name,
+                                            "ctl00$MainContent$ddlFilingYear": current_year,
+                                            "ctl00$MainContent$btnSearch": "Search",
+                                        },
+                                        {
+                                            **form_fields,
+                                            "ctl00$ContentPlaceHolder1$txtLastName": name,
+                                            "ctl00$ContentPlaceHolder1$ddlFilingYear": current_year,
+                                            "ctl00$ContentPlaceHolder1$btnSearch": "Search",
+                                        },
+                                        {
+                                            **form_fields,
+                                            "LastName": name,
+                                            "FilingYear": current_year,
+                                            "Search": "Search",
+                                        },
+                                    ]
+                                )
+
                             # Also try without names (all results)
-                            possible_form_data_sets.extend([
-                                {
-                                    **form_fields,
-                                    'ctl00$MainContent$ddlFilingYear': current_year,
-                                    'ctl00$MainContent$btnSearch': 'Search'
-                                },
-                                {
-                                    **form_fields,
-                                    'ctl00$ContentPlaceHolder1$ddlFilingYear': current_year,
-                                    'ctl00$ContentPlaceHolder1$btnSearch': 'Search'
-                                }
-                            ])
-                            
+                            possible_form_data_sets.extend(
+                                [
+                                    {
+                                        **form_fields,
+                                        "ctl00$MainContent$ddlFilingYear": current_year,
+                                        "ctl00$MainContent$btnSearch": "Search",
+                                    },
+                                    {
+                                        **form_fields,
+                                        "ctl00$ContentPlaceHolder1$ddlFilingYear": current_year,
+                                        "ctl00$ContentPlaceHolder1$btnSearch": "Search",
+                                    },
+                                ]
+                            )
+
                             # Try each form configuration
                             for i, form_data in enumerate(possible_form_data_sets):
                                 try:
                                     logger.info(f"Attempting search with form configuration {i+1}")
-                                    async with session.post(view_search_url, data=form_data) as search_response:
+                                    async with session.post(
+                                        view_search_url, data=form_data
+                                    ) as search_response:
                                         if search_response.status == 200:
                                             results_html = await search_response.text()
-                                            if 'search results' in results_html.lower() or 'disclosure' in results_html.lower():
-                                                disclosures = await self._parse_house_results(results_html, base_url)
-                                                logger.info(f"Successfully found {len(disclosures)} House disclosures")
+                                            if (
+                                                "search results" in results_html.lower()
+                                                or "disclosure" in results_html.lower()
+                                            ):
+                                                disclosures = await self._parse_house_results(
+                                                    results_html, base_url
+                                                )
+                                                logger.info(
+                                                    f"Successfully found {len(disclosures)} House disclosures"
+                                                )
                                                 break
                                             else:
-                                                logger.debug(f"Form config {i+1} didn't return results")
+                                                logger.debug(
+                                                    f"Form config {i+1} didn't return results"
+                                                )
                                         else:
-                                            logger.debug(f"Form config {i+1} failed with status {search_response.status}")
+                                            logger.debug(
+                                                f"Form config {i+1} failed with status {search_response.status}"
+                                            )
                                 except Exception as e:
                                     logger.debug(f"Form config {i+1} failed: {e}")
                             else:
-                                logger.warning("All form configurations failed, using basic page scraping")
+                                logger.warning(
+                                    "All form configurations failed, using basic page scraping"
+                                )
                                 # Fall back to scraping any existing disclosure links on the page
                                 disclosures = await self._parse_house_results(html, base_url)
                         else:
-                            logger.warning("Could not find required ASPX form fields, using basic page scraping")
+                            logger.warning(
+                                "Could not find required ASPX form fields, using basic page scraping"
+                            )
                             # Fall back to parsing any existing links
                             disclosures = await self._parse_house_results(html, base_url)
                     else:
                         logger.warning(f"Failed to access House disclosure site: {response.status}")
-                        
+
                 # Rate limiting
                 await asyncio.sleep(self.config.request_delay)
 
@@ -230,19 +264,21 @@ class CongressTradingScraper(BaseScraper):
 
         try:
             logger.info("Starting Senate disclosures scrape from EFD database")
-            
+
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=self.config.timeout),
-                headers={'User-Agent': self.config.user_agent}
+                headers={"User-Agent": self.config.user_agent},
             ) as session:
-                
+
                 # Search for recent periodic transaction reports (PTRs)
                 search_params = {
-                    'report_type': '11',  # Periodic Transaction Report
-                    'submitted_start_date': (datetime.now() - timedelta(days=90)).strftime('%m/%d/%Y'),
-                    'submitted_end_date': datetime.now().strftime('%m/%d/%Y')
+                    "report_type": "11",  # Periodic Transaction Report
+                    "submitted_start_date": (datetime.now() - timedelta(days=90)).strftime(
+                        "%m/%d/%Y"
+                    ),
+                    "submitted_end_date": datetime.now().strftime("%m/%d/%Y"),
                 }
-                
+
                 async with session.get(search_url, params=search_params) as response:
                     if response.status == 200:
                         html = await response.text()
@@ -250,7 +286,7 @@ class CongressTradingScraper(BaseScraper):
                         logger.info(f"Found {len(disclosures)} Senate disclosures")
                     else:
                         logger.warning(f"Senate search failed with status {response.status}")
-                        
+
                 # Rate limiting
                 await asyncio.sleep(self.config.request_delay)
 
@@ -263,64 +299,89 @@ class CongressTradingScraper(BaseScraper):
     async def _parse_house_results(self, html: str, base_url: str) -> List[TradingDisclosure]:
         """Parse House disclosure search results"""
         disclosures = []
-        
+
         try:
-            soup = BeautifulSoup(html, 'html.parser')
-            
+            soup = BeautifulSoup(html, "html.parser")
+
             # Look for disclosure result rows - try multiple selectors
-            result_rows = (soup.find_all('tr', class_='disclosure-row') or 
-                          soup.select('tr[id*="GridView"]') or
-                          soup.select('table tr') or
-                          soup.find_all('tr'))
-            
+            result_rows = (
+                soup.find_all("tr", class_="disclosure-row")
+                or soup.select('tr[id*="GridView"]')
+                or soup.select("table tr")
+                or soup.find_all("tr")
+            )
+
             logger.info(f"Found {len(result_rows)} potential result rows")
-            
+
             for row in result_rows[:20]:  # Limit to 20 most recent
-                cells = row.find_all('td')
+                cells = row.find_all("td")
                 if len(cells) >= 3:  # At least 3 columns
                     # Extract text from each cell to identify the structure
-                    cell_texts = [cell.get_text(strip=True) for cell in cells if cell.get_text(strip=True)]
-                    
+                    cell_texts = [
+                        cell.get_text(strip=True) for cell in cells if cell.get_text(strip=True)
+                    ]
+
                     if not cell_texts:
                         continue
-                        
+
                     # Try to identify which cell contains the politician name
                     # Names usually contain letters and may have titles like "Rep.", "Hon."
                     politician_name = ""
-                    
+
                     for text in cell_texts:
                         # Look for text that looks like a person's name
-                        if (len(text) > 3 and 
-                            any(c.isalpha() for c in text) and
-                            not text.isdigit() and 
-                            not text.startswith('20') and  # Not a year
-                            'pdf' not in text.lower() and
-                            'view' not in text.lower()):
-                            
+                        if (
+                            len(text) > 3
+                            and any(c.isalpha() for c in text)
+                            and not text.isdigit()
+                            and not text.startswith("20")  # Not a year
+                            and "pdf" not in text.lower()
+                            and "view" not in text.lower()
+                        ):
+
                             # Clean up potential name
-                            clean_name = text.replace('Hon.', '').replace('Rep.', '').replace('Sen.', '').strip()
-                            if len(clean_name) > 3 and ' ' in clean_name:  # Likely full name
+                            clean_name = (
+                                text.replace("Hon.", "")
+                                .replace("Rep.", "")
+                                .replace("Sen.", "")
+                                .strip()
+                            )
+                            if len(clean_name) > 3 and " " in clean_name:  # Likely full name
                                 politician_name = clean_name
                                 break
-                    
+
                     if not politician_name:
                         politician_name = cell_texts[0]  # Fallback to first cell
-                    
+
                     # Extract other information
-                    filing_year = next((text for text in cell_texts if text.isdigit() and len(text) == 4 and text.startswith('20')), "")
-                    filing_type = next((text for text in cell_texts if 'periodic' in text.lower() or 'annual' in text.lower()), "")
-                    
+                    filing_year = next(
+                        (
+                            text
+                            for text in cell_texts
+                            if text.isdigit() and len(text) == 4 and text.startswith("20")
+                        ),
+                        "",
+                    )
+                    filing_type = next(
+                        (
+                            text
+                            for text in cell_texts
+                            if "periodic" in text.lower() or "annual" in text.lower()
+                        ),
+                        "",
+                    )
+
                     # Look for PDF link
-                    pdf_link = row.find('a', href=True)
+                    pdf_link = row.find("a", href=True)
                     if pdf_link:
-                        pdf_url = urljoin(base_url, pdf_link['href'])
-                        
+                        pdf_url = urljoin(base_url, pdf_link["href"])
+
                         # Create basic disclosure entry
                         # Note: Actual transaction details would require PDF parsing
                         disclosure = TradingDisclosure(
                             politician_id="",  # To be filled by matcher
                             transaction_date=datetime.now() - timedelta(days=30),  # Estimate
-                            disclosure_date=datetime.now() - timedelta(days=15),   # Estimate
+                            disclosure_date=datetime.now() - timedelta(days=15),  # Estimate
                             transaction_type=TransactionType.PURCHASE,  # Default
                             asset_name="Unknown Asset",  # Would need PDF parsing
                             asset_type="stock",
@@ -332,39 +393,39 @@ class CongressTradingScraper(BaseScraper):
                                 "filing_year": filing_year,
                                 "filing_type": filing_type,
                                 "requires_pdf_parsing": True,
-                                "extraction_method": "house_search_results"
-                            }
+                                "extraction_method": "house_search_results",
+                            },
                         )
                         disclosures.append(disclosure)
-                        
+
         except Exception as e:
             logger.error(f"Error parsing House results: {e}")
-            
+
         return disclosures
 
     async def _parse_senate_results(self, html: str, base_url: str) -> List[TradingDisclosure]:
         """Parse Senate EFD search results"""
         disclosures = []
-        
+
         try:
-            soup = BeautifulSoup(html, 'html.parser')
-            
+            soup = BeautifulSoup(html, "html.parser")
+
             # Look for search result rows
-            result_rows = soup.find_all('tr', class_='searchresult') or soup.select('tbody tr')
-            
+            result_rows = soup.find_all("tr", class_="searchresult") or soup.select("tbody tr")
+
             for row in result_rows[:20]:  # Limit to 20 most recent
-                cells = row.find_all('td')
+                cells = row.find_all("td")
                 if len(cells) >= 4:
                     # Extract information
                     name = cells[0].get_text(strip=True) if cells[0] else ""
                     report_type = cells[1].get_text(strip=True) if cells[1] else ""
                     filing_date = cells[2].get_text(strip=True) if cells[2] else ""
-                    
+
                     # Look for report link
-                    report_link = row.find('a', href=True)
-                    if report_link and 'ptr' in report_type.lower():  # Periodic Transaction Report
-                        report_url = urljoin(base_url, report_link['href'])
-                        
+                    report_link = row.find("a", href=True)
+                    if report_link and "ptr" in report_type.lower():  # Periodic Transaction Report
+                        report_url = urljoin(base_url, report_link["href"])
+
                         # Create disclosure entry
                         # Note: Actual transaction details would require report parsing
                         disclosure = TradingDisclosure(
@@ -381,34 +442,29 @@ class CongressTradingScraper(BaseScraper):
                                 "politician_name": name,
                                 "report_type": report_type,
                                 "filing_date": filing_date,
-                                "requires_report_parsing": True
-                            }
+                                "requires_report_parsing": True,
+                            },
                         )
                         disclosures.append(disclosure)
-                        
+
         except Exception as e:
             logger.error(f"Error parsing Senate results: {e}")
-            
+
         return disclosures
 
     def _parse_date(self, date_str: str) -> Optional[datetime]:
         """Parse various date formats from disclosure sites"""
         if not date_str:
             return None
-            
-        date_formats = [
-            '%m/%d/%Y',
-            '%Y-%m-%d',
-            '%m-%d-%Y',
-            '%B %d, %Y'
-        ]
-        
+
+        date_formats = ["%m/%d/%Y", "%Y-%m-%d", "%m-%d-%Y", "%B %d, %Y"]
+
         for fmt in date_formats:
             try:
                 return datetime.strptime(date_str.strip(), fmt)
             except ValueError:
                 continue
-                
+
         logger.warning(f"Could not parse date: {date_str}")
         return None
 
@@ -440,17 +496,19 @@ class QuiverQuantScraper(BaseScraper):
                     if len(cells) >= 4:
                         # Extract cell contents and try to identify the correct fields
                         cell_texts = [cell.get_text(strip=True) for cell in cells]
-                        
+
                         # Try to identify which cell contains what data
                         politician_name = cell_texts[0] if len(cell_texts) > 0 else ""
-                        
+
                         # Look for date-like patterns (YYYY-MM-DD, MM/DD/YYYY, etc.)
                         transaction_date = ""
                         ticker = ""
                         transaction_type = ""
                         amount = ""
-                        
-                        for i, text in enumerate(cell_texts[1:], 1):  # Skip first cell (politician name)
+
+                        for i, text in enumerate(
+                            cell_texts[1:], 1
+                        ):  # Skip first cell (politician name)
                             # Check if this looks like a date
                             if self._looks_like_date(text):
                                 transaction_date = text
@@ -458,19 +516,21 @@ class QuiverQuantScraper(BaseScraper):
                             elif text.isupper() and len(text) <= 5 and text.isalpha():
                                 ticker = text
                             # Check if this contains transaction type keywords
-                            elif any(word in text.lower() for word in ['purchase', 'sale', 'buy', 'sell']):
+                            elif any(
+                                word in text.lower() for word in ["purchase", "sale", "buy", "sell"]
+                            ):
                                 # Split transaction type and amount if combined
-                                if '$' in text:
+                                if "$" in text:
                                     # Split on $ to separate transaction type from amount
-                                    parts = text.split('$', 1)
+                                    parts = text.split("$", 1)
                                     transaction_type = parts[0].strip()
-                                    amount = '$' + parts[1] if len(parts) > 1 else ""
+                                    amount = "$" + parts[1] if len(parts) > 1 else ""
                                 else:
                                     transaction_type = text
                             # Check if this looks like an amount (contains $ or numbers with ,)
-                            elif '$' in text or (',' in text and any(c.isdigit() for c in text)):
+                            elif "$" in text or ("," in text and any(c.isdigit() for c in text)):
                                 amount = text
-                        
+
                         # Only create trade data if we have essential fields
                         if politician_name and (transaction_date or ticker):
                             trade_data = {
@@ -492,16 +552,17 @@ class QuiverQuantScraper(BaseScraper):
         """Check if a string looks like a date"""
         if not text or len(text) < 8:
             return False
-            
+
         # Common date patterns
         date_patterns = [
-            r'\d{4}-\d{1,2}-\d{1,2}',      # YYYY-MM-DD
-            r'\d{1,2}/\d{1,2}/\d{4}',      # MM/DD/YYYY
-            r'\d{1,2}-\d{1,2}-\d{4}',      # MM-DD-YYYY
-            r'\w{3}\s+\d{1,2},?\s+\d{4}',  # Month DD, YYYY
+            r"\d{4}-\d{1,2}-\d{1,2}",  # YYYY-MM-DD
+            r"\d{1,2}/\d{1,2}/\d{4}",  # MM/DD/YYYY
+            r"\d{1,2}-\d{1,2}-\d{4}",  # MM-DD-YYYY
+            r"\w{3}\s+\d{1,2},?\s+\d{4}",  # Month DD, YYYY
         ]
-        
+
         import re
+
         for pattern in date_patterns:
             if re.search(pattern, text):
                 return True
@@ -543,7 +604,9 @@ class QuiverQuantScraper(BaseScraper):
                             # Try MM-DD-YYYY
                             transaction_date = datetime.strptime(date_str, "%m-%d-%Y")
                         except ValueError:
-                            logger.warning(f"Could not parse date '{date_str}', using estimated date")
+                            logger.warning(
+                                f"Could not parse date '{date_str}', using estimated date"
+                            )
                             transaction_date = datetime.now() - timedelta(days=30)
 
             # Parse amount
@@ -583,39 +646,41 @@ class EUParliamentScraper(BaseScraper):
         try:
             logger.info("Starting EU Parliament MEP declarations scrape")
             base_url = "https://www.europarl.europa.eu"
-            
+
             async with aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=self.config.timeout),
-                headers={'User-Agent': self.config.user_agent}
+                headers={"User-Agent": self.config.user_agent},
             ) as session:
-                
+
                 # Get list of current MEPs
                 mep_list_url = f"{base_url}/meps/en/full-list/all"
-                
+
                 async with session.get(mep_list_url) as response:
                     if response.status == 200:
                         html = await response.text()
                         mep_data = await self._extract_mep_urls(html, base_url)
                         logger.info(f"Found {len(mep_data)} MEP profiles to check")
-                        
+
                         # Check declarations for a subset of MEPs (to avoid overwhelming the server)
                         for i, mep_info in enumerate(mep_data[:50]):  # Limit to 50 MEPs
                             try:
-                                mep_disclosures = await self._scrape_mep_profile(session, mep_info['url'], mep_info)
+                                mep_disclosures = await self._scrape_mep_profile(
+                                    session, mep_info["url"], mep_info
+                                )
                                 disclosures.extend(mep_disclosures)
-                                
+
                                 # Rate limiting - EU Parliament is more sensitive
                                 await asyncio.sleep(self.config.request_delay * 2)
-                                
+
                                 if i > 0 and i % 10 == 0:
                                     logger.info(f"Processed {i} MEP profiles")
-                                    
+
                             except Exception as e:
                                 logger.warning(f"Failed to process MEP profile {mep_url}: {e}")
                                 continue
                     else:
                         logger.warning(f"Failed to access MEP list: {response.status}")
-                        
+
                 logger.info(f"Collected {len(disclosures)} EU Parliament disclosures")
 
         except Exception as e:
@@ -626,124 +691,155 @@ class EUParliamentScraper(BaseScraper):
     async def _extract_mep_urls(self, html: str, base_url: str) -> List[Dict[str, str]]:
         """Extract MEP profile URLs and names from the MEP list page"""
         mep_data = []
-        
+
         try:
-            soup = BeautifulSoup(html, 'html.parser')
-            
+            soup = BeautifulSoup(html, "html.parser")
+
             # Look for MEP profile links - they usually contain both name and link
-            mep_links = soup.find_all('a', href=True)
-            
+            mep_links = soup.find_all("a", href=True)
+
             seen_urls = set()
-            
+
             for link in mep_links:
-                href = link.get('href', '')
-                if '/meps/en/' in href and '/home' in href:
+                href = link.get("href", "")
+                if "/meps/en/" in href and "/home" in href:
                     full_url = urljoin(base_url, href)
-                    
+
                     if full_url not in seen_urls:
                         # Extract MEP name from link text or nearby elements
                         mep_name = ""
-                        
+
                         # Try to get name from link text
                         link_text = link.get_text(strip=True)
-                        if link_text and len(link_text) > 3 and not link_text.lower().startswith('http'):
+                        if (
+                            link_text
+                            and len(link_text) > 3
+                            and not link_text.lower().startswith("http")
+                        ):
                             mep_name = link_text
-                        
+
                         # If no name in link, look in parent elements
                         if not mep_name:
                             parent = link.parent
                             if parent:
                                 # Look for text that looks like a name
                                 for text_node in parent.stripped_strings:
-                                    if (len(text_node) > 3 and 
-                                        ' ' in text_node and
-                                        not text_node.startswith('http') and
-                                        not text_node.isdigit()):
+                                    if (
+                                        len(text_node) > 3
+                                        and " " in text_node
+                                        and not text_node.startswith("http")
+                                        and not text_node.isdigit()
+                                    ):
                                         mep_name = text_node
                                         break
-                        
+
                         # Extract country/party info if available
                         country = ""
                         party = ""
-                        
+
                         # Look for country and party info near the link
-                        container = link.find_parent(['div', 'article', 'section'])
+                        container = link.find_parent(["div", "article", "section"])
                         if container:
                             text_elements = list(container.stripped_strings)
                             for i, text in enumerate(text_elements):
                                 if text == mep_name and i < len(text_elements) - 2:
                                     # Country and party usually come after name
-                                    country = text_elements[i + 1] if i + 1 < len(text_elements) else ""
-                                    party = text_elements[i + 2] if i + 2 < len(text_elements) else ""
-                        
+                                    country = (
+                                        text_elements[i + 1] if i + 1 < len(text_elements) else ""
+                                    )
+                                    party = (
+                                        text_elements[i + 2] if i + 2 < len(text_elements) else ""
+                                    )
+
                         if mep_name:  # Only add if we found a name
-                            mep_data.append({
-                                'url': full_url,
-                                'name': mep_name,
-                                'country': country,
-                                'party': party
-                            })
+                            mep_data.append(
+                                {
+                                    "url": full_url,
+                                    "name": mep_name,
+                                    "country": country,
+                                    "party": party,
+                                }
+                            )
                             seen_urls.add(full_url)
-                            
+
                             # Limit to prevent overwhelming the servers
                             if len(mep_data) >= 50:
                                 break
-                        
+
         except Exception as e:
             logger.error(f"Error extracting MEP data: {e}")
-            
+
         return mep_data
 
-    async def _scrape_mep_profile(self, session: aiohttp.ClientSession, mep_url: str, mep_info: Dict[str, str] = None) -> List[TradingDisclosure]:
+    async def _scrape_mep_profile(
+        self, session: aiohttp.ClientSession, mep_url: str, mep_info: Dict[str, str] = None
+    ) -> List[TradingDisclosure]:
         """Scrape financial interests from an individual MEP profile"""
         disclosures = []
-        
+
         try:
             async with session.get(mep_url) as response:
                 if response.status == 200:
                     html = await response.text()
-                    soup = BeautifulSoup(html, 'html.parser')
-                    
+                    soup = BeautifulSoup(html, "html.parser")
+
                     # Use extracted MEP name from list, or try to extract from profile
-                    if mep_info and mep_info.get('name'):
-                        mep_name = mep_info['name']
-                        mep_country = mep_info.get('country', '')
-                        mep_party = mep_info.get('party', '')
+                    if mep_info and mep_info.get("name"):
+                        mep_name = mep_info["name"]
+                        mep_country = mep_info.get("country", "")
+                        mep_party = mep_info.get("party", "")
                     else:
                         # Fallback: extract from profile page
-                        name_element = soup.find('h1', class_='ep-header-title')
-                        mep_name = name_element.get_text(strip=True) if name_element else "Unknown MEP"
+                        name_element = soup.find("h1", class_="ep-header-title")
+                        mep_name = (
+                            name_element.get_text(strip=True) if name_element else "Unknown MEP"
+                        )
                         mep_country = ""
                         mep_party = ""
-                    
+
                     # Look for financial interests section
                     # EU Parliament declarations are typically in a specific section
-                    interests_section = soup.find('div', id='financial-interests') or \
-                                      soup.find('section', class_='ep-a-section') or \
-                                      soup.find('div', class_='ep-m-content-block')
-                    
+                    interests_section = (
+                        soup.find("div", id="financial-interests")
+                        or soup.find("section", class_="ep-a-section")
+                        or soup.find("div", class_="ep-m-content-block")
+                    )
+
                     if interests_section:
                         # Parse financial interests
                         # Note: EU declarations focus more on activities and interests than specific trades
-                        interest_items = interests_section.find_all(['p', 'li', 'div'], recursive=True)
-                        
+                        interest_items = interests_section.find_all(
+                            ["p", "li", "div"], recursive=True
+                        )
+
                         for item in interest_items:
                             item_text = item.get_text(strip=True).lower()
-                            
+
                             # Look for financial keywords
-                            if any(keyword in item_text for keyword in [
-                                'shareholding', 'investment', 'director', 'board',
-                                'financial interest', 'remuneration', 'consulting'
-                            ]):
+                            if any(
+                                keyword in item_text
+                                for keyword in [
+                                    "shareholding",
+                                    "investment",
+                                    "director",
+                                    "board",
+                                    "financial interest",
+                                    "remuneration",
+                                    "consulting",
+                                ]
+                            ):
                                 # Create disclosure for detected financial interest
                                 disclosure = TradingDisclosure(
                                     politician_id="",  # To be filled by matcher
-                                    transaction_date=datetime.now() - timedelta(days=90),  # Estimate
-                                    disclosure_date=datetime.now() - timedelta(days=60),   # Estimate
+                                    transaction_date=datetime.now()
+                                    - timedelta(days=90),  # Estimate
+                                    disclosure_date=datetime.now() - timedelta(days=60),  # Estimate
                                     transaction_type=TransactionType.PURCHASE,  # Default for interests
                                     asset_name=self._extract_company_name(item_text),
                                     asset_type="interest",
-                                    amount_range_min=Decimal("0"),  # EU doesn't always specify amounts
+                                    amount_range_min=Decimal(
+                                        "0"
+                                    ),  # EU doesn't always specify amounts
                                     amount_range_max=Decimal("0"),
                                     source_url=mep_url,
                                     raw_data={
@@ -751,28 +847,30 @@ class EUParliamentScraper(BaseScraper):
                                         "country": mep_country,
                                         "party": mep_party,
                                         "interest_type": "financial_activity",
-                                        "interest_description": item.get_text(strip=True)[:500],  # Truncate
+                                        "interest_description": item.get_text(strip=True)[
+                                            :500
+                                        ],  # Truncate
                                         "region": "eu",
                                         "extraction_method": "mep_profile_scraping",
-                                        "requires_manual_review": True
-                                    }
+                                        "requires_manual_review": True,
+                                    },
                                 )
                                 disclosures.append(disclosure)
-                        
+
         except Exception as e:
             logger.warning(f"Error scraping MEP profile {mep_url}: {e}")
-            
+
         return disclosures
 
     def _extract_company_name(self, text: str) -> str:
         """Extract company/organization name from interest description"""
         # Simple heuristic to extract potential company names
         words = text.split()
-        
+
         # Look for capitalized sequences that might be company names
         potential_names = []
         current_name = []
-        
+
         for word in words:
             if word[0].isupper() and len(word) > 2:
                 current_name.append(word)
@@ -780,10 +878,10 @@ class EUParliamentScraper(BaseScraper):
                 if current_name and len(current_name) <= 4:  # Reasonable company name length
                     potential_names.append(" ".join(current_name))
                 current_name = []
-        
+
         if current_name and len(current_name) <= 4:
             potential_names.append(" ".join(current_name))
-            
+
         # Return the first reasonable candidate or default
         return potential_names[0] if potential_names else "Financial Interest"
 
@@ -858,6 +956,7 @@ class PoliticianMatcher:
 # Import specialized scrapers after base classes are defined
 try:
     from .scrapers_uk import UKParliamentScraper, run_uk_parliament_collection
+
     UK_SCRAPER_AVAILABLE = True
 except Exception as e:
     logger.debug(f"UK scraper import failed: {e}")
@@ -867,6 +966,7 @@ except Exception as e:
 
 try:
     from .scrapers_california import CaliforniaNetFileScraper, run_california_collection
+
     CALIFORNIA_SCRAPER_AVAILABLE = True
 except Exception as e:
     logger.debug(f"California scraper import failed: {e}")
@@ -876,6 +976,7 @@ except Exception as e:
 
 try:
     from .scrapers_eu import EUMemberStatesScraper, run_eu_member_states_collection
+
     EU_MEMBER_STATES_SCRAPER_AVAILABLE = True
 except Exception as e:
     logger.debug(f"EU member states scraper import failed: {e}")
@@ -885,6 +986,7 @@ except Exception as e:
 
 try:
     from .scrapers_us_states import USStatesScraper, run_us_states_collection
+
     US_STATES_SCRAPER_AVAILABLE = True
 except Exception as e:
     logger.debug(f"US states scraper import failed: {e}")
@@ -899,7 +1001,7 @@ async def run_uk_parliament_workflow(config: ScrapingConfig) -> List[TradingDisc
     if not UK_SCRAPER_AVAILABLE:
         logger.warning("UK Parliament scraper not available")
         return []
-    
+
     logger.info("Starting UK Parliament financial interests collection")
     try:
         disclosures = await run_uk_parliament_collection(config)
@@ -915,7 +1017,7 @@ async def run_california_workflow(config: ScrapingConfig) -> List[TradingDisclos
     if not CALIFORNIA_SCRAPER_AVAILABLE:
         logger.warning("California scraper not available")
         return []
-    
+
     logger.info("Starting California financial disclosures collection")
     try:
         disclosures = await run_california_collection(config)
@@ -931,7 +1033,7 @@ async def run_eu_member_states_workflow(config: ScrapingConfig) -> List[TradingD
     if not EU_MEMBER_STATES_SCRAPER_AVAILABLE:
         logger.warning("EU member states scraper not available")
         return []
-    
+
     logger.info("Starting EU member states financial disclosures collection")
     try:
         disclosures = await run_eu_member_states_collection(config)
@@ -947,7 +1049,7 @@ async def run_us_states_workflow(config: ScrapingConfig) -> List[TradingDisclosu
     if not US_STATES_SCRAPER_AVAILABLE:
         logger.warning("US states scraper not available")
         return []
-    
+
     logger.info("Starting US states financial disclosures collection")
     try:
         disclosures = await run_us_states_collection(config)
@@ -960,7 +1062,13 @@ async def run_us_states_workflow(config: ScrapingConfig) -> List[TradingDisclosu
 
 # Export the new workflow function
 __all__ = [
-    'BaseScraper', 'CongressTradingScraper', 'QuiverQuantScraper', 'EUParliamentScraper', 
-    'PoliticianMatcher', 'run_uk_parliament_workflow', 'run_california_workflow', 
-    'run_eu_member_states_workflow', 'run_us_states_workflow'
+    "BaseScraper",
+    "CongressTradingScraper",
+    "QuiverQuantScraper",
+    "EUParliamentScraper",
+    "PoliticianMatcher",
+    "run_uk_parliament_workflow",
+    "run_california_workflow",
+    "run_eu_member_states_workflow",
+    "run_us_states_workflow",
 ]

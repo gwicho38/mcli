@@ -2,6 +2,7 @@
 
 import sys
 import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from typing import Dict, Any, Optional, List, Callable, Union
@@ -20,9 +21,21 @@ from ml.preprocessing.data_processor import DataProcessor, ProcessingConfig
 from ml.features.stock_features import StockRecommendationFeatures
 from ml.features.political_features import PoliticalInfluenceFeatures
 from ml.features.ensemble_features import EnsembleFeatureBuilder
-from ml.features.recommendation_engine import StockRecommendationEngine, RecommendationConfig as FeatureRecommendationConfig
-from ml.models.ensemble_models import DeepEnsembleModel, EnsembleConfig, ModelConfig, EnsembleTrainer
-from ml.models.recommendation_models import StockRecommendationModel, RecommendationConfig, RecommendationTrainer
+from ml.features.recommendation_engine import (
+    StockRecommendationEngine,
+    RecommendationConfig as FeatureRecommendationConfig,
+)
+from ml.models.ensemble_models import (
+    DeepEnsembleModel,
+    EnsembleConfig,
+    ModelConfig,
+    EnsembleTrainer,
+)
+from ml.models.recommendation_models import (
+    StockRecommendationModel,
+    RecommendationConfig,
+    RecommendationTrainer,
+)
 from .experiment_tracker import ExperimentTracker, MLflowConfig
 
 logger = logging.getLogger(__name__)
@@ -30,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 class PipelineStage(Enum):
     """Pipeline execution stages"""
+
     DATA_INGESTION = "data_ingestion"
     DATA_PREPROCESSING = "data_preprocessing"
     FEATURE_ENGINEERING = "feature_engineering"
@@ -41,6 +55,7 @@ class PipelineStage(Enum):
 @dataclass
 class PipelineStep:
     """Individual pipeline step configuration"""
+
     name: str
     stage: PipelineStage
     function: Callable
@@ -55,6 +70,7 @@ class PipelineStep:
 @dataclass
 class PipelineConfig:
     """Complete pipeline configuration"""
+
     name: str = "politician-trading-ml-pipeline"
     version: str = "1.0.0"
     data_dir: Path = Path("data")
@@ -102,57 +118,76 @@ class MLPipeline:
     def _setup_default_pipeline(self):
         """Setup default pipeline steps"""
         # Data ingestion
-        self.add_step(PipelineStep(
-            name="load_raw_data",
-            stage=PipelineStage.DATA_INGESTION,
-            function=self._load_raw_data,
-            outputs=["raw_trading_data", "raw_stock_data"]
-        ))
+        self.add_step(
+            PipelineStep(
+                name="load_raw_data",
+                stage=PipelineStage.DATA_INGESTION,
+                function=self._load_raw_data,
+                outputs=["raw_trading_data", "raw_stock_data"],
+            )
+        )
 
         # Data preprocessing
-        self.add_step(PipelineStep(
-            name="preprocess_data",
-            stage=PipelineStage.DATA_PREPROCESSING,
-            function=self._preprocess_data,
-            inputs={"trading_data": "raw_trading_data", "stock_data": "raw_stock_data"},
-            outputs=["processed_trading_data", "processed_stock_data"]
-        ))
+        self.add_step(
+            PipelineStep(
+                name="preprocess_data",
+                stage=PipelineStage.DATA_PREPROCESSING,
+                function=self._preprocess_data,
+                inputs={"trading_data": "raw_trading_data", "stock_data": "raw_stock_data"},
+                outputs=["processed_trading_data", "processed_stock_data"],
+            )
+        )
 
         # Feature engineering
-        self.add_step(PipelineStep(
-            name="extract_features",
-            stage=PipelineStage.FEATURE_ENGINEERING,
-            function=self._extract_features,
-            inputs={"trading_data": "processed_trading_data", "stock_data": "processed_stock_data"},
-            outputs=["feature_matrix", "feature_names", "labels"]
-        ))
+        self.add_step(
+            PipelineStep(
+                name="extract_features",
+                stage=PipelineStage.FEATURE_ENGINEERING,
+                function=self._extract_features,
+                inputs={
+                    "trading_data": "processed_trading_data",
+                    "stock_data": "processed_stock_data",
+                },
+                outputs=["feature_matrix", "feature_names", "labels"],
+            )
+        )
 
         # Model training
-        self.add_step(PipelineStep(
-            name="train_model",
-            stage=PipelineStage.MODEL_TRAINING,
-            function=self._train_model,
-            inputs={"X": "feature_matrix", "y": "labels"},
-            outputs=["trained_model", "training_metrics"]
-        ))
+        self.add_step(
+            PipelineStep(
+                name="train_model",
+                stage=PipelineStage.MODEL_TRAINING,
+                function=self._train_model,
+                inputs={"X": "feature_matrix", "y": "labels"},
+                outputs=["trained_model", "training_metrics"],
+            )
+        )
 
         # Model evaluation
-        self.add_step(PipelineStep(
-            name="evaluate_model",
-            stage=PipelineStage.MODEL_EVALUATION,
-            function=self._evaluate_model,
-            inputs={"model": "trained_model", "X_test": "test_features", "y_test": "test_labels"},
-            outputs=["evaluation_metrics", "predictions"]
-        ))
+        self.add_step(
+            PipelineStep(
+                name="evaluate_model",
+                stage=PipelineStage.MODEL_EVALUATION,
+                function=self._evaluate_model,
+                inputs={
+                    "model": "trained_model",
+                    "X_test": "test_features",
+                    "y_test": "test_labels",
+                },
+                outputs=["evaluation_metrics", "predictions"],
+            )
+        )
 
         # Model deployment
-        self.add_step(PipelineStep(
-            name="deploy_model",
-            stage=PipelineStage.MODEL_DEPLOYMENT,
-            function=self._deploy_model,
-            inputs={"model": "trained_model", "metrics": "evaluation_metrics"},
-            outputs=["deployment_info"]
-        ))
+        self.add_step(
+            PipelineStep(
+                name="deploy_model",
+                stage=PipelineStage.MODEL_DEPLOYMENT,
+                function=self._deploy_model,
+                inputs={"model": "trained_model", "metrics": "evaluation_metrics"},
+                outputs=["deployment_info"],
+            )
+        )
 
     def add_step(self, step: PipelineStep):
         """Add step to pipeline"""
@@ -179,15 +214,15 @@ class MLPipeline:
             # Generate mock data for testing
             stock_data = self._generate_mock_stock_data()
 
-        logger.info(f"Loaded {len(trading_data)} trading records and {len(stock_data)} stock prices")
+        logger.info(
+            f"Loaded {len(trading_data)} trading records and {len(stock_data)} stock prices"
+        )
 
-        return {
-            "raw_trading_data": trading_data,
-            "raw_stock_data": stock_data
-        }
+        return {"raw_trading_data": trading_data, "raw_stock_data": stock_data}
 
-    def _preprocess_data(self, trading_data: pd.DataFrame,
-                        stock_data: pd.DataFrame) -> Dict[str, pd.DataFrame]:
+    def _preprocess_data(
+        self, trading_data: pd.DataFrame, stock_data: pd.DataFrame
+    ) -> Dict[str, pd.DataFrame]:
         """Preprocess raw data"""
         logger.info("Preprocessing data...")
 
@@ -200,8 +235,8 @@ class MLPipeline:
 
         # Process stock data (ensure proper format)
         processed_stock = stock_data.copy()
-        if 'date' in processed_stock.columns and processed_stock['date'].dtype == 'object':
-            processed_stock['date'] = pd.to_datetime(processed_stock['date'])
+        if "date" in processed_stock.columns and processed_stock["date"].dtype == "object":
+            processed_stock["date"] = pd.to_datetime(processed_stock["date"])
 
         # Clean and validate
         processed_trading = self.data_processor.clean_data(processed_trading)
@@ -211,11 +246,12 @@ class MLPipeline:
 
         return {
             "processed_trading_data": processed_trading,
-            "processed_stock_data": processed_stock
+            "processed_stock_data": processed_stock,
         }
 
-    def _extract_features(self, trading_data: pd.DataFrame,
-                         stock_data: pd.DataFrame) -> Dict[str, Any]:
+    def _extract_features(
+        self, trading_data: pd.DataFrame, stock_data: pd.DataFrame
+    ) -> Dict[str, Any]:
         """Extract features from preprocessed data"""
         logger.info("Extracting features...")
 
@@ -255,7 +291,7 @@ class MLPipeline:
         return {
             "feature_matrix": feature_df.values,
             "feature_names": feature_names,
-            "labels": labels
+            "labels": labels,
         }
 
     def _train_model(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
@@ -280,7 +316,7 @@ class MLPipeline:
                 learning_rate=0.001,
                 weight_decay=1e-4,
                 batch_size=32,
-                epochs=10
+                epochs=10,
             ),
             ModelConfig(
                 model_type="attention",
@@ -289,19 +325,16 @@ class MLPipeline:
                 learning_rate=0.001,
                 weight_decay=1e-4,
                 batch_size=32,
-                epochs=10
-            )
+                epochs=10,
+            ),
         ]
 
         ensemble_config = EnsembleConfig(
-            base_models=model_configs,
-            ensemble_method="weighted_average"
+            base_models=model_configs, ensemble_method="weighted_average"
         )
 
         recommendation_config = RecommendationConfig(
-            ensemble_config=ensemble_config,
-            risk_adjustment=True,
-            confidence_threshold=0.6
+            ensemble_config=ensemble_config, risk_adjustment=True, confidence_threshold=0.6
         )
 
         # Create and train model
@@ -317,9 +350,16 @@ class MLPipeline:
         # Train model
         trainer = RecommendationTrainer(self.model, recommendation_config)
         result = trainer.train(
-            X_train, y_train, returns_train, risk_labels_train,
-            X_val, y_val, returns_val, risk_labels_val,
-            epochs=10, batch_size=32
+            X_train,
+            y_train,
+            returns_train,
+            risk_labels_train,
+            X_val,
+            y_val,
+            returns_val,
+            risk_labels_val,
+            epochs=10,
+            batch_size=32,
         )
 
         # Extract metrics
@@ -331,18 +371,16 @@ class MLPipeline:
             "val_accuracy": result.val_metrics.accuracy,
             "val_precision": result.val_metrics.precision,
             "val_recall": result.val_metrics.recall,
-            "val_f1": result.val_metrics.f1_score
+            "val_f1": result.val_metrics.f1_score,
         }
 
         logger.info(f"Model trained - Val accuracy: {training_metrics['val_accuracy']:.3f}")
 
-        return {
-            "trained_model": self.model,
-            "training_metrics": training_metrics
-        }
+        return {"trained_model": self.model, "training_metrics": training_metrics}
 
-    def _evaluate_model(self, model: StockRecommendationModel,
-                       X_test: np.ndarray, y_test: np.ndarray) -> Dict[str, Any]:
+    def _evaluate_model(
+        self, model: StockRecommendationModel, X_test: np.ndarray, y_test: np.ndarray
+    ) -> Dict[str, Any]:
         """Evaluate trained model"""
         logger.info("Evaluating model...")
 
@@ -351,13 +389,21 @@ class MLPipeline:
         probabilities = model.predict_proba(X_test)
 
         # Calculate metrics
-        from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+        from sklearn.metrics import (
+            accuracy_score,
+            precision_score,
+            recall_score,
+            f1_score,
+            roc_auc_score,
+        )
 
         evaluation_metrics = {
             "test_accuracy": accuracy_score(y_test, predictions),
-            "test_precision": precision_score(y_test, predictions, average='weighted', zero_division=0),
-            "test_recall": recall_score(y_test, predictions, average='weighted', zero_division=0),
-            "test_f1": f1_score(y_test, predictions, average='weighted', zero_division=0)
+            "test_precision": precision_score(
+                y_test, predictions, average="weighted", zero_division=0
+            ),
+            "test_recall": recall_score(y_test, predictions, average="weighted", zero_division=0),
+            "test_f1": f1_score(y_test, predictions, average="weighted", zero_division=0),
         }
 
         # Calculate AUC if binary classification
@@ -369,35 +415,37 @@ class MLPipeline:
 
         logger.info(f"Model evaluation - Test accuracy: {evaluation_metrics['test_accuracy']:.3f}")
 
-        return {
-            "evaluation_metrics": evaluation_metrics,
-            "predictions": predictions
-        }
+        return {"evaluation_metrics": evaluation_metrics, "predictions": predictions}
 
-    def _deploy_model(self, model: StockRecommendationModel,
-                     metrics: Dict[str, float]) -> Dict[str, Any]:
+    def _deploy_model(
+        self, model: StockRecommendationModel, metrics: Dict[str, float]
+    ) -> Dict[str, Any]:
         """Deploy model (save to disk)"""
         logger.info("Deploying model...")
 
         # Save model
         model_path = self.config.model_dir / f"model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pt"
-        torch.save({
-            'model_state_dict': model.state_dict(),
-            'metrics': metrics,
-            'config': model.recommendation_config
-        }, model_path)
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "metrics": metrics,
+                "config": model.recommendation_config,
+            },
+            model_path,
+        )
 
         deployment_info = {
             "model_path": str(model_path),
             "deployed_at": datetime.now().isoformat(),
-            "metrics": metrics
+            "metrics": metrics,
         }
 
         logger.info(f"Model deployed to {model_path}")
         return {"deployment_info": deployment_info}
 
-    def run(self, start_step: Optional[str] = None,
-           end_step: Optional[str] = None) -> Dict[str, Any]:
+    def run(
+        self, start_step: Optional[str] = None, end_step: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Execute pipeline"""
         logger.info(f"Starting pipeline: {self.config.name} v{self.config.version}")
 
@@ -407,12 +455,14 @@ class MLPipeline:
             self.experiment_tracker.start_run(run_name, self.config.tags)
 
             # Log pipeline config
-            self.experiment_tracker.log_params({
-                "pipeline_name": self.config.name,
-                "pipeline_version": self.config.version,
-                "enable_caching": self.config.enable_caching,
-                "parallel_execution": self.config.parallel_execution
-            })
+            self.experiment_tracker.log_params(
+                {
+                    "pipeline_name": self.config.name,
+                    "pipeline_version": self.config.version,
+                    "enable_caching": self.config.enable_caching,
+                    "parallel_execution": self.config.parallel_execution,
+                }
+            )
 
         # Execute steps
         start_idx = 0
@@ -421,7 +471,9 @@ class MLPipeline:
         if start_step:
             start_idx = next((i for i, s in enumerate(self.steps) if s.name == start_step), 0)
         if end_step:
-            end_idx = next((i+1 for i, s in enumerate(self.steps) if s.name == end_step), len(self.steps))
+            end_idx = next(
+                (i + 1 for i, s in enumerate(self.steps) if s.name == end_step), len(self.steps)
+            )
 
         for i, step in enumerate(self.steps[start_idx:end_idx], start=start_idx):
             if not step.enabled:
@@ -453,7 +505,9 @@ class MLPipeline:
                 # Log to MLflow
                 if self.experiment_tracker and "metrics" in str(result):
                     if isinstance(result, dict) and any("metric" in k for k in result.keys()):
-                        metrics_dict = result.get("training_metrics", result.get("evaluation_metrics", {}))
+                        metrics_dict = result.get(
+                            "training_metrics", result.get("evaluation_metrics", {})
+                        )
                         self.experiment_tracker.log_metrics(metrics_dict)
 
                 # Checkpoint if needed
@@ -473,9 +527,7 @@ class MLPipeline:
                     self.artifacts.get("feature_matrix", np.random.randn(5, 100))[:5]
                 )
                 self.experiment_tracker.log_model(
-                    self.model,
-                    "recommendation_model",
-                    input_example=example_input
+                    self.model, "recommendation_model", input_example=example_input
                 )
             except Exception as e:
                 logger.warning(f"Could not log model to MLflow: {e}")
@@ -486,11 +538,7 @@ class MLPipeline:
 
         logger.info("Pipeline execution completed successfully")
 
-        return {
-            "artifacts": self.artifacts,
-            "metrics": self.metrics,
-            "model": self.model
-        }
+        return {"artifacts": self.artifacts, "metrics": self.metrics, "model": self.model}
 
     def _save_checkpoint(self, step_number: int):
         """Save pipeline checkpoint"""
@@ -498,20 +546,23 @@ class MLPipeline:
 
         checkpoint = {
             "step_number": step_number,
-            "artifacts": {k: v for k, v in self.artifacts.items()
-                        if not isinstance(v, (torch.nn.Module, type))},
+            "artifacts": {
+                k: v
+                for k, v in self.artifacts.items()
+                if not isinstance(v, (torch.nn.Module, type))
+            },
             "metrics": self.metrics,
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
 
-        with open(checkpoint_path, 'wb') as f:
+        with open(checkpoint_path, "wb") as f:
             pickle.dump(checkpoint, f)
 
         logger.debug(f"Saved checkpoint at step {step_number}")
 
     def load_checkpoint(self, checkpoint_path: Path):
         """Load pipeline checkpoint"""
-        with open(checkpoint_path, 'rb') as f:
+        with open(checkpoint_path, "rb") as f:
             checkpoint = pickle.load(f)
 
         self.artifacts.update(checkpoint["artifacts"])
@@ -529,13 +580,16 @@ class MLPipeline:
 
         data = []
         for _ in range(n_records):
-            data.append({
-                "politician_name_cleaned": np.random.choice(politicians),
-                "transaction_date_cleaned": pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(1, 365)),
-                "transaction_amount_cleaned": np.random.uniform(1000, 500000),
-                "transaction_type_cleaned": np.random.choice(["buy", "sell"]),
-                "ticker_cleaned": np.random.choice(tickers)
-            })
+            data.append(
+                {
+                    "politician_name_cleaned": np.random.choice(politicians),
+                    "transaction_date_cleaned": pd.Timestamp.now()
+                    - pd.Timedelta(days=np.random.randint(1, 365)),
+                    "transaction_amount_cleaned": np.random.uniform(1000, 500000),
+                    "transaction_type_cleaned": np.random.choice(["buy", "sell"]),
+                    "ticker_cleaned": np.random.choice(tickers),
+                }
+            )
 
         return pd.DataFrame(data)
 
@@ -550,15 +604,17 @@ class MLPipeline:
             base_price = np.random.uniform(100, 500)
             for date in dates:
                 price = base_price * (1 + np.random.normal(0, 0.02))
-                data.append({
-                    "symbol": ticker,
-                    "date": date,
-                    "close": price,
-                    "volume": np.random.randint(1000000, 10000000),
-                    "open": price * 0.99,
-                    "high": price * 1.01,
-                    "low": price * 0.98
-                })
+                data.append(
+                    {
+                        "symbol": ticker,
+                        "date": date,
+                        "close": price,
+                        "volume": np.random.randint(1000000, 10000000),
+                        "open": price * 0.99,
+                        "high": price * 1.01,
+                        "low": price * 0.98,
+                    }
+                )
 
         return pd.DataFrame(data)
 
@@ -583,8 +639,9 @@ class PipelineExecutor:
 
         return self.pipelines[name].run(**kwargs)
 
-    def run_experiment(self, n_runs: int = 5,
-                      param_grid: Optional[Dict[str, List]] = None) -> pd.DataFrame:
+    def run_experiment(
+        self, n_runs: int = 5, param_grid: Optional[Dict[str, List]] = None
+    ) -> pd.DataFrame:
         """Run multiple experiments with different parameters"""
         results = []
 
@@ -604,11 +661,7 @@ class PipelineExecutor:
             result = pipeline.run()
 
             # Collect metrics
-            run_metrics = {
-                "run_id": i,
-                "pipeline_name": pipeline_name,
-                **result.get("metrics", {})
-            }
+            run_metrics = {"run_id": i, "pipeline_name": pipeline_name, **result.get("metrics", {})}
             results.append(run_metrics)
 
         return pd.DataFrame(results)

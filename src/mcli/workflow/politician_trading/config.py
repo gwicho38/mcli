@@ -73,24 +73,24 @@ class ScrapingConfig:
     def get_active_sources(self):
         """Get all active data sources based on configuration"""
         from .data_sources import ALL_DATA_SOURCES
-        
+
         active_sources = []
-        
+
         if self.enable_us_federal:
             active_sources.extend(ALL_DATA_SOURCES["us_federal"])
-        
+
         if self.enable_us_states:
             active_sources.extend(ALL_DATA_SOURCES["us_states"])
-            
+
         if self.enable_eu_parliament:
             active_sources.extend(ALL_DATA_SOURCES["eu_parliament"])
-            
+
         if self.enable_eu_national:
             active_sources.extend(ALL_DATA_SOURCES["eu_national"])
-            
+
         if self.enable_third_party:
             active_sources.extend(ALL_DATA_SOURCES["third_party"])
-        
+
         # Filter to only active status sources
         return [source for source in active_sources if source.status == "active"]
 

@@ -17,6 +17,7 @@ from contextlib import asynccontextmanager
 
 import sys
 import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 from ml.models.recommendation_models import StockRecommendationModel, PortfolioRecommendation
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 # Pydantic models for API
 class PredictionRequest(BaseModel):
     """Request model for predictions"""
+
     trading_data: Dict[str, Any] = Field(..., description="Politician trading data")
     stock_data: Optional[Dict[str, Any]] = Field(None, description="Stock price data")
     tickers: List[str] = Field(..., description="Stock tickers to analyze")
@@ -38,6 +40,7 @@ class PredictionRequest(BaseModel):
 
 class PredictionResponse(BaseModel):
     """Response model for predictions"""
+
     recommendations: List[Dict[str, Any]]
     timestamp: str
     model_version: str
@@ -46,6 +49,7 @@ class PredictionResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response"""
+
     status: str
     model_loaded: bool
     model_version: Optional[str]
@@ -54,6 +58,7 @@ class HealthResponse(BaseModel):
 
 class ModelMetricsResponse(BaseModel):
     """Model metrics response"""
+
     accuracy: float
     precision: float
     recall: float
@@ -63,12 +68,14 @@ class ModelMetricsResponse(BaseModel):
 
 class BatchPredictionRequest(BaseModel):
     """Batch prediction request"""
+
     batch_id: str
     data: List[PredictionRequest]
 
 
 class BatchPredictionResponse(BaseModel):
     """Batch prediction response"""
+
     batch_id: str
     status: str
     progress: float
@@ -85,12 +92,7 @@ class ModelEndpoint:
         self.feature_extractors = {}
         self.start_time = datetime.now()
         self.prediction_cache = {}
-        self.metrics = {
-            "total_predictions": 0,
-            "avg_latency_ms": 0,
-            "cache_hits": 0,
-            "errors": 0
-        }
+        self.metrics = {"total_predictions": 0, "avg_latency_ms": 0, "cache_hits": 0, "errors": 0}
 
         if model_path:
             self.load_model(model_path)
@@ -102,14 +104,14 @@ class ModelEndpoint:
         self.feature_extractors = {
             "stock": StockRecommendationFeatures(),
             "political": PoliticalInfluenceFeatures(),
-            "ensemble": EnsembleFeatureBuilder()
+            "ensemble": EnsembleFeatureBuilder(),
         }
         logger.info("Feature extractors initialized")
 
     def load_model(self, model_path: str):
         """Load model from file"""
         try:
-            checkpoint = torch.load(model_path, map_location='cpu')
+            checkpoint = torch.load(model_path, map_location="cpu")
 
             # Reconstruct model (simplified - would need proper config)
             from ml.models.ensemble_models import EnsembleConfig, ModelConfig
@@ -124,7 +126,7 @@ class ModelEndpoint:
                     learning_rate=0.001,
                     weight_decay=1e-4,
                     batch_size=32,
-                    epochs=10
+                    epochs=10,
                 )
             ]
 
@@ -136,24 +138,27 @@ class ModelEndpoint:
             self.model = StockRecommendationModel(input_dim, recommendation_config)
 
             # Load state
-            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.model.load_state_dict(checkpoint["model_state_dict"])
             self.model.eval()
 
-            self.model_version = checkpoint.get('version', '1.0.0')
+            self.model_version = checkpoint.get("version", "1.0.0")
             logger.info(f"Model loaded from {model_path} (version: {self.model_version})")
 
         except Exception as e:
             logger.error(f"Failed to load model: {e}")
             raise
 
-    def extract_features(self, trading_data: pd.DataFrame,
-                        stock_data: Optional[pd.DataFrame] = None) -> np.ndarray:
+    def extract_features(
+        self, trading_data: pd.DataFrame, stock_data: Optional[pd.DataFrame] = None
+    ) -> np.ndarray:
         """Extract features from raw data"""
         features = pd.DataFrame()
 
         # Extract political features
         if not trading_data.empty:
-            political_features = self.feature_extractors["political"].extract_influence_features(trading_data)
+            political_features = self.feature_extractors["political"].extract_influence_features(
+                trading_data
+            )
             features = pd.concat([features, political_features], axis=1)
 
         # Extract stock features if available
@@ -196,9 +201,7 @@ class ModelEndpoint:
             # Generate recommendations
             if self.model:
                 recommendations = self.model.generate_recommendations(
-                    features,
-                    request.tickers,
-                    market_data=stock_df
+                    features, request.tickers, market_data=stock_df
                 )
             else:
                 # Mock recommendations if no model loaded
@@ -216,7 +219,7 @@ class ModelEndpoint:
                     "entry_price": rec.entry_price,
                     "target_price": rec.target_price,
                     "stop_loss": rec.stop_loss,
-                    "reason": rec.recommendation_reason
+                    "reason": rec.recommendation_reason,
                 }
                 for rec in recommendations
             ]
@@ -227,15 +230,15 @@ class ModelEndpoint:
             # Update metrics
             self.metrics["total_predictions"] += 1
             self.metrics["avg_latency_ms"] = (
-                (self.metrics["avg_latency_ms"] * (self.metrics["total_predictions"] - 1) + processing_time)
-                / self.metrics["total_predictions"]
-            )
+                self.metrics["avg_latency_ms"] * (self.metrics["total_predictions"] - 1)
+                + processing_time
+            ) / self.metrics["total_predictions"]
 
             response = PredictionResponse(
                 recommendations=recommendations_dict,
                 timestamp=datetime.now().isoformat(),
                 model_version=self.model_version,
-                processing_time_ms=processing_time
+                processing_time_ms=processing_time,
             )
 
             # Cache response
@@ -267,7 +270,7 @@ class ModelEndpoint:
                 expected_return=np.random.normal(0.05, 0.15),
                 risk_adjusted_score=np.random.random(),
                 position_size=np.random.uniform(0.01, 0.1),
-                recommendation_reason="Mock recommendation for testing"
+                recommendation_reason="Mock recommendation for testing",
             )
             recommendations.append(rec)
         return recommendations
@@ -280,7 +283,7 @@ class ModelEndpoint:
             status="healthy",
             model_loaded=self.model is not None,
             model_version=self.model_version,
-            uptime_seconds=uptime
+            uptime_seconds=uptime,
         )
 
     def get_metrics(self) -> Dict[str, Any]:
@@ -289,7 +292,7 @@ class ModelEndpoint:
             **self.metrics,
             "model_version": self.model_version,
             "uptime_seconds": (datetime.now() - self.start_time).total_seconds(),
-            "cache_size": len(self.prediction_cache)
+            "cache_size": len(self.prediction_cache),
         }
 
 
@@ -310,7 +313,7 @@ class PredictionService:
             "status": "processing",
             "progress": 0.0,
             "results": [],
-            "start_time": datetime.now()
+            "start_time": datetime.now(),
         }
 
         # Process each request
@@ -334,10 +337,7 @@ class PredictionService:
         self.batch_jobs[batch_id]["end_time"] = datetime.now()
 
         return BatchPredictionResponse(
-            batch_id=batch_id,
-            status="completed",
-            progress=1.0,
-            results=results
+            batch_id=batch_id, status="completed", progress=1.0, results=results
         )
 
     def get_batch_status(self, batch_id: str) -> BatchPredictionResponse:
@@ -351,7 +351,7 @@ class PredictionService:
             batch_id=batch_id,
             status=job["status"],
             progress=job["progress"],
-            results=job.get("results")
+            results=job.get("results"),
         )
 
 
@@ -378,7 +378,7 @@ class ModelServer:
             title="Stock Recommendation API",
             description="ML-powered stock recommendation system based on politician trading data",
             version="1.0.0",
-            lifespan=self.lifespan
+            lifespan=self.lifespan,
         )
 
         # Health check
@@ -401,19 +401,14 @@ class ModelServer:
 
         # Batch prediction
         @app.post("/batch/predict", response_model=BatchPredictionResponse)
-        async def batch_predict(batch_request: BatchPredictionRequest,
-                               background_tasks: BackgroundTasks):
+        async def batch_predict(
+            batch_request: BatchPredictionRequest, background_tasks: BackgroundTasks
+        ):
             """Submit batch prediction job"""
-            background_tasks.add_task(
-                self.prediction_service.process_batch,
-                batch_request
-            )
+            background_tasks.add_task(self.prediction_service.process_batch, batch_request)
 
             return BatchPredictionResponse(
-                batch_id=batch_request.batch_id,
-                status="submitted",
-                progress=0.0,
-                results=None
+                batch_id=batch_request.batch_id, status="submitted", progress=0.0, results=None
             )
 
         # Batch status
@@ -442,12 +437,14 @@ class ModelServer:
                 df = pd.read_csv(pd.io.common.BytesIO(content))
 
                 # Extract tickers
-                tickers = df['ticker_cleaned'].unique().tolist() if 'ticker_cleaned' in df.columns else []
+                tickers = (
+                    df["ticker_cleaned"].unique().tolist() if "ticker_cleaned" in df.columns else []
+                )
 
                 # Create request
                 request = PredictionRequest(
-                    trading_data=df.to_dict(orient='records')[0] if len(df) > 0 else {},
-                    tickers=tickers[:5]  # Limit to 5 tickers
+                    trading_data=df.to_dict(orient="records")[0] if len(df) > 0 else {},
+                    tickers=tickers[:5],  # Limit to 5 tickers
                 )
 
                 return await self.model_endpoint.predict(request)

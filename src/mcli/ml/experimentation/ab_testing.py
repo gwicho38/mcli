@@ -34,6 +34,7 @@ class VariantType(Enum):
 @dataclass
 class Variant:
     """A/B test variant configuration"""
+
     id: str
     name: str
     type: VariantType
@@ -46,6 +47,7 @@ class Variant:
 @dataclass
 class Metric:
     """A/B test metric definition"""
+
     name: str
     type: str  # "binary", "continuous", "count"
     aggregation: str  # "mean", "sum", "count", "rate"
@@ -58,6 +60,7 @@ class Metric:
 @dataclass
 class ExperimentConfig:
     """A/B test experiment configuration"""
+
     id: str
     name: str
     description: str
@@ -90,6 +93,7 @@ class ExperimentConfig:
 @dataclass
 class UserAssignment:
     """User assignment to experiment variant"""
+
     user_id: str
     experiment_id: str
     variant_id: str
@@ -100,6 +104,7 @@ class UserAssignment:
 @dataclass
 class ExperimentResult:
     """Results of an A/B test experiment"""
+
     experiment_id: str
     variant_results: Dict[str, Dict[str, Any]]
     statistical_tests: Dict[str, Dict[str, Any]]
@@ -145,7 +150,10 @@ class TrafficSplitter:
                 return variant.id
 
         # Default to control
-        control_variant = next((v for v in experiment.variants if v.type == VariantType.CONTROL), experiment.variants[0])
+        control_variant = next(
+            (v for v in experiment.variants if v.type == VariantType.CONTROL),
+            experiment.variants[0],
+        )
         self.assignments[cache_key] = control_variant.id
         return control_variant.id
 
@@ -163,9 +171,15 @@ class MetricsCollector:
         self.storage_path.mkdir(parents=True, exist_ok=True)
         self.metrics_buffer = []
 
-    def record_metric(self, user_id: str, experiment_id: str, variant_id: str,
-                     metric_name: str, value: Union[float, int, bool],
-                     timestamp: Optional[datetime] = None):
+    def record_metric(
+        self,
+        user_id: str,
+        experiment_id: str,
+        variant_id: str,
+        metric_name: str,
+        value: Union[float, int, bool],
+        timestamp: Optional[datetime] = None,
+    ):
         """Record a metric value for a user"""
         if timestamp is None:
             timestamp = datetime.now()
@@ -176,7 +190,7 @@ class MetricsCollector:
             "variant_id": variant_id,
             "metric_name": metric_name,
             "value": value,
-            "timestamp": timestamp.isoformat()
+            "timestamp": timestamp.isoformat(),
         }
 
         self.metrics_buffer.append(metric_record)
@@ -193,7 +207,7 @@ class MetricsCollector:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = self.storage_path / f"metrics_{timestamp}.json"
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(self.metrics_buffer, f, indent=2)
 
         logger.info(f"Flushed {len(self.metrics_buffer)} metrics to {filename}")
@@ -205,7 +219,7 @@ class MetricsCollector:
 
         # Load from all metric files
         for file_path in self.storage_path.glob("metrics_*.json"):
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 metrics = json.load(f)
                 experiment_metrics = [m for m in metrics if m["experiment_id"] == experiment_id]
                 all_metrics.extend(experiment_metrics)
@@ -214,7 +228,7 @@ class MetricsCollector:
             return pd.DataFrame()
 
         df = pd.DataFrame(all_metrics)
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
         return df
 
 
@@ -224,8 +238,9 @@ class StatisticalAnalyzer:
     def __init__(self, significance_level: float = 0.05):
         self.significance_level = significance_level
 
-    def analyze_experiment(self, experiment: ExperimentConfig,
-                          metrics_df: pd.DataFrame) -> ExperimentResult:
+    def analyze_experiment(
+        self, experiment: ExperimentConfig, metrics_df: pd.DataFrame
+    ) -> ExperimentResult:
         """Analyze experiment results"""
         if metrics_df.empty:
             return self._empty_result(experiment.id)
@@ -233,14 +248,18 @@ class StatisticalAnalyzer:
         # Group metrics by variant
         variant_data = {}
         for variant in experiment.variants:
-            variant_metrics = metrics_df[metrics_df['variant_id'] == variant.id]
-            variant_data[variant.id] = self._analyze_variant_metrics(variant_metrics, experiment.metrics)
+            variant_metrics = metrics_df[metrics_df["variant_id"] == variant.id]
+            variant_data[variant.id] = self._analyze_variant_metrics(
+                variant_metrics, experiment.metrics
+            )
 
         # Perform statistical tests
         statistical_tests = {}
         confidence_intervals = {}
 
-        control_variant = next((v for v in experiment.variants if v.type == VariantType.CONTROL), None)
+        control_variant = next(
+            (v for v in experiment.variants if v.type == VariantType.CONTROL), None
+        )
         if control_variant:
             for variant in experiment.variants:
                 if variant.type == VariantType.TREATMENT:
@@ -265,21 +284,26 @@ class StatisticalAnalyzer:
             confidence_intervals=confidence_intervals,
             recommendations=recommendations,
             created_at=datetime.now(),
-            total_users=len(metrics_df['user_id'].unique()),
-            duration_days=(datetime.now() - experiment.start_date).days if experiment.start_date else 0,
-            statistical_significance=any(test.get('significant', False) for test in statistical_tests.values()),
-            winner_variant=winner
+            total_users=len(metrics_df["user_id"].unique()),
+            duration_days=(
+                (datetime.now() - experiment.start_date).days if experiment.start_date else 0
+            ),
+            statistical_significance=any(
+                test.get("significant", False) for test in statistical_tests.values()
+            ),
+            winner_variant=winner,
         )
 
-    def _analyze_variant_metrics(self, variant_df: pd.DataFrame,
-                                metrics_config: List[Metric]) -> Dict[str, Any]:
+    def _analyze_variant_metrics(
+        self, variant_df: pd.DataFrame, metrics_config: List[Metric]
+    ) -> Dict[str, Any]:
         """Analyze metrics for a single variant"""
         if variant_df.empty:
             return {}
 
         results = {}
         for metric in metrics_config:
-            metric_data = variant_df[variant_df['metric_name'] == metric.name]['value']
+            metric_data = variant_df[variant_df["metric_name"] == metric.name]["value"]
 
             if metric_data.empty:
                 continue
@@ -289,7 +313,7 @@ class StatisticalAnalyzer:
                     "count": len(metric_data),
                     "success_rate": metric_data.mean(),
                     "std": metric_data.std(),
-                    "confidence_interval": self._binary_confidence_interval(metric_data)
+                    "confidence_interval": self._binary_confidence_interval(metric_data),
                 }
             elif metric.type == "continuous":
                 results[metric.name] = {
@@ -297,34 +321,39 @@ class StatisticalAnalyzer:
                     "mean": metric_data.mean(),
                     "std": metric_data.std(),
                     "median": metric_data.median(),
-                    "confidence_interval": self._continuous_confidence_interval(metric_data)
+                    "confidence_interval": self._continuous_confidence_interval(metric_data),
                 }
             elif metric.type == "count":
                 results[metric.name] = {
                     "count": len(metric_data),
                     "sum": metric_data.sum(),
                     "mean": metric_data.mean(),
-                    "rate_per_user": metric_data.sum() / len(variant_df['user_id'].unique())
+                    "rate_per_user": metric_data.sum() / len(variant_df["user_id"].unique()),
                 }
 
         return results
 
-    def _compare_variants(self, metrics_df: pd.DataFrame, control_id: str,
-                         treatment_id: str, metrics_config: List[Metric]) -> tuple:
+    def _compare_variants(
+        self,
+        metrics_df: pd.DataFrame,
+        control_id: str,
+        treatment_id: str,
+        metrics_config: List[Metric],
+    ) -> tuple:
         """Compare treatment variant against control"""
         tests = {}
         intervals = {}
 
         for metric in metrics_config:
             control_data = metrics_df[
-                (metrics_df['variant_id'] == control_id) &
-                (metrics_df['metric_name'] == metric.name)
-            ]['value']
+                (metrics_df["variant_id"] == control_id)
+                & (metrics_df["metric_name"] == metric.name)
+            ]["value"]
 
             treatment_data = metrics_df[
-                (metrics_df['variant_id'] == treatment_id) &
-                (metrics_df['metric_name'] == metric.name)
-            ]['value']
+                (metrics_df["variant_id"] == treatment_id)
+                & (metrics_df["metric_name"] == metric.name)
+            ]["value"]
 
             if control_data.empty or treatment_data.empty:
                 continue
@@ -342,7 +371,9 @@ class StatisticalAnalyzer:
             if metric.type == "binary":
                 intervals[metric.name] = self._binary_effect_interval(control_data, treatment_data)
             else:
-                intervals[metric.name] = self._continuous_effect_interval(control_data, treatment_data)
+                intervals[metric.name] = self._continuous_effect_interval(
+                    control_data, treatment_data
+                )
 
         return tests, intervals
 
@@ -354,8 +385,10 @@ class StatisticalAnalyzer:
         treatment_total = len(treatment)
 
         # Chi-square test
-        observed = [[control_success, control_total - control_success],
-                   [treatment_success, treatment_total - treatment_success]]
+        observed = [
+            [control_success, control_total - control_success],
+            [treatment_success, treatment_total - treatment_success],
+        ]
 
         chi2, p_value, _, _ = stats.chi2_contingency(observed)
 
@@ -371,7 +404,7 @@ class StatisticalAnalyzer:
             "significant": p_value < self.significance_level,
             "effect_size": effect_size,
             "control_rate": control_rate,
-            "treatment_rate": treatment_rate
+            "treatment_rate": treatment_rate,
         }
 
     def _continuous_test(self, control: pd.Series, treatment: pd.Series) -> Dict[str, Any]:
@@ -380,9 +413,10 @@ class StatisticalAnalyzer:
         statistic, p_value = stats.ttest_ind(treatment, control)
 
         # Effect size (Cohen's d)
-        pooled_std = np.sqrt(((len(control) - 1) * control.std()**2 +
-                             (len(treatment) - 1) * treatment.std()**2) /
-                            (len(control) + len(treatment) - 2))
+        pooled_std = np.sqrt(
+            ((len(control) - 1) * control.std() ** 2 + (len(treatment) - 1) * treatment.std() ** 2)
+            / (len(control) + len(treatment) - 2)
+        )
 
         cohens_d = (treatment.mean() - control.mean()) / pooled_std if pooled_std > 0 else 0
 
@@ -394,7 +428,9 @@ class StatisticalAnalyzer:
             "effect_size": cohens_d,
             "control_mean": control.mean(),
             "treatment_mean": treatment.mean(),
-            "relative_change": (treatment.mean() - control.mean()) / control.mean() if control.mean() != 0 else 0
+            "relative_change": (
+                (treatment.mean() - control.mean()) / control.mean() if control.mean() != 0 else 0
+            ),
         }
 
     def _count_test(self, control: pd.Series, treatment: pd.Series) -> Dict[str, Any]:
@@ -420,7 +456,7 @@ class StatisticalAnalyzer:
             "significant": p_value < self.significance_level,
             "control_rate": control_rate,
             "treatment_rate": treatment_rate,
-            "rate_ratio": treatment_rate / control_rate if control_rate > 0 else float('inf')
+            "rate_ratio": treatment_rate / control_rate if control_rate > 0 else float("inf"),
         }
 
     def _binary_confidence_interval(self, data: pd.Series, confidence: float = 0.95) -> tuple:
@@ -462,7 +498,7 @@ class StatisticalAnalyzer:
 
         if n1 > 1 and n2 > 1:
             pooled_var = ((n1 - 1) * control.var() + (n2 - 1) * treatment.var()) / (n1 + n2 - 2)
-            se = np.sqrt(pooled_var * (1/n1 + 1/n2))
+            se = np.sqrt(pooled_var * (1 / n1 + 1 / n2))
             t_value = stats.t.ppf(0.975, n1 + n2 - 2)
             margin = t_value * se
         else:
@@ -470,8 +506,9 @@ class StatisticalAnalyzer:
 
         return (diff - margin, diff + margin)
 
-    def _generate_recommendations(self, variant_data: Dict, statistical_tests: Dict,
-                                metrics_config: List[Metric]) -> List[str]:
+    def _generate_recommendations(
+        self, variant_data: Dict, statistical_tests: Dict, metrics_config: List[Metric]
+    ) -> List[str]:
         """Generate recommendations based on results"""
         recommendations = []
 
@@ -482,17 +519,17 @@ class StatisticalAnalyzer:
             significant_degradations = []
 
             for metric_name, test in tests.items():
-                if test.get('significant', False):
+                if test.get("significant", False):
                     metric_config = next((m for m in metrics_config if m.name == metric_name), None)
 
                     if metric_config:
                         if metric_config.goal == "increase":
-                            if test.get('effect_size', 0) > 0:
+                            if test.get("effect_size", 0) > 0:
                                 significant_improvements.append(metric_name)
                             else:
                                 significant_degradations.append(metric_name)
                         elif metric_config.goal == "decrease":
-                            if test.get('effect_size', 0) < 0:
+                            if test.get("effect_size", 0) < 0:
                                 significant_improvements.append(metric_name)
                             else:
                                 significant_degradations.append(metric_name)
@@ -507,12 +544,20 @@ class StatisticalAnalyzer:
                     f"Variant {variant_id} shows significant degradation in: {', '.join(significant_degradations)}"
                 )
 
-        if not any(test.get('significant', False) for tests in statistical_tests.values() for test in tests.values()):
-            recommendations.append("No statistically significant differences detected. Consider running experiment longer.")
+        if not any(
+            test.get("significant", False)
+            for tests in statistical_tests.values()
+            for test in tests.values()
+        ):
+            recommendations.append(
+                "No statistically significant differences detected. Consider running experiment longer."
+            )
 
         return recommendations
 
-    def _determine_winner(self, statistical_tests: Dict, metrics_config: List[Metric]) -> Optional[str]:
+    def _determine_winner(
+        self, statistical_tests: Dict, metrics_config: List[Metric]
+    ) -> Optional[str]:
         """Determine winning variant based on primary metrics"""
         primary_metrics = [m for m in metrics_config if m.primary]
 
@@ -526,8 +571,8 @@ class StatisticalAnalyzer:
 
             for metric in primary_metrics:
                 test = tests.get(metric.name)
-                if test and test.get('significant', False):
-                    effect_size = test.get('effect_size', 0)
+                if test and test.get("significant", False):
+                    effect_size = test.get("effect_size", 0)
 
                     if metric.goal == "increase" and effect_size > 0:
                         score += 1
@@ -552,7 +597,7 @@ class StatisticalAnalyzer:
             statistical_tests={},
             confidence_intervals={},
             recommendations=["No data available for analysis"],
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
 
@@ -634,8 +679,9 @@ class ABTestingFramework:
 
         return self.traffic_splitter.assign_variant(user_id, experiment)
 
-    def record_metric(self, user_id: str, experiment_id: str, metric_name: str,
-                     value: Union[float, int, bool]):
+    def record_metric(
+        self, user_id: str, experiment_id: str, metric_name: str, value: Union[float, int, bool]
+    ):
         """Record metric for user"""
         # Get user's variant assignment
         variant_id = self.traffic_splitter.get_assignment(user_id, experiment_id)
@@ -643,9 +689,7 @@ class ABTestingFramework:
             variant_id = self.assign_user(user_id, experiment_id)
 
         # Record metric
-        self.metrics_collector.record_metric(
-            user_id, experiment_id, variant_id, metric_name, value
-        )
+        self.metrics_collector.record_metric(user_id, experiment_id, variant_id, metric_name, value)
 
     def analyze_experiment(self, experiment_id: str) -> ExperimentResult:
         """Analyze experiment results"""
@@ -667,9 +711,11 @@ class ABTestingFramework:
 
         summary = {
             "experiment": asdict(experiment),
-            "total_users": len(metrics_df['user_id'].unique()) if not metrics_df.empty else 0,
+            "total_users": len(metrics_df["user_id"].unique()) if not metrics_df.empty else 0,
             "total_events": len(metrics_df) if not metrics_df.empty else 0,
-            "variant_distribution": metrics_df['variant_id'].value_counts().to_dict() if not metrics_df.empty else {}
+            "variant_distribution": (
+                metrics_df["variant_id"].value_counts().to_dict() if not metrics_df.empty else {}
+            ),
         }
 
         return summary
@@ -684,7 +730,7 @@ class ABTestingFramework:
                 "start_date": exp.start_date.isoformat() if exp.start_date else None,
                 "end_date": exp.end_date.isoformat() if exp.end_date else None,
                 "variants": len(exp.variants),
-                "metrics": len(exp.metrics)
+                "metrics": len(exp.metrics),
             }
             for exp in self.experiments.values()
         ]
@@ -697,24 +743,26 @@ class ABTestingFramework:
         experiment_dict = asdict(experiment)
 
         # Convert datetime objects to ISO strings
-        if experiment_dict.get('start_date'):
-            experiment_dict['start_date'] = experiment.start_date.isoformat()
-        if experiment_dict.get('end_date'):
-            experiment_dict['end_date'] = experiment.end_date.isoformat()
+        if experiment_dict.get("start_date"):
+            experiment_dict["start_date"] = experiment.start_date.isoformat()
+        if experiment_dict.get("end_date"):
+            experiment_dict["end_date"] = experiment.end_date.isoformat()
 
         # Convert enums to strings
-        experiment_dict['status'] = experiment.status.value
-        for variant in experiment_dict['variants']:
-            variant['type'] = variant['type'].value if hasattr(variant['type'], 'value') else variant['type']
+        experiment_dict["status"] = experiment.status.value
+        for variant in experiment_dict["variants"]:
+            variant["type"] = (
+                variant["type"].value if hasattr(variant["type"], "value") else variant["type"]
+            )
 
-        with open(experiment_file, 'w') as f:
+        with open(experiment_file, "w") as f:
             json.dump(experiment_dict, f, indent=2)
 
     def load_experiments(self):
         """Load experiments from storage"""
         for experiment_file in self.storage_path.glob("experiment_*.json"):
             try:
-                with open(experiment_file, 'r') as f:
+                with open(experiment_file, "r") as f:
                     experiment_dict = json.load(f)
 
                 # Convert back from dict to objects
@@ -727,26 +775,26 @@ class ABTestingFramework:
     def _dict_to_experiment(self, experiment_dict: Dict) -> ExperimentConfig:
         """Convert dictionary back to ExperimentConfig"""
         # Convert datetime strings back to objects
-        if experiment_dict.get('start_date'):
-            experiment_dict['start_date'] = datetime.fromisoformat(experiment_dict['start_date'])
-        if experiment_dict.get('end_date'):
-            experiment_dict['end_date'] = datetime.fromisoformat(experiment_dict['end_date'])
+        if experiment_dict.get("start_date"):
+            experiment_dict["start_date"] = datetime.fromisoformat(experiment_dict["start_date"])
+        if experiment_dict.get("end_date"):
+            experiment_dict["end_date"] = datetime.fromisoformat(experiment_dict["end_date"])
 
         # Convert status string back to enum
-        experiment_dict['status'] = ExperimentStatus(experiment_dict['status'])
+        experiment_dict["status"] = ExperimentStatus(experiment_dict["status"])
 
         # Convert variants
         variants = []
-        for variant_dict in experiment_dict['variants']:
-            variant_dict['type'] = VariantType(variant_dict['type'])
+        for variant_dict in experiment_dict["variants"]:
+            variant_dict["type"] = VariantType(variant_dict["type"])
             variants.append(Variant(**variant_dict))
-        experiment_dict['variants'] = variants
+        experiment_dict["variants"] = variants
 
         # Convert metrics
         metrics = []
-        for metric_dict in experiment_dict['metrics']:
+        for metric_dict in experiment_dict["metrics"]:
             metrics.append(Metric(**metric_dict))
-        experiment_dict['metrics'] = metrics
+        experiment_dict["metrics"] = metrics
 
         return ExperimentConfig(**experiment_dict)
 
@@ -784,15 +832,15 @@ if __name__ == "__main__":
                 name="Single Model",
                 type=VariantType.CONTROL,
                 traffic_percentage=50.0,
-                model_config={"model_type": "single_mlp"}
+                model_config={"model_type": "single_mlp"},
             ),
             Variant(
                 id="treatment",
                 name="Ensemble Model",
                 type=VariantType.TREATMENT,
                 traffic_percentage=50.0,
-                model_config={"model_type": "ensemble"}
-            )
+                model_config={"model_type": "ensemble"},
+            ),
         ],
         metrics=[
             Metric(
@@ -800,23 +848,18 @@ if __name__ == "__main__":
                 type="continuous",
                 aggregation="mean",
                 goal="increase",
-                primary=True
+                primary=True,
             ),
             Metric(
                 name="recommendation_click_rate",
                 type="binary",
                 aggregation="mean",
                 goal="increase",
-                primary=True
+                primary=True,
             ),
-            Metric(
-                name="portfolio_return",
-                type="continuous",
-                aggregation="mean",
-                goal="increase"
-            )
+            Metric(name="portfolio_return", type="continuous", aggregation="mean", goal="increase"),
         ],
-        min_sample_size=1000
+        min_sample_size=1000,
     )
 
     # Create and start experiment
@@ -829,9 +872,15 @@ if __name__ == "__main__":
         variant = framework.assign_user(user_id, experiment_id)
 
         # Simulate metrics
-        framework.record_metric(user_id, experiment_id, "prediction_accuracy", random.uniform(0.6, 0.9))
-        framework.record_metric(user_id, experiment_id, "recommendation_click_rate", random.choice([0, 1]))
-        framework.record_metric(user_id, experiment_id, "portfolio_return", random.uniform(-0.1, 0.15))
+        framework.record_metric(
+            user_id, experiment_id, "prediction_accuracy", random.uniform(0.6, 0.9)
+        )
+        framework.record_metric(
+            user_id, experiment_id, "recommendation_click_rate", random.choice([0, 1])
+        )
+        framework.record_metric(
+            user_id, experiment_id, "portfolio_return", random.uniform(-0.1, 0.15)
+        )
 
     # Analyze results
     results = framework.analyze_experiment(experiment_id)

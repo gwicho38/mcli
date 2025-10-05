@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DVCConfig:
     """DVC configuration"""
+
     project_root: Path = Path(".")
     remote_storage: str = "s3://my-bucket/dvc-storage"  # or local path
     cache_dir: Path = Path(".dvc/cache")
@@ -49,10 +50,7 @@ class DataVersionControl:
         """Run DVC command"""
         try:
             result = subprocess.run(
-                command.split(),
-                capture_output=True,
-                text=True,
-                cwd=self.project_root
+                command.split(), capture_output=True, text=True, cwd=self.project_root
             )
 
             if result.returncode != 0:
@@ -67,8 +65,7 @@ class DataVersionControl:
             logger.error(f"Failed to run DVC command: {e}")
             raise
 
-    def add_data(self, data_path: Union[str, Path],
-                 description: Optional[str] = None) -> str:
+    def add_data(self, data_path: Union[str, Path], description: Optional[str] = None) -> str:
         """Add data file or directory to DVC tracking"""
         data_path = Path(data_path)
 
@@ -82,7 +79,7 @@ class DataVersionControl:
         metadata = self._generate_metadata(data_path, description)
         metadata_path = data_path.with_suffix(".meta.json")
 
-        with open(metadata_path, 'w') as f:
+        with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2)
 
         # Commit if auto-commit enabled
@@ -115,13 +112,9 @@ class DataVersionControl:
         status_output = self._run_command("dvc status")
 
         # Parse status
-        status = {
-            "modified": [],
-            "not_in_cache": [],
-            "deleted": []
-        }
+        status = {"modified": [], "not_in_cache": [], "deleted": []}
 
-        for line in status_output.split('\n'):
+        for line in status_output.split("\n"):
             if "modified:" in line:
                 status["modified"].append(line.split(":")[-1].strip())
             elif "not in cache:" in line:
@@ -131,8 +124,9 @@ class DataVersionControl:
 
         return status
 
-    def _generate_metadata(self, data_path: Path,
-                          description: Optional[str] = None) -> Dict[str, Any]:
+    def _generate_metadata(
+        self, data_path: Path, description: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Generate metadata for data file"""
         stat = data_path.stat()
 
@@ -143,13 +137,17 @@ class DataVersionControl:
             "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
             "hash": self._calculate_hash(data_path),
             "description": description or "",
-            "type": "directory" if data_path.is_dir() else "file"
+            "type": "directory" if data_path.is_dir() else "file",
         }
 
         # Add data-specific metadata
-        if data_path.suffix in ['.csv', '.parquet']:
+        if data_path.suffix in [".csv", ".parquet"]:
             try:
-                df = pd.read_csv(data_path) if data_path.suffix == '.csv' else pd.read_parquet(data_path)
+                df = (
+                    pd.read_csv(data_path)
+                    if data_path.suffix == ".csv"
+                    else pd.read_parquet(data_path)
+                )
                 metadata["rows"] = len(df)
                 metadata["columns"] = len(df.columns)
                 metadata["column_names"] = df.columns.tolist()
@@ -196,32 +194,36 @@ class DVCPipeline:
                 "params": stage.get("params", []),
                 "outs": stage.get("outs", []),
                 "metrics": stage.get("metrics", []),
-                "plots": stage.get("plots", [])
+                "plots": stage.get("plots", []),
             }
 
         # Save pipeline
-        with open(self.pipeline_file, 'w') as f:
+        with open(self.pipeline_file, "w") as f:
             yaml.dump(pipeline, f, default_flow_style=False)
 
         logger.info(f"Created DVC pipeline with {len(stages)} stages")
 
-    def add_stage(self, name: str, cmd: str,
-                  deps: Optional[List[str]] = None,
-                  params: Optional[List[str]] = None,
-                  outs: Optional[List[str]] = None,
-                  metrics: Optional[List[str]] = None):
+    def add_stage(
+        self,
+        name: str,
+        cmd: str,
+        deps: Optional[List[str]] = None,
+        params: Optional[List[str]] = None,
+        outs: Optional[List[str]] = None,
+        metrics: Optional[List[str]] = None,
+    ):
         """Add stage to pipeline"""
         stage_config = {
             "cmd": cmd,
             "deps": deps or [],
             "params": params or [],
             "outs": outs or [],
-            "metrics": metrics or []
+            "metrics": metrics or [],
         }
 
         # Load existing pipeline
         if self.pipeline_file.exists():
-            with open(self.pipeline_file, 'r') as f:
+            with open(self.pipeline_file, "r") as f:
                 pipeline = yaml.safe_load(f) or {"stages": {}}
         else:
             pipeline = {"stages": {}}
@@ -230,7 +232,7 @@ class DVCPipeline:
         pipeline["stages"][name] = stage_config
 
         # Save pipeline
-        with open(self.pipeline_file, 'w') as f:
+        with open(self.pipeline_file, "w") as f:
             yaml.dump(pipeline, f, default_flow_style=False)
 
         logger.info(f"Added stage '{name}' to pipeline")
@@ -251,9 +253,9 @@ class DVCPipeline:
 
         # Parse metrics (simplified)
         metrics = {}
-        for line in metrics_output.split('\n'):
-            if ':' in line:
-                key, value = line.split(':', 1)
+        for line in metrics_output.split("\n"):
+            if ":" in line:
+                key, value = line.split(":", 1)
                 try:
                     metrics[key.strip()] = float(value.strip())
                 except:
@@ -269,14 +271,14 @@ class DVCPipeline:
                 "cmd": "python src/prepare_data.py",
                 "deps": ["data/raw"],
                 "outs": ["data/processed"],
-                "params": ["prepare.test_split", "prepare.seed"]
+                "params": ["prepare.test_split", "prepare.seed"],
             },
             {
                 "name": "feature_engineering",
                 "cmd": "python src/featurize.py",
                 "deps": ["data/processed"],
                 "outs": ["data/features"],
-                "params": ["featurize.max_features", "featurize.ngrams"]
+                "params": ["featurize.max_features", "featurize.ngrams"],
             },
             {
                 "name": "train",
@@ -284,36 +286,27 @@ class DVCPipeline:
                 "deps": ["data/features"],
                 "outs": ["models/model.pkl"],
                 "params": ["train.epochs", "train.learning_rate"],
-                "metrics": [{"metrics.json": {"cache": False}}]
+                "metrics": [{"metrics.json": {"cache": False}}],
             },
             {
                 "name": "evaluate",
                 "cmd": "python src/evaluate.py",
                 "deps": ["models/model.pkl", "data/features"],
                 "metrics": [{"eval/metrics.json": {"cache": False}}],
-                "plots": [{"eval/plots/roc.json": {"x": "fpr", "y": "tpr"}}]
-            }
+                "plots": [{"eval/plots/roc.json": {"x": "fpr", "y": "tpr"}}],
+            },
         ]
 
         self.create_pipeline(stages)
 
         # Create default params file
         params = {
-            "prepare": {
-                "test_split": 0.2,
-                "seed": 42
-            },
-            "featurize": {
-                "max_features": 100,
-                "ngrams": 2
-            },
-            "train": {
-                "epochs": 10,
-                "learning_rate": 0.001
-            }
+            "prepare": {"test_split": 0.2, "seed": 42},
+            "featurize": {"max_features": 100, "ngrams": 2},
+            "train": {"epochs": 10, "learning_rate": 0.001},
         }
 
-        with open(self.params_file, 'w') as f:
+        with open(self.params_file, "w") as f:
             yaml.dump(params, f, default_flow_style=False)
 
         logger.info("Created ML pipeline with DVC")
@@ -329,17 +322,16 @@ class DataRegistry:
     def _load_registry(self) -> Dict[str, Any]:
         """Load data registry"""
         if self.registry_path.exists():
-            with open(self.registry_path, 'r') as f:
+            with open(self.registry_path, "r") as f:
                 return json.load(f)
         return {"datasets": {}}
 
     def _save_registry(self):
         """Save data registry"""
-        with open(self.registry_path, 'w') as f:
+        with open(self.registry_path, "w") as f:
             json.dump(self.registry, f, indent=2)
 
-    def register_dataset(self, name: str, path: str,
-                        version: str, metadata: Dict[str, Any]):
+    def register_dataset(self, name: str, path: str, version: str, metadata: Dict[str, Any]):
         """Register new dataset version"""
         if name not in self.registry["datasets"]:
             self.registry["datasets"][name] = {"versions": {}}
@@ -347,7 +339,7 @@ class DataRegistry:
         self.registry["datasets"][name]["versions"][version] = {
             "path": path,
             "metadata": metadata,
-            "registered": datetime.now().isoformat()
+            "registered": datetime.now().isoformat(),
         }
 
         self.registry["datasets"][name]["latest"] = version
@@ -487,7 +479,7 @@ evaluate:
         ".dvc/.gitignore": dvc_gitignore,
         ".dvcignore": dvcignore,
         "dvc.yaml": dvc_yaml,
-        "params.yaml": params_yaml
+        "params.yaml": params_yaml,
     }
 
 
@@ -508,7 +500,7 @@ if __name__ == "__main__":
         name="politician_trades",
         path="data/politician_trades.csv",
         version="v1.0",
-        metadata={"source": "congress", "records": 10000}
+        metadata={"source": "congress", "records": 10000},
     )
 
     # Create ML pipeline

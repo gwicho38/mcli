@@ -51,9 +51,7 @@ class LSHClient:
         """Initialize aiohttp session"""
         if not self.session:
             connector = aiohttp.TCPConnector(limit=10)
-            self.session = aiohttp.ClientSession(
-                connector=connector, timeout=self.timeout
-            )
+            self.session = aiohttp.ClientSession(connector=connector, timeout=self.timeout)
             logger.info(f"Connected to LSH API at {self.base_url}")
 
     async def disconnect(self):
@@ -81,9 +79,7 @@ class LSHClient:
         headers = self._get_headers()
 
         try:
-            async with self.session.request(
-                method, url, headers=headers, json=data
-            ) as response:
+            async with self.session.request(method, url, headers=headers, json=data) as response:
                 if response.status == 401:
                     raise ValueError("LSH API authentication failed - check API key")
 
@@ -104,9 +100,7 @@ class LSHClient:
         endpoint = "/api/jobs"
         if filter_params:
             # Convert filter to query params
-            endpoint += "?" + "&".join(
-                f"{k}={v}" for k, v in filter_params.items()
-            )
+            endpoint += "?" + "&".join(f"{k}={v}" for k, v in filter_params.items())
         return await self._request("GET", endpoint)
 
     async def get_job(self, job_id: str) -> Dict[str, Any]:
@@ -261,12 +255,15 @@ class LSHEventProcessor:
         self.logger.info(f"LSH job started: {job_name} ({job_id})")
 
         # Emit mcli-specific event
-        await self._emit_mcli_event("lsh.job.started", {
-            "job_id": job_id,
-            "job_name": job_name,
-            "timestamp": data.get("timestamp"),
-            "job_data": job_data
-        })
+        await self._emit_mcli_event(
+            "lsh.job.started",
+            {
+                "job_id": job_id,
+                "job_name": job_name,
+                "timestamp": data.get("timestamp"),
+                "job_data": job_data,
+            },
+        )
 
     async def _handle_job_completed(self, data: Dict[str, Any]):
         """Handle job completion event"""
@@ -289,14 +286,17 @@ class LSHEventProcessor:
             await self._process_supabase_job(job_data)
 
         # Emit mcli-specific event
-        await self._emit_mcli_event("lsh.job.completed", {
-            "job_id": job_id,
-            "job_name": job_name,
-            "timestamp": data.get("timestamp"),
-            "job_data": job_data,
-            "stdout": stdout,
-            "stderr": stderr
-        })
+        await self._emit_mcli_event(
+            "lsh.job.completed",
+            {
+                "job_id": job_id,
+                "job_name": job_name,
+                "timestamp": data.get("timestamp"),
+                "job_data": job_data,
+                "stdout": stdout,
+                "stderr": stderr,
+            },
+        )
 
     async def _handle_job_failed(self, data: Dict[str, Any]):
         """Handle job failure event"""
@@ -308,13 +308,16 @@ class LSHEventProcessor:
         self.logger.error(f"LSH job failed: {job_name} ({job_id}) - {error}")
 
         # Emit mcli-specific event
-        await self._emit_mcli_event("lsh.job.failed", {
-            "job_id": job_id,
-            "job_name": job_name,
-            "timestamp": data.get("timestamp"),
-            "error": error,
-            "job_data": job_data
-        })
+        await self._emit_mcli_event(
+            "lsh.job.failed",
+            {
+                "job_id": job_id,
+                "job_name": job_name,
+                "timestamp": data.get("timestamp"),
+                "error": error,
+                "job_data": job_data,
+            },
+        )
 
     async def _handle_supabase_sync(self, data: Dict[str, Any]):
         """Handle Supabase data sync event"""
@@ -329,12 +332,15 @@ class LSHEventProcessor:
             await self._process_politician_data(table, operation, sync_data)
 
         # Emit mcli-specific event
-        await self._emit_mcli_event("lsh.supabase.sync", {
-            "table": table,
-            "operation": operation,
-            "data": sync_data,
-            "timestamp": data.get("timestamp")
-        })
+        await self._emit_mcli_event(
+            "lsh.supabase.sync",
+            {
+                "table": table,
+                "operation": operation,
+                "data": sync_data,
+                "timestamp": data.get("timestamp"),
+            },
+        )
 
     async def _process_trading_data(self, job_data: Dict, stdout: str):
         """Process politician trading data from job output"""
@@ -343,7 +349,7 @@ class LSHEventProcessor:
             if stdout.strip():
                 # Assuming JSON output format
                 trading_records = []
-                for line in stdout.strip().split('\n'):
+                for line in stdout.strip().split("\n"):
                     try:
                         record = json.loads(line)
                         trading_records.append(record)
@@ -354,12 +360,15 @@ class LSHEventProcessor:
                     self.logger.info(f"Processed {len(trading_records)} trading records")
 
                     # Emit processed data event
-                    await self._emit_mcli_event("trading.data.processed", {
-                        "records": trading_records,
-                        "count": len(trading_records),
-                        "job_id": job_data.get("id"),
-                        "timestamp": time.time()
-                    })
+                    await self._emit_mcli_event(
+                        "trading.data.processed",
+                        {
+                            "records": trading_records,
+                            "count": len(trading_records),
+                            "job_id": job_data.get("id"),
+                            "timestamp": time.time(),
+                        },
+                    )
 
         except Exception as e:
             self.logger.error(f"Error processing trading data: {e}")
@@ -373,11 +382,10 @@ class LSHEventProcessor:
             self.logger.info(f"Processing Supabase sync job: {job_data.get('name')}")
 
             # Emit database sync event
-            await self._emit_mcli_event("database.sync.completed", {
-                "job_id": job_data.get("id"),
-                "sync_info": sync_info,
-                "timestamp": time.time()
-            })
+            await self._emit_mcli_event(
+                "database.sync.completed",
+                {"job_id": job_data.get("id"), "sync_info": sync_info, "timestamp": time.time()},
+            )
 
         except Exception as e:
             self.logger.error(f"Error processing Supabase job: {e}")
@@ -391,13 +399,16 @@ class LSHEventProcessor:
             processed_data = await self._transform_politician_data(table, operation, data)
 
             # Emit transformed data event
-            await self._emit_mcli_event("politician.data.updated", {
-                "table": table,
-                "operation": operation,
-                "original_data": data,
-                "processed_data": processed_data,
-                "timestamp": time.time()
-            })
+            await self._emit_mcli_event(
+                "politician.data.updated",
+                {
+                    "table": table,
+                    "operation": operation,
+                    "original_data": data,
+                    "processed_data": processed_data,
+                    "timestamp": time.time(),
+                },
+            )
 
         except Exception as e:
             self.logger.error(f"Error processing politician data: {e}")

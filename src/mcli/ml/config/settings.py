@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 class DatabaseSettings(BaseSettings):
     """Database configuration"""
+
     model_config = SettingsConfigDict(env_prefix="DB_")
 
     host: str = Field(default="localhost", description="Database host")
@@ -39,11 +40,14 @@ class DatabaseSettings(BaseSettings):
         # Use aiosqlite for local development if no user is specified
         if not self.user:
             return f"sqlite+aiosqlite:///{self.name}"
-        return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+        return (
+            f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+        )
 
 
 class RedisSettings(BaseSettings):
     """Redis configuration"""
+
     model_config = SettingsConfigDict(env_prefix="REDIS_")
 
     host: str = Field(default="localhost", description="Redis host")
@@ -64,10 +68,15 @@ class RedisSettings(BaseSettings):
 
 class MLflowSettings(BaseSettings):
     """MLflow configuration"""
+
     model_config = SettingsConfigDict(env_prefix="MLFLOW_")
 
-    tracking_uri: str = Field(default="http://localhost:5000", description="MLflow tracking server URI")
-    experiment_name: str = Field(default="politician_trading", description="Default experiment name")
+    tracking_uri: str = Field(
+        default="http://localhost:5000", description="MLflow tracking server URI"
+    )
+    experiment_name: str = Field(
+        default="politician_trading", description="Default experiment name"
+    )
     artifact_root: Optional[str] = Field(default=None, description="Artifact storage root")
 
     # Authentication
@@ -77,6 +86,7 @@ class MLflowSettings(BaseSettings):
 
 class ModelSettings(BaseSettings):
     """Model configuration"""
+
     model_config = SettingsConfigDict(env_prefix="MODEL_")
 
     # Model paths
@@ -105,12 +115,15 @@ class ModelSettings(BaseSettings):
 
 class DataSettings(BaseSettings):
     """Data configuration"""
+
     model_config = SettingsConfigDict(env_prefix="DATA_")
 
     # Data paths
     data_dir: Path = Field(default=Path("data"), description="Data storage directory")
     raw_dir: Path = Field(default=Path("data/raw"), description="Raw data directory")
-    processed_dir: Path = Field(default=Path("data/processed"), description="Processed data directory")
+    processed_dir: Path = Field(
+        default=Path("data/processed"), description="Processed data directory"
+    )
 
     # DVC settings
     dvc_remote: str = Field(default="local", description="DVC remote storage")
@@ -129,6 +142,7 @@ class DataSettings(BaseSettings):
 
 class APISettings(BaseSettings):
     """API configuration"""
+
     model_config = SettingsConfigDict(env_prefix="API_")
 
     # Server settings
@@ -152,6 +166,7 @@ class APISettings(BaseSettings):
 
 class MonitoringSettings(BaseSettings):
     """Monitoring configuration"""
+
     model_config = SettingsConfigDict(env_prefix="MONITORING_")
 
     # Metrics
@@ -173,6 +188,7 @@ class MonitoringSettings(BaseSettings):
 
 class SecuritySettings(BaseSettings):
     """Security configuration"""
+
     model_config = SettingsConfigDict(env_prefix="SECURITY_")
 
     # Authentication
@@ -196,15 +212,15 @@ class SecuritySettings(BaseSettings):
 
 class Settings(BaseSettings):
     """Main application settings"""
+
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
     # Environment
-    environment: str = Field(default="development", description="Environment (development, staging, production)")
+    environment: str = Field(
+        default="development", description="Environment (development, staging, production)"
+    )
     debug: bool = Field(default=False, description="Debug mode")
 
     # Component settings

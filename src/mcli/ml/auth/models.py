@@ -8,34 +8,37 @@ from uuid import UUID
 
 class UserCreate(BaseModel):
     """User registration model"""
+
     username: str = Field(..., min_length=3, max_length=50, regex="^[a-zA-Z0-9_-]+$")
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=100)
     first_name: Optional[str] = Field(None, max_length=50)
     last_name: Optional[str] = Field(None, max_length=50)
 
-    @validator('password')
+    @validator("password")
     def validate_password(cls, v):
         """Ensure password meets security requirements"""
         if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
+            raise ValueError("Password must be at least 8 characters long")
         if not any(char.isdigit() for char in v):
-            raise ValueError('Password must contain at least one digit')
+            raise ValueError("Password must contain at least one digit")
         if not any(char.isupper() for char in v):
-            raise ValueError('Password must contain at least one uppercase letter')
+            raise ValueError("Password must contain at least one uppercase letter")
         if not any(char.islower() for char in v):
-            raise ValueError('Password must contain at least one lowercase letter')
+            raise ValueError("Password must contain at least one lowercase letter")
         return v
 
 
 class UserLogin(BaseModel):
     """User login model"""
+
     username: str
     password: str
 
 
 class UserResponse(BaseModel):
     """User response model"""
+
     id: UUID
     username: str
     email: str
@@ -53,6 +56,7 @@ class UserResponse(BaseModel):
 
 class TokenResponse(BaseModel):
     """JWT token response"""
+
     access_token: str
     token_type: str = "Bearer"
     expires_in: int
@@ -62,6 +66,7 @@ class TokenResponse(BaseModel):
 
 class TokenData(BaseModel):
     """JWT token payload"""
+
     sub: str  # User ID
     username: str
     role: str
@@ -72,45 +77,50 @@ class TokenData(BaseModel):
 
 class PasswordReset(BaseModel):
     """Password reset request"""
+
     email: EmailStr
 
 
 class PasswordResetConfirm(BaseModel):
     """Password reset confirmation"""
+
     token: str
     new_password: str = Field(..., min_length=8, max_length=100)
 
 
 class PasswordChange(BaseModel):
     """Password change request"""
+
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
 
-    @validator('new_password')
+    @validator("new_password")
     def validate_password(cls, v, values):
         """Ensure new password is different and meets requirements"""
-        if 'current_password' in values and v == values['current_password']:
-            raise ValueError('New password must be different from current password')
+        if "current_password" in values and v == values["current_password"]:
+            raise ValueError("New password must be different from current password")
 
         if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
+            raise ValueError("Password must be at least 8 characters long")
         if not any(char.isdigit() for char in v):
-            raise ValueError('Password must contain at least one digit')
+            raise ValueError("Password must contain at least one digit")
         if not any(char.isupper() for char in v):
-            raise ValueError('Password must contain at least one uppercase letter')
+            raise ValueError("Password must contain at least one uppercase letter")
         if not any(char.islower() for char in v):
-            raise ValueError('Password must contain at least one lowercase letter')
+            raise ValueError("Password must contain at least one lowercase letter")
         return v
 
 
 class APIKeyCreate(BaseModel):
     """API key creation model"""
+
     name: str = Field(..., min_length=1, max_length=100)
     expires_at: Optional[datetime] = None
 
 
 class APIKeyResponse(BaseModel):
     """API key response"""
+
     key: str
     name: str
     created_at: datetime
@@ -120,6 +130,7 @@ class APIKeyResponse(BaseModel):
 
 class UserUpdate(BaseModel):
     """User update model"""
+
     email: Optional[EmailStr] = None
     first_name: Optional[str] = Field(None, max_length=50)
     last_name: Optional[str] = Field(None, max_length=50)
@@ -129,6 +140,7 @@ class UserUpdate(BaseModel):
 
 class UserPermissions(BaseModel):
     """User permissions model"""
+
     user_id: UUID
     permissions: List[str]
     roles: List[str]
@@ -136,6 +148,7 @@ class UserPermissions(BaseModel):
 
 class SessionInfo(BaseModel):
     """Session information"""
+
     session_id: str
     user_id: UUID
     ip_address: str
@@ -147,6 +160,7 @@ class SessionInfo(BaseModel):
 
 class LoginAttempt(BaseModel):
     """Login attempt tracking"""
+
     username: str
     ip_address: str
     success: bool

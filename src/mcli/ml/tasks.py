@@ -13,18 +13,15 @@ logger = get_logger(__name__)
 
 # Create Celery app
 celery_app = Celery(
-    'mcli_ml',
-    broker=settings.redis.url,
-    backend=settings.redis.url,
-    include=['mcli.ml.tasks']
+    "mcli_ml", broker=settings.redis.url, backend=settings.redis.url, include=["mcli.ml.tasks"]
 )
 
 # Celery configuration
 celery_app.conf.update(
-    task_serializer='json',
-    accept_content=['json'],
-    result_serializer='json',
-    timezone='UTC',
+    task_serializer="json",
+    accept_content=["json"],
+    result_serializer="json",
+    timezone="UTC",
     enable_utc=True,
     task_track_started=True,
     task_time_limit=3600,  # 1 hour
@@ -35,29 +32,29 @@ celery_app.conf.update(
 
 # Schedule periodic tasks
 celery_app.conf.beat_schedule = {
-    'update-stock-data': {
-        'task': 'mcli.ml.tasks.update_stock_data_task',
-        'schedule': crontab(minute='*/15'),  # Every 15 minutes
+    "update-stock-data": {
+        "task": "mcli.ml.tasks.update_stock_data_task",
+        "schedule": crontab(minute="*/15"),  # Every 15 minutes
     },
-    'retrain-models': {
-        'task': 'mcli.ml.tasks.retrain_models_task',
-        'schedule': crontab(hour=2, minute=0),  # Daily at 2 AM
+    "retrain-models": {
+        "task": "mcli.ml.tasks.retrain_models_task",
+        "schedule": crontab(hour=2, minute=0),  # Daily at 2 AM
     },
-    'check-model-drift': {
-        'task': 'mcli.ml.tasks.check_model_drift_task',
-        'schedule': crontab(minute=0),  # Every hour
+    "check-model-drift": {
+        "task": "mcli.ml.tasks.check_model_drift_task",
+        "schedule": crontab(minute=0),  # Every hour
     },
-    'cleanup-old-predictions': {
-        'task': 'mcli.ml.tasks.cleanup_predictions_task',
-        'schedule': crontab(hour=3, minute=0),  # Daily at 3 AM
+    "cleanup-old-predictions": {
+        "task": "mcli.ml.tasks.cleanup_predictions_task",
+        "schedule": crontab(hour=3, minute=0),  # Daily at 3 AM
     },
-    'generate-daily-report': {
-        'task': 'mcli.ml.tasks.generate_daily_report_task',
-        'schedule': crontab(hour=6, minute=0),  # Daily at 6 AM
+    "generate-daily-report": {
+        "task": "mcli.ml.tasks.generate_daily_report_task",
+        "schedule": crontab(hour=6, minute=0),  # Daily at 6 AM
     },
-    'fetch-politician-trades': {
-        'task': 'mcli.ml.tasks.fetch_politician_trades_task',
-        'schedule': crontab(minute='*/30'),  # Every 30 minutes
+    "fetch-politician-trades": {
+        "task": "mcli.ml.tasks.fetch_politician_trades_task",
+        "schedule": crontab(minute="*/30"),  # Every 30 minutes
     },
 }
 
@@ -100,10 +97,7 @@ def train_model_task(self, model_id: str, retrain: bool = False) -> Dict[str, An
         db.commit()
 
         # Configure and run pipeline
-        config = PipelineConfig(
-            experiment_name=f"model_{model_id}",
-            enable_mlflow=True
-        )
+        config = PipelineConfig(experiment_name=f"model_{model_id}", enable_mlflow=True)
 
         pipeline = MLPipeline(config)
 
@@ -114,9 +108,9 @@ def train_model_task(self, model_id: str, retrain: bool = False) -> Dict[str, An
 
         # Update model with results
         model.status = ModelStatus.TRAINED
-        model.train_accuracy = result.get('train_accuracy')
-        model.val_accuracy = result.get('val_accuracy')
-        model.test_accuracy = result.get('test_accuracy')
+        model.train_accuracy = result.get("train_accuracy")
+        model.val_accuracy = result.get("val_accuracy")
+        model.test_accuracy = result.get("test_accuracy")
         model.metrics = result
 
         db.commit()
@@ -162,9 +156,9 @@ def update_stock_data_task(self, ticker: str = None) -> Dict[str, Any]:
                     stock = StockData(ticker=ticker)
                     db.add(stock)
 
-                stock.current_price = data.get('price')
-                stock.volume = data.get('volume')
-                stock.change_1d = data.get('change_1d')
+                stock.current_price = data.get("price")
+                stock.volume = data.get("volume")
+                stock.change_1d = data.get("change_1d")
                 stock.last_updated = datetime.utcnow()
 
                 updated_count += 1
@@ -194,9 +188,7 @@ def check_model_drift_task() -> Dict[str, Any]:
         from mcli.ml.database.models import Model, ModelStatus
 
         db = SessionLocal()
-        deployed_models = db.query(Model).filter(
-            Model.status == ModelStatus.DEPLOYED
-        ).all()
+        deployed_models = db.query(Model).filter(Model.status == ModelStatus.DEPLOYED).all()
 
         drift_detected = []
         for model in deployed_models:
@@ -212,7 +204,7 @@ def check_model_drift_task() -> Dict[str, Any]:
         return {
             "checked": len(deployed_models),
             "drift_detected": len(drift_detected),
-            "models_with_drift": drift_detected
+            "models_with_drift": drift_detected,
         }
 
     except Exception as e:
@@ -233,9 +225,7 @@ def cleanup_predictions_task() -> Dict[str, Any]:
 
         # Delete predictions older than 90 days
         cutoff_date = datetime.utcnow() - timedelta(days=90)
-        deleted = db.query(Prediction).filter(
-            Prediction.created_at < cutoff_date
-        ).delete()
+        deleted = db.query(Prediction).filter(Prediction.created_at < cutoff_date).delete()
 
         db.commit()
         db.close()
@@ -260,10 +250,14 @@ def retrain_models_task() -> Dict[str, Any]:
         db = SessionLocal()
 
         # Get models that need retraining
-        models_to_retrain = db.query(Model).filter(
-            Model.status == ModelStatus.DEPLOYED,
-            Model.updated_at < datetime.utcnow() - timedelta(days=7)
-        ).all()
+        models_to_retrain = (
+            db.query(Model)
+            .filter(
+                Model.status == ModelStatus.DEPLOYED,
+                Model.updated_at < datetime.utcnow() - timedelta(days=7),
+            )
+            .all()
+        )
 
         retrained = []
         for model in models_to_retrain:
@@ -293,17 +287,19 @@ def generate_daily_report_task() -> Dict[str, Any]:
         db = SessionLocal()
 
         # Gather statistics
-        total_predictions = db.query(Prediction).filter(
-            Prediction.prediction_date >= datetime.utcnow() - timedelta(days=1)
-        ).count()
+        total_predictions = (
+            db.query(Prediction)
+            .filter(Prediction.prediction_date >= datetime.utcnow() - timedelta(days=1))
+            .count()
+        )
 
-        active_portfolios = db.query(Portfolio).filter(
-            Portfolio.is_active == True
-        ).count()
+        active_portfolios = db.query(Portfolio).filter(Portfolio.is_active == True).count()
 
-        active_users = db.query(User).filter(
-            User.last_login_at >= datetime.utcnow() - timedelta(days=1)
-        ).count()
+        active_users = (
+            db.query(User)
+            .filter(User.last_login_at >= datetime.utcnow() - timedelta(days=1))
+            .count()
+        )
 
         db.close()
 
@@ -312,7 +308,7 @@ def generate_daily_report_task() -> Dict[str, Any]:
             "predictions_24h": total_predictions,
             "active_portfolios": active_portfolios,
             "active_users_24h": active_users,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.utcnow().isoformat(),
         }
 
         # In real implementation, send email or save to storage
@@ -344,11 +340,15 @@ def fetch_politician_trades_task() -> Dict[str, Any]:
         new_trades = 0
         for trade_info in trades_data:
             # Check if trade exists
-            existing = db.query(Trade).filter(
-                Trade.politician_id == trade_info['politician_id'],
-                Trade.ticker == trade_info['ticker'],
-                Trade.disclosure_date == trade_info['disclosure_date']
-            ).first()
+            existing = (
+                db.query(Trade)
+                .filter(
+                    Trade.politician_id == trade_info["politician_id"],
+                    Trade.ticker == trade_info["ticker"],
+                    Trade.disclosure_date == trade_info["disclosure_date"],
+                )
+                .first()
+            )
 
             if not existing:
                 trade = Trade(**trade_info)
@@ -377,13 +377,10 @@ def process_batch_predictions_task(self, predictions: list) -> Dict[str, Any]:
 
         results = []
         for pred in predictions:
-            model = asyncio.run(get_model_by_id(pred['model_id']))
-            features = np.array(pred['features']).reshape(1, -1)
+            model = asyncio.run(get_model_by_id(pred["model_id"]))
+            features = np.array(pred["features"]).reshape(1, -1)
             result = model.predict(features)
-            results.append({
-                'ticker': pred['ticker'],
-                'prediction': float(result[0])
-            })
+            results.append({"ticker": pred["ticker"], "prediction": float(result[0])})
 
         logger.info(f"Batch predictions completed")
         return {"predictions": results}
@@ -394,7 +391,7 @@ def process_batch_predictions_task(self, predictions: list) -> Dict[str, Any]:
 
 
 # Worker health check
-@celery_app.task(name='health_check')
+@celery_app.task(name="health_check")
 def health_check():
     """Health check for Celery worker"""
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}

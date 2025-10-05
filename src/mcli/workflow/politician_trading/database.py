@@ -96,17 +96,20 @@ class PoliticianTradingDB:
             existing = await self.find_politician_by_name(
                 politician.first_name, politician.last_name
             )
-            
+
             if existing:
                 # Update existing politician (but don't change ID)
                 politician_dict = self._politician_to_dict(politician)
                 politician_dict["id"] = existing.id  # Keep existing ID
                 politician_dict["updated_at"] = datetime.utcnow().isoformat()
-                
-                result = self.client.table("politicians").update(
-                    politician_dict
-                ).eq("id", existing.id).execute()
-                
+
+                result = (
+                    self.client.table("politicians")
+                    .update(politician_dict)
+                    .eq("id", existing.id)
+                    .execute()
+                )
+
                 if result.data:
                     return result.data[0]["id"]
                 return existing.id
@@ -115,18 +118,16 @@ class PoliticianTradingDB:
                 politician_dict = self._politician_to_dict(politician)
                 if not politician_dict.get("id"):
                     politician_dict["id"] = str(uuid4())
-                    
+
                 politician_dict["created_at"] = datetime.utcnow().isoformat()
                 politician_dict["updated_at"] = datetime.utcnow().isoformat()
 
-                result = self.client.table("politicians").insert(
-                    politician_dict
-                ).execute()
-                
+                result = self.client.table("politicians").insert(politician_dict).execute()
+
                 if result.data:
                     return result.data[0]["id"]
                 return politician_dict["id"]
-                
+
         except Exception as e:
             logger.error(f"Failed to upsert politician: {e}")
             # For debugging: log the politician data that caused the error

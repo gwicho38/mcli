@@ -15,10 +15,7 @@ from dotenv import load_dotenv
 
 # Page config must come first
 st.set_page_config(
-    page_title="MCLI ML Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="MCLI ML Dashboard", page_icon="📊", layout="wide", initial_sidebar_state="expanded"
 )
 
 # Load environment variables from supabase/.env.local
@@ -27,7 +24,8 @@ if env_path.exists():
     load_dotenv(env_path)
 
 # Custom CSS
-st.markdown("""
+st.markdown(
+    """
 <style>
     .metric-card {
         background-color: #f0f2f6;
@@ -36,7 +34,9 @@ st.markdown("""
         border-left: 4px solid #1f77b4;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 @st.cache_resource
@@ -47,7 +47,9 @@ def get_supabase_client() -> Client:
     key = os.getenv("SUPABASE_KEY", "") or os.getenv("SUPABASE_ANON_KEY", "")
 
     if not url or not key:
-        st.warning("⚠️ Supabase credentials not found. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.")
+        st.warning(
+            "⚠️ Supabase credentials not found. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables."
+        )
         return None
 
     return create_client(url, key)
@@ -81,7 +83,13 @@ def get_disclosures_data():
 
     try:
         # Get recent disclosures
-        response = client.table("trading_disclosures").select("*").order("disclosure_date", desc=True).limit(500).execute()
+        response = (
+            client.table("trading_disclosures")
+            .select("*")
+            .order("disclosure_date", desc=True)
+            .limit(500)
+            .execute()
+        )
         return pd.DataFrame(response.data)
     except Exception as e:
         st.error(f"Error fetching disclosures: {e}")
@@ -97,7 +105,13 @@ def get_predictions_data():
 
     try:
         # Try to get predictions if table exists
-        response = client.table("ml_predictions").select("*").order("created_at", desc=True).limit(100).execute()
+        response = (
+            client.table("ml_predictions")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(100)
+            .execute()
+        )
         return pd.DataFrame(response.data)
     except:
         # Table might not exist yet
@@ -128,7 +142,13 @@ def get_jobs_data():
         return pd.DataFrame()
 
     try:
-        response = client.table("data_pull_jobs").select("*").order("created_at", desc=True).limit(50).execute()
+        response = (
+            client.table("data_pull_jobs")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(50)
+            .execute()
+        )
         return pd.DataFrame(response.data)
     except Exception as e:
         st.error(f"Error fetching jobs: {e}")
@@ -152,9 +172,9 @@ def main():
     st.markdown(
         '<a href="file:///Users/lefv/repos/lsh/dashboard-hub.html" target="_blank" style="text-decoration: none;">'
         '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-weight: 600;">'
-        '🚀 Dashboard Hub - View All'
-        '</div></a>',
-        unsafe_allow_html=True
+        "🚀 Dashboard Hub - View All"
+        "</div></a>",
+        unsafe_allow_html=True,
     )
 
     st.sidebar.subheader("🔗 Direct Links")
@@ -164,32 +184,32 @@ def main():
         st.markdown(
             '<a href="http://localhost:3034/dashboard/" target="_blank" style="text-decoration: none;">'
             '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px; border-radius: 6px; text-align: center; margin-bottom: 8px;">'
-            '📊 Pipeline Jobs'
-            '</div></a>',
-            unsafe_allow_html=True
+            "📊 Pipeline Jobs"
+            "</div></a>",
+            unsafe_allow_html=True,
         )
         st.markdown(
             '<a href="http://localhost:3034/dashboard/workflow.html" target="_blank" style="text-decoration: none;">'
             '<div style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 8px; border-radius: 6px; text-align: center; margin-bottom: 8px;">'
-            '🔄 Workflows'
-            '</div></a>',
-            unsafe_allow_html=True
+            "🔄 Workflows"
+            "</div></a>",
+            unsafe_allow_html=True,
         )
 
     with col2:
         st.markdown(
             '<a href="http://localhost:3033/dashboard/" target="_blank" style="text-decoration: none;">'
             '<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 8px; border-radius: 6px; text-align: center; margin-bottom: 8px;">'
-            '🏗️ CI/CD'
-            '</div></a>',
-            unsafe_allow_html=True
+            "🏗️ CI/CD"
+            "</div></a>",
+            unsafe_allow_html=True,
         )
         st.markdown(
             '<a href="http://localhost:3035/api/health" target="_blank" style="text-decoration: none;">'
             '<div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 8px; border-radius: 6px; text-align: center; margin-bottom: 8px;">'
-            '🔍 Monitoring'
-            '</div></a>',
-            unsafe_allow_html=True
+            "🔍 Monitoring"
+            "</div></a>",
+            unsafe_allow_html=True,
         )
 
     st.sidebar.markdown("---")
@@ -205,13 +225,21 @@ def main():
             st.error("❌ Not connected to Supabase")
     page = st.sidebar.selectbox(
         "Choose a page",
-        ["Overview", "Politicians", "Trading Disclosures", "ML Predictions", "Data Pull Jobs", "System Health"]
+        [
+            "Overview",
+            "Politicians",
+            "Trading Disclosures",
+            "ML Predictions",
+            "Data Pull Jobs",
+            "System Health",
+        ],
     )
 
     # Auto-refresh toggle
     auto_refresh = st.sidebar.checkbox("Auto-refresh (30s)", value=True)
     if auto_refresh:
         import time
+
         time.sleep(30)
         st.rerun()
 
@@ -252,7 +280,10 @@ def show_overview():
 
     # Also show sample data for debugging
     if not politicians.empty:
-        st.sidebar.write("Sample politician:", politicians.iloc[0]['full_name'] if 'full_name' in politicians.columns else "No name")
+        st.sidebar.write(
+            "Sample politician:",
+            politicians.iloc[0]["full_name"] if "full_name" in politicians.columns else "No name",
+        )
 
     # Display key metrics
     col1, col2, col3, col4 = st.columns(4)
@@ -261,28 +292,31 @@ def show_overview():
         st.metric(
             label="Politicians Tracked",
             value=len(politicians) if not politicians.empty else 0,
-            delta=None  # Simplified to avoid errors
+            delta=None,  # Simplified to avoid errors
         )
 
     with col2:
         st.metric(
             label="Total Disclosures",
             value=len(disclosures),
-            delta=f"{len(disclosures[pd.to_datetime(disclosures['disclosure_date']) > datetime.now() - timedelta(days=7)])} this week" if not disclosures.empty and 'disclosure_date' in disclosures else None
+            delta=(
+                f"{len(disclosures[pd.to_datetime(disclosures['disclosure_date']) > datetime.now() - timedelta(days=7)])} this week"
+                if not disclosures.empty and "disclosure_date" in disclosures
+                else None
+            ),
         )
 
     with col3:
-        st.metric(
-            label="ML Predictions",
-            value=len(predictions) if not predictions.empty else "0"
-        )
+        st.metric(label="ML Predictions", value=len(predictions) if not predictions.empty else "0")
 
     with col4:
-        successful_jobs = len(jobs[jobs['status'] == 'completed']) if not jobs.empty and 'status' in jobs else 0
+        successful_jobs = (
+            len(jobs[jobs["status"] == "completed"]) if not jobs.empty and "status" in jobs else 0
+        )
         total_jobs = len(jobs) if not jobs.empty else 0
         st.metric(
             label="Job Success Rate",
-            value=f"{(successful_jobs/total_jobs*100):.1f}%" if total_jobs > 0 else "N/A"
+            value=f"{(successful_jobs/total_jobs*100):.1f}%" if total_jobs > 0 else "N/A",
         )
 
     # Charts
@@ -290,18 +324,25 @@ def show_overview():
 
     with col1:
         st.subheader("Disclosure Types")
-        if not disclosures.empty and 'transaction_type' in disclosures:
-            type_counts = disclosures['transaction_type'].value_counts()
-            fig = px.pie(values=type_counts.values, names=type_counts.index, title="Transaction Types")
+        if not disclosures.empty and "transaction_type" in disclosures:
+            type_counts = disclosures["transaction_type"].value_counts()
+            fig = px.pie(
+                values=type_counts.values, names=type_counts.index, title="Transaction Types"
+            )
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No disclosure data available")
 
     with col2:
         st.subheader("Top Traded Tickers")
-        if not disclosures.empty and 'ticker_symbol' in disclosures:
-            ticker_counts = disclosures['ticker_symbol'].value_counts().head(10)
-            fig = px.bar(x=ticker_counts.values, y=ticker_counts.index, orientation='h', title="Most Traded Stocks")
+        if not disclosures.empty and "ticker_symbol" in disclosures:
+            ticker_counts = disclosures["ticker_symbol"].value_counts().head(10)
+            fig = px.bar(
+                x=ticker_counts.values,
+                y=ticker_counts.index,
+                orientation="h",
+                title="Most Traded Stocks",
+            )
             st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No ticker data available")
@@ -319,26 +360,26 @@ def show_politicians():
         with col1:
             party_filter = st.multiselect(
                 "Party",
-                options=politicians['party'].dropna().unique() if 'party' in politicians else [],
-                default=[]
+                options=politicians["party"].dropna().unique() if "party" in politicians else [],
+                default=[],
             )
         with col2:
             state_filter = st.multiselect(
                 "State",
-                options=politicians['state'].dropna().unique() if 'state' in politicians else [],
-                default=[]
+                options=politicians["state"].dropna().unique() if "state" in politicians else [],
+                default=[],
             )
         with col3:
             active_only = st.checkbox("Active Only", value=True)
 
         # Apply filters
         filtered = politicians.copy()
-        if party_filter and 'party' in filtered:
-            filtered = filtered[filtered['party'].isin(party_filter)]
-        if state_filter and 'state' in filtered:
-            filtered = filtered[filtered['state'].isin(state_filter)]
-        if active_only and 'is_active' in filtered:
-            filtered = filtered[filtered['is_active'] == True]
+        if party_filter and "party" in filtered:
+            filtered = filtered[filtered["party"].isin(party_filter)]
+        if state_filter and "state" in filtered:
+            filtered = filtered[filtered["state"].isin(state_filter)]
+        if active_only and "is_active" in filtered:
+            filtered = filtered[filtered["is_active"] == True]
 
         # Display data
         st.dataframe(filtered, use_container_width=True)
@@ -346,14 +387,18 @@ def show_politicians():
         # Stats
         col1, col2 = st.columns(2)
         with col1:
-            if 'party' in filtered:
-                party_dist = filtered['party'].value_counts()
-                fig = px.pie(values=party_dist.values, names=party_dist.index, title="Party Distribution")
+            if "party" in filtered:
+                party_dist = filtered["party"].value_counts()
+                fig = px.pie(
+                    values=party_dist.values, names=party_dist.index, title="Party Distribution"
+                )
                 st.plotly_chart(fig, use_container_width=True)
         with col2:
-            if 'state' in filtered:
-                state_dist = filtered['state'].value_counts().head(10)
-                fig = px.bar(x=state_dist.values, y=state_dist.index, orientation='h', title="Top States")
+            if "state" in filtered:
+                state_dist = filtered["state"].value_counts().head(10)
+                fig = px.bar(
+                    x=state_dist.values, y=state_dist.index, orientation="h", title="Top States"
+                )
                 st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("No politician data available")
@@ -367,32 +412,38 @@ def show_disclosures():
 
     if not disclosures.empty:
         # Convert dates
-        if 'disclosure_date' in disclosures:
-            disclosures['disclosure_date'] = pd.to_datetime(disclosures['disclosure_date'])
+        if "disclosure_date" in disclosures:
+            disclosures["disclosure_date"] = pd.to_datetime(disclosures["disclosure_date"])
 
         # Filters
         col1, col2, col3 = st.columns(3)
         with col1:
             ticker_filter = st.text_input("Ticker Symbol", "").upper()
         with col2:
-            transaction_types = disclosures['transaction_type'].dropna().unique() if 'transaction_type' in disclosures else []
+            transaction_types = (
+                disclosures["transaction_type"].dropna().unique()
+                if "transaction_type" in disclosures
+                else []
+            )
             transaction_filter = st.selectbox("Transaction Type", ["All"] + list(transaction_types))
         with col3:
             date_range = st.date_input(
                 "Date Range",
                 value=(datetime.now() - timedelta(days=30), datetime.now()),
-                max_value=datetime.now()
+                max_value=datetime.now(),
             )
 
         # Apply filters
         filtered = disclosures.copy()
-        if ticker_filter and 'ticker_symbol' in filtered:
-            filtered = filtered[filtered['ticker_symbol'].str.contains(ticker_filter, na=False)]
-        if transaction_filter != "All" and 'transaction_type' in filtered:
-            filtered = filtered[filtered['transaction_type'] == transaction_filter]
-        if len(date_range) == 2 and 'disclosure_date' in filtered:
-            filtered = filtered[(filtered['disclosure_date'] >= pd.Timestamp(date_range[0])) &
-                              (filtered['disclosure_date'] <= pd.Timestamp(date_range[1]))]
+        if ticker_filter and "ticker_symbol" in filtered:
+            filtered = filtered[filtered["ticker_symbol"].str.contains(ticker_filter, na=False)]
+        if transaction_filter != "All" and "transaction_type" in filtered:
+            filtered = filtered[filtered["transaction_type"] == transaction_filter]
+        if len(date_range) == 2 and "disclosure_date" in filtered:
+            filtered = filtered[
+                (filtered["disclosure_date"] >= pd.Timestamp(date_range[0]))
+                & (filtered["disclosure_date"] <= pd.Timestamp(date_range[1]))
+            ]
 
         # Display data
         st.dataframe(filtered, use_container_width=True)
@@ -402,17 +453,27 @@ def show_disclosures():
             col1, col2 = st.columns(2)
             with col1:
                 # Volume over time
-                if 'disclosure_date' in filtered and 'amount' in filtered:
-                    daily_volume = filtered.groupby(filtered['disclosure_date'].dt.date)['amount'].sum()
-                    fig = px.line(x=daily_volume.index, y=daily_volume.values, title="Trading Volume Over Time")
+                if "disclosure_date" in filtered and "amount" in filtered:
+                    daily_volume = filtered.groupby(filtered["disclosure_date"].dt.date)[
+                        "amount"
+                    ].sum()
+                    fig = px.line(
+                        x=daily_volume.index,
+                        y=daily_volume.values,
+                        title="Trading Volume Over Time",
+                    )
                     st.plotly_chart(fig, use_container_width=True)
 
             with col2:
                 # Top politicians by trading
-                if 'politician_name' in filtered:
-                    top_traders = filtered['politician_name'].value_counts().head(10)
-                    fig = px.bar(x=top_traders.values, y=top_traders.index, orientation='h',
-                               title="Most Active Traders")
+                if "politician_name" in filtered:
+                    top_traders = filtered["politician_name"].value_counts().head(10)
+                    fig = px.bar(
+                        x=top_traders.values,
+                        y=top_traders.index,
+                        orientation="h",
+                        title="Most Active Traders",
+                    )
                     st.plotly_chart(fig, use_container_width=True)
     else:
         st.warning("No disclosure data available")
@@ -428,11 +489,15 @@ def show_predictions():
         st.dataframe(predictions, use_container_width=True)
 
         # Add prediction analysis charts if we have data
-        if 'confidence' in predictions:
-            fig = px.histogram(predictions, x='confidence', title="Prediction Confidence Distribution")
+        if "confidence" in predictions:
+            fig = px.histogram(
+                predictions, x="confidence", title="Prediction Confidence Distribution"
+            )
             st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("No ML predictions available yet. The ML pipeline will generate predictions once sufficient data is collected.")
+        st.info(
+            "No ML predictions available yet. The ML pipeline will generate predictions once sufficient data is collected."
+        )
 
 
 def show_jobs():
@@ -445,34 +510,36 @@ def show_jobs():
         # Status overview
         col1, col2, col3 = st.columns(3)
 
-        status_counts = jobs['status'].value_counts() if 'status' in jobs else pd.Series()
+        status_counts = jobs["status"].value_counts() if "status" in jobs else pd.Series()
 
         with col1:
-            st.metric("Completed", status_counts.get('completed', 0))
+            st.metric("Completed", status_counts.get("completed", 0))
         with col2:
-            st.metric("Running", status_counts.get('running', 0))
+            st.metric("Running", status_counts.get("running", 0))
         with col3:
-            st.metric("Failed", status_counts.get('failed', 0))
+            st.metric("Failed", status_counts.get("failed", 0))
 
         # Jobs table
         st.dataframe(jobs, use_container_width=True)
 
         # Success rate over time
-        if 'created_at' in jobs:
-            jobs['created_at'] = pd.to_datetime(jobs['created_at'])
-            jobs['date'] = jobs['created_at'].dt.date
+        if "created_at" in jobs:
+            jobs["created_at"] = pd.to_datetime(jobs["created_at"])
+            jobs["date"] = jobs["created_at"].dt.date
 
-            daily_stats = jobs.groupby(['date', 'status']).size().unstack(fill_value=0)
+            daily_stats = jobs.groupby(["date", "status"]).size().unstack(fill_value=0)
             fig = go.Figure()
 
             for status in daily_stats.columns:
-                fig.add_trace(go.Scatter(
-                    x=daily_stats.index,
-                    y=daily_stats[status],
-                    mode='lines+markers',
-                    name=status,
-                    stackgroup='one'
-                ))
+                fig.add_trace(
+                    go.Scatter(
+                        x=daily_stats.index,
+                        y=daily_stats[status],
+                        mode="lines+markers",
+                        name=status,
+                        stackgroup="one",
+                    )
+                )
 
             fig.update_layout(title="Job Status Over Time", xaxis_title="Date", yaxis_title="Count")
             st.plotly_chart(fig, use_container_width=True)
@@ -503,8 +570,8 @@ def show_system_health():
     with col2:
         # Check data freshness
         disclosures = get_disclosures_data()
-        if not disclosures.empty and 'created_at' in disclosures:
-            latest = pd.to_datetime(disclosures['created_at']).max()
+        if not disclosures.empty and "created_at" in disclosures:
+            latest = pd.to_datetime(disclosures["created_at"]).max()
             hours_ago = (datetime.now() - latest).total_seconds() / 3600
             if hours_ago < 24:
                 st.success(f"✅ Data: Fresh ({hours_ago:.1f}h old)")
@@ -516,9 +583,9 @@ def show_system_health():
     with col3:
         # Check job health
         jobs = get_jobs_data()
-        if not jobs.empty and 'status' in jobs:
+        if not jobs.empty and "status" in jobs:
             recent_jobs = jobs.head(10)
-            success_rate = (recent_jobs['status'] == 'completed').mean() * 100
+            success_rate = (recent_jobs["status"] == "completed").mean() * 100
             if success_rate > 80:
                 st.success(f"✅ Jobs: {success_rate:.0f}% success")
             elif success_rate > 50:
@@ -541,8 +608,8 @@ def show_system_health():
             len(politicians),
             len(disclosures),
             len(predictions),
-            len(jobs) if not jobs.empty else 0
-        ]
+            len(jobs) if not jobs.empty else 0,
+        ],
     }
 
     stats_df = pd.DataFrame(stats_data)

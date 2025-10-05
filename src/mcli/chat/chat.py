@@ -7,6 +7,7 @@ import requests
 # Optional ollama import - gracefully handle if not installed
 try:
     import ollama
+
     OLLAMA_AVAILABLE = True
 except ImportError:
     OLLAMA_AVAILABLE = False
@@ -937,8 +938,8 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                     console.print("[yellow]For local model support, install ollama:[/yellow]")
                     console.print("  pip install ollama")
                     console.print("\n[yellow]Or switch to OpenAI by configuring:[/yellow]")
-                    console.print("  provider = \"openai\"")
-                    console.print("  openai_api_key = \"your-key-here\"")
+                    console.print('  provider = "openai"')
+                    console.print('  openai_api_key = "your-key-here"')
                     return
 
                 # Use Ollama SDK for local model inference

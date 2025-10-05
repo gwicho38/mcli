@@ -74,7 +74,9 @@ def generate_mock_features(n_samples: int = 500, n_features: int = 150) -> pd.Da
             )
         else:
             # Truncate if we have too many features
-            all_features = np.concatenate([tech_features, pol_features, ensemble_features, regime_features])
+            all_features = np.concatenate(
+                [tech_features, pol_features, ensemble_features, regime_features]
+            )
             sample_features = all_features[:n_features]
         features.append(sample_features)
 

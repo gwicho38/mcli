@@ -5,6 +5,7 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 from pydantic import BaseModel, Field
 
+
 # Model schemas
 class ModelCreate(BaseModel):
     name: str
@@ -13,10 +14,12 @@ class ModelCreate(BaseModel):
     description: Optional[str] = None
     hyperparameters: Dict[str, Any] = {}
 
+
 class ModelUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     tags: Optional[List[str]] = None
+
 
 class ModelResponse(BaseModel):
     id: UUID
@@ -30,6 +33,7 @@ class ModelResponse(BaseModel):
     class Config:
         orm_mode = True
 
+
 class ModelMetrics(BaseModel):
     model_id: UUID
     train_accuracy: Optional[float]
@@ -40,16 +44,19 @@ class ModelMetrics(BaseModel):
     test_loss: Optional[float]
     additional_metrics: Dict[str, Any]
 
+
 # Prediction schemas
 class PredictionRequest(BaseModel):
     ticker: str
     features: Dict[str, float]
     model_id: Optional[UUID] = None
 
+
 class BatchPredictionRequest(BaseModel):
     tickers: List[PredictionRequest]
     model_id: Optional[UUID] = None
     horizon: int = 1
+
 
 class PredictionResponse(BaseModel):
     id: UUID

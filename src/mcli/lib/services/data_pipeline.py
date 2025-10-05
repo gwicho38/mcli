@@ -186,7 +186,9 @@ class DataProcessor:
                 # Validate
                 if self.config.enable_validation:
                     if not await self.validator.validate_trading_record(record):
-                        self.logger.warning(f"Validation failed for record: {record.get('id', 'unknown')}")
+                        self.logger.warning(
+                            f"Validation failed for record: {record.get('id', 'unknown')}"
+                        )
                         continue
 
                 # Enrich
@@ -208,7 +210,9 @@ class DataProcessor:
         self.logger.info(f"Processed {len(processed_records)}/{len(records)} trading records")
         return processed_records
 
-    async def process_supabase_sync(self, table: str, operation: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_supabase_sync(
+        self, table: str, operation: str, data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Process Supabase sync data"""
         try:
             # Validate
@@ -231,7 +235,9 @@ class DataProcessor:
             self.logger.error(f"Error processing Supabase sync: {e}")
             return {}
 
-    async def _transform_supabase_data(self, table: str, operation: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _transform_supabase_data(
+        self, table: str, operation: str, data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Transform Supabase data based on table schema"""
         transformed = data.copy()
 

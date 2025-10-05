@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MLflowConfig:
     """Configuration for MLflow tracking"""
+
     tracking_uri: str = "sqlite:///mlruns.db"
     experiment_name: str = "politician-trading-predictions"
     artifact_location: Optional[str] = None
@@ -32,13 +33,14 @@ class MLflowConfig:
             self.tags = {
                 "project": "politician-trading",
                 "framework": "pytorch",
-                "type": "stock-recommendation"
+                "type": "stock-recommendation",
             }
 
 
 @dataclass
 class ExperimentRun:
     """Container for experiment run information"""
+
     run_id: str
     experiment_id: str
     run_name: str
@@ -73,7 +75,7 @@ class ExperimentTracker:
             experiment_id = mlflow.create_experiment(
                 self.config.experiment_name,
                 artifact_location=self.config.artifact_location,
-                tags=self.config.tags
+                tags=self.config.tags,
             )
         else:
             experiment_id = experiment.experiment_id
@@ -105,7 +107,7 @@ class ExperimentTracker:
             metrics={},
             params={},
             artifacts=[],
-            start_time=datetime.now()
+            start_time=datetime.now(),
         )
 
         logger.info(f"Started MLflow run: {run_name} (ID: {run.info.run_id})")
@@ -156,11 +158,15 @@ class ExperimentTracker:
         self.current_run.artifacts.append(str(artifact_path))
         logger.debug(f"Logged artifact: {artifact_path}")
 
-    def log_model(self, model: Any, model_name: str,
-                  input_example: Optional[Union[np.ndarray, pd.DataFrame]] = None,
-                  signature: Optional[ModelSignature] = None,
-                  conda_env: Optional[Dict] = None,
-                  pip_requirements: Optional[List[str]] = None):
+    def log_model(
+        self,
+        model: Any,
+        model_name: str,
+        input_example: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+        signature: Optional[ModelSignature] = None,
+        conda_env: Optional[Dict] = None,
+        pip_requirements: Optional[List[str]] = None,
+    ):
         """Log model to current run"""
         if not self.current_run:
             raise ValueError("No active MLflow run. Call start_run() first.")
@@ -196,7 +202,7 @@ class ExperimentTracker:
                 signature=signature,
                 input_example=input_example,
                 conda_env=conda_env,
-                pip_requirements=pip_requirements
+                pip_requirements=pip_requirements,
             )
             framework = "pytorch"
         else:
@@ -207,7 +213,7 @@ class ExperimentTracker:
                 signature=signature,
                 input_example=input_example,
                 conda_env=conda_env,
-                pip_requirements=pip_requirements
+                pip_requirements=pip_requirements,
             )
             framework = "sklearn"
 
@@ -245,8 +251,10 @@ class ExperimentTracker:
         mlflow.end_run(status=status)
 
         duration = (self.current_run.end_time - self.current_run.start_time).total_seconds()
-        logger.info(f"Ended MLflow run {self.current_run.run_name} "
-                   f"(Duration: {duration:.2f}s, Status: {status})")
+        logger.info(
+            f"Ended MLflow run {self.current_run.run_name} "
+            f"(Duration: {duration:.2f}s, Status: {status})"
+        )
 
         current_run = self.current_run
         self.current_run = None
@@ -256,17 +264,17 @@ class ExperimentTracker:
         """Get run by ID"""
         return self.client.get_run(run_id)
 
-    def search_runs(self, filter_string: str = "",
-                   max_results: int = 100) -> List[mlflow.entities.Run]:
+    def search_runs(
+        self, filter_string: str = "", max_results: int = 100
+    ) -> List[mlflow.entities.Run]:
         """Search for runs in experiment"""
         return self.client.search_runs(
             experiment_ids=[self.experiment_id],
             filter_string=filter_string,
-            max_results=max_results
+            max_results=max_results,
         )
 
-    def compare_runs(self, run_ids: List[str],
-                     metrics: Optional[List[str]] = None) -> pd.DataFrame:
+    def compare_runs(self, run_ids: List[str], metrics: Optional[List[str]] = None) -> pd.DataFrame:
         """Compare multiple runs"""
         runs_data = []
 
@@ -307,15 +315,14 @@ class ModelRegistry:
         if config.registry_uri:
             mlflow.set_registry_uri(config.registry_uri)
 
-    def register_model(self, model_uri: str, model_name: str,
-                      tags: Optional[Dict[str, str]] = None) -> str:
+    def register_model(
+        self, model_uri: str, model_name: str, tags: Optional[Dict[str, str]] = None
+    ) -> str:
         """Register model in MLflow registry"""
         try:
             # Create registered model if it doesn't exist
             self.client.create_registered_model(
-                model_name,
-                tags=tags or {},
-                description=f"Model for {model_name}"
+                model_name, tags=tags or {}, description=f"Model for {model_name}"
             )
         except Exception as e:
             logger.debug(f"Model {model_name} already exists: {e}")
@@ -325,27 +332,28 @@ class ModelRegistry:
             name=model_name,
             source=model_uri,
             run_id=model_uri.split("/")[1] if "runs:/" in model_uri else None,
-            tags=tags or {}
+            tags=tags or {},
         )
 
         logger.info(f"Registered model {model_name} version {model_version.version}")
         return f"models:/{model_name}/{model_version.version}"
 
-    def transition_model_stage(self, model_name: str, version: int,
-                              stage: str, archive_existing: bool = True):
+    def transition_model_stage(
+        self, model_name: str, version: int, stage: str, archive_existing: bool = True
+    ):
         """Transition model version to new stage"""
         self.client.transition_model_version_stage(
             name=model_name,
             version=version,
             stage=stage,
-            archive_existing_versions=archive_existing
+            archive_existing_versions=archive_existing,
         )
 
         logger.info(f"Transitioned {model_name} v{version} to {stage}")
 
-    def load_model(self, model_name: str,
-                   version: Optional[int] = None,
-                   stage: Optional[str] = None) -> Any:
+    def load_model(
+        self, model_name: str, version: Optional[int] = None, stage: Optional[str] = None
+    ) -> Any:
         """Load model from registry"""
         if version:
             model_uri = f"models:/{model_name}/{version}"
@@ -362,8 +370,7 @@ class ModelRegistry:
         """Get specific model version details"""
         return self.client.get_model_version(model_name, version)
 
-    def get_latest_versions(self, model_name: str,
-                           stages: Optional[List[str]] = None):
+    def get_latest_versions(self, model_name: str, stages: Optional[List[str]] = None):
         """Get latest model versions for given stages"""
         return self.client.get_latest_versions(model_name, stages=stages)
 

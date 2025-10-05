@@ -18,15 +18,15 @@ class PoliticianRole(Enum):
     EU_MEP = "eu_parliament_member"
     EU_COMMISSIONER = "eu_commissioner"
     EU_COUNCIL_MEMBER = "eu_council_member"
-    
+
     # EU Member State Roles
     GERMAN_BUNDESTAG = "german_bundestag_member"
     FRENCH_DEPUTY = "french_national_assembly_deputy"
     ITALIAN_DEPUTY = "italian_chamber_deputy"
     ITALIAN_SENATOR = "italian_senate_member"
-    SPANISH_DEPUTY = "spanish_congress_deputy" 
+    SPANISH_DEPUTY = "spanish_congress_deputy"
     DUTCH_MP = "dutch_tweede_kamer_member"
-    
+
     # US State Roles
     TEXAS_STATE_OFFICIAL = "texas_state_official"
     NEW_YORK_STATE_OFFICIAL = "new_york_state_official"

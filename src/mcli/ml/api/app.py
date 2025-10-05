@@ -52,6 +52,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize ML models
     from mcli.ml.models import load_production_models
+
     await load_production_models()
     logger.info("ML models loaded")
 
@@ -62,10 +63,12 @@ async def lifespan(app: FastAPI):
 
     # Cleanup cache connections
     from mcli.ml.cache import close_cache
+
     await close_cache()
 
     # Cleanup database connections
     from mcli.ml.database.session import async_engine
+
     await async_engine.dispose()
 
 
@@ -109,10 +112,7 @@ def create_app() -> FastAPI:
 
     # Trusted host middleware
     if settings.is_production:
-        app.add_middleware(
-            TrustedHostMiddleware,
-            allowed_hosts=["*.mcli-ml.com", "mcli-ml.com"]
-        )
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*.mcli-ml.com", "mcli-ml.com"])
 
     # Include routers
     app.include_router(auth_router.router, prefix="/api/v1/auth", tags=["Authentication"])
@@ -130,11 +130,7 @@ def create_app() -> FastAPI:
     @app.get("/health", tags=["Health"])
     async def health_check():
         """Health check endpoint"""
-        return {
-            "status": "healthy",
-            "environment": settings.environment,
-            "version": "1.0.0"
-        }
+        return {"status": "healthy", "environment": settings.environment, "version": "1.0.0"}
 
     # Ready check endpoint
     @app.get("/ready", tags=["Health"])
@@ -154,8 +150,8 @@ def create_app() -> FastAPI:
                 content={
                     "status": "not ready",
                     "database": "healthy" if db_healthy else "unhealthy",
-                    "cache": "healthy" if cache_healthy else "unhealthy"
-                }
+                    "cache": "healthy" if cache_healthy else "unhealthy",
+                },
             )
 
     # Metrics endpoint (Prometheus format)
@@ -163,6 +159,7 @@ def create_app() -> FastAPI:
     async def metrics():
         """Prometheus metrics endpoint"""
         from mcli.ml.monitoring.metrics import get_metrics
+
         return Response(content=get_metrics(), media_type="text/plain")
 
     # Root endpoint
@@ -172,24 +169,18 @@ def create_app() -> FastAPI:
         return {
             "message": "MCLI ML System API",
             "version": "1.0.0",
-            "docs": "/docs" if settings.debug else None
+            "docs": "/docs" if settings.debug else None,
         }
 
     # Exception handlers
     @app.exception_handler(404)
     async def not_found_handler(request: Request, exc):
-        return JSONResponse(
-            status_code=404,
-            content={"detail": "Resource not found"}
-        )
+        return JSONResponse(status_code=404, content={"detail": "Resource not found"})
 
     @app.exception_handler(500)
     async def internal_server_error_handler(request: Request, exc):
         logger.error(f"Internal server error: {exc}")
-        return JSONResponse(
-            status_code=500,
-            content={"detail": "Internal server error"}
-        )
+        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
     return app
 

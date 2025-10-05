@@ -11,7 +11,10 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from mcli.ml.config import settings, create_settings
 from mcli.ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig
 from mcli.ml.backtesting.backtest_engine import BacktestEngine, BacktestConfig
-from mcli.ml.optimization.portfolio_optimizer import AdvancedPortfolioOptimizer, OptimizationObjective
+from mcli.ml.optimization.portfolio_optimizer import (
+    AdvancedPortfolioOptimizer,
+    OptimizationObjective,
+)
 from mcli.ml.monitoring.drift_detection import ModelMonitor
 from mcli.ml.experimentation.ab_testing import ABTestingFramework
 
@@ -19,7 +22,7 @@ app = typer.Typer(
     name="mcli-ml",
     help="ML system for politician trading analysis and stock recommendations",
     no_args_is_help=True,
-    rich_markup_mode="rich"
+    rich_markup_mode="rich",
 )
 
 console = Console()
@@ -33,7 +36,9 @@ def train(
     batch_size: Optional[int] = typer.Option(None, "--batch-size", help="Training batch size"),
     learning_rate: Optional[float] = typer.Option(None, "--lr", help="Learning rate"),
     device: Optional[str] = typer.Option(None, "--device", help="Device (cpu, cuda, auto)"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Validate configuration without training"),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Validate configuration without training"
+    ),
 ):
     """Train ML models for stock recommendations"""
 
@@ -82,12 +87,12 @@ def train(
                 console.print(f"Model saved to: {result.get('model_path', 'Unknown')}")
 
                 # Display metrics if available
-                if 'metrics' in result:
+                if "metrics" in result:
                     metrics_table = Table(title="Training Metrics")
                     metrics_table.add_column("Metric", style="cyan")
                     metrics_table.add_column("Value", style="magenta")
 
-                    for metric, value in result['metrics'].items():
+                    for metric, value in result["metrics"].items():
                         metrics_table.add_row(metric, str(value))
 
                     console.print(metrics_table)
@@ -146,7 +151,7 @@ def backtest(
     config = BacktestConfig(
         initial_capital=initial_capital,
         commission=commission,
-        benchmark='SPY',
+        benchmark="SPY",
     )
 
     async def run_backtest():
@@ -162,7 +167,9 @@ def backtest(
             try:
                 # In a real implementation, you'd load actual price data
                 # For now, we'll just validate the setup
-                console.print("[yellow]Note: This is a demo setup. Connect to actual data sources for real backtesting.[/yellow]")
+                console.print(
+                    "[yellow]Note: This is a demo setup. Connect to actual data sources for real backtesting.[/yellow]"
+                )
 
                 progress.update(task, description="Backtest completed!")
                 console.print("[green]✓ Backtest completed successfully![/green]")
@@ -204,7 +211,9 @@ def optimize(
         obj_enum = OptimizationObjective(objective)
     except ValueError:
         console.print(f"[red]Invalid objective: {objective}[/red]")
-        console.print(f"Valid objectives: {', '.join([obj.value for obj in OptimizationObjective])}")
+        console.print(
+            f"Valid objectives: {', '.join([obj.value for obj in OptimizationObjective])}"
+        )
         raise typer.Exit(1)
 
     async def run_optimization():
@@ -217,7 +226,9 @@ def optimize(
 
             try:
                 # In a real implementation, you'd fetch actual returns and covariance
-                console.print("[yellow]Note: Using sample data for demo. Connect to data sources for real optimization.[/yellow]")
+                console.print(
+                    "[yellow]Note: Using sample data for demo. Connect to data sources for real optimization.[/yellow]"
+                )
 
                 progress.update(task, description="Optimization completed!")
                 console.print("[green]✓ Portfolio optimization completed![/green]")
@@ -228,7 +239,7 @@ def optimize(
                 allocation_table.add_column("Weight", style="magenta")
 
                 # Sample allocation
-                weights = [0.35, 0.30, 0.25, 0.10][:len(tickers)]
+                weights = [0.35, 0.30, 0.25, 0.10][: len(tickers)]
                 for ticker, weight in zip(tickers, weights):
                     allocation_table.add_row(ticker, f"{weight:.1%}")
 
@@ -267,7 +278,9 @@ def monitor(
     monitor = ModelMonitor(model_name)
 
     if check_drift:
-        console.print("[yellow]Note: Connect to real data sources for actual drift detection.[/yellow]")
+        console.print(
+            "[yellow]Note: Connect to real data sources for actual drift detection.[/yellow]"
+        )
         console.print("[green]✓ No significant drift detected[/green]")
 
     if generate_report:
@@ -311,16 +324,15 @@ def experiment(
 
         for exp in experiments:
             exp_table.add_row(
-                exp["id"][:8] + "...",
-                exp["name"],
-                exp["status"],
-                str(exp["variants"])
+                exp["id"][:8] + "...", exp["name"], exp["status"], str(exp["variants"])
             )
 
         console.print(exp_table)
 
     else:
-        console.print(f"[yellow]Action '{action}' would be executed for experiment {experiment_id or 'N/A'}[/yellow]")
+        console.print(
+            f"[yellow]Action '{action}' would be executed for experiment {experiment_id or 'N/A'}[/yellow]"
+        )
 
 
 @app.command()

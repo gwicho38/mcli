@@ -25,7 +25,7 @@ async def list_models(
     limit: int = Query(100, le=1000),
     status: Optional[ModelStatus] = None,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """List all available models"""
     query = db.query(Model)
@@ -42,16 +42,13 @@ async def list_models(
 async def get_model(
     model_id: UUID,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get specific model details"""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
 
     return ModelResponse.from_orm(model)
 
@@ -60,13 +57,11 @@ async def get_model(
 async def create_model(
     model_data: ModelCreate,
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Create a new model"""
     model = Model(
-        **model_data.dict(),
-        created_by=current_user.username,
-        status=ModelStatus.TRAINING
+        **model_data.dict(), created_by=current_user.username, status=ModelStatus.TRAINING
     )
 
     db.add(model)
@@ -84,16 +79,13 @@ async def update_model(
     model_id: UUID,
     updates: ModelUpdate,
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update model metadata"""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
 
     for field, value in updates.dict(exclude_unset=True).items():
         setattr(model, field, value)
@@ -110,21 +102,18 @@ async def deploy_model(
     model_id: UUID,
     endpoint: Optional[str] = None,
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Deploy model to production"""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
 
     if model.status != ModelStatus.TRAINED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Model must be trained before deployment"
+            detail="Model must be trained before deployment",
         )
 
     # Deploy model (in real implementation, this would deploy to serving infrastructure)
@@ -134,26 +123,20 @@ async def deploy_model(
 
     db.commit()
 
-    return {
-        "message": "Model deployed successfully",
-        "endpoint": model.deployment_endpoint
-    }
+    return {"message": "Model deployed successfully", "endpoint": model.deployment_endpoint}
 
 
 @router.post("/{model_id}/archive")
 async def archive_model(
     model_id: UUID,
     current_user: User = Depends(require_role(UserRole.ADMIN)),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Archive a model"""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
 
     model.status = ModelStatus.ARCHIVED
     db.commit()
@@ -166,16 +149,13 @@ async def archive_model(
 async def get_model_metrics(
     model_id: UUID,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Get model performance metrics"""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
 
     return ModelMetrics(
         model_id=model.id,
@@ -185,7 +165,7 @@ async def get_model_metrics(
         train_loss=model.train_loss,
         val_loss=model.val_loss,
         test_loss=model.test_loss,
-        additional_metrics=model.metrics or {}
+        additional_metrics=model.metrics or {},
     )
 
 
@@ -194,16 +174,13 @@ async def retrain_model(
     model_id: UUID,
     hyperparameters: Optional[dict] = None,
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Retrain an existing model"""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
 
     # Update hyperparameters if provided
     if hyperparameters:
@@ -223,16 +200,13 @@ async def upload_model_artifact(
     model_id: UUID,
     file: UploadFile = File(...),
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Upload model artifact file"""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
 
     # Save file (in real implementation, save to S3 or similar)
     file_path = f"/models/{model_id}/{file.filename}"
@@ -241,31 +215,25 @@ async def upload_model_artifact(
     model.model_path = file_path
     db.commit()
 
-    return {
-        "message": "Model artifact uploaded successfully",
-        "path": file_path
-    }
+    return {"message": "Model artifact uploaded successfully", "path": file_path}
 
 
 @router.delete("/{model_id}")
 async def delete_model(
     model_id: UUID,
     current_user: User = Depends(require_role(UserRole.ADMIN)),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Delete a model"""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
 
     if model.status == ModelStatus.DEPLOYED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete deployed model. Archive it first."
+            detail="Cannot delete deployed model. Archive it first.",
         )
 
     db.delete(model)
@@ -278,25 +246,18 @@ async def delete_model(
 async def download_model(
     model_id: UUID,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Download model artifact"""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Model not found")
 
     if not model.model_path:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Model artifact not available"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Model artifact not available"
         )
 
     # In real implementation, return file from storage
-    return {
-        "download_url": f"https://storage.mcli-ml.com{model.model_path}",
-        "expires_in": 3600
-    }
+    return {"download_url": f"https://storage.mcli-ml.com{model.model_path}", "expires_in": 3600}

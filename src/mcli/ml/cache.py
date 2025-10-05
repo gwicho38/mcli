@@ -45,8 +45,8 @@ class CacheManager:
                     port=settings.redis.port,
                     db=settings.redis.db,
                     password=settings.redis.password,
-                    max_connections=settings.redis.max_connections
-                )
+                    max_connections=settings.redis.max_connections,
+                ),
             )
 
             # Test connection
@@ -68,7 +68,7 @@ class CacheManager:
                 settings.redis.url,
                 encoding="utf-8",
                 decode_responses=False,
-                max_connections=settings.redis.max_connections
+                max_connections=settings.redis.max_connections,
             )
 
             # Test connection
@@ -88,7 +88,7 @@ class CacheManager:
         try:
             # Try JSON first (for simple types)
             if isinstance(value, (dict, list, str, int, float, bool, type(None))):
-                return json.dumps(value).encode('utf-8')
+                return json.dumps(value).encode("utf-8")
         except:
             pass
 
@@ -102,7 +102,7 @@ class CacheManager:
 
         # Try JSON first
         try:
-            return json.loads(value.decode('utf-8'))
+            return json.loads(value.decode("utf-8"))
         except:
             pass
 
@@ -272,10 +272,7 @@ def cached(expire: int = 3600, key_prefix: str = None):
                 key_parts.insert(0, key_prefix)
 
             # Add function arguments to key
-            key_data = {
-                'args': args,
-                'kwargs': kwargs
-            }
+            key_data = {"args": args, "kwargs": kwargs}
             key_hash = hashlib.md5(
                 json.dumps(key_data, sort_keys=True, default=str).encode()
             ).hexdigest()
@@ -306,10 +303,7 @@ def cached(expire: int = 3600, key_prefix: str = None):
             if key_prefix:
                 key_parts.insert(0, key_prefix)
 
-            key_data = {
-                'args': args,
-                'kwargs': kwargs
-            }
+            key_data = {"args": args, "kwargs": kwargs}
             key_hash = hashlib.md5(
                 json.dumps(key_data, sort_keys=True, default=str).encode()
             ).hexdigest()

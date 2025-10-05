@@ -203,9 +203,7 @@ class PoliticianTradingMonitor:
             # Get total counts
             politicians_result = self.db.client.table("politicians").select("id").execute()
 
-            disclosures_result = (
-                self.db.client.table("trading_disclosures").select("id").execute()
-            )
+            disclosures_result = self.db.client.table("trading_disclosures").select("id").execute()
 
             jobs_result = self.db.client.table("data_pull_jobs").select("id").execute()
 
@@ -218,10 +216,7 @@ class PoliticianTradingMonitor:
             )
 
             eu_politicians = (
-                self.db.client.table("politicians")
-                .select("id")
-                .eq("role", "eu_mep")
-                .execute()
+                self.db.client.table("politicians").select("id").eq("role", "eu_mep").execute()
             )
 
             # Get recent activity (last 30 days)
@@ -253,7 +248,9 @@ class PoliticianTradingMonitor:
                     "eu_total": len(eu_politicians.data) if eu_politicians.data else 0,
                 },
                 "recent_activity": {
-                    "disclosures_last_30_days": len(recent_disclosures.data) if recent_disclosures.data else 0
+                    "disclosures_last_30_days": (
+                        len(recent_disclosures.data) if recent_disclosures.data else 0
+                    )
                 },
                 "top_assets": top_assets.data if top_assets.data else [],
                 "generated_at": datetime.utcnow().isoformat(),
@@ -369,8 +366,11 @@ class PoliticianTradingMonitor:
 
             # Group by asset ticker to count occurrences
             from collections import Counter
-            asset_counts = Counter(asset.get("asset_ticker", "Unknown") for asset in stats["top_assets"])
-            
+
+            asset_counts = Counter(
+                asset.get("asset_ticker", "Unknown") for asset in stats["top_assets"]
+            )
+
             for asset_ticker, count in asset_counts.most_common(5):  # Top 5
                 assets_table.add_row(asset_ticker)
 

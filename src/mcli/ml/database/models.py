@@ -6,9 +6,22 @@ from enum import Enum as PyEnum
 from uuid import uuid4
 
 from sqlalchemy import (
-    Column, String, Integer, Float, DateTime, Boolean, Text,
-    ForeignKey, JSON, Enum, Index, UniqueConstraint, CheckConstraint,
-    Table, event, BigInteger
+    Column,
+    String,
+    Integer,
+    Float,
+    DateTime,
+    Boolean,
+    Text,
+    ForeignKey,
+    JSON,
+    Enum,
+    Index,
+    UniqueConstraint,
+    CheckConstraint,
+    Table,
+    event,
+    BigInteger,
 )
 from sqlalchemy.orm import declarative_base, relationship, validates
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
@@ -21,26 +34,27 @@ Base = declarative_base()
 
 # Association tables for many-to-many relationships
 portfolio_stocks = Table(
-    'portfolio_stocks',
+    "portfolio_stocks",
     Base.metadata,
-    Column('portfolio_id', UUID(as_uuid=True), ForeignKey('portfolios.id')),
-    Column('stock_ticker', String, ForeignKey('stock_data.ticker')),
-    Column('weight', Float, nullable=False),
-    Column('shares', Integer, default=0),
-    Column('entry_price', Float),
-    Column('created_at', DateTime, default=datetime.utcnow),
+    Column("portfolio_id", UUID(as_uuid=True), ForeignKey("portfolios.id")),
+    Column("stock_ticker", String, ForeignKey("stock_data.ticker")),
+    Column("weight", Float, nullable=False),
+    Column("shares", Integer, default=0),
+    Column("entry_price", Float),
+    Column("created_at", DateTime, default=datetime.utcnow),
 )
 
 experiment_models = Table(
-    'experiment_models',
+    "experiment_models",
     Base.metadata,
-    Column('experiment_id', UUID(as_uuid=True), ForeignKey('experiments.id')),
-    Column('model_id', UUID(as_uuid=True), ForeignKey('models.id')),
+    Column("experiment_id", UUID(as_uuid=True), ForeignKey("experiments.id")),
+    Column("model_id", UUID(as_uuid=True), ForeignKey("models.id")),
 )
 
 
 class UserRole(PyEnum):
     """User role enumeration"""
+
     ADMIN = "admin"
     USER = "user"
     ANALYST = "analyst"
@@ -49,6 +63,7 @@ class UserRole(PyEnum):
 
 class ModelStatus(PyEnum):
     """Model status enumeration"""
+
     TRAINING = "training"
     TRAINED = "trained"
     DEPLOYED = "deployed"
@@ -58,6 +73,7 @@ class ModelStatus(PyEnum):
 
 class TradeType(PyEnum):
     """Trade type enumeration"""
+
     BUY = "buy"
     SELL = "sell"
     OPTION = "option"
@@ -65,6 +81,7 @@ class TradeType(PyEnum):
 
 class AlertType(PyEnum):
     """Alert type enumeration"""
+
     POLITICIAN_TRADE = "politician_trade"
     PRICE_MOVEMENT = "price_movement"
     VOLUME_SPIKE = "volume_spike"
@@ -74,7 +91,8 @@ class AlertType(PyEnum):
 
 class User(Base):
     """User model for authentication and authorization"""
-    __tablename__ = 'users'
+
+    __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     username = Column(String(50), unique=True, nullable=False, index=True)
@@ -102,22 +120,26 @@ class User(Base):
 
     # Constraints
     __table_args__ = (
-        CheckConstraint("email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'", name='valid_email'),
-        Index('idx_user_active', 'is_active'),
+        CheckConstraint(
+            "email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}$'", name="valid_email"
+        ),
+        Index("idx_user_active", "is_active"),
     )
 
-    @validates('email')
+    @validates("email")
     def validate_email(self, key, email):
         """Validate email format"""
         import re
-        if not re.match(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$', email):
+
+        if not re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$", email):
             raise ValueError("Invalid email format")
         return email.lower()
 
 
 class Politician(Base):
     """Politician information"""
-    __tablename__ = 'politicians'
+
+    __tablename__ = "politicians"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(100), nullable=False)
@@ -142,17 +164,18 @@ class Politician(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_politician_active', 'active'),
-        Index('idx_politician_party_state', 'party', 'state'),
+        Index("idx_politician_active", "active"),
+        Index("idx_politician_party_state", "party", "state"),
     )
 
 
 class Trade(Base):
     """Political trading records"""
-    __tablename__ = 'trades'
+
+    __tablename__ = "trades"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    politician_id = Column(UUID(as_uuid=True), ForeignKey('politicians.id'), nullable=False)
+    politician_id = Column(UUID(as_uuid=True), ForeignKey("politicians.id"), nullable=False)
 
     ticker = Column(String(10), nullable=False, index=True)
     trade_type = Column(Enum(TradeType), nullable=False)
@@ -175,10 +198,11 @@ class Trade(Base):
 
     # Indexes and constraints
     __table_args__ = (
-        Index('idx_trade_ticker_date', 'ticker', 'disclosure_date'),
-        Index('idx_trade_politician_date', 'politician_id', 'disclosure_date'),
-        UniqueConstraint('politician_id', 'ticker', 'disclosure_date', 'trade_type',
-                        name='unique_trade'),
+        Index("idx_trade_ticker_date", "ticker", "disclosure_date"),
+        Index("idx_trade_politician_date", "politician_id", "disclosure_date"),
+        UniqueConstraint(
+            "politician_id", "ticker", "disclosure_date", "trade_type", name="unique_trade"
+        ),
     )
 
     @hybrid_property
@@ -191,7 +215,8 @@ class Trade(Base):
 
 class StockData(Base):
     """Stock market data"""
-    __tablename__ = 'stock_data'
+
+    __tablename__ = "stock_data"
 
     ticker = Column(String(10), primary_key=True)
     company_name = Column(String(200))
@@ -234,20 +259,21 @@ class StockData(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_stock_sector_cap', 'sector', 'market_cap'),
-        Index('idx_stock_updated', 'last_updated'),
+        Index("idx_stock_sector_cap", "sector", "market_cap"),
+        Index("idx_stock_updated", "last_updated"),
     )
 
 
 class Prediction(Base):
     """Model predictions"""
-    __tablename__ = 'predictions'
+
+    __tablename__ = "predictions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    model_id = Column(UUID(as_uuid=True), ForeignKey('models.id'), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'))
+    model_id = Column(UUID(as_uuid=True), ForeignKey("models.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
 
-    ticker = Column(String(10), ForeignKey('stock_data.ticker'), nullable=False, index=True)
+    ticker = Column(String(10), ForeignKey("stock_data.ticker"), nullable=False, index=True)
 
     # Prediction details
     prediction_date = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
@@ -281,18 +307,19 @@ class Prediction(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_prediction_date_ticker', 'prediction_date', 'ticker'),
-        Index('idx_prediction_model_date', 'model_id', 'prediction_date'),
-        Index('idx_prediction_confidence', 'confidence_score'),
+        Index("idx_prediction_date_ticker", "prediction_date", "ticker"),
+        Index("idx_prediction_model_date", "model_id", "prediction_date"),
+        Index("idx_prediction_confidence", "confidence_score"),
     )
 
 
 class Portfolio(Base):
     """User portfolios"""
-    __tablename__ = 'portfolios'
+
+    __tablename__ = "portfolios"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
     name = Column(String(100), nullable=False)
     description = Column(Text)
@@ -326,28 +353,29 @@ class Portfolio(Base):
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint('user_id', 'name', name='unique_user_portfolio'),
-        Index('idx_portfolio_active', 'is_active'),
+        UniqueConstraint("user_id", "name", name="unique_user_portfolio"),
+        Index("idx_portfolio_active", "is_active"),
     )
 
 
 class Alert(Base):
     """User alerts and notifications"""
-    __tablename__ = 'alerts'
+
+    __tablename__ = "alerts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
     alert_type = Column(Enum(AlertType), nullable=False, index=True)
-    severity = Column(String(10), default='info')  # info, warning, critical
+    severity = Column(String(10), default="info")  # info, warning, critical
 
     title = Column(String(200), nullable=False)
     message = Column(Text, nullable=False)
 
     # Related entities
     ticker = Column(String(10), index=True)
-    politician_id = Column(UUID(as_uuid=True), ForeignKey('politicians.id'))
-    portfolio_id = Column(UUID(as_uuid=True), ForeignKey('portfolios.id'))
+    politician_id = Column(UUID(as_uuid=True), ForeignKey("politicians.id"))
+    portfolio_id = Column(UUID(as_uuid=True), ForeignKey("portfolios.id"))
 
     is_read = Column(Boolean, default=False, index=True)
     is_sent = Column(Boolean, default=False)
@@ -363,18 +391,19 @@ class Alert(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_alert_user_unread', 'user_id', 'is_read'),
-        Index('idx_alert_created', 'created_at'),
+        Index("idx_alert_user_unread", "user_id", "is_read"),
+        Index("idx_alert_created", "created_at"),
     )
 
 
 class BacktestResult(Base):
     """Backtesting results"""
-    __tablename__ = 'backtest_results'
+
+    __tablename__ = "backtest_results"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    model_id = Column(UUID(as_uuid=True), ForeignKey('models.id'), nullable=False)
-    portfolio_id = Column(UUID(as_uuid=True), ForeignKey('portfolios.id'))
+    model_id = Column(UUID(as_uuid=True), ForeignKey("models.id"), nullable=False)
+    portfolio_id = Column(UUID(as_uuid=True), ForeignKey("portfolios.id"))
 
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
@@ -414,14 +443,15 @@ class BacktestResult(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_backtest_model', 'model_id'),
-        Index('idx_backtest_sharpe', 'sharpe_ratio'),
+        Index("idx_backtest_model", "model_id"),
+        Index("idx_backtest_sharpe", "sharpe_ratio"),
     )
 
 
 class Experiment(Base):
     """ML experiments tracking"""
-    __tablename__ = 'experiments'
+
+    __tablename__ = "experiments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(100), nullable=False, index=True)
@@ -440,7 +470,7 @@ class Experiment(Base):
     test_metrics = Column(JSON)
 
     # Status
-    status = Column(String(20), default='running')  # running, completed, failed
+    status = Column(String(20), default="running")  # running, completed, failed
 
     # Timing
     started_at = Column(DateTime, default=datetime.utcnow)
@@ -461,21 +491,22 @@ class Experiment(Base):
 
     # Indexes
     __table_args__ = (
-        Index('idx_experiment_status', 'status'),
-        Index('idx_experiment_created', 'created_at'),
+        Index("idx_experiment_status", "status"),
+        Index("idx_experiment_created", "created_at"),
     )
 
 
 class Model(Base):
     """ML models registry"""
-    __tablename__ = 'models'
+
+    __tablename__ = "models"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(100), nullable=False, index=True)
     version = Column(String(20), nullable=False)
 
     model_type = Column(String(50), nullable=False)  # ensemble, lstm, transformer, etc.
-    framework = Column(String(20), default='pytorch')  # pytorch, tensorflow, sklearn
+    framework = Column(String(20), default="pytorch")  # pytorch, tensorflow, sklearn
 
     # MLflow integration
     mlflow_model_uri = Column(String(500))
@@ -541,18 +572,19 @@ class Model(Base):
 
     # Constraints and indexes
     __table_args__ = (
-        UniqueConstraint('name', 'version', name='unique_model_version'),
-        Index('idx_model_status', 'status'),
-        Index('idx_model_created', 'created_at'),
+        UniqueConstraint("name", "version", name="unique_model_version"),
+        Index("idx_model_status", "status"),
+        Index("idx_model_created", "created_at"),
     )
 
 
 class FeatureSet(Base):
     """Feature sets for models"""
-    __tablename__ = 'feature_sets'
+
+    __tablename__ = "feature_sets"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    model_id = Column(UUID(as_uuid=True), ForeignKey('models.id'), nullable=False)
+    model_id = Column(UUID(as_uuid=True), ForeignKey("models.id"), nullable=False)
 
     name = Column(String(100), nullable=False)
     version = Column(String(20), nullable=False)
@@ -580,14 +612,15 @@ class FeatureSet(Base):
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint('model_id', 'name', 'version', name='unique_feature_set'),
-        Index('idx_feature_set_model', 'model_id'),
+        UniqueConstraint("model_id", "name", "version", name="unique_feature_set"),
+        Index("idx_feature_set_model", "model_id"),
     )
 
 
 class DataVersion(Base):
     """Data versioning for DVC"""
-    __tablename__ = 'data_versions'
+
+    __tablename__ = "data_versions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
 
@@ -618,27 +651,29 @@ class DataVersion(Base):
 
     # Constraints
     __table_args__ = (
-        UniqueConstraint('dataset_name', 'version', name='unique_data_version'),
-        Index('idx_data_version_created', 'created_at'),
+        UniqueConstraint("dataset_name", "version", name="unique_data_version"),
+        Index("idx_data_version_created", "created_at"),
     )
 
 
 # Database events and triggers
-@event.listens_for(User, 'before_insert')
+@event.listens_for(User, "before_insert")
 def generate_api_key(mapper, connection, target):
     """Generate API key for new users"""
     if not target.api_key:
         import secrets
+
         target.api_key = secrets.token_urlsafe(32)
         target.api_key_created_at = datetime.utcnow()
 
 
-@event.listens_for(Portfolio, 'before_update')
+@event.listens_for(Portfolio, "before_update")
 def update_portfolio_metrics(mapper, connection, target):
     """Update portfolio performance metrics"""
     if target.current_value and target.initial_capital:
-        target.total_return = ((target.current_value - target.initial_capital) /
-                              target.initial_capital) * 100
+        target.total_return = (
+            (target.current_value - target.initial_capital) / target.initial_capital
+        ) * 100
 
 
 # Create indexes for better query performance
@@ -652,7 +687,6 @@ def create_indexes(engine):
         "CREATE INDEX IF NOT EXISTS idx_prediction_latest ON predictions(ticker, prediction_date DESC)",
         "CREATE INDEX IF NOT EXISTS idx_portfolio_performance ON portfolios(user_id, total_return DESC)",
         "CREATE INDEX IF NOT EXISTS idx_alert_priority ON alerts(user_id, is_read, severity, created_at DESC)",
-
         # Full text search indexes (PostgreSQL specific)
         "CREATE INDEX IF NOT EXISTS idx_politician_name_search ON politicians USING gin(to_tsvector('english', name))",
         "CREATE INDEX IF NOT EXISTS idx_stock_company_search ON stock_data USING gin(to_tsvector('english', company_name))",

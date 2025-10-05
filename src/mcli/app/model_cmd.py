@@ -100,7 +100,9 @@ def download(model_name: str):
 
 @model.command()
 @click.option("--model", "-m", help="Specific model to use")
-@click.option("--port", "-p", default=None, help="Port to run server on (default: from config or 51234)")
+@click.option(
+    "--port", "-p", default=None, help="Port to run server on (default: from config or 51234)"
+)
 @click.option(
     "--auto-download",
     is_flag=True,
@@ -113,6 +115,7 @@ def start(model: Optional[str], port: Optional[int], auto_download: bool):
     if port is None:
         try:
             from mcli.lib.config.config import load_config
+
             config = load_config()
             port = config.get("model", {}).get("server_port", 51234)
         except Exception:
@@ -201,13 +204,19 @@ def recommend():
 
 
 @model.command()
-@click.option("--port", "-p", default=None, help="Port where server is running (default: from config or 51234)")
+@click.option(
+    "--port",
+    "-p",
+    default=None,
+    help="Port where server is running (default: from config or 51234)",
+)
 def status(port: Optional[int]):
     """Check status of the lightweight model server."""
     # Load port from config if not specified
     if port is None:
         try:
             from mcli.lib.config.config import load_config
+
             config = load_config()
             port = config.get("model", {}).get("server_port", 51234)
         except Exception:
@@ -243,13 +252,19 @@ def status(port: Optional[int]):
 
 
 @model.command()
-@click.option("--port", "-p", default=None, help="Port where server is running (default: from config or 51234)")
+@click.option(
+    "--port",
+    "-p",
+    default=None,
+    help="Port where server is running (default: from config or 51234)",
+)
 def stop(port: Optional[int]):
     """Stop the lightweight model server."""
     # Load port from config if not specified
     if port is None:
         try:
             from mcli.lib.config.config import load_config
+
             config = load_config()
             port = config.get("model", {}).get("server_port", 51234)
         except Exception:

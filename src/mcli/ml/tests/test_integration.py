@@ -2,6 +2,7 @@
 
 import sys
 import os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
 import pytest
@@ -44,7 +45,7 @@ class TestDataIntegration:
         # Process data
         processed_trading = processor.process_politician_trades(trading_data)
         assert len(processed_trading) > 0
-        assert 'transaction_amount_cleaned' in processed_trading.columns
+        assert "transaction_amount_cleaned" in processed_trading.columns
 
         # Clean data
         cleaned_data = processor.clean_data(processed_trading)
@@ -67,7 +68,7 @@ class TestDataIntegration:
 
         # Political features
         political_features = political_extractor.extract_influence_features(trading_data)
-        assert 'total_influence' in political_features.columns
+        assert "total_influence" in political_features.columns
 
         # Ensemble features
         combined = pd.concat([political_features, stock_features], axis=1)
@@ -79,34 +80,39 @@ class TestDataIntegration:
         n_records = 100
         data = []
         for _ in range(n_records):
-            data.append({
-                'politician_name_cleaned': np.random.choice(['Pelosi', 'McConnell']),
-                'transaction_date_cleaned': datetime.now() - timedelta(days=np.random.randint(1, 365)),
-                'transaction_amount_cleaned': np.random.uniform(1000, 500000),
-                'transaction_type_cleaned': np.random.choice(['buy', 'sell']),
-                'ticker_cleaned': np.random.choice(['AAPL', 'MSFT', 'GOOGL'])
-            })
+            data.append(
+                {
+                    "politician_name_cleaned": np.random.choice(["Pelosi", "McConnell"]),
+                    "transaction_date_cleaned": datetime.now()
+                    - timedelta(days=np.random.randint(1, 365)),
+                    "transaction_amount_cleaned": np.random.uniform(1000, 500000),
+                    "transaction_type_cleaned": np.random.choice(["buy", "sell"]),
+                    "ticker_cleaned": np.random.choice(["AAPL", "MSFT", "GOOGL"]),
+                }
+            )
         return pd.DataFrame(data)
 
     def _generate_mock_stock_data(self):
         """Generate mock stock data"""
         dates = pd.date_range(end=datetime.now(), periods=100)
-        tickers = ['AAPL', 'MSFT', 'GOOGL']
+        tickers = ["AAPL", "MSFT", "GOOGL"]
         data = []
 
         for ticker in tickers:
             base_price = np.random.uniform(100, 300)
             for date in dates:
                 price = base_price * (1 + np.random.normal(0, 0.02))
-                data.append({
-                    'symbol': ticker,
-                    'date': date,
-                    'close': price,
-                    'volume': np.random.randint(1000000, 10000000),
-                    'open': price * 0.99,
-                    'high': price * 1.01,
-                    'low': price * 0.98
-                })
+                data.append(
+                    {
+                        "symbol": ticker,
+                        "date": date,
+                        "close": price,
+                        "volume": np.random.randint(1000000, 10000000),
+                        "open": price * 0.99,
+                        "high": price * 1.01,
+                        "low": price * 0.98,
+                    }
+                )
 
         return pd.DataFrame(data)
 
@@ -131,7 +137,7 @@ class TestModelIntegration:
                 learning_rate=0.001,
                 weight_decay=1e-4,
                 batch_size=32,
-                epochs=2
+                epochs=2,
             )
         ]
 
@@ -155,8 +161,7 @@ class TestModelIntegration:
 
         # Create request
         request = PredictionRequest(
-            trading_data={'politician': 'Test', 'amount': 10000},
-            tickers=['AAPL', 'MSFT']
+            trading_data={"politician": "Test", "amount": 10000}, tickers=["AAPL", "MSFT"]
         )
 
         # Generate prediction (async would need event loop)
@@ -176,7 +181,7 @@ class TestPipelineIntegration:
                 data_dir=Path(tmpdir) / "data",
                 model_dir=Path(tmpdir) / "models",
                 output_dir=Path(tmpdir) / "outputs",
-                enable_mlflow=False  # Disable for testing
+                enable_mlflow=False,  # Disable for testing
             )
 
             # Create pipeline
@@ -185,16 +190,15 @@ class TestPipelineIntegration:
             # Run pipeline (with mock data)
             result = pipeline.run()
 
-            assert 'model' in result
-            assert result['model'] is not None
+            assert "model" in result
+            assert result["model"] is not None
 
     def test_pipeline_with_mlflow(self):
         """Test pipeline with MLflow tracking"""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Configure MLflow
             mlflow_config = MLflowConfig(
-                tracking_uri=f"sqlite:///{tmpdir}/mlflow.db",
-                experiment_name="test_experiment"
+                tracking_uri=f"sqlite:///{tmpdir}/mlflow.db", experiment_name="test_experiment"
             )
 
             # Configure pipeline
@@ -202,7 +206,7 @@ class TestPipelineIntegration:
                 data_dir=Path(tmpdir) / "data",
                 model_dir=Path(tmpdir) / "models",
                 enable_mlflow=True,
-                mlflow_config=mlflow_config
+                mlflow_config=mlflow_config,
             )
 
             # Create and run pipeline
@@ -223,16 +227,18 @@ class TestBacktestIntegration:
         dates = pd.date_range(end=datetime.now(), periods=252)
         price_data = []
 
-        for ticker in ['AAPL', 'MSFT', 'GOOGL', 'SPY']:
+        for ticker in ["AAPL", "MSFT", "GOOGL", "SPY"]:
             base_price = np.random.uniform(100, 300)
             for date in dates:
                 price = base_price * (1 + np.random.normal(0, 0.02))
-                price_data.append({
-                    'symbol': ticker,
-                    'date': date,
-                    'close': price,
-                    'volume': np.random.randint(1000000, 10000000)
-                })
+                price_data.append(
+                    {
+                        "symbol": ticker,
+                        "date": date,
+                        "close": price,
+                        "volume": np.random.randint(1000000, 10000000),
+                    }
+                )
 
         price_df = pd.DataFrame(price_data)
 
@@ -242,7 +248,7 @@ class TestBacktestIntegration:
             commission=0.001,
             slippage=0.001,
             max_positions=10,
-            benchmark='SPY'
+            benchmark="SPY",
         )
 
         # Create engine and strategy
@@ -255,7 +261,7 @@ class TestBacktestIntegration:
 
         assert result is not None
         assert len(result.portfolio_value) > 0
-        assert result.metrics['total_return'] is not None
+        assert result.metrics["total_return"] is not None
 
     def test_performance_analysis(self):
         """Test performance analysis"""
@@ -265,9 +271,7 @@ class TestBacktestIntegration:
 
         # Analyze performance
         analyzer = PerformanceAnalyzer()
-        portfolio_metrics, risk_metrics = analyzer.calculate_metrics(
-            returns, benchmark_returns
-        )
+        portfolio_metrics, risk_metrics = analyzer.calculate_metrics(returns, benchmark_returns)
 
         assert portfolio_metrics.sharpe_ratio is not None
         assert risk_metrics.value_at_risk_95 is not None
@@ -310,7 +314,7 @@ class TestSystemIntegration:
                     learning_rate=0.001,
                     weight_decay=1e-4,
                     batch_size=32,
-                    epochs=1
+                    epochs=1,
                 )
             ]
 
@@ -326,7 +330,7 @@ class TestSystemIntegration:
             engine.set_strategy(strategy)
 
             result = engine.run(stock_data)
-            assert result.metrics['total_return'] is not None
+            assert result.metrics["total_return"] is not None
 
             # Step 5: Performance Analysis
             logger.info("Step 5: Analyzing performance...")
@@ -344,21 +348,24 @@ class TestSystemIntegration:
         data = []
 
         for _ in range(n_records):
-            data.append({
-                'politician_name_cleaned': np.random.choice(['Pelosi', 'McConnell', 'Schumer']),
-                'transaction_date_cleaned': datetime.now() - timedelta(days=np.random.randint(1, 365)),
-                'transaction_amount_cleaned': np.random.uniform(1000, 1000000),
-                'transaction_type_cleaned': np.random.choice(['buy', 'sell']),
-                'ticker_cleaned': np.random.choice(['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA']),
-                'disclosure_date': datetime.now() - timedelta(days=np.random.randint(0, 45))
-            })
+            data.append(
+                {
+                    "politician_name_cleaned": np.random.choice(["Pelosi", "McConnell", "Schumer"]),
+                    "transaction_date_cleaned": datetime.now()
+                    - timedelta(days=np.random.randint(1, 365)),
+                    "transaction_amount_cleaned": np.random.uniform(1000, 1000000),
+                    "transaction_type_cleaned": np.random.choice(["buy", "sell"]),
+                    "ticker_cleaned": np.random.choice(["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]),
+                    "disclosure_date": datetime.now() - timedelta(days=np.random.randint(0, 45)),
+                }
+            )
 
         return pd.DataFrame(data)
 
     def _generate_stock_data(self):
         """Generate comprehensive stock data"""
         dates = pd.date_range(end=datetime.now(), periods=365)
-        tickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'SPY']
+        tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "SPY"]
         data = []
 
         for ticker in tickers:
@@ -371,15 +378,17 @@ class TestSystemIntegration:
                 new_price = prices[-1] * (1 + change)
                 prices.append(new_price)
 
-                data.append({
-                    'symbol': ticker,
-                    'date': date,
-                    'close': new_price,
-                    'open': new_price * (1 + np.random.normal(0, 0.005)),
-                    'high': new_price * (1 + abs(np.random.normal(0, 0.01))),
-                    'low': new_price * (1 - abs(np.random.normal(0, 0.01))),
-                    'volume': np.random.randint(1000000, 50000000)
-                })
+                data.append(
+                    {
+                        "symbol": ticker,
+                        "date": date,
+                        "close": new_price,
+                        "open": new_price * (1 + np.random.normal(0, 0.005)),
+                        "high": new_price * (1 + abs(np.random.normal(0, 0.01))),
+                        "low": new_price * (1 - abs(np.random.normal(0, 0.01))),
+                        "volume": np.random.randint(1000000, 50000000),
+                    }
+                )
 
         return pd.DataFrame(data)
 
