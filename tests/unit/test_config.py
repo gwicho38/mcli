@@ -4,7 +4,7 @@ Unit tests for mcli.lib.config module
 
 import pytest
 from pathlib import Path
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, MagicMock
 import tempfile
 import os
 
@@ -12,118 +12,93 @@ import os
 class TestConfig:
     """Test suite for config module"""
 
-    def test_load_config_default(self):
-        """Test loading config with default values"""
-        from mcli.lib.config.config import load_config
+    def test_get_config_for_file(self):
+        """Test getting config file path for a file"""
+        from mcli.lib.config.config import get_config_for_file
 
-        with patch('mcli.lib.config.config.CONFIG_FILE') as mock_path:
-            mock_path.exists.return_value = False
+        result = get_config_for_file('test')
 
-            result = load_config()
+        assert 'test' in str(result)
+        assert 'mcli.test.config.json' in str(result)
 
-            assert result == {}
+    def test_get_config_for_file_custom_type(self):
+        """Test getting config file with custom type"""
+        from mcli.lib.config.config import get_config_for_file
 
-    def test_load_config_file_exists(self):
-        """Test loading config when file exists"""
-        from mcli.lib.config.config import load_config
+        result = get_config_for_file('myfile', config_type='settings')
 
-        test_config = """
-        [model]
-        server_port = 8080
+        assert 'myfile' in str(result)
+        assert 'mcli.myfile.settings.json' in str(result)
 
-        [api]
-        timeout = 30
-        """
+    def test_get_config_directory(self):
+        """Test getting config directory"""
+        from mcli.lib.config.config import get_config_directory
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
-            f.write(test_config)
-            temp_path = f.name
+        result = get_config_directory()
 
-        try:
-            with patch('mcli.lib.config.config.CONFIG_FILE', Path(temp_path)):
-                result = load_config()
+        assert result is not None
+        assert isinstance(result, Path)
+        assert '.config/mcli' in str(result) or 'mcli' in str(result).lower()
 
-                assert 'model' in result
-                assert result['model']['server_port'] == 8080
-                assert result['api']['timeout'] == 30
-        finally:
-            os.unlink(temp_path)
+    def test_get_config_file_name(self):
+        """Test extracting config file name from path"""
+        from mcli.lib.config.config import get_config_file_name
 
-    def test_save_config(self):
-        """Test saving config to file"""
-        from mcli.lib.config.config import save_config
+        result = get_config_file_name('/path/to/myconfig/file.json')
 
-        test_config = {
-            'model': {'server_port': 9000},
-            'api': {'timeout': 60}
-        }
+        assert result == 'myconfig'
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            config_path = Path(tmpdir) / 'config.toml'
+    def test_get_config_file_name_nested(self):
+        """Test config file name extraction with nested paths"""
+        from mcli.lib.config.config import get_config_file_name
 
-            with patch('mcli.lib.config.config.CONFIG_FILE', config_path):
-                save_config(test_config)
+        result = get_config_file_name('/deep/nested/path/config/file.json')
 
-                assert config_path.exists()
-                content = config_path.read_text()
-                assert 'server_port = 9000' in content
-                assert 'timeout = 60' in content
+        # Function returns second-to-last path component
+        assert result == 'config'
 
-    def test_get_config_value_existing(self):
-        """Test getting existing config value"""
-        from mcli.lib.config.config import get_config_value
+    def test_user_config_root_exists(self):
+        """Test USER_CONFIG_ROOT is defined"""
+        from mcli.lib.config.config import USER_CONFIG_ROOT
 
-        test_config = """
-        [model]
-        server_port = 8080
-        """
+        assert USER_CONFIG_ROOT is not None
+        assert isinstance(USER_CONFIG_ROOT, str)
+        assert 'mcli' in USER_CONFIG_ROOT.lower()
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
-            f.write(test_config)
-            temp_path = f.name
+    def test_dev_secrets_root_exists(self):
+        """Test DEV_SECRETS_ROOT is defined"""
+        from mcli.lib.config.config import DEV_SECRETS_ROOT
 
-        try:
-            with patch('mcli.lib.config.config.CONFIG_FILE', Path(temp_path)):
-                result = get_config_value('model.server_port')
-                assert result == 8080
-        finally:
-            os.unlink(temp_path)
+        assert DEV_SECRETS_ROOT is not None
+        assert isinstance(DEV_SECRETS_ROOT, str)
+        assert 'secrets' in DEV_SECRETS_ROOT
 
-    def test_get_config_value_missing(self):
-        """Test getting missing config value returns default"""
-        from mcli.lib.config.config import get_config_value
+    def test_private_key_path_defined(self):
+        """Test PRIVATE_KEY_PATH is defined"""
+        from mcli.lib.config.config import PRIVATE_KEY_PATH
 
-        with patch('mcli.lib.config.config.CONFIG_FILE') as mock_path:
-            mock_path.exists.return_value = False
+        assert PRIVATE_KEY_PATH is not None
+        assert 'private_key.pem' in PRIVATE_KEY_PATH
 
-            result = get_config_value('missing.key', default='default_value')
-            assert result == 'default_value'
+    def test_user_info_file_defined(self):
+        """Test USER_INFO_FILE is defined"""
+        from mcli.lib.config.config import USER_INFO_FILE
 
-    def test_get_config_value_nested(self):
-        """Test getting nested config value"""
-        from mcli.lib.config.config import get_config_value
+        assert USER_INFO_FILE is not None
+        assert 'user_info.json' in USER_INFO_FILE
 
-        test_config = """
-        [section]
-        [section.nested]
-        value = "test"
-        """
+    def test_packages_to_sync_defined(self):
+        """Test PACKAGES_TO_SYNC constant"""
+        from mcli.lib.config.config import PACKAGES_TO_SYNC
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
-            f.write(test_config)
-            temp_path = f.name
+        assert PACKAGES_TO_SYNC is not None
+        assert isinstance(PACKAGES_TO_SYNC, list)
 
-        try:
-            with patch('mcli.lib.config.config.CONFIG_FILE', Path(temp_path)):
-                result = get_config_value('section.nested.value')
-                assert result == 'test'
-        finally:
-            os.unlink(temp_path)
+    def test_get_mcli_rc(self):
+        """Test get_mcli_rc function"""
+        from mcli.lib.config.config import get_mcli_rc
 
-    def test_config_file_path(self):
-        """Test CONFIG_FILE path is set correctly"""
-        from mcli.lib.config.config import CONFIG_FILE
-        from mcli.lib.paths import get_mcli_home
+        # Should not raise an error
+        result = get_mcli_rc()
 
-        expected_path = get_mcli_home() / 'config.toml'
-        assert CONFIG_FILE == expected_path
+        # Function currently has no return, just logs
