@@ -789,5 +789,5 @@ def show_system_health():
     st.plotly_chart(fig, width='stretch')
 
 
-if __name__ == "__main__":
-    main()
+# Run the main dashboard function
+main()
