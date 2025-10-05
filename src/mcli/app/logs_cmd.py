@@ -120,8 +120,18 @@ def list_logs(date: Optional[str]):
 @click.argument("log_type", type=click.Choice(["main", "trace", "system"]))
 @click.option("--lines", "-n", type=int, default=20, help="Number of lines to show (default: 20)")
 @click.option("--date", "-d", help="Date for log file (YYYYMMDD format, default: today)")
-def tail_logs(log_type: str, lines: int, date: Optional[str]):
-    """Show the last N lines of a specific log file"""
+@click.option(
+    "--follow",
+    "-f",
+    is_flag=True,
+    help="Follow log output in real-time (like tail -f)",
+)
+def tail_logs(log_type: str, lines: int, date: Optional[str], follow: bool):
+    """Show the last N lines of a specific log file
+
+    By default, shows the last N lines and exits. Use --follow/-f to
+    continuously monitor the log file for new entries (similar to tail -f).
+    """
     logs_dir = get_logs_dir()
 
     # Note: get_logs_dir() creates the directory automatically
@@ -144,17 +154,36 @@ def tail_logs(log_type: str, lines: int, date: Optional[str]):
         return
 
     try:
-        # Read last N lines
-        with open(log_file, "r") as f:
-            all_lines = f.readlines()
-            tail_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
+        if follow:
+            # Follow mode: continuously stream new lines
+            console.print(f"\n📡 **Following {log_file.name}** (last {lines} lines)", style="cyan")
+            console.print("Press Ctrl+C to stop\n")
 
-        # Display with formatting
-        console.print(f"\n📋 **Last {len(tail_lines)} lines from {log_file.name}**\n", style="cyan")
+            # Use tail -f for real-time following
+            cmd = ["tail", f"-n{lines}", "-f", str(log_file)]
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-        for line in tail_lines:
-            formatted_line = _format_log_line(line.rstrip())
-            console.print(formatted_line)
+            try:
+                for line in iter(process.stdout.readline, ""):
+                    if line:
+                        formatted_line = _format_log_line(line.rstrip())
+                        console.print(formatted_line)
+            except KeyboardInterrupt:
+                process.terminate()
+                console.print("\n👋 Log following stopped", style="cyan")
+        else:
+            # Standard mode: just show last N lines
+            # Read last N lines
+            with open(log_file, "r") as f:
+                all_lines = f.readlines()
+                tail_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
+
+            # Display with formatting
+            console.print(f"\n📋 **Last {len(tail_lines)} lines from {log_file.name}**\n", style="cyan")
+
+            for line in tail_lines:
+                formatted_line = _format_log_line(line.rstrip())
+                console.print(formatted_line)
 
     except Exception as e:
         console.print(f"❌ Error reading log file: {e}", style="red")
