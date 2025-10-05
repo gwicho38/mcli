@@ -1273,12 +1273,17 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
         console.print(f"[cyan]📦 Installing mcli {latest_version}...[/cyan]")
 
         # Detect if we're running from a uv tool installation
-        # uv tool installations are typically in ~/.local/share/uv/tools/
-        is_uv_tool = ".local/share/uv/tools/" in sys.executable or \
-                     "\\AppData\\Local\\uv\\tools\\" in sys.executable
+        # uv tool installations are typically in ~/.local/share/uv/tools/ or similar
+        executable_path = str(sys.executable).replace("\\", "/")  # Normalize path separators
+
+        is_uv_tool = (
+            "/uv/tools/" in executable_path or
+            "/.local/share/uv/tools/" in executable_path or
+            "\\AppData\\Local\\uv\\tools\\" in str(sys.executable)
+        )
 
         if is_uv_tool:
-            # Use uv tool install for uv tool environments
+            # Use uv tool install for uv tool environments (uv doesn't include pip)
             console.print("[dim]Detected uv tool installation, using 'uv tool install'[/dim]")
             cmd = ["uv", "tool", "install", "--force", "mcli-framework"]
             if pre:
@@ -1286,7 +1291,7 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
                 # For now, --pre is not supported with uv tool install in this context
                 console.print("[yellow]⚠️  Pre-release flag not supported with uv tool install[/yellow]")
         else:
-            # Use pip to upgrade for regular installations
+            # Use pip to upgrade for regular installations (requires pip in environment)
             cmd = [sys.executable, "-m", "pip", "install", "--upgrade", "mcli-framework"]
             if pre:
                 cmd.append("--pre")
