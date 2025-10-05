@@ -205,10 +205,8 @@ dev = [
   "twine>=4.0.0",                 # Package upload
 ]
 
-# All optional features
-all = [
-  "mcli[chat,async-extras,video,documents,viz,database,ml,gpu,monitoring,streaming,dashboard,web]",
-]
+# All optional features (all features now included by default)
+all = []
 
 [tool.black]
 line-length = 100

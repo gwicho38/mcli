@@ -110,6 +110,15 @@ help: ## Show this help message
 	@echo "  $(GREEN)docs$(RESET)                  Generate documentation"
 	@echo "  $(GREEN)docs-serve$(RESET)            Serve documentation locally"
 	@echo ""
+	@echo "$(CYAN)Dashboard:$(RESET)"
+	@echo "  $(GREEN)dashboard$(RESET)             Launch integrated ML dashboard with LSH (default)"
+	@echo "  $(GREEN)dashboard-integrated$(RESET)  Launch integrated dashboard with ML jobs and LSH"
+	@echo "  $(GREEN)dashboard-training$(RESET)    Launch ML training dashboard"
+	@echo "  $(GREEN)dashboard-supabase$(RESET)    Launch Supabase-focused dashboard"
+	@echo "  $(GREEN)dashboard-basic$(RESET)       Launch basic ML dashboard"
+	@echo "  $(GREEN)dashboard-cli$(RESET)         Launch dashboard using CLI command"
+	@echo "  $(GREEN)dashboard-workflow$(RESET)    Launch dashboard using workflow command"
+	@echo ""
 	@echo "$(CYAN)Maintenance:$(RESET)"
 	@echo "  $(GREEN)clean$(RESET)                 Clean all build artifacts"
 	@echo "  $(GREEN)clean-pyc$(RESET)             Clean only Python cache files"
@@ -452,6 +461,59 @@ docs-serve: docs ## Serve documentation locally
 	@echo "$(CYAN)Serving documentation locally...$(RESET)"
 	@echo "$(YELLOW)Documentation serving not yet configured$(RESET)"
 	@echo "$(CYAN)Consider adding sphinx or mkdocs serve capability$(RESET)"
+
+# =============================================================================
+# DASHBOARD TARGETS
+# =============================================================================
+
+.PHONY: dashboard
+dashboard: dashboard-integrated ## Launch integrated ML dashboard with LSH integration (default)
+
+.PHONY: dashboard-integrated
+dashboard-integrated: setup ## Launch integrated dashboard with ML jobs and LSH integration
+	@echo "$(CYAN)Launching integrated ML dashboard with LSH integration...$(RESET)"
+	@echo "$(YELLOW)Dashboard will be available at http://localhost:8501$(RESET)"
+	$(VENV_PYTHON) -m streamlit run src/mcli/ml/dashboard/app_integrated.py \
+		--server.port 8501 \
+		--server.address localhost \
+		--browser.gatherUsageStats false
+
+.PHONY: dashboard-training
+dashboard-training: setup ## Launch ML training dashboard
+	@echo "$(CYAN)Launching ML training dashboard...$(RESET)"
+	@echo "$(YELLOW)Dashboard will be available at http://localhost:8502$(RESET)"
+	$(VENV_PYTHON) -m streamlit run src/mcli/ml/dashboard/app_training.py \
+		--server.port 8502 \
+		--server.address localhost \
+		--browser.gatherUsageStats false
+
+.PHONY: dashboard-supabase
+dashboard-supabase: setup ## Launch Supabase-focused dashboard
+	@echo "$(CYAN)Launching Supabase dashboard...$(RESET)"
+	@echo "$(YELLOW)Dashboard will be available at http://localhost:8503$(RESET)"
+	$(VENV_PYTHON) -m streamlit run src/mcli/ml/dashboard/app_supabase.py \
+		--server.port 8503 \
+		--server.address localhost \
+		--browser.gatherUsageStats false
+
+.PHONY: dashboard-basic
+dashboard-basic: setup ## Launch basic ML dashboard
+	@echo "$(CYAN)Launching basic ML dashboard...$(RESET)"
+	@echo "$(YELLOW)Dashboard will be available at http://localhost:8504$(RESET)"
+	$(VENV_PYTHON) -m streamlit run src/mcli/ml/dashboard/app.py \
+		--server.port 8504 \
+		--server.address localhost \
+		--browser.gatherUsageStats false
+
+.PHONY: dashboard-cli
+dashboard-cli: setup ## Launch dashboard using CLI command
+	@echo "$(CYAN)Launching dashboard via CLI command...$(RESET)"
+	.venv/bin/mcli-dashboard
+
+.PHONY: dashboard-workflow
+dashboard-workflow: setup ## Launch dashboard using workflow command
+	@echo "$(CYAN)Launching dashboard via workflow command...$(RESET)"
+	.venv/bin/mcli workflow dashboard launch
 
 .PHONY: bump-version
 bump-version: ## Bump version (requires VERSION argument, e.g., make bump-version VERSION=1.2.3)

@@ -15,11 +15,20 @@ import json
 from pathlib import Path
 import subprocess
 import pickle
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Add ML pipeline imports
-from mcli.ml.preprocessing.data_preprocessor import DataPreprocessor
-from mcli.ml.features.feature_engineering import FeatureEngineering
-from mcli.ml.models import get_model_by_id
+try:
+    from mcli.ml.preprocessing import PoliticianTradingPreprocessor, MLDataPipeline
+    from mcli.ml.models import get_model_by_id
+    HAS_ML_PIPELINE = True
+except ImportError:
+    HAS_ML_PIPELINE = False
+    PoliticianTradingPreprocessor = None
+    MLDataPipeline = None
 
 # Page config
 st.set_page_config(
@@ -72,13 +81,17 @@ def get_supabase_client() -> Client:
 @st.cache_resource
 def get_preprocessor():
     """Get data preprocessor instance"""
-    return DataPreprocessor()
+    if HAS_ML_PIPELINE and PoliticianTradingPreprocessor:
+        return PoliticianTradingPreprocessor()
+    return None
 
 
 @st.cache_resource
-def get_feature_engineer():
-    """Get feature engineering instance"""
-    return FeatureEngineering()
+def get_ml_pipeline():
+    """Get ML data pipeline instance"""
+    if HAS_ML_PIPELINE and MLDataPipeline:
+        return MLDataPipeline()
+    return None
 
 
 def check_lsh_daemon():
@@ -128,11 +141,18 @@ def run_ml_pipeline(df_disclosures):
     try:
         # 1. Preprocess data
         preprocessor = get_preprocessor()
-        processed_data = preprocessor.preprocess(df_disclosures)
+        if preprocessor:
+            processed_data = preprocessor.preprocess(df_disclosures)
+        else:
+            # Use raw data if preprocessor not available
+            processed_data = df_disclosures
 
-        # 2. Feature engineering
-        feature_engineer = get_feature_engineer()
-        features = feature_engineer.create_features(processed_data)
+        # 2. Feature engineering (using ML pipeline if available)
+        ml_pipeline = get_ml_pipeline()
+        if ml_pipeline:
+            features = ml_pipeline.transform(processed_data)
+        else:
+            features = processed_data
 
         # 3. Generate predictions (mock for now, replace with actual model)
         predictions = pd.DataFrame({
@@ -219,15 +239,18 @@ def main():
     st.sidebar.title("Navigation")
     page = st.sidebar.selectbox(
         "Choose a page",
-        ["Pipeline Overview", "ML Processing", "Model Performance", "Predictions", "LSH Jobs", "System Health"]
+        ["Pipeline Overview", "ML Processing", "Model Performance", "Predictions", "LSH Jobs", "System Health"],
+        index=0  # Default to Pipeline Overview
     )
 
-    # Auto-refresh toggle
-    auto_refresh = st.sidebar.checkbox("Auto-refresh (30s)", value=True)
+    # Auto-refresh toggle (default off to prevent blocking)
+    auto_refresh = st.sidebar.checkbox("Auto-refresh (30s)", value=False)
     if auto_refresh:
-        import time
-        time.sleep(30)
-        st.rerun()
+        try:
+            from streamlit_autorefresh import st_autorefresh
+            st_autorefresh(interval=30000, key="data_refresh")
+        except ImportError:
+            st.sidebar.warning("⚠️ Auto-refresh requires streamlit-autorefresh package")
 
     # Manual refresh button
     if st.sidebar.button("🔄 Refresh Now"):
@@ -244,24 +267,41 @@ def main():
             else:
                 st.sidebar.error("❌ Pipeline failed")
 
-    # Main content
-    if page == "Pipeline Overview":
-        show_pipeline_overview()
-    elif page == "ML Processing":
-        show_ml_processing()
-    elif page == "Model Performance":
-        show_model_performance()
-    elif page == "Predictions":
-        show_predictions()
-    elif page == "LSH Jobs":
-        show_lsh_jobs()
-    elif page == "System Health":
-        show_system_health()
+    # Main content with error handling
+    try:
+        if page == "Pipeline Overview":
+            show_pipeline_overview()
+        elif page == "ML Processing":
+            show_ml_processing()
+        elif page == "Model Performance":
+            show_model_performance()
+        elif page == "Predictions":
+            show_predictions()
+        elif page == "LSH Jobs":
+            show_lsh_jobs()
+        elif page == "System Health":
+            show_system_health()
+    except Exception as e:
+        st.error(f"❌ Error loading page '{page}': {e}")
+        import traceback
+        with st.expander("See error details"):
+            st.code(traceback.format_exc())
 
 
 def show_pipeline_overview():
     """Show ML pipeline overview"""
     st.header("ML Pipeline Overview")
+
+    # Check Supabase connection
+    if not get_supabase_client():
+        st.warning("⚠️ **Supabase not configured**")
+        st.info("""
+        To connect to Supabase, set these environment variables:
+        - `SUPABASE_URL`: Your Supabase project URL
+        - `SUPABASE_KEY`: Your Supabase API key
+
+        The dashboard will show demo data until configured.
+        """)
 
     # Get data
     politicians = get_politicians_data()
@@ -283,17 +323,20 @@ def show_pipeline_overview():
         if not disclosures.empty:
             preprocessor = get_preprocessor()
             try:
-                processed = preprocessor.preprocess(disclosures.head(100))
-                feature_count = len(processed.columns)
+                if preprocessor:
+                    processed = preprocessor.preprocess(disclosures.head(100))
+                    feature_count = len(processed.columns)
+                else:
+                    feature_count = len(disclosures.columns)
             except:
-                feature_count = 0
+                feature_count = len(disclosures.columns) if not disclosures.empty else 0
         else:
             feature_count = 0
 
         st.metric(
             label="Features Extracted",
             value=feature_count,
-            delta="After preprocessing"
+            delta="Raw data" if not preprocessor else "After preprocessing"
         )
 
     with col3:
