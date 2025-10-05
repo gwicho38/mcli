@@ -144,7 +144,11 @@ def get_lsh_jobs():
                         })
 
             return pd.DataFrame(jobs)
-    except:
+        else:
+            # Log file doesn't exist - return empty DataFrame
+            return pd.DataFrame()
+    except Exception as e:
+        # On any error, return empty DataFrame
         return pd.DataFrame()
 
 
