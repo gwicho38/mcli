@@ -9,15 +9,25 @@ import json
 import os
 import sys
 import time
+import pytest
 from pathlib import Path
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from mcli.lib.services.lsh_client import LSHClient, LSHEventProcessor
-from mcli.lib.services.data_pipeline import LSHDataPipeline, DataPipelineConfig
+# Check for aiomqtt dependency
+try:
+    import aiomqtt
+    HAS_AIOMQTT = True
+except ImportError:
+    HAS_AIOMQTT = False
+
+if HAS_AIOMQTT:
+    from mcli.lib.services.lsh_client import LSHClient, LSHEventProcessor
+    from mcli.lib.services.data_pipeline import LSHDataPipeline, DataPipelineConfig
 
 
+@pytest.mark.skipif(not HAS_AIOMQTT, reason="aiomqtt module not installed")
 async def test_lsh_connection():
     """Test basic connection to LSH daemon"""
     print("🔗 Testing LSH daemon connection...")
@@ -55,6 +65,7 @@ async def test_lsh_connection():
         return False
 
 
+@pytest.mark.skipif(not HAS_AIOMQTT, reason="aiomqtt module not installed")
 async def test_job_creation():
     """Test creating a simple job"""
     print("\n🛠️  Testing job creation...")
@@ -96,6 +107,7 @@ async def test_job_creation():
         return False
 
 
+@pytest.mark.skipif(not HAS_AIOMQTT, reason="aiomqtt module not installed")
 async def test_event_listening():
     """Test event listening capabilities"""
     print("\n👂 Testing event listening...")
@@ -142,6 +154,7 @@ async def test_event_listening():
         return False
 
 
+@pytest.mark.skipif(not HAS_AIOMQTT, reason="aiomqtt module not installed")
 async def test_data_pipeline():
     """Test data pipeline functionality"""
     print("\n🏭 Testing data pipeline...")
@@ -212,6 +225,7 @@ async def test_data_pipeline():
         return False
 
 
+@pytest.mark.skipif(not HAS_AIOMQTT, reason="aiomqtt module not installed")
 async def test_webhook_configuration():
     """Test webhook configuration"""
     print("\n🪝 Testing webhook configuration...")
