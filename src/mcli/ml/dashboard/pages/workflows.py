@@ -121,6 +121,14 @@ def fetch_workflow_executions(workflow_id: Optional[str] = None) -> pd.DataFrame
         if executions:
             return pd.DataFrame(executions)
 
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            # API endpoint not implemented yet - use demo data silently
+            pass
+        else:
+            st.warning(f"Could not fetch execution data: {e}")
+    except requests.exceptions.ConnectionError:
+        st.warning("⚠️ LSH Daemon connection failed. Using demo data.")
     except Exception as e:
         st.warning(f"Could not fetch execution data: {e}")
 
