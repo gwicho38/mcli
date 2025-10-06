@@ -7,12 +7,21 @@ from unittest.mock import Mock, patch, MagicMock
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from mcli.ml.auth.auth_manager import AuthManager, RateLimiter
-from mcli.ml.auth.models import UserCreate, UserLogin, PasswordChange
-from mcli.ml.auth.permissions import Permission, has_permission, check_permission
-from mcli.ml.database.models import User, UserRole
+# Check for aiosqlite dependency
+try:
+    import aiosqlite
+    HAS_AIOSQLITE = True
+except ImportError:
+    HAS_AIOSQLITE = False
+
+if HAS_AIOSQLITE:
+    from mcli.ml.auth.auth_manager import AuthManager, RateLimiter
+    from mcli.ml.auth.models import UserCreate, UserLogin, PasswordChange
+    from mcli.ml.auth.permissions import Permission, has_permission, check_permission
+    from mcli.ml.database.models import User, UserRole
 
 
+@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
 class TestAuthManager:
     """Test authentication manager"""
 
@@ -155,6 +164,7 @@ class TestAuthManager:
         assert new_token_response.access_token is not None
 
 
+@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
 class TestPasswordValidation:
     """Test password validation"""
 
@@ -209,6 +219,7 @@ class TestPasswordValidation:
             )
 
 
+@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
 class TestPermissions:
     """Test permission system"""
 
@@ -262,6 +273,7 @@ class TestPermissions:
         assert not has_permission(analyst, Permission.USER_DELETE)
 
 
+@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
 class TestRateLimiter:
     """Test rate limiting"""
 
@@ -307,6 +319,7 @@ class TestRateLimiter:
         assert allowed
 
 
+@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
 class TestResourcePermissions:
     """Test resource-based permissions"""
 
@@ -343,6 +356,7 @@ class TestResourcePermissions:
         assert ResourcePermission.can_deploy_model(admin, model)
 
 
+@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
 class TestAuthIntegration:
     """Integration tests for auth system"""
 
