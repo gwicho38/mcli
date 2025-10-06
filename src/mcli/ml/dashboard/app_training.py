@@ -222,7 +222,7 @@ def show_model_comparison():
             labels={"value": "Accuracy", "variable": "Split"},
         )
         fig.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
     with col2:
         # Loss comparison
@@ -235,7 +235,7 @@ def show_model_comparison():
             labels={"value": "Loss", "variable": "Split"},
         )
         fig.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
     # Additional metrics if available
     if models_df["rmse"].max() > 0:
@@ -253,7 +253,7 @@ def show_model_comparison():
                 hover_data=["name"],
                 title="RMSE vs MAE (sized by R²)",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
         with col2:
             # R² score comparison
@@ -267,7 +267,7 @@ def show_model_comparison():
                 color_continuous_scale="Greens",
             )
             fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
 
 def show_residual_analysis():
@@ -313,7 +313,7 @@ def show_residual_analysis():
         fig.update_layout(
             xaxis_title="Prediction Index", yaxis_title="Residuals", hovermode="x unified"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
         # Statistics
         col1, col2, col3 = st.columns(3)
@@ -347,7 +347,7 @@ def show_residual_analysis():
         )
 
         fig.update_layout(xaxis_title="Residuals", yaxis_title="Frequency", showlegend=True)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
         # Normality tests
         _, p_value = stats.normaltest(residuals)
@@ -389,7 +389,7 @@ def show_residual_analysis():
             yaxis_title="Sample Quantiles",
             title="Q-Q Plot (Normal Distribution)",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
         st.info(f"Correlation with normal distribution: {r:.4f}")
 
@@ -415,7 +415,7 @@ def show_residual_analysis():
             yaxis_title="Residuals",
             title="Residuals vs Predicted (looking for patterns)",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
         st.info(
             "💡 Ideally, residuals should be randomly scattered around zero with no clear patterns."
@@ -463,7 +463,7 @@ def show_feature_importance():
                 color_continuous_scale="Viridis",
             )
             fig.update_layout(height=600, yaxis={"categoryorder": "total ascending"})
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
             # Feature importance table
             st.subheader("Feature Importance Table")
@@ -524,7 +524,7 @@ def show_feature_importance():
                     names="Category",
                     title="Feature Importance by Category",
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch", config={"responsive": True})
         else:
             st.warning("No feature information available for this model")
     finally:
@@ -578,7 +578,7 @@ def show_training_history():
             title="Training Duration Distribution",
             labels={"duration_seconds": "Duration (seconds)"},
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
 
 def main():

@@ -330,7 +330,7 @@ def show_overview():
             fig = px.pie(
                 values=type_counts.values, names=type_counts.index, title="Transaction Types"
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
         else:
             st.info("No disclosure data available")
 
@@ -344,7 +344,7 @@ def show_overview():
                 orientation="h",
                 title="Most Traded Stocks",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
         else:
             st.info("No ticker data available")
 
@@ -393,14 +393,14 @@ def show_politicians():
                 fig = px.pie(
                     values=party_dist.values, names=party_dist.index, title="Party Distribution"
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch", config={"responsive": True})
         with col2:
             if "state" in filtered:
                 state_dist = filtered["state"].value_counts().head(10)
                 fig = px.bar(
                     x=state_dist.values, y=state_dist.index, orientation="h", title="Top States"
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch", config={"responsive": True})
     else:
         st.warning("No politician data available")
 
@@ -463,7 +463,7 @@ def show_disclosures():
                         y=daily_volume.values,
                         title="Trading Volume Over Time",
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
             with col2:
                 # Top politicians by trading
@@ -475,7 +475,7 @@ def show_disclosures():
                         orientation="h",
                         title="Most Active Traders",
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch", config={"responsive": True})
     else:
         st.warning("No disclosure data available")
 
@@ -494,7 +494,7 @@ def show_predictions():
             fig = px.histogram(
                 predictions, x="confidence", title="Prediction Confidence Distribution"
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
     else:
         st.info(
             "No ML predictions available yet. The ML pipeline will generate predictions once sufficient data is collected."
@@ -543,7 +543,7 @@ def show_jobs():
                 )
 
             fig.update_layout(title="Job Status Over Time", xaxis_title="Date", yaxis_title="Count")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
     else:
         st.warning("No job data available")
 
@@ -621,7 +621,7 @@ def show_system_health():
 
     with col2:
         fig = px.bar(stats_df, x="Entity", y="Count", title="Database Records")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
 
 if __name__ == "__main__":
