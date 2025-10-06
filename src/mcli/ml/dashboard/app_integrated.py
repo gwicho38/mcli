@@ -913,15 +913,27 @@ def show_model_performance():
 
         with col1:
             avg_accuracy = model_metrics["accuracy"].mean()
-            st.metric("Average Accuracy", f"{avg_accuracy:.2%}")
+            st.metric(
+                "Average Accuracy",
+                f"{avg_accuracy:.2%}",
+                help="Mean prediction accuracy across all deployed models. Higher is better (typically 70-95% for good models).",
+            )
 
         with col2:
             avg_sharpe = model_metrics["sharpe_ratio"].mean()
-            st.metric("Average Sharpe Ratio", f"{avg_sharpe:.2f}")
+            st.metric(
+                "Average Sharpe Ratio",
+                f"{avg_sharpe:.2f}",
+                help="Risk-adjusted return measure. Calculated as (returns - risk-free rate) / volatility. Values > 1 are good, > 2 are very good, > 3 are excellent.",
+            )
 
         with col3:
             deployed_count = len(model_metrics[model_metrics["status"] == "deployed"])
-            st.metric("Deployed Models", deployed_count)
+            st.metric(
+                "Deployed Models",
+                deployed_count,
+                help="Number of models currently active and available for predictions.",
+            )
 
         # Model comparison
         st.subheader("Model Comparison")
@@ -1205,7 +1217,9 @@ def show_evaluate_models_tab():
     if not model_metrics.empty:
         # Model selection for evaluation
         selected_model = st.selectbox(
-            "Select Model to Evaluate", model_metrics["model_name"].tolist()
+            "Select Model to Evaluate",
+            model_metrics["model_name"].tolist(),
+            help="Choose a trained model to view detailed performance metrics and evaluation charts.",
         )
 
         # Evaluation metrics
@@ -1216,13 +1230,29 @@ def show_evaluate_models_tab():
         model_data = model_metrics[model_metrics["model_name"] == selected_model].iloc[0]
 
         with col1:
-            st.metric("Accuracy", f"{model_data['accuracy']:.2%}")
+            st.metric(
+                "Accuracy",
+                f"{model_data['accuracy']:.2%}",
+                help="Percentage of correct predictions. Measures how often the model's predictions match actual outcomes.",
+            )
         with col2:
-            st.metric("Sharpe Ratio", f"{model_data['sharpe_ratio']:.2f}")
+            st.metric(
+                "Sharpe Ratio",
+                f"{model_data['sharpe_ratio']:.2f}",
+                help="Risk-adjusted return measure. Higher values indicate better returns relative to risk. > 1 is good, > 2 is very good, > 3 is excellent.",
+            )
         with col3:
-            st.metric("Status", model_data["status"])
+            st.metric(
+                "Status",
+                model_data["status"],
+                help="Current deployment status of the model. 'Deployed' means ready for predictions.",
+            )
         with col4:
-            st.metric("Created", model_data.get("created_at", "N/A")[:10])
+            st.metric(
+                "Created",
+                model_data.get("created_at", "N/A")[:10],
+                help="Date when this model was trained and saved.",
+            )
 
         # Confusion Matrix Simulation
         st.markdown("### 🎯 Confusion Matrix")
@@ -1307,6 +1337,7 @@ def show_compare_models_tab():
             "Select Models to Compare (2-5 models)",
             model_metrics["model_name"].tolist(),
             default=model_metrics["model_name"].tolist()[: min(3, len(model_metrics))],
+            help="Choose 2-5 models to compare side-by-side. View accuracy, Sharpe ratio, and other metrics across models to identify the best performer.",
         )
 
         if len(models_to_compare) >= 2:
@@ -1407,19 +1438,53 @@ def show_interactive_predictions_tab():
             index=0,
             help="Start typing to search and filter politician names. Data loaded from database.",
         )
-        transaction_type = st.selectbox("Transaction Type", ["Purchase", "Sale"])
+        transaction_type = st.selectbox(
+            "Transaction Type",
+            ["Purchase", "Sale"],
+            help="Type of transaction: Purchase (buying stock) or Sale (selling stock).",
+        )
 
     with col2:
-        amount = st.number_input("Transaction Amount ($)", 1000, 10000000, 50000, step=1000)
-        filing_date = st.date_input("Filing Date")
-        market_cap = st.selectbox("Market Cap", ["Large Cap", "Mid Cap", "Small Cap"])
+        amount = st.number_input(
+            "Transaction Amount ($)",
+            1000,
+            10000000,
+            50000,
+            step=1000,
+            help="Dollar value of the transaction. Larger transactions may have more significant market impact.",
+        )
+        filing_date = st.date_input(
+            "Filing Date",
+            help="Date when the trade was disclosed. Timing relative to market events can be important.",
+        )
+        market_cap = st.selectbox(
+            "Market Cap",
+            ["Large Cap", "Mid Cap", "Small Cap"],
+            help="Company size: Large Cap (>$10B), Mid Cap ($2-10B), Small Cap (<$2B). Larger companies tend to be less volatile.",
+        )
 
     with col3:
         sector = st.selectbox(
-            "Sector", ["Technology", "Healthcare", "Finance", "Energy", "Consumer"]
+            "Sector",
+            ["Technology", "Healthcare", "Finance", "Energy", "Consumer"],
+            help="Industry sector of the stock. Different sectors have different risk/return profiles and react differently to market conditions.",
         )
-        sentiment = st.slider("News Sentiment", -1.0, 1.0, 0.0, 0.1)
-        volatility = st.slider("Volatility Index", 0.0, 1.0, 0.3, 0.05)
+        sentiment = st.slider(
+            "News Sentiment",
+            -1.0,
+            1.0,
+            0.0,
+            0.1,
+            help="Overall news sentiment about the stock. -1 = very negative, 0 = neutral, +1 = very positive. Based on recent news articles and social media.",
+        )
+        volatility = st.slider(
+            "Volatility Index",
+            0.0,
+            1.0,
+            0.3,
+            0.05,
+            help="Stock price volatility measure. 0 = stable, 1 = highly volatile. Higher volatility means higher risk but potentially higher returns.",
+        )
 
     # Trading History Section
     st.markdown("---")
@@ -1433,13 +1498,21 @@ def show_interactive_predictions_tab():
 
         with col1:
             total_trades = len(trading_history)
-            st.metric("Total Trades", total_trades)
+            st.metric(
+                "Total Trades",
+                total_trades,
+                help="Total number of trading disclosures filed by this politician (last 100 shown).",
+            )
 
         with col2:
             # Count transaction types
             if "transaction_type" in trading_history.columns:
                 purchases = len(trading_history[trading_history["transaction_type"] == "Purchase"])
-                st.metric("Purchases", purchases)
+                st.metric(
+                    "Purchases",
+                    purchases,
+                    help="Number of purchase transactions. Compare with sales to understand trading behavior.",
+                )
             else:
                 st.metric("Purchases", "N/A")
 
@@ -1447,7 +1520,11 @@ def show_interactive_predictions_tab():
             # Count unique tickers
             if "ticker_symbol" in trading_history.columns:
                 unique_tickers = trading_history["ticker_symbol"].nunique()
-                st.metric("Unique Stocks", unique_tickers)
+                st.metric(
+                    "Unique Stocks",
+                    unique_tickers,
+                    help="Number of different stocks traded. Higher diversity may indicate broader market exposure.",
+                )
             else:
                 st.metric("Unique Stocks", "N/A")
 
@@ -1456,7 +1533,11 @@ def show_interactive_predictions_tab():
             if "disclosure_date" in trading_history.columns:
                 try:
                     recent_date = pd.to_datetime(trading_history["disclosure_date"]).max()
-                    st.metric("Last Trade", recent_date.strftime("%Y-%m-%d"))
+                    st.metric(
+                        "Last Trade",
+                        recent_date.strftime("%Y-%m-%d"),
+                        help="Date of most recent trading disclosure. Newer trades may be more relevant for predictions.",
+                    )
                 except:
                     st.metric("Last Trade", "N/A")
             else:
@@ -1662,7 +1743,9 @@ def show_performance_tracking_tab():
 
     # Time range selector
     time_range = st.selectbox(
-        "Select Time Range", ["Last 7 Days", "Last 30 Days", "Last 90 Days", "All Time"]
+        "Select Time Range",
+        ["Last 7 Days", "Last 30 Days", "Last 90 Days", "All Time"],
+        help="Choose time period to view model performance trends. Longer periods show overall stability, shorter periods show recent changes.",
     )
 
     # Generate time series data
@@ -1790,7 +1873,13 @@ def show_predictions():
             col1, col2, col3 = st.columns(3)
 
             with col1:
-                min_confidence = st.slider("Min Confidence", 0.0, 1.0, 0.5)
+                min_confidence = st.slider(
+                    "Min Confidence",
+                    0.0,
+                    1.0,
+                    0.5,
+                    help="Filter predictions by minimum confidence level. Higher values show only high-confidence predictions.",
+                )
 
             with col2:
                 recommendation_filter = st.selectbox(
@@ -1800,10 +1889,15 @@ def show_predictions():
                         if "recommendation" in predictions
                         else ["All"]
                     ),
+                    help="Filter by recommendation type: BUY (positive outlook), SELL (negative outlook), or HOLD (neutral).",
                 )
 
             with col3:
-                sort_by = st.selectbox("Sort By", ["predicted_return", "confidence", "risk_score"])
+                sort_by = st.selectbox(
+                    "Sort By",
+                    ["predicted_return", "confidence", "risk_score"],
+                    help="Sort predictions by: predicted return (highest gains first), confidence (most certain first), or risk score (lowest risk first).",
+                )
 
             # Apply filters
             filtered_predictions = predictions.copy()
