@@ -119,6 +119,63 @@ def get_politician_names() -> List[str]:
         return ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer"]  # Fallback
 
 
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def get_politician_trading_history(politician_name: str) -> pd.DataFrame:
+    """Get trading history for a specific politician"""
+    try:
+        client = get_supabase_client()
+        if not client:
+            return pd.DataFrame()  # Return empty if no client
+
+        # Split name into first and last
+        name_parts = politician_name.split(" ", 1)
+        if len(name_parts) < 2:
+            return pd.DataFrame()
+
+        first_name, last_name = name_parts[0], name_parts[1]
+
+        # First, find the politician ID
+        politician_result = (
+            client.table("politicians")
+            .select("id")
+            .eq("first_name", first_name)
+            .eq("last_name", last_name)
+            .execute()
+        )
+
+        if not politician_result.data:
+            return pd.DataFrame()
+
+        politician_id = politician_result.data[0]["id"]
+
+        # Get trading disclosures for this politician
+        disclosures_result = (
+            client.table("trading_disclosures")
+            .select("*")
+            .eq("politician_id", politician_id)
+            .order("disclosure_date", desc=True)
+            .limit(100)
+            .execute()
+        )
+
+        if disclosures_result.data:
+            df = pd.DataFrame(disclosures_result.data)
+            # Convert any dict/list columns to JSON strings
+            for col in df.columns:
+                if df[col].dtype == "object":
+                    if any(isinstance(x, (dict, list)) for x in df[col].dropna()):
+                        df[col] = df[col].apply(
+                            lambda x: json.dumps(x) if isinstance(x, (dict, list)) else x
+                        )
+            return df
+        else:
+            return pd.DataFrame()
+
+    except Exception as e:
+        logger.warning(f"Failed to fetch trading history for {politician_name}: {e}")
+        return pd.DataFrame()
+
+
 @st.cache_resource
 def get_preprocessor():
     """Get data preprocessor instance"""
@@ -1363,6 +1420,145 @@ def show_interactive_predictions_tab():
         )
         sentiment = st.slider("News Sentiment", -1.0, 1.0, 0.0, 0.1)
         volatility = st.slider("Volatility Index", 0.0, 1.0, 0.3, 0.05)
+
+    # Trading History Section
+    st.markdown("---")
+    st.markdown(f"### 📊 {politician_name}'s Trading History")
+
+    trading_history = get_politician_trading_history(politician_name)
+
+    if not trading_history.empty:
+        # Summary metrics
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            total_trades = len(trading_history)
+            st.metric("Total Trades", total_trades)
+
+        with col2:
+            # Count transaction types
+            if "transaction_type" in trading_history.columns:
+                purchases = len(trading_history[trading_history["transaction_type"] == "Purchase"])
+                st.metric("Purchases", purchases)
+            else:
+                st.metric("Purchases", "N/A")
+
+        with col3:
+            # Count unique tickers
+            if "ticker_symbol" in trading_history.columns:
+                unique_tickers = trading_history["ticker_symbol"].nunique()
+                st.metric("Unique Stocks", unique_tickers)
+            else:
+                st.metric("Unique Stocks", "N/A")
+
+        with col4:
+            # Most recent trade date
+            if "disclosure_date" in trading_history.columns:
+                try:
+                    recent_date = pd.to_datetime(trading_history["disclosure_date"]).max()
+                    st.metric("Last Trade", recent_date.strftime("%Y-%m-%d"))
+                except:
+                    st.metric("Last Trade", "N/A")
+            else:
+                st.metric("Last Trade", "N/A")
+
+        # Detailed history in expandable section
+        with st.expander("📜 View Detailed Trading History", expanded=False):
+            # Filter options
+            col1, col2 = st.columns(2)
+
+            with col1:
+                # Transaction type filter
+                if "transaction_type" in trading_history.columns:
+                    trans_types = ["All"] + list(trading_history["transaction_type"].unique())
+                    trans_filter = st.selectbox("Filter by Transaction Type", trans_types)
+                else:
+                    trans_filter = "All"
+
+            with col2:
+                # Show recent N trades
+                show_trades = st.slider("Show Last N Trades", 5, 50, 10, step=5)
+
+            # Apply filters
+            filtered_history = trading_history.copy()
+            if trans_filter != "All" and "transaction_type" in filtered_history.columns:
+                filtered_history = filtered_history[
+                    filtered_history["transaction_type"] == trans_filter
+                ]
+
+            # Display trades
+            st.dataframe(
+                filtered_history.head(show_trades),
+                width="stretch",
+                height=300,
+            )
+
+            # Visualizations
+            if len(filtered_history) > 0:
+                st.markdown("#### 📈 Trading Patterns")
+
+                viz_col1, viz_col2 = st.columns(2)
+
+                with viz_col1:
+                    # Transaction type distribution
+                    if "transaction_type" in filtered_history.columns:
+                        trans_dist = filtered_history["transaction_type"].value_counts()
+                        fig = px.pie(
+                            values=trans_dist.values,
+                            names=trans_dist.index,
+                            title="Transaction Type Distribution",
+                        )
+                        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+
+                with viz_col2:
+                    # Top traded stocks
+                    if "ticker_symbol" in filtered_history.columns:
+                        top_stocks = filtered_history["ticker_symbol"].value_counts().head(10)
+                        fig = px.bar(
+                            x=top_stocks.values,
+                            y=top_stocks.index,
+                            orientation="h",
+                            title="Top 10 Most Traded Stocks",
+                            labels={"x": "Number of Trades", "y": "Ticker"},
+                        )
+                        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+
+                # Timeline of trades
+                if "disclosure_date" in filtered_history.columns:
+                    st.markdown("#### 📅 Trading Timeline")
+                    try:
+                        timeline_df = filtered_history.copy()
+                        timeline_df["disclosure_date"] = pd.to_datetime(
+                            timeline_df["disclosure_date"]
+                        )
+                        timeline_df = timeline_df.sort_values("disclosure_date")
+
+                        # Count trades per month
+                        timeline_df["month"] = timeline_df["disclosure_date"].dt.to_period("M")
+                        monthly_trades = (
+                            timeline_df.groupby("month").size().reset_index(name="count")
+                        )
+                        monthly_trades["month"] = monthly_trades["month"].astype(str)
+
+                        fig = px.line(
+                            monthly_trades,
+                            x="month",
+                            y="count",
+                            title="Trading Activity Over Time",
+                            labels={"month": "Month", "count": "Number of Trades"},
+                            markers=True,
+                        )
+                        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                    except Exception as e:
+                        st.info("Timeline visualization not available")
+
+    else:
+        st.info(
+            f"📭 No trading history found for {politician_name}. "
+            "This could mean: (1) No trades on record, (2) Data not yet synced, or (3) Name not in database."
+        )
+
+    st.markdown("---")
 
     # Technical details about prediction system
     with st.expander("ℹ️ About the Prediction System"):
