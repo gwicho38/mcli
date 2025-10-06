@@ -45,6 +45,17 @@ except ImportError:
     HAS_PREDICTOR = False
     PoliticianTradingPredictor = None
 
+# Add new dashboard pages
+try:
+    from pages.cicd import show_cicd_dashboard
+    from pages.workflows import show_workflows_dashboard
+
+    HAS_EXTENDED_PAGES = True
+except ImportError:
+    HAS_EXTENDED_PAGES = False
+    show_cicd_dashboard = None
+    show_workflows_dashboard = None
+
 # Page config
 st.set_page_config(
     page_title="MCLI ML Dashboard - Integrated",
@@ -598,17 +609,24 @@ def main():
 
     # Sidebar
     st.sidebar.title("Navigation")
+    # Build page list
+    pages = [
+        "Pipeline Overview",
+        "ML Processing",
+        "Model Performance",
+        "Model Training & Evaluation",
+        "Predictions",
+        "LSH Jobs",
+        "System Health",
+    ]
+
+    # Add extended pages if available
+    if HAS_EXTENDED_PAGES:
+        pages.extend(["CI/CD Pipelines", "Workflows"])
+
     page = st.sidebar.selectbox(
         "Choose a page",
-        [
-            "Pipeline Overview",
-            "ML Processing",
-            "Model Performance",
-            "Model Training & Evaluation",
-            "Predictions",
-            "LSH Jobs",
-            "System Health",
-        ],
+        pages,
         index=0,  # Default to Pipeline Overview
     )
 
@@ -653,6 +671,10 @@ def main():
             show_lsh_jobs()
         elif page == "System Health":
             show_system_health()
+        elif page == "CI/CD Pipelines" and HAS_EXTENDED_PAGES:
+            show_cicd_dashboard()
+        elif page == "Workflows" and HAS_EXTENDED_PAGES:
+            show_workflows_dashboard()
     except Exception as e:
         st.error(f"❌ Error loading page '{page}': {e}")
         import traceback
