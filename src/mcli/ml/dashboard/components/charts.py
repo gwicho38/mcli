@@ -248,7 +248,7 @@ def create_waterfall_chart(
     return fig
 
 
-def render_chart(fig: go.Figure, use_container_width: bool = True, key: Optional[str] = None):
+def render_chart(fig: go.Figure, key: Optional[str] = None):
     """Helper to render Plotly chart with consistent configuration"""
     st.plotly_chart(
         fig,
