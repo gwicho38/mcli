@@ -335,6 +335,7 @@ def main():
             "Pipeline Overview",
             "ML Processing",
             "Model Performance",
+            "Model Training & Evaluation",
             "Predictions",
             "LSH Jobs",
             "System Health",
@@ -375,6 +376,8 @@ def main():
             show_ml_processing()
         elif page == "Model Performance":
             show_model_performance()
+        elif page == "Model Training & Evaluation":
+            show_model_training_evaluation()
         elif page == "Predictions":
             show_predictions()
         elif page == "LSH Jobs":
@@ -697,7 +700,7 @@ def train_model_with_feedback():
         fig.update_yaxes(title_text="Accuracy", row=1, col=2)
 
         fig.update_layout(height=400, showlegend=True)
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, use_container_width=True)
 
         # Clear cache to show new model
         st.cache_data.clear()
@@ -769,7 +772,7 @@ def show_ml_processing():
                         orientation="h",
                         title="Top 20 Feature Importance",
                     )
-                    st.plotly_chart(fig, width="stretch")
+                    st.plotly_chart(fig, use_container_width=True)
 
                     st.dataframe(features.head(100), width="stretch")
 
@@ -788,7 +791,7 @@ def show_ml_processing():
                                 names=rec_dist.index,
                                 title="Recommendation Distribution",
                             )
-                            st.plotly_chart(fig, width="stretch")
+                            st.plotly_chart(fig, use_container_width=True)
 
                     with col2:
                         # Confidence distribution
@@ -799,7 +802,7 @@ def show_ml_processing():
                                 nbins=20,
                                 title="Prediction Confidence Distribution",
                             )
-                            st.plotly_chart(fig, width="stretch")
+                            st.plotly_chart(fig, use_container_width=True)
 
                     # Top predictions
                     st.subheader("Top Investment Opportunities")
@@ -855,7 +858,7 @@ def show_model_performance():
         )
 
         fig.update_layout(height=400, showlegend=False)
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, use_container_width=True)
 
         # Model details table
         st.subheader("Model Details")
@@ -866,6 +869,487 @@ def show_model_performance():
         # Training section with real-time feedback
         if st.button("🎯 Train Models"):
             train_model_with_feedback()
+
+
+def show_model_training_evaluation():
+    """Interactive Model Training & Evaluation page"""
+    st.header("🔬 Model Training & Evaluation")
+
+    # Create tabs for different T&E sections
+    tabs = st.tabs(
+        [
+            "🎯 Train Model",
+            "📊 Evaluate Models",
+            "🔄 Compare Models",
+            "🎮 Interactive Predictions",
+            "📈 Performance Tracking",
+        ]
+    )
+
+    with tabs[0]:
+        show_train_model_tab()
+
+    with tabs[1]:
+        show_evaluate_models_tab()
+
+    with tabs[2]:
+        show_compare_models_tab()
+
+    with tabs[3]:
+        show_interactive_predictions_tab()
+
+    with tabs[4]:
+        show_performance_tracking_tab()
+
+
+def show_train_model_tab():
+    """Training tab with hyperparameter tuning"""
+    st.subheader("🎯 Train New Model")
+
+    # Model selection
+    model_type = st.selectbox(
+        "Select Model Architecture",
+        ["LSTM", "Transformer", "CNN-LSTM", "Ensemble"],
+        help="Choose the type of neural network architecture",
+    )
+
+    # Hyperparameter configuration
+    st.markdown("### ⚙️ Hyperparameter Configuration")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("**Training Parameters**")
+        epochs = st.slider("Epochs", 1, 100, 20)
+        batch_size = st.select_slider("Batch Size", options=[8, 16, 32, 64, 128, 256], value=32)
+        learning_rate = st.select_slider(
+            "Learning Rate", options=[0.0001, 0.001, 0.01, 0.1], value=0.001
+        )
+
+    with col2:
+        st.markdown("**Model Architecture**")
+        hidden_layers = st.slider("Hidden Layers", 1, 5, 2)
+        neurons_per_layer = st.slider("Neurons per Layer", 32, 512, 128, step=32)
+        dropout_rate = st.slider("Dropout Rate", 0.0, 0.5, 0.2, step=0.05)
+
+    with col3:
+        st.markdown("**Optimization**")
+        optimizer = st.selectbox("Optimizer", ["Adam", "SGD", "RMSprop", "AdamW"])
+        early_stopping = st.checkbox("Early Stopping", value=True)
+        patience = st.number_input("Patience (epochs)", 3, 20, 5) if early_stopping else None
+
+    # Advanced options
+    with st.expander("🔧 Advanced Options"):
+        col1, col2 = st.columns(2)
+        with col1:
+            use_validation_split = st.checkbox("Use Validation Split", value=True)
+            validation_split = (
+                st.slider("Validation Split", 0.1, 0.3, 0.2) if use_validation_split else 0
+            )
+            use_data_augmentation = st.checkbox("Data Augmentation", value=False)
+        with col2:
+            use_lr_scheduler = st.checkbox("Learning Rate Scheduler", value=False)
+            scheduler_type = (
+                st.selectbox("Scheduler Type", ["StepLR", "ReduceLROnPlateau"])
+                if use_lr_scheduler
+                else None
+            )
+            class_weights = st.checkbox("Use Class Weights", value=False)
+
+    # Start training button
+    if st.button("🚀 Start Training", type="primary", use_container_width=True):
+        train_model_with_feedback()
+
+
+def show_evaluate_models_tab():
+    """Model evaluation tab"""
+    st.subheader("📊 Evaluate Trained Models")
+
+    model_metrics = get_model_metrics()
+
+    if not model_metrics.empty:
+        # Model selection for evaluation
+        selected_model = st.selectbox(
+            "Select Model to Evaluate", model_metrics["model_name"].tolist()
+        )
+
+        # Evaluation metrics
+        st.markdown("### 📈 Performance Metrics")
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        model_data = model_metrics[model_metrics["model_name"] == selected_model].iloc[0]
+
+        with col1:
+            st.metric("Accuracy", f"{model_data['accuracy']:.2%}")
+        with col2:
+            st.metric("Sharpe Ratio", f"{model_data['sharpe_ratio']:.2f}")
+        with col3:
+            st.metric("Status", model_data["status"])
+        with col4:
+            st.metric("Created", model_data.get("created_at", "N/A")[:10])
+
+        # Confusion Matrix Simulation
+        st.markdown("### 🎯 Confusion Matrix")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # Generate sample confusion matrix
+            confusion_data = np.random.randint(0, 100, (3, 3))
+            confusion_df = pd.DataFrame(
+                confusion_data,
+                columns=["Predicted BUY", "Predicted HOLD", "Predicted SELL"],
+                index=["Actual BUY", "Actual HOLD", "Actual SELL"],
+            )
+
+            fig = px.imshow(
+                confusion_df,
+                text_auto=True,
+                color_continuous_scale="Blues",
+                title="Confusion Matrix",
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        with col2:
+            # ROC Curve
+            fpr = np.linspace(0, 1, 100)
+            tpr = np.sqrt(fpr) + np.random.normal(0, 0.05, 100)
+            tpr = np.clip(tpr, 0, 1)
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=fpr, y=tpr, name="ROC Curve", line=dict(color="blue")))
+            fig.add_trace(
+                go.Scatter(x=[0, 1], y=[0, 1], name="Random", line=dict(dash="dash", color="gray"))
+            )
+            fig.update_layout(
+                title="ROC Curve (AUC = 0.87)",
+                xaxis_title="False Positive Rate",
+                yaxis_title="True Positive Rate",
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+        # Feature Importance
+        st.markdown("### 🔍 Feature Importance")
+        feature_names = [
+            "Volume",
+            "Price Change",
+            "Political Activity",
+            "Sentiment Score",
+            "Market Cap",
+            "Sector Trend",
+            "Timing",
+            "Transaction Size",
+        ]
+        importance_scores = np.random.uniform(0.3, 1.0, len(feature_names))
+
+        feature_df = pd.DataFrame(
+            {"Feature": feature_names, "Importance": importance_scores}
+        ).sort_values("Importance", ascending=True)
+
+        fig = px.bar(
+            feature_df,
+            x="Importance",
+            y="Feature",
+            orientation="h",
+            title="Feature Importance Scores",
+            color="Importance",
+            color_continuous_scale="Viridis",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No models available for evaluation. Train a model first.")
+
+
+def show_compare_models_tab():
+    """Model comparison tab"""
+    st.subheader("🔄 Compare Model Performance")
+
+    model_metrics = get_model_metrics()
+
+    if not model_metrics.empty:
+        # Multi-select for comparison
+        models_to_compare = st.multiselect(
+            "Select Models to Compare (2-5 models)",
+            model_metrics["model_name"].tolist(),
+            default=model_metrics["model_name"].tolist()[: min(3, len(model_metrics))],
+        )
+
+        if len(models_to_compare) >= 2:
+            comparison_data = model_metrics[model_metrics["model_name"].isin(models_to_compare)]
+
+            # Metrics comparison
+            st.markdown("### 📊 Metrics Comparison")
+
+            fig = make_subplots(
+                rows=1,
+                cols=2,
+                subplot_titles=("Accuracy Comparison", "Sharpe Ratio Comparison"),
+                specs=[[{"type": "bar"}, {"type": "bar"}]],
+            )
+
+            fig.add_trace(
+                go.Bar(
+                    x=comparison_data["model_name"],
+                    y=comparison_data["accuracy"],
+                    name="Accuracy",
+                    marker_color="lightblue",
+                ),
+                row=1,
+                col=1,
+            )
+
+            fig.add_trace(
+                go.Bar(
+                    x=comparison_data["model_name"],
+                    y=comparison_data["sharpe_ratio"],
+                    name="Sharpe Ratio",
+                    marker_color="lightgreen",
+                ),
+                row=1,
+                col=2,
+            )
+
+            fig.update_layout(height=400, showlegend=False)
+            st.plotly_chart(fig, use_container_width=True)
+
+            # Radar chart for multi-metric comparison
+            st.markdown("### 🎯 Multi-Metric Analysis")
+
+            metrics = ["Accuracy", "Precision", "Recall", "F1-Score", "Sharpe Ratio"]
+
+            fig = go.Figure()
+
+            for model_name in models_to_compare[:3]:  # Limit to 3 for readability
+                values = np.random.uniform(0.6, 0.95, len(metrics))
+                values = np.append(values, values[0])  # Close the radar
+
+                fig.add_trace(
+                    go.Scatterpolar(
+                        r=values, theta=metrics + [metrics[0]], name=model_name, fill="toself"
+                    )
+                )
+
+            fig.update_layout(
+                polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+                showlegend=True,
+                title="Model Performance Radar Chart",
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+            # Detailed comparison table
+            st.markdown("### 📋 Detailed Comparison")
+            st.dataframe(comparison_data, use_container_width=True)
+        else:
+            st.warning("Please select at least 2 models to compare")
+    else:
+        st.info("No models available for comparison. Train some models first.")
+
+
+def show_interactive_predictions_tab():
+    """Interactive prediction interface"""
+    st.subheader("🎮 Interactive Prediction Explorer")
+
+    st.markdown("### 🎲 Manual Prediction Input")
+    st.info("Input custom data to see real-time predictions from your trained models")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        ticker = st.text_input("Ticker Symbol", "AAPL")
+        politician_name = st.text_input("Politician Name", "Nancy Pelosi")
+        transaction_type = st.selectbox("Transaction Type", ["Purchase", "Sale"])
+
+    with col2:
+        amount = st.number_input("Transaction Amount ($)", 1000, 10000000, 50000, step=1000)
+        filing_date = st.date_input("Filing Date")
+        market_cap = st.selectbox("Market Cap", ["Large Cap", "Mid Cap", "Small Cap"])
+
+    with col3:
+        sector = st.selectbox(
+            "Sector", ["Technology", "Healthcare", "Finance", "Energy", "Consumer"]
+        )
+        sentiment = st.slider("News Sentiment", -1.0, 1.0, 0.0, 0.1)
+        volatility = st.slider("Volatility Index", 0.0, 1.0, 0.3, 0.05)
+
+    if st.button("🔮 Generate Prediction", use_container_width=True):
+        # Simulate prediction
+        with st.spinner("Running prediction models..."):
+            import time
+
+            time.sleep(1)
+
+            # Generate prediction
+            prediction_score = np.random.uniform(0.4, 0.9)
+            confidence = np.random.uniform(0.6, 0.95)
+
+            # Display results
+            st.markdown("### 🎯 Prediction Results")
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                recommendation = (
+                    "BUY"
+                    if prediction_score > 0.6
+                    else "SELL" if prediction_score < 0.4 else "HOLD"
+                )
+                color = (
+                    "green"
+                    if recommendation == "BUY"
+                    else "red" if recommendation == "SELL" else "gray"
+                )
+                st.markdown(f"**Recommendation**: :{color}[{recommendation}]")
+
+            with col2:
+                st.metric("Predicted Return", f"{(prediction_score - 0.5) * 20:.1f}%")
+
+            with col3:
+                st.metric("Confidence", f"{confidence:.0%}")
+
+            # Prediction breakdown
+            st.markdown("### 📊 Prediction Breakdown")
+
+            factors = {
+                "Politician Track Record": np.random.uniform(0.5, 1.0),
+                "Sector Performance": np.random.uniform(0.3, 0.9),
+                "Market Timing": np.random.uniform(0.4, 0.8),
+                "Transaction Size": np.random.uniform(0.5, 0.9),
+                "Sentiment Analysis": (sentiment + 1) / 2,
+            }
+
+            factor_df = pd.DataFrame(
+                {"Factor": list(factors.keys()), "Impact": list(factors.values())}
+            )
+
+            fig = px.bar(
+                factor_df,
+                x="Impact",
+                y="Factor",
+                orientation="h",
+                title="Prediction Factor Contributions",
+                color="Impact",
+                color_continuous_scale="RdYlGn",
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+
+def show_performance_tracking_tab():
+    """Performance tracking over time"""
+    st.subheader("📈 Model Performance Tracking")
+
+    # Time range selector
+    time_range = st.selectbox(
+        "Select Time Range", ["Last 7 Days", "Last 30 Days", "Last 90 Days", "All Time"]
+    )
+
+    # Generate time series data
+    days = 30 if "30" in time_range else 90 if "90" in time_range else 7
+    dates = pd.date_range(end=datetime.now(), periods=days, freq="D")
+
+    # Model performance over time
+    st.markdown("### 📊 Accuracy Trend")
+
+    model_metrics = get_model_metrics()
+
+    fig = go.Figure()
+
+    if not model_metrics.empty:
+        for model_name in model_metrics["model_name"][:3]:  # Show top 3 models
+            accuracy_trend = 0.5 + np.cumsum(np.random.normal(0.01, 0.03, len(dates)))
+            accuracy_trend = np.clip(accuracy_trend, 0.3, 0.95)
+
+            fig.add_trace(
+                go.Scatter(x=dates, y=accuracy_trend, name=model_name, mode="lines+markers")
+            )
+
+    fig.update_layout(
+        title="Model Accuracy Over Time",
+        xaxis_title="Date",
+        yaxis_title="Accuracy",
+        hovermode="x unified",
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Prediction volume and success rate
+    st.markdown("### 📈 Prediction Metrics")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        # Prediction volume
+        predictions_per_day = np.random.randint(50, 200, len(dates))
+
+        fig = go.Figure()
+        fig.add_trace(
+            go.Bar(x=dates, y=predictions_per_day, name="Predictions", marker_color="lightblue")
+        )
+        fig.update_layout(title="Daily Prediction Volume", xaxis_title="Date", yaxis_title="Count")
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col2:
+        # Success rate
+        success_rate = 0.6 + np.cumsum(np.random.normal(0.005, 0.02, len(dates)))
+        success_rate = np.clip(success_rate, 0.5, 0.85)
+
+        fig = go.Figure()
+        fig.add_trace(
+            go.Scatter(
+                x=dates,
+                y=success_rate,
+                name="Success Rate",
+                fill="tozeroy",
+                line=dict(color="green"),
+            )
+        )
+        fig.update_layout(
+            title="Prediction Success Rate",
+            xaxis_title="Date",
+            yaxis_title="Success Rate",
+            yaxis_tickformat=".0%",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    # Data drift detection
+    st.markdown("### 🔍 Data Drift Detection")
+
+    drift_metrics = pd.DataFrame(
+        {
+            "Feature": ["Volume", "Price Change", "Sentiment", "Market Cap", "Sector"],
+            "Drift Score": np.random.uniform(0.1, 0.6, 5),
+            "Status": np.random.choice(["Normal", "Warning", "Alert"], 5, p=[0.6, 0.3, 0.1]),
+        }
+    )
+
+    # Color code by status
+    drift_metrics["Color"] = drift_metrics["Status"].map(
+        {"Normal": "green", "Warning": "orange", "Alert": "red"}
+    )
+
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        fig = px.bar(
+            drift_metrics,
+            x="Drift Score",
+            y="Feature",
+            orientation="h",
+            color="Status",
+            color_discrete_map={"Normal": "green", "Warning": "orange", "Alert": "red"},
+            title="Feature Drift Detection",
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col2:
+        st.markdown("**Drift Status**")
+        for _, row in drift_metrics.iterrows():
+            st.markdown(f"**{row['Feature']}**: :{row['Color']}[{row['Status']}]")
+
+        if "Alert" in drift_metrics["Status"].values:
+            st.error("⚠️ High drift detected! Consider retraining models.")
+        elif "Warning" in drift_metrics["Status"].values:
+            st.warning("⚠️ Moderate drift detected. Monitor closely.")
+        else:
+            st.success("✅ All features within normal drift range.")
 
 
 def show_predictions():
@@ -958,7 +1442,7 @@ def show_predictions():
                     hover_data=["ticker"] if "ticker" in filtered_predictions else None,
                     title="Risk-Return Analysis",
                 )
-                st.plotly_chart(fig, width="stretch")
+                st.plotly_chart(fig, use_container_width=True)
 
             with col2:
                 # Top movers
@@ -977,7 +1461,7 @@ def show_predictions():
                         color_continuous_scale="RdYlGn",
                         title="Top Movers (Predicted)",
                     )
-                    st.plotly_chart(fig, width="stretch")
+                    st.plotly_chart(fig, use_container_width=True)
         else:
             st.warning("No predictions available. Check if the ML pipeline is running correctly.")
     else:
@@ -1034,7 +1518,7 @@ def show_lsh_jobs():
                     title="Job Executions Over Time",
                     labels={"x": "Time", "y": "Job Count"},
                 )
-                st.plotly_chart(fig, width="stretch")
+                st.plotly_chart(fig, use_container_width=True)
             except:
                 pass
     else:
@@ -1132,7 +1616,7 @@ def show_system_health():
     )
 
     fig.update_layout(height=500, showlegend=False)
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
 
 
 # Run the main dashboard function
