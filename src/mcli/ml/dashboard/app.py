@@ -283,7 +283,7 @@ def show_overview():
         model_data = get_model_performance()
         if not model_data.empty:
             fig = px.bar(model_data, x="name", y="accuracy", title="Model Accuracy Comparison")
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
         else:
             st.info("No model performance data available")
 
@@ -295,7 +295,7 @@ def show_overview():
             fig = px.histogram(
                 pred_data, x="confidence", title="Prediction Confidence Distribution"
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
         else:
             st.info("No recent predictions available")
 
@@ -315,7 +315,7 @@ def show_models():
         fig = px.line(
             model_data, x="created_at", y="accuracy", color="name", title="Model Accuracy Over Time"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch", config={"responsive": True})
     else:
         st.warning("No model data available")
 
@@ -362,7 +362,7 @@ def show_predictions():
                 color="ticker",
                 title="Confidence vs Predicted Return",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
         with col2:
             # Group by ticker and show average return
@@ -373,7 +373,7 @@ def show_predictions():
                 y="predicted_return",
                 title="Average Predicted Return by Ticker",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
     else:
         st.warning("No prediction data available")
@@ -397,7 +397,7 @@ def show_portfolios():
             fig = px.bar(
                 portfolio_data, x="name", y="total_return", title="Total Return by Portfolio"
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
         with col2:
             fig = px.scatter(
@@ -408,7 +408,7 @@ def show_portfolios():
                 hover_data=["name"],
                 title="Risk-Return Analysis",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
     else:
         st.warning("No portfolio data available")
@@ -467,7 +467,7 @@ def show_system_health():
     )
 
     fig.update_layout(height=500, title_text="System Resource Usage (24h)")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
 
 def show_live_monitoring():
