@@ -94,6 +94,27 @@ def get_supabase_client() -> Client:
     return create_client(url, key)
 
 
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def get_politician_names() -> List[str]:
+    """Get all politician names from database for searchable dropdown"""
+    try:
+        client = get_supabase_client()
+        if not client:
+            return ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer"]  # Fallback
+
+        result = client.table("politicians").select("first_name, last_name").execute()
+
+        if result.data:
+            # Create full names and sort them
+            names = [f"{p['first_name']} {p['last_name']}" for p in result.data]
+            return sorted(set(names))  # Remove duplicates and sort
+        else:
+            return ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer"]  # Fallback
+    except Exception as e:
+        logger.warning(f"Failed to fetch politician names: {e}")
+        return ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer"]  # Fallback
+
+
 @st.cache_resource
 def get_preprocessor():
     """Get data preprocessor instance"""
@@ -1303,13 +1324,28 @@ def show_interactive_predictions_tab():
     st.subheader("🎮 Interactive Prediction Explorer")
 
     st.markdown("### 🎲 Manual Prediction Input")
-    st.info("Input custom data to see real-time predictions from your trained models")
+    st.info(
+        "💡 **How it works**: Input trade details below and click 'Generate Prediction' to see what the model predicts. "
+        "The model analyzes politician track records, market conditions, and trade characteristics to forecast potential returns."
+    )
+
+    # Get politician names for searchable dropdown
+    politician_names = get_politician_names()
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        ticker = st.text_input("Ticker Symbol", "AAPL")
-        politician_name = st.text_input("Politician Name", "Nancy Pelosi")
+        ticker = st.text_input(
+            "Ticker Symbol",
+            "AAPL",
+            help="Stock ticker symbol (e.g., AAPL, TSLA, MSFT)",
+        )
+        politician_name = st.selectbox(
+            "Politician Name",
+            options=politician_names,
+            index=0,
+            help="Start typing to search and filter politician names. Data loaded from database.",
+        )
         transaction_type = st.selectbox("Transaction Type", ["Purchase", "Sale"])
 
     with col2:
@@ -1324,6 +1360,36 @@ def show_interactive_predictions_tab():
         sentiment = st.slider("News Sentiment", -1.0, 1.0, 0.0, 0.1)
         volatility = st.slider("Volatility Index", 0.0, 1.0, 0.3, 0.05)
 
+    # Technical details about prediction system
+    with st.expander("ℹ️ About the Prediction System"):
+        st.markdown(
+            """
+            ### How Predictions Work
+
+            **Current Implementation** (Demo Mode):
+            - Uses simulated predictions to demonstrate the interface
+            - Generates random but plausible prediction scores
+            - Shows how the final system will display results
+
+            **Full Production System** (To Be Integrated):
+            1. **Load Trained Model**: Fetch the latest trained model from `/models` directory
+            2. **Feature Engineering**: Transform your input data using the same preprocessing pipeline:
+               - Politician historical performance scores
+               - Market sector analysis
+               - Transaction timing and size normalization
+               - Sentiment and volatility indicators
+            3. **Model Inference**: Run the preprocessed data through the neural network
+            4. **Result Interpretation**: Convert model output to actionable recommendations
+
+            **Prediction Factors**:
+            - Politician's historical trading success rate
+            - Sector-specific market trends
+            - Transaction size relative to portfolio
+            - Market timing and volatility
+            - News sentiment analysis
+            """
+        )
+
     if st.button("🔮 Generate Prediction", width="stretch"):
         # Simulate prediction
         with st.spinner("Running prediction models..."):
@@ -1336,6 +1402,10 @@ def show_interactive_predictions_tab():
             confidence = np.random.uniform(0.6, 0.95)
 
             # Display results
+            st.warning(
+                "⚠️ **Demo Mode**: Results are simulated for demonstration. "
+                "Integrate trained model for production predictions."
+            )
             st.markdown("### 🎯 Prediction Results")
 
             col1, col2, col3 = st.columns(3)
