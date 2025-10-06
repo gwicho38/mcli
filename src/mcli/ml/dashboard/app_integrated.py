@@ -103,12 +103,47 @@ def get_supabase_client() -> Client:
     key = os.getenv("SUPABASE_KEY", "")
 
     if not url or not key:
-        st.warning(
-            "⚠️ Supabase credentials not found. Set SUPABASE_URL and SUPABASE_KEY environment variables."
+        st.error(
+            "❌ Supabase credentials not configured"
         )
+        with st.expander("🔧 Configuration Required"):
+            st.markdown("""
+            **Missing environment variables:**
+            - `SUPABASE_URL`: {}
+            - `SUPABASE_KEY`: {}
+
+            **To fix:**
+            1. Create `.streamlit/secrets.toml` file
+            2. Add your Supabase credentials:
+               ```toml
+               SUPABASE_URL = "https://your-project.supabase.co"
+               SUPABASE_KEY = "your-anon-key"
+               ```
+            3. Restart the dashboard
+
+            **Using demo data** until configured.
+            """.format(
+                "✅ Set" if url else "❌ Missing",
+                "✅ Set" if key else "❌ Missing"
+            ))
         return None
 
-    return create_client(url, key)
+    try:
+        client = create_client(url, key)
+        # Test connection with a simple query
+        try:
+            test_result = client.table("politicians").select("id").limit(1).execute()
+            return client
+        except Exception as conn_error:
+            st.error(f"❌ Supabase connection failed: {conn_error}")
+            with st.expander("🔍 Connection Details"):
+                st.write(f"**URL:** {url[:30]}...")
+                st.write(f"**Error:** {str(conn_error)}")
+                st.write("**Using demo data** until connection is restored.")
+            return None
+    except Exception as e:
+        st.error(f"❌ Failed to create Supabase client: {e}")
+        return None
 
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes
@@ -495,26 +530,43 @@ def run_ml_pipeline(df_disclosures):
 
 def _generate_fallback_predictions(processed_data):
     """Generate basic predictions when predictor is unavailable"""
-    if processed_data.empty:
-        return pd.DataFrame()
+    # If we have real data, use it
+    if not processed_data.empty and "ticker_symbol" in processed_data:
+        tickers = processed_data["ticker_symbol"].unique()[:10]
+        n_tickers = len(tickers)
+    else:
+        # Generate demo predictions with realistic tickers
+        tickers = np.array(["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN", "NVDA", "META", "NFLX", "AMD", "INTC"])
+        n_tickers = len(tickers)
+        st.info("🔵 Showing demo predictions (Supabase connection unavailable)")
 
-    tickers = (
-        processed_data["ticker_symbol"].unique()[:10] if "ticker_symbol" in processed_data else []
-    )
-    n_tickers = len(tickers)
+    # Generate predictions with realistic patterns
+    np.random.seed(42)  # Reproducible for demo
+    predicted_returns = np.random.normal(0.02, 0.03, n_tickers)  # Mean 2% return, std 3%
+    confidences = np.random.beta(5, 2, n_tickers)  # Skewed towards higher confidence
+    risk_scores = 1 - confidences  # Inverse relationship
 
-    if n_tickers == 0:
-        return pd.DataFrame()
+    # Generate recommendations based on predicted returns
+    recommendations = []
+    for ret in predicted_returns:
+        if ret > 0.03:
+            recommendations.append("BUY")
+        elif ret < -0.02:
+            recommendations.append("SELL")
+        else:
+            recommendations.append("HOLD")
 
     return pd.DataFrame(
         {
             "ticker": tickers,
-            "predicted_return": np.random.uniform(-0.05, 0.05, n_tickers),
-            "confidence": np.random.uniform(0.5, 0.8, n_tickers),
-            "risk_score": np.random.uniform(0.3, 0.7, n_tickers),
-            "recommendation": np.random.choice(["BUY", "HOLD", "SELL"], n_tickers),
-            "trade_count": np.random.randint(1, 10, n_tickers),
-            "signal_strength": np.random.uniform(0.3, 0.9, n_tickers),
+            "predicted_return": predicted_returns,
+            "confidence": confidences,
+            "risk_score": risk_scores,
+            "recommendation": recommendations,
+            "trade_count": np.random.randint(5, 50, n_tickers),
+            "signal_strength": confidences * np.random.uniform(0.8, 1.0, n_tickers),
+            "politician_count": np.random.randint(1, 15, n_tickers),
+            "avg_trade_size": np.random.uniform(10000, 500000, n_tickers),
         }
     )
 
@@ -547,7 +599,8 @@ def get_disclosures_data():
     """Get trading disclosures from Supabase"""
     client = get_supabase_client()
     if not client:
-        return pd.DataFrame()
+        # Return demo data when Supabase unavailable
+        return _generate_demo_disclosures()
 
     try:
         response = (
@@ -558,6 +611,11 @@ def get_disclosures_data():
             .execute()
         )
         df = pd.DataFrame(response.data)
+
+        if df.empty:
+            st.warning("No disclosure data in Supabase. Using demo data.")
+            return _generate_demo_disclosures()
+
         # Convert any dict/list columns to JSON strings to avoid hashing issues
         for col in df.columns:
             if df[col].dtype == "object":
@@ -568,7 +626,37 @@ def get_disclosures_data():
         return df
     except Exception as e:
         st.error(f"Error fetching disclosures: {e}")
-        return pd.DataFrame()
+        return _generate_demo_disclosures()
+
+
+def _generate_demo_disclosures():
+    """Generate demo trading disclosure data for testing"""
+    st.info("🔵 Using demo trading data (Supabase unavailable)")
+
+    np.random.seed(42)
+    n_records = 100
+
+    politicians = ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer", "Tommy Tuberville"]
+    tickers = ["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN", "NVDA", "META", "NFLX", "AMD", "INTC"]
+    transaction_types = ["purchase", "sale", "exchange"]
+
+    # Generate dates over last 6 months
+    end_date = pd.Timestamp.now()
+    start_date = end_date - pd.Timedelta(days=180)
+    dates = pd.date_range(start=start_date, end=end_date, periods=n_records)
+
+    return pd.DataFrame({
+        "id": range(1, n_records + 1),
+        "politician_name": np.random.choice(politicians, n_records),
+        "ticker_symbol": np.random.choice(tickers, n_records),
+        "transaction_type": np.random.choice(transaction_types, n_records),
+        "amount": np.random.uniform(15000, 500000, n_records),
+        "disclosure_date": dates,
+        "transaction_date": dates - pd.Timedelta(days=np.random.randint(1, 45)),
+        "asset_description": [f"Common Stock - {t}" for t in np.random.choice(tickers, n_records)],
+        "party": np.random.choice(["Democrat", "Republican"], n_records),
+        "state": np.random.choice(["CA", "TX", "NY", "FL", "AL"], n_records),
+    })
 
 
 @st.cache_data(ttl=30)
@@ -1094,6 +1182,8 @@ def show_ml_processing():
                                 title="Recommendation Distribution",
                             )
                             st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                        else:
+                            st.info("No recommendation data in predictions")
 
                     with col2:
                         # Confidence distribution
@@ -1105,11 +1195,58 @@ def show_ml_processing():
                                 title="Prediction Confidence Distribution",
                             )
                             st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                        else:
+                            st.info("No confidence data in predictions")
 
                     # Top predictions
                     st.subheader("Top Investment Opportunities")
-                    top_predictions = predictions.nlargest(10, "predicted_return")
-                    st.dataframe(top_predictions, width="stretch")
+                    if "predicted_return" in predictions:
+                        top_predictions = predictions.nlargest(10, "predicted_return")
+                        st.dataframe(top_predictions, width="stretch")
+                    else:
+                        st.warning("Predictions missing 'predicted_return' column")
+                        st.dataframe(predictions.head(10), width="stretch")
+
+                elif predictions is None:
+                    st.error("❌ ML Pipeline Error: No predictions generated")
+                    st.info("""
+                    **Possible causes:**
+                    - No trained model available
+                    - Insufficient training data
+                    - Pipeline configuration error
+
+                    **Next steps:**
+                    1. Check 'Raw Data' tab - verify data is loaded
+                    2. Check 'Preprocessed' tab - verify data preprocessing works
+                    3. Go to 'Model Training & Evaluation' page to train a model
+                    4. Check Supabase connection in 'System Health' page
+                    """)
+
+                    # Debug info
+                    with st.expander("🔍 Debug Information"):
+                        st.write("**Data Status:**")
+                        st.write(f"- Raw records: {len(disclosures)}")
+                        st.write(f"- Processed records: {len(processed_data) if processed_data is not None else 'N/A'}")
+                        st.write(f"- Features generated: {len(features.columns) if features is not None else 'N/A'}")
+                        st.write(f"- Predictions: None")
+
+                else:
+                    st.warning("⚠️ No predictions generated (empty results)")
+                    st.info("""
+                    **This usually means:**
+                    - Not enough data to generate predictions
+                    - All data was filtered out during feature engineering
+                    - Model confidence threshold too high
+
+                    **Debug info:**
+                    - Raw records: {}
+                    - Processed records: {}
+                    - Features: {}
+                    """.format(
+                        len(disclosures),
+                        len(processed_data) if processed_data is not None else 0,
+                        len(features) if features is not None else 0
+                    ))
         else:
             st.error("Failed to process data through pipeline")
     else:
