@@ -9,15 +9,10 @@ import plotly.graph_objects as go
 import plotly.express as px
 from typing import Optional
 
-# Import components
-import sys
-from pathlib import Path
-dashboard_dir = Path(__file__).parent.parent
-sys.path.insert(0, str(dashboard_dir))
-
-from components.metrics import display_kpi_row, display_status_badge, display_health_indicator
-from components.charts import create_timeline_chart, create_status_pie_chart, render_chart
-from components.tables import display_filterable_dataframe, export_dataframe
+# Import components using relative imports
+from ..components.metrics import display_kpi_row, display_status_badge, display_health_indicator
+from ..components.charts import create_timeline_chart, create_status_pie_chart, render_chart
+from ..components.tables import display_filterable_dataframe, export_dataframe
 
 
 def get_cicd_api_url() -> str:

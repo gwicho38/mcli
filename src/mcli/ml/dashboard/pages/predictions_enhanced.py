@@ -10,15 +10,10 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, List
 import os
 
-# Import from parent
-import sys
-from pathlib import Path
-dashboard_dir = Path(__file__).parent.parent
-sys.path.insert(0, str(dashboard_dir))
-
-from components.metrics import display_kpi_row, display_status_badge
-from components.charts import create_timeline_chart, render_chart
-from components.tables import display_filterable_dataframe, export_dataframe
+# Import components using relative imports
+from ..components.metrics import display_kpi_row, display_status_badge
+from ..components.charts import create_timeline_chart, render_chart
+from ..components.tables import display_filterable_dataframe, export_dataframe
 
 # Import real data functions from main app
 try:
@@ -377,7 +372,7 @@ def show_prediction_generator():
     with col3:
         use_historical = st.checkbox("Use Historical Patterns", value=True)
 
-    if st.button("🔮 Generate Prediction", type="primary", use_container_width=True):
+    if st.button("🔮 Generate Prediction", type="primary", width="stretch"):
         with st.spinner("Analyzing trading patterns and generating prediction..."):
 
             # Use REAL data and REAL ML model
@@ -751,7 +746,7 @@ def show_portfolio_builder(predictions_df: pd.DataFrame):
         min_confidence = st.slider("Min Confidence", 0.5, 0.95, 0.7, 0.05)
         total_capital = st.number_input("Total Capital ($)", min_value=1000, value=100000, step=10000)
 
-        if st.button("🎯 Build Portfolio", type="primary", use_container_width=True):
+        if st.button("🎯 Build Portfolio", type="primary", width="stretch"):
             st.session_state['portfolio_built'] = True
 
     with col2:

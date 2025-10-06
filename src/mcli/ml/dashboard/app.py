@@ -309,7 +309,7 @@ def show_models():
 
     if not model_data.empty:
         st.subheader("Model Performance")
-        st.dataframe(model_data, use_container_width=True)
+        st.dataframe(model_data, width="stretch")
 
         # Model accuracy chart
         fig = px.line(
@@ -349,7 +349,7 @@ def show_predictions():
 
         # Display filtered data
         st.subheader("Filtered Predictions")
-        st.dataframe(filtered_data, use_container_width=True)
+        st.dataframe(filtered_data, width="stretch")
 
         # Charts
         col1, col2 = st.columns(2)
@@ -388,7 +388,7 @@ def show_portfolios():
     if not portfolio_data.empty:
         # Portfolio metrics
         st.subheader("Portfolio Summary")
-        st.dataframe(portfolio_data, use_container_width=True)
+        st.dataframe(portfolio_data, width="stretch")
 
         # Performance charts
         col1, col2 = st.columns(2)
@@ -509,13 +509,13 @@ def show_live_monitoring():
                         "Time": [datetime.now() - timedelta(seconds=x * 10) for x in range(5)],
                     }
                 )
-                st.dataframe(new_preds, use_container_width=True)
+                st.dataframe(new_preds, width="stretch")
 
             # Model status
             with model_placeholder.container():
                 model_data = get_model_performance()
                 if not model_data.empty:
-                    st.dataframe(model_data[["name", "accuracy"]], use_container_width=True)
+                    st.dataframe(model_data[["name", "accuracy"]], width="stretch")
 
             time.sleep(5)
 
