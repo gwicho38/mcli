@@ -49,12 +49,14 @@ except ImportError:
 try:
     from pages.cicd import show_cicd_dashboard
     from pages.workflows import show_workflows_dashboard
+    from pages.predictions_enhanced import show_predictions_enhanced
 
     HAS_EXTENDED_PAGES = True
 except ImportError:
     HAS_EXTENDED_PAGES = False
     show_cicd_dashboard = None
     show_workflows_dashboard = None
+    show_predictions_enhanced = None
 
 # Page config
 st.set_page_config(
@@ -666,7 +668,11 @@ def main():
         elif page == "Model Training & Evaluation":
             show_model_training_evaluation()
         elif page == "Predictions":
-            show_predictions()
+            # Use enhanced predictions page if available, otherwise fallback
+            if HAS_EXTENDED_PAGES and show_predictions_enhanced:
+                show_predictions_enhanced()
+            else:
+                show_predictions()
         elif page == "LSH Jobs":
             show_lsh_jobs()
         elif page == "System Health":
