@@ -90,12 +90,22 @@ def fetch_webhooks() -> list:
         response = requests.get(f"{api_url}/webhooks", timeout=5)
         response.raise_for_status()
         return response.json().get("webhooks", [])
-    except:
-        # Mock data
-        return [
-            {"id": "wh-1", "name": "GitHub Main", "url": "https://github.com/user/repo", "events": ["push", "pull_request"], "active": True},
-            {"id": "wh-2", "name": "GitLab CI", "url": "https://gitlab.com/user/repo", "events": ["push"], "active": True},
-        ]
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            # API endpoint not implemented yet - use demo data silently
+            pass
+        else:
+            st.warning(f"Could not fetch webhooks: {e}")
+    except requests.exceptions.ConnectionError:
+        st.warning("⚠️ LSH Daemon connection failed. Using demo data.")
+    except Exception as e:
+        st.warning(f"Could not fetch webhooks: {e}")
+
+    # Return mock data
+    return [
+        {"id": "wh-1", "name": "GitHub Main", "url": "https://github.com/user/repo", "events": ["push", "pull_request"], "active": True},
+        {"id": "wh-2", "name": "GitLab CI", "url": "https://gitlab.com/user/repo", "events": ["push"], "active": True},
+    ]
 
 
 def show_cicd_dashboard():
