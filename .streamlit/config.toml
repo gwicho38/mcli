@@ -1,0 +1,31 @@
+# Streamlit Configuration
+# This file configures the Streamlit app behavior
+
+[server]
+# Server settings
+headless = true
+port = 8501
+enableCORS = false
+enableXsrfProtection = true
+
+# Performance settings
+maxUploadSize = 200
+maxMessageSize = 200
+
+[browser]
+# Browser settings
+gatherUsageStats = false
+serverAddress = "localhost"
+
+[theme]
+# Custom theme for MCLI dashboard
+primaryColor = "#1f77b4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"
+
+[client]
+# Client settings
+showErrorDetails = true
+toolbarMode = "auto"

@@ -39,8 +39,8 @@ SUPABASE_URL = "https://uljsqvwkomdrlnofmlad.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsanNxdndrb21kcmxub2ZtbGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MDIyNDQsImV4cCI6MjA3MjM3ODI0NH0.QCpfcEpxGX_5Wn8ljf_J2KWjJLGdF8zRsV_7OatxmHI"
 SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsanNxdndrb21kcmxub2ZtbGFkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjgwMjI0NCwiZXhwIjoyMDcyMzc4MjQ0fQ.4364sQbTJQd4IcxEQG6mPiOUw1iJ2bdKfV6W4oRqHvs"
 
-# Optional - if using LSH API
-LSH_API_URL = "http://localhost:3030"
+# LSH Daemon API (Production - Deployed on Fly.io)
+LSH_API_URL = "https://mcli-lsh-daemon.fly.dev"
 ```
 
 **Or in the UI:**
