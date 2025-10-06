@@ -911,6 +911,13 @@ def show_train_model_tab():
     """Training tab with hyperparameter tuning"""
     st.subheader("🎯 Train New Model")
 
+    # Helpful info box
+    st.info(
+        "💡 **Quick Start Guide:** Configure your model below and click 'Start Training'. "
+        "Hover over any parameter name (ℹ️) to see detailed explanations. "
+        "For most tasks, the default values are a good starting point."
+    )
+
     # Model naming
     st.markdown("### 📝 Model Configuration")
     model_name_input = st.text_input(
@@ -934,7 +941,7 @@ def show_train_model_tab():
     model_type = st.selectbox(
         "Select Model Architecture",
         ["LSTM", "Transformer", "CNN-LSTM", "Ensemble"],
-        help="Choose the type of neural network architecture",
+        help="Neural network architecture type:\n• LSTM: Long Short-Term Memory, excellent for time series and sequential data\n• Transformer: Attention-based, state-of-the-art for many tasks, handles long sequences well\n• CNN-LSTM: Combines convolutional layers with LSTM, good for spatiotemporal patterns\n• Ensemble: Combines multiple models for better predictions (slower but often more accurate)",
     )
 
     # Hyperparameter configuration
@@ -944,41 +951,163 @@ def show_train_model_tab():
 
     with col1:
         st.markdown("**Training Parameters**")
-        epochs = st.slider("Epochs", 1, 100, 20)
-        batch_size = st.select_slider("Batch Size", options=[8, 16, 32, 64, 128, 256], value=32)
+        epochs = st.slider(
+            "Epochs",
+            1,
+            100,
+            20,
+            help="Number of complete passes through the training dataset. More epochs can improve accuracy but may lead to overfitting. Typical range: 10-50 for most tasks.",
+        )
+        batch_size = st.select_slider(
+            "Batch Size",
+            options=[8, 16, 32, 64, 128, 256],
+            value=32,
+            help="Number of samples processed before updating model weights. Larger batches train faster but use more memory. Smaller batches may generalize better. Common values: 16, 32, 64.",
+        )
         learning_rate = st.select_slider(
-            "Learning Rate", options=[0.0001, 0.001, 0.01, 0.1], value=0.001
+            "Learning Rate",
+            options=[0.0001, 0.001, 0.01, 0.1],
+            value=0.001,
+            help="Step size for weight updates during training. Lower values (0.0001-0.001) are safer but slower. Higher values (0.01-0.1) train faster but may overshoot optimal weights. Start with 0.001 for Adam optimizer.",
         )
 
     with col2:
         st.markdown("**Model Architecture**")
-        hidden_layers = st.slider("Hidden Layers", 1, 5, 2)
-        neurons_per_layer = st.slider("Neurons per Layer", 32, 512, 128, step=32)
-        dropout_rate = st.slider("Dropout Rate", 0.0, 0.5, 0.2, step=0.05)
+        hidden_layers = st.slider(
+            "Hidden Layers",
+            1,
+            5,
+            2,
+            help="Number of hidden layers in the neural network. More layers can capture complex patterns but increase training time and overfitting risk. Start with 2-3 layers for most problems.",
+        )
+        neurons_per_layer = st.slider(
+            "Neurons per Layer",
+            32,
+            512,
+            128,
+            step=32,
+            help="Number of neurons in each hidden layer. More neurons increase model capacity and training time. Common values: 64, 128, 256. Higher values for complex data.",
+        )
+        dropout_rate = st.slider(
+            "Dropout Rate",
+            0.0,
+            0.5,
+            0.2,
+            step=0.05,
+            help="Fraction of neurons randomly dropped during training to prevent overfitting. 0.0 = no dropout, 0.5 = aggressive regularization. Typical range: 0.1-0.3 for most tasks.",
+        )
 
     with col3:
         st.markdown("**Optimization**")
-        optimizer = st.selectbox("Optimizer", ["Adam", "SGD", "RMSprop", "AdamW"])
-        early_stopping = st.checkbox("Early Stopping", value=True)
-        patience = st.number_input("Patience (epochs)", 3, 20, 5) if early_stopping else None
+        optimizer = st.selectbox(
+            "Optimizer",
+            ["Adam", "SGD", "RMSprop", "AdamW"],
+            help="Algorithm for updating model weights:\n• Adam: Adaptive learning rate, works well for most tasks (recommended)\n• SGD: Simple but requires careful learning rate tuning\n• RMSprop: Good for recurrent networks\n• AdamW: Adam with weight decay, better generalization",
+        )
+        early_stopping = st.checkbox(
+            "Early Stopping",
+            value=True,
+            help="Stop training when validation performance stops improving. Prevents overfitting and saves training time. Recommended for most tasks.",
+        )
+        patience = (
+            st.number_input(
+                "Patience (epochs)",
+                3,
+                20,
+                5,
+                help="Number of epochs to wait for improvement before stopping. Higher patience allows more time to escape local minima. Typical range: 3-10 epochs.",
+            )
+            if early_stopping
+            else None
+        )
 
     # Advanced options
     with st.expander("🔧 Advanced Options"):
         col1, col2 = st.columns(2)
         with col1:
-            use_validation_split = st.checkbox("Use Validation Split", value=True)
-            validation_split = (
-                st.slider("Validation Split", 0.1, 0.3, 0.2) if use_validation_split else 0
+            use_validation_split = st.checkbox(
+                "Use Validation Split",
+                value=True,
+                help="Split data into training and validation sets. Validation set is used to monitor overfitting and select best model. Essential for reliable training. Recommended: Always enabled.",
             )
-            use_data_augmentation = st.checkbox("Data Augmentation", value=False)
+            validation_split = (
+                st.slider(
+                    "Validation Split",
+                    0.1,
+                    0.3,
+                    0.2,
+                    help="Fraction of data reserved for validation (not used for training). Higher values give more reliable validation but less training data. Typical: 0.2 (20% validation, 80% training).",
+                )
+                if use_validation_split
+                else 0
+            )
+            use_data_augmentation = st.checkbox(
+                "Data Augmentation",
+                value=False,
+                help="Generate additional training samples by applying random transformations to existing data. Reduces overfitting and improves generalization. Useful when training data is limited. May increase training time.",
+            )
         with col2:
-            use_lr_scheduler = st.checkbox("Learning Rate Scheduler", value=False)
+            use_lr_scheduler = st.checkbox(
+                "Learning Rate Scheduler",
+                value=False,
+                help="Automatically adjust learning rate during training. Can improve convergence and final performance. Useful for long training runs or when training plateaus. Not always necessary with Adam optimizer.",
+            )
             scheduler_type = (
-                st.selectbox("Scheduler Type", ["StepLR", "ReduceLROnPlateau"])
+                st.selectbox(
+                    "Scheduler Type",
+                    ["StepLR", "ReduceLROnPlateau"],
+                    help="Learning rate adjustment strategy:\n• StepLR: Reduce LR by fixed factor at regular intervals\n• ReduceLROnPlateau: Reduce LR when validation metric stops improving (adaptive, often better)",
+                )
                 if use_lr_scheduler
                 else None
             )
-            class_weights = st.checkbox("Use Class Weights", value=False)
+            class_weights = st.checkbox(
+                "Use Class Weights",
+                value=False,
+                help="Give higher importance to underrepresented classes during training. Helps with imbalanced datasets (e.g., if you have many HOLD predictions but few BUY/SELL). Enable if your classes are imbalanced.",
+            )
+
+    # Helpful tips section
+    with st.expander("📚 Training Tips & Best Practices"):
+        st.markdown(
+            """
+            ### 🎯 Recommended Settings by Task
+
+            **Small Dataset (< 1000 samples):**
+            - Epochs: 20-30
+            - Batch Size: 8-16
+            - Learning Rate: 0.001
+            - Dropout: 0.3-0.4 (higher to prevent overfitting)
+            - Enable Early Stopping
+
+            **Medium Dataset (1000-10,000 samples):**
+            - Epochs: 30-50
+            - Batch Size: 32-64
+            - Learning Rate: 0.001
+            - Dropout: 0.2-0.3
+            - Use Validation Split: 20%
+
+            **Large Dataset (> 10,000 samples):**
+            - Epochs: 50-100
+            - Batch Size: 64-128
+            - Learning Rate: 0.001-0.01
+            - Dropout: 0.1-0.2
+            - Consider Learning Rate Scheduler
+
+            ### ⚡ Performance Tips
+            - **Start simple**: Begin with default settings and adjust based on results
+            - **Monitor overfitting**: If training accuracy >> validation accuracy, increase dropout or reduce model complexity
+            - **Too slow to converge**: Increase learning rate or reduce model size
+            - **Unstable training**: Decrease learning rate or batch size
+            - **Memory issues**: Reduce batch size or model size
+
+            ### 🔍 What to Watch During Training
+            - **Loss should decrease**: Both train and validation loss should trend downward
+            - **Accuracy should increase**: Both train and validation accuracy should improve
+            - **Gap between train/val**: Small gap = good, large gap = overfitting
+            - **Early stopping triggers**: Model stops when validation stops improving
+            """
+        )
 
     # Start training button
     if st.button("🚀 Start Training", type="primary", use_container_width=True):
