@@ -37,7 +37,16 @@ def fetch_workflows() -> pd.DataFrame:
         if workflows:
             return pd.DataFrame(workflows)
 
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            # API endpoint not implemented yet - use demo data silently
+            pass
+        else:
+            st.warning(f"Could not fetch workflow data: {e}")
+    except requests.exceptions.ConnectionError:
+        st.warning("⚠️ LSH Daemon connection failed. Using demo data.")
     except Exception as e:
+        # Only show warning for unexpected errors
         st.warning(f"Could not fetch workflow data: {e}")
 
     # Return mock data

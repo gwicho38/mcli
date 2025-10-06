@@ -37,7 +37,16 @@ def fetch_cicd_builds(limit: int = 100) -> pd.DataFrame:
         if builds:
             return pd.DataFrame(builds)
 
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            # API endpoint not implemented yet - use demo data silently
+            pass
+        else:
+            st.warning(f"Could not fetch CI/CD data: {e}")
+    except requests.exceptions.ConnectionError:
+        st.warning("⚠️ LSH Daemon connection failed. Using demo data.")
     except Exception as e:
+        # Only show warning for unexpected errors
         st.warning(f"Could not fetch CI/CD data: {e}")
 
     # Return mock data for demonstration
