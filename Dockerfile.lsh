@@ -1,0 +1,173 @@
+# Dockerfile.lsh - LSH Daemon Docker Image for fly.io
+#
+# This Dockerfile builds a container for the LSH (Long-running Service Host) daemon,
+# which provides job scheduling, event streaming, and data pipeline management.
+#
+# Usage:
+#   docker build -f Dockerfile.lsh -t mcli-lsh-daemon .
+#   docker run -p 3030:3030 --env-file .env mcli-lsh-daemon
+#
+# For fly.io deployment, see fly.lsh.toml and docs/lsh_deployment_guide.md
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv package manager (faster than pip)
+RUN pip install --no-cache-dir uv
+
+# Copy dependency files
+COPY pyproject.toml uv.lock ./
+
+# Install Python dependencies
+# Using --frozen to ensure reproducible builds
+RUN uv sync --frozen --no-dev
+
+# Copy application source code
+COPY src/mcli ./mcli
+
+# Create necessary directories
+RUN mkdir -p /data /app/.local/mcli/daemon
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PORT=3030
+
+# Expose port
+EXPOSE 3030
+
+# Health check
+# Verifies the daemon is responding to HTTP requests
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:3030/health || exit 1
+
+# Create non-root user for security
+RUN useradd -m -u 1000 lsh && \
+    chown -R lsh:lsh /app /data
+
+# Switch to non-root user
+USER lsh
+
+# Run LSH daemon
+# The daemon will:
+# - Start FastAPI server on port 3030
+# - Provide job management API
+# - Stream events via Server-Sent Events
+# - Integrate with Supabase for data sync
+CMD ["python", "-m", "mcli.workflow.daemon.api_daemon", "start", "--host", "0.0.0.0", "--port", "3030"]
+
+# Alternative: If using uvicorn directly
+# CMD ["uvicorn", "mcli.workflow.daemon.api_daemon:app", "--host", "0.0.0.0", "--port", "3030"]
+
+# =============================================================================
+# Build & Run Instructions
+# =============================================================================
+
+# Local build and test:
+#   docker build -f Dockerfile.lsh -t mcli-lsh-daemon .
+#   docker run -p 3030:3030 --env-file .env mcli-lsh-daemon
+
+# Test the running container:
+#   curl http://localhost:3030/health
+#   curl http://localhost:3030/status
+
+# Deploy to fly.io:
+#   fly deploy --config fly.lsh.toml -a mcli-lsh-daemon
+
+# =============================================================================
+# Multi-stage build option (smaller image)
+# =============================================================================
+
+# Uncomment for production to reduce image size:
+
+# FROM python:3.11-slim as builder
+# WORKDIR /app
+# RUN pip install --no-cache-dir uv
+# COPY pyproject.toml uv.lock ./
+# RUN uv sync --frozen --no-dev
+# COPY src/mcli ./mcli
+
+# FROM python:3.11-slim
+# WORKDIR /app
+# COPY --from=builder /app /app
+# ENV PYTHONPATH=/app
+# ENV PORT=3030
+# EXPOSE 3030
+# CMD ["python", "-m", "mcli.workflow.daemon.api_daemon", "start", "--host", "0.0.0.0", "--port", "3030"]
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+
+# Required (set via fly secrets or .env):
+# - LSH_API_KEY: API authentication key
+# - SUPABASE_URL: Supabase project URL
+# - SUPABASE_KEY: Supabase anonymous key
+#
+# Optional:
+# - PORT: Port to listen on (default: 3030)
+# - LSH_LOG_LEVEL: Logging level (default: info)
+# - LSH_MAX_CONCURRENT_JOBS: Max concurrent jobs (default: 10)
+# - LSH_JOB_TIMEOUT: Job timeout in seconds (default: 300)
+
+# =============================================================================
+# Volumes (optional)
+# =============================================================================
+
+# For persistent data storage:
+# VOLUME /data
+# Mount with: docker run -v lsh_data:/data ...
+
+# =============================================================================
+# Security Notes
+# =============================================================================
+
+# - Runs as non-root user (lsh)
+# - No sensitive data baked into image
+# - Secrets passed via environment variables
+# - Health checks for reliability
+# - Minimal attack surface (slim base image)
+
+# =============================================================================
+# Troubleshooting
+# =============================================================================
+
+# If container fails to start:
+# 1. Check logs:           docker logs <container_id>
+# 2. Inspect container:    docker inspect <container_id>
+# 3. Test locally first:   python -m mcli.workflow.daemon.api_daemon start
+# 4. Verify dependencies:  uv sync --frozen
+
+# If health checks fail:
+# 1. Verify /health endpoint returns 200
+# 2. Check PORT env var is correct
+# 3. Ensure app binds to 0.0.0.0 not localhost
+# 4. Review application logs
+
+# Debug mode:
+# docker run -it --entrypoint /bin/bash mcli-lsh-daemon
+# Then manually run: python -m mcli.workflow.daemon.api_daemon start --debug
+
+# =============================================================================
+# Performance Tuning
+# =============================================================================
+
+# For high-load production:
+# - Use multi-worker setup: --workers 4
+# - Increase memory limits in fly.toml
+# - Enable connection pooling for Supabase
+# - Add Redis for caching (optional)
+
+# Example with workers:
+# CMD ["uvicorn", "mcli.workflow.daemon.api_daemon:app", \
+#      "--host", "0.0.0.0", "--port", "3030", "--workers", "4"]

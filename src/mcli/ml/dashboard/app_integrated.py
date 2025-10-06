@@ -1822,27 +1822,36 @@ def show_interactive_predictions_tab():
             """
             ### How Predictions Work
 
-            **Current Implementation** (Demo Mode):
-            - Uses simulated predictions to demonstrate the interface
-            - Generates random but plausible prediction scores
-            - Shows how the final system will display results
+            **Current Implementation** (Production Mode):
 
-            **Full Production System** (To Be Integrated):
-            1. **Load Trained Model**: Fetch the latest trained model from `/models` directory
-            2. **Feature Engineering**: Transform your input data using the same preprocessing pipeline:
-               - Politician historical performance scores
-               - Market sector analysis
-               - Transaction timing and size normalization
-               - Sentiment and volatility indicators
-            3. **Model Inference**: Run the preprocessed data through the neural network
-            4. **Result Interpretation**: Convert model output to actionable recommendations
+            This system uses a **feature-engineered prediction pipeline** with real data analysis:
 
-            **Prediction Factors**:
-            - Politician's historical trading success rate
-            - Sector-specific market trends
-            - Transaction size relative to portfolio
-            - Market timing and volatility
-            - News sentiment analysis
+            1. **Load Latest Model**: Fetches the most recent trained model from `/models` directory
+            2. **Feature Engineering**: Transforms input data using a 10-feature pipeline:
+               - **Politician Performance**: Historical trading volume, purchase ratio, stock diversity
+               - **Transaction Characteristics**: Purchase/sale indicator, amount (log-scaled & normalized)
+               - **Market Indicators**: Market cap score, sector risk assessment
+               - **Sentiment & Volatility**: News sentiment scores, price volatility measures
+               - **Timing Analysis**: Trade recency score with decay function
+            3. **Model Inference**: Runs preprocessed data through feature-weighted scoring model
+            4. **Result Generation**: Produces 4 key metrics:
+               - **Recommendation**: BUY/SELL/HOLD based on weighted score
+               - **Predicted Return**: Expected return percentage
+               - **Confidence**: Prediction confidence (50%-95%)
+               - **Risk Level**: Risk assessment (Low/Medium/High)
+
+            **Next Steps** (Neural Network Integration):
+            - Load PyTorch model from training pipeline
+            - Run inference with trained neural network weights
+            - Replace weighted scoring with deep learning predictions
+            - See `docs/model_training_guide.md` for training instructions
+
+            **Prediction Quality Factors**:
+            - Politician's historical trading success (15% weight)
+            - News sentiment analysis (20% weight)
+            - Price volatility (12% weight, negative impact)
+            - Transaction timing and market conditions
+            - Sector-specific risk profiles
             """
         )
 

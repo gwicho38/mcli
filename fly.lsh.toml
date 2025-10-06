@@ -1,0 +1,240 @@
+# fly.toml - LSH Daemon Configuration for fly.io
+#
+# Usage:
+#   fly deploy --config fly.lsh.toml -a mcli-lsh-daemon
+#
+# See docs/lsh_deployment_guide.md for complete deployment instructions
+
+app = "mcli-lsh-daemon"
+primary_region = "sjc"  # San Jose - change to your preferred region
+
+# Available regions:
+# - ams: Amsterdam, Netherlands
+# - cdg: Paris, France
+# - dfw: Dallas, Texas (US)
+# - ewr: Secaucus, NJ (US)
+# - fra: Frankfurt, Germany
+# - gru: São Paulo, Brazil
+# - hkg: Hong Kong
+# - iad: Ashburn, Virginia (US)
+# - lax: Los Angeles, California (US)
+# - lhr: London, United Kingdom
+# - maa: Chennai, India
+# - nrt: Tokyo, Japan
+# - ord: Chicago, Illinois (US)
+# - scl: Santiago, Chile
+# - sea: Seattle, Washington (US)
+# - sjc: San Jose, California (US)
+# - syd: Sydney, Australia
+# - yyz: Toronto, Canada
+
+# Build configuration
+[build]
+  dockerfile = "Dockerfile.lsh"
+
+# Environment variables (non-secret)
+[env]
+  PORT = "3030"
+  LSH_LOG_LEVEL = "info"
+  LSH_MAX_CONCURRENT_JOBS = "10"
+  LSH_JOB_TIMEOUT = "300"
+  LSH_ENABLE_CACHING = "true"
+  LSH_ENABLE_HISTORY = "true"
+
+# HTTP service configuration
+[http_service]
+  internal_port = 3030
+  force_https = true
+
+  # Keep daemon always running (critical for job scheduler)
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  # Health check configuration
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+    # Expected response
+    [http_service.checks.headers]
+      # Add custom headers if needed
+
+# TCP/HTTP service configuration
+[[services]]
+  protocol = "tcp"
+  internal_port = 3030
+
+  # HTTP ports
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  # Concurrency limits
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 1000
+    soft_limit = 500
+
+# Virtual machine configuration
+[[vm]]
+  # CPU configuration
+  cpu_kind = "shared"  # Options: shared, performance
+  cpus = 1             # Number of CPUs
+
+  # Memory configuration (MB)
+  memory_mb = 512      # Options: 256, 512, 1024, 2048, 4096, 8192
+
+  # For production, consider:
+  # memory_mb = 1024
+  # cpus = 2
+
+# Metrics endpoint (optional - for monitoring)
+[metrics]
+  port = 9091
+  path = "/metrics"
+
+# Persistent storage (optional - for SQLite database)
+# Uncomment if you want to persist LSH daemon data
+# [[mounts]]
+#   source = "lsh_data"
+#   destination = "/data"
+#   initial_size = "1GB"
+
+# Secrets configuration
+# Set secrets using: fly secrets set KEY=value -a mcli-lsh-daemon
+#
+# Required secrets:
+# - LSH_API_KEY: API authentication key
+# - SUPABASE_URL: Supabase project URL
+# - SUPABASE_KEY: Supabase anonymous key
+# - SUPABASE_SERVICE_ROLE_KEY: Supabase service role key
+#
+# Example:
+# fly secrets set LSH_API_KEY=your_secure_key -a mcli-lsh-daemon
+# fly secrets set SUPABASE_URL=https://xxx.supabase.co -a mcli-lsh-daemon
+# fly secrets set SUPABASE_KEY=your_anon_key -a mcli-lsh-daemon
+
+# Deploy configuration
+[deploy]
+  # Deployment strategy
+  strategy = "rolling"  # Options: rolling, immediate, canary
+
+  # Release command (optional - runs before deployment)
+  # release_command = "python -m mcli.lib.db.migrations"
+
+# Experimental features
+[experimental]
+  # Enable auto-scaling based on load
+  auto_rollback = true
+
+# Restart policy
+[restart]
+  policy = "on-failure"
+  max_retries = 3
+
+# =============================================================================
+# Deployment Commands
+# =============================================================================
+
+# Initial setup:
+#   1. Create app:      fly apps create mcli-lsh-daemon
+#   2. Set secrets:     fly secrets set LSH_API_KEY=xxx -a mcli-lsh-daemon
+#   3. Deploy:          fly deploy --config fly.lsh.toml -a mcli-lsh-daemon
+
+# Subsequent deployments:
+#   fly deploy --config fly.lsh.toml -a mcli-lsh-daemon
+
+# View logs:
+#   fly logs -a mcli-lsh-daemon
+
+# Check status:
+#   fly status -a mcli-lsh-daemon
+
+# SSH into machine:
+#   fly ssh console -a mcli-lsh-daemon
+
+# Scale vertically:
+#   fly scale memory 1024 -a mcli-lsh-daemon
+#   fly scale vm shared-cpu-2x -a mcli-lsh-daemon
+
+# Scale horizontally:
+#   fly scale count 2 -a mcli-lsh-daemon
+
+# View metrics:
+#   fly dashboard -a mcli-lsh-daemon
+
+# =============================================================================
+# Cost Optimization
+# =============================================================================
+
+# For development (lower cost, can auto-stop):
+# [http_service]
+#   auto_stop_machines = true
+#   min_machines_running = 0
+
+# [[vm]]
+#   memory_mb = 256
+#   cpus = 1
+
+# For production (high availability):
+# [http_service]
+#   auto_stop_machines = false
+#   min_machines_running = 2  # For redundancy
+
+# [[vm]]
+#   memory_mb = 1024
+#   cpus = 2
+
+# =============================================================================
+# Multi-region Deployment (Advanced)
+# =============================================================================
+
+# To deploy in multiple regions for low latency:
+# 1. Create app in primary region (already done above)
+# 2. Scale to additional regions:
+#    fly scale count 1 --region sjc -a mcli-lsh-daemon
+#    fly scale count 1 --region iad -a mcli-lsh-daemon
+#    fly scale count 1 --region fra -a mcli-lsh-daemon
+
+# =============================================================================
+# Monitoring & Alerts
+# =============================================================================
+
+# Set up monitoring:
+# 1. View dashboard:  fly dashboard -a mcli-lsh-daemon
+# 2. Check health:    curl https://mcli-lsh-daemon.fly.dev/health
+# 3. Monitor logs:    fly logs -a mcli-lsh-daemon --follow
+
+# =============================================================================
+# Troubleshooting
+# =============================================================================
+
+# If deployment fails:
+# 1. Check build logs:     fly logs -a mcli-lsh-daemon
+# 2. Verify Dockerfile:    docker build -f Dockerfile.lsh .
+# 3. Check secrets:        fly secrets list -a mcli-lsh-daemon
+# 4. SSH into machine:     fly ssh console -a mcli-lsh-daemon
+# 5. Test health check:    curl http://localhost:3030/health
+
+# If health checks fail:
+# 1. Verify PORT env var is 3030
+# 2. Check /health endpoint exists
+# 3. Ensure app binds to 0.0.0.0, not localhost
+# 4. Review application logs
+
+# =============================================================================
+# Documentation
+# =============================================================================
+
+# Full deployment guide:     docs/lsh_deployment_guide.md
+# fly.io documentation:      https://fly.io/docs
+# mcli documentation:        README.md
