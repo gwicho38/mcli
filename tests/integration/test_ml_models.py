@@ -1,21 +1,29 @@
 """Test suite for ML models"""
 
 import pytest
-import torch
 import numpy as np
 from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
 
-from mcli.ml.models.base_models import BaseStockModel, MLPBaseModel, ResNetModel
-from mcli.ml.models.ensemble_models import (
-    AttentionStockPredictor,
-    TransformerStockModel,
-    LSTMStockPredictor,
-    DeepEnsembleModel
-)
-from mcli.ml.models.recommendation_models import StockRecommendationModel
+# Check for torch dependency
+try:
+    import torch
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+
+if HAS_TORCH:
+    from mcli.ml.models.base_models import BaseStockModel, MLPBaseModel, ResNetModel
+    from mcli.ml.models.ensemble_models import (
+        AttentionStockPredictor,
+        TransformerStockModel,
+        LSTMStockPredictor,
+        DeepEnsembleModel
+    )
+    from mcli.ml.models.recommendation_models import StockRecommendationModel
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestBaseModels:
     """Test base model abstractions"""
 
@@ -83,6 +91,7 @@ class TestBaseModels:
         assert metrics['mae'] > 0
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestEnsembleModels:
     """Test ensemble and advanced models"""
 
@@ -151,6 +160,7 @@ class TestEnsembleModels:
         assert torch.all(confidence >= 0) and torch.all(confidence <= 1)
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestRecommendationModel:
     """Test stock recommendation model"""
 
@@ -230,6 +240,7 @@ class TestRecommendationModel:
             assert len(portfolio['weights']) == 5
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestModelTraining:
     """Test model training functionality"""
 
@@ -288,6 +299,7 @@ class TestModelTraining:
             assert torch.allclose(p1, p2)
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestModelValidation:
     """Test model validation and evaluation"""
 

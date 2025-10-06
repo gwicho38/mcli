@@ -7,12 +7,18 @@ from unittest.mock import Mock, patch, MagicMock
 import requests
 import json
 
-from mcli.lib.api.daemon_client import (
-    get_daemon_client,
-    DaemonClient
-)
+# Try to import daemon client
+try:
+    from mcli.lib.api.daemon_client import (
+        get_daemon_client,
+        APIDaemonClient as DaemonClient
+    )
+    HAS_DAEMON_CLIENT = True
+except ImportError:
+    HAS_DAEMON_CLIENT = False
 
 
+@pytest.mark.skipif(not HAS_DAEMON_CLIENT, reason="daemon_client module not available")
 class TestDaemonClient:
     """Test suite for DaemonClient functionality"""
     

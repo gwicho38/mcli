@@ -7,13 +7,22 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, AsyncMock, MagicMock
 import asyncio
 
-from mcli.ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig
-from mcli.ml.data.preprocessing import DataPreprocessor
-from mcli.ml.features.feature_engineering import FeatureEngineer
-from mcli.ml.backtesting.backtest_engine import BacktestEngine, BacktestConfig
-from mcli.ml.monitoring.drift_detection import ModelMonitor
+# Check for torch dependency
+try:
+    import torch
+    HAS_TORCH = True
+except ImportError:
+    HAS_TORCH = False
+
+if HAS_TORCH:
+    from mcli.ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig
+    from mcli.ml.data.preprocessing import DataPreprocessor
+    from mcli.ml.features.feature_engineering import FeatureEngineer
+    from mcli.ml.backtesting.backtest_engine import BacktestEngine, BacktestConfig
+    from mcli.ml.monitoring.drift_detection import ModelMonitor
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestDataPreprocessing:
     """Test data preprocessing functionality"""
 
@@ -78,6 +87,7 @@ class TestDataPreprocessing:
         assert normalized_data.max().max() <= 3
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestFeatureEngineering:
     """Test feature engineering"""
 
@@ -141,6 +151,7 @@ class TestFeatureEngineering:
         assert 'resistance' in patterns
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestMLPipeline:
     """Test ML pipeline orchestration"""
 
@@ -200,6 +211,7 @@ class TestMLPipeline:
             assert model is not None
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestBacktesting:
     """Test backtesting functionality"""
 
@@ -282,6 +294,7 @@ class TestBacktesting:
             assert 'equity_curve' in results
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestModelMonitoring:
     """Test model monitoring and drift detection"""
 
@@ -354,6 +367,7 @@ class TestModelMonitoring:
         assert len(alerts) > 0 if any(accuracies < 0.80) else len(alerts) == 0
 
 
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestIntegration:
     """Integration tests for complete workflows"""
 
@@ -393,6 +407,7 @@ class TestIntegration:
 
 
 @pytest.mark.performance
+@pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestPerformance:
     """Performance and scalability tests"""
 
