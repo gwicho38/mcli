@@ -363,15 +363,51 @@ def show_workflow_executions():
                     st.progress(progress)
                     st.caption(f"Steps: {execution.get('steps_completed')}/{execution['steps_total']}")
 
-            # Mock logs
-            if st.button("View Logs", key=f"logs_{execution.get('id')}"):
-                st.code(f"""
+            # Action buttons
+            col_btn1, col_btn2, col_btn3 = st.columns(3)
+
+            with col_btn1:
+                if st.button("📋 View Logs", key=f"logs_{execution.get('id')}"):
+                    st.code(f"""
 [INFO] Workflow execution started: {execution.get('id')}
 [INFO] Step 1/8: Fetching data from sources...
 [INFO] Step 2/8: Transforming data...
 [INFO] Step 3/8: Validating data quality...
 [INFO] Execution {'completed' if execution.get('status') == 'completed' else execution.get('status')}
-                """, language="log")
+                    """, language="log")
+
+            with col_btn2:
+                # Download results as JSON
+                result_data = {
+                    "execution_id": execution.get('id'),
+                    "workflow_name": execution.get('workflow_name'),
+                    "status": execution.get('status'),
+                    "started_at": str(execution.get('started_at')),
+                    "completed_at": str(execution.get('completed_at')),
+                    "duration_seconds": execution.get('duration_sec'),
+                    "triggered_by": execution.get('triggered_by'),
+                    "steps_completed": execution.get('steps_completed'),
+                    "steps_total": execution.get('steps_total'),
+                    "results": {
+                        "records_processed": 1250,
+                        "errors": 0,
+                        "warnings": 3,
+                        "output_location": f"/data/workflows/{execution.get('id')}/output.parquet"
+                    }
+                }
+                st.download_button(
+                    label="💾 Download Results",
+                    data=json.dumps(result_data, indent=2),
+                    file_name=f"workflow_result_{execution.get('id')}.json",
+                    mime="application/json",
+                    key=f"download_{execution.get('id')}"
+                )
+
+            with col_btn3:
+                # Link to view detailed results (mock for now)
+                if st.button("🔗 View Details", key=f"details_{execution.get('id')}"):
+                    st.info(f"Results viewer would open for execution: {execution.get('id')}")
+                    st.json(result_data)
 
     # Export
     st.markdown("#### 📥 Export Execution Data")
