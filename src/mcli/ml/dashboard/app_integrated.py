@@ -596,16 +596,17 @@ def get_politicians_data():
 
 @st.cache_data(ttl=30, hash_funcs={pd.DataFrame: lambda x: x.to_json()})
 def get_disclosures_data():
-    """Get trading disclosures from Supabase"""
+    """Get trading disclosures from Supabase with proper schema mapping"""
     client = get_supabase_client()
     if not client:
         # Return demo data when Supabase unavailable
         return _generate_demo_disclosures()
 
     try:
+        # Use JOIN to get politician information
         response = (
             client.table("trading_disclosures")
-            .select("*")
+            .select("*, politicians(first_name, last_name, full_name, party, state_or_country)")
             .order("disclosure_date", desc=True)
             .limit(1000)
             .execute()
@@ -616,16 +617,65 @@ def get_disclosures_data():
             st.warning("No disclosure data in Supabase. Using demo data.")
             return _generate_demo_disclosures()
 
-        # Convert any dict/list columns to JSON strings to avoid hashing issues
+        # Map Supabase schema to dashboard expected columns
+        # Extract politician info from nested dict
+        if 'politicians' in df.columns:
+            df['politician_name'] = df['politicians'].apply(
+                lambda x: x.get('full_name', '') if isinstance(x, dict) else ''
+            )
+            df['party'] = df['politicians'].apply(
+                lambda x: x.get('party', '') if isinstance(x, dict) else ''
+            )
+            df['state'] = df['politicians'].apply(
+                lambda x: x.get('state_or_country', '') if isinstance(x, dict) else ''
+            )
+
+        # Map asset_ticker to ticker_symbol (dashboard expects this)
+        if 'asset_ticker' in df.columns and 'asset_name' in df.columns:
+            # Use asset_ticker when available, otherwise use first word of asset_name
+            df['ticker_symbol'] = df['asset_ticker'].fillna(
+                df['asset_name'].str.split().str[0]
+            )
+        elif 'asset_ticker' in df.columns:
+            df['ticker_symbol'] = df['asset_ticker'].fillna('UNKNOWN')
+        elif 'asset_name' in df.columns:
+            # If no ticker column, use first word of asset_name as fallback
+            df['ticker_symbol'] = df['asset_name'].str.split().str[0]
+        else:
+            df['ticker_symbol'] = 'UNKNOWN'
+
+        # Calculate amount from range (use midpoint)
+        if 'amount_range_min' in df.columns and 'amount_range_max' in df.columns:
+            df['amount'] = (
+                df['amount_range_min'].fillna(0) + df['amount_range_max'].fillna(0)
+            ) / 2
+        elif 'amount_exact' in df.columns:
+            df['amount'] = df['amount_exact']
+        else:
+            df['amount'] = 0
+
+        # Add asset_description if not exists
+        if 'asset_description' not in df.columns and 'asset_name' in df.columns:
+            df['asset_description'] = df['asset_name']
+
+        # Convert dates to datetime
+        for date_col in ['disclosure_date', 'transaction_date']:
+            if date_col in df.columns:
+                df[date_col] = pd.to_datetime(df[date_col])
+
+        # Convert any remaining dict/list columns to JSON strings
         for col in df.columns:
             if df[col].dtype == "object":
                 if any(isinstance(x, (dict, list)) for x in df[col].dropna()):
                     df[col] = df[col].apply(
                         lambda x: json.dumps(x) if isinstance(x, (dict, list)) else x
                     )
+
         return df
     except Exception as e:
         st.error(f"Error fetching disclosures: {e}")
+        with st.expander("🔍 Error Details"):
+            st.code(str(e))
         return _generate_demo_disclosures()
 
 
