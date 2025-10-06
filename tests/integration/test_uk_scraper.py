@@ -6,11 +6,22 @@ Test script to verify enhanced UK Parliament scraper extracts real MP names
 import asyncio
 import sys
 import os
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from mcli.workflow.politician_trading.scrapers_uk import UKParliamentScraper
-from mcli.workflow.politician_trading.config import WorkflowConfig
+# Check for bs4 dependency
+try:
+    import bs4
+    HAS_BS4 = True
+except ImportError:
+    HAS_BS4 = False
 
+if HAS_BS4:
+    from mcli.workflow.politician_trading.scrapers_uk import UKParliamentScraper
+    from mcli.workflow.politician_trading.config import WorkflowConfig
+
+@pytest.mark.skipif(not HAS_BS4, reason="bs4 module not installed")
 async def test_uk_name_extraction():
     """Test if the enhanced UK Parliament scraper extracts real MP names"""
     print("🧪 Testing Enhanced UK Parliament Scraper")

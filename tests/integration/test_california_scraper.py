@@ -6,11 +6,22 @@ Test script to verify enhanced California scraper extracts real politician names
 import asyncio
 import sys
 import os
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
-from mcli.workflow.politician_trading.scrapers_california import CaliforniaNetFileScraper
-from mcli.workflow.politician_trading.config import WorkflowConfig
+# Check for bs4 dependency
+try:
+    import bs4
+    HAS_BS4 = True
+except ImportError:
+    HAS_BS4 = False
 
+if HAS_BS4:
+    from mcli.workflow.politician_trading.scrapers_california import CaliforniaNetFileScraper
+    from mcli.workflow.politician_trading.config import WorkflowConfig
+
+@pytest.mark.skipif(not HAS_BS4, reason="bs4 module not installed")
 async def test_california_name_extraction():
     """Test if the enhanced California scraper extracts real politician names"""
     print("🧪 Testing Enhanced California NetFile Scraper")
