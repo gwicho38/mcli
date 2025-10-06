@@ -631,16 +631,22 @@ def get_disclosures_data():
             )
 
         # Map asset_ticker to ticker_symbol (dashboard expects this)
-        if 'asset_ticker' in df.columns and 'asset_name' in df.columns:
-            # Use asset_ticker when available, otherwise use first word of asset_name
-            df['ticker_symbol'] = df['asset_ticker'].fillna(
-                df['asset_name'].str.split().str[0]
-            )
-        elif 'asset_ticker' in df.columns:
-            df['ticker_symbol'] = df['asset_ticker'].fillna('UNKNOWN')
-        elif 'asset_name' in df.columns:
-            # If no ticker column, use first word of asset_name as fallback
-            df['ticker_symbol'] = df['asset_name'].str.split().str[0]
+        # Note: Most disclosures don't have stock tickers (funds, real estate, bonds)
+        # Use asset_type as categorical identifier for non-stock assets
+        if 'asset_ticker' in df.columns:
+            # Use real ticker when available
+            df['ticker_symbol'] = df['asset_ticker']
+
+            # For None/null values, use asset_type as category
+            if 'asset_type' in df.columns:
+                df['ticker_symbol'] = df['ticker_symbol'].fillna(
+                    df['asset_type'].str.upper().str.replace('_', '-')
+                )
+            else:
+                df['ticker_symbol'] = df['ticker_symbol'].fillna('NON-STOCK')
+        elif 'asset_type' in df.columns:
+            # No ticker column - use asset type as category
+            df['ticker_symbol'] = df['asset_type'].str.upper().str.replace('_', '-')
         else:
             df['ticker_symbol'] = 'UNKNOWN'
 
