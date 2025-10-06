@@ -748,7 +748,7 @@ def show_pipeline_overview():
             lsh_jobs["job_name"].str.contains("ml|model|train|predict", case=False, na=False)
         ]
         if not ml_jobs.empty:
-            st.dataframe(ml_jobs.head(10), width="stretch")
+            st.dataframe(ml_jobs.head(10), use_container_width=True)
         else:
             st.info("No ML pipeline jobs found in LSH logs")
     else:
@@ -974,7 +974,7 @@ def train_model_with_feedback():
         fig.update_yaxes(title_text="Accuracy", row=1, col=2)
 
         fig.update_layout(height=400, showlegend=True)
-        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
         # Clear cache to show new model
         st.cache_data.clear()
@@ -1006,12 +1006,12 @@ def show_ml_processing():
 
             with tabs[0]:
                 st.subheader("Raw Disclosure Data")
-                st.dataframe(disclosures.head(100), width="stretch")
+                st.dataframe(disclosures.head(100), use_container_width=True)
                 st.metric("Total Records", len(disclosures))
 
             with tabs[1]:
                 st.subheader("Preprocessed Data")
-                st.dataframe(processed_data.head(100), width="stretch")
+                st.dataframe(processed_data.head(100), use_container_width=True)
 
                 # Data quality metrics
                 col1, col2, col3 = st.columns(3)
@@ -1046,9 +1046,9 @@ def show_ml_processing():
                         orientation="h",
                         title="Top 20 Feature Importance",
                     )
-                    st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
-                    st.dataframe(features.head(100), width="stretch")
+                    st.dataframe(features.head(100), use_container_width=True)
 
             with tabs[3]:
                 st.subheader("Model Predictions")
@@ -1065,7 +1065,7 @@ def show_ml_processing():
                                 names=rec_dist.index,
                                 title="Recommendation Distribution",
                             )
-                            st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                            st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
                     with col2:
                         # Confidence distribution
@@ -1076,12 +1076,12 @@ def show_ml_processing():
                                 nbins=20,
                                 title="Prediction Confidence Distribution",
                             )
-                            st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                            st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
                     # Top predictions
                     st.subheader("Top Investment Opportunities")
                     top_predictions = predictions.nlargest(10, "predicted_return")
-                    st.dataframe(top_predictions, width="stretch")
+                    st.dataframe(top_predictions, use_container_width=True)
         else:
             st.error("Failed to process data through pipeline")
     else:
@@ -1144,11 +1144,11 @@ def show_model_performance():
         )
 
         fig.update_layout(height=400, showlegend=False)
-        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
         # Model details table
         st.subheader("Model Details")
-        st.dataframe(model_metrics, width="stretch")
+        st.dataframe(model_metrics, use_container_width=True)
     else:
         st.info("No trained models found. Run the training pipeline to generate models.")
 
@@ -1460,7 +1460,7 @@ def show_evaluate_models_tab():
                 color_continuous_scale="Blues",
                 title="Confusion Matrix",
             )
-            st.plotly_chart(fig, width="stretch", config={"responsive": True})
+            st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
         with col2:
             # ROC Curve
@@ -1478,7 +1478,7 @@ def show_evaluate_models_tab():
                 xaxis_title="False Positive Rate",
                 yaxis_title="True Positive Rate",
             )
-            st.plotly_chart(fig, width="stretch", config={"responsive": True})
+            st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
         # Feature Importance
         st.markdown("### 🔍 Feature Importance")
@@ -1507,7 +1507,7 @@ def show_evaluate_models_tab():
             color="Importance",
             color_continuous_scale="Viridis",
         )
-        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
     else:
         st.info("No models available for evaluation. Train a model first.")
 
@@ -1563,7 +1563,7 @@ def show_compare_models_tab():
             )
 
             fig.update_layout(height=400, showlegend=False)
-            st.plotly_chart(fig, width="stretch", config={"responsive": True})
+            st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
             # Radar chart for multi-metric comparison
             st.markdown("### 🎯 Multi-Metric Analysis")
@@ -1587,11 +1587,11 @@ def show_compare_models_tab():
                 showlegend=True,
                 title="Model Performance Radar Chart",
             )
-            st.plotly_chart(fig, width="stretch", config={"responsive": True})
+            st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
             # Detailed comparison table
             st.markdown("### 📋 Detailed Comparison")
-            st.dataframe(comparison_data, width="stretch")
+            st.dataframe(comparison_data, use_container_width=True)
         else:
             st.warning("Please select at least 2 models to compare")
     else:
@@ -1776,7 +1776,7 @@ def show_interactive_predictions_tab():
                             names=trans_dist.index,
                             title="Transaction Type Distribution",
                         )
-                        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
                 with viz_col2:
                     # Top traded stocks
@@ -1789,7 +1789,7 @@ def show_interactive_predictions_tab():
                             title="Top 10 Most Traded Stocks",
                             labels={"x": "Number of Trades", "y": "Ticker"},
                         )
-                        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
                 # Timeline of trades
                 if "disclosure_date" in filtered_history.columns:
@@ -1802,11 +1802,11 @@ def show_interactive_predictions_tab():
                         timeline_df = timeline_df.sort_values("disclosure_date")
 
                         # Count trades per month
-                        timeline_df["month"] = timeline_df["disclosure_date"].dt.to_period("M")
+                        # Convert to month string directly to avoid PeriodArray timezone warning
+                        timeline_df["month"] = timeline_df["disclosure_date"].dt.strftime("%Y-%m")
                         monthly_trades = (
                             timeline_df.groupby("month").size().reset_index(name="count")
                         )
-                        monthly_trades["month"] = monthly_trades["month"].astype(str)
 
                         fig = px.line(
                             monthly_trades,
@@ -1816,7 +1816,7 @@ def show_interactive_predictions_tab():
                             labels={"month": "Month", "count": "Number of Trades"},
                             markers=True,
                         )
-                        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
                     except Exception as e:
                         st.info("Timeline visualization not available")
 
@@ -1980,7 +1980,7 @@ def show_interactive_predictions_tab():
                 color="Contribution",
                 color_continuous_scale="RdYlGn",
             )
-            st.plotly_chart(fig, width="stretch", config={"responsive": True})
+            st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
             # Show raw feature values in expandable section
             with st.expander("🔍 View Engineered Features"):
@@ -2024,7 +2024,7 @@ def show_performance_tracking_tab():
         yaxis_title="Accuracy",
         hovermode="x unified",
     )
-    st.plotly_chart(fig, width="stretch", config={"responsive": True})
+    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     # Prediction volume and success rate
     st.markdown("### 📈 Prediction Metrics")
@@ -2040,7 +2040,7 @@ def show_performance_tracking_tab():
             go.Bar(x=dates, y=predictions_per_day, name="Predictions", marker_color="lightblue")
         )
         fig.update_layout(title="Daily Prediction Volume", xaxis_title="Date", yaxis_title="Count")
-        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     with col2:
         # Success rate
@@ -2063,7 +2063,7 @@ def show_performance_tracking_tab():
             yaxis_title="Success Rate",
             yaxis_tickformat=".0%",
         )
-        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     # Data drift detection
     st.markdown("### 🔍 Data Drift Detection")
@@ -2093,7 +2093,7 @@ def show_performance_tracking_tab():
             color_discrete_map={"Normal": "green", "Warning": "orange", "Alert": "red"},
             title="Feature Drift Detection",
         )
-        st.plotly_chart(fig, width="stretch", config={"responsive": True})
+        st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
     with col2:
         st.markdown("**Drift Status**")
@@ -2209,7 +2209,7 @@ def show_predictions():
                     hover_data=["ticker"] if "ticker" in filtered_predictions else None,
                     title="Risk-Return Analysis",
                 )
-                st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
             with col2:
                 # Top movers
@@ -2228,7 +2228,7 @@ def show_predictions():
                         color_continuous_scale="RdYlGn",
                         title="Top Movers (Predicted)",
                     )
-                    st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
         else:
             st.warning("No predictions available. Check if the ML pipeline is running correctly.")
     else:
@@ -2269,7 +2269,7 @@ def show_lsh_jobs():
 
         # Recent jobs
         st.subheader("Recent Jobs")
-        st.dataframe(lsh_jobs.head(20), width="stretch")
+        st.dataframe(lsh_jobs.head(20), use_container_width=True)
 
         # Job timeline
         if "timestamp" in lsh_jobs:
@@ -2277,7 +2277,7 @@ def show_lsh_jobs():
                 lsh_jobs["timestamp"] = pd.to_datetime(lsh_jobs["timestamp"])
 
                 # Group by hour
-                hourly_jobs = lsh_jobs.set_index("timestamp").resample("1H").size()
+                hourly_jobs = lsh_jobs.set_index("timestamp").resample("1h").size()
 
                 fig = px.line(
                     x=hourly_jobs.index,
@@ -2285,7 +2285,7 @@ def show_lsh_jobs():
                     title="Job Executions Over Time",
                     labels={"x": "Time", "y": "Job Count"},
                 )
-                st.plotly_chart(fig, width="stretch", config={"responsive": True})
+                st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
             except:
                 pass
     else:
@@ -2354,7 +2354,7 @@ def show_system_health():
 
     status_df = pd.DataFrame(list(components.items()), columns=["Component", "Status"])
 
-    st.dataframe(status_df, width="stretch")
+    st.dataframe(status_df, use_container_width=True)
 
     # Resource usage (mock data for now)
     st.subheader("Resource Usage")
@@ -2383,7 +2383,7 @@ def show_system_health():
     )
 
     fig.update_layout(height=500, showlegend=False)
-    st.plotly_chart(fig, width="stretch", config={"responsive": True})
+    st.plotly_chart(fig, use_container_width=True, config={"responsive": True})
 
 
 # Run the main dashboard function
