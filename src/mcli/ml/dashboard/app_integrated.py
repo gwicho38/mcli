@@ -705,7 +705,7 @@ def train_model_with_feedback():
         fig.update_yaxes(title_text="Accuracy", row=1, col=2)
 
         fig.update_layout(height=400, showlegend=True)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # Clear cache to show new model
         st.cache_data.clear()
@@ -777,7 +777,7 @@ def show_ml_processing():
                         orientation="h",
                         title="Top 20 Feature Importance",
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
 
                     st.dataframe(features.head(100), width="stretch")
 
@@ -796,7 +796,7 @@ def show_ml_processing():
                                 names=rec_dist.index,
                                 title="Recommendation Distribution",
                             )
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width="stretch")
 
                     with col2:
                         # Confidence distribution
@@ -807,7 +807,7 @@ def show_ml_processing():
                                 nbins=20,
                                 title="Prediction Confidence Distribution",
                             )
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, width="stretch")
 
                     # Top predictions
                     st.subheader("Top Investment Opportunities")
@@ -863,7 +863,7 @@ def show_model_performance():
         )
 
         fig.update_layout(height=400, showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
         # Model details table
         st.subheader("Model Details")
@@ -1110,7 +1110,7 @@ def show_train_model_tab():
         )
 
     # Start training button
-    if st.button("🚀 Start Training", type="primary", use_container_width=True):
+    if st.button("🚀 Start Training", type="primary", width="stretch"):
         train_model_with_feedback()
 
 
@@ -1161,7 +1161,7 @@ def show_evaluate_models_tab():
                 color_continuous_scale="Blues",
                 title="Confusion Matrix",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         with col2:
             # ROC Curve
@@ -1179,7 +1179,7 @@ def show_evaluate_models_tab():
                 xaxis_title="False Positive Rate",
                 yaxis_title="True Positive Rate",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
         # Feature Importance
         st.markdown("### 🔍 Feature Importance")
@@ -1208,7 +1208,7 @@ def show_evaluate_models_tab():
             color="Importance",
             color_continuous_scale="Viridis",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("No models available for evaluation. Train a model first.")
 
@@ -1263,7 +1263,7 @@ def show_compare_models_tab():
             )
 
             fig.update_layout(height=400, showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             # Radar chart for multi-metric comparison
             st.markdown("### 🎯 Multi-Metric Analysis")
@@ -1287,11 +1287,11 @@ def show_compare_models_tab():
                 showlegend=True,
                 title="Model Performance Radar Chart",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             # Detailed comparison table
             st.markdown("### 📋 Detailed Comparison")
-            st.dataframe(comparison_data, use_container_width=True)
+            st.dataframe(comparison_data, width="stretch")
         else:
             st.warning("Please select at least 2 models to compare")
     else:
@@ -1324,7 +1324,7 @@ def show_interactive_predictions_tab():
         sentiment = st.slider("News Sentiment", -1.0, 1.0, 0.0, 0.1)
         volatility = st.slider("Volatility Index", 0.0, 1.0, 0.3, 0.05)
 
-    if st.button("🔮 Generate Prediction", use_container_width=True):
+    if st.button("🔮 Generate Prediction", width="stretch"):
         # Simulate prediction
         with st.spinner("Running prediction models..."):
             import time
@@ -1383,7 +1383,7 @@ def show_interactive_predictions_tab():
                 color="Impact",
                 color_continuous_scale="RdYlGn",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 
 def show_performance_tracking_tab():
@@ -1421,7 +1421,7 @@ def show_performance_tracking_tab():
         yaxis_title="Accuracy",
         hovermode="x unified",
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     # Prediction volume and success rate
     st.markdown("### 📈 Prediction Metrics")
@@ -1437,7 +1437,7 @@ def show_performance_tracking_tab():
             go.Bar(x=dates, y=predictions_per_day, name="Predictions", marker_color="lightblue")
         )
         fig.update_layout(title="Daily Prediction Volume", xaxis_title="Date", yaxis_title="Count")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with col2:
         # Success rate
@@ -1460,7 +1460,7 @@ def show_performance_tracking_tab():
             yaxis_title="Success Rate",
             yaxis_tickformat=".0%",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     # Data drift detection
     st.markdown("### 🔍 Data Drift Detection")
@@ -1490,7 +1490,7 @@ def show_performance_tracking_tab():
             color_discrete_map={"Normal": "green", "Warning": "orange", "Alert": "red"},
             title="Feature Drift Detection",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with col2:
         st.markdown("**Drift Status**")
@@ -1595,7 +1595,7 @@ def show_predictions():
                     hover_data=["ticker"] if "ticker" in filtered_predictions else None,
                     title="Risk-Return Analysis",
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
 
             with col2:
                 # Top movers
@@ -1614,7 +1614,7 @@ def show_predictions():
                         color_continuous_scale="RdYlGn",
                         title="Top Movers (Predicted)",
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width="stretch")
         else:
             st.warning("No predictions available. Check if the ML pipeline is running correctly.")
     else:
@@ -1671,7 +1671,7 @@ def show_lsh_jobs():
                     title="Job Executions Over Time",
                     labels={"x": "Time", "y": "Job Count"},
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
             except:
                 pass
     else:
@@ -1769,7 +1769,7 @@ def show_system_health():
     )
 
     fig.update_layout(height=500, showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 # Run the main dashboard function
