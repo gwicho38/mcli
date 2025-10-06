@@ -38,7 +38,9 @@ class GitCommitWorkflow:
                 check=True,
             )
 
-            status_lines = result.stdout.strip().split("\n") if result.stdout.strip() else []
+            # Don't strip() the entire output as it removes leading spaces from status codes
+            # Just filter out empty lines
+            status_lines = [line for line in result.stdout.split("\n") if line.strip()]
 
             changes = {"modified": [], "added": [], "deleted": [], "renamed": [], "untracked": []}
 
