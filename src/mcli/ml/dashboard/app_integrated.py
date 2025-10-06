@@ -388,9 +388,21 @@ def check_lsh_daemon():
 
 @st.cache_data(ttl=30)
 def get_lsh_jobs():
-    """Get LSH daemon job status"""
+    """Get LSH daemon job status from API"""
     try:
-        # Read from LSH log file
+        lsh_api_url = os.getenv("LSH_API_URL", "http://localhost:3030")
+
+        # Try fetching from API first
+        try:
+            response = requests.get(f"{lsh_api_url}/api/jobs", timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                if "jobs" in data and len(data["jobs"]) > 0:
+                    return pd.DataFrame(data["jobs"])
+        except:
+            pass
+
+        # Fallback: Try reading from local LSH log file (for local development)
         log_path = Path("/tmp/lsh-job-daemon-lefv.log")
         if log_path.exists():
             with open(log_path, "r") as f:
@@ -412,7 +424,7 @@ def get_lsh_jobs():
 
             return pd.DataFrame(jobs)
         else:
-            # Log file doesn't exist - return empty DataFrame
+            # No jobs available
             return pd.DataFrame()
     except Exception as e:
         # On any error, return empty DataFrame
