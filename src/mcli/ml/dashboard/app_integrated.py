@@ -619,10 +619,15 @@ def train_model_with_feedback():
         model_dir = Path("models")
         model_dir.mkdir(exist_ok=True)
 
-        # Save model metadata
-        model_name = f"politician_trading_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        # Get user-defined model name from session state, with fallback
+        user_model_name = st.session_state.get("model_name", "politician_trading_model")
+
+        # Generate versioned model name with timestamp
+        model_name = f"{user_model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
         metadata = {
             "model_name": model_name,
+            "base_name": user_model_name,
             "accuracy": float(best_accuracy),
             "sharpe_ratio": np.random.uniform(1.5, 3.0),
             "created_at": datetime.now().isoformat(),
@@ -905,6 +910,25 @@ def show_model_training_evaluation():
 def show_train_model_tab():
     """Training tab with hyperparameter tuning"""
     st.subheader("🎯 Train New Model")
+
+    # Model naming
+    st.markdown("### 📝 Model Configuration")
+    model_name_input = st.text_input(
+        "Model Name",
+        value="politician_trading_model",
+        help="Enter a name for your model. A timestamp will be automatically appended for versioning.",
+        placeholder="e.g., politician_trading_model, lstm_v1, ensemble_model",
+    )
+
+    # Display preview of final name
+    preview_name = f"{model_name_input}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    st.caption(f"📌 Final model name will be: `{preview_name}`")
+
+    # Store in session state
+    if "model_name" not in st.session_state:
+        st.session_state.model_name = model_name_input
+    else:
+        st.session_state.model_name = model_name_input
 
     # Model selection
     model_type = st.selectbox(
