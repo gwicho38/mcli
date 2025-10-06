@@ -383,7 +383,7 @@ def show_politicians():
             filtered = filtered[filtered["is_active"] == True]
 
         # Display data
-        st.dataframe(filtered, use_container_width=True)
+        st.dataframe(filtered, width="stretch")
 
         # Stats
         col1, col2 = st.columns(2)
@@ -447,7 +447,7 @@ def show_disclosures():
             ]
 
         # Display data
-        st.dataframe(filtered, use_container_width=True)
+        st.dataframe(filtered, width="stretch")
 
         # Analysis
         if not filtered.empty:
@@ -487,7 +487,7 @@ def show_predictions():
     predictions = get_predictions_data()
 
     if not predictions.empty:
-        st.dataframe(predictions, use_container_width=True)
+        st.dataframe(predictions, width="stretch")
 
         # Add prediction analysis charts if we have data
         if "confidence" in predictions:
@@ -521,7 +521,7 @@ def show_jobs():
             st.metric("Failed", status_counts.get("failed", 0))
 
         # Jobs table
-        st.dataframe(jobs, use_container_width=True)
+        st.dataframe(jobs, width="stretch")
 
         # Success rate over time
         if "created_at" in jobs:
@@ -617,7 +617,7 @@ def show_system_health():
 
     col1, col2 = st.columns(2)
     with col1:
-        st.dataframe(stats_df, use_container_width=True)
+        st.dataframe(stats_df, width="stretch")
 
     with col2:
         fig = px.bar(stats_df, x="Entity", y="Count", title="Database Records")

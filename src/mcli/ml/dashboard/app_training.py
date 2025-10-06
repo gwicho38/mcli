@@ -203,7 +203,7 @@ def show_model_comparison():
         sorted_df.style.highlight_max(
             subset=["test_accuracy", "r2"], color="lightgreen"
         ).highlight_min(subset=["test_loss", "rmse", "mae"], color="lightgreen"),
-        use_container_width=True,
+        width="stretch",
     )
 
     # Visualization section
@@ -467,7 +467,7 @@ def show_feature_importance():
 
             # Feature importance table
             st.subheader("Feature Importance Table")
-            st.dataframe(feature_df.head(top_n), use_container_width=True)
+            st.dataframe(feature_df.head(top_n), width="stretch")
 
             # Feature categories (similar to bitcoin project)
             st.subheader("Feature Categories")
@@ -565,7 +565,7 @@ def show_training_history():
     display_df = jobs_df[["name", "status", "started_at", "duration_seconds"]].copy()
     display_df["duration_minutes"] = display_df["duration_seconds"] / 60
 
-    st.dataframe(display_df, use_container_width=True)
+    st.dataframe(display_df, width="stretch")
 
     # Training duration distribution
     if not jobs_df["duration_seconds"].isna().all():
