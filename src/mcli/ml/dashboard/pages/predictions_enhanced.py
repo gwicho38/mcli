@@ -1,4 +1,4 @@
-"""Enhanced Predictions Dashboard with Interactive Features"""
+"""Enhanced Predictions Dashboard with Interactive Features - REAL DATA"""
 
 import streamlit as st
 import pandas as pd
@@ -19,6 +19,23 @@ sys.path.insert(0, str(dashboard_dir))
 from components.metrics import display_kpi_row, display_status_badge
 from components.charts import create_timeline_chart, render_chart
 from components.tables import display_filterable_dataframe, export_dataframe
+
+# Import real data functions from main app
+try:
+    # These are defined in app_integrated.py
+    from ..app_integrated import (
+        get_supabase_client,
+        get_disclosures_data,
+        run_ml_pipeline,
+        get_politician_names,
+        get_politician_trading_history,
+        engineer_features,
+        generate_production_prediction
+    )
+    HAS_REAL_DATA = True
+except ImportError:
+    HAS_REAL_DATA = False
+    st.warning("⚠️ Real data functions not available. Using fallback mode.")
 
 
 def generate_mock_predictions(num_predictions: int = 50) -> pd.DataFrame:
@@ -87,11 +104,61 @@ def generate_mock_historical_performance() -> pd.DataFrame:
     return df
 
 
+def get_real_predictions() -> pd.DataFrame:
+    """Get real predictions from ML pipeline"""
+    if not HAS_REAL_DATA:
+        st.warning("⚠️ Supabase connection not configured. Using demo data.")
+        return generate_mock_predictions()
+
+    try:
+        # Get real disclosure data
+        disclosures = get_disclosures_data()
+
+        if disclosures.empty:
+            st.info("No disclosure data available. Click 'Run ML Pipeline' in sidebar to generate predictions.")
+            return generate_mock_predictions()
+
+        # Run ML pipeline to generate predictions
+        _, _, predictions = run_ml_pipeline(disclosures)
+
+        if predictions is not None and not predictions.empty:
+            # Ensure all required columns exist
+            required_cols = ['ticker', 'predicted_return', 'confidence', 'risk_score',
+                           'recommendation', 'sector', 'politician']
+
+            for col in required_cols:
+                if col not in predictions.columns:
+                    if col == 'sector':
+                        predictions[col] = 'Technology'  # Default
+                    elif col == 'politician':
+                        predictions[col] = 'Unknown'
+                    elif col == 'ticker':
+                        predictions[col] = 'UNK'
+
+            return predictions
+        else:
+            st.info("ML pipeline did not generate predictions. Using demo data for display.")
+            return generate_mock_predictions()
+
+    except Exception as e:
+        st.error(f"Error loading predictions: {e}")
+        st.info("Falling back to demo data")
+        return generate_mock_predictions()
+
+
 def show_predictions_enhanced():
-    """Enhanced predictions dashboard"""
+    """Enhanced predictions dashboard - USING REAL DATA"""
 
     st.title("🔮 Live Predictions & Recommendations")
     st.markdown("AI-powered stock predictions based on politician trading patterns")
+
+    # Data source indicator
+    col1, col2 = st.columns([3, 1])
+    with col2:
+        if HAS_REAL_DATA:
+            st.success("🟢 Live Data")
+        else:
+            st.warning("🟡 Demo Mode")
 
     # Tabs for different views
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -102,8 +169,8 @@ def show_predictions_enhanced():
         "💼 Portfolio Builder"
     ])
 
-    # Generate predictions data
-    predictions_df = generate_mock_predictions()
+    # Get REAL predictions data
+    predictions_df = get_real_predictions()
 
     with tab1:
         show_active_predictions(predictions_df)
@@ -272,10 +339,18 @@ def show_active_predictions(predictions_df: pd.DataFrame):
 
 
 def show_prediction_generator():
-    """Interactive prediction generator"""
+    """Interactive prediction generator - USES REAL DATA"""
 
     st.subheader("🎯 Generate Custom Prediction")
     st.markdown("Get AI-powered predictions for specific stock/politician combinations")
+
+    # Get REAL politician names from database
+    politician_list = ['Nancy Pelosi', 'Paul Pelosi', 'Dan Crenshaw']  # Fallback
+    if HAS_REAL_DATA:
+        try:
+            politician_list = get_politician_names()
+        except:
+            pass
 
     col1, col2 = st.columns(2)
 
@@ -289,7 +364,7 @@ def show_prediction_generator():
         st.markdown("#### Context")
         politician = st.selectbox(
             "Politician",
-            ['Nancy Pelosi', 'Paul Pelosi', 'Dan Crenshaw', 'Josh Gottheimer', 'Susie Lee', 'Tommy Tuberville']
+            politician_list
         )
         transaction_type = st.selectbox("Transaction Type", ['Purchase', 'Sale', 'Exchange'])
         transaction_amount = st.number_input("Transaction Amount ($)", min_value=1000, value=100000, step=10000)
@@ -304,13 +379,48 @@ def show_prediction_generator():
 
     if st.button("🔮 Generate Prediction", type="primary", use_container_width=True):
         with st.spinner("Analyzing trading patterns and generating prediction..."):
-            import time
-            time.sleep(2)  # Simulate processing
 
-            # Generate mock prediction
-            predicted_return = np.random.uniform(0.05, 0.25) if transaction_type == 'Purchase' else np.random.uniform(-0.15, -0.05)
-            confidence = np.random.uniform(0.7, 0.95)
-            risk_score = {'Low': 0.3, 'Medium': 0.5, 'High': 0.7}[risk_tolerance]
+            # Use REAL data and REAL ML model
+            if HAS_REAL_DATA:
+                try:
+                    # Get politician's REAL trading history
+                    trading_history = get_politician_trading_history(politician)
+
+                    # Engineer features from REAL data
+                    features = engineer_features(
+                        ticker=ticker,
+                        politician_name=politician,
+                        transaction_type=transaction_type,
+                        amount=transaction_amount,
+                        filing_date=datetime.now().date(),
+                        market_cap="Large Cap",  # Could be fetched from API
+                        sector=sector,
+                        sentiment=0.2,  # Could be fetched from sentiment API
+                        volatility=0.3 if risk_tolerance == 'Low' else 0.5 if risk_tolerance == 'Medium' else 0.7,
+                        trading_history=trading_history
+                    )
+
+                    # Generate REAL prediction
+                    prediction_result = generate_production_prediction(features)
+
+                    predicted_return = prediction_result['predicted_return']
+                    confidence = prediction_result['confidence']
+                    risk_score = prediction_result['risk_score']
+
+                    st.success("✅ Prediction Generated from Real Data & ML Model!")
+
+                except Exception as e:
+                    st.warning(f"Could not use real model: {e}. Using demo prediction.")
+                    # Fallback to demo
+                    predicted_return = np.random.uniform(0.05, 0.25) if transaction_type == 'Purchase' else np.random.uniform(-0.15, -0.05)
+                    confidence = np.random.uniform(0.7, 0.95)
+                    risk_score = {'Low': 0.3, 'Medium': 0.5, 'High': 0.7}[risk_tolerance]
+            else:
+                # Demo mode
+                st.info("Using demo prediction (Supabase not connected)")
+                predicted_return = np.random.uniform(0.05, 0.25) if transaction_type == 'Purchase' else np.random.uniform(-0.15, -0.05)
+                confidence = np.random.uniform(0.7, 0.95)
+                risk_score = {'Low': 0.3, 'Medium': 0.5, 'High': 0.7}[risk_tolerance]
 
             st.success("✅ Prediction Generated!")
 
