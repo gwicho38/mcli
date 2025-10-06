@@ -1,8 +1,18 @@
 import pytest
 from click.testing import CliRunner
-from mcli.workflow.repo.repo import repo
+
+# Check for openai dependency
+try:
+    import openai
+    HAS_OPENAI = True
+except ImportError:
+    HAS_OPENAI = False
+
+if HAS_OPENAI:
+    from mcli.workflow.repo.repo import repo
 
 
+@pytest.mark.skipif(not HAS_OPENAI, reason="openai module not installed")
 def test_repo_group_help():
     runner = CliRunner()
     result = runner.invoke(repo, ['--help'])
@@ -10,6 +20,7 @@ def test_repo_group_help():
     assert 'repo utility' in result.output
 
 
+@pytest.mark.skipif(not HAS_OPENAI, reason="openai module not installed")
 def test_analyze_help():
     runner = CliRunner()
     result = runner.invoke(repo, ['analyze', '--help'])
@@ -17,6 +28,7 @@ def test_analyze_help():
     assert 'Provides a source lines of code analysis' in result.output
 
 
+@pytest.mark.skipif(not HAS_OPENAI, reason="openai module not installed")
 def test_analyze_missing_required():
     runner = CliRunner()
     result = runner.invoke(repo, ['analyze'])
@@ -24,6 +36,7 @@ def test_analyze_missing_required():
     assert 'Missing argument' in result.output
 
 
+@pytest.mark.skipif(not HAS_OPENAI, reason="openai module not installed")
 def test_worktree_help():
     runner = CliRunner()
     result = runner.invoke(repo, ['wt', '--help'])
@@ -31,6 +44,7 @@ def test_worktree_help():
     assert 'Create and manage worktrees' in result.output
 
 
+@pytest.mark.skipif(not HAS_OPENAI, reason="openai module not installed")
 def test_commit_help():
     runner = CliRunner()
     result = runner.invoke(repo, ['commit', '--help'])
@@ -38,6 +52,7 @@ def test_commit_help():
     assert 'Edit commits to a repository' in result.output
 
 
+@pytest.mark.skipif(not HAS_OPENAI, reason="openai module not installed")
 def test_revert_help():
     runner = CliRunner()
     result = runner.invoke(repo, ['revert', '--help'])
@@ -45,6 +60,7 @@ def test_revert_help():
     assert 'Create and manage worktrees' in result.output
 
 
+@pytest.mark.skipif(not HAS_OPENAI, reason="openai module not installed")
 def test_migration_loe_help():
     runner = CliRunner()
     result = runner.invoke(repo, ['migration-loe', '--help'])
@@ -52,6 +68,7 @@ def test_migration_loe_help():
     assert 'Create and manage worktrees' in result.output
 
 
+@pytest.mark.skipif(not HAS_OPENAI, reason="openai module not installed")
 def test_migration_loe_missing_required():
     runner = CliRunner()
     result = runner.invoke(repo, ['migration-loe'])

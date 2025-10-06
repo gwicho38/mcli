@@ -8,17 +8,26 @@ import asyncio
 from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
 
-from mcli.workflow.politician_trading.config import WorkflowConfig, SupabaseConfig, ScrapingConfig
-from mcli.workflow.politician_trading.workflow import PoliticianTradingWorkflow
-from mcli.workflow.politician_trading.monitoring import PoliticianTradingMonitor
-from mcli.workflow.politician_trading.models import (
-    Politician,
-    TradingDisclosure,
-    PoliticianRole,
-    TransactionType,
-)
+# Check for postgrest dependency
+try:
+    import postgrest
+    HAS_POSTGREST = True
+except ImportError:
+    HAS_POSTGREST = False
+
+if HAS_POSTGREST:
+    from mcli.workflow.politician_trading.config import WorkflowConfig, SupabaseConfig, ScrapingConfig
+    from mcli.workflow.politician_trading.workflow import PoliticianTradingWorkflow
+    from mcli.workflow.politician_trading.monitoring import PoliticianTradingMonitor
+    from mcli.workflow.politician_trading.models import (
+        Politician,
+        TradingDisclosure,
+        PoliticianRole,
+        TransactionType,
+    )
 
 
+@pytest.mark.skipif(not HAS_POSTGREST, reason="postgrest module not installed")
 class TestPoliticianTradingIntegration:
     """Test the complete politician trading workflow"""
 
@@ -229,6 +238,7 @@ class TestPoliticianTradingIntegration:
         assert custom_config.scraping.max_retries == 5
 
 
+@pytest.mark.skipif(not HAS_POSTGREST, reason="postgrest module not installed")
 class TestScrapingIntegration:
     """Test scraping functionality"""
 

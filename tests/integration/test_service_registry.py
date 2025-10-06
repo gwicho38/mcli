@@ -1,10 +1,20 @@
 import pytest
 from click.testing import CliRunner
-from mcli.workflow.registry.registry import registry
 import os
 from pathlib import Path
 
+# Check for fuzzywuzzy dependency
+try:
+    import fuzzywuzzy
+    HAS_FUZZYWUZZY = True
+except ImportError:
+    HAS_FUZZYWUZZY = False
 
+if HAS_FUZZYWUZZY:
+    from mcli.workflow.registry.registry import registry
+
+
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_registry_group_help():
     runner = CliRunner()
     result = runner.invoke(registry, ['--help'])
@@ -12,6 +22,7 @@ def test_registry_group_help():
     assert 'registry utility' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_catalog_help():
     runner = CliRunner()
     result = runner.invoke(registry, ['catalog', '--help'])
@@ -19,6 +30,7 @@ def test_catalog_help():
     assert 'Fetch the catalog of repositories' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_tags_help():
     runner = CliRunner()
     result = runner.invoke(registry, ['tags', '--help'])
@@ -26,6 +38,7 @@ def test_tags_help():
     assert 'Fetch the tags for a given repository' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_tags_missing_required():
     runner = CliRunner()
     result = runner.invoke(registry, ['tags'])
@@ -33,6 +46,7 @@ def test_tags_missing_required():
     assert 'Missing argument' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_search_tags_help():
     runner = CliRunner()
     result = runner.invoke(registry, ['search-tags', '--help'])
@@ -40,6 +54,7 @@ def test_search_tags_help():
     assert 'Fetch the tags for a given repository' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_search_tags_missing_required():
     runner = CliRunner()
     result = runner.invoke(registry, ['search-tags'])
@@ -47,6 +62,7 @@ def test_search_tags_missing_required():
     assert 'Missing argument' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_search_help():
     runner = CliRunner()
     result = runner.invoke(registry, ['search', '--help'])
@@ -54,6 +70,7 @@ def test_search_help():
     assert 'Search for a repository by name' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_search_missing_required():
     runner = CliRunner()
     result = runner.invoke(registry, ['search'])
@@ -61,6 +78,7 @@ def test_search_missing_required():
     assert 'Missing argument' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_image_info_help():
     runner = CliRunner()
     result = runner.invoke(registry, ['image-info', '--help'])
@@ -68,6 +86,7 @@ def test_image_info_help():
     assert 'Get detailed information about a specific image' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_image_info_missing_required():
     runner = CliRunner()
     result = runner.invoke(registry, ['image-info'])
@@ -75,6 +94,7 @@ def test_image_info_missing_required():
     assert 'Missing argument' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_count_help():
     runner = CliRunner()
     result = runner.invoke(registry, ['count', '--help'])
@@ -82,6 +102,7 @@ def test_count_help():
     assert 'Count the number of tags/images in a repository' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_count_missing_required():
     runner = CliRunner()
     result = runner.invoke(registry, ['count'])
@@ -89,6 +110,7 @@ def test_count_missing_required():
     assert 'Missing argument' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_pull_help():
     runner = CliRunner()
     result = runner.invoke(registry, ['pull', '--help'])
@@ -96,6 +118,7 @@ def test_pull_help():
     assert 'Pull an image from the registry' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_pull_missing_required():
     runner = CliRunner()
     result = runner.invoke(registry, ['pull'])
@@ -103,6 +126,7 @@ def test_pull_missing_required():
     assert 'Missing argument' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_fuzzy_search_help():
     runner = CliRunner()
     result = runner.invoke(registry, ['fuzzy-search', '--help'])
@@ -110,6 +134,7 @@ def test_fuzzy_search_help():
     assert 'TOKEN' in result.output
 
 
+@pytest.mark.skipif(not HAS_FUZZYWUZZY, reason="fuzzywuzzy module not installed")
 def test_fuzzy_search_missing_required():
     runner = CliRunner()
     result = runner.invoke(registry, ['fuzzy-search'])
