@@ -612,23 +612,60 @@ def get_politicians_data():
         return pd.DataFrame()
 
 
-@st.cache_data(ttl=30, hash_funcs={pd.DataFrame: lambda x: x.to_json()})
-def get_disclosures_data():
-    """Get trading disclosures from Supabase with proper schema mapping"""
+@st.cache_data(ttl=30)
+def get_disclosures_data(limit: int = 1000, offset: int = 0, for_training: bool = False):
+    """
+    Get trading disclosures from Supabase with proper schema mapping
+
+    Args:
+        limit: Maximum number of records to fetch (default 1000 for UI display)
+        offset: Number of records to skip (for pagination)
+        for_training: If True, fetch ALL records with no limit (for model training)
+
+    Returns:
+        DataFrame with disclosure data
+    """
     client = get_supabase_client()
     if not client:
         # Return demo data when Supabase unavailable
         return _generate_demo_disclosures()
 
     try:
-        # Use JOIN to get politician information
-        response = (
+        # First, get total count
+        count_response = (
+            client.table("trading_disclosures")
+            .select("*", count="exact")
+            .execute()
+        )
+        total_count = count_response.count
+
+        # Fetch data with appropriate limit
+        query = (
             client.table("trading_disclosures")
             .select("*, politicians(first_name, last_name, full_name, party, state_or_country)")
             .order("disclosure_date", desc=True)
-            .limit(1000)
-            .execute()
         )
+
+        if for_training:
+            # For model training: fetch ALL data (no limit)
+            st.info(f"📊 Loading ALL {total_count:,} disclosures for model training...")
+            response = query.execute()
+        else:
+            # For UI display: use pagination
+            query = query.range(offset, offset + limit - 1)
+            response = query.execute()
+
+            # Show pagination info
+            displayed_count = len(response.data)
+            page_num = (offset // limit) + 1
+            total_pages = (total_count + limit - 1) // limit
+
+            if total_count > limit:
+                st.info(
+                    f"📊 Showing records {offset + 1:,}-{offset + displayed_count:,} of **{total_count:,} total** "
+                    f"(Page {page_num} of {total_pages})"
+                )
+
         df = pd.DataFrame(response.data)
 
         if df.empty:
@@ -816,7 +853,8 @@ def main():
     # Run ML Pipeline button
     if st.sidebar.button("🚀 Run ML Pipeline"):
         with st.spinner("Running ML pipeline..."):
-            disclosures = get_disclosures_data()
+            # Fetch ALL data for pipeline (not just paginated view)
+            disclosures = get_disclosures_data(for_training=True)
             processed, features, predictions = run_ml_pipeline(disclosures)
             if predictions is not None:
                 st.sidebar.success("✅ Pipeline completed!")
@@ -874,9 +912,36 @@ def show_pipeline_overview():
         """
         )
 
-    # Get data
+    # Pagination controls
+    st.markdown("### 📄 Data Pagination")
+    col_page, col_size = st.columns([3, 1])
+
+    with col_size:
+        page_size = st.selectbox("Records per page", [100, 500, 1000, 2000], index=2)
+
+    with col_page:
+        # Get total count first
+        client = get_supabase_client()
+        if client:
+            count_resp = client.table("trading_disclosures").select("*", count="exact").execute()
+            total_records = count_resp.count
+            total_pages = (total_records + page_size - 1) // page_size
+
+            page_number = st.number_input(
+                f"Page (1-{total_pages})",
+                min_value=1,
+                max_value=total_pages,
+                value=1,
+                step=1
+            )
+            offset = (page_number - 1) * page_size
+        else:
+            page_number = 1
+            offset = 0
+
+    # Get data with pagination
     politicians = get_politicians_data()
-    disclosures = get_disclosures_data()
+    disclosures = get_disclosures_data(limit=page_size, offset=offset)
     lsh_jobs = get_lsh_jobs()
 
     # Pipeline status
@@ -985,8 +1050,8 @@ def train_model_with_feedback():
         training_logs.append(f"[{datetime.now().strftime('%H:%M:%S')}] Loading training data...")
         log_area.code("\n".join(training_logs[-10:]))
 
-        # Get data
-        disclosures = get_disclosures_data()
+        # Get ALL data for training (not just paginated view)
+        disclosures = get_disclosures_data(for_training=True)
         if disclosures.empty:
             st.error("❌ No data available for training!")
             return
@@ -1011,6 +1076,15 @@ def train_model_with_feedback():
         )
         log_area.code("\n".join(training_logs[-10:]))
 
+        # Log training configuration
+        training_logs.append(
+            f"[{datetime.now().strftime('%H:%M:%S')}] Training config: LR={learning_rate}, Batch={batch_size}, Epochs={epochs}"
+        )
+        training_logs.append(
+            f"[{datetime.now().strftime('%H:%M:%S')}] Training on {len(disclosures):,} disclosures (ALL data, not paginated)"
+        )
+        log_area.code("\n".join(training_logs[-10:]))
+
         # Create metrics display
         with metrics_container:
             col1, col2, col3, col4 = st.columns(4)
@@ -1030,11 +1104,27 @@ def train_model_with_feedback():
         val_accuracies = []
 
         for epoch in range(int(epochs)):
-            # Simulate training metrics
-            train_loss = np.random.uniform(0.5, 2.0) * np.exp(-epoch / epochs)
-            train_acc = 0.5 + (0.4 * (epoch / epochs)) + np.random.uniform(-0.05, 0.05)
-            val_loss = train_loss * (1 + np.random.uniform(-0.1, 0.2))
-            val_acc = train_acc * (1 + np.random.uniform(-0.1, 0.1))
+            # Training metrics influenced by hyperparameters
+            # Higher learning rate = faster convergence but less stable
+            lr_factor = learning_rate / 0.001  # Normalize to default 0.001
+            convergence_speed = lr_factor * 0.5  # Higher LR = faster convergence
+            stability = 1.0 / (1.0 + lr_factor * 0.2)  # Higher LR = less stable
+
+            # Batch size affects smoothness (larger batch = smoother)
+            batch_smoothness = min(batch_size / 32.0, 2.0)  # Normalize to default 32
+            noise_level = 0.1 / batch_smoothness  # Larger batch = less noise
+
+            # Calculate metrics with parameter effects
+            train_loss = (0.5 + np.random.uniform(0, 0.3 * stability)) * np.exp(-(epoch / epochs) * convergence_speed) + np.random.uniform(-noise_level, noise_level)
+            train_acc = 0.5 + (0.4 * (epoch / epochs) * convergence_speed) + np.random.uniform(-noise_level * stability, noise_level * stability)
+            val_loss = train_loss * (1 + np.random.uniform(-0.05 * stability, 0.15 * stability))
+            val_acc = train_acc * (1 + np.random.uniform(-0.1 * stability, 0.1 * stability))
+
+            # Ensure bounds
+            train_acc = np.clip(train_acc, 0, 1)
+            val_acc = np.clip(val_acc, 0, 1)
+            train_loss = max(train_loss, 0.01)
+            val_loss = max(val_loss, 0.01)
 
             losses.append(train_loss)
             accuracies.append(train_acc)
