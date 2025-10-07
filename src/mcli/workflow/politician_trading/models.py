@@ -64,7 +64,7 @@ class Politician:
     first_name: str = ""
     last_name: str = ""
     full_name: str = ""
-    role: PoliticianRole = PoliticianRole.US_HOUSE_REP
+    role: str = "House"  # Can be string or PoliticianRole enum
     party: str = ""
     state_or_country: str = ""
     district: Optional[str] = None
@@ -85,6 +85,7 @@ class TradingDisclosure:
 
     id: Optional[str] = None
     politician_id: str = ""
+    politician_bioguide_id: Optional[str] = None  # For lookups before politician_id is assigned
 
     # Transaction details
     transaction_date: datetime = field(default_factory=datetime.utcnow)
