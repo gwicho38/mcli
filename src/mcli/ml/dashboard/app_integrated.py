@@ -612,7 +612,7 @@ def get_politicians_data():
         return pd.DataFrame()
 
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=30, show_spinner=False)
 def get_disclosures_data(limit: int = 1000, offset: int = 0, for_training: bool = False):
     """
     Get trading disclosures from Supabase with proper schema mapping
@@ -914,32 +914,56 @@ def show_pipeline_overview():
 
     # Pagination controls
     st.markdown("### 📄 Data Pagination")
-    col_page, col_size = st.columns([3, 1])
+
+    # Initialize session state for page number
+    if 'page_number' not in st.session_state:
+        st.session_state.page_number = 1
+
+    col_size, col_page_input, col_nav = st.columns([1, 2, 2])
 
     with col_size:
-        page_size = st.selectbox("Records per page", [100, 500, 1000, 2000], index=2)
+        page_size = st.selectbox("Records per page", [100, 500, 1000, 2000], index=2, key="page_size_select")
 
-    with col_page:
-        # Get total count first
-        client = get_supabase_client()
-        if client:
-            count_resp = client.table("trading_disclosures").select("*", count="exact").execute()
-            total_records = count_resp.count
-            total_pages = (total_records + page_size - 1) // page_size
+    # Get total count first
+    client = get_supabase_client()
+    if client:
+        count_resp = client.table("trading_disclosures").select("*", count="exact").execute()
+        total_records = count_resp.count
+        total_pages = (total_records + page_size - 1) // page_size
+    else:
+        total_records = 0
+        total_pages = 1
 
-            page_number = st.number_input(
-                f"Page (1-{total_pages})",
-                min_value=1,
-                max_value=total_pages,
-                value=1,
-                step=1
-            )
-            offset = (page_number - 1) * page_size
-        else:
-            page_number = 1
-            offset = 0
+    with col_page_input:
+        # Page number input with validation
+        page_input = st.number_input(
+            f"Page (1-{total_pages})",
+            min_value=1,
+            max_value=max(1, total_pages),
+            value=st.session_state.page_number,
+            step=1,
+            key="page_number_input"
+        )
+        st.session_state.page_number = page_input
 
-    # Get data with pagination
+    with col_nav:
+        # Navigation buttons
+        col_prev, col_next, col_info = st.columns([1, 1, 2])
+
+        with col_prev:
+            if st.button("⬅️ Previous", disabled=(st.session_state.page_number <= 1)):
+                st.session_state.page_number = max(1, st.session_state.page_number - 1)
+                st.rerun()
+
+        with col_next:
+            if st.button("Next ➡️", disabled=(st.session_state.page_number >= total_pages)):
+                st.session_state.page_number = min(total_pages, st.session_state.page_number + 1)
+                st.rerun()
+
+    # Calculate offset
+    offset = (st.session_state.page_number - 1) * page_size
+
+    # Get data with pagination (disable cache for pagination)
     politicians = get_politicians_data()
     disclosures = get_disclosures_data(limit=page_size, offset=offset)
     lsh_jobs = get_lsh_jobs()
