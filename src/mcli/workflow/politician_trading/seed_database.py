@@ -22,6 +22,19 @@ from uuid import UUID
 
 from supabase import create_client, Client
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    # Look for .env in project root
+    env_path = Path(__file__).parent.parent.parent.parent.parent / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+        logger = logging.getLogger(__name__)
+        logger.info(f"Loaded environment variables from {env_path}")
+except ImportError:
+    # python-dotenv not installed, try loading from .streamlit/secrets.toml
+    pass
+
 from .data_sources import ALL_DATA_SOURCES, AccessMethod, DataSource
 from .models import Politician, TradingDisclosure
 from .scrapers_free_sources import FreeDataFetcher
@@ -171,9 +184,22 @@ def upsert_politicians(
             }
 
             # Try to find existing politician
-            existing = client.table("politicians").select("id").eq(
-                "bioguide_id", politician.bioguide_id
-            ).execute()
+            if politician.bioguide_id:
+                # Query by bioguide_id if available
+                existing = client.table("politicians").select("id").eq(
+                    "bioguide_id", politician.bioguide_id
+                ).execute()
+            else:
+                # Query by unique constraint fields (first_name, last_name, role, state_or_country)
+                existing = client.table("politicians").select("id").eq(
+                    "first_name", politician.first_name
+                ).eq(
+                    "last_name", politician.last_name
+                ).eq(
+                    "role", politician.role
+                ).eq(
+                    "state_or_country", politician.state_or_country
+                ).execute()
 
             if existing.data:
                 # Update existing
@@ -186,9 +212,12 @@ def upsert_politicians(
                 pol_id = UUID(result.data[0]["id"])
                 new_count += 1
 
-            # Store mapping
+            # Store mapping - use bioguide_id if available, otherwise use full_name
             if politician.bioguide_id:
                 politician_map[politician.bioguide_id] = pol_id
+            elif politician.full_name:
+                # For sources without bioguide_id (e.g., Senate Stock Watcher), use full_name
+                politician_map[politician.full_name] = pol_id
 
         except Exception as e:
             logger.error(f"Error upserting politician {politician.full_name}: {e}")

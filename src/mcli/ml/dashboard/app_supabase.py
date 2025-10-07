@@ -42,18 +42,34 @@ st.markdown(
 
 @st.cache_resource
 def get_supabase_client() -> Client:
-    """Get Supabase client"""
-    url = os.getenv("SUPABASE_URL", "")
-    # Try both SUPABASE_KEY and SUPABASE_ANON_KEY
-    key = os.getenv("SUPABASE_KEY", "") or os.getenv("SUPABASE_ANON_KEY", "")
+    """Get Supabase client with Streamlit Cloud secrets support"""
+    # Try Streamlit secrets first (for Streamlit Cloud), then fall back to environment variables (for local dev)
+    try:
+        url = st.secrets.get("SUPABASE_URL", "")
+        key = st.secrets.get("SUPABASE_KEY", "") or st.secrets.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    except (AttributeError, FileNotFoundError):
+        # Secrets not available, try environment variables
+        url = os.getenv("SUPABASE_URL", "")
+        key = os.getenv("SUPABASE_KEY", "") or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
     if not url or not key:
         st.warning(
-            "⚠️ Supabase credentials not found. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables."
+            "⚠️ Supabase credentials not found. Configure SUPABASE_URL and SUPABASE_KEY in Streamlit Cloud secrets or environment variables."
         )
         return None
 
-    return create_client(url, key)
+    try:
+        client = create_client(url, key)
+        # Test connection
+        try:
+            client.table("politicians").select("id").limit(1).execute()
+            return client
+        except Exception as e:
+            st.error(f"❌ Supabase connection test failed: {e}")
+            return None
+    except Exception as e:
+        st.error(f"❌ Failed to create Supabase client: {e}")
+        return None
 
 
 @st.cache_data(ttl=30)
@@ -91,9 +107,18 @@ def get_disclosures_data():
             .limit(500)
             .execute()
         )
-        return pd.DataFrame(response.data)
+        df = pd.DataFrame(response.data)
+
+        # Convert datetime columns to proper datetime format
+        date_columns = ['transaction_date', 'disclosure_date', 'created_at', 'updated_at']
+        for col in date_columns:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], format='ISO8601', errors='coerce')
+
+        return df
     except Exception as e:
         st.error(f"Error fetching disclosures: {e}")
+        print(f"Error details: {e}")  # Debug output
         return pd.DataFrame()
 
 
