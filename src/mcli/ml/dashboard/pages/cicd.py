@@ -9,10 +9,16 @@ import plotly.graph_objects as go
 import plotly.express as px
 from typing import Optional
 
-# Import components using relative imports
-from ..components.metrics import display_kpi_row, display_status_badge, display_health_indicator
-from ..components.charts import create_timeline_chart, create_status_pie_chart, render_chart
-from ..components.tables import display_filterable_dataframe, export_dataframe
+# Import components
+try:
+    from ..components.metrics import display_kpi_row, display_status_badge, display_health_indicator
+    from ..components.charts import create_timeline_chart, create_status_pie_chart, render_chart
+    from ..components.tables import display_filterable_dataframe, export_dataframe
+except ImportError:
+    # Fallback for when imported outside package context
+    from components.metrics import display_kpi_row, display_status_badge, display_health_indicator
+    from components.charts import create_timeline_chart, create_status_pie_chart, render_chart
+    from components.tables import display_filterable_dataframe, export_dataframe
 
 
 def get_cicd_api_url() -> str:
