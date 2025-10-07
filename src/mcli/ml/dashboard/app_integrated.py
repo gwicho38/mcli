@@ -50,13 +50,17 @@ try:
     from pages.cicd import show_cicd_dashboard
     from pages.workflows import show_workflows_dashboard
     from pages.predictions_enhanced import show_predictions_enhanced
+    from pages.scrapers_and_logs import show_scrapers_and_logs
 
     HAS_EXTENDED_PAGES = True
+    HAS_SCRAPERS_PAGE = True
 except ImportError:
     HAS_EXTENDED_PAGES = False
+    HAS_SCRAPERS_PAGE = False
     show_cicd_dashboard = None
     show_workflows_dashboard = None
     show_predictions_enhanced = None
+    show_scrapers_and_logs = None
 
 # Page config
 st.set_page_config(
@@ -780,6 +784,10 @@ def main():
         "System Health",
     ]
 
+    # Add scrapers and logs page
+    if HAS_SCRAPERS_PAGE:
+        pages.append("Scrapers & Logs")
+
     # Add extended pages if available
     if HAS_EXTENDED_PAGES:
         pages.extend(["CI/CD Pipelines", "Workflows"])
@@ -835,6 +843,8 @@ def main():
             show_lsh_jobs()
         elif page == "System Health":
             show_system_health()
+        elif page == "Scrapers & Logs" and HAS_SCRAPERS_PAGE:
+            show_scrapers_and_logs()
         elif page == "CI/CD Pipelines" and HAS_EXTENDED_PAGES:
             show_cicd_dashboard()
         elif page == "Workflows" and HAS_EXTENDED_PAGES:
