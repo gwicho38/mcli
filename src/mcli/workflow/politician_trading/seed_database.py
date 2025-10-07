@@ -24,7 +24,7 @@ from supabase import create_client, Client
 
 from .data_sources import ALL_DATA_SOURCES, AccessMethod, DataSource
 from .models import Politician, TradingDisclosure
-from .scrapers_third_party import ThirdPartyDataFetcher
+from .scrapers_free_sources import FreeDataFetcher
 
 
 # Configure logging
@@ -301,35 +301,42 @@ def upsert_trading_disclosures(
 # =============================================================================
 
 
-def seed_from_propublica(
+def seed_from_senate_watcher(
     client: Client,
-    test_run: bool = False
+    test_run: bool = False,
+    recent_only: bool = False,
+    days: int = 90
 ) -> Dict[str, int]:
     """
-    Seed database from ProPublica Congress API
+    Seed database from Senate Stock Watcher GitHub dataset
 
     Args:
         client: Supabase client
         test_run: If True, only fetch but don't insert to DB
+        recent_only: If True, only fetch recent transactions
+        days: Number of days to look back if recent_only=True
 
     Returns:
         Statistics dictionary
     """
     logger.info("=" * 80)
-    logger.info("SEEDING FROM PROPUBLICA CONGRESS API")
+    logger.info("SEEDING FROM SENATE STOCK WATCHER (GitHub)")
     logger.info("=" * 80)
 
     # Create job record
-    job_id = create_data_pull_job(client, "propublica_seed")
+    job_id = create_data_pull_job(client, "senate_watcher_seed", {
+        "recent_only": recent_only,
+        "days": days
+    })
 
     try:
         # Initialize fetcher
-        fetcher = ThirdPartyDataFetcher()
+        fetcher = FreeDataFetcher()
 
         # Fetch data
-        data = fetcher.fetch_from_propublica(
-            fetch_members=True,
-            fetch_transactions=True
+        data = fetcher.fetch_from_senate_watcher(
+            recent_only=recent_only,
+            days=days
         )
 
         politicians = data["politicians"]
@@ -360,7 +367,7 @@ def seed_from_propublica(
         return disclosure_stats
 
     except Exception as e:
-        logger.error(f"Error seeding from ProPublica: {e}")
+        logger.error(f"Error seeding from Senate Stock Watcher: {e}")
         update_data_pull_job(client, job_id, "failed", error=str(e))
         raise
 
@@ -385,18 +392,19 @@ def seed_from_all_sources(
 
     results = {}
 
-    # ProPublica (has working implementation)
+    # Senate Stock Watcher (free GitHub dataset - no API key needed!)
     try:
-        logger.info("\n📡 ProPublica Congress API")
-        results["propublica"] = seed_from_propublica(client, test_run)
+        logger.info("\n📡 Senate Stock Watcher (GitHub)")
+        results["senate_watcher"] = seed_from_senate_watcher(client, test_run)
     except Exception as e:
-        logger.error(f"ProPublica seeding failed: {e}")
-        results["propublica"] = {"error": str(e)}
+        logger.error(f"Senate Stock Watcher seeding failed: {e}")
+        results["senate_watcher"] = {"error": str(e)}
 
-    # TODO: Add other sources as scrapers are implemented
-    # - StockNear (requires JavaScript rendering or API)
+    # TODO: Add other sources as implemented
+    # - Finnhub (requires free API key from finnhub.io)
+    # - SEC Edgar (free, no API key, but need to implement Form 4 parsing)
+    # - StockNear (requires JavaScript rendering)
     # - QuiverQuant (requires premium subscription)
-    # - Barchart (requires scraping implementation)
 
     logger.info("\n" + "=" * 80)
     logger.info("SEEDING SUMMARY")
@@ -428,9 +436,22 @@ def main():
 
     parser.add_argument(
         "--sources",
-        choices=["all", "propublica", "stocknear", "quiverquant"],
+        choices=["all", "senate", "finnhub", "sec-edgar"],
         default="all",
         help="Which data sources to seed from (default: all)"
+    )
+
+    parser.add_argument(
+        "--recent-only",
+        action="store_true",
+        help="Only fetch recent transactions (last 90 days)"
+    )
+
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=90,
+        help="Number of days to look back when using --recent-only (default: 90)"
     )
 
     parser.add_argument(
@@ -460,12 +481,19 @@ def main():
 
     # Run seeding
     try:
-        if args.sources == "propublica":
-            seed_from_propublica(client, args.test_run)
+        if args.sources == "senate":
+            seed_from_senate_watcher(
+                client,
+                test_run=args.test_run,
+                recent_only=args.recent_only,
+                days=args.days
+            )
         elif args.sources == "all":
             seed_from_all_sources(client, args.test_run)
         else:
             logger.error(f"Source '{args.sources}' not yet implemented")
+            logger.info("Available sources: all, senate")
+            logger.info("Coming soon: finnhub, sec-edgar")
             sys.exit(1)
 
         logger.info("\n✅ Seeding completed successfully!")
