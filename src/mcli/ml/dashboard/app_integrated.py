@@ -1303,7 +1303,8 @@ def show_ml_processing():
     """Show ML processing details"""
     st.header("ML Processing Pipeline")
 
-    disclosures = get_disclosures_data()
+    # Fetch ALL data for ML processing (not just paginated view)
+    disclosures = get_disclosures_data(for_training=True)
 
     if not disclosures.empty:
         # Run pipeline
@@ -1349,11 +1350,15 @@ def show_ml_processing():
                 }
                 display_df.rename(columns=column_renames, inplace=True)
 
+                # Show info about record counts
+                st.info(f"📊 Processing **{len(disclosures):,} total records** (showing first 100 for preview)")
+
                 st.dataframe(display_df, width="stretch")
-                st.metric("Total Records", len(disclosures))
+                st.metric("Total Records Being Processed", len(disclosures))
 
             with tabs[1]:
                 st.subheader("Preprocessed Data")
+                st.info(f"📊 Processing **{len(processed_data):,} total records** (showing first 100 for preview)")
                 st.dataframe(processed_data.head(100), width="stretch")
 
                 # Data quality metrics
@@ -1391,6 +1396,7 @@ def show_ml_processing():
                     )
                     st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
+                    st.info(f"📊 Generated features for **{len(features):,} total records** (showing first 100 for preview)")
                     st.dataframe(features.head(100), width="stretch")
 
             with tabs[3]:
