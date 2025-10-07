@@ -48,7 +48,8 @@ class SenateStockWatcherScraper:
             List of transaction dictionaries
         """
         try:
-            url = f"{self.BASE_URL}/all_transactions.json"
+            # File is in aggregate/ folder
+            url = f"{self.BASE_URL}/aggregate/all_transactions.json"
             logger.info(f"Fetching Senate transactions from: {url}")
 
             response = self.session.get(url, timeout=30)
@@ -114,21 +115,34 @@ class SenateStockWatcherScraper:
 
         for txn in transactions:
             try:
-                first_name = txn.get("first_name", "").strip()
-                last_name = txn.get("last_name", "").strip()
-                office = txn.get("office", "").strip()
+                # Parse senator name (format: "FirstName MiddleInitial LastName")
+                senator_name = txn.get("senator", "").strip()
+                if not senator_name:
+                    continue
+
+                # Split name into parts
+                name_parts = senator_name.split()
+                if len(name_parts) >= 2:
+                    # Handle middle names/initials
+                    first_name = name_parts[0]
+                    last_name = name_parts[-1]
+                    full_name = senator_name
+                else:
+                    first_name = senator_name
+                    last_name = ""
+                    full_name = senator_name
 
                 # Create unique key
-                key = f"{first_name}_{last_name}_{office}"
+                key = senator_name
 
                 if key not in politicians_map:
                     politicians_map[key] = Politician(
                         first_name=first_name,
                         last_name=last_name,
-                        full_name=f"{first_name} {last_name}".strip(),
+                        full_name=full_name,
                         role="Senate",
                         party="",  # Not included in dataset
-                        state_or_country=office if office else "US",
+                        state_or_country="US",
                         bioguide_id=None,  # Not included in dataset
                     )
 
@@ -181,9 +195,12 @@ class SenateStockWatcherScraper:
                 amount_str = txn.get("amount", "")
                 amount_min, amount_max = self._parse_amount_range(amount_str)
 
+                # Get senator name for bioguide_id (use same format as convert_to_politicians)
+                senator_name = txn.get("senator", "").strip()
+
                 # Create disclosure
                 disclosure = TradingDisclosure(
-                    politician_bioguide_id=f"{txn.get('first_name', '')}_{txn.get('last_name', '')}",
+                    politician_bioguide_id=senator_name,  # Use senator name as bioguide_id
                     transaction_date=transaction_date,
                     disclosure_date=disclosure_date,
                     transaction_type=txn.get("type", "").lower() or "purchase",

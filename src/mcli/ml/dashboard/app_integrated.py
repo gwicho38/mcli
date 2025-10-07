@@ -98,9 +98,15 @@ st.markdown(
 
 @st.cache_resource
 def get_supabase_client() -> Client:
-    """Get Supabase client"""
-    url = os.getenv("SUPABASE_URL", "")
-    key = os.getenv("SUPABASE_KEY", "")
+    """Get Supabase client with Streamlit Cloud secrets support"""
+    # Try Streamlit secrets first (for Streamlit Cloud), then fall back to environment variables (for local dev)
+    try:
+        url = st.secrets.get("SUPABASE_URL", "")
+        key = st.secrets.get("SUPABASE_KEY", "") or st.secrets.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    except (AttributeError, FileNotFoundError):
+        # Secrets not available, try environment variables
+        url = os.getenv("SUPABASE_URL", "")
+        key = os.getenv("SUPABASE_KEY", "") or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
     if not url or not key:
         st.error(
@@ -108,17 +114,22 @@ def get_supabase_client() -> Client:
         )
         with st.expander("🔧 Configuration Required"):
             st.markdown("""
-            **Missing environment variables:**
+            **Missing Supabase credentials:**
             - `SUPABASE_URL`: {}
             - `SUPABASE_KEY`: {}
 
-            **To fix:**
-            1. Create `.streamlit/secrets.toml` file
-            2. Add your Supabase credentials:
+            **For Streamlit Cloud:**
+            1. Go to https://share.streamlit.io
+            2. Select your app → Settings → Secrets
+            3. Add:
                ```toml
                SUPABASE_URL = "https://your-project.supabase.co"
                SUPABASE_KEY = "your-anon-key"
                ```
+
+            **For local development:**
+            1. Create `.streamlit/secrets.toml` file
+            2. Add the same credentials as above
             3. Restart the dashboard
 
             **Using demo data** until configured.
@@ -133,6 +144,7 @@ def get_supabase_client() -> Client:
         # Test connection with a simple query
         try:
             test_result = client.table("politicians").select("id").limit(1).execute()
+            logger.info(f"✅ Supabase connection successful (URL: {url[:30]}...)")
             return client
         except Exception as conn_error:
             st.error(f"❌ Supabase connection failed: {conn_error}")
@@ -140,9 +152,11 @@ def get_supabase_client() -> Client:
                 st.write(f"**URL:** {url[:30]}...")
                 st.write(f"**Error:** {str(conn_error)}")
                 st.write("**Using demo data** until connection is restored.")
+            logger.error(f"Supabase connection test failed: {conn_error}")
             return None
     except Exception as e:
         st.error(f"❌ Failed to create Supabase client: {e}")
+        logger.error(f"Failed to create Supabase client: {e}")
         return None
 
 
@@ -664,10 +678,10 @@ def get_disclosures_data():
         if 'asset_description' not in df.columns and 'asset_name' in df.columns:
             df['asset_description'] = df['asset_name']
 
-        # Convert dates to datetime
-        for date_col in ['disclosure_date', 'transaction_date']:
+        # Convert dates to datetime with ISO8601 format
+        for date_col in ['disclosure_date', 'transaction_date', 'created_at', 'updated_at']:
             if date_col in df.columns:
-                df[date_col] = pd.to_datetime(df[date_col])
+                df[date_col] = pd.to_datetime(df[date_col], format='ISO8601', errors='coerce')
 
         # Convert any remaining dict/list columns to JSON strings
         for col in df.columns:
