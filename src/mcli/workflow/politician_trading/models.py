@@ -164,3 +164,160 @@ class DataSource:
 
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
+
+
+# =============================================================================
+# Corporate Registry Models
+# =============================================================================
+
+
+@dataclass
+class Company:
+    """Corporate registry company information"""
+
+    id: Optional[str] = None
+    company_number: str = ""  # Registration number in jurisdiction
+    company_name: str = ""
+    jurisdiction: str = ""  # Country/region code (e.g., "GB", "US", "FR")
+
+    # Company details
+    company_type: Optional[str] = None
+    status: str = "active"  # active, dissolved, liquidation, etc.
+    incorporation_date: Optional[datetime] = None
+    registered_address: Optional[str] = None
+
+    # Business information
+    sic_codes: List[str] = field(default_factory=list)  # Standard Industrial Classification
+    nature_of_business: Optional[str] = None
+
+    # Source information
+    source: str = ""  # "uk_companies_house", "opencorporates", etc.
+    source_url: Optional[str] = None
+    raw_data: Dict[str, Any] = field(default_factory=dict)
+
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
+
+
+@dataclass
+class CompanyOfficer:
+    """Company officer/director information"""
+
+    id: Optional[str] = None
+    company_id: str = ""  # Foreign key to Company
+
+    # Officer details
+    name: str = ""
+    officer_role: str = ""  # director, secretary, etc.
+    appointed_on: Optional[datetime] = None
+    resigned_on: Optional[datetime] = None
+
+    # Personal details (may be limited by privacy laws)
+    nationality: Optional[str] = None
+    occupation: Optional[str] = None
+    country_of_residence: Optional[str] = None
+    date_of_birth: Optional[datetime] = None  # Often only month/year available
+
+    # Address (often redacted for privacy)
+    address: Optional[str] = None
+
+    # Source information
+    source: str = ""
+    raw_data: Dict[str, Any] = field(default_factory=dict)
+
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
+
+
+@dataclass
+class PersonWithSignificantControl:
+    """Person with significant control (PSC) - UK Companies House"""
+
+    id: Optional[str] = None
+    company_id: str = ""  # Foreign key to Company
+
+    # PSC details
+    name: str = ""
+    kind: str = ""  # individual-person-with-significant-control, corporate-entity-person-with-significant-control, etc.
+
+    # Control nature
+    natures_of_control: List[str] = field(default_factory=list)  # ownership-of-shares-75-to-100-percent, etc.
+    notified_on: Optional[datetime] = None
+
+    # Personal details (may be redacted)
+    nationality: Optional[str] = None
+    country_of_residence: Optional[str] = None
+    date_of_birth: Optional[datetime] = None  # Usually only month/year
+
+    # Address
+    address: Optional[str] = None
+
+    # Source information
+    source: str = ""
+    raw_data: Dict[str, Any] = field(default_factory=dict)
+
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
+
+
+@dataclass
+class FinancialPublication:
+    """Financial publication/disclosure (e.g., France Info-Financière)"""
+
+    id: Optional[str] = None
+    publication_id: str = ""  # Source publication ID
+
+    # Publication details
+    title: str = ""
+    publication_type: str = ""  # prospectus, annual-report, regulatory-filing, etc.
+    publication_date: datetime = field(default_factory=datetime.utcnow)
+
+    # Issuer/company
+    issuer_name: Optional[str] = None
+    issuer_id: Optional[str] = None  # LEI, ISIN, or other identifier
+    company_id: Optional[str] = None  # Foreign key to Company (if linked)
+
+    # Document information
+    document_url: Optional[str] = None
+    document_format: Optional[str] = None  # pdf, html, xml
+    language: Optional[str] = None
+
+    # Source information
+    source: str = ""  # "info_financiere", "xbrl_filings", etc.
+    jurisdiction: str = ""
+    raw_data: Dict[str, Any] = field(default_factory=dict)
+
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
+
+
+@dataclass
+class XBRLFiling:
+    """XBRL financial statement filing"""
+
+    id: Optional[str] = None
+    filing_id: str = ""  # Source filing ID
+
+    # Filing details
+    entity_name: str = ""
+    entity_id: Optional[str] = None  # LEI or other identifier
+    company_id: Optional[str] = None  # Foreign key to Company (if linked)
+
+    # Filing information
+    filing_date: datetime = field(default_factory=datetime.utcnow)
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
+    fiscal_year: Optional[int] = None
+    fiscal_period: Optional[str] = None  # Q1, Q2, FY, etc.
+
+    # Document
+    document_url: Optional[str] = None
+    taxonomy: Optional[str] = None  # ESEF, UKSEF, US-GAAP, etc.
+
+    # Source information
+    source: str = ""  # "xbrl_filings", "xbrl_us", etc.
+    jurisdiction: str = ""
+    raw_data: Dict[str, Any] = field(default_factory=dict)
+
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
