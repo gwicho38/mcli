@@ -10,10 +10,16 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, List
 import os
 
-# Import components using relative imports
-from ..components.metrics import display_kpi_row, display_status_badge
-from ..components.charts import create_timeline_chart, render_chart
-from ..components.tables import display_filterable_dataframe, export_dataframe
+# Import components
+try:
+    from ..components.metrics import display_kpi_row, display_status_badge
+    from ..components.charts import create_timeline_chart, render_chart
+    from ..components.tables import display_filterable_dataframe, export_dataframe
+except ImportError:
+    # Fallback for when imported outside package context
+    from components.metrics import display_kpi_row, display_status_badge
+    from components.charts import create_timeline_chart, render_chart
+    from components.tables import display_filterable_dataframe, export_dataframe
 
 # Import real data functions from main app
 try:
