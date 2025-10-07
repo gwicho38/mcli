@@ -1316,7 +1316,40 @@ def show_ml_processing():
 
             with tabs[0]:
                 st.subheader("Raw Disclosure Data")
-                st.dataframe(disclosures.head(100), width="stretch")
+
+                # Select and reorder columns for better display
+                display_columns = [
+                    'transaction_date',
+                    'politician_name' if 'politician_name' in disclosures.columns else 'politician_id',
+                    'transaction_type',
+                    'asset_name',  # The actual stock/asset name
+                    'asset_ticker',  # The stock ticker (e.g., AAPL, TSLA)
+                    'asset_type',  # Type (Stock, Fund, etc.)
+                    'amount_range_min',
+                    'amount_range_max',
+                ]
+
+                # Only include columns that exist in the DataFrame
+                available_display_cols = [col for col in display_columns if col in disclosures.columns]
+
+                # Display the data with selected columns
+                display_df = disclosures[available_display_cols].head(100).copy()
+
+                # Rename columns for better readability
+                column_renames = {
+                    'transaction_date': 'Date',
+                    'politician_name': 'Politician',
+                    'politician_id': 'Politician ID',
+                    'transaction_type': 'Type',
+                    'asset_name': 'Asset Name',
+                    'asset_ticker': 'Ticker',
+                    'asset_type': 'Asset Type',
+                    'amount_range_min': 'Min Amount',
+                    'amount_range_max': 'Max Amount',
+                }
+                display_df.rename(columns=column_renames, inplace=True)
+
+                st.dataframe(display_df, width="stretch")
                 st.metric("Total Records", len(disclosures))
 
             with tabs[1]:
