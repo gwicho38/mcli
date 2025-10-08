@@ -689,6 +689,9 @@ def extract_workflow_commands(output):
                     }
 
                     # Create a template based on command type
+                    # Replace hyphens with underscores for valid Python function names
+                    safe_name = cmd_name.replace("-", "_")
+
                     if isinstance(cmd_obj, click.Group):
                         # For groups, create a template
                         command_info["code"] = f'''"""
@@ -697,7 +700,7 @@ def extract_workflow_commands(output):
 import click
 
 @click.group(name="{cmd_name}")
-def {cmd_name}_group():
+def app():
     """{cmd_obj.help or 'Workflow command group'}"""
     pass
 
@@ -711,7 +714,7 @@ def {cmd_name}_group():
 import click
 
 @click.command(name="{cmd_name}")
-def {cmd_name}_command():
+def app():
     """{cmd_obj.help or 'Workflow command'}"""
     click.echo("Workflow command: {cmd_name}")
     # Add your implementation here
