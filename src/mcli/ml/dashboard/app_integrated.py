@@ -649,6 +649,9 @@ def get_disclosures_data(limit: int = 1000, offset: int = 0, for_training: bool 
         if for_training:
             # For model training: fetch ALL data (no limit)
             st.info(f"📊 Loading ALL {total_count:,} disclosures for model training...")
+            # Supabase has a default 1000 record limit - must use range to get all
+            # Use range(0, total_count) to fetch all records
+            query = query.range(0, total_count - 1)
             response = query.execute()
         else:
             # For UI display: use pagination
