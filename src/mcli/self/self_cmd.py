@@ -1557,6 +1557,266 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
         console.print(f"[dim]{traceback.format_exc()}[/dim]")
 
 
+@self_app.command("import-script")
+@click.argument("script_path", type=click.Path(exists=True))
+@click.option("--name", "-n", help="Command name (defaults to script filename)")
+@click.option("--group", "-g", default="workflow", help="Command group")
+@click.option("--description", "-d", help="Command description")
+@click.option("--interactive", "-i", is_flag=True, help="Open in $EDITOR for review/editing")
+def import_script(script_path, name, group, description, interactive):
+    """
+    Import a Python script as a portable JSON command.
+
+    Converts a Python script into a JSON command that can be loaded
+    by mcli. The script should define Click commands.
+
+    Examples:
+        mcli self import-script my_script.py
+        mcli self import-script my_script.py --name custom-cmd --interactive
+    """
+    import subprocess
+    import tempfile
+
+    script_file = Path(script_path).resolve()
+
+    if not script_file.exists():
+        click.echo(f"❌ Script not found: {script_file}", err=True)
+        return 1
+
+    # Read the script content
+    try:
+        with open(script_file, 'r') as f:
+            code = f.read()
+    except Exception as e:
+        click.echo(f"❌ Failed to read script: {e}", err=True)
+        return 1
+
+    # Determine command name
+    if not name:
+        name = script_file.stem.lower().replace("-", "_")
+
+    # Validate command name
+    if not re.match(r"^[a-z][a-z0-9_]*$", name):
+        click.echo(f"❌ Invalid command name: {name}", err=True)
+        return 1
+
+    # Interactive editing
+    if interactive:
+        editor = os.environ.get('EDITOR', 'vim')
+        click.echo(f"📝 Opening in {editor} for review...")
+
+        # Create temp file with the code
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as tmp:
+            tmp.write(code)
+            tmp_path = tmp.name
+
+        try:
+            subprocess.run([editor, tmp_path], check=True)
+
+            # Read edited content
+            with open(tmp_path, 'r') as f:
+                code = f.read()
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+
+    # Get description
+    if not description:
+        # Try to extract from docstring
+        import ast
+        try:
+            tree = ast.parse(code)
+            description = ast.get_docstring(tree) or f"Imported from {script_file.name}"
+        except:
+            description = f"Imported from {script_file.name}"
+
+    # Save as JSON command
+    manager = get_command_manager()
+
+    saved_path = manager.save_command(
+        name=name,
+        code=code,
+        description=description,
+        group=group,
+        metadata={
+            "source": "import-script",
+            "original_file": str(script_file),
+            "imported_at": datetime.now().isoformat()
+        }
+    )
+
+    click.echo(f"✅ Imported script as command: {name}")
+    click.echo(f"📁 Saved to: {saved_path}")
+    click.echo(f"🔄 Use with: mcli {group} {name}")
+    click.echo(f"💡 Command will be available after restart or reload")
+
+    return 0
+
+
+@self_app.command("export-script")
+@click.argument("command_name")
+@click.option("--output", "-o", type=click.Path(), help="Output file path")
+@click.option("--standalone", "-s", is_flag=True, help="Make script standalone (add if __name__ == '__main__')")
+def export_script(command_name, output, standalone):
+    """
+    Export a JSON command to a Python script.
+
+    Converts a portable JSON command back to a standalone Python script
+    that can be edited and run independently.
+
+    Examples:
+        mcli self export-script my-command
+        mcli self export-script my-command --output my_script.py --standalone
+    """
+    manager = get_command_manager()
+
+    # Load the command
+    command_file = manager.commands_dir / f"{command_name}.json"
+    if not command_file.exists():
+        click.echo(f"❌ Command not found: {command_name}", err=True)
+        return 1
+
+    try:
+        with open(command_file, 'r') as f:
+            command_data = json.load(f)
+    except Exception as e:
+        click.echo(f"❌ Failed to load command: {e}", err=True)
+        return 1
+
+    # Get the code
+    code = command_data.get('code', '')
+
+    if not code:
+        click.echo(f"❌ Command has no code: {command_name}", err=True)
+        return 1
+
+    # Add standalone wrapper if requested
+    if standalone:
+        # Check if already has if __name__ == '__main__'
+        if "if __name__" not in code:
+            code += "\n\nif __name__ == '__main__':\n    app()\n"
+
+    # Determine output path
+    if not output:
+        output = f"{command_name}.py"
+
+    output_file = Path(output)
+
+    # Write the script
+    try:
+        with open(output_file, 'w') as f:
+            f.write(code)
+    except Exception as e:
+        click.echo(f"❌ Failed to write script: {e}", err=True)
+        return 1
+
+    click.echo(f"✅ Exported command to script: {output_file}")
+    click.echo(f"📝 Source command: {command_name}")
+
+    if standalone:
+        click.echo(f"🚀 Run standalone with: python {output_file}")
+
+    click.echo(f"💡 Edit and re-import with: mcli self import-script {output_file}")
+
+    return 0
+
+
+@self_app.command("edit-command")
+@click.argument("command_name")
+@click.option("--editor", "-e", help="Editor to use (defaults to $EDITOR)")
+def edit_command(command_name, editor):
+    """
+    Edit a command interactively using $EDITOR.
+
+    Opens the command's Python code in your preferred editor,
+    allows you to make changes, and saves the updated version.
+
+    Examples:
+        mcli self edit-command my-command
+        mcli self edit-command my-command --editor code
+    """
+    import subprocess
+    import tempfile
+
+    manager = get_command_manager()
+
+    # Load the command
+    command_file = manager.commands_dir / f"{command_name}.json"
+    if not command_file.exists():
+        click.echo(f"❌ Command not found: {command_name}", err=True)
+        return 1
+
+    try:
+        with open(command_file, 'r') as f:
+            command_data = json.load(f)
+    except Exception as e:
+        click.echo(f"❌ Failed to load command: {e}", err=True)
+        return 1
+
+    code = command_data.get('code', '')
+
+    if not code:
+        click.echo(f"❌ Command has no code: {command_name}", err=True)
+        return 1
+
+    # Determine editor
+    if not editor:
+        editor = os.environ.get('EDITOR', 'vim')
+
+    click.echo(f"📝 Opening command in {editor}...")
+
+    # Create temp file with the code
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False,
+                                      prefix=f"{command_name}_") as tmp:
+        tmp.write(code)
+        tmp_path = tmp.name
+
+    try:
+        # Open in editor
+        result = subprocess.run([editor, tmp_path])
+
+        if result.returncode != 0:
+            click.echo(f"⚠️  Editor exited with code {result.returncode}")
+
+        # Read edited content
+        with open(tmp_path, 'r') as f:
+            new_code = f.read()
+
+        # Check if code changed
+        if new_code.strip() == code.strip():
+            click.echo("ℹ️  No changes made")
+            return 0
+
+        # Validate syntax
+        try:
+            compile(new_code, '<string>', 'exec')
+        except SyntaxError as e:
+            click.echo(f"❌ Syntax error in edited code: {e}", err=True)
+            should_save = Prompt.ask(
+                "Save anyway?", choices=["y", "n"], default="n"
+            )
+            if should_save.lower() != "y":
+                return 1
+
+        # Update the command
+        command_data['code'] = new_code
+        command_data['updated_at'] = datetime.now().isoformat()
+
+        with open(command_file, 'w') as f:
+            json.dump(command_data, f, indent=2)
+
+        # Update lockfile
+        manager.generate_lockfile()
+
+        click.echo(f"✅ Updated command: {command_name}")
+        click.echo(f"📁 Saved to: {command_file}")
+        click.echo(f"🔄 Reload with: mcli self reload" or "restart mcli")
+
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+    return 0
+
+
 # Register the plugin group with self_app
 self_app.add_command(plugin)
 
