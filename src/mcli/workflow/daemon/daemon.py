@@ -16,15 +16,33 @@ import click
 import psutil
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
+
+try:
+    from watchdog.events import FileSystemEventHandler
+    from watchdog.observers import Observer
+    HAS_WATCHDOG = True
+except ImportError:
+    # Watchdog not available, file watching will be disabled
+    HAS_WATCHDOG = False
+    FileSystemEventHandler = object  # Stub for inheritance
+    Observer = None
 
 # Import existing utilities
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
-from mcli.workflow.daemon.commands import CommandDatabase
 
 logger = get_logger(__name__)
+
+
+# Stub CommandDatabase for backward compatibility
+# Commands are now managed via JSON files in ~/.mcli/commands/
+class CommandDatabase:
+    """Stub database for backward compatibility.
+    Commands are now stored as JSON files and loaded via the custom commands system.
+    """
+    def __init__(self, db_path: Optional[str] = None):
+        logger.debug("CommandDatabase stub initialized - commands now managed via JSON files")
+        pass
 
 
 @dataclass

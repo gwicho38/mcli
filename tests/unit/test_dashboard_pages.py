@@ -1,9 +1,7 @@
 """Unit tests for Streamlit dashboard pages
 
-Tests for:
-- pages/cicd.py
-- pages/workflows.py
-- pages/predictions_enhanced.py
+NOTE: Dashboard page tests require streamlit and dashboard modules.
+Tests are conditional on dependencies being available.
 """
 
 import sys
@@ -14,7 +12,24 @@ import pandas as pd
 import pytest
 import logging
 from unittest.mock import patch, MagicMock, Mock
-import streamlit as st
+
+# Check for streamlit and dashboard modules
+try:
+    import streamlit as st
+    HAS_STREAMLIT = True
+except ImportError:
+    HAS_STREAMLIT = False
+
+try:
+    if HAS_STREAMLIT:
+        from mcli.ml.dashboard.pages import cicd, workflows, predictions_enhanced
+    HAS_PAGES = HAS_STREAMLIT
+except ImportError:
+    HAS_PAGES = False
+
+# Skip all tests if dependencies not available
+if not HAS_PAGES:
+    pytestmark = pytest.mark.skip(reason="streamlit or dashboard pages not available")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

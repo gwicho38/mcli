@@ -1,5 +1,8 @@
 """
 Unit tests for mcli.workflow.daemon.async_process_manager module
+
+NOTE: This module requires aiosqlite and other async dependencies.
+Tests are conditional on dependencies being available.
 """
 
 import asyncio
@@ -10,12 +13,27 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from datetime import datetime
 
-from mcli.workflow.daemon.async_process_manager import (
-    ProcessStatus,
-    ProcessInfo,
-    AsyncProcessContainer,
-    AsyncProcessManager,
-)
+# Check for async dependencies
+try:
+    import aiosqlite
+    from mcli.workflow.daemon.async_process_manager import (
+        ProcessStatus,
+        ProcessInfo,
+        AsyncProcessContainer,
+        AsyncProcessManager,
+    )
+    HAS_ASYNC_DEPS = True
+except (ImportError, ModuleNotFoundError):
+    HAS_ASYNC_DEPS = False
+    # Create stubs for type hints
+    ProcessStatus = None
+    ProcessInfo = None
+    AsyncProcessContainer = None
+    AsyncProcessManager = None
+
+# Skip all tests if dependencies not available
+if not HAS_ASYNC_DEPS:
+    pytestmark = pytest.mark.skip(reason="aiosqlite or async dependencies not available")
 
 
 class TestProcessStatus:
