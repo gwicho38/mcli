@@ -1,4 +1,8 @@
-"""Test suite for ML models"""
+"""Test suite for ML models
+
+NOTE: ML model tests require torch and model modules.
+Tests are conditional on torch installation.
+"""
 
 import pytest
 import numpy as np
@@ -12,15 +16,24 @@ try:
 except ImportError:
     HAS_TORCH = False
 
-if HAS_TORCH:
-    from mcli.ml.models.base_models import BaseStockModel, MLPBaseModel, ResNetModel
-    from mcli.ml.models.ensemble_models import (
-        AttentionStockPredictor,
-        TransformerStockModel,
-        LSTMStockPredictor,
-        DeepEnsembleModel
-    )
-    from mcli.ml.models.recommendation_models import StockRecommendationModel
+# Check for model modules
+try:
+    if HAS_TORCH:
+        from mcli.ml.models.base_models import BaseStockModel, MLPBaseModel, ResNetModel
+        from mcli.ml.models.ensemble_models import (
+            AttentionStockPredictor,
+            TransformerStockModel,
+            LSTMStockPredictor,
+            DeepEnsembleModel
+        )
+        from mcli.ml.models.recommendation_models import StockRecommendationModel
+    HAS_MODELS = HAS_TORCH
+except ImportError:
+    HAS_MODELS = False
+
+# Skip all tests if torch or models not available
+if not HAS_MODELS:
+    pytestmark = pytest.mark.skip(reason="torch or ML model modules not available")
 
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")

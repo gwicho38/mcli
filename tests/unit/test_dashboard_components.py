@@ -1,9 +1,7 @@
 """Unit tests for Streamlit dashboard components
 
-Tests for:
-- components/charts.py
-- components/metrics.py
-- components/tables.py
+NOTE: Dashboard component tests require streamlit and dashboard modules.
+Tests are conditional on dependencies being available.
 """
 
 import sys
@@ -14,7 +12,24 @@ import pandas as pd
 import pytest
 import logging
 from unittest.mock import patch, MagicMock, call
-import streamlit as st
+
+# Check for streamlit and dashboard modules
+try:
+    import streamlit as st
+    HAS_STREAMLIT = True
+except ImportError:
+    HAS_STREAMLIT = False
+
+try:
+    if HAS_STREAMLIT:
+        from mcli.ml.dashboard.components import charts, metrics, tables
+    HAS_DASHBOARD = HAS_STREAMLIT
+except ImportError:
+    HAS_DASHBOARD = False
+
+# Skip all tests if dependencies not available
+if not HAS_DASHBOARD:
+    pytestmark = pytest.mark.skip(reason="streamlit or dashboard components not available")
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)

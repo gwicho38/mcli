@@ -1,18 +1,18 @@
 """
 Unit tests for mcli.workflow.git_commit.commands module
+
+NOTE: This module has been migrated to portable JSON commands.
+Tests are skipped as the Python module no longer exists.
 """
 
 import pytest
-import subprocess
-import sys
 import tempfile
+import subprocess
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
-# Mock ollama before importing GitCommitWorkflow
-sys.modules['ollama'] = MagicMock()
-
-from mcli.workflow.git_commit.commands import GitCommitWorkflow
+# Skip all tests in this module - git_commit commands now loaded from JSON
+pytestmark = pytest.mark.skip(reason="git_commit commands migrated to portable JSON format")
 
 
 class TestGitCommitWorkflow:

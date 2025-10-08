@@ -1,8 +1,14 @@
+"""
+Unit tests for mcli.workflow.file.file module
+
+NOTE: This module has been migrated to portable JSON commands.
+Tests are skipped as the Python module no longer exists.
+"""
+
 import pytest
-from click.testing import CliRunner
-from mcli.workflow.file.file import file
-import os
-from pathlib import Path
+
+# Skip all tests in this module - file commands now loaded from JSON
+pytestmark = pytest.mark.skip(reason="file commands migrated to portable JSON format")
 
 
 def test_file_group_help():

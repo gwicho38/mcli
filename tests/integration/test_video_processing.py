@@ -1,6 +1,14 @@
+"""
+Integration tests for mcli.workflow.videos module
+
+NOTE: This module has been migrated to portable JSON commands.
+Tests are skipped as the Python module no longer exists.
+"""
+
 import pytest
-from click.testing import CliRunner
-from mcli.workflow.videos.videos import videos
+
+# Skip all tests in this module - videos commands now loaded from JSON
+pytestmark = pytest.mark.skip(reason="videos commands migrated to portable JSON format")
 
 
 def test_videos_group_help():
