@@ -30,6 +30,7 @@ except ImportError:
     process = None
 
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.custom_commands import get_command_manager
 
 logger = get_logger()
 
@@ -202,6 +203,7 @@ def get_command_template(name: str, group: Optional[str] = None) -> str:
 
     if group:
         # Template for a command in a group using Click
+        # Use 'app' as the variable name so it's found first
         template = f'''"""
 {name} command for mcli.{group}.
 """
@@ -214,11 +216,11 @@ logger = get_logger()
 
 # Create a Click command group
 @click.group(name="{name}")
-def {name}_group():
+def app():
     """Description for {name} command group."""
     pass
 
-@{name}_group.command("hello")
+@app.command("hello")
 @click.argument("name", default="World")
 def hello(name: str):
     """Example subcommand."""
@@ -387,14 +389,20 @@ def collect_commands() -> List[Dict[str, Any]]:
 
 @self_app.command("add-command")
 @click.argument("command_name", required=True)
-@click.option("--group", "-g", help="Optional command group to create under")
-def add_command(command_name, group):
+@click.option("--group", "-g", help="Command group (defaults to 'workflow')", default="workflow")
+@click.option(
+    "--description", "-d", help="Description for the command", default="Custom command"
+)
+def add_command(command_name, group, description):
     """
-    Generate a new command template that can be used by mcli.
+    Generate a new portable custom command saved to ~/.mcli/commands/.
+
+    Commands are automatically nested under the 'workflow' group by default,
+    making them portable and persistent across updates.
 
     Example:
-        mcli self add my_command
-        mcli self add feature_command --group features
+        mcli self add-command my_command
+        mcli self add-command analytics --group data
     """
     command_name = command_name.lower().replace("-", "_")
 
@@ -409,13 +417,9 @@ def add_command(command_name, group):
         )
         return 1
 
-    mcli_path = Path(__file__).parent.parent
-
+    # Validate group name if provided
     if group:
-        # Creating under a specific group
         command_group = group.lower().replace("-", "_")
-
-        # Validate group name
         if not re.match(r"^[a-z][a-z0-9_]*$", command_group):
             logger.error(
                 f"Invalid group name: {command_group}. Use lowercase letters, numbers, and underscores (starting with a letter)."
@@ -425,101 +429,322 @@ def add_command(command_name, group):
                 err=True,
             )
             return 1
-
-        # Check if group exists, create if needed
-        group_path = mcli_path / command_group
-        if not group_path.exists():
-            # Create group directory and __init__.py
-            group_path.mkdir(parents=True, exist_ok=True)
-            with open(group_path / "__init__.py", "w") as f:
-                f.write(f'"""\n{command_group.capitalize()} commands for mcli.\n"""')
-            logger.info(f"Created new command group directory: {command_group}")
-            click.echo(f"Created new command group directory: {command_group}")
-
-        # Create command file
-        command_file_path = group_path / f"{command_name}.py"
-        if command_file_path.exists():
-            logger.warning(f"Command file already exists: {command_file_path}")
-            should_override = Prompt.ask(
-                "File already exists. Override?", choices=["y", "n"], default="n"
-            )
-            if should_override.lower() != "y":
-                logger.info("Command creation aborted.")
-                click.echo("Command creation aborted.")
-                return 1
-
-        # Generate command file
-        with open(command_file_path, "w") as f:
-            f.write(get_command_template(command_name, command_group))
-
-        logger.info(f"Created new command: {command_name} in group: {command_group}")
-        click.echo(f"Created new command: {command_name} in group: {command_group}")
-        click.echo(f"File created: {command_file_path}")
-        click.echo(
-            f"To use this command, add 'from mcli.{command_group}.{command_name} import {command_name}_group' to your main imports"
-        )
-        click.echo(
-            f"Then add '{command_name}_group to your main CLI group using app.add_command({command_name}_group)'"
-        )
-
     else:
-        # Creating directly under self
-        command_file_path = mcli_path / "self" / f"{command_name}.py"
+        command_group = "workflow"  # Default to workflow group
 
-        if command_file_path.exists():
-            logger.warning(f"Command file already exists: {command_file_path}")
-            should_override = Prompt.ask(
-                "File already exists. Override?", choices=["y", "n"], default="n"
-            )
-            if should_override.lower() != "y":
-                logger.info("Command creation aborted.")
-                click.echo("Command creation aborted.")
-                return 1
+    # Get the command manager
+    manager = get_command_manager()
 
-        # Generate command file
-        with open(command_file_path, "w") as f:
-            f.write(get_command_template(command_name))
+    # Check if command already exists
+    command_file = manager.commands_dir / f"{command_name}.json"
+    if command_file.exists():
+        logger.warning(f"Custom command already exists: {command_name}")
+        should_override = Prompt.ask(
+            "Command already exists. Override?", choices=["y", "n"], default="n"
+        )
+        if should_override.lower() != "y":
+            logger.info("Command creation aborted.")
+            click.echo("Command creation aborted.")
+            return 1
 
-        # Update self_cmd.py to import and register the new command
-        with open(Path(__file__), "r") as f:
-            content = f.read()
+    # Generate command code
+    code = get_command_template(command_name, command_group)
 
-        # Add import statement if not exists
-        import_statement = f"from mcli.self.{command_name} import {command_name}_command"
-        if import_statement not in content:
-            import_section_end = content.find("logger = get_logger()")
-            if import_section_end != -1:
-                updated_content = (
-                    content[:import_section_end]
-                    + import_statement
-                    + "\n"
-                    + content[import_section_end:]
-                )
+    # Save the command
+    saved_path = manager.save_command(
+        name=command_name,
+        code=code,
+        description=description,
+        group=command_group,
+    )
 
-                # Add command registration (Click syntax)
-                registration = f"@self_app.command('{command_name}')\ndef {command_name}(name=\"World\"):\n    return {command_name}_command(name)\n"
-                registration_point = updated_content.rfind("def ")
-                if registration_point != -1:
-                    # Find the end of the last function
-                    last_func_end = updated_content.find("\n\n", registration_point)
-                    if last_func_end != -1:
-                        updated_content = (
-                            updated_content[: last_func_end + 2]
-                            + registration
-                            + updated_content[last_func_end + 2 :]
-                        )
-                    else:
-                        updated_content += "\n\n" + registration
-
-                with open(Path(__file__), "w") as f:
-                    f.write(updated_content)
-
-        logger.info(f"Created new command: {command_name} in self module")
-        click.echo(f"Created new command: {command_name} in self module")
-        click.echo(f"File created: {command_file_path}")
-        click.echo(f"Command has been automatically registered with self_app")
+    logger.info(f"Created portable custom command: {command_name}")
+    click.echo(f"✅ Created portable custom command: {command_name}")
+    click.echo(f"📁 Saved to: {saved_path}")
+    click.echo(f"🔄 Command will be automatically loaded on next mcli startup")
+    click.echo(
+        f"💡 You can share this command by copying {saved_path} to another machine's ~/.mcli/commands/ directory"
+    )
 
     return 0
+
+
+@self_app.command("list-commands")
+def list_commands():
+    """
+    List all custom commands stored in ~/.mcli/commands/.
+    """
+    manager = get_command_manager()
+    commands = manager.load_all_commands()
+
+    if not commands:
+        click.echo("No custom commands found.")
+        click.echo(
+            f"Create one with: mcli self add-command <name>"
+        )
+        return 0
+
+    table = Table(title="Custom Commands")
+    table.add_column("Name", style="green")
+    table.add_column("Group", style="blue")
+    table.add_column("Description", style="yellow")
+    table.add_column("Version", style="cyan")
+    table.add_column("Updated", style="dim")
+
+    for cmd in commands:
+        table.add_row(
+            cmd["name"],
+            cmd.get("group", "-"),
+            cmd.get("description", ""),
+            cmd.get("version", "1.0"),
+            cmd.get("updated_at", "")[:10] if cmd.get("updated_at") else "-",
+        )
+
+    console.print(table)
+    click.echo(f"\n📁 Commands directory: {manager.commands_dir}")
+    click.echo(f"🔒 Lockfile: {manager.lockfile_path}")
+
+    return 0
+
+
+@self_app.command("remove-command")
+@click.argument("command_name", required=True)
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+def remove_command(command_name, yes):
+    """
+    Remove a custom command from ~/.mcli/commands/.
+    """
+    manager = get_command_manager()
+    command_file = manager.commands_dir / f"{command_name}.json"
+
+    if not command_file.exists():
+        click.echo(f"❌ Command '{command_name}' not found.", err=True)
+        return 1
+
+    if not yes:
+        should_delete = Prompt.ask(
+            f"Delete command '{command_name}'?", choices=["y", "n"], default="n"
+        )
+        if should_delete.lower() != "y":
+            click.echo("Deletion cancelled.")
+            return 0
+
+    if manager.delete_command(command_name):
+        click.echo(f"✅ Deleted custom command: {command_name}")
+        return 0
+    else:
+        click.echo(f"❌ Failed to delete command: {command_name}", err=True)
+        return 1
+
+
+@self_app.command("export-commands")
+@click.argument("export_file", type=click.Path(), required=False)
+def export_commands(export_file):
+    """
+    Export all custom commands to a JSON file.
+
+    If no file is specified, exports to commands-export.json in current directory.
+    """
+    manager = get_command_manager()
+
+    if not export_file:
+        export_file = "commands-export.json"
+
+    export_path = Path(export_file)
+
+    if manager.export_commands(export_path):
+        click.echo(f"✅ Exported custom commands to: {export_path}")
+        click.echo(
+            f"💡 Import on another machine with: mcli self import-commands {export_path}"
+        )
+        return 0
+    else:
+        click.echo("❌ Failed to export commands.", err=True)
+        return 1
+
+
+@self_app.command("import-commands")
+@click.argument("import_file", type=click.Path(exists=True), required=True)
+@click.option("--overwrite", is_flag=True, help="Overwrite existing commands")
+def import_commands(import_file, overwrite):
+    """
+    Import custom commands from a JSON file.
+    """
+    manager = get_command_manager()
+    import_path = Path(import_file)
+
+    results = manager.import_commands(import_path, overwrite=overwrite)
+
+    success_count = sum(1 for v in results.values() if v)
+    failed_count = len(results) - success_count
+
+    if success_count > 0:
+        click.echo(f"✅ Imported {success_count} command(s)")
+
+    if failed_count > 0:
+        click.echo(
+            f"⚠️  Skipped {failed_count} command(s) (already exist, use --overwrite to replace)"
+        )
+        click.echo("Skipped commands:")
+        for name, success in results.items():
+            if not success:
+                click.echo(f"  - {name}")
+
+    return 0
+
+
+@self_app.command("verify-commands")
+def verify_commands():
+    """
+    Verify that custom commands match the lockfile.
+    """
+    manager = get_command_manager()
+
+    # First, ensure lockfile is up to date
+    manager.update_lockfile()
+
+    verification = manager.verify_lockfile()
+
+    if verification["valid"]:
+        click.echo("✅ All custom commands are in sync with the lockfile.")
+        return 0
+
+    click.echo("⚠️  Commands are out of sync with the lockfile:\n")
+
+    if verification["missing"]:
+        click.echo(f"Missing commands (in lockfile but not found):")
+        for name in verification["missing"]:
+            click.echo(f"  - {name}")
+
+    if verification["extra"]:
+        click.echo(f"\nExtra commands (not in lockfile):")
+        for name in verification["extra"]:
+            click.echo(f"  - {name}")
+
+    if verification["modified"]:
+        click.echo(f"\nModified commands:")
+        for name in verification["modified"]:
+            click.echo(f"  - {name}")
+
+    click.echo(f"\n💡 Run 'mcli self update-lockfile' to sync the lockfile")
+
+    return 1
+
+
+@self_app.command("update-lockfile")
+def update_lockfile():
+    """
+    Update the commands lockfile with current state.
+    """
+    manager = get_command_manager()
+
+    if manager.update_lockfile():
+        click.echo(f"✅ Updated lockfile: {manager.lockfile_path}")
+        return 0
+    else:
+        click.echo("❌ Failed to update lockfile.", err=True)
+        return 1
+
+
+@self_app.command("extract-workflow-commands")
+@click.option(
+    "--output", "-o", type=click.Path(), help="Output file (default: workflow-commands.json)"
+)
+def extract_workflow_commands(output):
+    """
+    Extract workflow commands from Python modules to JSON format.
+
+    This command helps migrate existing workflow commands to portable JSON format.
+    """
+    import inspect
+    from pathlib import Path
+
+    output_file = Path(output) if output else Path("workflow-commands.json")
+
+    workflow_commands = []
+
+    # Try to get workflow from the main app
+    try:
+        from mcli.app.main import create_app
+
+        app = create_app()
+
+        # Check if workflow group exists
+        if "workflow" in app.commands:
+            workflow_group = app.commands["workflow"]
+
+            # Force load lazy group if needed
+            if hasattr(workflow_group, "_load_group"):
+                workflow_group = workflow_group._load_group()
+
+            if hasattr(workflow_group, "commands"):
+                for cmd_name, cmd_obj in workflow_group.commands.items():
+                    # Extract command information
+                    command_info = {
+                        "name": cmd_name,
+                        "group": "workflow",
+                        "description": cmd_obj.help or "Workflow command",
+                        "version": "1.0",
+                        "metadata": {"source": "workflow", "migrated": True},
+                    }
+
+                    # Create a template based on command type
+                    if isinstance(cmd_obj, click.Group):
+                        # For groups, create a template
+                        command_info["code"] = f'''"""
+{cmd_name} workflow command.
+"""
+import click
+
+@click.group(name="{cmd_name}")
+def {cmd_name}_group():
+    """{cmd_obj.help or 'Workflow command group'}"""
+    pass
+
+# Add your subcommands here
+'''
+                    else:
+                        # For regular commands, create a template
+                        command_info["code"] = f'''"""
+{cmd_name} workflow command.
+"""
+import click
+
+@click.command(name="{cmd_name}")
+def {cmd_name}_command():
+    """{cmd_obj.help or 'Workflow command'}"""
+    click.echo("Workflow command: {cmd_name}")
+    # Add your implementation here
+'''
+
+                    workflow_commands.append(command_info)
+
+        if workflow_commands:
+            import json
+
+            with open(output_file, "w") as f:
+                json.dump(workflow_commands, f, indent=2)
+
+            click.echo(f"✅ Extracted {len(workflow_commands)} workflow commands")
+            click.echo(f"📁 Saved to: {output_file}")
+            click.echo(
+                f"\n💡 These are templates. Import with: mcli self import-commands {output_file}"
+            )
+            click.echo(
+                "   Then customize the code in ~/.mcli/commands/<command>.json"
+            )
+            return 0
+        else:
+            click.echo("⚠️  No workflow commands found to extract")
+            return 1
+
+    except Exception as e:
+        logger.error(f"Failed to extract workflow commands: {e}")
+        click.echo(f"❌ Failed to extract workflow commands: {e}", err=True)
+        import traceback
+
+        click.echo(traceback.format_exc(), err=True)
+        return 1
 
 
 @click.group("plugin")

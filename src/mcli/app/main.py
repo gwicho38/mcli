@@ -423,6 +423,16 @@ def _add_lazy_commands(app: click.Group):
         app.add_command(lazy_cmd)
         logger.debug(f"Added lazy command: {cmd_name}")
 
+    # Load custom user commands from ~/.mcli/commands/ AFTER all groups are added
+    try:
+        from mcli.lib.custom_commands import load_custom_commands
+
+        loaded_count = load_custom_commands(app)
+        if loaded_count > 0:
+            logger.info(f"Loaded {loaded_count} custom user command(s)")
+    except Exception as e:
+        logger.debug(f"Could not load custom commands: {e}")
+
 
 def create_app() -> click.Group:
     """Create and configure the Click application with clean top-level commands."""

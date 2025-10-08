@@ -80,3 +80,15 @@ def get_cache_dir() -> Path:
     cache_dir = get_mcli_home() / "cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
+
+
+def get_custom_commands_dir() -> Path:
+    """
+    Get the custom commands directory for mcli.
+
+    Returns:
+        Path to custom commands directory (e.g., ~/.mcli/commands), created if it doesn't exist
+    """
+    commands_dir = get_mcli_home() / "commands"
+    commands_dir.mkdir(parents=True, exist_ok=True)
+    return commands_dir

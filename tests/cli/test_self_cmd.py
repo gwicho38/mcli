@@ -24,7 +24,7 @@ def test_add_command_help():
     runner = CliRunner()
     result = runner.invoke(self_app, ['add-command', '--help'])
     assert result.exit_code == 0
-    assert 'Generate a new command template' in result.output
+    assert 'Generate a new portable custom command' in result.output
 
 
 def test_add_command_missing_required():
