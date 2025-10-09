@@ -18,14 +18,11 @@ numpy>=1.24.0,<2.0.0
 plotly>=5.17.0
 
 # Trading dependencies (essential)
-# alpaca-py dependencies - explicit to avoid conflicts
-sseclient-py>=1.7.2,<2.0.0
-msgpack>=1.0.3,<2.0.0
 pydantic>=2.0.3,<3.0.0
 pydantic-settings>=2.1.0
-# Install alpaca-py without websockets version pinning to avoid Streamlit conflicts
-alpaca-py>=0.42.0
 yfinance>=0.2.18
+# alpaca-py with minimal constraints to avoid conflicts
+alpaca-py>=0.20.0
 
 # Dashboard
 streamlit>=1.28.0
