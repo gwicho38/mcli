@@ -59,10 +59,15 @@ try:
         trading_status_card,
     )
     HAS_STREAMLIT_EXTRAS = True
-except ImportError:
+except (ImportError, KeyError, ModuleNotFoundError) as e:
     HAS_STREAMLIT_EXTRAS = False
     enhanced_metrics = None
     section_header = None
+    vertical_space = None
+    data_quality_indicators = None
+    trading_status_card = None
+    # Suppress warning for now - this is handled gracefully
+    # st.warning(f"Streamlit-extras utilities not available: {e}")
 
 # Add ML pipeline imports
 try:
