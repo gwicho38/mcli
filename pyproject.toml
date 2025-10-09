@@ -103,7 +103,7 @@ dependencies = [
   "pyarrow>=14.0.0",
   "yfinance>=0.2.18",
   "alpha-vantage>=2.3.1",
-  "alpaca-py>=0.20.0",
+  "alpaca-py==0.42.2",
   "cvxpy>=1.4.0",
   "python-jose[cryptography]>=3.3.0",
   "passlib[bcrypt]>=1.7.4",
@@ -133,6 +133,7 @@ dependencies = [
   # Web framework
   "flask>=2.3.0,<3.0.0",
   "alpaca-trade-api>=0.26",
+  "alpaca>=1.0.0",
 ]
 
 [project.urls]
