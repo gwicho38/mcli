@@ -13,10 +13,27 @@ from mcli.ml.config import settings
 from .models import Base
 
 # Synchronous database setup
-engine = create_engine(
-    settings.database.url,
-    **settings.get_database_config(),
-)
+try:
+    engine = create_engine(
+        settings.database.url,
+        **settings.get_database_config(),
+    )
+except (AttributeError, Exception) as e:
+    # Fallback to environment variable if settings.database is not configured
+    import os
+    database_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_URL")
+    if database_url and not database_url.startswith("postgres"):
+        # Supabase URL is not a direct database URL
+        database_url = None
+
+    if not database_url:
+        # Default to SQLite for development/testing
+        database_url = "sqlite:///./ml_system.db"
+
+    engine = create_engine(
+        database_url,
+        connect_args={"check_same_thread": False} if "sqlite" in database_url else {},
+    )
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -27,14 +44,30 @@ SessionLocal = sessionmaker(
 
 
 # Asynchronous database setup
-async_engine = create_async_engine(
-    settings.database.async_url,
-    pool_size=settings.database.pool_size,
-    max_overflow=settings.database.max_overflow,
-    pool_timeout=settings.database.pool_timeout,
-    pool_pre_ping=True,
-    echo=settings.debug,
-)
+try:
+    async_engine = create_async_engine(
+        settings.database.async_url,
+        pool_size=settings.database.pool_size,
+        max_overflow=settings.database.max_overflow,
+        pool_timeout=settings.database.pool_timeout,
+        pool_pre_ping=True,
+        echo=settings.debug,
+    )
+except (AttributeError, Exception):
+    # Fallback for async engine
+    import os
+    async_database_url = os.getenv("ASYNC_DATABASE_URL")
+    if not async_database_url:
+        # Convert sync URL to async if possible
+        if "sqlite" in database_url:
+            async_database_url = database_url.replace("sqlite:///", "sqlite+aiosqlite:///")
+        else:
+            async_database_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
+
+    async_engine = create_async_engine(
+        async_database_url,
+        pool_pre_ping=True,
+    )
 
 AsyncSessionLocal = async_sessionmaker(
     async_engine,
