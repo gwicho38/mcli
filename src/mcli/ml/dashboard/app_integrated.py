@@ -184,6 +184,10 @@ except (ImportError, KeyError, ModuleNotFoundError) as e:
                 st.code(pkg)
         else:
             st.warning("⚠️ No alpaca-related packages found in pip list")
+
+        # Show full pip list for debugging
+        with st.expander("🔍 Full pip list (for debugging)"):
+            st.code(result.stdout, language="text")
     except Exception as pip_error:
         st.caption(f"Could not check installed packages: {pip_error}")
 
