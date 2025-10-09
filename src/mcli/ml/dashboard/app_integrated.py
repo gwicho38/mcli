@@ -125,8 +125,18 @@ try:
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     HAS_MONTE_CARLO_PAGE = False
 
-# Note: CI/CD and Workflows pages removed from imports to avoid errors on Streamlit Cloud
-# They can be re-enabled when their dependencies are available
+# Import CI/CD and Workflows pages
+try:
+    from mcli.ml.dashboard.pages.cicd import show_cicd_dashboard
+    HAS_CICD_PAGE = True
+except (ImportError, KeyError, ModuleNotFoundError) as e:
+    st.warning(f"CI/CD page not available: {e}")
+
+try:
+    from mcli.ml.dashboard.pages.workflows import show_workflows_dashboard
+    HAS_WORKFLOWS_PAGE = True
+except (ImportError, KeyError, ModuleNotFoundError) as e:
+    st.warning(f"Workflows page not available: {e}")
 
 # Page config
 st.set_page_config(
