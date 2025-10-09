@@ -32,6 +32,9 @@ logger = logging.getLogger(__name__)
 def show_scrapers_and_logs():
     """Main function for scrapers and logs page"""
     st.header("🔍 Data Scrapers & System Logs")
+    
+    # Add a simple test to ensure the page is rendering
+    st.info("📋 Page loaded successfully - Scrapers & Logs functionality is available")
 
     st.markdown("""
     **Features:**
@@ -1058,3 +1061,8 @@ def show_job_history():
 
 # Export for use in main dashboard
 __all__ = ["show_scrapers_and_logs"]
+
+
+# Module-level execution only when run directly (not when imported)
+if __name__ == "__main__":
+    show_scrapers_and_logs()

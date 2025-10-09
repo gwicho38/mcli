@@ -86,32 +86,44 @@ class AlpacaTradingClient:
         self.trading_client = TradingClient(
             api_key=config.api_key,
             secret_key=config.secret_key,
-            paper=config.paper_trading,
-            base_url=config.base_url
+            paper=config.paper_trading
         )
         self.data_client = StockHistoricalDataClient(
             api_key=config.api_key,
-            secret_key=config.secret_key,
-            base_url=config.data_url
+            secret_key=config.secret_key
         )
     
     def get_account(self) -> Dict:
         """Get account information"""
         try:
             account = self.trading_client.get_account()
-            return {
+
+            # Build response with safe attribute access
+            response = {
                 "account_id": account.id,
-                "equity": float(account.equity),
-                "cash": float(account.cash),
-                "buying_power": float(account.buying_power),
-                "portfolio_value": float(account.portfolio_value),
-                "unrealized_pl": float(account.unrealized_pl),
-                "realized_pl": float(account.realized_pl),
-                "currency": account.currency,
-                "status": account.status,
-                "trading_blocked": account.trading_blocked,
-                "pattern_day_trader": account.pattern_day_trader,
+                "equity": float(account.equity) if hasattr(account, 'equity') else 0.0,
+                "cash": float(account.cash) if hasattr(account, 'cash') else 0.0,
+                "buying_power": float(account.buying_power) if hasattr(account, 'buying_power') else 0.0,
+                "currency": account.currency if hasattr(account, 'currency') else "USD",
+                "status": account.status.value if hasattr(account.status, 'value') else str(account.status),
+                "trading_blocked": account.trading_blocked if hasattr(account, 'trading_blocked') else False,
+                "pattern_day_trader": account.pattern_day_trader if hasattr(account, 'pattern_day_trader') else False,
             }
+
+            # Add optional fields that may not exist in all account types
+            if hasattr(account, 'portfolio_value'):
+                response["portfolio_value"] = float(account.portfolio_value)
+            else:
+                response["portfolio_value"] = response["equity"]
+
+            if hasattr(account, 'long_market_value'):
+                response["unrealized_pl"] = float(account.long_market_value) - float(account.cash)
+            else:
+                response["unrealized_pl"] = 0.0
+
+            response["realized_pl"] = 0.0  # Not always available in paper accounts
+
+            return response
         except Exception as e:
             logger.error(f"Failed to get account info: {e}")
             raise

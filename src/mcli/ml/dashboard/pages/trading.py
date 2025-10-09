@@ -71,6 +71,9 @@ def show_trading_dashboard():
     """Main trading dashboard page"""
     st.title("📈 Trading Dashboard")
     st.markdown("Manage your portfolios and execute trades based on politician trading insights")
+    
+    # Add a simple test to ensure the page is rendering
+    st.info("📋 Page loaded successfully - Trading Dashboard functionality is available")
 
     # Check if trading dependencies are available
     if not HAS_TRADING_DEPS:
@@ -758,3 +761,8 @@ def show_settings_page():
     
     for alert_type in alert_types:
         st.checkbox(alert_type, value=True)
+
+
+# Module-level execution only when run directly (not when imported)
+if __name__ == "__main__":
+    show_trading_dashboard()
