@@ -377,6 +377,7 @@ def config(
     debug: Optional[bool] = typer.Option(None, "--debug", help="Set debug mode"),
 ):
     """Manage system configuration"""
+    global settings
 
     if show:
         console.print(f"[bold blue]Current Configuration[/bold blue]")
@@ -399,7 +400,6 @@ def config(
             raise typer.Exit(1)
 
         # Update environment
-        global settings
         settings = create_settings(environment)
         console.print(f"[green]✓ Environment set to: {environment}[/green]")
 

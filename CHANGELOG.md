@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.3.1] - 2025-01-09
+
+### Fixed
+- Fixed deprecated Pydantic `regex` parameter in Field definitions (now uses `pattern`)
+- Fixed deprecated Pydantic `orm_mode` in model Config classes (now uses `from_attributes`)
+- Fixed global variable declaration order in CLI config command
+- Resolved `mcli self search` command errors and warnings
+
 ### Added
 - Comprehensive environment configuration template (`.env.example`)
 - Pre-commit hooks configuration for code quality

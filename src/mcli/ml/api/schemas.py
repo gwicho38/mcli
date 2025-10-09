@@ -32,7 +32,7 @@ class ModelResponse(BaseModel):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ModelMetrics(BaseModel):
@@ -69,4 +69,4 @@ class PredictionResponse(BaseModel):
     model_name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
