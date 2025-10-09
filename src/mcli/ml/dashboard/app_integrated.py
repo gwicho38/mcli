@@ -80,23 +80,21 @@ show_trading_dashboard = None
 show_test_portfolio = None
 
 try:
-    from mcli.ml.dashboard.pages.cicd import show_cicd_dashboard
-    from mcli.ml.dashboard.pages.workflows import show_workflows_dashboard
     from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
     HAS_EXTENDED_PAGES = True
-except ImportError as e:
+except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Extended pages not available: {e}")
 
 try:
     from mcli.ml.dashboard.pages.scrapers_and_logs import show_scrapers_and_logs
     HAS_SCRAPERS_PAGE = True
-except ImportError as e:
+except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Scrapers & Logs page not available: {e}")
 
 try:
     from mcli.ml.dashboard.pages.trading import show_trading_dashboard
     from mcli.ml.dashboard.pages.test_portfolio import show_test_portfolio
-except ImportError as e:
+except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Trading pages not available: {e}")
 
 # Page config
