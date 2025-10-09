@@ -92,6 +92,7 @@ HAS_TRADING_PAGES = False
 HAS_MONTE_CARLO_PAGE = False
 HAS_CICD_PAGE = False
 HAS_WORKFLOWS_PAGE = False
+HAS_DEBUG_PAGE = False
 
 show_overview = None
 show_cicd_dashboard = None
@@ -101,6 +102,7 @@ show_scrapers_and_logs = None
 show_trading_dashboard = None
 show_test_portfolio = None
 show_monte_carlo_predictions = None
+show_debug_dependencies = None
 
 # Import Overview page
 try:
@@ -122,11 +124,63 @@ except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Scrapers & Logs page not available: {e}")
 
 try:
+    import sys
+    import traceback
+
+    # Verbose logging for alpaca-py debugging
+    st.info("🔍 Attempting to import trading pages (alpaca-py dependent)...")
+
+    # First, try importing alpaca directly to see the specific error
+    try:
+        import alpaca
+        st.success(f"✅ alpaca module imported successfully")
+        if hasattr(alpaca, "__version__"):
+            st.info(f"Alpaca version: {alpaca.__version__}")
+        if hasattr(alpaca, "__file__"):
+            st.caption(f"Alpaca location: {alpaca.__file__}")
+    except ImportError as alpaca_error:
+        st.error(f"❌ Failed to import alpaca module: {alpaca_error}")
+        with st.expander("🔬 Detailed alpaca import error"):
+            st.code(traceback.format_exc())
+
+        # Try to provide diagnostic info
+        st.warning("💡 Troubleshooting tips:")
+        st.markdown("""
+        - Check that `alpaca-py>=0.20.0` is in requirements.txt
+        - Verify Python version is 3.8+ (current: {}.{})
+        - Check Streamlit Cloud deployment logs for installation errors
+        - Visit the **Debug Dependencies** page for detailed diagnostics
+        """.format(sys.version_info.major, sys.version_info.minor))
+
+    # Now try importing the trading pages
     from mcli.ml.dashboard.pages.trading import show_trading_dashboard
     from mcli.ml.dashboard.pages.test_portfolio import show_test_portfolio
     HAS_TRADING_PAGES = True
+    st.success("✅ Trading pages imported successfully!")
+
 except (ImportError, KeyError, ModuleNotFoundError) as e:
-    st.warning(f"Trading pages not available: {e}")
+    st.error(f"❌ Trading pages not available: {e}")
+    with st.expander("📋 Full error traceback"):
+        st.code(traceback.format_exc())
+
+    # Show installed packages related to alpaca
+    try:
+        import subprocess
+        result = subprocess.run(
+            ["pip", "list"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        alpaca_packages = [line for line in result.stdout.split("\n") if "alpaca" in line.lower()]
+        if alpaca_packages:
+            st.info("📦 Found alpaca-related packages:")
+            for pkg in alpaca_packages:
+                st.code(pkg)
+        else:
+            st.warning("⚠️ No alpaca-related packages found in pip list")
+    except Exception as pip_error:
+        st.caption(f"Could not check installed packages: {pip_error}")
 
 try:
     from mcli.ml.dashboard.pages.monte_carlo_predictions import show_monte_carlo_predictions
@@ -146,6 +200,13 @@ try:
     HAS_WORKFLOWS_PAGE = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Workflows page not available: {e}")
+
+# Import Debug Dependencies page (always available for troubleshooting)
+try:
+    from mcli.ml.dashboard.pages.debug_dependencies import show_debug_dependencies
+    HAS_DEBUG_PAGE = True
+except (ImportError, KeyError, ModuleNotFoundError) as e:
+    st.warning(f"Debug Dependencies page not available: {e}")
 
 # Page config
 st.set_page_config(
@@ -948,7 +1009,11 @@ def main():
     # Add Workflows page if available
     if HAS_WORKFLOWS_PAGE:
         pages.append("Workflows")
-    
+
+    # Add Debug Dependencies page (always useful for troubleshooting)
+    if HAS_DEBUG_PAGE:
+        pages.append("Debug Dependencies")
+
     page = st.sidebar.selectbox(
         "Choose a page",
         pages,
@@ -1064,6 +1129,17 @@ def main():
                     st.code(traceback.format_exc())
             else:
                 st.warning("Workflows page is not available. This page requires additional dependencies.")
+
+        elif page == "Debug Dependencies":
+            if show_debug_dependencies is not None:
+                try:
+                    show_debug_dependencies()
+                except Exception as e:
+                    st.error(f"❌ Error in Debug Dependencies page: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
+            else:
+                st.warning("Debug Dependencies page is not available.")
     except Exception as e:
         st.error(f"❌ Error loading page '{page}': {e}")
         import traceback

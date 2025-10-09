@@ -169,6 +169,7 @@ def show_overview():
         - **CI/CD Pipelines**: Monitor build and deployment pipelines
         - **Workflows**: Track automated workflow executions
         - **ML Processing**: Data preprocessing and feature engineering
+        - **Debug Dependencies**: Troubleshoot installation and import issues (useful for alpaca-py debugging)
         """)
 
     vertical_space(2)
@@ -279,6 +280,26 @@ def show_overview():
         - **Documentation**: Help improve the docs
 
         This is an open-source project built for the community.
+        """)
+
+    with st.expander("**Q: Why are some pages showing errors or not loading?**"):
+        st.markdown("""
+        **A:** Some pages require optional dependencies that may not be installed:
+
+        **Common Issues:**
+        - **Trading Dashboard/Test Portfolio**: Requires `alpaca-py` package
+        - **Advanced ML pages**: May require `torch` or `pytorch-lightning` (not available on Streamlit Cloud)
+
+        **Troubleshooting:**
+        1. Check the error message displayed at the top of the dashboard
+        2. Visit the **Debug Dependencies** page for detailed diagnostics
+        3. The Debug page shows:
+           - Which packages are installed
+           - Detailed import error messages
+           - Python environment information
+           - Troubleshooting suggestions
+
+        **Note:** Most pages have graceful fallbacks and will work with demo data if dependencies are missing.
         """)
 
     vertical_space(2)
