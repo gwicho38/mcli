@@ -104,3 +104,7 @@ node_modules/
 coverage.json
 .coverage
 htmlcov/
+
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md
