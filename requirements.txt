@@ -30,6 +30,7 @@ yfinance>=0.2.18
 # Dashboard
 streamlit>=1.28.0
 streamlit-autorefresh>=1.0.1
+streamlit-extras>=0.7.0
 
 # Utilities
 beautifulsoup4>=4.12.0
