@@ -344,8 +344,38 @@ def collect_commands() -> List[Dict[str, Any]]:
                 module_name = ".".join(relative_path.with_suffix("").parts)
 
                 try:
-                    # Try to import the module
-                    module = importlib.import_module(module_name)
+                    # Suppress Streamlit warnings and logging during module import
+                    import warnings
+                    import logging
+                    import sys
+                    import os
+                    from contextlib import redirect_stderr
+                    from io import StringIO
+                    
+                    # Suppress Python warnings
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings("ignore", message=".*missing ScriptRunContext.*")
+                        warnings.filterwarnings("ignore", message=".*No runtime found.*")
+                        warnings.filterwarnings("ignore", message=".*Session state does not function.*")
+                        warnings.filterwarnings("ignore", message=".*to view this Streamlit app.*")
+                        
+                        # Suppress Streamlit logger warnings
+                        streamlit_logger = logging.getLogger("streamlit")
+                        original_level = streamlit_logger.level
+                        streamlit_logger.setLevel(logging.CRITICAL)
+                        
+                        # Also suppress specific Streamlit sub-loggers
+                        logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").setLevel(logging.CRITICAL)
+                        logging.getLogger("streamlit.runtime.caching.cache_data_api").setLevel(logging.CRITICAL)
+                        
+                        # Redirect stderr to suppress Streamlit warnings
+                        with redirect_stderr(StringIO()):
+                            try:
+                                # Try to import the module
+                                module = importlib.import_module(module_name)
+                            finally:
+                                # Restore original logging level
+                                streamlit_logger.setLevel(original_level)
 
                     # Extract command and group objects
                     for name, obj in inspect.getmembers(module):
@@ -387,15 +417,167 @@ def collect_commands() -> List[Dict[str, Any]]:
     return commands
 
 
+def open_editor_for_command(command_name: str, command_group: str, description: str) -> Optional[str]:
+    """
+    Open the user's default editor to allow them to write command logic.
+    
+    Args:
+        command_name: Name of the command
+        command_group: Group for the command
+        description: Description of the command
+        
+    Returns:
+        The Python code written by the user, or None if cancelled
+    """
+    import tempfile
+    import subprocess
+    import os
+    import sys
+    from pathlib import Path
+    
+    # Get the user's default editor
+    editor = os.environ.get('EDITOR')
+    if not editor:
+        # Try common editors in order of preference
+        for common_editor in ['vim', 'nano', 'code', 'subl', 'atom', 'emacs']:
+            if subprocess.run(['which', common_editor], capture_output=True).returncode == 0:
+                editor = common_editor
+                break
+    
+    if not editor:
+        click.echo("❌ No editor found. Please set the EDITOR environment variable or install vim/nano.")
+        return None
+    
+    # Create a temporary file with the template
+    template = get_command_template(command_name, command_group)
+    
+    # Add helpful comments to the template
+    enhanced_template = f'''"""
+{command_name} command for mcli.{command_group}.
+
+Description: {description}
+
+Instructions:
+1. Write your Python command logic below
+2. Use Click decorators for command definition
+3. Save and close the editor to create the command
+4. The command will be automatically converted to JSON format
+
+Example Click command structure:
+@click.command()
+@click.argument('name', default='World')
+def my_command(name):
+    \"\"\"My custom command.\"\"\"
+    click.echo(f"Hello, {{name}}!")
+"""
+import click
+from typing import Optional, List
+from pathlib import Path
+from mcli.lib.logger.logger import get_logger
+
+logger = get_logger()
+
+# Write your command logic here:
+# Replace this template with your actual command implementation
+
+{template.split('"""')[2].split('"""')[0] if '"""' in template else ''}
+
+# Your command implementation goes here:
+# Example:
+# @click.command()
+# @click.argument('name', default='World')
+# def {command_name}_command(name):
+#     \"\"\"{description}\"\"\"
+#     logger.info(f"Executing {command_name} command with name: {{name}}")
+#     click.echo(f"Hello, {{name}}! This is the {command_name} command.")
+'''
+    
+    # Create temporary file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+        temp_file.write(enhanced_template)
+        temp_file_path = temp_file.name
+    
+    try:
+        # Check if we're in an interactive environment
+        if not sys.stdin.isatty() or not sys.stdout.isatty():
+            click.echo("❌ Editor requires an interactive terminal. Use --template flag for non-interactive mode.")
+            return None
+            
+        # Open editor
+        click.echo(f"📝 Opening {editor} to edit command logic...")
+        click.echo("💡 Write your Python command logic and save the file to continue.")
+        click.echo("💡 Press Ctrl+C to cancel command creation.")
+        
+        # Run the editor
+        result = subprocess.run([editor, temp_file_path], check=False)
+        
+        if result.returncode != 0:
+            click.echo("❌ Editor exited with error. Command creation cancelled.")
+            return None
+        
+        # Read the edited content
+        with open(temp_file_path, 'r') as f:
+            edited_code = f.read()
+        
+        # Check if the file was actually edited (not just the template)
+        if edited_code.strip() == enhanced_template.strip():
+            click.echo("⚠️  No changes detected. Command creation cancelled.")
+            return None
+        
+        # Extract the actual command code (remove the instructions)
+        lines = edited_code.split('\n')
+        code_lines = []
+        in_code_section = False
+        
+        for line in lines:
+            if line.strip().startswith('# Your command implementation goes here:'):
+                in_code_section = True
+                continue
+            if in_code_section:
+                code_lines.append(line)
+        
+        if not code_lines or not any(line.strip() for line in code_lines):
+            # Fallback: use the entire file content
+            code_lines = lines
+        
+        final_code = '\n'.join(code_lines).strip()
+        
+        if not final_code:
+            click.echo("❌ No command code found. Command creation cancelled.")
+            return None
+        
+        click.echo("✅ Command code captured successfully!")
+        return final_code
+        
+    except KeyboardInterrupt:
+        click.echo("\n❌ Command creation cancelled by user.")
+        return None
+    except Exception as e:
+        click.echo(f"❌ Error opening editor: {e}")
+        return None
+    finally:
+        # Clean up temporary file
+        try:
+            os.unlink(temp_file_path)
+        except OSError:
+            pass
+
+
 @self_app.command("add-command")
 @click.argument("command_name", required=True)
 @click.option("--group", "-g", help="Command group (defaults to 'workflow')", default="workflow")
 @click.option(
     "--description", "-d", help="Description for the command", default="Custom command"
 )
-def add_command(command_name, group, description):
+@click.option(
+    "--template", "-t", is_flag=True, help="Use template mode (skip editor and use predefined template)"
+)
+def add_command(command_name, group, description, template):
     """
     Generate a new portable custom command saved to ~/.mcli/commands/.
+
+    This command will open your default editor to allow you to write the Python logic
+    for your command. The editor will be opened with a template that you can modify.
 
     Commands are automatically nested under the 'workflow' group by default,
     making them portable and persistent across updates.
@@ -403,6 +585,7 @@ def add_command(command_name, group, description):
     Example:
         mcli self add-command my_command
         mcli self add-command analytics --group data
+        mcli self add-command quick_cmd --template  # Use template without editor
     """
     command_name = command_name.lower().replace("-", "_")
 
@@ -448,7 +631,17 @@ def add_command(command_name, group, description):
             return 1
 
     # Generate command code
-    code = get_command_template(command_name, command_group)
+    if template:
+        # Use template mode - generate and save directly
+        code = get_command_template(command_name, command_group)
+        click.echo(f"📝 Using template for command: {command_name}")
+    else:
+        # Editor mode - open editor for user to write code
+        click.echo(f"🔧 Opening editor for command: {command_name}")
+        code = open_editor_for_command(command_name, command_group, description)
+        if code is None:
+            click.echo("❌ Command creation cancelled.")
+            return 1
 
     # Save the command
     saved_path = manager.save_command(

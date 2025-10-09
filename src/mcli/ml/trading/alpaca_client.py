@@ -1,6 +1,7 @@
 """Alpaca Trading API client for executing trades"""
 
 import logging
+import os
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Dict, List, Optional, Tuple, Union
@@ -18,6 +19,10 @@ from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -343,11 +348,58 @@ class AlpacaTradingClient:
             raise
 
 
-def create_trading_client(api_key: str, secret_key: str, paper_trading: bool = True) -> AlpacaTradingClient:
-    """Create a trading client with the given credentials"""
+def create_trading_client(api_key: str = None, secret_key: str = None, paper_trading: bool = True) -> AlpacaTradingClient:
+    """
+    Create a trading client with the given credentials or from environment variables
+
+    Args:
+        api_key: Alpaca API key (if None, loads from ALPACA_API_KEY env var)
+        secret_key: Alpaca secret key (if None, loads from ALPACA_SECRET_KEY env var)
+        paper_trading: Whether to use paper trading (default: True)
+
+    Returns:
+        AlpacaTradingClient instance
+    """
+    # Load from environment if not provided
+    if api_key is None:
+        api_key = os.getenv("ALPACA_API_KEY")
+    if secret_key is None:
+        secret_key = os.getenv("ALPACA_SECRET_KEY")
+
+    if not api_key or not secret_key:
+        raise ValueError(
+            "Alpaca API credentials not found. "
+            "Please provide api_key and secret_key, or set ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables."
+        )
+
+    base_url = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+
     config = TradingConfig(
         api_key=api_key,
         secret_key=secret_key,
+        base_url=base_url,
         paper_trading=paper_trading
     )
     return AlpacaTradingClient(config)
+
+
+def get_alpaca_config_from_env() -> Optional[Dict[str, str]]:
+    """
+    Get Alpaca configuration from environment variables
+
+    Returns:
+        Dictionary with API configuration or None if not configured
+    """
+    api_key = os.getenv("ALPACA_API_KEY")
+    secret_key = os.getenv("ALPACA_SECRET_KEY")
+    base_url = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+
+    if not api_key or not secret_key:
+        return None
+
+    return {
+        "api_key": api_key,
+        "secret_key": secret_key,
+        "base_url": base_url,
+        "is_paper": "paper" in base_url.lower()
+    }
