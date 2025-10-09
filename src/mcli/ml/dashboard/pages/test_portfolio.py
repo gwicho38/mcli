@@ -25,6 +25,9 @@ def show_test_portfolio():
     st.title("🧪 Test Portfolio - Paper Trading")
     st.markdown("Test your trading strategies with paper money before going live")
     
+    # Add a simple test to ensure the page is rendering
+    st.info("📋 Page loaded successfully - Test Portfolio functionality is available")
+    
     # Initialize session state
     if "test_portfolio_id" not in st.session_state:
         st.session_state.test_portfolio_id = None
@@ -371,3 +374,8 @@ try:
     from mcli.ml.trading.models import Position
 except ImportError:
     Position = None
+
+
+# Module-level execution only when run directly (not when imported)
+if __name__ == "__main__":
+    show_test_portfolio()
