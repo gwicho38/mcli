@@ -1,6 +1,7 @@
 """Trading dashboard page for portfolio management and trade execution"""
 
 import logging
+import warnings
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from uuid import UUID
@@ -10,6 +11,12 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
+
+# Suppress Streamlit warnings when used outside runtime context
+warnings.filterwarnings("ignore", message=".*missing ScriptRunContext.*")
+warnings.filterwarnings("ignore", message=".*No runtime found.*")
+warnings.filterwarnings("ignore", message=".*Session state does not function.*")
+warnings.filterwarnings("ignore", message=".*to view this Streamlit app.*")
 
 # Try to import trading dependencies with fallbacks
 try:
@@ -667,38 +674,77 @@ def show_signals_page():
 
 def show_settings_page():
     """Show trading settings page"""
+    import os
+
     st.header("⚙️ Trading Settings")
-    
+
     st.subheader("Alpaca API Configuration")
-    
-    with st.form("alpaca_config"):
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            api_key = st.text_input("API Key", type="password", help="Your Alpaca API key")
-            base_url = st.selectbox("Environment", ["Paper Trading", "Live Trading"])
-        
-        with col2:
-            secret_key = st.text_input("Secret Key", type="password", help="Your Alpaca secret key")
-            risk_level = st.selectbox("Risk Level", [RiskLevel.CONSERVATIVE, RiskLevel.MODERATE, RiskLevel.AGGRESSIVE])
-        
-        max_position_size = st.slider("Max Position Size (%)", 1, 50, 10, help="Maximum percentage of portfolio per position")
-        max_portfolio_risk = st.slider("Max Portfolio Risk (%)", 5, 100, 20, help="Maximum portfolio risk percentage")
-        
-        if st.form_submit_button("Save Settings", type="primary"):
-            st.success("Settings saved successfully!")
-    
+
+    # Check current configuration from environment
+    api_key_configured = bool(os.getenv("ALPACA_API_KEY"))
+    secret_key_configured = bool(os.getenv("ALPACA_SECRET_KEY"))
+    base_url = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
+    is_paper = "paper" in base_url.lower()
+
+    # Show current configuration status
+    st.info("📝 **Configuration Status**")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if api_key_configured:
+            st.success("✅ API Key Configured")
+            # Show masked version
+            api_key_value = os.getenv("ALPACA_API_KEY", "")
+            if len(api_key_value) > 8:
+                masked_key = api_key_value[:4] + "..." + api_key_value[-4:]
+                st.code(masked_key)
+        else:
+            st.error("❌ API Key Not Set")
+
+    with col2:
+        if secret_key_configured:
+            st.success("✅ Secret Key Configured")
+        else:
+            st.error("❌ Secret Key Not Set")
+
+    with col3:
+        st.metric("Environment", "Paper Trading" if is_paper else "Live Trading")
+
+    st.markdown("---")
+
+    # Configuration instructions
+    with st.expander("🔧 How to Configure Alpaca API Keys"):
+        st.markdown("""
+        ### Setting up Alpaca API Credentials
+
+        1. **Get your API keys from Alpaca:**
+           - Visit [Alpaca Dashboard](https://app.alpaca.markets/paper/dashboard/overview)
+           - Go to "Your API Keys" section
+           - Generate new API keys if needed
+
+        2. **Add keys to your `.env` file:**
+           ```bash
+           ALPACA_API_KEY=your_api_key_here
+           ALPACA_SECRET_KEY=your_secret_key_here
+           ALPACA_BASE_URL=https://paper-api.alpaca.markets  # For paper trading
+           ```
+
+        3. **Restart the Streamlit app** to load the new configuration
+
+        **Current Configuration File:** `/Users/lefv/repos/mcli/.env`
+        """)
+
     st.subheader("Risk Management")
-    
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
         st.metric("Current Max Position Size", "10%")
         st.metric("Current Max Portfolio Risk", "20%")
-    
+
     with col2:
         st.metric("Active Risk Level", "Moderate")
-        st.metric("Paper Trading", "Enabled")
+        st.metric("Paper Trading", "Enabled" if is_paper else "Disabled")
     
     st.subheader("Portfolio Alerts")
     

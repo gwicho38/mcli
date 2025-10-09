@@ -6,11 +6,18 @@ import logging
 import os
 import pickle
 import subprocess
+import warnings
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
 
 import numpy as np
+
+# Suppress Streamlit warnings when used outside runtime context
+warnings.filterwarnings("ignore", message=".*missing ScriptRunContext.*")
+warnings.filterwarnings("ignore", message=".*No runtime found.*")
+warnings.filterwarnings("ignore", message=".*Session state does not function.*")
+warnings.filterwarnings("ignore", message=".*to view this Streamlit app.*")
 
 logger = logging.getLogger(__name__)
 import pandas as pd

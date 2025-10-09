@@ -2,10 +2,17 @@
 
 import os
 import logging
+import warnings
 from typing import List, Optional
 import pandas as pd
 import streamlit as st
 from supabase import Client, create_client
+
+# Suppress Streamlit warnings when used outside runtime context
+warnings.filterwarnings("ignore", message=".*missing ScriptRunContext.*")
+warnings.filterwarnings("ignore", message=".*No runtime found.*")
+warnings.filterwarnings("ignore", message=".*Session state does not function.*")
+warnings.filterwarnings("ignore", message=".*to view this Streamlit app.*")
 
 logger = logging.getLogger(__name__)
 
