@@ -93,6 +93,7 @@ show_predictions_enhanced = None
 show_scrapers_and_logs = None
 show_trading_dashboard = None
 show_test_portfolio = None
+show_monte_carlo_predictions = None
 
 try:
     from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
@@ -111,6 +112,12 @@ try:
     from mcli.ml.dashboard.pages.test_portfolio import show_test_portfolio
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Trading pages not available: {e}")
+
+try:
+    from mcli.ml.dashboard.pages.monte_carlo_predictions import show_monte_carlo_predictions
+    HAS_MONTE_CARLO_PAGE = True
+except (ImportError, KeyError, ModuleNotFoundError) as e:
+    HAS_MONTE_CARLO_PAGE = False
 
 # Page config
 st.set_page_config(
@@ -895,6 +902,10 @@ def main():
     if HAS_SCRAPERS_PAGE:
         pages.append("Scrapers & Logs")
 
+    # Add Monte Carlo predictions page
+    if HAS_MONTE_CARLO_PAGE:
+        pages.append("Monte Carlo Predictions")
+
     # Add extended pages if available
     if HAS_EXTENDED_PAGES:
         pages.extend(["CI/CD Pipelines", "Workflows"])
@@ -968,6 +979,16 @@ def main():
                     st.code(traceback.format_exc())
             else:
                 st.warning("Test portfolio not available")
+        elif page == "Monte Carlo Predictions":
+            if HAS_MONTE_CARLO_PAGE and show_monte_carlo_predictions:
+                try:
+                    show_monte_carlo_predictions()
+                except Exception as e:
+                    st.error(f"❌ Error in Monte Carlo Predictions page: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
+            else:
+                st.warning("Monte Carlo predictions not available")
         elif page == "LSH Jobs":
             show_lsh_jobs()
         elif page == "System Health":
