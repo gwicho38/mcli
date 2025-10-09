@@ -19,7 +19,24 @@ warnings.filterwarnings("ignore", message=".*No runtime found.*")
 warnings.filterwarnings("ignore", message=".*Session state does not function.*")
 warnings.filterwarnings("ignore", message=".*to view this Streamlit app.*")
 
+# Suppress Plotly deprecation warnings
+warnings.filterwarnings("ignore", message=".*keyword arguments have been deprecated.*")
+warnings.filterwarnings("ignore", message=".*Use `config` instead.*")
+
+# Suppress media file errors
+warnings.filterwarnings("ignore", message=".*MediaFileHandler.*")
+warnings.filterwarnings("ignore", message=".*Missing file.*")
+warnings.filterwarnings("ignore", message=".*Bad filename.*")
+
+# Suppress additional warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 logger = logging.getLogger(__name__)
+
+# Suppress specific Streamlit media file errors in logging
+logging.getLogger("streamlit.runtime.media_file_storage").setLevel(logging.ERROR)
+logging.getLogger("streamlit.web.server.media_file_handler").setLevel(logging.ERROR)
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -53,26 +70,34 @@ except ImportError:
     PoliticianTradingPredictor = None
 
 # Add new dashboard pages
+HAS_EXTENDED_PAGES = False
+HAS_SCRAPERS_PAGE = False
+show_cicd_dashboard = None
+show_workflows_dashboard = None
+show_predictions_enhanced = None
+show_scrapers_and_logs = None
+show_trading_dashboard = None
+show_test_portfolio = None
+
 try:
     from mcli.ml.dashboard.pages.cicd import show_cicd_dashboard
     from mcli.ml.dashboard.pages.workflows import show_workflows_dashboard
     from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
-    from mcli.ml.dashboard.pages.scrapers_and_logs import show_scrapers_and_logs
-    from mcli.ml.dashboard.pages.trading import show_trading_dashboard
-    from mcli.ml.dashboard.pages.test_portfolio import show_test_portfolio
-
     HAS_EXTENDED_PAGES = True
+except ImportError as e:
+    st.warning(f"Extended pages not available: {e}")
+
+try:
+    from mcli.ml.dashboard.pages.scrapers_and_logs import show_scrapers_and_logs
     HAS_SCRAPERS_PAGE = True
 except ImportError as e:
-    print(f"Import error: {e}")  # Debug print
-    HAS_EXTENDED_PAGES = False
-    HAS_SCRAPERS_PAGE = False
-    show_cicd_dashboard = None
-    show_workflows_dashboard = None
-    show_predictions_enhanced = None
-    show_scrapers_and_logs = None
-    show_trading_dashboard = None
-    show_test_portfolio = None
+    st.warning(f"Scrapers & Logs page not available: {e}")
+
+try:
+    from mcli.ml.dashboard.pages.trading import show_trading_dashboard
+    from mcli.ml.dashboard.pages.test_portfolio import show_test_portfolio
+except ImportError as e:
+    st.warning(f"Trading pages not available: {e}")
 
 # Page config
 st.set_page_config(
@@ -818,6 +843,21 @@ def get_model_metrics():
 
 def main():
     """Main dashboard function"""
+    
+    # Clear any problematic session state that might cause media file errors
+    try:
+        # Remove any file-related session state that might be causing issues
+        keys_to_remove = []
+        for key in st.session_state.keys():
+            if 'file' in key.lower() or 'download' in key.lower() or 'media' in key.lower():
+                keys_to_remove.append(key)
+        
+        for key in keys_to_remove:
+            if key in st.session_state:
+                del st.session_state[key]
+    except Exception:
+        # Ignore errors when clearing session state
+        pass
 
     # Title and header
     st.title("🤖 MCLI ML System Dashboard - Integrated")
@@ -896,12 +936,22 @@ def main():
                 show_predictions()
         elif page == "Trading Dashboard":
             if HAS_EXTENDED_PAGES and show_trading_dashboard:
-                show_trading_dashboard()
+                try:
+                    show_trading_dashboard()
+                except Exception as e:
+                    st.error(f"❌ Error in Trading Dashboard page: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
             else:
                 st.warning("Trading dashboard not available")
         elif page == "Test Portfolio":
             if HAS_EXTENDED_PAGES and show_test_portfolio:
-                show_test_portfolio()
+                try:
+                    show_test_portfolio()
+                except Exception as e:
+                    st.error(f"❌ Error in Test Portfolio page: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
             else:
                 st.warning("Test portfolio not available")
         elif page == "LSH Jobs":
@@ -909,11 +959,26 @@ def main():
         elif page == "System Health":
             show_system_health()
         elif page == "Scrapers & Logs" and HAS_SCRAPERS_PAGE:
-            show_scrapers_and_logs()
+            try:
+                show_scrapers_and_logs()
+            except Exception as e:
+                st.error(f"❌ Error in Scrapers & Logs page: {e}")
+                import traceback
+                st.code(traceback.format_exc())
         elif page == "CI/CD Pipelines" and HAS_EXTENDED_PAGES:
-            show_cicd_dashboard()
+            try:
+                show_cicd_dashboard()
+            except Exception as e:
+                st.error(f"❌ Error in CI/CD Pipelines page: {e}")
+                import traceback
+                st.code(traceback.format_exc())
         elif page == "Workflows" and HAS_EXTENDED_PAGES:
-            show_workflows_dashboard()
+            try:
+                show_workflows_dashboard()
+            except Exception as e:
+                st.error(f"❌ Error in Workflows page: {e}")
+                import traceback
+                st.code(traceback.format_exc())
     except Exception as e:
         st.error(f"❌ Error loading page '{page}': {e}")
         import traceback
@@ -2811,5 +2876,12 @@ def show_system_health():
     st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
 
-# Run the main dashboard function
-main()
+# Run the main dashboard function with error handling
+try:
+    main()
+except Exception as e:
+    st.error(f"❌ Dashboard error: {e}")
+    st.info("🔄 Please refresh the page to try again")
+    import traceback
+    with st.expander("Error details"):
+        st.code(traceback.format_exc())
