@@ -85,6 +85,7 @@ except ImportError:
     PoliticianTradingPredictor = None
 
 # Add new dashboard pages
+HAS_OVERVIEW_PAGE = False
 HAS_PREDICTIONS_ENHANCED = False
 HAS_SCRAPERS_PAGE = False
 HAS_TRADING_PAGES = False
@@ -92,6 +93,7 @@ HAS_MONTE_CARLO_PAGE = False
 HAS_CICD_PAGE = False
 HAS_WORKFLOWS_PAGE = False
 
+show_overview = None
 show_cicd_dashboard = None
 show_workflows_dashboard = None
 show_predictions_enhanced = None
@@ -99,6 +101,13 @@ show_scrapers_and_logs = None
 show_trading_dashboard = None
 show_test_portfolio = None
 show_monte_carlo_predictions = None
+
+# Import Overview page
+try:
+    from mcli.ml.dashboard.pages.overview import show_overview
+    HAS_OVERVIEW_PAGE = True
+except (ImportError, KeyError, ModuleNotFoundError) as e:
+    st.warning(f"Overview page not available: {e}")
 
 try:
     from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
@@ -140,7 +149,7 @@ except (ImportError, KeyError, ModuleNotFoundError) as e:
 
 # Page config
 st.set_page_config(
-    page_title="MCLI ML Dashboard - Integrated",
+    page_title="Politician Trading Tracker - MCLI",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -899,13 +908,20 @@ def main():
         pass
 
     # Title and header
-    st.title("🤖 MCLI ML System Dashboard - Integrated")
-    st.markdown("Real-time ML pipeline monitoring with LSH daemon integration")
+    st.title("📊 Politician Trading Tracker")
+    st.markdown("Track, Analyze & Replicate Congressional Trading Patterns")
 
     # Sidebar
     st.sidebar.title("Navigation")
     # Build page list
-    pages = [
+    pages = []
+
+    # Add Overview as first page if available
+    if HAS_OVERVIEW_PAGE:
+        pages.append("Overview")
+
+    # Add other pages
+    pages.extend([
         "Pipeline Overview",
         "ML Processing",
         "Model Performance",
@@ -915,7 +931,7 @@ def main():
         "Test Portfolio",
         "LSH Jobs",
         "System Health",
-    ]
+    ])
 
     # Add scrapers and logs page
     if HAS_SCRAPERS_PAGE:
@@ -968,7 +984,12 @@ def main():
 
     # Main content with error handling
     try:
-        if page == "Pipeline Overview":
+        if page == "Overview":
+            if HAS_OVERVIEW_PAGE and show_overview:
+                show_overview()
+            else:
+                st.error("Overview page not available")
+        elif page == "Pipeline Overview":
             show_pipeline_overview()
         elif page == "ML Processing":
             show_ml_processing()
