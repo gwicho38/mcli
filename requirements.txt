@@ -21,8 +21,11 @@ plotly>=5.17.0
 pydantic>=2.0.3,<3.0.0
 pydantic-settings>=2.1.0
 yfinance>=0.2.18
-# alpaca-py with minimal constraints to avoid conflicts
-alpaca-py>=0.20.0
+# alpaca-py - pinned to specific version for Python 3.13 compatibility
+# Install in specific order to avoid conflicts
+websockets>=12.0
+msgpack>=1.0.0
+alpaca-py==0.25.2
 
 # Dashboard
 streamlit>=1.28.0
