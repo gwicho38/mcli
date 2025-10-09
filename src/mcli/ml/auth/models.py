@@ -10,7 +10,7 @@ from pydantic import BaseModel, EmailStr, Field, validator
 class UserCreate(BaseModel):
     """User registration model"""
 
-    username: str = Field(..., min_length=3, max_length=50, regex="^[a-zA-Z0-9_-]+$")
+    username: str = Field(..., min_length=3, max_length=50, pattern="^[a-zA-Z0-9_-]+$")
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=100)
     first_name: Optional[str] = Field(None, max_length=50)
@@ -52,7 +52,7 @@ class UserResponse(BaseModel):
     last_login_at: Optional[datetime]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class TokenResponse(BaseModel):

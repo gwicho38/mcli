@@ -47,20 +47,25 @@ except ImportError:
 
 # Add new dashboard pages
 try:
-    from pages.cicd import show_cicd_dashboard
-    from pages.workflows import show_workflows_dashboard
-    from pages.predictions_enhanced import show_predictions_enhanced
-    from pages.scrapers_and_logs import show_scrapers_and_logs
+    from mcli.ml.dashboard.pages.cicd import show_cicd_dashboard
+    from mcli.ml.dashboard.pages.workflows import show_workflows_dashboard
+    from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
+    from mcli.ml.dashboard.pages.scrapers_and_logs import show_scrapers_and_logs
+    from mcli.ml.dashboard.pages.trading import show_trading_dashboard
+    from mcli.ml.dashboard.pages.test_portfolio import show_test_portfolio
 
     HAS_EXTENDED_PAGES = True
     HAS_SCRAPERS_PAGE = True
-except ImportError:
+except ImportError as e:
+    print(f"Import error: {e}")  # Debug print
     HAS_EXTENDED_PAGES = False
     HAS_SCRAPERS_PAGE = False
     show_cicd_dashboard = None
     show_workflows_dashboard = None
     show_predictions_enhanced = None
     show_scrapers_and_logs = None
+    show_trading_dashboard = None
+    show_test_portfolio = None
 
 # Page config
 st.set_page_config(
@@ -820,6 +825,8 @@ def main():
         "Model Performance",
         "Model Training & Evaluation",
         "Predictions",
+        "Trading Dashboard",
+        "Test Portfolio",
         "LSH Jobs",
         "System Health",
     ]
@@ -831,7 +838,7 @@ def main():
     # Add extended pages if available
     if HAS_EXTENDED_PAGES:
         pages.extend(["CI/CD Pipelines", "Workflows"])
-
+    
     page = st.sidebar.selectbox(
         "Choose a page",
         pages,
@@ -880,6 +887,16 @@ def main():
                 show_predictions_enhanced()
             else:
                 show_predictions()
+        elif page == "Trading Dashboard":
+            if HAS_EXTENDED_PAGES and show_trading_dashboard:
+                show_trading_dashboard()
+            else:
+                st.warning("Trading dashboard not available")
+        elif page == "Test Portfolio":
+            if HAS_EXTENDED_PAGES and show_test_portfolio:
+                show_test_portfolio()
+            else:
+                st.warning("Test portfolio not available")
         elif page == "LSH Jobs":
             show_lsh_jobs()
         elif page == "System Health":
