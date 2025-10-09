@@ -85,8 +85,13 @@ except ImportError:
     PoliticianTradingPredictor = None
 
 # Add new dashboard pages
-HAS_EXTENDED_PAGES = False
+HAS_PREDICTIONS_ENHANCED = False
 HAS_SCRAPERS_PAGE = False
+HAS_TRADING_PAGES = False
+HAS_MONTE_CARLO_PAGE = False
+HAS_CICD_PAGE = False
+HAS_WORKFLOWS_PAGE = False
+
 show_cicd_dashboard = None
 show_workflows_dashboard = None
 show_predictions_enhanced = None
@@ -97,9 +102,9 @@ show_monte_carlo_predictions = None
 
 try:
     from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
-    HAS_EXTENDED_PAGES = True
+    HAS_PREDICTIONS_ENHANCED = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
-    st.warning(f"Extended pages not available: {e}")
+    st.warning(f"Predictions Enhanced page not available: {e}")
 
 try:
     from mcli.ml.dashboard.pages.scrapers_and_logs import show_scrapers_and_logs
@@ -110,6 +115,7 @@ except (ImportError, KeyError, ModuleNotFoundError) as e:
 try:
     from mcli.ml.dashboard.pages.trading import show_trading_dashboard
     from mcli.ml.dashboard.pages.test_portfolio import show_test_portfolio
+    HAS_TRADING_PAGES = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Trading pages not available: {e}")
 
@@ -118,6 +124,9 @@ try:
     HAS_MONTE_CARLO_PAGE = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     HAS_MONTE_CARLO_PAGE = False
+
+# Note: CI/CD and Workflows pages removed from imports to avoid errors on Streamlit Cloud
+# They can be re-enabled when their dependencies are available
 
 # Page config
 st.set_page_config(
@@ -906,9 +915,13 @@ def main():
     if HAS_MONTE_CARLO_PAGE:
         pages.append("Monte Carlo Predictions")
 
-    # Add extended pages if available
-    if HAS_EXTENDED_PAGES:
-        pages.extend(["CI/CD Pipelines", "Workflows"])
+    # Add CI/CD page if available
+    if HAS_CICD_PAGE:
+        pages.append("CI/CD Pipelines")
+
+    # Add Workflows page if available
+    if HAS_WORKFLOWS_PAGE:
+        pages.append("Workflows")
     
     page = st.sidebar.selectbox(
         "Choose a page",
@@ -955,12 +968,12 @@ def main():
             show_model_training_evaluation()
         elif page == "Predictions":
             # Use enhanced predictions page if available, otherwise fallback
-            if HAS_EXTENDED_PAGES and show_predictions_enhanced:
+            if HAS_PREDICTIONS_ENHANCED and show_predictions_enhanced:
                 show_predictions_enhanced()
             else:
                 show_predictions()
         elif page == "Trading Dashboard":
-            if HAS_EXTENDED_PAGES and show_trading_dashboard:
+            if HAS_TRADING_PAGES and show_trading_dashboard:
                 try:
                     show_trading_dashboard()
                 except Exception as e:
@@ -970,7 +983,7 @@ def main():
             else:
                 st.warning("Trading dashboard not available")
         elif page == "Test Portfolio":
-            if HAS_EXTENDED_PAGES and show_test_portfolio:
+            if HAS_TRADING_PAGES and show_test_portfolio:
                 try:
                     show_test_portfolio()
                 except Exception as e:
@@ -1000,20 +1013,26 @@ def main():
                 st.error(f"❌ Error in Scrapers & Logs page: {e}")
                 import traceback
                 st.code(traceback.format_exc())
-        elif page == "CI/CD Pipelines" and HAS_EXTENDED_PAGES:
-            try:
-                show_cicd_dashboard()
-            except Exception as e:
-                st.error(f"❌ Error in CI/CD Pipelines page: {e}")
-                import traceback
-                st.code(traceback.format_exc())
-        elif page == "Workflows" and HAS_EXTENDED_PAGES:
-            try:
-                show_workflows_dashboard()
-            except Exception as e:
-                st.error(f"❌ Error in Workflows page: {e}")
-                import traceback
-                st.code(traceback.format_exc())
+        elif page == "CI/CD Pipelines":
+            if show_cicd_dashboard is not None:
+                try:
+                    show_cicd_dashboard()
+                except Exception as e:
+                    st.error(f"❌ Error in CI/CD Pipelines page: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
+            else:
+                st.warning("CI/CD Pipelines page is not available. This page requires additional dependencies.")
+        elif page == "Workflows":
+            if show_workflows_dashboard is not None:
+                try:
+                    show_workflows_dashboard()
+                except Exception as e:
+                    st.error(f"❌ Error in Workflows page: {e}")
+                    import traceback
+                    st.code(traceback.format_exc())
+            else:
+                st.warning("Workflows page is not available. This page requires additional dependencies.")
     except Exception as e:
         st.error(f"❌ Error loading page '{page}': {e}")
         import traceback
