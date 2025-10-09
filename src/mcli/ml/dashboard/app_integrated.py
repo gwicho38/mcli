@@ -49,6 +49,21 @@ from supabase import Client, create_client
 # Load environment variables from .env file
 load_dotenv()
 
+# Import streamlit-extras utilities
+try:
+    from mcli.ml.dashboard.streamlit_extras_utils import (
+        enhanced_metrics,
+        section_header,
+        vertical_space,
+        data_quality_indicators,
+        trading_status_card,
+    )
+    HAS_STREAMLIT_EXTRAS = True
+except ImportError:
+    HAS_STREAMLIT_EXTRAS = False
+    enhanced_metrics = None
+    section_header = None
+
 # Add ML pipeline imports
 try:
     from mcli.ml.models import get_model_by_id
