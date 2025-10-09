@@ -888,6 +888,7 @@ def main():
         "Choose a page",
         pages,
         index=0,  # Default to Pipeline Overview
+        key="main_page_selector"
     )
 
     # Auto-refresh toggle (default off to prevent blocking)
