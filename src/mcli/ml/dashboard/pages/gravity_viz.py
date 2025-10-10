@@ -120,7 +120,7 @@ class PoliticianLocations:
     """Manages politician location and trading data"""
 
     # Approximate coordinates for major cities (used as fallback)
-    LOCATION_MAP = {
+    STATE_CAPITALS = {
         # US States (capital cities)
         'Alabama': (32.3668, -86.3000),
         'California': (38.5816, -121.4944),
@@ -153,6 +153,102 @@ class PoliticianLocations:
         'Denmark': (55.6761, 12.5683),  # Copenhagen
         'Finland': (60.1699, 24.9384),  # Helsinki
     }
+
+    # Major city coordinates for district approximations
+    MAJOR_CITIES = {
+        # California
+        'San Francisco': (37.7749, -122.4194),
+        'Los Angeles': (34.0522, -118.2437),
+        'San Diego': (32.7157, -117.1611),
+        'Sacramento': (38.5816, -121.4944),
+        'San Jose': (37.3382, -121.8863),
+        # Texas
+        'Houston': (29.7604, -97.7431),
+        'Dallas': (32.7767, -96.7970),
+        'Austin': (30.2672, -97.7431),
+        'San Antonio': (29.4241, -98.4936),
+        # New York
+        'New York City': (40.7128, -74.0060),
+        'Buffalo': (42.8864, -78.8784),
+        'Rochester': (43.1566, -77.6088),
+        'Albany': (42.6526, -73.7562),
+        # Florida
+        'Miami': (25.7617, -80.1918),
+        'Tampa': (27.9506, -82.4572),
+        'Orlando': (28.5383, -81.3792),
+        'Jacksonville': (30.3322, -81.6557),
+        'Tallahassee': (30.4383, -84.2807),
+        # Pennsylvania
+        'Philadelphia': (39.9526, -75.1652),
+        'Pittsburgh': (40.4406, -79.9959),
+        'Harrisburg': (40.2732, -76.8867),
+        # Illinois
+        'Chicago': (41.8781, -87.6298),
+        'Springfield': (39.7817, -89.6501),
+        # New Jersey
+        'Newark': (40.7357, -74.1724),
+        'Jersey City': (40.7178, -74.0431),
+        'Trenton': (40.2206, -74.7597),
+        # And more major cities as needed...
+    }
+
+    @staticmethod
+    def get_location_for_politician(state_or_country: str, district: str, role: str) -> Tuple[float, float]:
+        """
+        Get lat/lon for a politician based on their state/district/role
+        Returns: (latitude, longitude)
+        """
+        # For US Congress members with districts, try to use district-specific locations
+        if district and state_or_country in ['California', 'Texas', 'New York', 'Florida', 'Pennsylvania', 'Illinois', 'New Jersey']:
+            # Parse district like "CA-11" or "TX-02"
+            if '-' in str(district):
+                district_num = district.split('-')[-1]
+
+                # District-specific mapping (approximate major city in district)
+                # This is a simplified approach - in production, use actual district boundaries
+                district_locations = {
+                    # California districts (examples)
+                    'California': {
+                        '11': (37.7749, -122.4194),  # SF Bay Area
+                        '12': (37.7749, -122.4194),  # SF
+                        '13': (37.3382, -121.8863),  # Oakland/East Bay
+                        '17': (37.3382, -121.8863),  # San Jose area
+                        '28': (34.0522, -118.2437),  # LA
+                        '43': (33.7701, -118.1937),  # Long Beach
+                    },
+                    # Texas districts
+                    'Texas': {
+                        '02': (29.7604, -97.7431),  # Houston
+                        '07': (29.7604, -97.7431),  # Houston
+                        '24': (32.7767, -96.7970),  # Dallas
+                        '21': (29.4241, -98.4936),  # San Antonio
+                    },
+                    # New York districts
+                    'New York': {
+                        '12': (40.7128, -74.0060),  # NYC Manhattan
+                        '14': (40.7128, -74.0060),  # NYC Bronx/Queens
+                        '26': (42.8864, -78.8784),  # Buffalo
+                    },
+                    # Add more as needed
+                }
+
+                if state_or_country in district_locations and district_num in district_locations[state_or_country]:
+                    # Add small random offset to prevent exact overlap
+                    base_lat, base_lon = district_locations[state_or_country][district_num]
+                    import random
+                    offset_lat = random.uniform(-0.1, 0.1)
+                    offset_lon = random.uniform(-0.1, 0.1)
+                    return (base_lat + offset_lat, base_lon + offset_lon)
+
+        # For senators or politicians without district mapping, use state capital with small offset
+        base_coords = PoliticianLocations.STATE_CAPITALS.get(state_or_country, (38.9072, -77.0369))
+
+        # Add small random offset to prevent exact overlap for multiple politicians from same location
+        import random
+        offset_lat = random.uniform(-0.2, 0.2)
+        offset_lon = random.uniform(-0.2, 0.2)
+
+        return (base_coords[0] + offset_lat, base_coords[1] + offset_lon)
 
     @staticmethod
     @st.cache_data(ttl=60)
@@ -199,11 +295,12 @@ class PoliticianLocations:
                     transaction_dates = pd.to_datetime(pol_disclosures['transaction_date'], errors='coerce')
                     last_trade_date = transaction_dates.max()
 
-                # Get location
+                # Get location based on state/district/role
                 state_or_country = pol.get('state_or_country', '')
-                lat, lon = PoliticianLocations.LOCATION_MAP.get(
-                    state_or_country,
-                    (38.9072, -77.0369)  # Default to Washington DC
+                district = pol.get('district', '')
+                role = pol.get('role', '')
+                lat, lon = PoliticianLocations.get_location_for_politician(
+                    state_or_country, district, role
                 )
 
                 # Build politician record - prefer first+last name over full_name if available
