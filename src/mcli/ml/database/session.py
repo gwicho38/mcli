@@ -21,14 +21,32 @@ try:
 except (AttributeError, Exception) as e:
     # Fallback to environment variable if settings.database is not configured
     import os
-    database_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_URL")
-    if database_url and not database_url.startswith("postgres"):
-        # Supabase URL is not a direct database URL
-        database_url = None
+    database_url = os.getenv("DATABASE_URL")
 
+    # If no DATABASE_URL, try to construct from Supabase credentials
     if not database_url:
-        # Default to SQLite for development/testing
-        database_url = "sqlite:///./ml_system.db"
+        supabase_url = os.getenv("SUPABASE_URL", "")
+        supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+
+        # Try to extract database connection from Supabase URL
+        # Supabase REST URL format: https://PROJECT_ID.supabase.co
+        # PostgreSQL URL format: postgresql://postgres:PASSWORD@db.PROJECT_ID.supabase.co:5432/postgres
+        if supabase_url and "supabase.co" in supabase_url:
+            # Extract project ID from REST API URL
+            project_id = supabase_url.replace("https://", "").replace("http://", "").split(".")[0]
+
+            # For now, use SQLite as we don't have the database password
+            # User should set DATABASE_URL in secrets with the full PostgreSQL connection string
+            database_url = "sqlite:///./ml_system.db"
+            import warnings
+            warnings.warn(
+                "DATABASE_URL not set. Using SQLite fallback. "
+                "For PostgreSQL access, set DATABASE_URL in Streamlit secrets with: "
+                f"postgresql://postgres:PASSWORD@db.{project_id}.supabase.co:5432/postgres"
+            )
+        else:
+            # Default to SQLite for development/testing
+            database_url = "sqlite:///./ml_system.db"
 
     engine = create_engine(
         database_url,

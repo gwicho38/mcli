@@ -38,17 +38,32 @@ def show_test_portfolio():
             session_context = get_session()
             db = session_context.__enter__()
         except Exception as db_error:
-            st.error(f"⚠️ Database connection unavailable: {str(db_error)[:100]}")
+            st.error(f"⚠️ Database connection unavailable: {str(db_error)[:200]}")
             st.info("""
-            **Note:** The Test Portfolio feature requires a database connection.
+            **Note:** The Test Portfolio feature requires a PostgreSQL database connection.
 
-            If you're running on Streamlit Cloud:
-            - The database may not be accessible from this environment
-            - Check your Streamlit Cloud secrets configuration
-            - Ensure DATABASE_URL or SUPABASE_URL is properly set
+            **To enable this feature on Streamlit Cloud:**
 
-            For now, you can use the other features like **Monte Carlo Predictions**
-            or **Scrapers & Logs** which don't require a database connection.
+            1. Go to your [Streamlit Cloud Dashboard](https://share.streamlit.io/)
+            2. Click on your app → Settings → Secrets
+            3. Add a `DATABASE_URL` secret with your Supabase PostgreSQL connection string:
+
+            ```
+            DATABASE_URL = "postgresql://postgres:YOUR_PASSWORD@db.uljsqvwkomdrlnofmlad.supabase.co:5432/postgres"
+            ```
+
+            **Where to find your Supabase password:**
+            - Go to your Supabase project settings
+            - Navigate to Database → Connection String
+            - Copy the connection pooler URL or direct connection URL
+            - Replace `[YOUR-PASSWORD]` with your actual database password
+
+            **For now, you can use these features instead:**
+            - **Monte Carlo Predictions** - Stock price simulations
+            - **Scrapers & Logs** - View politician trading data
+            - **Predictions** - ML-based stock predictions
+
+            These features use the Supabase REST API which is already configured.
             """)
             return
 
