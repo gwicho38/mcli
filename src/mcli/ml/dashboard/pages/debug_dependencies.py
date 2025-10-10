@@ -126,73 +126,129 @@ Platform: {sys.platform}
     # List installed packages
     st.header("📋 Installed Packages")
 
+    # Check if uv is being used
+    uv_available = False
     try:
-        result = subprocess.run(
-            ["pip", "list", "--format=columns"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        uv_check = subprocess.run(["uv", "--version"], capture_output=True, text=True, timeout=5)
+        uv_available = uv_check.returncode == 0
+        if uv_available:
+            st.info(f"🚀 Detected `uv` package manager: {uv_check.stdout.strip()}")
+    except:
+        pass
 
-        if result.returncode == 0:
-            # Search for alpaca-related packages
-            alpaca_packages = [
-                line for line in result.stdout.split("\n")
-                if "alpaca" in line.lower()
-            ]
+    # Try uv pip list first (for Streamlit Cloud), fallback to pip
+    package_managers = []
+    if uv_available:
+        package_managers.append(("uv", ["uv", "pip", "list", "--format=columns"]))
+    package_managers.append(("pip", ["pip", "list", "--format=columns"]))
 
-            if alpaca_packages:
-                st.success("Found alpaca-related packages:")
-                for pkg in alpaca_packages:
-                    st.code(pkg)
-            else:
-                st.error("⚠️ No alpaca-related packages found in pip list!")
+    packages_found = False
 
-            with st.expander("📦 All Installed Packages (click to expand)"):
-                st.code(result.stdout)
-        else:
-            st.error("Failed to run pip list")
-            st.code(result.stderr)
+    for pm_name, pm_command in package_managers:
+        try:
+            result = subprocess.run(
+                pm_command,
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
 
-    except subprocess.TimeoutExpired:
-        st.error("pip list command timed out")
-    except Exception as e:
-        st.error(f"Error running pip list: {str(e)}")
+            if result.returncode == 0:
+                packages_found = True
+                st.success(f"✅ Listing packages from `{pm_name}`")
+
+                # Search for alpaca-related packages
+                alpaca_packages = [
+                    line for line in result.stdout.split("\n")
+                    if "alpaca" in line.lower()
+                ]
+
+                if alpaca_packages:
+                    st.success("Found alpaca-related packages:")
+                    for pkg in alpaca_packages:
+                        st.code(pkg)
+                else:
+                    st.warning(f"⚠️ No alpaca-related packages found in `{pm_name} list`")
+                    st.info("""
+                    **Note:** If imports are working (see above), the package IS installed.
+                    This just means the package manager's list command isn't showing it.
+                    This is common with `uv` on Streamlit Cloud.
+                    """)
+
+                with st.expander(f"📦 All Installed Packages from `{pm_name}` (click to expand)"):
+                    st.code(result.stdout)
+
+                break  # Stop after first successful listing
+
+        except subprocess.TimeoutExpired:
+            st.warning(f"`{pm_name} list` command timed out")
+        except Exception as e:
+            st.warning(f"Could not run `{pm_name} list`: {str(e)}")
+
+    if not packages_found:
+        st.error("❌ Could not list packages from any package manager")
 
     # Check for specific alpaca-py installation
     st.header("🔎 Alpaca-py Installation Check")
 
-    try:
-        result = subprocess.run(
-            ["pip", "show", "alpaca-py"],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+    # Try both uv and pip
+    show_commands = []
+    if uv_available:
+        show_commands.append(("uv", ["uv", "pip", "show", "alpaca-py"]))
+    show_commands.append(("pip", ["pip", "show", "alpaca-py"]))
 
-        if result.returncode == 0:
-            st.success("✅ alpaca-py package is installed!")
-            st.code(result.stdout)
+    package_info_found = False
 
-            # Try to get the version
-            try:
-                import alpaca
-                if hasattr(alpaca, "__version__"):
-                    st.info(f"Alpaca version from import: {alpaca.__version__}")
-            except:
-                pass
-        else:
-            st.error("❌ alpaca-py package NOT found!")
-            st.code(result.stderr)
+    for pm_name, pm_command in show_commands:
+        try:
+            result = subprocess.run(
+                pm_command,
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+
+            if result.returncode == 0:
+                package_info_found = True
+                st.success(f"✅ alpaca-py package details from `{pm_name}`:")
+                st.code(result.stdout)
+
+                # Try to get the version from import
+                try:
+                    import alpaca
+                    if hasattr(alpaca, "__version__"):
+                        st.info(f"📦 Alpaca version from import: {alpaca.__version__}")
+                except:
+                    pass
+
+                break  # Stop after first successful show
+
+        except subprocess.TimeoutExpired:
+            st.warning(f"`{pm_name} show` command timed out")
+        except Exception as e:
+            st.warning(f"Could not run `{pm_name} show`: {str(e)}")
+
+    if not package_info_found:
+        st.warning("⚠️ Package info not available from package managers")
+
+        # Check if imports work anyway
+        try:
+            import alpaca
+            st.success("✅ But alpaca module imports successfully!")
+            if hasattr(alpaca, "__version__"):
+                st.info(f"📦 Version from import: {alpaca.__version__}")
+            if hasattr(alpaca, "__file__"):
+                st.info(f"📁 Location: {alpaca.__file__}")
+            st.info("""
+            **This is normal on Streamlit Cloud with `uv`.**
+            The package is installed and working, even though package manager commands don't show it.
+            """)
+        except ImportError:
+            st.error("❌ alpaca-py package NOT installed and imports fail!")
 
             # Suggest installation
             st.markdown("### 💡 Suggested Fix")
             st.code("pip install alpaca-py>=0.20.0", language="bash")
-
-    except subprocess.TimeoutExpired:
-        st.error("pip show command timed out")
-    except Exception as e:
-        st.error(f"Error running pip show: {str(e)}")
 
     # Check requirements.txt
     st.header("📄 Requirements.txt Check")
