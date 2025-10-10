@@ -187,8 +187,15 @@ class TestDatabaseSessionManagement:
 
         # Verify SELECT 1 was executed to test connection
         mock_session.execute.assert_called()
-        call_args = str(mock_session.execute.call_args)
-        assert "SELECT 1" in call_args or "select 1" in call_args.lower()
+        # Check that execute was called with a text() wrapper containing SELECT 1
+        from sqlalchemy import text
+        call_args = mock_session.execute.call_args
+        # The first positional argument should be a TextClause
+        assert call_args is not None
+        assert len(call_args[0]) > 0
+        # Get the actual SQL from the TextClause object
+        sql_clause = str(call_args[0][0])
+        assert "SELECT 1" in sql_clause or "select 1" in sql_clause.lower()
 
 
 class TestConnectionPoolerFailover:

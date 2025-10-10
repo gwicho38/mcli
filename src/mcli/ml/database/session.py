@@ -13,117 +13,122 @@ from mcli.ml.config import settings
 from .models import Base
 
 # Synchronous database setup
-try:
-    engine = create_engine(
-        settings.database.url,
-        **settings.get_database_config(),
-    )
-except (AttributeError, Exception) as e:
-    # Fallback to environment variable if settings.database is not configured
-    import os
-    database_url = os.getenv("DATABASE_URL")
+# Prioritize DATABASE_URL environment variable over settings
+import os
+database_url = os.getenv("DATABASE_URL")
 
-    # Check if DATABASE_URL has placeholder password
-    if database_url and "your_password" in database_url:
-        database_url = None  # Treat placeholder as not set
+# Check if DATABASE_URL has placeholder password
+if database_url and "your_password" in database_url:
+    database_url = None  # Treat placeholder as not set
 
-    # If no valid DATABASE_URL, try to use Supabase REST API via connection pooler
-    if not database_url:
-        supabase_url = os.getenv("SUPABASE_URL", "")
-        supabase_service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+# If no DATABASE_URL or it's SQLite from settings, try explicit configuration
+if not database_url:
+    try:
+        # Check if settings has a non-SQLite configuration
+        settings_url = settings.database.url
+        if settings_url and "sqlite" not in settings_url:
+            database_url = settings_url
+    except (AttributeError, Exception):
+        pass  # Continue with database_url=None
 
-        if supabase_url and supabase_service_key and "supabase.co" in supabase_url:
-            # Extract project reference from Supabase URL
-            # Format: https://PROJECT_REF.supabase.co
-            project_ref = supabase_url.replace("https://", "").replace("http://", "").split(".")[0]
+# If still no valid DATABASE_URL, try to use Supabase REST API via connection pooler
+if not database_url:
+    supabase_url = os.getenv("SUPABASE_URL", "")
+    supabase_service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-            # Use Supabase IPv4-only connection pooler
-            # This avoids IPv6 connectivity issues on Streamlit Cloud
-            # Try EU region poolers (which are verified to work for this project)
-            # Session mode (port 5432) for persistent connections
-            # Transaction mode (port 6543) for serverless/short-lived connections
-            pooler_urls = [
-                f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-1-eu-north-1.pooler.supabase.com:5432/postgres",
-                f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-1-eu-north-1.pooler.supabase.com:6543/postgres",
-            ]
+    if supabase_url and supabase_service_key and "supabase.co" in supabase_url:
+        # Extract project reference from Supabase URL
+        # Format: https://PROJECT_REF.supabase.co
+        project_ref = supabase_url.replace("https://", "").replace("http://", "").split(".")[0]
 
-            # Try to connect to poolers
-            import logging
-            logger = logging.getLogger(__name__)
+        # Use Supabase IPv4-only connection pooler
+        # This avoids IPv6 connectivity issues on Streamlit Cloud
+        # Try EU region poolers (which are verified to work for this project)
+        # Session mode (port 5432) for persistent connections
+        # Transaction mode (port 6543) for serverless/short-lived connections
+        pooler_urls = [
+            f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-1-eu-north-1.pooler.supabase.com:5432/postgres",
+            f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-1-eu-north-1.pooler.supabase.com:6543/postgres",
+        ]
 
-            for pooler_url in pooler_urls:
-                try:
-                    # Test connection
-                    test_engine = create_engine(pooler_url, pool_pre_ping=True)
-                    with test_engine.connect() as conn:
-                        conn.execute("SELECT 1")
-                    database_url = pooler_url
-                    logger.info(f"Successfully connected via pooler: {pooler_url.split('@')[1].split(':')[0]}")
-                    test_engine.dispose()
-                    break
-                except Exception as e:
-                    logger.warning(f"Failed to connect via {pooler_url.split('@')[1].split(':')[0]}: {e}")
-                    continue
+        # Try to connect to poolers
+        import logging
+        logger = logging.getLogger(__name__)
 
-            if not database_url:
-                # Fallback to first pooler URL if all fail (will be handled by pool_pre_ping later)
-                database_url = pooler_urls[0]
+        for pooler_url in pooler_urls:
+            try:
+                # Test connection
+                test_engine = create_engine(pooler_url, pool_pre_ping=True)
+                with test_engine.connect() as conn:
+                    from sqlalchemy import text
+                    conn.execute(text("SELECT 1"))
+                database_url = pooler_url
+                logger.info(f"Successfully connected via pooler: {pooler_url.split('@')[1].split(':')[0]}")
+                test_engine.dispose()
+                break
+            except Exception as e:
+                logger.warning(f"Failed to connect via {pooler_url.split('@')[1].split(':')[0]}: {e}")
+                continue
 
-            import warnings
-            warnings.warn(
-                "Using Supabase connection pooler with service role key. "
-                "For better performance, set DATABASE_URL with your actual database password. "
-                "Find it in Supabase Dashboard → Settings → Database → Connection String"
-            )
-        else:
-            # Default to SQLite for development/testing
-            database_url = "sqlite:///./ml_system.db"
-            import warnings
-            warnings.warn(
-                "No database credentials found. Using SQLite fallback. "
-                "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or DATABASE_URL in environment."
-            )
+        if not database_url:
+            # Fallback to first pooler URL if all fail (will be handled by pool_pre_ping later)
+            database_url = pooler_urls[0]
 
-    # Debug: Log which database URL is being used
-    import logging
-    logger = logging.getLogger(__name__)
-
-    if "pooler.supabase.com" in database_url:
-        logger.info(f"🔗 Using Supabase connection pooler")
-    elif "sqlite" in database_url:
-        logger.warning("📁 Using SQLite fallback (database features limited)")
+        import warnings
+        warnings.warn(
+            "Using Supabase connection pooler with service role key. "
+            "For better performance, set DATABASE_URL with your actual database password. "
+            "Find it in Supabase Dashboard → Settings → Database → Connection String"
+        )
     else:
-        # Mask password in display
-        display_url = database_url
-        if "@" in display_url and ":" in display_url:
-            parts = display_url.split("@")
-            before_at = parts[0].split(":")
-            if len(before_at) >= 3:
-                before_at[2] = "***"
-                display_url = ":".join(before_at) + "@" + parts[1]
-        logger.info(f"🔗 Database URL: {display_url}")
+        # Default to SQLite for development/testing
+        database_url = "sqlite:///./ml_system.db"
+        import warnings
+        warnings.warn(
+            "No database credentials found. Using SQLite fallback. "
+            "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or DATABASE_URL in environment."
+        )
 
-    # Configure connection arguments based on database type
-    if "sqlite" in database_url:
-        connect_args = {"check_same_thread": False}
-    elif "postgresql" in database_url:
-        # Force IPv4 for PostgreSQL to avoid IPv6 connection issues
-        connect_args = {
-            "connect_timeout": 10,
-            "options": "-c statement_timeout=30000",  # 30 second query timeout
-        }
-    else:
-        connect_args = {}
+# Debug: Log which database URL is being used
+import logging
+logger = logging.getLogger(__name__)
 
-    engine = create_engine(
-        database_url,
-        connect_args=connect_args,
-        pool_pre_ping=True,  # Verify connections before using them
-        pool_recycle=3600,  # Recycle connections after 1 hour
-        pool_size=5,  # Smaller pool for Streamlit Cloud
-        max_overflow=10,
-        pool_timeout=30,
-    )
+if "pooler.supabase.com" in database_url:
+    logger.info(f"🔗 Using Supabase connection pooler")
+elif "sqlite" in database_url:
+    logger.warning("📁 Using SQLite fallback (database features limited)")
+else:
+    # Mask password in display
+    display_url = database_url
+    if "@" in display_url and ":" in display_url:
+        parts = display_url.split("@")
+        before_at = parts[0].split(":")
+        if len(before_at) >= 3:
+            before_at[2] = "***"
+            display_url = ":".join(before_at) + "@" + parts[1]
+    logger.info(f"🔗 Database URL: {display_url}")
+
+# Configure connection arguments based on database type
+if "sqlite" in database_url:
+    connect_args = {"check_same_thread": False}
+elif "postgresql" in database_url:
+    # Force IPv4 for PostgreSQL to avoid IPv6 connection issues
+    connect_args = {
+        "connect_timeout": 10,
+        "options": "-c statement_timeout=30000",  # 30 second query timeout
+    }
+else:
+    connect_args = {}
+
+engine = create_engine(
+    database_url,
+    connect_args=connect_args,
+    pool_pre_ping=True,  # Verify connections before using them
+    pool_recycle=3600,  # Recycle connections after 1 hour
+    pool_size=5,  # Smaller pool for Streamlit Cloud
+    max_overflow=10,
+    pool_timeout=30,
+)
 
 SessionLocal = sessionmaker(
     autocommit=False,
