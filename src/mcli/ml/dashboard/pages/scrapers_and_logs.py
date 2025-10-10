@@ -915,10 +915,18 @@ def show_system_logs():
         except Exception as e:
             st.error(f"Error reading log file: {e}")
     else:
-        st.info(f"Log file not found at {log_file}. Logs will appear here after scraping jobs run.")
+        st.info("📋 **No logs available yet**")
+        st.markdown("""
+        System logs will appear here automatically after scraping jobs run.
+
+        **To generate logs:**
+        - Use the "Manual Scrapers" section above to run a data pull
+        - Wait for automated jobs to execute
+        - Logs will be stored in: `/tmp/seed_database.log`
+        """)
 
         # Create example logs display
-        st.markdown("### Example Log Output")
+        st.markdown("### 📝 Example Log Output")
         st.code("""
 2025-10-07 12:00:00 - INFO - Starting data pull job: senate_watcher_seed
 2025-10-07 12:00:05 - INFO - Fetched 8350 Senate transactions
