@@ -554,8 +554,8 @@ schedule.every().day.at("02:00").do(daily_corporate_data_update)
 Just add them to Settings → Secrets in Streamlit Cloud:
 ```toml
 SUPABASE_URL = "https://uljsqvwkomdrlnofmlad.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsanNxdndrb21kcmxub2ZtbGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MDIyNDQsImV4cCI6MjA3MjM3ODI0NH0.QCpfcEpxGX_5Wn8ljf_J2KWjJLGdF8zRsV_7OatxmHI"
-SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsanNxdndrb21kcmxub2ZtbGFkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjgwMjI0NCwiZXhwIjoyMDcyMzc4MjQ0fQ.4364sQbTJQd4IcxEQG6mPiOUw1iJ2bdKfV6W4oRqHvs"
+SUPABASE_KEY = "your_anon_key_here"
+SUPABASE_SERVICE_ROLE_KEY = "your_service_role_key_here"
 LSH_API_URL = "https://mcli-lsh-daemon.fly.dev"
 ```
 

@@ -113,9 +113,9 @@ The repository is ready with:
    Click "Advanced settings" → "Secrets" and add:
 
    ```toml
-   SUPABASE_URL = "https://uljsqvwkomdrlnofmlad.supabase.co"
-   SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsanNxdndrb21kcmxub2ZtbGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MDIyNDQsImV4cCI6MjA3MjM3ODI0NH0.QCpfcEpxGX_5Wn8ljf_J2KWjJLGdF8zRsV_7OatxmHI"
-   SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsanNxdndrb21kcmxub2ZtbGFkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjgwMjI0NCwiZXhwIjoyMDcyMzc4MjQ0fQ.4364sQbTJQd4IcxEQG6mPiOUw1iJ2bdKfV6W4oRqHvs"
+   SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co"
+   SUPABASE_KEY = "your_anon_key_here"
+   SUPABASE_SERVICE_ROLE_KEY = "your_service_role_key_here"
    LSH_API_URL = "https://mcli-lsh-daemon.fly.dev"
    ```
 
@@ -159,7 +159,7 @@ Test locally before deploying:
 ```bash
 # Set environment variables
 export LSH_API_URL=https://mcli-lsh-daemon.fly.dev
-export SUPABASE_URL=https://uljsqvwkomdrlnofmlad.supabase.co
+export SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 export SUPABASE_KEY=<your-anon-key>
 
 # Run dashboard locally
@@ -304,7 +304,7 @@ To reduce costs:
 ### Production URLs
 - **LSH Daemon**: https://mcli-lsh-daemon.fly.dev
 - **Dashboard**: https://web-mcli.streamlit.app (or your custom URL)
-- **Supabase**: https://uljsqvwkomdrlnofmlad.supabase.co
+- **Supabase**: https://YOUR_PROJECT_REF.supabase.co
 
 ### Dashboards
 - **Fly.io**: https://fly.io/dashboard

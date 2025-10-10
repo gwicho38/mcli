@@ -100,7 +100,7 @@ Created automated verification tool: `scripts/verify_streamlit_deployment.py`
 ```toml
 # Supabase Configuration
 SUPABASE_URL = "https://uljsqvwkomdrlnofmlad.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsanNxdndrb21kcmxub2ZtbGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MDIyNDQsImV4cCI6MjA3MjM3ODI0NH0.QCpfcEpxGX_5Wn8ljf_J2KWjJLGdF8zRsV_7OatxmHI"
+SUPABASE_KEY = "your_anon_key_here"
 
 # LSH Daemon (Production)
 LSH_API_URL = "https://mcli-lsh-daemon.fly.dev"
