@@ -33,7 +33,26 @@ def show_test_portfolio():
         st.session_state.test_portfolio_id = None
     
     try:
-        with get_session() as db:
+        # Try to get database session
+        try:
+            session_context = get_session()
+            db = session_context.__enter__()
+        except Exception as db_error:
+            st.error(f"⚠️ Database connection unavailable: {str(db_error)[:100]}")
+            st.info("""
+            **Note:** The Test Portfolio feature requires a database connection.
+
+            If you're running on Streamlit Cloud:
+            - The database may not be accessible from this environment
+            - Check your Streamlit Cloud secrets configuration
+            - Ensure DATABASE_URL or SUPABASE_URL is properly set
+
+            For now, you can use the other features like **Monte Carlo Predictions**
+            or **Scrapers & Logs** which don't require a database connection.
+            """)
+            return
+
+        try:
             trading_service = TradingService(db)
             paper_engine = create_paper_trading_engine(db)
             
@@ -363,7 +382,15 @@ def show_test_portfolio():
                         else:
                             st.session_state.confirm_delete = True
                             st.warning("Click again to confirm deletion")
-                
+
+        finally:
+            # Clean up database session
+            if 'db' in locals() and 'session_context' in locals():
+                try:
+                    session_context.__exit__(None, None, None)
+                except Exception:
+                    pass
+
     except Exception as e:
         st.error(f"Error loading test portfolio: {e}")
         logger.error(f"Test portfolio error: {e}")
