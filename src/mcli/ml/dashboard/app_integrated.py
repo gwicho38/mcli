@@ -111,7 +111,7 @@ show_debug_dependencies = None
 
 # Import Overview page
 try:
-    from mcli.ml.dashboard.pages.overview import show_overview
+    from mcli.ml.dashboard.overview import show_overview
     HAS_OVERVIEW_PAGE = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Overview page not available: {e}")
