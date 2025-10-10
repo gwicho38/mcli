@@ -485,6 +485,9 @@ def main():
     # Load politician data from database
     politicians_df = PoliticianLocations.get_politicians_from_db()
 
+    # Show data info
+    st.sidebar.info(f"📊 Loaded {len(politicians_df)} politicians with trading data")
+
     # Politician selection
     selected_politician = st.sidebar.selectbox(
         "Select Politician",
@@ -507,15 +510,22 @@ def main():
         "Minimum Trade Volume ($)",
         min_value=0,
         max_value=10_000_000,
-        value=1_000_000,
-        step=500_000,
-        format="%d"
+        value=0,  # Changed from 1,000,000 to 0 to show all politicians by default
+        step=100_000,
+        format="%d",
+        help="Filter politicians by minimum trade volume. Set to 0 to see all."
     )
 
     # Filter politicians by trade volume
     filtered_politicians = politicians_df[
         politicians_df['total_trade_volume'] >= min_trade_volume
     ]
+
+    # Show filter results
+    if len(filtered_politicians) < len(politicians_df):
+        st.sidebar.warning(f"⚠️ Filter reduced to {len(filtered_politicians)} politicians (from {len(politicians_df)})")
+    else:
+        st.sidebar.success(f"✅ Showing all {len(filtered_politicians)} politicians")
 
     # Main content
     if selected_politician != 'All':
