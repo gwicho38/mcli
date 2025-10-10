@@ -215,7 +215,8 @@ def get_session() -> Generator[Session, None, None]:
     try:
         session = SessionLocal()
         # Test the connection
-        session.execute("SELECT 1")
+        from sqlalchemy import text
+        session.execute(text("SELECT 1"))
         yield session
         session.commit()
     except Exception as e:
