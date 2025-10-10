@@ -155,7 +155,6 @@ Platform: {sys.platform}
 
             if result.returncode == 0:
                 packages_found = True
-                st.success(f"✅ Listing packages from `{pm_name}`")
 
                 # Search for alpaca-related packages
                 alpaca_packages = [
@@ -164,16 +163,9 @@ Platform: {sys.platform}
                 ]
 
                 if alpaca_packages:
-                    st.success("Found alpaca-related packages:")
+                    st.success(f"✅ Found alpaca packages in `{pm_name}` list:")
                     for pkg in alpaca_packages:
                         st.code(pkg)
-                else:
-                    st.warning(f"⚠️ No alpaca-related packages found in `{pm_name} list`")
-                    st.info("""
-                    **Note:** If imports are working (see above), the package IS installed.
-                    This just means the package manager's list command isn't showing it.
-                    This is common with `uv` on Streamlit Cloud.
-                    """)
 
                 with st.expander(f"📦 All Installed Packages from `{pm_name}` (click to expand)"):
                     st.code(result.stdout)
@@ -229,20 +221,14 @@ Platform: {sys.platform}
             st.warning(f"Could not run `{pm_name} show`: {str(e)}")
 
     if not package_info_found:
-        st.warning("⚠️ Package info not available from package managers")
-
         # Check if imports work anyway
         try:
             import alpaca
-            st.success("✅ But alpaca module imports successfully!")
+            st.success("✅ Alpaca module imports successfully!")
             if hasattr(alpaca, "__version__"):
                 st.info(f"📦 Version from import: {alpaca.__version__}")
             if hasattr(alpaca, "__file__"):
                 st.info(f"📁 Location: {alpaca.__file__}")
-            st.info("""
-            **This is normal on Streamlit Cloud with `uv`.**
-            The package is installed and working, even though package manager commands don't show it.
-            """)
         except ImportError:
             st.error("❌ alpaca-py package NOT installed and imports fail!")
 
