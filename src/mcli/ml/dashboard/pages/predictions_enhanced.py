@@ -310,7 +310,8 @@ def show_active_predictions(predictions_df: pd.DataFrame):
             with st.container():
                 cols = st.columns([2, 1, 1, 1])
                 with cols[0]:
-                    st.markdown(f"**{row['ticker']}** - {row['sector']}")
+                    st.markdown(f"### 📈 {row['ticker']}")
+                    st.caption(f"{row['sector']}")
                 with cols[1]:
                     st.metric("Return", f"{row['predicted_return']*100:+.1f}%")
                 with cols[2]:
@@ -327,7 +328,8 @@ def show_active_predictions(predictions_df: pd.DataFrame):
             with st.container():
                 cols = st.columns([2, 1, 1, 1])
                 with cols[0]:
-                    st.markdown(f"**{row['ticker']}** - {row['sector']}")
+                    st.markdown(f"### 📈 {row['ticker']}")
+                    st.caption(f"{row['sector']}")
                 with cols[1]:
                     st.metric("Return", f"{row['predicted_return']*100:+.1f}%")
                 with cols[2]:
