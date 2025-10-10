@@ -121,7 +121,7 @@ def show_cicd_dashboard():
         if st.button("🔄 Refresh"):
             st.rerun()
     with col2:
-        auto_refresh = st.checkbox("Auto-refresh", value=False)
+        auto_refresh = st.checkbox("Auto-refresh", value=True)
 
     if auto_refresh:
         import time

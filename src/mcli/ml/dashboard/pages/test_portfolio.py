@@ -261,7 +261,7 @@ def show_test_portfolio():
                     fig.update_yaxes(title_text="Portfolio Value ($)", row=1, col=1)
                     fig.update_yaxes(title_text="Daily Return (%)", row=2, col=1)
                     
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, config={"displayModeBar": True}, use_container_width=True)
                 else:
                     st.info("No performance data available yet. Start trading to see your performance!")
                 

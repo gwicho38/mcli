@@ -225,7 +225,7 @@ def show_trading_overview():
                     labels={"total_return_pct": "Total Return (%)", "date": "Date"}
                 )
                 fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, config={"displayModeBar": True}, use_container_width=True)
             else:
                 st.info("No performance data available yet. Start trading to see your performance!")
             
@@ -580,7 +580,7 @@ def show_performance_page():
                 fig.update_yaxes(title_text="Portfolio Value ($)", row=1, col=1)
                 fig.update_yaxes(title_text="Daily Return (%)", row=2, col=1)
                 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, config={"displayModeBar": True}, use_container_width=True)
             else:
                 st.info("No performance data available yet")
             
