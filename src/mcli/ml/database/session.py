@@ -37,13 +37,14 @@ except (AttributeError, Exception) as e:
             # Format: https://PROJECT_REF.supabase.co
             project_ref = supabase_url.replace("https://", "").replace("http://", "").split(".")[0]
 
-            # Use Supabase IPv4-only connection pooler (Transaction mode, port 6543)
+            # Use Supabase IPv4-only connection pooler
             # This avoids IPv6 connectivity issues on Streamlit Cloud
-            # Connection pooler uses service role key as password
-            # Try multiple pooler regions for better reliability
+            # Try EU region poolers (which are verified to work for this project)
+            # Session mode (port 5432) for persistent connections
+            # Transaction mode (port 6543) for serverless/short-lived connections
             pooler_urls = [
-                f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-0-us-east-1.pooler.supabase.com:5432/postgres",
-                f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-0-us-west-1.pooler.supabase.com:6543/postgres",
+                f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-1-eu-north-1.pooler.supabase.com:5432/postgres",
+                f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-1-eu-north-1.pooler.supabase.com:6543/postgres",
             ]
 
             # Try to connect to poolers
@@ -84,11 +85,13 @@ except (AttributeError, Exception) as e:
             )
 
     # Debug: Log which database URL is being used
-    import streamlit as st
+    import logging
+    logger = logging.getLogger(__name__)
+
     if "pooler.supabase.com" in database_url:
-        st.info(f"🔗 Using Supabase connection pooler")
+        logger.info(f"🔗 Using Supabase connection pooler")
     elif "sqlite" in database_url:
-        st.warning("📁 Using SQLite fallback (database features limited)")
+        logger.warning("📁 Using SQLite fallback (database features limited)")
     else:
         # Mask password in display
         display_url = database_url
@@ -98,7 +101,7 @@ except (AttributeError, Exception) as e:
             if len(before_at) >= 3:
                 before_at[2] = "***"
                 display_url = ":".join(before_at) + "@" + parts[1]
-        st.info(f"🔗 Database URL: {display_url}")
+        logger.info(f"🔗 Database URL: {display_url}")
 
     # Configure connection arguments based on database type
     if "sqlite" in database_url:

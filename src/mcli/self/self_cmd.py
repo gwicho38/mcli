@@ -563,7 +563,7 @@ logger = get_logger()
             pass
 
 
-@self_app.command("add-command")
+@self_app.command("add-command", deprecated=True)
 @click.argument("command_name", required=True)
 @click.option("--group", "-g", help="Command group (defaults to 'workflow')", default="workflow")
 @click.option(
@@ -574,19 +574,20 @@ logger = get_logger()
 )
 def add_command(command_name, group, description, template):
     """
+    [DEPRECATED] Use 'mcli commands add' instead.
+
     Generate a new portable custom command saved to ~/.mcli/commands/.
 
-    This command will open your default editor to allow you to write the Python logic
-    for your command. The editor will be opened with a template that you can modify.
-
-    Commands are automatically nested under the 'workflow' group by default,
-    making them portable and persistent across updates.
+    This command has been moved to 'mcli commands add' for better organization.
+    Please use the new command going forward.
 
     Example:
-        mcli self add-command my_command
-        mcli self add-command analytics --group data
-        mcli self add-command quick_cmd --template  # Use template without editor
+        mcli commands add my_command
+        mcli commands add analytics --group data
+        mcli commands add quick_cmd --template  # Use template without editor
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands add'[/yellow]")
+    click.echo("[yellow]   Please use: mcli commands add {} [options][/yellow]\n".format(command_name))
     command_name = command_name.lower().replace("-", "_")
 
     # Validate command name
@@ -662,11 +663,16 @@ def add_command(command_name, group, description, template):
     return 0
 
 
-@self_app.command("list-commands")
+@self_app.command("list-commands", deprecated=True)
 def list_commands():
     """
+    [DEPRECATED] Use 'mcli commands list-custom' instead.
+
     List all custom commands stored in ~/.mcli/commands/.
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands list-custom'[/yellow]")
+    click.echo("[yellow]   Please use: mcli commands list-custom[/yellow]\n")
+
     manager = get_command_manager()
     commands = manager.load_all_commands()
 
@@ -700,13 +706,18 @@ def list_commands():
     return 0
 
 
-@self_app.command("remove-command")
+@self_app.command("remove-command", deprecated=True)
 @click.argument("command_name", required=True)
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
 def remove_command(command_name, yes):
     """
+    [DEPRECATED] Use 'mcli commands remove' instead.
+
     Remove a custom command from ~/.mcli/commands/.
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands remove'[/yellow]")
+    click.echo(f"[yellow]   Please use: mcli commands remove {command_name}[/yellow]\n")
+
     manager = get_command_manager()
     command_file = manager.commands_dir / f"{command_name}.json"
 
@@ -730,14 +741,19 @@ def remove_command(command_name, yes):
         return 1
 
 
-@self_app.command("export-commands")
+@self_app.command("export-commands", deprecated=True)
 @click.argument("export_file", type=click.Path(), required=False)
 def export_commands(export_file):
     """
+    [DEPRECATED] Use 'mcli commands export' instead.
+
     Export all custom commands to a JSON file.
 
     If no file is specified, exports to commands-export.json in current directory.
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands export'[/yellow]")
+    click.echo(f"[yellow]   Please use: mcli commands export {export_file or '<file>'}[/yellow]\n")
+
     manager = get_command_manager()
 
     if not export_file:
@@ -756,13 +772,18 @@ def export_commands(export_file):
         return 1
 
 
-@self_app.command("import-commands")
+@self_app.command("import-commands", deprecated=True)
 @click.argument("import_file", type=click.Path(exists=True), required=True)
 @click.option("--overwrite", is_flag=True, help="Overwrite existing commands")
 def import_commands(import_file, overwrite):
     """
+    [DEPRECATED] Use 'mcli commands import' instead.
+
     Import custom commands from a JSON file.
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands import'[/yellow]")
+    click.echo(f"[yellow]   Please use: mcli commands import {import_file}[/yellow]\n")
+
     manager = get_command_manager()
     import_path = Path(import_file)
 
@@ -786,11 +807,16 @@ def import_commands(import_file, overwrite):
     return 0
 
 
-@self_app.command("verify-commands")
+@self_app.command("verify-commands", deprecated=True)
 def verify_commands():
     """
+    [DEPRECATED] Use 'mcli commands verify' instead.
+
     Verify that custom commands match the lockfile.
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands verify'[/yellow]")
+    click.echo("[yellow]   Please use: mcli commands verify[/yellow]\n")
+
     manager = get_command_manager()
 
     # First, ensure lockfile is up to date
@@ -824,11 +850,16 @@ def verify_commands():
     return 1
 
 
-@self_app.command("update-lockfile")
+@self_app.command("update-lockfile", deprecated=True)
 def update_lockfile():
     """
+    [DEPRECATED] Use 'mcli commands update-lockfile' instead.
+
     Update the commands lockfile with current state.
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands update-lockfile'[/yellow]")
+    click.echo("[yellow]   Please use: mcli commands update-lockfile[/yellow]\n")
+
     manager = get_command_manager()
 
     if manager.update_lockfile():
@@ -1750,7 +1781,7 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
         console.print(f"[dim]{traceback.format_exc()}[/dim]")
 
 
-@self_app.command("import-script")
+@self_app.command("import-script", deprecated=True)
 @click.argument("script_path", type=click.Path(exists=True))
 @click.option("--name", "-n", help="Command name (defaults to script filename)")
 @click.option("--group", "-g", default="workflow", help="Command group")
@@ -1758,15 +1789,20 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
 @click.option("--interactive", "-i", is_flag=True, help="Open in $EDITOR for review/editing")
 def import_script(script_path, name, group, description, interactive):
     """
+    [DEPRECATED] Use 'mcli commands import-script' instead.
+
     Import a Python script as a portable JSON command.
 
     Converts a Python script into a JSON command that can be loaded
     by mcli. The script should define Click commands.
 
     Examples:
-        mcli self import-script my_script.py
-        mcli self import-script my_script.py --name custom-cmd --interactive
+        mcli commands import-script my_script.py
+        mcli commands import-script my_script.py --name custom-cmd --interactive
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands import-script'[/yellow]")
+    click.echo(f"[yellow]   Please use: mcli commands import-script {script_path}[/yellow]\n")
+
     import subprocess
     import tempfile
 
@@ -1845,21 +1881,26 @@ def import_script(script_path, name, group, description, interactive):
     return 0
 
 
-@self_app.command("export-script")
+@self_app.command("export-script", deprecated=True)
 @click.argument("command_name")
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.option("--standalone", "-s", is_flag=True, help="Make script standalone (add if __name__ == '__main__')")
 def export_script(command_name, output, standalone):
     """
+    [DEPRECATED] Use 'mcli commands export-script' instead.
+
     Export a JSON command to a Python script.
 
     Converts a portable JSON command back to a standalone Python script
     that can be edited and run independently.
 
     Examples:
-        mcli self export-script my-command
-        mcli self export-script my-command --output my_script.py --standalone
+        mcli commands export-script my-command
+        mcli commands export-script my-command --output my_script.py --standalone
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands export-script'[/yellow]")
+    click.echo(f"[yellow]   Please use: mcli commands export-script {command_name}[/yellow]\n")
+
     manager = get_command_manager()
 
     # Load the command
@@ -1913,20 +1954,25 @@ def export_script(command_name, output, standalone):
     return 0
 
 
-@self_app.command("edit-command")
+@self_app.command("edit-command", deprecated=True)
 @click.argument("command_name")
 @click.option("--editor", "-e", help="Editor to use (defaults to $EDITOR)")
 def edit_command(command_name, editor):
     """
+    [DEPRECATED] Use 'mcli commands edit' instead.
+
     Edit a command interactively using $EDITOR.
 
     Opens the command's Python code in your preferred editor,
     allows you to make changes, and saves the updated version.
 
     Examples:
-        mcli self edit-command my-command
-        mcli self edit-command my-command --editor code
+        mcli commands edit my-command
+        mcli commands edit my-command --editor code
     """
+    click.echo("[yellow]⚠️  DEPRECATED: This command has been moved to 'mcli commands edit'[/yellow]")
+    click.echo(f"[yellow]   Please use: mcli commands edit {command_name}[/yellow]\n")
+
     import subprocess
     import tempfile
 
