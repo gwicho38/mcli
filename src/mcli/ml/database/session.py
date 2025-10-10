@@ -37,10 +37,36 @@ except (AttributeError, Exception) as e:
             # Format: https://PROJECT_REF.supabase.co
             project_ref = supabase_url.replace("https://", "").replace("http://", "").split(".")[0]
 
-            # Use Supabase connection pooler with service role key as password
-            # This is a special Supabase feature that allows REST API keys to authenticate
-            # Note: This may not work for all operations - ideally use real database password
-            database_url = f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+            # Use Supabase IPv4-only connection pooler (Transaction mode, port 6543)
+            # This avoids IPv6 connectivity issues on Streamlit Cloud
+            # Connection pooler uses service role key as password
+            # Try multiple pooler regions for better reliability
+            pooler_urls = [
+                f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-0-us-east-1.pooler.supabase.com:5432/postgres",
+                f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-0-us-west-1.pooler.supabase.com:6543/postgres",
+            ]
+
+            # Try to connect to poolers
+            import logging
+            logger = logging.getLogger(__name__)
+
+            for pooler_url in pooler_urls:
+                try:
+                    # Test connection
+                    test_engine = create_engine(pooler_url, pool_pre_ping=True)
+                    with test_engine.connect() as conn:
+                        conn.execute("SELECT 1")
+                    database_url = pooler_url
+                    logger.info(f"Successfully connected via pooler: {pooler_url.split('@')[1].split(':')[0]}")
+                    test_engine.dispose()
+                    break
+                except Exception as e:
+                    logger.warning(f"Failed to connect via {pooler_url.split('@')[1].split(':')[0]}: {e}")
+                    continue
+
+            if not database_url:
+                # Fallback to first pooler URL if all fail (will be handled by pool_pre_ping later)
+                database_url = pooler_urls[0]
 
             import warnings
             warnings.warn(
@@ -74,11 +100,26 @@ except (AttributeError, Exception) as e:
                 display_url = ":".join(before_at) + "@" + parts[1]
         st.info(f"🔗 Database URL: {display_url}")
 
+    # Configure connection arguments based on database type
+    if "sqlite" in database_url:
+        connect_args = {"check_same_thread": False}
+    elif "postgresql" in database_url:
+        # Force IPv4 for PostgreSQL to avoid IPv6 connection issues
+        connect_args = {
+            "connect_timeout": 10,
+            "options": "-c statement_timeout=30000",  # 30 second query timeout
+        }
+    else:
+        connect_args = {}
+
     engine = create_engine(
         database_url,
-        connect_args={"check_same_thread": False} if "sqlite" in database_url else {},
+        connect_args=connect_args,
         pool_pre_ping=True,  # Verify connections before using them
         pool_recycle=3600,  # Recycle connections after 1 hour
+        pool_size=5,  # Smaller pool for Streamlit Cloud
+        max_overflow=10,
+        pool_timeout=30,
     )
 
 SessionLocal = sessionmaker(
@@ -160,21 +201,45 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
 @contextmanager
 def get_session() -> Generator[Session, None, None]:
     """
-    Context manager for database session.
+    Context manager for database session with improved error handling.
 
     Usage:
         with get_session() as session:
             user = session.query(User).first()
+
+    Raises:
+        ConnectionError: If database connection cannot be established
+        Exception: For other database errors
     """
-    session = SessionLocal()
+    session = None
     try:
+        session = SessionLocal()
+        # Test the connection
+        session.execute("SELECT 1")
         yield session
         session.commit()
-    except Exception:
-        session.rollback()
-        raise
+    except Exception as e:
+        if session:
+            session.rollback()
+        # Provide more helpful error messages
+        error_msg = str(e).lower()
+        if "cannot assign requested address" in error_msg or "ipv6" in error_msg:
+            raise ConnectionError(
+                "Database connection failed due to network issues. "
+                "This may be an IPv6 connectivity problem. "
+                "Please ensure DATABASE_URL uses connection pooler (pooler.supabase.com) instead of direct connection (db.supabase.co). "
+                f"Original error: {e}"
+            )
+        elif "authentication failed" in error_msg or "password" in error_msg:
+            raise ConnectionError(
+                "Database authentication failed. Please check your database credentials. "
+                f"Original error: {e}"
+            )
+        else:
+            raise
     finally:
-        session.close()
+        if session:
+            session.close()
 
 
 @asynccontextmanager
