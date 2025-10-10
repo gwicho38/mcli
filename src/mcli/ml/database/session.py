@@ -57,6 +57,23 @@ except (AttributeError, Exception) as e:
                 "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or DATABASE_URL in environment."
             )
 
+    # Debug: Log which database URL is being used
+    import streamlit as st
+    if "pooler.supabase.com" in database_url:
+        st.info(f"🔗 Using Supabase connection pooler")
+    elif "sqlite" in database_url:
+        st.warning("📁 Using SQLite fallback (database features limited)")
+    else:
+        # Mask password in display
+        display_url = database_url
+        if "@" in display_url and ":" in display_url:
+            parts = display_url.split("@")
+            before_at = parts[0].split(":")
+            if len(before_at) >= 3:
+                before_at[2] = "***"
+                display_url = ":".join(before_at) + "@" + parts[1]
+        st.info(f"🔗 Database URL: {display_url}")
+
     engine = create_engine(
         database_url,
         connect_args={"check_same_thread": False} if "sqlite" in database_url else {},
