@@ -352,14 +352,14 @@ def run_simulation(
         num_paths_to_plot=num_paths_display,
         show_percentiles=show_percentiles
     )
-    st.plotly_chart(path_fig, use_container_width=True)
+    st.plotly_chart(path_fig, config={"displayModeBar": True}, use_container_width=True)
 
     vertical_space(1)
 
     # Distribution visualization
     st.subheader("📉 Price & Return Distributions")
     dist_fig = simulator.create_distribution_visualization()
-    st.plotly_chart(dist_fig, use_container_width=True)
+    st.plotly_chart(dist_fig, config={"displayModeBar": True}, use_container_width=True)
 
     vertical_space(2)
 

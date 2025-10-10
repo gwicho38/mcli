@@ -594,7 +594,7 @@ def main():
     )
 
     # Auto-refresh toggle
-    auto_refresh = st.sidebar.checkbox("Auto-refresh (60s)", value=False)
+    auto_refresh = st.sidebar.checkbox("Auto-refresh (60s)", value=True)
     if auto_refresh:
         import time
 

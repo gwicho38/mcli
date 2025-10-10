@@ -1031,7 +1031,7 @@ def main():
     )
 
     # Auto-refresh toggle (default off to prevent blocking)
-    auto_refresh = st.sidebar.checkbox("Auto-refresh (30s)", value=False)
+    auto_refresh = st.sidebar.checkbox("Auto-refresh (30s)", value=True)
     if auto_refresh:
         try:
             from streamlit_autorefresh import st_autorefresh

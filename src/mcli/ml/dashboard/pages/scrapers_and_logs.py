@@ -986,7 +986,7 @@ def show_job_history():
                     names=job_type_counts.index,
                     title="Jobs by Type"
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, config={"displayModeBar": True}, use_container_width=True)
 
                 # Status breakdown
                 st.markdown("### Status Breakdown")
@@ -999,7 +999,7 @@ def show_job_history():
                     labels={'x': 'Status', 'y': 'Count'},
                     title="Jobs by Status"
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, config={"displayModeBar": True}, use_container_width=True)
 
                 # Timeline
                 st.markdown("### Job Timeline")
@@ -1015,7 +1015,7 @@ def show_job_history():
                     color='status',
                     title="Jobs Over Time"
                 )
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, config={"displayModeBar": True}, use_container_width=True)
 
                 # Records processed
                 st.markdown("### Records Processed")
@@ -1053,7 +1053,7 @@ def show_job_history():
                         hovermode='x unified'
                     )
 
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, config={"displayModeBar": True}, use_container_width=True)
 
             else:
                 st.info("No job history available yet. Run some scraping jobs to see statistics here.")
