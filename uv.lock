@@ -246,12 +246,6 @@ wheels = [
 ]
 
 [[package]]
-name = "alpaca"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/32/90/cbb2168bdb83f757f3b88f3cac783ac910848cf2d685a383b384cf1a263d/alpaca-1.0.0.tar.gz", hash = "sha256:a02b0b317c8cb098a0c78fd62909f88d971530fbbccbdb4abca2c18413833ba0", size = 10001, upload-time = "2013-04-12T14:26:55.438Z" }
-
-[[package]]
 name = "alpaca-py"
 version = "0.42.2"
 source = { registry = "https://pypi.org/simple" }
@@ -266,23 +260,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/23/ea/4aae04688b4ae77a952c81f53118f13f45b57679142c81640e7c1132f4c2/alpaca_py-0.42.2.tar.gz", hash = "sha256:e59c3f44b72009cac66507bee750a1625b55a235106051ab49ac82332b282938", size = 97703, upload-time = "2025-09-26T16:14:03.78Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/23/0c/6b04b2275f4e4bc58e67e08522f1f168800d62ddc306e26be06b1548b49b/alpaca_py-0.42.2-py3-none-any.whl", hash = "sha256:0f85b58a05563d47775f23918c47fbbbc77e7661edc3e87467383b4118ed1ad2", size = 122225, upload-time = "2025-09-26T16:14:02.779Z" },
-]
-
-[[package]]
-name = "alpaca-trade-api"
-version = "0.26"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "asyncio-nats-client" },
-    { name = "pandas" },
-    { name = "requests" },
-    { name = "urllib3" },
-    { name = "websocket-client" },
-    { name = "websockets" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e9/46/cd71d94fa98097c8a6d21bae5aeb37877330abffbab129a3ee3da1ccdf01/alpaca-trade-api-0.26.tar.gz", hash = "sha256:fac25064ae0368942fdf79e540da4c162fa6b65dd9100494e1d3ecf08ad5f973", size = 14395, upload-time = "2019-02-28T17:13:39.317Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/99/91/9dee24e982126e666d783b5a5ad384b7d2108bd69c73d5fcb6d66ceb0753/alpaca_trade_api-0.26-py3-none-any.whl", hash = "sha256:b39152b728a50fb929cb29a7edaede6adb39a9a698d86978a653a2f9a2789fed", size = 21386, upload-time = "2019-02-28T17:13:37.582Z" },
 ]
 
 [[package]]
@@ -493,12 +470,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/a5/ae/136395dfbfe00dfc9
 wheels = [
     { url = "https://files.pythonhosted.org/packages/fe/ba/e2081de779ca30d473f21f5b30e0e737c438205440784c7dfc81efc2b029/async_timeout-5.0.1-py3-none-any.whl", hash = "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c", size = 6233, upload-time = "2024-11-06T16:41:37.9Z" },
 ]
-
-[[package]]
-name = "asyncio-nats-client"
-version = "0.11.5"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/91/71/1e70cfeb15ac082a039a6011fa1c6684b55239dd8edd411a871d2c35aab2/asyncio-nats-client-0.11.5.tar.gz", hash = "sha256:c6a2855a63db68289bb270240670ff30514ba0082a8b4f759b8e9955ac84c575", size = 22853, upload-time = "2021-11-24T22:29:10.004Z" }
 
 [[package]]
 name = "asyncpg"
@@ -4355,9 +4326,7 @@ dependencies = [
     { name = "aiomqtt" },
     { name = "aiosqlite" },
     { name = "alembic" },
-    { name = "alpaca" },
     { name = "alpaca-py" },
-    { name = "alpaca-trade-api" },
     { name = "alpha-vantage" },
     { name = "altair" },
     { name = "anthropic" },
@@ -4497,9 +4466,7 @@ requires-dist = [
     { name = "aiomqtt", specifier = ">=2.0.0" },
     { name = "aiosqlite", specifier = ">=0.20.0" },
     { name = "alembic", specifier = ">=1.12.0" },
-    { name = "alpaca", specifier = ">=1.0.0" },
     { name = "alpaca-py", specifier = "==0.42.2" },
-    { name = "alpaca-trade-api", specifier = ">=0.26" },
     { name = "alpha-vantage", specifier = ">=2.3.1" },
     { name = "altair", specifier = ">=4.2.1,<5.0.0" },
     { name = "anthropic", specifier = ">=0.60.0" },
