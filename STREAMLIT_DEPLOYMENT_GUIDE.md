@@ -23,16 +23,18 @@ Go to your Streamlit Cloud app settings: https://politician-trading-tracker.stre
 
 ```toml
 # Database Connection - EU Region Pooler (IPv4)
-DATABASE_URL = "postgresql://postgres.uljsqvwkomdrlnofmlad:servicetoanothertoastATp3%23Q79@aws-1-eu-north-1.pooler.supabase.com:5432/postgres"
+# IMPORTANT: Replace YOUR_PROJECT_REF and YOUR_PASSWORD with actual values from Supabase Dashboard
+DATABASE_URL = "postgresql://postgres.YOUR_PROJECT_REF:YOUR_PASSWORD@aws-1-eu-north-1.pooler.supabase.com:5432/postgres"
 
 # Supabase Configuration
-SUPABASE_URL = "https://uljsqvwkomdrlnofmlad.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsanNxdndrb21kcmxub2ZtbGFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4MDIyNDQsImV4cCI6MjA3MjM3ODI0NH0.QCpfcEpxGX_5Wn8ljf_J2KWjJLGdF8zRsV_7OatxmHI"
-SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVsanNxdndrb21kcmxub2ZtbGFkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjgwMjI0NCwiZXhwIjoyMDcyMzc4MjQ0fQ.4364sQbTJQd4IcxEQG6mPiOUw1iJ2bdKfV6W4oRqHvs"
+# Get these from Supabase Dashboard → Settings → API
+SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co"
+SUPABASE_KEY = "your_anon_key_here"
+SUPABASE_SERVICE_ROLE_KEY = "your_service_role_key_here"
 
-# LSH Daemon Configuration (deployed on fly.io)
-LSH_API_URL = "https://mcli-lsh-daemon.fly.dev"
-LSH_API_KEY = "xK7mP9nQ2sT4vW8yZ1bC3dF5gH7jK9mN0pR2tV4wX6zA8cE0"
+# LSH Daemon Configuration (if using)
+LSH_API_URL = "your_lsh_api_url_here"
+LSH_API_KEY = "your_lsh_api_key_here"
 
 # Redis (if needed)
 REDIS_HOST = "localhost"
@@ -82,7 +84,7 @@ Visit your app: https://politician-trading-tracker.streamlit.app/
 ```
 or
 ```
-🔗 Database URL: postgresql://postgres.uljsqvwkomdrlnofmlad:***@aws-1-eu-north-1.pooler.supabase.com:5432/postgres
+🔗 Database URL: postgresql://postgres.YOUR_PROJECT_REF:***@aws-1-eu-north-1.pooler.supabase.com:5432/postgres
 ```
 
 ---
@@ -137,9 +139,9 @@ postgresql://postgres.PROJECT_REF:PASSWORD@POOLER_HOST:PORT/postgres
 ### Issue: Authentication failed
 
 **Check:**
-1. Password in `DATABASE_URL` is correct: `servicetoanothertoastATp3%23Q79`
-2. Service role key is set
-3. Project reference matches: `uljsqvwkomdrlnofmlad`
+1. Password in `DATABASE_URL` is correct (get from Supabase Dashboard → Settings → Database)
+2. Service role key is set (get from Supabase Dashboard → Settings → API)
+3. Project reference matches your Supabase project
 
 **Find credentials:**
 - Supabase Dashboard → Settings → Database → Connection String
@@ -175,7 +177,7 @@ For better performance, set DATABASE_URL with your actual database password.
 
 | Variable | Purpose | Example |
 |----------|---------|---------|
-| `DATABASE_URL` | Primary database connection | `postgresql://postgres.uljsqvwkomdrlnofmlad:...` |
+| `DATABASE_URL` | Primary database connection | `postgresql://postgres.YOUR_PROJECT_REF:...` |
 | `SUPABASE_URL` | Supabase project URL | `https://uljsqvwkomdrlnofmlad.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role authentication | `eyJhbGci...` |
 
