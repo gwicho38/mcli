@@ -121,12 +121,12 @@ def show_cicd_dashboard():
         if st.button("🔄 Refresh"):
             st.rerun()
     with col2:
-        auto_refresh = st.checkbox("Auto-refresh", value=True)
+        auto_refresh = st.checkbox("Auto-refresh (30s)", value=False)
 
     if auto_refresh:
-        import time
-        time.sleep(5)
-        st.rerun()
+        from streamlit_autorefresh import st_autorefresh
+        # Auto-refresh every 30 seconds
+        st_autorefresh(interval=30000, key="cicd_refresh")
 
     st.divider()
 

@@ -736,10 +736,10 @@ def run_senate_watcher_scraper(
                 st.markdown("#### Recent Trading Disclosures")
                 disc_df = pd.DataFrame([{
                     "Date": d.transaction_date.strftime("%Y-%m-%d") if hasattr(d.transaction_date, 'strftime') else str(d.transaction_date),
-                    "Politician": d.politician_bioguide_id,
-                    "Type": d.transaction_type,
+                    "Ticker": d.asset_ticker or "—",
                     "Asset": d.asset_name[:50],
-                    "Ticker": d.asset_ticker or "",
+                    "Type": d.transaction_type,
+                    "Politician": d.politician_bioguide_id,
                     "Min": f"${d.amount_range_min:,.0f}" if d.amount_range_min else "",
                     "Max": f"${d.amount_range_max:,.0f}" if d.amount_range_max else ""
                 } for d in disclosures[:100]])  # Limit to 100 for display
