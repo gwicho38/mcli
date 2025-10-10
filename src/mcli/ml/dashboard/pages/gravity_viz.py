@@ -206,10 +206,25 @@ class PoliticianLocations:
                     (38.9072, -77.0369)  # Default to Washington DC
                 )
 
-                # Build politician record
-                full_name = pol.get('full_name', f"{pol.get('first_name', '')} {pol.get('last_name', '')}").strip()
+                # Build politician record - prefer first+last name over full_name if available
+                first_name = pol.get('first_name', '').strip()
+                last_name = pol.get('last_name', '').strip()
+                full_name = pol.get('full_name', '').strip()
+
+                # Use first_name + last_name if both available, otherwise use full_name
+                if first_name and last_name:
+                    display_name = f"{first_name} {last_name}"
+                elif full_name:
+                    display_name = full_name
+                elif first_name:
+                    display_name = first_name
+                elif last_name:
+                    display_name = last_name
+                else:
+                    display_name = f"Politician {pol_id[:8]}"  # Fallback to ID
+
                 result_data.append({
-                    'name': full_name,
+                    'name': display_name,
                     'role': pol.get('role', 'Unknown'),
                     'state': state_or_country,
                     'district': pol.get('district'),
