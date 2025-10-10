@@ -49,22 +49,25 @@ Is the server running on that host and accepting TCP/IP connections?
 
 #### Option 1: Use Connection Pooler (Recommended for Streamlit Cloud)
 
+**Important:** Connection pooler requires actual database password, not service role key.
+
 Set in Streamlit Cloud Secrets or `.env`:
 
 ```bash
-# Use connection pooler (IPv4-only, no password needed)
-SUPABASE_URL=https://uljsqvwkomdrlnofmlad.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGc...your_service_role_key
+# Use connection pooler URL directly with database password
+DATABASE_URL=postgresql://postgres.PROJECT_REF:YOUR_DATABASE_PASSWORD@aws-0-us-east-1.pooler.supabase.com:5432/postgres
 
-# Keep DATABASE_URL with placeholder or remove it
-DATABASE_URL=postgresql://postgres:your_password@db.uljsqvwkomdrlnofmlad.supabase.co:5432/postgres
+# Where:
+# - PROJECT_REF: Your Supabase project reference (e.g., uljsqvwkomdrlnofmlad)
+# - YOUR_DATABASE_PASSWORD: Your actual database password from Supabase Dashboard
 ```
 
-The code will automatically:
-1. Detect the placeholder password
-2. Extract project reference from SUPABASE_URL
-3. Build connection pooler URL with service role key
-4. Connect via IPv4-only pooler
+To find your database password:
+1. Go to Supabase Dashboard → Settings → Database
+2. Look for "Connection string" section
+3. Copy the password from the connection string
+
+**Note:** Service role key authentication with pooler is not yet fully supported by this implementation.
 
 #### Option 2: Direct Connection with Real Password
 
