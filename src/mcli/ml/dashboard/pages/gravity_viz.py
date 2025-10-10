@@ -10,6 +10,8 @@ import plotly.express as px
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 import numpy as np
+import os
+from supabase import Client, create_client
 
 # Configure page
 st.set_page_config(
@@ -48,6 +50,25 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+
+@st.cache_resource
+def get_supabase_client() -> Optional[Client]:
+    """Get Supabase client with Streamlit Cloud secrets support"""
+    try:
+        url = st.secrets.get("SUPABASE_URL", "")
+        key = st.secrets.get("SUPABASE_KEY", "") or st.secrets.get("SUPABASE_SERVICE_ROLE_KEY", "")
+    except (AttributeError, FileNotFoundError):
+        url = os.getenv("SUPABASE_URL", "")
+        key = os.getenv("SUPABASE_KEY", "") or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    if not url or not key:
+        return None
+
+    try:
+        return create_client(url, key)
+    except Exception:
+        return None
 
 
 class GravityData:
@@ -98,12 +119,124 @@ class GravityData:
 class PoliticianLocations:
     """Manages politician location and trading data"""
 
+    # Approximate coordinates for major cities (used as fallback)
+    LOCATION_MAP = {
+        # US States (capital cities)
+        'Alabama': (32.3668, -86.3000),
+        'California': (38.5816, -121.4944),
+        'Texas': (30.2672, -97.7431),
+        'New Jersey': (40.2206, -74.7597),
+        'Florida': (30.4383, -84.2807),
+        'New York': (42.6526, -73.7562),
+        'Pennsylvania': (40.2732, -76.8867),
+        'Illinois': (39.7817, -89.6501),
+        'Ohio': (39.9612, -82.9988),
+        'Georgia': (33.7490, -84.3880),
+        'Michigan': (42.7325, -84.5555),
+        'North Carolina': (35.7796, -78.6382),
+        'Virginia': (37.5407, -77.4360),
+        'Washington': (47.0379, -122.9007),
+        'Massachusetts': (42.3601, -71.0589),
+        # UK
+        'United Kingdom': (51.5074, -0.1278),  # London
+        'UK': (51.5074, -0.1278),
+        # EU Countries (capitals)
+        'France': (48.8566, 2.3522),  # Paris
+        'Germany': (52.5200, 13.4050),  # Berlin
+        'Italy': (41.9028, 12.4964),  # Rome
+        'Spain': (40.4168, -3.7038),  # Madrid
+        'Poland': (52.2297, 21.0122),  # Warsaw
+        'Netherlands': (52.3676, 4.9041),  # Amsterdam
+        'Belgium': (50.8503, 4.3517),  # Brussels
+        'Sweden': (59.3293, 18.0686),  # Stockholm
+        'Austria': (48.2082, 16.3738),  # Vienna
+        'Denmark': (55.6761, 12.5683),  # Copenhagen
+        'Finland': (60.1699, 24.9384),  # Helsinki
+    }
+
     @staticmethod
-    def get_sample_politicians() -> pd.DataFrame:
-        """
-        Sample politician data with locations
-        In production: integrate with mcli's politician_trading database
-        """
+    @st.cache_data(ttl=60)
+    def get_politicians_from_db() -> pd.DataFrame:
+        """Fetch politicians with trading data from database"""
+        client = get_supabase_client()
+        if not client:
+            return PoliticianLocations.get_fallback_politicians()
+
+        try:
+            # Fetch politicians
+            politicians_response = client.table("politicians").select("*").execute()
+            if not politicians_response.data:
+                return PoliticianLocations.get_fallback_politicians()
+
+            politicians_df = pd.DataFrame(politicians_response.data)
+
+            # Fetch trading disclosures to calculate volumes
+            disclosures_response = client.table("trading_disclosures").select("*").execute()
+            disclosures_df = pd.DataFrame(disclosures_response.data) if disclosures_response.data else pd.DataFrame()
+
+            # Calculate trading metrics per politician
+            result_data = []
+            for _, pol in politicians_df.iterrows():
+                pol_id = pol.get('id')
+                pol_disclosures = disclosures_df[disclosures_df['politician_id'] == pol_id] if not disclosures_df.empty else pd.DataFrame()
+
+                # Calculate metrics
+                recent_trades = len(pol_disclosures)
+                total_volume = 0
+                last_trade_date = None
+
+                if not pol_disclosures.empty:
+                    # Estimate volume from range midpoints
+                    for _, d in pol_disclosures.iterrows():
+                        min_amt = d.get('amount_range_min', 0) or 0
+                        max_amt = d.get('amount_range_max', 0) or 0
+                        if min_amt and max_amt:
+                            total_volume += (min_amt + max_amt) / 2
+                        elif d.get('amount_exact'):
+                            total_volume += d['amount_exact']
+
+                    # Get last trade date
+                    transaction_dates = pd.to_datetime(pol_disclosures['transaction_date'], errors='coerce')
+                    last_trade_date = transaction_dates.max()
+
+                # Get location
+                state_or_country = pol.get('state_or_country', '')
+                lat, lon = PoliticianLocations.LOCATION_MAP.get(
+                    state_or_country,
+                    (38.9072, -77.0369)  # Default to Washington DC
+                )
+
+                # Build politician record
+                full_name = pol.get('full_name', f"{pol.get('first_name', '')} {pol.get('last_name', '')}").strip()
+                result_data.append({
+                    'name': full_name,
+                    'role': pol.get('role', 'Unknown'),
+                    'state': state_or_country,
+                    'district': pol.get('district'),
+                    'party': pol.get('party', 'Unknown'),
+                    'lat': lat,
+                    'lon': lon,
+                    'recent_trades': recent_trades,
+                    'total_trade_volume': total_volume,
+                    'last_trade_date': last_trade_date if pd.notna(last_trade_date) else datetime(2025, 1, 1),
+                })
+
+            result_df = pd.DataFrame(result_data)
+            # Filter out politicians with no trading data
+            result_df = result_df[result_df['recent_trades'] > 0]
+
+            if result_df.empty:
+                return PoliticianLocations.get_fallback_politicians()
+
+            return result_df
+
+        except Exception as e:
+            st.warning(f"Could not fetch politicians from database: {e}")
+            return PoliticianLocations.get_fallback_politicians()
+
+    @staticmethod
+    def get_fallback_politicians() -> pd.DataFrame:
+        """Fallback sample data if database is unavailable"""
         politicians = [
             {
                 'name': 'Nancy Pelosi',
@@ -111,7 +244,7 @@ class PoliticianLocations:
                 'state': 'California',
                 'district': 'CA-11',
                 'party': 'Democrat',
-                'lat': 37.7749,  # San Francisco
+                'lat': 37.7749,
                 'lon': -122.4194,
                 'recent_trades': 15,
                 'total_trade_volume': 5_000_000,
@@ -123,50 +256,13 @@ class PoliticianLocations:
                 'state': 'Alabama',
                 'district': None,
                 'party': 'Republican',
-                'lat': 32.3668,  # Montgomery
+                'lat': 32.3668,
                 'lon': -86.3000,
                 'recent_trades': 23,
                 'total_trade_volume': 3_200_000,
                 'last_trade_date': datetime(2025, 10, 3),
             },
-            {
-                'name': 'Josh Gottheimer',
-                'role': 'US House Representative',
-                'state': 'New Jersey',
-                'district': 'NJ-05',
-                'party': 'Democrat',
-                'lat': 40.9168,  # Ridgewood
-                'lon': -74.1168,
-                'recent_trades': 12,
-                'total_trade_volume': 2_800_000,
-                'last_trade_date': datetime(2025, 10, 7),
-            },
-            {
-                'name': 'Dan Crenshaw',
-                'role': 'US House Representative',
-                'state': 'Texas',
-                'district': 'TX-02',
-                'party': 'Republican',
-                'lat': 29.7604,  # Houston
-                'lon': -95.3698,
-                'recent_trades': 18,
-                'total_trade_volume': 4_100_000,
-                'last_trade_date': datetime(2025, 10, 6),
-            },
-            {
-                'name': 'Ro Khanna',
-                'role': 'US House Representative',
-                'state': 'California',
-                'district': 'CA-17',
-                'party': 'Democrat',
-                'lat': 37.3861,  # San Jose
-                'lon': -121.8947,
-                'recent_trades': 8,
-                'total_trade_volume': 1_500_000,
-                'last_trade_date': datetime(2025, 10, 4),
-            },
         ]
-
         return pd.DataFrame(politicians)
 
 
@@ -386,8 +482,8 @@ def main():
     # Sidebar
     st.sidebar.header("⚙️ Configuration")
 
-    # Load politician data
-    politicians_df = PoliticianLocations.get_sample_politicians()
+    # Load politician data from database
+    politicians_df = PoliticianLocations.get_politicians_from_db()
 
     # Politician selection
     selected_politician = st.sidebar.selectbox(
