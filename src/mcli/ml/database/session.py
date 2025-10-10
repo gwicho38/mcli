@@ -23,34 +23,45 @@ except (AttributeError, Exception) as e:
     import os
     database_url = os.getenv("DATABASE_URL")
 
-    # If no DATABASE_URL, try to construct from Supabase credentials
+    # Check if DATABASE_URL has placeholder password
+    if database_url and "your_password" in database_url:
+        database_url = None  # Treat placeholder as not set
+
+    # If no valid DATABASE_URL, try to use Supabase REST API via connection pooler
     if not database_url:
         supabase_url = os.getenv("SUPABASE_URL", "")
-        supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
+        supabase_service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-        # Try to extract database connection from Supabase URL
-        # Supabase REST URL format: https://PROJECT_ID.supabase.co
-        # PostgreSQL URL format: postgresql://postgres:PASSWORD@db.PROJECT_ID.supabase.co:5432/postgres
-        if supabase_url and "supabase.co" in supabase_url:
-            # Extract project ID from REST API URL
-            project_id = supabase_url.replace("https://", "").replace("http://", "").split(".")[0]
+        if supabase_url and supabase_service_key and "supabase.co" in supabase_url:
+            # Extract project reference from Supabase URL
+            # Format: https://PROJECT_REF.supabase.co
+            project_ref = supabase_url.replace("https://", "").replace("http://", "").split(".")[0]
 
-            # For now, use SQLite as we don't have the database password
-            # User should set DATABASE_URL in secrets with the full PostgreSQL connection string
-            database_url = "sqlite:///./ml_system.db"
+            # Use Supabase connection pooler with service role key as password
+            # This is a special Supabase feature that allows REST API keys to authenticate
+            # Note: This may not work for all operations - ideally use real database password
+            database_url = f"postgresql://postgres.{project_ref}:{supabase_service_key}@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
+
             import warnings
             warnings.warn(
-                "DATABASE_URL not set. Using SQLite fallback. "
-                "For PostgreSQL access, set DATABASE_URL in Streamlit secrets with: "
-                f"postgresql://postgres:PASSWORD@db.{project_id}.supabase.co:5432/postgres"
+                "Using Supabase connection pooler with service role key. "
+                "For better performance, set DATABASE_URL with your actual database password. "
+                "Find it in Supabase Dashboard → Settings → Database → Connection String"
             )
         else:
             # Default to SQLite for development/testing
             database_url = "sqlite:///./ml_system.db"
+            import warnings
+            warnings.warn(
+                "No database credentials found. Using SQLite fallback. "
+                "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or DATABASE_URL in environment."
+            )
 
     engine = create_engine(
         database_url,
         connect_args={"check_same_thread": False} if "sqlite" in database_url else {},
+        pool_pre_ping=True,  # Verify connections before using them
+        pool_recycle=3600,  # Recycle connections after 1 hour
     )
 
 SessionLocal = sessionmaker(
