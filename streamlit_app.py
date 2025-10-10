@@ -25,7 +25,7 @@ src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
 # Import and run the overview page as main
-from mcli.ml.dashboard.pages.overview import show_overview
+from mcli.ml.dashboard.overview import show_overview
 
 if __name__ == "__main__":
     show_overview()
