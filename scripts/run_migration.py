@@ -6,22 +6,13 @@ import os
 import sys
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Add scripts directory to path to import helpers
+sys.path.insert(0, str(Path(__file__).parent))
 
-from supabase import create_client, Client
+from utils.supabase_helper import create_supabase_client
 
 def run_migration(migration_file: str):
     """Run a SQL migration file on Supabase"""
-
-    # Get Supabase credentials
-    url = os.getenv("SUPABASE_URL")
-    # Use service role key for admin operations
-    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-    if not url or not key:
-        print("Error: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set")
-        sys.exit(1)
 
     # Read migration file
     migration_path = Path(migration_file)
@@ -32,12 +23,15 @@ def run_migration(migration_file: str):
     sql_content = migration_path.read_text()
 
     print(f"Running migration: {migration_path.name}")
-    print(f"Supabase URL: {url}")
     print(f"Migration size: {len(sql_content)} bytes")
     print("-" * 60)
 
-    # Create Supabase client
-    supabase: Client = create_client(url, key)
+    # Create Supabase client using helper
+    supabase = create_supabase_client()
+    if not supabase:
+        print("Failed to connect to Supabase")
+        print("Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in .env")
+        sys.exit(1)
 
     # Execute SQL using PostgREST
     # Note: Supabase Python client doesn't have direct SQL execution
@@ -71,6 +65,10 @@ def run_migration(migration_file: str):
         # Try using psycopg2 directly
         try:
             import psycopg2
+
+            # Get credentials for direct connection
+            url = os.getenv("SUPABASE_URL")
+            key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
             # Construct direct connection to Supabase Postgres
             # Format: postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres

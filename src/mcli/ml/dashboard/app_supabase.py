@@ -1,75 +1,26 @@
 """Streamlit dashboard for ML system monitoring - Supabase version"""
 
 import asyncio
-import os
 from datetime import datetime, timedelta
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from dotenv import load_dotenv
 from plotly.subplots import make_subplots
-from supabase import Client, create_client
+
+from mcli.ml.dashboard.common import get_supabase_client, load_environment_variables, setup_page_config
+from mcli.ml.dashboard.styles import apply_dashboard_styles
 
 # Page config must come first
-st.set_page_config(
-    page_title="MCLI ML Dashboard", page_icon="📊", layout="wide", initial_sidebar_state="expanded"
-)
+setup_page_config(page_title="MCLI ML Dashboard")
 
-# Load environment variables from supabase/.env.local
-env_path = Path(__file__).parent.parent.parent.parent.parent / "supabase" / ".env.local"
-if env_path.exists():
-    load_dotenv(env_path)
+# Load environment variables
+load_environment_variables()
 
-# Custom CSS
-st.markdown(
-    """
-<style>
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
-    }
-</style>
-""",
-    unsafe_allow_html=True,
-)
-
-
-@st.cache_resource
-def get_supabase_client() -> Client:
-    """Get Supabase client with Streamlit Cloud secrets support"""
-    # Try Streamlit secrets first (for Streamlit Cloud), then fall back to environment variables (for local dev)
-    try:
-        url = st.secrets.get("SUPABASE_URL", "")
-        key = st.secrets.get("SUPABASE_KEY", "") or st.secrets.get("SUPABASE_SERVICE_ROLE_KEY", "")
-    except (AttributeError, FileNotFoundError):
-        # Secrets not available, try environment variables
-        url = os.getenv("SUPABASE_URL", "")
-        key = os.getenv("SUPABASE_KEY", "") or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-
-    if not url or not key:
-        st.warning(
-            "⚠️ Supabase credentials not found. Configure SUPABASE_URL and SUPABASE_KEY in Streamlit Cloud secrets or environment variables."
-        )
-        return None
-
-    try:
-        client = create_client(url, key)
-        # Test connection
-        try:
-            client.table("politicians").select("id").limit(1).execute()
-            return client
-        except Exception as e:
-            st.error(f"❌ Supabase connection test failed: {e}")
-            return None
-    except Exception as e:
-        st.error(f"❌ Failed to create Supabase client: {e}")
-        return None
+# Apply standard dashboard styles
+apply_dashboard_styles()
 
 
 @st.cache_data(ttl=30)

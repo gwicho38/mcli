@@ -1,31 +1,24 @@
 #!/usr/bin/env python3
 """Check Supabase schema to see actual column names"""
 
-import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+# Add scripts directory to path to import helpers
+sys.path.insert(0, str(Path(__file__).parent))
 
-# Parse secrets file
-env_file = Path(__file__).parent.parent / ".streamlit" / "secrets.toml"
-if env_file.exists():
-    with open(env_file) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                key, value = line.split("=", 1)
-                os.environ[key.strip()] = value.strip().strip('"')
-
-from supabase import create_client
-
-url = os.getenv("SUPABASE_URL")
-key = os.getenv("SUPABASE_KEY")
-client = create_client(url, key)
+from utils.supabase_helper import create_supabase_client
 
 print("=" * 60)
 print("SUPABASE SCHEMA CHECK")
 print("=" * 60)
+
+# Create Supabase client using helper
+client = create_supabase_client()
+if not client:
+    print("Failed to connect to Supabase")
+    print("Ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set in .env")
+    sys.exit(1)
 
 # Check trading_disclosures schema
 print("\n1. trading_disclosures columns:")

@@ -6,48 +6,37 @@ import logging
 import os
 import pickle
 import subprocess
-import warnings
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
 
 import numpy as np
 
-# Suppress Streamlit warnings when used outside runtime context
-warnings.filterwarnings("ignore", message=".*missing ScriptRunContext.*")
-warnings.filterwarnings("ignore", message=".*No runtime found.*")
-warnings.filterwarnings("ignore", message=".*Session state does not function.*")
-warnings.filterwarnings("ignore", message=".*to view this Streamlit app.*")
+# Suppress warnings before other imports
+from mcli.ml.dashboard.common import suppress_streamlit_warnings
 
-# Suppress Plotly deprecation warnings
-warnings.filterwarnings("ignore", message=".*keyword arguments have been deprecated.*")
-warnings.filterwarnings("ignore", message=".*Use `config` instead.*")
-
-# Suppress media file errors
-warnings.filterwarnings("ignore", message=".*MediaFileHandler.*")
-warnings.filterwarnings("ignore", message=".*Missing file.*")
-warnings.filterwarnings("ignore", message=".*Bad filename.*")
-
-# Suppress additional warnings
-warnings.filterwarnings("ignore", category=UserWarning)
-warnings.filterwarnings("ignore", category=FutureWarning)
+suppress_streamlit_warnings()
 
 logger = logging.getLogger(__name__)
 
-# Suppress specific Streamlit media file errors in logging
-logging.getLogger("streamlit.runtime.media_file_storage").setLevel(logging.ERROR)
-logging.getLogger("streamlit.web.server.media_file_handler").setLevel(logging.ERROR)
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import requests
 import streamlit as st
-from dotenv import load_dotenv
 from plotly.subplots import make_subplots
-from supabase import Client, create_client
+from supabase import Client
 
-# Load environment variables from .env file
-load_dotenv()
+# Import common dashboard utilities
+from mcli.ml.dashboard.common import (
+    get_supabase_client,
+    load_environment_variables,
+    setup_page_config,
+)
+from mcli.ml.dashboard.styles import apply_dashboard_styles
+
+# Load environment variables
+load_environment_variables()
 
 # Import streamlit-extras utilities
 try:
@@ -217,24 +206,19 @@ try:
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Debug Dependencies page not available: {e}")
 
-# Page config
-st.set_page_config(
+# Page config - must be before other st commands
+setup_page_config(
     page_title="Politician Trading Tracker - MCLI",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    page_icon="📊"
 )
 
-# Custom CSS
+# Apply standard dashboard styles (includes metric-card, alert boxes)
+apply_dashboard_styles()
+
+# Add integrated dashboard-specific CSS
 st.markdown(
     """
 <style>
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
-    }
     .success-box {
         background-color: #d4edda;
         border: 1px solid #c3e6cb;
@@ -254,69 +238,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
-@st.cache_resource
-def get_supabase_client() -> Client:
-    """Get Supabase client with Streamlit Cloud secrets support"""
-    # Try Streamlit secrets first (for Streamlit Cloud), then fall back to environment variables (for local dev)
-    try:
-        url = st.secrets.get("SUPABASE_URL", "")
-        key = st.secrets.get("SUPABASE_KEY", "") or st.secrets.get("SUPABASE_SERVICE_ROLE_KEY", "")
-    except (AttributeError, FileNotFoundError):
-        # Secrets not available, try environment variables
-        url = os.getenv("SUPABASE_URL", "")
-        key = os.getenv("SUPABASE_KEY", "") or os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-
-    if not url or not key:
-        st.error(
-            "❌ Supabase credentials not configured"
-        )
-        with st.expander("🔧 Configuration Required"):
-            st.markdown("""
-            **Missing Supabase credentials:**
-            - `SUPABASE_URL`: {}
-            - `SUPABASE_KEY`: {}
-
-            **For Streamlit Cloud:**
-            1. Go to https://share.streamlit.io
-            2. Select your app → Settings → Secrets
-            3. Add:
-               ```toml
-               SUPABASE_URL = "https://your-project.supabase.co"
-               SUPABASE_KEY = "your-anon-key"
-               ```
-
-            **For local development:**
-            1. Create `.streamlit/secrets.toml` file
-            2. Add the same credentials as above
-            3. Restart the dashboard
-
-            **Using demo data** until configured.
-            """.format(
-                "✅ Set" if url else "❌ Missing",
-                "✅ Set" if key else "❌ Missing"
-            ))
-        return None
-
-    try:
-        client = create_client(url, key)
-        # Test connection with a simple query
-        try:
-            test_result = client.table("politicians").select("id").limit(1).execute()
-            logger.info(f"✅ Supabase connection successful (URL: {url[:30]}...)")
-            return client
-        except Exception as conn_error:
-            st.error(f"❌ Supabase connection failed: {conn_error}")
-            with st.expander("🔍 Connection Details"):
-                st.write(f"**URL:** {url[:30]}...")
-                st.write(f"**Error:** {str(conn_error)}")
-                st.write("**Using demo data** until connection is restored.")
-            logger.error(f"Supabase connection test failed: {conn_error}")
-            return None
-    except Exception as e:
-        st.error(f"❌ Failed to create Supabase client: {e}")
-        logger.error(f"Failed to create Supabase client: {e}")
-        return None
+# Note: get_supabase_client is now imported from common.py
 
 
 @st.cache_data(ttl=300)  # Cache for 5 minutes

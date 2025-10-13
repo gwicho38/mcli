@@ -12,24 +12,22 @@ from scipy import stats
 
 from mcli.ml.database.models import Experiment, Model, ModelStatus
 from mcli.ml.database.session import SessionLocal
+from mcli.ml.dashboard.common import setup_page_config
+from mcli.ml.dashboard.styles import apply_dashboard_styles
 
-st.set_page_config(
+# Page config - must be first
+setup_page_config(
     page_title="MCLI Training Dashboard",
-    page_icon="🔬",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    page_icon="🔬"
 )
 
-# Custom CSS
+# Apply standard dashboard styles (includes metric-card)
+apply_dashboard_styles()
+
+# Add training-specific CSS
 st.markdown(
     """
 <style>
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
-    }
     .model-card {
         background-color: #ffffff;
         padding: 1.5rem;

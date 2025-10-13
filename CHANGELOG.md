@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.5.0] - 2025-10-13
+
+### Changed
+- **Major refactoring to eliminate code duplication (DRY principle)**
+  - Created `CloudProviderManager` base class to consolidate AWS, GCP, and Azure credential managers (eliminated 163 lines of duplicate code)
+  - Extracted dashboard common utilities into `common.py` and `styles.py` (consolidated 300+ lines across 4 dashboards)
+  - Created `scripts/utils/supabase_helper.py` with reusable Supabase connection utilities (eliminated 150+ lines across 5 scripts)
+  - Refactored 5 Supabase scripts to use centralized helper functions
+  - Removed duplicate logs command implementation from `self_cmd.py` (eliminated 260 lines)
+  - Removed 10 deprecated commands completely (eliminated 461 lines)
+  - Total reduction: ~1,300+ lines of duplicate/deprecated code
+
+### Added
+- Comprehensive CLAUDE.md documentation for AI-assisted development
+- Shared dashboard utilities for page config, CSS styles, and Supabase client creation
+- Centralized Supabase helper functions for consistent credential management
+
+### Improved
+- Better code maintainability through centralized utilities
+- Consistent error handling across Supabase scripts
+- Cleaner dashboard implementations with shared styling
+
 ## [7.3.1] - 2025-01-09
 
 ### Fixed
