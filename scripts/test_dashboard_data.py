@@ -1,21 +1,11 @@
 #!/usr/bin/env python3
 """Test that dashboard can fetch and map Supabase data correctly"""
 
-import os
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
-
-# Parse secrets
-env_file = Path(__file__).parent.parent / ".streamlit" / "secrets.toml"
-if env_file.exists():
-    with open(env_file) as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                key, value = line.split("=", 1)
-                os.environ[key.strip()] = value.strip().strip('"')
+# Add scripts directory to path to import helpers
+sys.path.insert(0, str(Path(__file__).parent))
 
 # Mock streamlit to prevent import errors
 class MockStreamlit:
@@ -29,16 +19,18 @@ class MockStreamlit:
 
 sys.modules['streamlit'] = MockStreamlit()
 
-from supabase import create_client
 import pandas as pd
+from utils.supabase_helper import create_supabase_client
 
 print("="*60)
 print("DASHBOARD DATA MAPPING TEST")
 print("="*60)
 
-url = os.getenv("SUPABASE_URL")
-key = os.getenv("SUPABASE_KEY")
-client = create_client(url, key)
+# Create Supabase client using helper
+client = create_supabase_client()
+if not client:
+    print("Failed to connect to Supabase")
+    sys.exit(1)
 
 print("\n1. Fetching raw data with JOIN...")
 response = (

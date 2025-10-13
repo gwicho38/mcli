@@ -25,47 +25,14 @@ from mcli.ml.database.models import (
     User,
 )
 from mcli.ml.database.session import SessionLocal
+from mcli.ml.dashboard.common import setup_page_config
+from mcli.ml.dashboard.styles import apply_dashboard_styles
 
-# Page config
-st.set_page_config(
-    page_title="MCLI ML Dashboard", page_icon="📊", layout="wide", initial_sidebar_state="expanded"
-)
+# Page config - must be first
+setup_page_config(page_title="MCLI ML Dashboard")
 
-# Custom CSS
-st.markdown(
-    """
-<style>
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
-    }
-    .alert-success {
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
-        padding: 0.75rem;
-        border-radius: 0.25rem;
-    }
-    .alert-warning {
-        background-color: #fff3cd;
-        border: 1px solid #ffeaa7;
-        color: #856404;
-        padding: 0.75rem;
-        border-radius: 0.25rem;
-    }
-    .alert-danger {
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-        padding: 0.75rem;
-        border-radius: 0.25rem;
-    }
-</style>
-""",
-    unsafe_allow_html=True,
-)
+# Apply standard dashboard styles
+apply_dashboard_styles()
 
 
 @st.cache_data(ttl=30)

@@ -1,84 +1,31 @@
 import json
-from typing import Optional
 
 from mcli.lib.config import DEV_SECRETS_ROOT
 from mcli.lib.fs import get_absolute_path
 from mcli.lib.logger.logger import get_logger
 
-from .credential_manager import CredentialManager
+from .credential_manager import CloudProviderManager
 
 logger = get_logger(__name__)
 
 
-class GcpManager(CredentialManager):
+class GcpManager(CloudProviderManager):
     """
-    Specialized credential manager for handling authentication tokens and environment URLs.
+    GCP credential manager for handling authentication tokens and storage credentials.
+    Inherits common token management from CloudProviderManager.
     """
-
-    def __init__(self, app_name: str = "mcli"):
-        """
-        Initialize GcpManager with a specific configuration filename.
-
-        Args:
-            app_name (str, optional): Name of the application. Defaults to "mcli".
-        """
-        super().__init__(app_name, config_filename="mcli.token.config.json")
-
-    def save_token(self, token: str):
-        """
-        Save authentication token to configuration.
-
-        Args:
-            token (str): Authentication token to save.
-
-        Raises:
-            ValueError: If token is empty or not a string.
-        """
-        if not token or not isinstance(token, str):
-            raise ValueError("Token must be a non-empty string")
-
-        try:
-            self.update_config("auth_token", token)
-        except Exception as e:
-            raise Exception(f"Failed to save token: {str(e)}")
-
-    def get_token(self) -> Optional[str]:
-        """
-        Retrieve the stored authentication token.
-
-        Returns:
-            Optional[str]: Stored authentication token or None if not found.
-        """
-        try:
-            logger.info("getting token")
-            return self.get_config_value("auth_token")
-        except Exception as e:
-            logger.info(f"Warning: Error retrieving token: {str(e)}")
-            return None
-
-    def clear_token(self):
-        """
-        Clear the stored authentication token.
-        Uses the base class clear_config method.
-        """
-        self.clear_config()
-
-    def get_url(self) -> Optional[str]:
-        """
-        Retrieve environment URL from configuration.
-
-        Returns:
-            Optional[str]: Stored environment URL or None if not found.
-        """
-        try:
-            logger.info("getting url")
-            return self.get_config_value("env_url")
-        except Exception as e:
-            logger.info(f"Warning: Error retrieving environment URL: {str(e)}")
-            return None
 
     @staticmethod
     def persist_gcp_storage_creds(account_id, account_email, access_key, secret_key):
+        """
+        Persist GCP storage credentials to file.
+
+        Args:
+            account_id (str): GCP account ID.
+            account_email (str): GCP account email.
+            access_key (str): GCP access key.
+            secret_key (str): GCP secret key.
+        """
         filepath = get_absolute_path(DEV_SECRETS_ROOT + "gcp/gcp.json")
         with open(filepath, "w") as f:
             json.dump(

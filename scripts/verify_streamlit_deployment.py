@@ -20,8 +20,11 @@ import os
 import sys
 from pathlib import Path
 
-# Add src to path
+# Add scripts and src directories to path
+sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from utils.supabase_helper import create_supabase_client
 
 def verify_environment():
     """Verify environment variables and secrets are configured"""
@@ -83,30 +86,12 @@ def verify_supabase_connection():
     print("="*80)
 
     try:
-        from supabase import create_client
-
-        # Get credentials
-        try:
-            import tomli
-            secrets_file = Path(".streamlit/secrets.toml")
-            if secrets_file.exists():
-                with open(secrets_file, 'rb') as f:
-                    secrets = tomli.load(f)
-                    url = secrets.get("SUPABASE_URL")
-                    key = secrets.get("SUPABASE_KEY") or secrets.get("SUPABASE_SERVICE_ROLE_KEY")
-            else:
-                url = os.getenv("SUPABASE_URL")
-                key = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-        except ImportError:
-            url = os.getenv("SUPABASE_URL")
-            key = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-        if not url or not key:
+        # Create Supabase client using helper
+        client = create_supabase_client()
+        if not client:
             print("❌ Supabase credentials not configured")
             return False
 
-        print(f"Connecting to: {url[:50]}...")
-        client = create_client(url, key)
         print("✅ Supabase client created")
 
         # Test connection with politicians table
@@ -212,25 +197,12 @@ def verify_data_flow():
 
     try:
         import pandas as pd
-        from supabase import create_client
 
-        # Get credentials
-        try:
-            import tomli
-            secrets_file = Path(".streamlit/secrets.toml")
-            if secrets_file.exists():
-                with open(secrets_file, 'rb') as f:
-                    secrets = tomli.load(f)
-                    url = secrets.get("SUPABASE_URL")
-                    key = secrets.get("SUPABASE_KEY") or secrets.get("SUPABASE_SERVICE_ROLE_KEY")
-            else:
-                url = os.getenv("SUPABASE_URL")
-                key = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-        except ImportError:
-            url = os.getenv("SUPABASE_URL")
-            key = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-        client = create_client(url, key)
+        # Create Supabase client using helper
+        client = create_supabase_client()
+        if not client:
+            print("❌ Supabase credentials not configured")
+            return False
 
         # Fetch disclosures
         print("Fetching disclosures...")
