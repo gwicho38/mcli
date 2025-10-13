@@ -1,7 +1,0 @@
-[console_scripts]
-mcli = mcli.app.main:main
-mcli-backtest = mcli.ml.backtesting.run:main
-mcli-dashboard = mcli.ml.dashboard:main
-mcli-optimize = mcli.ml.optimization.optimize:main
-mcli-serve = mcli.ml.serving.serve:main
-mcli-train = mcli.ml.training.train:main
