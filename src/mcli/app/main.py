@@ -255,9 +255,11 @@ class LazyCommand(click.Command):
     def shell_complete(self, ctx, param, incomplete):
         """Provide shell completion for the lazily loaded command."""
         cmd = self._load_command()
+        # Delegate to the loaded command's completion
         if hasattr(cmd, "shell_complete"):
             return cmd.shell_complete(ctx, param, incomplete)
-        return []
+        # Fallback to default Click completion
+        return super().shell_complete(ctx, param, incomplete) if hasattr(super(), "shell_complete") else []
 
 
 class LazyGroup(click.Group):
@@ -309,9 +311,11 @@ class LazyGroup(click.Group):
     def shell_complete(self, ctx, param, incomplete):
         """Provide shell completion for the lazily loaded group."""
         group = self._load_group()
+        # Delegate to the loaded group's completion
         if hasattr(group, "shell_complete"):
             return group.shell_complete(ctx, param, incomplete)
-        return []
+        # Fallback to default Click completion
+        return super().shell_complete(ctx, param, incomplete) if hasattr(super(), "shell_complete") else []
 
 
 def _add_lazy_commands(app: click.Group):
@@ -334,14 +338,14 @@ def _add_lazy_commands(app: click.Group):
     except Exception as e:
         logger.debug(f"Could not load self commands: {e}")
 
-    # Shell completion - load immediately as it's lightweight and useful
+    # Test group - load immediately for testing commands
     try:
-        from mcli.app.completion_cmd import completion
+        from mcli.test.test_cmd import test_group
 
-        app.add_command(completion, name="completion")
-        logger.debug("Added completion commands")
-    except ImportError as e:
-        logger.debug(f"Could not load completion commands: {e}")
+        app.add_command(test_group, name="test")
+        logger.debug("Added test group commands")
+    except Exception as e:
+        logger.debug(f"Could not load test commands: {e}")
 
     # Add workflow with completion-aware lazy loading
     try:
@@ -374,22 +378,6 @@ def _add_lazy_commands(app: click.Group):
             "import_path": "mcli.app.model_cmd.model",
             "help": "Model management commands for offline and online model usage",
         },
-        "cron-test": {
-            "import_path": "mcli.app.cron_test_cmd.cron_test",
-            "help": "🕒 Validate and test MCLI cron/scheduler functionality with comprehensive tests.",
-        },
-        "visual": {
-            "import_path": "mcli.app.visual_cmd.visual",
-            "help": "🎨 Visual effects and enhancements showcase",
-        },
-        "redis": {
-            "import_path": "mcli.app.redis_cmd.redis_group",
-            "help": "🗄️  Manage Redis cache service for performance optimization",
-        },
-        "logs": {
-            "import_path": "mcli.app.logs_cmd.logs_group",
-            "help": "📋 Stream and manage MCLI log files with real-time updates",
-        },
     }
 
     for cmd_name, cmd_info in lazy_commands.items():
@@ -397,7 +385,7 @@ def _add_lazy_commands(app: click.Group):
         if cmd_name == "workflow":
             continue
 
-        if cmd_name in ["model", "redis", "logs"]:
+        if cmd_name in ["model"]:
             # Use completion-aware LazyGroup for commands that have subcommands
             try:
                 from mcli.app.completion_helpers import create_completion_aware_lazy_group

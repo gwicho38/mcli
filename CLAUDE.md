@@ -4,490 +4,237 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MCLI is a modern Python CLI framework with AI chat capabilities, ML/trading features, and extensible command architecture. The project uses UV for package management, supports multiple deployment modes (wheel, portable binary), and includes integrated dashboards for ML model training and politician trading analysis.
+MCLI is a modern CLI framework with AI chat capabilities, command management, and extensible architecture. It combines Python and Rust for high-performance command-line operations, with features including OpenAI/Anthropic integration, workflow automation, ML/trading capabilities, and Streamlit dashboards.
 
-**Current Version:** 7.4.0
-**Python Support:** 3.9-3.12
-**Package Manager:** UV (preferred) / pip
+## Build & Development Commands
 
-## Development Commands
-
-### Setup and Installation
-
+### Setup
 ```bash
-# Initial setup with UV
-make setup
-
-# Install package locally (editable mode)
-make install
-
-# Install development dependencies
-make install-dev
-
-# Install from PyPI
-pip install mcli-framework
-```
-
-### Testing
-
-```bash
-# Basic installation test
-make test
-
-# Run unit tests
-make test-unit
-
-# Run tests with coverage
-make test-cov
-
-# Run fast tests only (skip slow tests)
-make test-fast
-
-# Test built executable
-make test-binary
+make setup                  # Setup UV environment with dependencies
+make install-dev           # Install development dependencies
+cp .env.example .env       # Configure environment variables
 ```
 
 ### Building
-
 ```bash
-# Build Python wheel
-make wheel
+make wheel                 # Build Python wheel package
+make portable              # Build portable executable
+make binary                # Build binary executable (directory format)
+make validate-build        # Comprehensive build validation (wheel + executable + tests)
+```
 
-# Build portable executable
-make portable
+### Testing
+```bash
+make test                  # Basic installation and functionality test
+make test-unit             # Run unit tests with pytest
+make test-cov              # Run tests with coverage
+make test-fast             # Run fast tests only (skip slow tests)
+make test-binary           # Test the built executable
 
-# Build binary executable (directory format)
-make binary
-
-# Build everything
-make build
-
-# Validate build readiness
-make validate-build
+# Run specific test categories
+pytest tests/unit          # Unit tests only
+pytest tests/cli           # CLI tests only
+pytest -m "not slow"       # Skip slow tests
+pytest -n auto             # Parallel testing
 ```
 
 ### Code Quality
-
 ```bash
-# Run all linters (black, isort, flake8, mypy)
-make lint
-
-# Auto-format code
-make format
-
-# Type checking only
-make type-check
-
-# Security checks
-make security-check
-
-# Install and run pre-commit hooks
-make pre-commit-install
-make pre-commit-run
+make lint                  # Run all linting (black, isort, flake8, mypy)
+make format                # Auto-format code (black + isort)
+make type-check            # Run mypy type checking
+make security-check        # Run security checks (bandit, safety)
+make pre-commit-run        # Run all pre-commit hooks
 ```
 
-### Dashboard (Streamlit)
-
+### Dashboard
 ```bash
-# Launch integrated dashboard (default - includes ML + LSH)
-make dashboard
-
-# Launch ML training dashboard
-make dashboard-training
-
-# Launch Supabase-focused dashboard
-make dashboard-supabase
-
-# Launch basic ML dashboard
-make dashboard-basic
-
-# Launch via CLI commands
-make dashboard-cli
-make dashboard-workflow
-```
-
-### Maintenance
-
-```bash
-# Clean all build artifacts
-make clean
-
-# Clean only Python cache files
-make clean-pyc
-
-# Clean build artifacts but keep venv
-make clean-build
-
-# Show debug information
-make debug
+make dashboard             # Launch integrated ML dashboard (default)
+make dashboard-training    # ML training dashboard
+make dashboard-supabase    # Supabase-focused dashboard
 ```
 
 ### CI/CD
-
 ```bash
-# Trigger GitHub Actions workflows
-make ci-trigger-build
-make ci-trigger-test
+make ci-trigger-build      # Trigger GitHub Actions build workflow
+make ci-trigger-test       # Trigger GitHub Actions test workflow
+make ci-watch              # Watch GitHub Actions runs in real-time
+make ci-status             # Show GitHub Actions run status
+```
 
-# Watch workflow runs in real-time
-make ci-watch
-
-# Show workflow status
-make ci-status
-
-# Show workflow logs
-make ci-logs
-make ci-logs-build
-make ci-logs-test
+### Maintenance
+```bash
+make clean                 # Clean all build artifacts
+make clean-pyc             # Clean Python cache files only
+make clean-build           # Clean build artifacts (keep venv)
 ```
 
 ## Architecture
 
-### Core Structure
+### Command Discovery
+- **Dynamic Loading**: Commands are discovered from `src/mcli/app/`, `src/mcli/self/`, `src/mcli/workflow/`, and `src/mcli/public/`
+- **Lazy Loading**: Heavy command groups use `LazyCommand` and `LazyGroup` classes to defer imports
+- **Completion-Aware**: Special wrapper `create_completion_aware_lazy_group` for shell completion support
+- **Config-Driven**: `config.toml` controls which directories are scanned (default: app, self, workflow, public)
 
-The codebase follows a modular architecture organized into several key areas:
-
-#### 1. Application Layer (`src/mcli/app/`)
-- **Entry Point:** `main.py` - Main CLI entry point with dynamic command discovery
-- **Command Groups:** Each `*_cmd.py` file defines a command group (e.g., `chat_cmd.py`, `commands_cmd.py`, `visual_cmd.py`)
-- **Discovery System:** Commands are dynamically discovered based on `config.toml` configuration
-
-**Key Pattern:** Command discovery reads `config.toml` to determine which directories to scan (`app`, `self`, `workflow`, `public`). New commands placed in these directories are automatically discovered.
-
-#### 2. Library Layer (`src/mcli/lib/`)
-- **API:** Daemon client/server, decorators for API exposure
-- **Auth:** Multi-cloud credential management (AWS, GCP, Azure, MCLI)
-- **UI:** Styling utilities (Rich-based), visual effects
-- **Services:** Redis, LSH client, data pipeline
-- **Performance:** Rust bridge, uvloop configuration, optimizer
-- **Discovery:** Command discovery and registration system
-
-**Important:** The `lib/api/daemon_decorator.py` allows functions to be exposed as daemon API endpoints. The daemon system enables MCLI to run as a background service.
-
-#### 3. Workflow Layer (`src/mcli/workflow/`)
-Workflow commands for specific tasks:
-- **daemon:** Background service management
-- **politician_trading:** Politician trading data collection/analysis
-- **model_service:** ML model serving and management
-- **lsh_integration:** Locality-sensitive hashing integration
-- **scheduler:** Cron/scheduled job management
-- **git_commit:** Git automation
-- **docker, gcloud, repo, file, sync:** Infrastructure/dev workflows
-
-**Pattern:** Each workflow directory is a self-contained module with its own command implementation.
-
-#### 4. ML/Trading Layer (`src/mcli/ml/`)
-Complete ML pipeline for trading/prediction:
-- **api:** FastAPI server with routers (predictions, backtest, portfolio, monitoring, etc.)
-- **dashboard:** Streamlit dashboards (4 variants: integrated, training, supabase, basic)
-- **training:** Model training pipelines
-- **backtesting:** Backtest engine and performance metrics
-- **monitoring:** Prometheus integration, model monitoring
-- **mlops:** MLflow and DVC integration
-- **data_ingestion:** Data pipeline for market data
-- **features:** Feature engineering
-- **predictions:** Prediction engine
-
-**Key Integration:** The ML system integrates with Supabase for data storage and LSH (Legal Services Hub) for job tracking.
-
-#### 5. Chat/AI Layer (`src/mcli/chat/`)
-- **chat.py:** Basic chat interface
-- **enhanced_chat.py:** Advanced chat with system integration
-- **command_rag.py:** Command RAG (Retrieval-Augmented Generation)
-- **system_integration.py:** System command integration
-- **system_controller.py:** System control interface
-
-**Configuration:** LLM provider is configured in `config.toml`. Supports OpenAI, Anthropic, and local Ollama models. Default is lightweight local models.
-
-#### 6. Self-Management Layer (`src/mcli/self/`)
-Commands for managing MCLI itself (updates, configuration, plugins).
-
-### Configuration System
-
-#### Main Config (`src/mcli/config.toml`)
-```toml
-[paths]
-included_dirs = ["app", "self", "workflow", "public"]
-
-[llm]
-provider = "local"  # or "openai", "anthropic"
-model = "prajjwal1/bert-tiny"
-temperature = 0.7
-use_lightweight_models = true
+### Module Structure
+```
+src/mcli/
+├── app/                   # Core application commands
+│   ├── main.py           # Main entry point, command discovery
+│   ├── chat_cmd.py       # Chat command
+│   ├── commands_cmd.py   # Command management
+│   ├── completion_cmd.py # Shell completion
+│   ├── model_cmd.py      # Model management
+│   └── video/            # Video processing commands
+├── self/                  # Self-management commands (update, performance, etc.)
+├── workflow/              # Workflow automation commands
+│   ├── politician_trading/ # Trading data scraping & analysis
+│   ├── daemon/           # Daemon management
+│   ├── scheduler/        # Scheduling
+│   └── dashboard/        # Dashboard launch
+├── lib/                   # Shared libraries
+│   ├── api/              # API functionality
+│   ├── ui/               # UI components (styling, rich output)
+│   ├── logger/           # Logging utilities
+│   ├── auth/             # Authentication
+│   └── custom_commands.py # User custom commands loader
+├── chat/                  # Chat system implementation
+├── ml/                    # ML/Trading features
+│   ├── training/         # Model training
+│   ├── backtesting/      # Backtesting
+│   ├── optimization/     # Portfolio optimization
+│   ├── dashboard/        # ML dashboards (Streamlit)
+│   └── database/         # Database interactions
+└── public/               # Public API commands
 ```
 
-#### Environment Variables (`.env`)
-Key variables:
-- `MCLI_ENV` - Environment (development/staging/production)
-- `OPENAI_API_KEY` - For GPT models
-- `ANTHROPIC_API_KEY` - For Claude
-- `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` - Database access
-- `MCLI_TRACE_LEVEL` - Debug tracing (0-3)
-- `MCLI_AUTO_OPTIMIZE` - Auto-enable performance optimizations
+### Key Design Patterns
+1. **Lazy Loading**: Use `LazyCommand`/`LazyGroup` for heavy imports to improve startup time
+2. **Click Commands**: All CLI commands use the Click framework with decorator-based definitions
+3. **Rich UI**: Use `mcli.lib.ui.styling` for colored output (success, error, info, warning)
+4. **Environment Config**: Heavy use of `.env` files for configuration (see `.env.example`)
+5. **Rust Extensions**: Performance-critical code in `mcli_rust/` (TF-IDF, file watching, etc.)
 
-### Testing Structure
-
-Tests are organized by category:
-- `tests/cli/` - CLI command tests
-- `tests/unit/` - Unit tests
-- `tests/integration/` - Integration tests
-
-**Test Markers:**
-- `@pytest.mark.slow` - Slow tests (skipped with `-m "not slow"`)
-- `@pytest.mark.integration` - Integration tests
-- `@pytest.mark.unit` - Unit tests
-- `@pytest.mark.api` - API tests
-
-### Package Entry Points
-
-Defined in `pyproject.toml`:
-```toml
-[project.scripts]
-mcli = "mcli.app.main:main"
-mcli-train = "mcli.ml.training.train:main"
-mcli-serve = "mcli.ml.serving.serve:main"
-mcli-backtest = "mcli.ml.backtesting.run:main"
-mcli-optimize = "mcli.ml.optimization.optimize:main"
-mcli-dashboard = "mcli.ml.dashboard:main"
-```
-
-### Dependencies
-
-**Core:** Click (CLI), Rich (UI), requests, tomli (TOML parser)
-**AI:** OpenAI, Anthropic, Ollama
-**Async:** FastAPI, uvicorn, uvloop, aiohttp, Redis
-**ML:** PyTorch, scikit-learn, MLflow, DVC
-**Trading:** yfinance, alpaca-py, PyPortfolioOpt
-**Database:** Supabase, SQLAlchemy, PostgreSQL
-**Dashboard:** Streamlit
-**All features included by default** (GPU support optional via `mcli-framework[gpu]`)
-
-## Development Patterns
+## Important Implementation Notes
 
 ### Adding New Commands
+1. Commands in `src/mcli/app/`, `src/mcli/self/`, `src/mcli/workflow/`, or `src/mcli/public/` are auto-discovered
+2. Use Click decorators: `@click.command()` or `@click.group()`
+3. Import UI helpers: `from mcli.lib.ui.styling import success, error, info, warning`
+4. Heavy imports should use lazy loading pattern (see `main.py:_add_lazy_commands()`)
 
-1. **Create command file** in appropriate directory (`app/`, `workflow/`, `self/`, or `public/`)
-2. **Use Click framework:**
-   ```python
-   import click
-   from mcli.lib.ui.styling import success, error, info
+### Workflow Commands
+- Workflow commands are in `src/mcli/workflow/`
+- Main entry point is `workflow.py` which creates a Click group
+- Subcommands are organized by domain (daemon, politician_trading, scheduler, etc.)
+- Skip individual workflow submodules in discovery to avoid duplicate commands (see `main.py:109-116`)
 
-   @click.command()
-   @click.option('--name', help='Your name')
-   def greet(name):
-       """Greet the user."""
-       success(f"Hello {name}!")
-   ```
+### Testing Requirements
+- Minimum coverage: 80% (configured in `pyproject.toml`)
+- Tests in `tests/` organized by category: unit, cli, integration, e2e, performance
+- Use pytest markers: `@pytest.mark.slow`, `@pytest.mark.integration`, `@pytest.mark.cli`
+- All fixtures in `tests/fixtures/` are globally available
+- Critical modules require 95% coverage: `mcli/self/`, `mcli/app/model_cmd.py`
 
-3. **Commands are auto-discovered** - No manual registration needed if placed in configured directories
+### Environment Variables
+Key variables from `.env`:
+- `MCLI_ENV`: Environment (development/staging/production)
+- `DEBUG`: Debug mode toggle
+- `MCLI_TRACE_LEVEL`: Runtime tracing (0=off, 1=basic, 2=detailed, 3=verbose)
+- `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`: For chat features
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY`: For database features
+- `MCLI_AUTO_OPTIMIZE`: Performance optimization toggle
 
-### Using the Logger
+### ML/Trading Features
+- Politician trading workflows in `src/mcli/workflow/politician_trading/`
+- Scrapers for US states, California, EU, UK, corporate registries
+- Supabase integration for data storage
+- MLflow tracking for experiments
+- Streamlit dashboards for visualization
 
-```python
-from mcli.lib.logger.logger import get_logger
-
-logger = get_logger(__name__)
-logger.info("Info message")
-logger.debug("Debug message")
-logger.error("Error message")
-```
-
-**Tracing:** Set `MCLI_TRACE_LEVEL=1` (function calls), `2` (line-by-line), or `3` (verbose)
-
-### Using UI Styling
-
-```python
-from mcli.lib.ui.styling import success, error, info, warning
-
-success("Operation completed!")
-error("Something went wrong")
-info("FYI: Important information")
-warning("Be careful!")
-```
-
-### Exposing Functions as Daemon APIs
-
-```python
-from mcli.lib.api.daemon_decorator import daemon_route
-
-@daemon_route(method="GET", path="/status")
-def get_status():
-    """Exposed as daemon API endpoint."""
-    return {"status": "ok"}
-```
-
-### Working with Supabase
-
-The project uses Supabase for:
-- Politician trading data storage
-- ML training data
-- LSH job tracking
-
-**Key Tables:**
-- `politician_trades` - Trading transactions
-- `ml_jobs` - ML training jobs
-- `lsh_jobs` - Legal Services Hub jobs
-
-**Access Pattern:**
-```python
-from mcli.lib.services.lsh_client import get_supabase_client
-
-client = get_supabase_client()
-result = client.table('politician_trades').select('*').execute()
-```
-
-## Important Implementation Details
-
-### Command Discovery Mechanism
-The `discover_modules()` function in `src/mcli/app/main.py` scans directories specified in `config.toml`. It:
-1. Reads `[paths].included_dirs` from `config.toml`
-2. Searches for Python files (excluding `__init__.py`, `setup.py`)
-3. Dynamically imports modules as Click command groups
-4. Registers commands with the main CLI
-
-**To add new command groups:** Add the directory to `included_dirs` in `config.toml`
-
-### Performance Optimization
-- Uses uvloop for async performance
-- Includes Rust extensions via `maturin` (see `build_rust.py`)
-- Lazy imports for faster startup
-- Caching via Redis (optional)
-
-### Build System
-- **UV-based:** Modern, fast dependency management
-- **Multi-platform:** Supports macOS, Linux (Windows partial)
-- **Caching:** Build cache in `.build_cache/` for faster rebuilds
-- **Wheel naming:** Automatically sanitizes wheel names (replaces `+` with `_`)
-
-### Database Migrations
-Located in `supabase/migrations/`. Apply using:
-```bash
-# Run migration script
-python scripts/run_migration.py
-```
+### Build System Details
+- **UV**: Fast Python package manager (preferred over pip)
+- **Wheel**: Standard Python package format
+- **Portable Executable**: Single-file Python executable
+- **Cache System**: Build cache in `.build_cache/` for faster rebuilds
+- **Multi-Platform**: Supports macOS (arm64/x86_64), Ubuntu, Windows
 
 ### Shell Completion
-```bash
-# Install completion for your shell
-mcli completion install
+- Install with: `mcli completion install`
+- Auto-detects bash/zsh/fish
+- Completion scripts in `src/mcli/app/completion_cmd.py`
+- Lazy groups need special wrapper for completion support
 
-# Check status
-mcli completion status
-```
-
-## Common Tasks
-
-### Running a Single Test
-```bash
-# Run specific test file
-uv run pytest tests/cli/test_chat_cmd.py -v
-
-# Run specific test function
-uv run pytest tests/cli/test_chat_cmd.py::test_chat_help -v
-```
-
-### Debugging Import Issues
-```bash
-# Enable tracing
-export MCLI_TRACE_LEVEL=1
-mcli --help
-
-# Check Python path
-uv run python -c "import sys; print('\n'.join(sys.path))"
-
-# Validate imports
-uv run python -c "import mcli; print(mcli.__file__)"
-```
-
-### Working with ML Models
-```bash
-# Train model
-mcli-train --config configs/model.yaml
-
-# Run backtest
-mcli-backtest --start-date 2024-01-01 --end-date 2024-12-31
-
-# Serve model
-mcli-serve --model-path models/best_model.pt --port 8000
-
-# Launch dashboard
-mcli-dashboard
-# or
-make dashboard
-```
-
-### Politician Trading Workflow
-```bash
-# Collect trading data
-mcli workflow politician-trading collect
-
-# Analyze trades
-mcli workflow politician-trading analyze
-
-# View dashboard
-make dashboard-integrated
-```
+### Pre-commit Hooks
+- Black: Code formatting (line length: 100)
+- isort: Import sorting (black profile)
+- flake8: Linting
+- mypy: Type checking
+- bandit: Security scanning
+- Install hooks: `make pre-commit-install`
 
 ## CI/CD Pipeline
 
-**GitHub Actions Workflows:**
-- **build.yml** - Multi-platform builds (Ubuntu, macOS)
-- **test.yml** - Multi-version testing (Python 3.9-3.12)
+### GitHub Actions Workflows
+- **ci.yml**: Main CI pipeline (lint, test, build, security scan)
+- **build.yml**: Multi-platform builds
+- **test.yml**: Multi-version Python testing (3.9-3.12)
+- **ml-pipeline.yml**: ML workflow testing
+- **publish.yml**: PyPI publishing
+- **security.yml**: Security scanning
 
-**Triggers:**
-- Push to main branch
-- Pull requests
-- Manual dispatch via `make ci-trigger-*`
+### CI Test Matrix
+- OS: Ubuntu, macOS
+- Python: 3.9, 3.10, 3.11, 3.12
+- Rust extensions tested on all platforms
 
-## Version Bumping and Publishing
+## Common Gotchas
 
-```bash
-# Bump version
-make bump-version VERSION=7.5.0
+1. **Import Order**: Use isort with black profile (see `pyproject.toml`)
+2. **Lazy Loading**: Heavy imports (torch, streamlit, etc.) must be lazy-loaded
+3. **Workflow Discovery**: Individual workflow submodules are skipped to avoid duplicate commands
+4. **Version Bumping**: Edit `pyproject.toml` version field directly
+5. **Rust Extensions**: Run `maturin develop` in `mcli_rust/` for local development
+6. **Test Markers**: Mark slow tests with `@pytest.mark.slow` to allow skipping
+7. **Environment Setup**: Always copy `.env.example` to `.env` before development
 
-# Publish to Test PyPI
-make publish-test
+## Python Version Support
 
-# Publish to PyPI (requires PYPI_TOKEN)
-make publish
-```
+- **Minimum**: Python 3.9
+- **Tested**: 3.9, 3.10, 3.11, 3.12
+- **Recommended**: 3.11 (best performance)
 
-## Project-Specific Conventions
+## Dependencies Management
 
-1. **All CLI commands use Click** - No argparse or other CLI libraries
-2. **Rich for output** - Use Rich for all formatted terminal output
-3. **Logger over print** - Use logger instead of print statements
-4. **Async-first** - Prefer async functions where I/O is involved
-5. **Type hints** - Use type hints for function signatures
-6. **Docstrings** - Include docstrings for public functions/classes
-7. **Error handling** - Use try/except with proper logging
-8. **Config over hardcoding** - Use `config.toml` or `.env` for configuration
+- **Core**: Click, Rich, requests, tomli (always installed)
+- **Optional Groups**: chat, async-extras, video, documents, viz, database, ml, gpu, monitoring, streaming, dashboard, web
+- **Development**: pytest, black, isort, mypy, ruff, pre-commit (in `[dev]` extra)
+- **All dependencies** now included by default (as of v7.0.0), optional groups are for legacy compatibility
 
-## Troubleshooting
+## Performance Considerations
 
-### "Module not found" errors
-- Ensure virtual environment is activated: `source .venv/bin/activate`
-- Reinstall in editable mode: `make install`
-- Check `config.toml` has correct `included_dirs`
+- Startup time optimization via lazy loading (see `LazyCommand`/`LazyGroup`)
+- Runtime tracing available with `MCLI_TRACE_LEVEL` for debugging
+- Rust extensions for performance-critical paths
+- Build caching in `.build_cache/` to speed up rebuilds
+- Parallel testing with `pytest -n auto`
 
-### "Command not found" after adding new command
-- Verify file is in a discovered directory (`app/`, `workflow/`, etc.)
-- Check `config.toml` includes the directory
-- Restart shell if using shell completion
+## Release Process
 
-### Dashboard not loading
-- Check Supabase credentials in `.env`
-- Verify port is not in use: `lsof -i :8501`
-- Check Streamlit logs in terminal
+1. Update version in `pyproject.toml`
+2. Run `make validate-build` to ensure everything works
+3. Run full test suite: `make test-cov`
+4. Tag release: `git tag vX.Y.Z`
+5. Push tags: `git push origin vX.Y.Z`
+6. GitHub Actions will automatically build and publish
 
-### Performance issues
-- Enable optimizations: `export MCLI_AUTO_OPTIMIZE=true`
-- Use uvloop: Already enabled by default
-- Check Redis connection if using caching
+## Entry Points
 
-## Resources
-
-- **Repository:** https://github.com/lefv/mcli
-- **PyPI:** https://pypi.org/project/mcli-framework/
-- **Documentation:** https://github.com/lefv/mcli#readme
-- **Issues:** https://github.com/lefv/mcli/issues
+Defined in `pyproject.toml [project.scripts]`:
+- `mcli`: Main CLI (`mcli.app.main:main`)
+- `mcli-train`: ML training (`mcli.ml.training.train:main`)
+- `mcli-serve`: ML serving (`mcli.ml.serving.serve:main`)
+- `mcli-backtest`: Backtesting (`mcli.ml.backtesting.run:main`)
+- `mcli-optimize`: Portfolio optimization (`mcli.ml.optimization.optimize:main`)
+- `mcli-dashboard`: Dashboard launcher (`mcli.ml.dashboard:main`)

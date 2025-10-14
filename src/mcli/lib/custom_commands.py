@@ -274,12 +274,23 @@ class CustomCommandManager:
                     spec.loader.exec_module(module)
 
                     # Look for a command or command group in the module
+                    # Prioritize Groups over Commands to handle commands with subcommands correctly
                     command_obj = None
+                    found_commands = []
+
                     for attr_name in dir(module):
                         attr = getattr(module, attr_name)
-                        if isinstance(attr, (click.Command, click.Group)):
+                        if isinstance(attr, click.Group):
+                            # Found a group - this takes priority
                             command_obj = attr
                             break
+                        elif isinstance(attr, click.Command):
+                            # Store command for fallback
+                            found_commands.append(attr)
+
+                    # If no group found, use the first command
+                    if not command_obj and found_commands:
+                        command_obj = found_commands[0]
 
                     if command_obj:
                         # Register with the target group

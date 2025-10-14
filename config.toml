@@ -1,0 +1,6 @@
+# MCLI Configuration File
+# Command discovery paths
+
+[paths]
+# Directories to scan for command modules
+included_dirs = ["app", "self", "workflow", "public", "test"]

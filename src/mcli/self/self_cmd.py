@@ -1265,6 +1265,35 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
 # Register the plugin group with self_app
 self_app.add_command(plugin)
 
+# Import and register new commands that have been moved to self
+try:
+    from mcli.self.completion_cmd import completion
+    self_app.add_command(completion, name="completion")
+    logger.debug("Added completion command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load completion command: {e}")
+
+try:
+    from mcli.self.logs_cmd import logs_group
+    self_app.add_command(logs_group, name="logs")
+    logger.debug("Added logs command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load logs command: {e}")
+
+try:
+    from mcli.self.redis_cmd import redis_group
+    self_app.add_command(redis_group, name="redis")
+    logger.debug("Added redis command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load redis command: {e}")
+
+try:
+    from mcli.self.visual_cmd import visual
+    self_app.add_command(visual, name="visual")
+    logger.debug("Added visual command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load visual command: {e}")
+
 # This part is important to make the command available to the CLI
 if __name__ == "__main__":
     self_app()

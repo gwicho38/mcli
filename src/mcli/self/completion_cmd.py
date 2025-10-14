@@ -27,7 +27,7 @@ def bash_completion(ctx):
 
     # Get the root CLI app
     app = ctx.find_root().command
-    complete = BashComplete(app, {}, "mcli", "complete")
+    complete = BashComplete(app, {}, "mcli", "_MCLI_COMPLETE")
     script = complete.source()
 
     click.echo("# Bash completion script for MCLI")
@@ -44,7 +44,7 @@ def zsh_completion(ctx):
 
     # Get the root CLI app
     app = ctx.find_root().command
-    complete = ZshComplete(app, {}, "mcli", "complete")
+    complete = ZshComplete(app, {}, "mcli", "_MCLI_COMPLETE")
     script = complete.source()
 
     click.echo("# Zsh completion script for MCLI")
@@ -61,7 +61,7 @@ def fish_completion(ctx):
 
     # Get the root CLI app
     app = ctx.find_root().command
-    complete = FishComplete(app, {}, "mcli", "complete")
+    complete = FishComplete(app, {}, "mcli", "_MCLI_COMPLETE")
     script = complete.source()
 
     click.echo("# Fish completion script for MCLI")
@@ -101,7 +101,7 @@ def install_completion(ctx, shell):
         if shell == "bash":
             from click.shell_completion import BashComplete
 
-            complete = BashComplete(app, {}, "mcli", "complete")
+            complete = BashComplete(app, {}, "mcli", "_MCLI_COMPLETE")
             script = complete.source()
 
             # Install to bash completion directory
@@ -130,7 +130,7 @@ def install_completion(ctx, shell):
         elif shell == "zsh":
             from click.shell_completion import ZshComplete
 
-            complete = ZshComplete(app, {}, "mcli", "complete")
+            complete = ZshComplete(app, {}, "mcli", "_MCLI_COMPLETE")
             script = complete.source()
 
             # Install to zsh completion directory
@@ -161,7 +161,7 @@ def install_completion(ctx, shell):
         elif shell == "fish":
             from click.shell_completion import FishComplete
 
-            complete = FishComplete(app, {}, "mcli", "complete")
+            complete = FishComplete(app, {}, "mcli", "_MCLI_COMPLETE")
             script = complete.source()
 
             # Install to fish completion directory
