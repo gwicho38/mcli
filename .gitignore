@@ -108,3 +108,4 @@ htmlcov/
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+.streamlit/secrets.toml
