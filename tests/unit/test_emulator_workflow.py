@@ -49,30 +49,64 @@ class TestEmulatorCommandStructure:
 
         metadata = data["metadata"]
         assert "platforms" in metadata
-        assert "android" in metadata["platforms"]
+        assert "android-sdk" in metadata["platforms"]
         assert "ios" in metadata["platforms"]
         assert "requires" in metadata
+        assert "avdmanager" in metadata["requires"] or "emulator" in metadata["requires"]
 
 
-class MockEmulatorManager:
-    """Mock EmulatorManager for testing"""
+class MockAndroidEmulatorManager:
+    """Mock AndroidEmulatorManager for testing"""
 
     def __init__(self):
         self.run_command_calls = []
 
-    def run_command(self, cmd, check=True):
+    def run_command(self, cmd, check=True, shell=False):
         """Mock run_command method"""
         self.run_command_calls.append(cmd)
         return 0, "", ""
 
-    def list_android_emulators(self, running_only=False):
-        """Mock list Android emulators"""
-        if running_only:
-            return [{"name": "emulator-5554", "status": "running", "type": "android"}]
+    @staticmethod
+    def get_android_sdk_path():
+        """Mock get_android_sdk_path method"""
+        return "/Users/test/android-sdk"
+
+    @staticmethod
+    def get_avdmanager_path():
+        """Mock get_avdmanager_path method"""
+        return "/Users/test/android-sdk/cmdline-tools/latest/bin/avdmanager"
+
+    @staticmethod
+    def get_emulator_path():
+        """Mock get_emulator_path method"""
+        return "/Users/test/android-sdk/emulator/emulator"
+
+    def list_avds(self):
+        """Mock list AVDs"""
         return [
-            {"name": "Pixel_6_API_34", "status": "available", "type": "android"},
-            {"name": "Nexus_5_API_30", "status": "available", "type": "android"},
+            {
+                "name": "Pixel_6_API_34",
+                "target": "Google APIs (Google Inc.)",
+                "status": "running",
+            },
+            {"name": "Outlet", "target": "Google APIs (Google Inc.)", "status": "stopped"},
         ]
+
+    def list_device_definitions(self):
+        """Mock list device definitions"""
+        return ["pixel_6", "pixel_7", "pixel_8"]
+
+    def list_system_images(self):
+        """Mock list system images"""
+        return [
+            "system-images;android-34;google_apis;arm64-v8a",
+            "system-images;android-33;google_apis;arm64-v8a",
+            "system-images;android-32;google_apis;arm64-v8a",
+        ]
+
+    def get_running_emulators(self):
+        """Mock get running emulators"""
+        return {"emulator-5554": "Pixel_6_API_34"}
 
     def list_ios_simulators(self, running_only=False):
         """Mock list iOS simulators"""
@@ -103,28 +137,20 @@ class MockEmulatorManager:
             },
         ]
 
-    def create_android_emulator(self, name, device, system_image):
-        """Mock create Android emulator"""
+    def create_avd(self, name, device, system_image, **kwargs):
+        """Mock create AVD"""
         return True
 
-    def delete_android_emulator(self, name):
-        """Mock delete Android emulator"""
+    def delete_avd(self, name):
+        """Mock delete AVD"""
         return True
 
-    def start_android_emulator(self, name, headless=False):
-        """Mock start Android emulator"""
+    def start_emulator(self, name, headless=True, **kwargs):
+        """Mock start emulator"""
         return True
 
-    def stop_android_emulator(self, device_id=None):
-        """Mock stop Android emulator"""
-        return True
-
-    def create_ios_simulator(self, name, device_type, runtime):
-        """Mock create iOS simulator"""
-        return True
-
-    def delete_ios_simulator(self, identifier):
-        """Mock delete iOS simulator"""
+    def stop_emulator(self, serial=None):
+        """Mock stop emulator"""
         return True
 
     def start_ios_simulator(self, identifier):
@@ -136,27 +162,63 @@ class MockEmulatorManager:
         return True
 
 
-class TestEmulatorManagerLogic:
-    """Test EmulatorManager class logic"""
+class TestAndroidEmulatorManagerLogic:
+    """Test AndroidEmulatorManager class logic"""
 
     def setup_method(self):
         """Setup test environment"""
-        self.manager = MockEmulatorManager()
+        self.manager = MockAndroidEmulatorManager()
 
-    def test_list_android_emulators_all(self):
-        """Test listing all Android emulators"""
-        emulators = self.manager.list_android_emulators(running_only=False)
+    def test_get_android_sdk_path(self):
+        """Test getting Android SDK path"""
+        path = self.manager.get_android_sdk_path()
 
-        assert len(emulators) == 2
-        assert all(emu["type"] == "android" for emu in emulators)
-        assert emulators[0]["name"] == "Pixel_6_API_34"
+        assert path is not None
+        assert "android-sdk" in path
 
-    def test_list_android_emulators_running(self):
-        """Test listing only running Android emulators"""
-        emulators = self.manager.list_android_emulators(running_only=True)
+    def test_get_avdmanager_path(self):
+        """Test getting avdmanager path"""
+        path = self.manager.get_avdmanager_path()
 
-        assert len(emulators) == 1
-        assert emulators[0]["status"] == "running"
+        assert path is not None
+        assert "avdmanager" in path
+
+    def test_get_emulator_path(self):
+        """Test getting emulator path"""
+        path = self.manager.get_emulator_path()
+
+        assert path is not None
+        assert "emulator" in path
+
+    def test_list_avds(self):
+        """Test listing AVDs"""
+        avds = self.manager.list_avds()
+
+        assert len(avds) > 0
+        assert "name" in avds[0]
+        assert "target" in avds[0]
+        assert "status" in avds[0]
+
+    def test_list_device_definitions(self):
+        """Test listing device definitions"""
+        devices = self.manager.list_device_definitions()
+
+        assert len(devices) > 0
+        assert "pixel_6" in devices
+
+    def test_list_system_images(self):
+        """Test listing system images"""
+        images = self.manager.list_system_images()
+
+        assert len(images) > 0
+        assert any("android-34" in img for img in images)
+
+    def test_get_running_emulators(self):
+        """Test getting running emulators"""
+        running = self.manager.get_running_emulators()
+
+        assert isinstance(running, dict)
+        assert "emulator-5554" in running
 
     def test_list_ios_simulators_all(self):
         """Test listing all iOS simulators"""
@@ -174,53 +236,60 @@ class TestEmulatorManagerLogic:
         assert len(simulators) == 1
         assert simulators[0]["status"] == "booted"
 
-    def test_create_android_emulator(self):
-        """Test creating Android emulator"""
-        result = self.manager.create_android_emulator(
-            "test_emu", "pixel_6", "system-images;android-34;google_apis;arm64-v8a"
+    def test_create_avd(self):
+        """Test creating AVD"""
+        result = self.manager.create_avd(
+            name="test_device",
+            device="pixel_6",
+            system_image="system-images;android-34;google_apis;arm64-v8a",
         )
 
         assert result is True
 
-    def test_delete_android_emulator(self):
-        """Test deleting Android emulator"""
-        result = self.manager.delete_android_emulator("test_emu")
+    def test_create_avd_with_options(self):
+        """Test creating AVD with custom options"""
+        result = self.manager.create_avd(
+            name="test_device",
+            device="pixel_6",
+            system_image="system-images;android-34;google_apis;arm64-v8a",
+            sdcard_size="512M",
+        )
 
         assert result is True
 
-    def test_start_android_emulator(self):
-        """Test starting Android emulator"""
-        result = self.manager.start_android_emulator("Pixel_6_API_34", headless=False)
+    def test_delete_avd(self):
+        """Test deleting AVD"""
+        result = self.manager.delete_avd("test_device")
 
         assert result is True
 
-    def test_start_android_emulator_headless(self):
-        """Test starting Android emulator in headless mode"""
-        result = self.manager.start_android_emulator("Pixel_6_API_34", headless=True)
+    def test_start_emulator_headless(self):
+        """Test starting emulator headlessly"""
+        result = self.manager.start_emulator("Pixel_6_API_34", headless=True)
 
         assert result is True
 
-    def test_stop_android_emulator(self):
-        """Test stopping Android emulator"""
-        result = self.manager.stop_android_emulator("emulator-5554")
+    def test_start_emulator_gui(self):
+        """Test starting emulator with GUI"""
+        result = self.manager.start_emulator("Pixel_6_API_34", headless=False)
 
         assert result is True
 
-    def test_stop_all_android_emulators(self):
-        """Test stopping all Android emulators"""
-        result = self.manager.stop_android_emulator(None)
+    def test_start_emulator_with_wipe(self):
+        """Test starting emulator with wipe data"""
+        result = self.manager.start_emulator("Pixel_6_API_34", headless=True, wipe_data=True)
 
         assert result is True
 
-    def test_create_ios_simulator(self):
-        """Test creating iOS simulator"""
-        result = self.manager.create_ios_simulator("Test iPhone", "iPhone 15", "iOS-17-2")
+    def test_stop_emulator_specific(self):
+        """Test stopping specific emulator"""
+        result = self.manager.stop_emulator("emulator-5554")
 
         assert result is True
 
-    def test_delete_ios_simulator(self):
-        """Test deleting iOS simulator"""
-        result = self.manager.delete_ios_simulator("iPhone 15")
+    def test_stop_all_emulators(self):
+        """Test stopping all emulators"""
+        result = self.manager.stop_emulator(None)
 
         assert result is True
 
@@ -243,38 +312,136 @@ class TestEmulatorManagerLogic:
         assert result is True
 
 
-class TestEmulatorCommandIntegration:
-    """Integration tests for emulator command execution"""
+class TestAndroidEmulatorCommandIntegration:
+    """Integration tests for Android emulator command execution"""
 
     @patch("subprocess.run")
-    def test_android_list_command_structure(self, mock_run):
-        """Test Android emulator list command calls correct subprocess"""
-        # Setup mock
+    def test_avdmanager_list_command(self, mock_run):
+        """Test avdmanager list avd command"""
         mock_run.return_value = Mock(
-            returncode=0, stdout="Pixel_6_API_34\nNexus_5_API_30\n", stderr=""
+            returncode=0,
+            stdout="Available Android Virtual Devices:\n    Name: Pixel_6_API_34\n---------\n",
+            stderr="",
         )
 
-        # Simulate command execution
         result = subprocess.run(
-            ["emulator", "-list-avds"], capture_output=True, text=True, check=False
+            ["avdmanager", "list", "avd"], capture_output=True, text=True, check=False
         )
 
         assert result.returncode == 0
         assert "Pixel_6_API_34" in result.stdout
 
     @patch("subprocess.run")
-    def test_android_running_devices_command(self, mock_run):
-        """Test getting running Android devices"""
+    def test_avdmanager_list_devices_command(self, mock_run):
+        """Test avdmanager list device command"""
+        mock_run.return_value = Mock(
+            returncode=0, stdout='id: 10 or "pixel_6"\n    Name: Pixel 6\n', stderr=""
+        )
+
+        result = subprocess.run(
+            ["avdmanager", "list", "device"], capture_output=True, text=True, check=False
+        )
+
+        assert result.returncode == 0
+        assert "pixel_6" in result.stdout
+
+    @patch("subprocess.run")
+    def test_avdmanager_list_targets_command(self, mock_run):
+        """Test avdmanager list target command"""
+        mock_run.return_value = Mock(
+            returncode=0,
+            stdout='id: 1 or "android-34"\n    Name: Android 14.0\n',
+            stderr="",
+        )
+
+        result = subprocess.run(
+            ["avdmanager", "list", "target"], capture_output=True, text=True, check=False
+        )
+
+        assert result.returncode == 0
+        assert "android-34" in result.stdout
+
+    @patch("subprocess.run")
+    def test_avdmanager_create_avd_command(self, mock_run):
+        """Test avdmanager AVD creation command"""
+        mock_run.return_value = Mock(returncode=0, stdout="AVD created", stderr="")
+
+        result = subprocess.run(
+            [
+                "avdmanager",
+                "create",
+                "avd",
+                "-n",
+                "test_device",
+                "-k",
+                "system-images;android-34;google_apis;arm64-v8a",
+                "-d",
+                "pixel_6",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode == 0
+
+    @patch("subprocess.run")
+    def test_avdmanager_delete_avd_command(self, mock_run):
+        """Test avdmanager delete AVD command"""
+        mock_run.return_value = Mock(returncode=0, stdout="AVD deleted", stderr="")
+
+        result = subprocess.run(
+            ["avdmanager", "delete", "avd", "-n", "test_device"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode == 0
+
+    @patch("subprocess.run")
+    def test_adb_devices_command(self, mock_run):
+        """Test getting running devices with adb"""
         # Setup mock
         mock_run.return_value = Mock(
-            returncode=0, stdout="List of devices attached\nemulator-5554\tdevice\n", stderr=""
+            returncode=0,
+            stdout="List of devices attached\nemulator-5554\tdevice\n",
+            stderr="",
         )
 
         result = subprocess.run(["adb", "devices"], capture_output=True, text=True, check=False)
 
         assert result.returncode == 0
-        assert "emulator-5554" in result.stdout
         assert "device" in result.stdout
+
+    @patch("subprocess.run")
+    def test_adb_emu_avd_name_command(self, mock_run):
+        """Test getting AVD name from running emulator"""
+        mock_run.return_value = Mock(returncode=0, stdout="Pixel_6_API_34\nOK\n", stderr="")
+
+        result = subprocess.run(
+            ["adb", "-s", "emulator-5554", "emu", "avd", "name"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode == 0
+        assert "Pixel_6_API_34" in result.stdout
+
+    @patch("subprocess.run")
+    def test_adb_emu_kill_command(self, mock_run):
+        """Test killing emulator via adb"""
+        mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
+
+        result = subprocess.run(
+            ["adb", "-s", "emulator-5554", "emu", "kill"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert result.returncode == 0
 
     @patch("subprocess.run")
     def test_ios_list_command_structure(self, mock_run):
@@ -299,133 +466,6 @@ class TestEmulatorCommandIntegration:
         assert result.returncode == 0
         data = json.loads(result.stdout)
         assert "devices" in data
-
-    @patch("subprocess.run")
-    def test_create_android_emulator_command(self, mock_run):
-        """Test Android emulator creation command"""
-        mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
-
-        result = subprocess.run(
-            [
-                "avdmanager",
-                "create",
-                "avd",
-                "-n",
-                "test_emulator",
-                "-k",
-                "system-images;android-34;google_apis;arm64-v8a",
-                "-d",
-                "pixel_6",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-        assert result.returncode == 0
-
-    @patch("subprocess.run")
-    def test_delete_android_emulator_command(self, mock_run):
-        """Test Android emulator deletion command"""
-        mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
-
-        result = subprocess.run(
-            ["avdmanager", "delete", "avd", "-n", "test_emulator"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-        assert result.returncode == 0
-
-    @patch("subprocess.Popen")
-    def test_start_android_emulator_command(self, mock_popen):
-        """Test Android emulator start command"""
-        mock_popen.return_value = Mock()
-
-        proc = subprocess.Popen(
-            ["emulator", "-avd", "Pixel_6_API_34"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-
-        assert proc is not None
-
-    @patch("subprocess.run")
-    def test_stop_android_emulator_command(self, mock_run):
-        """Test Android emulator stop command"""
-        mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
-
-        result = subprocess.run(
-            ["adb", "-s", "emulator-5554", "emu", "kill"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-        assert result.returncode == 0
-
-    @patch("subprocess.run")
-    def test_create_ios_simulator_command(self, mock_run):
-        """Test iOS simulator creation command"""
-        # Mock device types list
-        mock_device_types = {
-            "devicetypes": [
-                {
-                    "name": "iPhone 15",
-                    "identifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-15",
-                }
-            ]
-        }
-
-        # Mock runtimes list
-        mock_runtimes = {
-            "runtimes": [
-                {"name": "iOS 17.2", "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-17-2"}
-            ]
-        }
-
-        # Mock create response
-        mock_run.side_effect = [
-            Mock(returncode=0, stdout=json.dumps(mock_device_types), stderr=""),
-            Mock(returncode=0, stdout=json.dumps(mock_runtimes), stderr=""),
-            Mock(returncode=0, stdout="ABCD-1234-5678", stderr=""),
-        ]
-
-        # Get device types
-        result1 = subprocess.run(
-            ["xcrun", "simctl", "list", "devicetypes", "-j"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert result1.returncode == 0
-
-        # Get runtimes
-        result2 = subprocess.run(
-            ["xcrun", "simctl", "list", "runtimes", "-j"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert result2.returncode == 0
-
-        # Create simulator
-        result3 = subprocess.run(
-            [
-                "xcrun",
-                "simctl",
-                "create",
-                "Test iPhone",
-                "com.apple.CoreSimulator.SimDeviceType.iPhone-15",
-                "com.apple.CoreSimulator.SimRuntime.iOS-17-2",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert result3.returncode == 0
 
     @patch("subprocess.run")
     def test_delete_ios_simulator_command(self, mock_run):
@@ -480,15 +520,25 @@ class TestEmulatorErrorHandling:
 
     def setup_method(self):
         """Setup test environment"""
-        self.manager = MockEmulatorManager()
+        self.manager = MockAndroidEmulatorManager()
 
     @patch("subprocess.run")
-    def test_android_list_command_not_found(self, mock_run):
+    def test_avdmanager_command_not_found(self, mock_run):
+        """Test handling when avdmanager command not found"""
+        mock_run.side_effect = FileNotFoundError("avdmanager: command not found")
+
+        with pytest.raises(FileNotFoundError):
+            subprocess.run(
+                ["avdmanager", "list", "avd"], capture_output=True, text=True, check=True
+            )
+
+    @patch("subprocess.run")
+    def test_emulator_command_not_found(self, mock_run):
         """Test handling when emulator command not found"""
         mock_run.side_effect = FileNotFoundError("emulator: command not found")
 
         with pytest.raises(FileNotFoundError):
-            subprocess.run(["emulator", "-list-avds"], capture_output=True, text=True, check=True)
+            subprocess.run(["emulator", "-avd", "test"], capture_output=True, text=True, check=True)
 
     @patch("subprocess.run")
     def test_ios_list_command_not_found(self, mock_run):
@@ -504,14 +554,24 @@ class TestEmulatorErrorHandling:
             )
 
     @patch("subprocess.run")
-    def test_android_emulator_creation_failure(self, mock_run):
-        """Test handling Android emulator creation failure"""
+    def test_avd_creation_invalid_system_image(self, mock_run):
+        """Test handling AVD creation with invalid system image"""
         mock_run.return_value = Mock(
             returncode=1, stdout="", stderr="Error: Package path is not valid"
         )
 
         result = subprocess.run(
-            ["avdmanager", "create", "avd", "-n", "test", "-k", "invalid-image"],
+            [
+                "avdmanager",
+                "create",
+                "avd",
+                "-n",
+                "test",
+                "-k",
+                "invalid-image",
+                "-d",
+                "pixel_6",
+            ],
             capture_output=True,
             text=True,
             check=False,
@@ -521,19 +581,31 @@ class TestEmulatorErrorHandling:
         assert "Error" in result.stderr
 
     @patch("subprocess.run")
-    def test_ios_simulator_creation_failure(self, mock_run):
-        """Test handling iOS simulator creation failure"""
-        mock_run.return_value = Mock(returncode=1, stdout="", stderr="Invalid device type")
+    def test_avd_already_exists(self, mock_run):
+        """Test handling when AVD already exists"""
+        mock_run.return_value = Mock(
+            returncode=1, stdout="", stderr="Error: AVD 'test' already exists"
+        )
 
         result = subprocess.run(
-            ["xcrun", "simctl", "create", "test", "invalid-type", "iOS-17-2"],
+            [
+                "avdmanager",
+                "create",
+                "avd",
+                "-n",
+                "test",
+                "-k",
+                "system-images;android-34;google_apis;arm64-v8a",
+                "-d",
+                "pixel_6",
+            ],
             capture_output=True,
             text=True,
             check=False,
         )
 
         assert result.returncode != 0
-        assert "Invalid" in result.stderr
+        assert "already exists" in result.stderr
 
     @patch("subprocess.run")
     def test_simulator_already_running(self, mock_run):
@@ -557,15 +629,21 @@ class TestEmulatorRealCommandExecution:
     Marked as slow to allow skipping.
     """
 
-    def test_check_android_tools_available(self):
-        """Test if Android tools are available on system"""
+    def test_check_android_sdk_available(self):
+        """Test if Android SDK is available on system"""
         try:
+            # Try avdmanager
             result = subprocess.run(
-                ["emulator", "-version"], capture_output=True, text=True, check=False, timeout=5
+                ["avdmanager", "list", "avd"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
             )
-            assert result.returncode in [0, 1]  # 0 or 1 both indicate tool exists
+            if result.returncode != 0:
+                pytest.skip("Android SDK not installed or not in PATH")
         except (FileNotFoundError, subprocess.TimeoutExpired):
-            pytest.skip("Android emulator tools not available")
+            pytest.skip("Android SDK tools not available")
 
     def test_check_ios_tools_available(self):
         """Test if iOS tools are available on system"""
