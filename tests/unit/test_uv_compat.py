@@ -4,19 +4,20 @@ Test UV compatibility with the build system.
 This script checks if the build system is properly configured for UV.
 """
 
+import logging
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
-import shutil
 from pathlib import Path
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class Colors:
     """Terminal colors for output formatting."""
+
     GREEN = "\033[0;32m"
     YELLOW = "\033[0;33m"
     RED = "\033[0;31m"
@@ -35,9 +36,7 @@ def log(message, color=None):
 def check_command(command):
     """Check if a command is available."""
     try:
-        subprocess.run(
-            command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
+        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return True
     except (subprocess.SubprocessError, FileNotFoundError):
         return False
@@ -65,16 +64,19 @@ def run_command(command, description, timeout=60, check=True):
 def check_build_files():
     """Check if build files are properly configured for UV."""
     issues = []
-    
+
     # Check pyproject.toml
     if os.path.exists("pyproject.toml"):
         with open("pyproject.toml", "r") as f:
             content = f.read()
-            if "poetry" in content.lower() and "build-backend = \"poetry.core.masonry.api\"" in content:
+            if (
+                "poetry" in content.lower()
+                and 'build-backend = "poetry.core.masonry.api"' in content
+            ):
                 issues.append("pyproject.toml still references poetry build backend")
     else:
         issues.append("pyproject.toml not found")
-    
+
     # Check Makefile
     if os.path.exists("Makefile"):
         with open("Makefile", "r") as f:
@@ -85,11 +87,11 @@ def check_build_files():
                 issues.append("Makefile doesn't contain 'uv' references")
     else:
         issues.append("Makefile not found")
-    
+
     # Check if uv.lock exists
     if not os.path.exists("uv.lock"):
         issues.append("uv.lock file not found")
-    
+
     return issues
 
 
@@ -99,10 +101,11 @@ def test_virtual_env():
     test_dir = tempfile.mkdtemp()
     try:
         os.chdir(test_dir)
-        
+
         # Create a minimal pyproject.toml
         with open("pyproject.toml", "w") as f:
-            f.write("""
+            f.write(
+                """
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
@@ -112,18 +115,19 @@ name = "uvtest"
 version = "0.1.0"
 description = "Test UV compatibility"
 requires-python = ">=3.9"
-            """)
-        
+            """
+            )
+
         # Test UV venv creation
         success, _ = run_command(["uv", "venv"], "Create virtual environment")
         if not success:
             return False
-        
+
         # Test UV pip install
         success, _ = run_command(["uv", "pip", "install", "rich"], "Install package")
         if not success:
             return False
-        
+
         return True
     finally:
         # Clean up
@@ -135,21 +139,21 @@ def main():
     """Main function."""
     log("Testing UV compatibility with build system", Colors.CYAN)
     log("-" * 50)
-    
+
     # Check if UV is installed
     if not check_command(["uv", "--version"]):
         log("❌ UV is not installed or not in PATH", Colors.RED)
         return 1
-    
+
     success, output = run_command(["uv", "--version"], "Check UV version")
     log(f"UV version: {output.strip()}")
-    
+
     # Check Python version
     success, output = run_command(["python", "--version"], "Check Python version")
     if success:
         python_version = output.strip()
         log(f"Python version: {python_version}")
-    
+
     # Check for issues in build files
     issues = check_build_files()
     if issues:
@@ -158,7 +162,7 @@ def main():
             log(f"  - {issue}", Colors.YELLOW)
     else:
         log("✅ Build files are properly configured for UV", Colors.GREEN)
-    
+
     # Test virtual environment management
     log("Testing UV virtual environment management...", Colors.CYAN)
     if test_virtual_env():
@@ -166,7 +170,7 @@ def main():
     else:
         log("❌ Issues with UV virtual environment management", Colors.RED)
         issues.append("UV virtual environment management failed")
-    
+
     # Test compilation with build
     log("Testing build package with UV...", Colors.CYAN)
     success, _ = run_command(
@@ -174,20 +178,29 @@ def main():
     )
     if success:
         build_success, _ = run_command(
-            ["python", "-m", "build", "--wheel", "--no-isolation", "--skip-dependency-check", "--outdir", "test_dist"],
+            [
+                "python",
+                "-m",
+                "build",
+                "--wheel",
+                "--no-isolation",
+                "--skip-dependency-check",
+                "--outdir",
+                "test_dist",
+            ],
             "Build wheel (dry run)",
             check=False,
         )
         # Clean up test build directory
         if os.path.exists("test_dist"):
             shutil.rmtree("test_dist")
-        
+
         if build_success:
             log("✅ Build command works with UV", Colors.GREEN)
         else:
             log("❌ Build command failed with UV", Colors.RED)
             issues.append("Build command failed")
-    
+
     # Summary
     log("-" * 50)
     if issues:

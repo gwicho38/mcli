@@ -2,14 +2,15 @@
 
 import asyncio
 import json
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-import aiohttp
-from aiohttp import ClientSession
-
+import os
 import sys
 from pathlib import Path
-import os
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import aiohttp
+import pytest
+from aiohttp import ClientSession
+
 
 # Mock the LSHClient and LSHEventProcessor classes for testing
 class LSHClient:
@@ -70,6 +71,7 @@ class LSHClient:
 
     async def list_webhooks(self):
         return await self._request("GET", "/api/webhooks")
+
 
 class LSHEventProcessor:
     def __init__(self, client):
@@ -185,11 +187,7 @@ class TestLSHClient:
     @pytest.mark.asyncio
     async def test_get_status(self, client):
         """Test status endpoint"""
-        expected_status = {
-            "pid": 12345,
-            "uptime": 3600,
-            "memoryUsage": {"heapUsed": 1000000}
-        }
+        expected_status = {"pid": 12345, "uptime": 3600, "memoryUsage": {"heapUsed": 1000000}}
 
         with patch.object(client, "_request") as mock_request:
             mock_request.return_value = expected_status
@@ -203,7 +201,7 @@ class TestLSHClient:
         """Test job listing with filters"""
         mock_jobs = [
             {"id": "1", "name": "job1", "status": "running"},
-            {"id": "2", "name": "job2", "status": "pending"}
+            {"id": "2", "name": "job2", "status": "pending"},
         ]
 
         with patch.object(client, "_request") as mock_request:
@@ -233,17 +231,9 @@ class TestLSHClient:
     @pytest.mark.asyncio
     async def test_create_job(self, client):
         """Test job creation"""
-        job_spec = {
-            "name": "new-job",
-            "command": "echo test",
-            "type": "shell"
-        }
+        job_spec = {"name": "new-job", "command": "echo test", "type": "shell"}
 
-        created_job = {
-            "id": "job_456",
-            **job_spec,
-            "status": "pending"
-        }
+        created_job = {"id": "job_456", **job_spec, "status": "pending"}
 
         with patch.object(client, "_request") as mock_request:
             mock_request.return_value = created_job
@@ -394,8 +384,8 @@ class TestLSHEventProcessor:
             "data": {
                 "job": {"id": "123", "name": "test", "status": "completed"},
                 "stdout": "output",
-                "stderr": ""
-            }
+                "stderr": "",
+            },
         }
 
         await processor.process_job_event(event_data)

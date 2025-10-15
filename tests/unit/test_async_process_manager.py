@@ -7,21 +7,24 @@ Tests are conditional on dependencies being available.
 
 import asyncio
 import json
-import pytest
 import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # Check for async dependencies
 try:
     import aiosqlite
+
     from mcli.workflow.daemon.async_process_manager import (
-        ProcessStatus,
-        ProcessInfo,
         AsyncProcessContainer,
         AsyncProcessManager,
+        ProcessInfo,
+        ProcessStatus,
     )
+
     HAS_ASYNC_DEPS = True
 except (ImportError, ModuleNotFoundError):
     HAS_ASYNC_DEPS = False

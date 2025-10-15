@@ -9,15 +9,15 @@ These tests connect to actual Supabase instance to validate:
 """
 
 import os
+
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError
 
-
 # Skip if no Supabase credentials (for local testing without credentials)
 requires_supabase = pytest.mark.skipif(
-    not os.getenv('SUPABASE_URL') or not os.getenv('SUPABASE_SERVICE_ROLE_KEY'),
-    reason="Supabase credentials not available"
+    not os.getenv("SUPABASE_URL") or not os.getenv("SUPABASE_SERVICE_ROLE_KEY"),
+    reason="Supabase credentials not available",
 )
 
 
@@ -65,27 +65,28 @@ class TestLiveSupabaseConnection:
 
         # Check connection pool configuration
         assert engine.pool.timeout() <= 30, "Pool timeout should be 30 seconds or less"
-        assert hasattr(engine.pool, '_pre_ping'), "Pool should have pre-ping enabled"
+        assert hasattr(engine.pool, "_pre_ping"), "Pool should have pre-ping enabled"
 
         print("✅ Connection timeout configuration: SUCCESS")
 
     def test_ipv4_only_connection(self):
         """Test that connection uses IPv4, not IPv6"""
-        from mcli.ml.database.session import engine
         import socket
+
+        from mcli.ml.database.session import engine
 
         # Get the database URL
         db_url = str(engine.url)
 
-        if 'pooler.supabase.com' in db_url:
+        if "pooler.supabase.com" in db_url:
             # Extract hostname
-            hostname = db_url.split('@')[1].split(':')[0]
+            hostname = db_url.split("@")[1].split(":")[0]
 
             # Resolve hostname to IP
             try:
                 ip_address = socket.gethostbyname(hostname)
                 # IPv4 addresses don't contain colons (IPv6 do)
-                assert ':' not in ip_address, f"Expected IPv4 address, got: {ip_address}"
+                assert ":" not in ip_address, f"Expected IPv4 address, got: {ip_address}"
                 print(f"✅ IPv4-only connection: SUCCESS (resolved to {ip_address})")
             except socket.gaierror as e:
                 pytest.skip(f"Could not resolve hostname: {e}")
@@ -103,15 +104,19 @@ class TestLiveSupabaseConnection:
             pytest.fail("Should have raised an exception for invalid query")
         except Exception as e:
             # Exception should be raised and handled
-            assert "nonexistent" in str(e).lower() or "not exist" in str(e).lower() or "relation" in str(e).lower()
+            assert (
+                "nonexistent" in str(e).lower()
+                or "not exist" in str(e).lower()
+                or "relation" in str(e).lower()
+            )
             print("✅ Error handling on bad query: SUCCESS")
 
     def test_connection_pooler_vs_direct_connection(self):
         """Compare pooler connection with direct connection (if password available)"""
-        database_url = os.getenv('DATABASE_URL', '')
+        database_url = os.getenv("DATABASE_URL", "")
 
         # Check if using pooler (placeholder password detected)
-        if 'your_password' in database_url or not database_url:
+        if "your_password" in database_url or not database_url:
             print("✅ Using connection pooler (placeholder password detected)")
             assert True, "Correctly using pooler"
         else:
@@ -125,13 +130,13 @@ class TestSupabasePoolerModes:
 
     def test_session_mode_pooler(self):
         """Test Session mode pooler (port 5432)"""
-        supabase_url = os.getenv('SUPABASE_URL', '')
-        service_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
+        supabase_url = os.getenv("SUPABASE_URL", "")
+        service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
         if not supabase_url or not service_key:
             pytest.skip("Supabase credentials not available")
 
-        project_ref = supabase_url.replace('https://', '').split('.')[0]
+        project_ref = supabase_url.replace("https://", "").split(".")[0]
         session_mode_url = f"postgresql://postgres.{project_ref}:{service_key}@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
 
         from sqlalchemy import create_engine
@@ -149,13 +154,13 @@ class TestSupabasePoolerModes:
 
     def test_transaction_mode_pooler(self):
         """Test Transaction mode pooler (port 6543)"""
-        supabase_url = os.getenv('SUPABASE_URL', '')
-        service_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
+        supabase_url = os.getenv("SUPABASE_URL", "")
+        service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
         if not supabase_url or not service_key:
             pytest.skip("Supabase credentials not available")
 
-        project_ref = supabase_url.replace('https://', '').split('.')[0]
+        project_ref = supabase_url.replace("https://", "").split(".")[0]
         transaction_mode_url = f"postgresql://postgres.{project_ref}:{service_key}@aws-0-us-west-1.pooler.supabase.com:6543/postgres"
 
         from sqlalchemy import create_engine
@@ -207,5 +212,5 @@ class TestConnectionRecovery:
         print("✅ Pool pre-ping functionality: SUCCESS")
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '-s', '--tb=short'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "-s", "--tb=short"])

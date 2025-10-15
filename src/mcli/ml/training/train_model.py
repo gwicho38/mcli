@@ -452,9 +452,7 @@ def save_model(
             "model_architecture": {
                 "input_size": model.network[0].in_features,
                 "hidden_layers": [
-                    layer.out_features
-                    for layer in model.network
-                    if isinstance(layer, nn.Linear)
+                    layer.out_features for layer in model.network if isinstance(layer, nn.Linear)
                 ][:-1],
             },
             "scaler_mean": scaler.mean_.tolist(),

@@ -29,10 +29,11 @@ except ImportError:
 # Try to import streamlit-extras
 try:
     from mcli.ml.dashboard.streamlit_extras_utils import (
-        section_header,
         enhanced_metrics,
+        section_header,
         vertical_space,
     )
+
     HAS_EXTRAS = True
 except ImportError:
     HAS_EXTRAS = False
@@ -76,7 +77,9 @@ def show_monte_carlo_predictions():
     )
 
     if not HAS_MONTE_CARLO:
-        st.error("⚠️ Monte Carlo simulator not available. Please ensure all dependencies are installed.")
+        st.error(
+            "⚠️ Monte Carlo simulator not available. Please ensure all dependencies are installed."
+        )
         st.info(
             """
             **Required:**
@@ -156,17 +159,13 @@ def show_monte_carlo_predictions():
         )
 
     # Main content area with tabs
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "🎯 Quick Simulation",
-        "📊 Advanced Analysis",
-        "📚 Learn More",
-        "⚙️ Custom Parameters"
-    ])
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ["🎯 Quick Simulation", "📊 Advanced Analysis", "📚 Learn More", "⚙️ Custom Parameters"]
+    )
 
     with tab1:
         show_quick_simulation(
-            num_simulations, days_forward, num_paths_display,
-            show_percentiles, confidence_level
+            num_simulations, days_forward, num_paths_display, show_percentiles, confidence_level
         )
 
     with tab2:
@@ -191,7 +190,7 @@ def show_quick_simulation(
     section_header(
         "🚀 Quick Start Simulation",
         "Enter stock details and get instant Monte Carlo predictions",
-        divider="blue"
+        divider="blue",
     )
 
     # Input form
@@ -306,36 +305,41 @@ def run_simulation(
     section_header(
         f"📈 Simulation Results: {stock_symbol}",
         f"{politician_name} • {num_simulations:,} simulations • {days_forward} days",
-        divider="green"
+        divider="green",
     )
 
     # Key metrics
     if HAS_EXTRAS and enhanced_metrics:
-        enhanced_metrics([
-            {
-                "label": "Expected Price",
-                "value": f"${stats['expected_final_price']:.2f}",
-                "delta": f"{stats['expected_return']:.1f}%"
-            },
-            {
-                "label": "Probability of Profit",
-                "value": f"{stats['probability_profit']:.1f}%",
-            },
-            {
-                "label": "Value at Risk (95%)",
-                "value": f"{stats['value_at_risk_95']:.1f}%",
-            },
-            {
-                "label": "Best Case (95th %ile)",
-                "value": f"${stats['percentile_95']:.2f}",
-                "delta": f"+{((stats['percentile_95']/current_price - 1) * 100):.1f}%"
-            },
-        ])
+        enhanced_metrics(
+            [
+                {
+                    "label": "Expected Price",
+                    "value": f"${stats['expected_final_price']:.2f}",
+                    "delta": f"{stats['expected_return']:.1f}%",
+                },
+                {
+                    "label": "Probability of Profit",
+                    "value": f"{stats['probability_profit']:.1f}%",
+                },
+                {
+                    "label": "Value at Risk (95%)",
+                    "value": f"{stats['value_at_risk_95']:.1f}%",
+                },
+                {
+                    "label": "Best Case (95th %ile)",
+                    "value": f"${stats['percentile_95']:.2f}",
+                    "delta": f"+{((stats['percentile_95']/current_price - 1) * 100):.1f}%",
+                },
+            ]
+        )
     else:
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            st.metric("Expected Price", f"${stats['expected_final_price']:.2f}",
-                     f"{stats['expected_return']:.1f}%")
+            st.metric(
+                "Expected Price",
+                f"${stats['expected_final_price']:.2f}",
+                f"{stats['expected_return']:.1f}%",
+            )
         with col2:
             st.metric("Profit Probability", f"{stats['probability_profit']:.1f}%")
         with col3:
@@ -349,8 +353,7 @@ def run_simulation(
     st.subheader("📊 Simulated Price Paths")
 
     path_fig = simulator.create_path_visualization(
-        num_paths_to_plot=num_paths_display,
-        show_percentiles=show_percentiles
+        num_paths_to_plot=num_paths_display, show_percentiles=show_percentiles
     )
     st.plotly_chart(path_fig, config={"displayModeBar": True}, use_container_width=True)
 
@@ -382,7 +385,9 @@ def run_simulation(
             st.markdown(f"- Median Return: {stats['median_return']:.2f}%")
             st.markdown(f"- Std Dev Return: {stats['std_return']:.2f}%")
             st.markdown(f"- 5th Percentile: {stats['value_at_risk_95']:.2f}%")
-            st.markdown(f"- 95th Percentile: {((stats['percentile_95']/current_price - 1)*100):.2f}%")
+            st.markdown(
+                f"- 95th Percentile: {((stats['percentile_95']/current_price - 1)*100):.2f}%"
+            )
 
     # Confidence intervals
     confidence_intervals = simulator.calculate_confidence_intervals([confidence_level])
@@ -401,7 +406,7 @@ def show_advanced_analysis(num_simulations: int, days_forward: int, confidence_l
     section_header(
         "🔬 Advanced Analysis",
         "Use historical price data for more accurate simulations",
-        divider="violet"
+        divider="violet",
     )
 
     st.info(
@@ -421,10 +426,11 @@ def show_educational_content():
     section_header(
         "📚 Understanding Monte Carlo Simulation",
         "Learn how probabilistic modeling predicts trading outcomes",
-        divider="orange"
+        divider="orange",
     )
 
-    st.markdown("""
+    st.markdown(
+        """
     ## What is Monte Carlo Simulation?
 
     Monte Carlo simulation is a computational technique that uses random sampling
@@ -467,17 +473,14 @@ def show_educational_content():
     - **Risk management**: Understand downside risk before entering positions
     - **Position sizing**: Determine appropriate investment amounts
     - **Timing analysis**: Compare different holding periods
-    """)
+    """
+    )
 
 
 def show_custom_parameters(num_simulations: int, days_forward: int):
     """Custom parameter configuration"""
 
-    section_header(
-        "⚙️ Custom Parameters",
-        "Advanced configuration for power users",
-        divider="gray"
-    )
+    section_header("⚙️ Custom Parameters", "Advanced configuration for power users", divider="gray")
 
     st.warning(
         "⚠️ **Advanced Users Only** - Modifying these parameters requires "
@@ -545,8 +548,7 @@ def show_custom_parameters(num_simulations: int, days_forward: int):
 
     if submitted:
         st.success(
-            f"Custom simulation configured with μ={custom_drift:.4f}, "
-            f"σ={custom_volatility:.4f}"
+            f"Custom simulation configured with μ={custom_drift:.4f}, " f"σ={custom_volatility:.4f}"
         )
 
 

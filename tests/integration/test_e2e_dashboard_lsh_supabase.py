@@ -10,22 +10,24 @@ import pytest
 # Skip all tests in this module - requires external service dependencies
 pytestmark = pytest.mark.skip(reason="requires external services (Supabase, LSH daemon)")
 
-import os
-import sys
-import requests
-import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, Any, List
 import asyncio
 import json
+import os
+import sys
+from datetime import datetime, timedelta
+from typing import Any, Dict, List
+
+import pandas as pd
+import requests
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
 # Conditionally import external dependencies (only if not skipped)
 try:
-    from supabase import create_client, Client
     from dotenv import load_dotenv
+    from supabase import Client, create_client
+
     HAS_DEPENDENCIES = True
 except ImportError:
     # If imports fail, tests are already skipped
@@ -149,7 +151,9 @@ class TestInfrastructureConnectivity:
                 assert field in disclosure, f"Missing field '{field}' in trading_disclosures"
 
             print(f"✓ Trading Disclosures Table: {len(response.data)} records")
-            print(f"  Sample: {disclosure.get('asset_ticker')} - {disclosure.get('transaction_type')}")
+            print(
+                f"  Sample: {disclosure.get('asset_ticker')} - {disclosure.get('transaction_type')}"
+            )
         else:
             print(f"⚠ Trading Disclosures Table: Empty (no test data)")
 
@@ -180,7 +184,9 @@ class TestDataFlow:
 
     def test_fetch_politicians_for_dashboard(self, supabase_client):
         """Test fetching politicians list for dashboard dropdown"""
-        response = supabase_client.table("politicians").select("id, first_name, last_name").execute()
+        response = (
+            supabase_client.table("politicians").select("id, first_name, last_name").execute()
+        )
 
         assert response.data is not None, "Failed to fetch politicians"
         assert len(response.data) > 0, "No politicians available"
@@ -200,12 +206,14 @@ class TestDataFlow:
         """Test fetching trading history for a specific politician"""
         politician_id = sample_politician["id"]
 
-        response = supabase_client.table("trading_disclosures") \
-            .select("*") \
-            .eq("politician_id", politician_id) \
-            .order("disclosure_date", desc=True) \
-            .limit(100) \
+        response = (
+            supabase_client.table("trading_disclosures")
+            .select("*")
+            .eq("politician_id", politician_id)
+            .order("disclosure_date", desc=True)
+            .limit(100)
             .execute()
+        )
 
         assert response.data is not None, "Failed to fetch trading history"
 
@@ -217,20 +225,26 @@ class TestDataFlow:
             for col in required_columns:
                 assert col in df.columns, f"Missing column '{col}' in trading data"
 
-            print(f"✓ Fetched {len(df)} trades for {sample_politician['first_name']} {sample_politician['last_name']}")
+            print(
+                f"✓ Fetched {len(df)} trades for {sample_politician['first_name']} {sample_politician['last_name']}"
+            )
             print(f"  Tickers: {df['asset_ticker'].unique()[:5].tolist()}")
         else:
-            print(f"⚠ No trading history for {sample_politician['first_name']} {sample_politician['last_name']}")
+            print(
+                f"⚠ No trading history for {sample_politician['first_name']} {sample_politician['last_name']}"
+            )
 
     def test_fetch_recent_disclosures(self, supabase_client):
         """Test fetching recent trading disclosures (last 90 days)"""
         cutoff_date = (datetime.now() - timedelta(days=90)).isoformat()
 
-        response = supabase_client.table("trading_disclosures") \
-            .select("*") \
-            .gte("disclosure_date", cutoff_date) \
-            .order("disclosure_date", desc=True) \
+        response = (
+            supabase_client.table("trading_disclosures")
+            .select("*")
+            .gte("disclosure_date", cutoff_date)
+            .order("disclosure_date", desc=True)
             .execute()
+        )
 
         assert response.data is not None, "Failed to fetch recent disclosures"
 
@@ -245,13 +259,17 @@ class TestDataFlow:
         """Test calculating politician trading statistics"""
         politician_id = sample_politician["id"]
 
-        response = supabase_client.table("trading_disclosures") \
-            .select("*") \
-            .eq("politician_id", politician_id) \
+        response = (
+            supabase_client.table("trading_disclosures")
+            .select("*")
+            .eq("politician_id", politician_id)
             .execute()
+        )
 
         if not response.data or len(response.data) == 0:
-            pytest.skip(f"No trades for {sample_politician['first_name']} {sample_politician['last_name']}")
+            pytest.skip(
+                f"No trades for {sample_politician['first_name']} {sample_politician['last_name']}"
+            )
 
         df = pd.DataFrame(response.data)
 
@@ -267,7 +285,9 @@ class TestDataFlow:
         assert 0 <= purchase_ratio <= 1, f"Invalid purchase ratio: {purchase_ratio}"
         assert unique_stocks >= 0, f"Invalid unique stocks count: {unique_stocks}"
 
-        print(f"✓ Calculated statistics for {sample_politician['first_name']} {sample_politician['last_name']}")
+        print(
+            f"✓ Calculated statistics for {sample_politician['first_name']} {sample_politician['last_name']}"
+        )
         print(f"  Total trades: {total_trades}")
         print(f"  Purchases: {purchases} ({purchase_ratio*100:.1f}%)")
         print(f"  Sales: {sales}")
@@ -291,10 +311,7 @@ class TestMLPredictionPipeline:
     @pytest.fixture(scope="class")
     def sample_trading_data(self, supabase_client):
         """Get sample trading data for predictions"""
-        response = supabase_client.table("trading_disclosures") \
-            .select("*") \
-            .limit(100) \
-            .execute()
+        response = supabase_client.table("trading_disclosures").select("*").limit(100).execute()
 
         if not response.data or len(response.data) == 0:
             pytest.skip("No trading data available")
@@ -311,25 +328,35 @@ class TestMLPredictionPipeline:
         politician_id = sample["politician_id"]
 
         # Fetch politician's historical data
-        history_response = supabase_client.table("trading_disclosures") \
-            .select("*") \
-            .eq("politician_id", politician_id) \
+        history_response = (
+            supabase_client.table("trading_disclosures")
+            .select("*")
+            .eq("politician_id", politician_id)
             .execute()
+        )
 
         history_df = pd.DataFrame(history_response.data)
 
         # Calculate politician statistics
         total_trades = len(history_df)
-        purchases = len(history_df[history_df["transaction_type"].str.contains("purchase", case=False, na=False)])
+        purchases = len(
+            history_df[
+                history_df["transaction_type"].str.contains("purchase", case=False, na=False)
+            ]
+        )
         purchase_ratio = purchases / total_trades if total_trades > 0 else 0.5
-        unique_stocks = history_df["asset_ticker"].nunique() if "asset_ticker" in history_df.columns else 1
+        unique_stocks = (
+            history_df["asset_ticker"].nunique() if "asset_ticker" in history_df.columns else 1
+        )
 
         # Engineer features (matching training pipeline)
         features = {
             "politician_trade_count": min(total_trades / 100, 1.0),
             "politician_purchase_ratio": purchase_ratio,
             "politician_diversity": min(unique_stocks / 50, 1.0),
-            "transaction_is_purchase": 1.0 if "purchase" in str(sample["transaction_type"]).lower() else 0.0,
+            "transaction_is_purchase": (
+                1.0 if "purchase" in str(sample["transaction_type"]).lower() else 0.0
+            ),
             "transaction_amount_log": 4.5,  # Placeholder
             "transaction_amount_normalized": 0.5,  # Placeholder
             "market_cap_score": 0.5,
@@ -359,6 +386,7 @@ class TestMLPredictionPipeline:
 
         # Look for model files
         import glob
+
         model_files = glob.glob(os.path.join(models_dir, "*.pt"))
         metadata_files = glob.glob(os.path.join(models_dir, "*.json"))
 
@@ -368,7 +396,7 @@ class TestMLPredictionPipeline:
         # Load latest model metadata
         latest_metadata = sorted(metadata_files, reverse=True)[0]
 
-        with open(latest_metadata, 'r') as f:
+        with open(latest_metadata, "r") as f:
             metadata = json.load(f)
 
         # Verify metadata structure
@@ -378,7 +406,9 @@ class TestMLPredictionPipeline:
 
         # Verify training metrics
         assert "final_metrics" in metadata, "Missing final_metrics in model metadata"
-        assert "train_accuracy" in metadata["final_metrics"], "Missing train_accuracy in final_metrics"
+        assert (
+            "train_accuracy" in metadata["final_metrics"]
+        ), "Missing train_accuracy in final_metrics"
 
         print(f"✓ Model metadata loaded: {metadata['model_name']}")
         print(f"  Accuracy: {metadata['accuracy']:.4f}")
@@ -436,7 +466,11 @@ class TestMLPredictionPipeline:
         confidence = min(0.5 + abs(score - 0.5), 0.95)
 
         # Verify prediction structure
-        assert recommendation in ["BUY", "SELL", "HOLD"], f"Invalid recommendation: {recommendation}"
+        assert recommendation in [
+            "BUY",
+            "SELL",
+            "HOLD",
+        ], f"Invalid recommendation: {recommendation}"
         assert -1.0 <= predicted_return <= 1.0, f"Predicted return out of range: {predicted_return}"
         assert 0.5 <= confidence <= 0.95, f"Confidence out of range: {confidence}"
 
@@ -523,10 +557,12 @@ class TestEndToEndWorkflow:
 
         # Step 2: Fetch trading history from Supabase
         print("\n→ Step 2: Fetching trading history from Supabase...")
-        trades = supabase_client.table("trading_disclosures") \
-            .select("*") \
-            .eq("politician_id", politician["id"]) \
+        trades = (
+            supabase_client.table("trading_disclosures")
+            .select("*")
+            .eq("politician_id", politician["id"])
             .execute()
+        )
 
         trades_df = pd.DataFrame(trades.data)
         print(f"  ✓ Fetched {len(trades_df)} trades")
@@ -534,9 +570,21 @@ class TestEndToEndWorkflow:
         # Step 3: Calculate politician statistics
         print("\n→ Step 3: Calculating politician statistics...")
         total_trades = len(trades_df)
-        purchases = len(trades_df[trades_df["transaction_type"].str.contains("purchase", case=False, na=False)]) if len(trades_df) > 0 else 0
+        purchases = (
+            len(
+                trades_df[
+                    trades_df["transaction_type"].str.contains("purchase", case=False, na=False)
+                ]
+            )
+            if len(trades_df) > 0
+            else 0
+        )
         purchase_ratio = purchases / total_trades if total_trades > 0 else 0.5
-        unique_stocks = trades_df["asset_ticker"].nunique() if "asset_ticker" in trades_df.columns and len(trades_df) > 0 else 0
+        unique_stocks = (
+            trades_df["asset_ticker"].nunique()
+            if "asset_ticker" in trades_df.columns and len(trades_df) > 0
+            else 0
+        )
 
         print(f"  ✓ Total trades: {total_trades}")
         print(f"  ✓ Purchase ratio: {purchase_ratio:.2%}")
@@ -605,9 +653,9 @@ class TestEndToEndWorkflow:
         # Simulate dashboard loading sequence
 
         # 1. Load politicians list
-        politicians = supabase_client.table("politicians") \
-            .select("id, first_name, last_name") \
-            .execute()
+        politicians = (
+            supabase_client.table("politicians").select("id, first_name, last_name").execute()
+        )
 
         assert politicians.data is not None
         politician_count = len(politicians.data)
@@ -615,10 +663,12 @@ class TestEndToEndWorkflow:
 
         # 2. Load recent disclosures
         cutoff = (datetime.now() - timedelta(days=90)).isoformat()
-        disclosures = supabase_client.table("trading_disclosures") \
-            .select("*") \
-            .gte("disclosure_date", cutoff) \
+        disclosures = (
+            supabase_client.table("trading_disclosures")
+            .select("*")
+            .gte("disclosure_date", cutoff)
             .execute()
+        )
 
         disclosure_count = len(disclosures.data) if disclosures.data else 0
         print(f"  ✓ Loaded {disclosure_count} recent disclosures")

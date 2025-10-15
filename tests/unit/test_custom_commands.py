@@ -48,9 +48,7 @@ class TestCustomCommandManager:
     def test_save_command(self):
         """Test saving a command"""
         code = "import click\n@click.command()\ndef test():\n    click.echo('test')"
-        path = self.manager.save_command(
-            name="test_cmd", code=code, description="Test command"
-        )
+        path = self.manager.save_command(name="test_cmd", code=code, description="Test command")
 
         assert path.exists()
         assert path.name == "test_cmd.json"
@@ -108,9 +106,7 @@ class TestCustomCommandManager:
     def test_delete_command(self):
         """Test deleting a command"""
         # Create a test command
-        self.manager.save_command(
-            name="test_cmd", code="test", description="Test"
-        )
+        self.manager.save_command(name="test_cmd", code="test", description="Test")
 
         # Verify it exists
         command_file = self.commands_dir / "test_cmd.json"
@@ -130,9 +126,7 @@ class TestCustomCommandManager:
         """Test lockfile generation"""
         # Create some test commands
         for i in range(2):
-            self.manager.save_command(
-                name=f"cmd_{i}", code=f"code {i}", description=f"Cmd {i}"
-            )
+            self.manager.save_command(name=f"cmd_{i}", code=f"code {i}", description=f"Cmd {i}")
 
         # Generate lockfile
         lockfile_data = self.manager.generate_lockfile()
@@ -268,9 +262,7 @@ class TestCustomCommandManager:
     def test_import_commands_no_overwrite(self):
         """Test importing without overwriting existing commands"""
         # Create existing command
-        self.manager.save_command(
-            name="existing_cmd", code="original", description="Original"
-        )
+        self.manager.save_command(name="existing_cmd", code="original", description="Original")
 
         # Try to import same command
         import_data = [
@@ -299,9 +291,7 @@ class TestCustomCommandManager:
     def test_import_commands_with_overwrite(self):
         """Test importing with overwriting existing commands"""
         # Create existing command
-        self.manager.save_command(
-            name="existing_cmd", code="original", description="Original"
-        )
+        self.manager.save_command(name="existing_cmd", code="original", description="Original")
 
         # Import with same command
         import_data = [

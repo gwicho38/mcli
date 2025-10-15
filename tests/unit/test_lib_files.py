@@ -13,34 +13,34 @@ pytestmark = pytest.mark.skip(reason="file commands migrated to portable JSON fo
 
 def test_file_group_help():
     runner = CliRunner()
-    result = runner.invoke(file, ['--help'])
+    result = runner.invoke(file, ["--help"])
     assert result.exit_code == 0
-    assert 'Personal file utility' in result.output
+    assert "Personal file utility" in result.output
 
 
 def test_oxps_to_pdf_help():
     runner = CliRunner()
-    result = runner.invoke(file, ['oxps-to-pdf', '--help'])
+    result = runner.invoke(file, ["oxps-to-pdf", "--help"])
     assert result.exit_code == 0
-    assert 'Converts an OXPS file' in result.output
+    assert "Converts an OXPS file" in result.output
 
 
 def test_oxps_to_pdf_missing_required():
     runner = CliRunner()
-    result = runner.invoke(file, ['oxps-to-pdf'])
+    result = runner.invoke(file, ["oxps-to-pdf"])
     assert result.exit_code != 0
-    assert 'Missing argument' in result.output
+    assert "Missing argument" in result.output
 
 
 def test_search_help():
     runner = CliRunner()
-    result = runner.invoke(file, ['search', '--help'])
+    result = runner.invoke(file, ["search", "--help"])
     assert result.exit_code == 0
-    assert 'Search for a string with ripgrep' in result.output
+    assert "Search for a string with ripgrep" in result.output
 
 
 def test_search_missing_required():
     runner = CliRunner()
-    result = runner.invoke(file, ['search'])
+    result = runner.invoke(file, ["search"])
     assert result.exit_code != 0
-    assert 'Missing argument' in result.output 
+    assert "Missing argument" in result.output

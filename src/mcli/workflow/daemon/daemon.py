@@ -20,6 +20,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 try:
     from watchdog.events import FileSystemEventHandler
     from watchdog.observers import Observer
+
     HAS_WATCHDOG = True
 except ImportError:
     # Watchdog not available, file watching will be disabled
@@ -40,6 +41,7 @@ class CommandDatabase:
     """Stub database for backward compatibility.
     Commands are now stored as JSON files and loaded via the custom commands system.
     """
+
     def __init__(self, db_path: Optional[str] = None):
         logger.debug("CommandDatabase stub initialized - commands now managed via JSON files")
         pass

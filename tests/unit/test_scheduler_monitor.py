@@ -2,11 +2,12 @@
 Unit tests for mcli.workflow.scheduler.monitor module
 """
 
-import pytest
 import threading
 import time
 from datetime import datetime
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import MagicMock, call, patch
+
+import pytest
 
 
 class TestJobMonitor:
@@ -16,6 +17,7 @@ class TestJobMonitor:
         """Setup test environment"""
         # Import here to avoid issues if module doesn't exist
         from mcli.workflow.scheduler.monitor import JobMonitor
+
         self.JobMonitor = JobMonitor
 
     def teardown_method(self):
@@ -95,15 +97,12 @@ class TestJobMonitor:
 
     def test_add_job_to_monitor(self):
         """Test adding a job to monitor"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         job = ScheduledJob(
-            name="test_job",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test_job", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         thread = threading.Thread(target=lambda: time.sleep(0.1))
@@ -121,22 +120,16 @@ class TestJobMonitor:
 
     def test_get_running_jobs_returns_job_ids(self):
         """Test get_running_jobs returns list of job IDs"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         job1 = ScheduledJob(
-            name="job1",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test1"
+            name="job1", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test1"
         )
 
         job2 = ScheduledJob(
-            name="job2",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test2"
+            name="job2", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test2"
         )
 
         thread1 = threading.Thread(target=lambda: time.sleep(0.1))
@@ -167,15 +160,12 @@ class TestJobMonitor:
 
     def test_is_job_running_returns_true_for_running_job(self):
         """Test is_job_running returns True for running job"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         thread = threading.Thread(target=lambda: time.sleep(0.1))
@@ -196,15 +186,12 @@ class TestJobMonitor:
 
     def test_get_job_runtime(self):
         """Test getting runtime for a running job"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         thread = threading.Thread(target=lambda: time.sleep(0.5))
@@ -234,15 +221,12 @@ class TestJobMonitor:
 
     def test_kill_job_returns_false_for_alive_thread(self):
         """Test kill_job returns False for alive thread (Python limitation)"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         thread = threading.Thread(target=lambda: time.sleep(0.5))
@@ -286,16 +270,13 @@ class TestJobMonitor:
 
     def test_get_monitor_stats_with_running_jobs(self):
         """Test get_monitor_stats with running jobs"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
         monitor.start_monitoring()
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         thread = threading.Thread(target=lambda: time.sleep(0.5))
@@ -321,15 +302,12 @@ class TestJobMonitor:
 
     def test_remove_job_from_monitor(self):
         """Test _remove_job removes job from tracking"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         thread = threading.Thread(target=lambda: time.sleep(0.1))
@@ -356,15 +334,12 @@ class TestJobMonitor:
 
     def test_monitor_loop_removes_completed_jobs(self):
         """Test that monitor loop removes completed jobs"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         # Create a short-running thread
@@ -386,23 +361,17 @@ class TestJobMonitor:
 
     def test_check_running_jobs_with_multiple_jobs(self):
         """Test _check_running_jobs with multiple jobs"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         # Create two jobs - one short, one long
         job1 = ScheduledJob(
-            name="short_job",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test1"
+            name="short_job", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test1"
         )
 
         job2 = ScheduledJob(
-            name="long_job",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test2"
+            name="long_job", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test2"
         )
 
         thread1 = threading.Thread(target=lambda: time.sleep(0.05))
@@ -431,7 +400,7 @@ class TestJobMonitor:
         monitor = self.JobMonitor()
 
         # Patch _check_running_jobs to raise exception
-        with patch.object(monitor, '_check_running_jobs', side_effect=Exception("Test error")):
+        with patch.object(monitor, "_check_running_jobs", side_effect=Exception("Test error")):
             monitor.start_monitoring()
 
             # Wait a bit - monitor should not crash
@@ -443,7 +412,7 @@ class TestJobMonitor:
 
     def test_thread_safety_with_concurrent_operations(self):
         """Test thread safety with concurrent add/remove operations"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
         monitor.start_monitoring()
@@ -458,7 +427,7 @@ class TestJobMonitor:
                     name=f"job_{i}",
                     cron_expression="* * * * *",
                     job_type=JobType.COMMAND,
-                    command=f"test{i}"
+                    command=f"test{i}",
                 )
                 thread = threading.Thread(target=lambda: time.sleep(0.1))
                 thread.start()
@@ -485,15 +454,12 @@ class TestJobMonitor:
 
     def test_monitor_stats_job_runtimes_accuracy(self):
         """Test that job runtime calculations are reasonably accurate"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         thread = threading.Thread(target=lambda: time.sleep(0.5))
@@ -526,15 +492,12 @@ class TestJobMonitor:
 
     def test_kill_job_with_finished_thread(self):
         """Test kill_job with already finished thread"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         thread = threading.Thread(target=lambda: time.sleep(0.05))

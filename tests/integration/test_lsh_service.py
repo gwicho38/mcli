@@ -9,8 +9,9 @@ import json
 import os
 import sys
 import time
-import pytest
 from pathlib import Path
+
+import pytest
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -18,13 +19,14 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 # Check for aiomqtt dependency
 try:
     import aiomqtt
+
     HAS_AIOMQTT = True
 except ImportError:
     HAS_AIOMQTT = False
 
 if HAS_AIOMQTT:
+    from mcli.lib.services.data_pipeline import DataPipelineConfig, LSHDataPipeline
     from mcli.lib.services.lsh_client import LSHClient, LSHEventProcessor
-    from mcli.lib.services.data_pipeline import LSHDataPipeline, DataPipelineConfig
 
 
 @pytest.mark.skipif(not HAS_AIOMQTT, reason="aiomqtt module not installed")
@@ -79,7 +81,7 @@ async def test_job_creation():
                 "type": "shell",
                 "description": "Test job created by mcli integration test",
                 "tags": ["test", "mcli"],
-                "databaseSync": False
+                "databaseSync": False,
             }
 
             job = await client.create_job(job_spec)
@@ -133,7 +135,7 @@ async def test_event_listening():
             job_spec = {
                 "name": "mcli-event-test-job",
                 "command": "echo 'Event test'",
-                "type": "shell"
+                "type": "shell",
             }
 
             job = await client.create_job(job_spec)
@@ -181,15 +183,15 @@ async def test_data_pipeline():
                     "transaction_date": "2024-01-01T00:00:00Z",
                     "transaction_type": "buy",
                     "asset_name": "AAPL",
-                    "transaction_amount": 10000
+                    "transaction_amount": 10000,
                 },
                 {
                     "politician_name": "Another Politician",
                     "transaction_date": "2024-01-02T00:00:00Z",
                     "transaction_type": "sell",
                     "asset_name": "MSFT",
-                    "transaction_amount": 5000
-                }
+                    "transaction_amount": 5000,
+                },
             ]
 
             # Process records through pipeline

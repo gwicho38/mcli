@@ -1,7 +1,8 @@
 """Reusable metric display components"""
 
-import streamlit as st
 from typing import Optional, Union
+
+import streamlit as st
 
 
 def display_metric_card(
@@ -10,42 +11,33 @@ def display_metric_card(
     delta: Optional[Union[int, float, str]] = None,
     delta_color: str = "normal",
     help_text: Optional[str] = None,
-    icon: Optional[str] = None
+    icon: Optional[str] = None,
 ):
     """Display a metric card with optional delta and icon"""
 
     if icon:
         label = f"{icon} {label}"
 
-    st.metric(
-        label=label,
-        value=value,
-        delta=delta,
-        delta_color=delta_color,
-        help=help_text
-    )
+    st.metric(label=label, value=value, delta=delta, delta_color=delta_color, help=help_text)
 
 
-def display_status_badge(
-    status: str,
-    size: str = "medium"
-) -> str:
+def display_status_badge(status: str, size: str = "medium") -> str:
     """Return a colored status badge"""
 
     status_colors = {
-        'completed': '🟢',
-        'success': '🟢',
-        'running': '🔵',
-        'in_progress': '🔵',
-        'pending': '🟡',
-        'waiting': '🟡',
-        'failed': '🔴',
-        'error': '🔴',
-        'cancelled': '⚪',
-        'unknown': '⚫'
+        "completed": "🟢",
+        "success": "🟢",
+        "running": "🔵",
+        "in_progress": "🔵",
+        "pending": "🟡",
+        "waiting": "🟡",
+        "failed": "🔴",
+        "error": "🔴",
+        "cancelled": "⚪",
+        "unknown": "⚫",
     }
 
-    icon = status_colors.get(status.lower(), '⚫')
+    icon = status_colors.get(status.lower(), "⚫")
 
     if size == "small":
         return f"{icon} {status}"
@@ -68,21 +60,17 @@ def display_kpi_row(metrics: dict, columns: Optional[int] = None):
             if isinstance(value, dict):
                 display_metric_card(
                     label=label,
-                    value=value.get('value', '-'),
-                    delta=value.get('delta'),
-                    delta_color=value.get('delta_color', 'normal'),
-                    help_text=value.get('help'),
-                    icon=value.get('icon')
+                    value=value.get("value", "-"),
+                    delta=value.get("delta"),
+                    delta_color=value.get("delta_color", "normal"),
+                    help_text=value.get("help"),
+                    icon=value.get("icon"),
                 )
             else:
                 st.metric(label=label, value=value)
 
 
-def display_progress_bar(
-    label: str,
-    progress: float,
-    show_percentage: bool = True
-):
+def display_progress_bar(label: str, progress: float, show_percentage: bool = True):
     """Display a progress bar with label"""
 
     st.text(label)
@@ -92,11 +80,7 @@ def display_progress_bar(
         st.caption(f"{progress * 100:.1f}%")
 
 
-def display_health_indicator(
-    component: str,
-    is_healthy: bool,
-    details: Optional[str] = None
-):
+def display_health_indicator(component: str, is_healthy: bool, details: Optional[str] = None):
     """Display a health status indicator"""
 
     if is_healthy:
@@ -105,11 +89,7 @@ def display_health_indicator(
         st.error(f"❌ {component}: Unhealthy" + (f" ({details})" if details else ""))
 
 
-def display_alert(
-    message: str,
-    alert_type: str = "info",
-    icon: Optional[str] = None
-):
+def display_alert(message: str, alert_type: str = "info", icon: Optional[str] = None):
     """Display an alert message"""
 
     if icon:

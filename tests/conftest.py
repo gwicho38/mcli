@@ -61,9 +61,7 @@ def mock_openai():
 def mock_anthropic():
     """Mock Anthropic client."""
     mock = MagicMock()
-    mock.messages.create.return_value.content = [
-        MagicMock(text="Test response")
-    ]
+    mock.messages.create.return_value.content = [MagicMock(text="Test response")]
     return mock
 
 
@@ -97,12 +95,14 @@ def mock_supabase():
 def temp_config_file(tmp_path):
     """Create a temporary config file."""
     config_file = tmp_path / "config.toml"
-    config_file.write_text("""
+    config_file.write_text(
+        """
 [llm]
 provider = "local"
 model = "test-model"
 temperature = 0.7
-""")
+"""
+    )
     return config_file
 
 
@@ -117,12 +117,16 @@ def reset_singletons():
 # pytest configuration
 def pytest_configure(config):
     """Configure pytest."""
-    config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+    )
     config.addinivalue_line("markers", "integration: marks tests as integration tests")
     config.addinivalue_line("markers", "unit: marks tests as unit tests")
     config.addinivalue_line("markers", "e2e: marks tests as end-to-end tests")
     config.addinivalue_line("markers", "cli: marks tests as CLI tests")
-    config.addinivalue_line("markers", "api: marks tests as API tests (require network/credentials)")
+    config.addinivalue_line(
+        "markers", "api: marks tests as API tests (require network/credentials)"
+    )
     config.addinivalue_line("markers", "requires_api: marks tests requiring API credentials")
     config.addinivalue_line("markers", "requires_db: marks tests requiring database")
 

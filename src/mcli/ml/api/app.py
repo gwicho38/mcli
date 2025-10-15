@@ -16,11 +16,7 @@ from mcli.ml.config import settings
 from mcli.ml.database.session import init_db
 from mcli.ml.logging import get_logger, setup_logging
 
-from .middleware import (
-    ErrorHandlingMiddleware,
-    RateLimitMiddleware,
-    RequestLoggingMiddleware,
-)
+from .middleware import ErrorHandlingMiddleware, RateLimitMiddleware, RequestLoggingMiddleware
 from .routers import (
     admin_router,
     auth_router,

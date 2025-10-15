@@ -21,9 +21,9 @@ logger = get_logger(__name__)
 def _start_openai_server(server, host: str, port: int, api_key: Optional[str], model: str):
     """Start FastAPI server with OpenAI compatibility"""
     try:
+        import uvicorn
         from fastapi import FastAPI
         from fastapi.middleware.cors import CORSMiddleware
-        import uvicorn
 
         from mcli.workflow.model_service.openai_adapter import create_openai_adapter
 

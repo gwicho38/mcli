@@ -10,16 +10,13 @@ import streamlit as st
 from plotly.subplots import make_subplots
 from scipy import stats
 
-from mcli.ml.database.models import Experiment, Model, ModelStatus
-from mcli.ml.database.session import SessionLocal
 from mcli.ml.dashboard.common import setup_page_config
 from mcli.ml.dashboard.styles import apply_dashboard_styles
+from mcli.ml.database.models import Experiment, Model, ModelStatus
+from mcli.ml.database.session import SessionLocal
 
 # Page config - must be first
-setup_page_config(
-    page_title="MCLI Training Dashboard",
-    page_icon="🔬"
-)
+setup_page_config(page_title="MCLI Training Dashboard", page_icon="🔬")
 
 # Apply standard dashboard styles (includes metric-card)
 apply_dashboard_styles()

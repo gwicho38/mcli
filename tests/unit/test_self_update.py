@@ -1,11 +1,12 @@
 """Unit tests for mcli self update command"""
 
-import sys
 import os
-from unittest.mock import patch, MagicMock
+import sys
+from unittest.mock import MagicMock, patch
+
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 
 def test_uv_tool_detection_unix_path():
@@ -16,9 +17,9 @@ def test_uv_tool_detection_unix_path():
     # Test the detection logic (mimicking the code from self_cmd.py)
     executable_path = str(uv_path).replace("\\", "/")
     is_uv_tool = (
-        "/uv/tools/" in executable_path or
-        "/.local/share/uv/tools/" in executable_path or
-        "\\AppData\\Local\\uv\\tools\\" in str(uv_path)
+        "/uv/tools/" in executable_path
+        or "/.local/share/uv/tools/" in executable_path
+        or "\\AppData\\Local\\uv\\tools\\" in str(uv_path)
     )
 
     assert is_uv_tool, "Should detect uv tool installation on Unix path"
@@ -32,9 +33,9 @@ def test_uv_tool_detection_windows_path():
     # Test the detection logic
     executable_path = str(uv_path).replace("\\", "/")
     is_uv_tool = (
-        "/uv/tools/" in executable_path or
-        "/.local/share/uv/tools/" in executable_path or
-        "\\AppData\\Local\\uv\\tools\\" in str(uv_path)
+        "/uv/tools/" in executable_path
+        or "/.local/share/uv/tools/" in executable_path
+        or "\\AppData\\Local\\uv\\tools\\" in str(uv_path)
     )
 
     assert is_uv_tool, "Should detect uv tool installation on Windows path"
@@ -46,9 +47,9 @@ def test_uv_tool_detection_alternative_unix():
 
     executable_path = str(uv_path).replace("\\", "/")
     is_uv_tool = (
-        "/uv/tools/" in executable_path or
-        "/.local/share/uv/tools/" in executable_path or
-        "\\AppData\\Local\\uv\\tools\\" in str(uv_path)
+        "/uv/tools/" in executable_path
+        or "/.local/share/uv/tools/" in executable_path
+        or "\\AppData\\Local\\uv\\tools\\" in str(uv_path)
     )
 
     assert is_uv_tool, "Should detect uv tool installation with /uv/tools/ pattern"
@@ -61,15 +62,15 @@ def test_pip_installation_detection():
         "/usr/local/bin/python",
         "/opt/homebrew/bin/python3",
         "C:\\Python311\\python.exe",
-        "/Users/user/.pyenv/versions/3.11.0/bin/python"
+        "/Users/user/.pyenv/versions/3.11.0/bin/python",
     ]
 
     for pip_path in pip_paths:
         executable_path = str(pip_path).replace("\\", "/")
         is_uv_tool = (
-            "/uv/tools/" in executable_path or
-            "/.local/share/uv/tools/" in executable_path or
-            "\\AppData\\Local\\uv\\tools\\" in str(pip_path)
+            "/uv/tools/" in executable_path
+            or "/.local/share/uv/tools/" in executable_path
+            or "\\AppData\\Local\\uv\\tools\\" in str(pip_path)
         )
 
         assert not is_uv_tool, f"Should NOT detect {pip_path} as uv tool installation"
@@ -96,9 +97,9 @@ def test_uv_tool_update_command_selection():
     executable_path = str(uv_executable).replace("\\", "/")
 
     is_uv_tool = (
-        "/uv/tools/" in executable_path or
-        "/.local/share/uv/tools/" in executable_path or
-        "\\AppData\\Local\\uv\\tools\\" in str(uv_executable)
+        "/uv/tools/" in executable_path
+        or "/.local/share/uv/tools/" in executable_path
+        or "\\AppData\\Local\\uv\\tools\\" in str(uv_executable)
     )
 
     if is_uv_tool:
@@ -106,17 +107,22 @@ def test_uv_tool_update_command_selection():
     else:
         cmd = [uv_executable, "-m", "pip", "install", "--upgrade", "mcli-framework"]
 
-    assert cmd == ["uv", "tool", "install", "--force", "mcli-framework"], \
-        "Should use 'uv tool install' for uv tool installations"
+    assert cmd == [
+        "uv",
+        "tool",
+        "install",
+        "--force",
+        "mcli-framework",
+    ], "Should use 'uv tool install' for uv tool installations"
 
     # Test pip path
     pip_executable = "/usr/local/bin/python3"
     executable_path = str(pip_executable).replace("\\", "/")
 
     is_uv_tool = (
-        "/uv/tools/" in executable_path or
-        "/.local/share/uv/tools/" in executable_path or
-        "\\AppData\\Local\\uv\\tools\\" in str(pip_executable)
+        "/uv/tools/" in executable_path
+        or "/.local/share/uv/tools/" in executable_path
+        or "\\AppData\\Local\\uv\\tools\\" in str(pip_executable)
     )
 
     if is_uv_tool:
@@ -124,8 +130,14 @@ def test_uv_tool_update_command_selection():
     else:
         cmd = [pip_executable, "-m", "pip", "install", "--upgrade", "mcli-framework"]
 
-    assert cmd == [pip_executable, "-m", "pip", "install", "--upgrade", "mcli-framework"], \
-        "Should use 'pip install' for regular installations"
+    assert cmd == [
+        pip_executable,
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "mcli-framework",
+    ], "Should use 'pip install' for regular installations"
 
 
 def test_regression_uv_tool_no_pip_error():
@@ -147,8 +159,9 @@ def test_regression_uv_tool_no_pip_error():
     user_path = "/Users/lefv/.local/share/uv/tools/mcli-framework/bin/python"
 
     # Test old detection (buggy)
-    old_is_uv_tool = ".local/share/uv/tools/" in user_path or \
-                     "\\AppData\\Local\\uv\\tools\\" in user_path
+    old_is_uv_tool = (
+        ".local/share/uv/tools/" in user_path or "\\AppData\\Local\\uv\\tools\\" in user_path
+    )
 
     # This should be True, but let's verify
     assert old_is_uv_tool, "Old detection should work but may have edge cases"
@@ -156,9 +169,9 @@ def test_regression_uv_tool_no_pip_error():
     # Test new detection (fixed)
     executable_path = str(user_path).replace("\\", "/")
     new_is_uv_tool = (
-        "/uv/tools/" in executable_path or
-        "/.local/share/uv/tools/" in executable_path or
-        "\\AppData\\Local\\uv\\tools\\" in str(user_path)
+        "/uv/tools/" in executable_path
+        or "/.local/share/uv/tools/" in executable_path
+        or "\\AppData\\Local\\uv\\tools\\" in str(user_path)
     )
 
     assert new_is_uv_tool, "New detection must correctly identify uv tool installation"
@@ -170,8 +183,13 @@ def test_regression_uv_tool_no_pip_error():
         cmd = [user_path, "-m", "pip", "install", "--upgrade", "mcli-framework"]
 
     # Should NOT use pip (which doesn't exist in uv tool env)
-    assert cmd == ["uv", "tool", "install", "--force", "mcli-framework"], \
-        "Must use 'uv tool install' to avoid 'No module named pip' error"
+    assert cmd == [
+        "uv",
+        "tool",
+        "install",
+        "--force",
+        "mcli-framework",
+    ], "Must use 'uv tool install' to avoid 'No module named pip' error"
 
 
 def main():

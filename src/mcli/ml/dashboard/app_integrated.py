@@ -41,12 +41,13 @@ load_environment_variables()
 # Import streamlit-extras utilities
 try:
     from mcli.ml.dashboard.streamlit_extras_utils import (
+        data_quality_indicators,
         enhanced_metrics,
         section_header,
-        vertical_space,
-        data_quality_indicators,
         trading_status_card,
+        vertical_space,
     )
+
     HAS_STREAMLIT_EXTRAS = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     HAS_STREAMLIT_EXTRAS = False
@@ -101,18 +102,21 @@ show_debug_dependencies = None
 # Import Overview page
 try:
     from mcli.ml.dashboard.overview import show_overview
+
     HAS_OVERVIEW_PAGE = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Overview page not available: {e}")
 
 try:
     from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
+
     HAS_PREDICTIONS_ENHANCED = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Predictions Enhanced page not available: {e}")
 
 try:
     from mcli.ml.dashboard.pages.scrapers_and_logs import show_scrapers_and_logs
+
     HAS_SCRAPERS_PAGE = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Scrapers & Logs page not available: {e}")
@@ -127,6 +131,7 @@ try:
     # First, try importing alpaca directly to see the specific error
     try:
         import alpaca
+
         st.success(f"✅ alpaca module imported successfully")
         if hasattr(alpaca, "__version__"):
             st.info(f"Alpaca version: {alpaca.__version__}")
@@ -139,16 +144,21 @@ try:
 
         # Try to provide diagnostic info
         st.warning("💡 Troubleshooting tips:")
-        st.markdown("""
+        st.markdown(
+            """
         - Check that `alpaca-py>=0.20.0` is in requirements.txt
         - Verify Python version is 3.8+ (current: {}.{})
         - Check Streamlit Cloud deployment logs for installation errors
         - Visit the **Debug Dependencies** page for detailed diagnostics
-        """.format(sys.version_info.major, sys.version_info.minor))
+        """.format(
+                sys.version_info.major, sys.version_info.minor
+            )
+        )
 
     # Now try importing the trading pages
-    from mcli.ml.dashboard.pages.trading import show_trading_dashboard
     from mcli.ml.dashboard.pages.test_portfolio import show_test_portfolio
+    from mcli.ml.dashboard.pages.trading import show_trading_dashboard
+
     HAS_TRADING_PAGES = True
     st.success("✅ Trading pages imported successfully!")
 
@@ -160,12 +170,8 @@ except (ImportError, KeyError, ModuleNotFoundError) as e:
     # Show installed packages related to alpaca
     try:
         import subprocess
-        result = subprocess.run(
-            ["pip", "list"],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+
+        result = subprocess.run(["pip", "list"], capture_output=True, text=True, timeout=5)
         alpaca_packages = [line for line in result.stdout.split("\n") if "alpaca" in line.lower()]
         if alpaca_packages:
             st.info("📦 Found alpaca-related packages:")
@@ -182,6 +188,7 @@ except (ImportError, KeyError, ModuleNotFoundError) as e:
 
 try:
     from mcli.ml.dashboard.pages.monte_carlo_predictions import show_monte_carlo_predictions
+
     HAS_MONTE_CARLO_PAGE = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     HAS_MONTE_CARLO_PAGE = False
@@ -189,12 +196,14 @@ except (ImportError, KeyError, ModuleNotFoundError) as e:
 # Import CI/CD and Workflows pages
 try:
     from mcli.ml.dashboard.pages.cicd import show_cicd_dashboard
+
     HAS_CICD_PAGE = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"CI/CD page not available: {e}")
 
 try:
     from mcli.ml.dashboard.pages.workflows import show_workflows_dashboard
+
     HAS_WORKFLOWS_PAGE = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Workflows page not available: {e}")
@@ -202,15 +211,13 @@ except (ImportError, KeyError, ModuleNotFoundError) as e:
 # Import Debug Dependencies page (always available for troubleshooting)
 try:
     from mcli.ml.dashboard.pages.debug_dependencies import show_debug_dependencies
+
     HAS_DEBUG_PAGE = True
 except (ImportError, KeyError, ModuleNotFoundError) as e:
     st.warning(f"Debug Dependencies page not available: {e}")
 
 # Page config - must be before other st commands
-setup_page_config(
-    page_title="Politician Trading Tracker - MCLI",
-    page_icon="📊"
-)
+setup_page_config(page_title="Politician Trading Tracker - MCLI", page_icon="📊")
 
 # Apply standard dashboard styles (includes metric-card, alert boxes)
 apply_dashboard_styles()
@@ -631,7 +638,9 @@ def _generate_fallback_predictions(processed_data):
         n_tickers = len(tickers)
     else:
         # Generate demo predictions with realistic tickers
-        tickers = np.array(["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN", "NVDA", "META", "NFLX", "AMD", "INTC"])
+        tickers = np.array(
+            ["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN", "NVDA", "META", "NFLX", "AMD", "INTC"]
+        )
         n_tickers = len(tickers)
         st.info("🔵 Showing demo predictions (Supabase connection unavailable)")
 
@@ -709,11 +718,7 @@ def get_disclosures_data(limit: int = 1000, offset: int = 0, for_training: bool 
 
     try:
         # First, get total count
-        count_response = (
-            client.table("trading_disclosures")
-            .select("*", count="exact")
-            .execute()
-        )
+        count_response = client.table("trading_disclosures").select("*", count="exact").execute()
         total_count = count_response.count
 
         # Fetch data with appropriate limit
@@ -754,55 +759,53 @@ def get_disclosures_data(limit: int = 1000, offset: int = 0, for_training: bool 
 
         # Map Supabase schema to dashboard expected columns
         # Extract politician info from nested dict
-        if 'politicians' in df.columns:
-            df['politician_name'] = df['politicians'].apply(
-                lambda x: x.get('full_name', '') if isinstance(x, dict) else ''
+        if "politicians" in df.columns:
+            df["politician_name"] = df["politicians"].apply(
+                lambda x: x.get("full_name", "") if isinstance(x, dict) else ""
             )
-            df['party'] = df['politicians'].apply(
-                lambda x: x.get('party', '') if isinstance(x, dict) else ''
+            df["party"] = df["politicians"].apply(
+                lambda x: x.get("party", "") if isinstance(x, dict) else ""
             )
-            df['state'] = df['politicians'].apply(
-                lambda x: x.get('state_or_country', '') if isinstance(x, dict) else ''
+            df["state"] = df["politicians"].apply(
+                lambda x: x.get("state_or_country", "") if isinstance(x, dict) else ""
             )
 
         # Map asset_ticker to ticker_symbol (dashboard expects this)
         # Note: Most disclosures don't have stock tickers (funds, real estate, bonds)
         # Use asset_type as categorical identifier for non-stock assets
-        if 'asset_ticker' in df.columns:
+        if "asset_ticker" in df.columns:
             # Use real ticker when available
-            df['ticker_symbol'] = df['asset_ticker']
+            df["ticker_symbol"] = df["asset_ticker"]
 
             # For None/null values, use asset_type as category
-            if 'asset_type' in df.columns:
-                df['ticker_symbol'] = df['ticker_symbol'].fillna(
-                    df['asset_type'].str.upper().str.replace('_', '-')
+            if "asset_type" in df.columns:
+                df["ticker_symbol"] = df["ticker_symbol"].fillna(
+                    df["asset_type"].str.upper().str.replace("_", "-")
                 )
             else:
-                df['ticker_symbol'] = df['ticker_symbol'].fillna('NON-STOCK')
-        elif 'asset_type' in df.columns:
+                df["ticker_symbol"] = df["ticker_symbol"].fillna("NON-STOCK")
+        elif "asset_type" in df.columns:
             # No ticker column - use asset type as category
-            df['ticker_symbol'] = df['asset_type'].str.upper().str.replace('_', '-')
+            df["ticker_symbol"] = df["asset_type"].str.upper().str.replace("_", "-")
         else:
-            df['ticker_symbol'] = 'UNKNOWN'
+            df["ticker_symbol"] = "UNKNOWN"
 
         # Calculate amount from range (use midpoint)
-        if 'amount_range_min' in df.columns and 'amount_range_max' in df.columns:
-            df['amount'] = (
-                df['amount_range_min'].fillna(0) + df['amount_range_max'].fillna(0)
-            ) / 2
-        elif 'amount_exact' in df.columns:
-            df['amount'] = df['amount_exact']
+        if "amount_range_min" in df.columns and "amount_range_max" in df.columns:
+            df["amount"] = (df["amount_range_min"].fillna(0) + df["amount_range_max"].fillna(0)) / 2
+        elif "amount_exact" in df.columns:
+            df["amount"] = df["amount_exact"]
         else:
-            df['amount'] = 0
+            df["amount"] = 0
 
         # Add asset_description if not exists
-        if 'asset_description' not in df.columns and 'asset_name' in df.columns:
-            df['asset_description'] = df['asset_name']
+        if "asset_description" not in df.columns and "asset_name" in df.columns:
+            df["asset_description"] = df["asset_name"]
 
         # Convert dates to datetime with ISO8601 format
-        for date_col in ['disclosure_date', 'transaction_date', 'created_at', 'updated_at']:
+        for date_col in ["disclosure_date", "transaction_date", "created_at", "updated_at"]:
             if date_col in df.columns:
-                df[date_col] = pd.to_datetime(df[date_col], format='ISO8601', errors='coerce')
+                df[date_col] = pd.to_datetime(df[date_col], format="ISO8601", errors="coerce")
 
         # Convert any remaining dict/list columns to JSON strings
         for col in df.columns:
@@ -827,7 +830,13 @@ def _generate_demo_disclosures():
     np.random.seed(42)
     n_records = 100
 
-    politicians = ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer", "Tommy Tuberville"]
+    politicians = [
+        "Nancy Pelosi",
+        "Paul Pelosi",
+        "Dan Crenshaw",
+        "Josh Gottheimer",
+        "Tommy Tuberville",
+    ]
     tickers = ["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN", "NVDA", "META", "NFLX", "AMD", "INTC"]
     transaction_types = ["purchase", "sale", "exchange"]
 
@@ -836,18 +845,22 @@ def _generate_demo_disclosures():
     start_date = end_date - pd.Timedelta(days=180)
     dates = pd.date_range(start=start_date, end=end_date, periods=n_records)
 
-    return pd.DataFrame({
-        "id": range(1, n_records + 1),
-        "politician_name": np.random.choice(politicians, n_records),
-        "ticker_symbol": np.random.choice(tickers, n_records),
-        "transaction_type": np.random.choice(transaction_types, n_records),
-        "amount": np.random.uniform(15000, 500000, n_records),
-        "disclosure_date": dates,
-        "transaction_date": dates - pd.Timedelta(days=np.random.randint(1, 45)),
-        "asset_description": [f"Common Stock - {t}" for t in np.random.choice(tickers, n_records)],
-        "party": np.random.choice(["Democrat", "Republican"], n_records),
-        "state": np.random.choice(["CA", "TX", "NY", "FL", "AL"], n_records),
-    })
+    return pd.DataFrame(
+        {
+            "id": range(1, n_records + 1),
+            "politician_name": np.random.choice(politicians, n_records),
+            "ticker_symbol": np.random.choice(tickers, n_records),
+            "transaction_type": np.random.choice(transaction_types, n_records),
+            "amount": np.random.uniform(15000, 500000, n_records),
+            "disclosure_date": dates,
+            "transaction_date": dates - pd.Timedelta(days=np.random.randint(1, 45)),
+            "asset_description": [
+                f"Common Stock - {t}" for t in np.random.choice(tickers, n_records)
+            ],
+            "party": np.random.choice(["Democrat", "Republican"], n_records),
+            "state": np.random.choice(["CA", "TX", "NY", "FL", "AL"], n_records),
+        }
+    )
 
 
 @st.cache_data(ttl=30)
@@ -883,15 +896,15 @@ def get_model_metrics():
 
 def main():
     """Main dashboard function"""
-    
+
     # Clear any problematic session state that might cause media file errors
     try:
         # Remove any file-related session state that might be causing issues
         keys_to_remove = []
         for key in st.session_state.keys():
-            if 'file' in key.lower() or 'download' in key.lower() or 'media' in key.lower():
+            if "file" in key.lower() or "download" in key.lower() or "media" in key.lower():
                 keys_to_remove.append(key)
-        
+
         for key in keys_to_remove:
             if key in st.session_state:
                 del st.session_state[key]
@@ -913,17 +926,19 @@ def main():
         pages.append("Overview")
 
     # Add other pages
-    pages.extend([
-        "Pipeline Overview",
-        "ML Processing",
-        "Model Performance",
-        "Model Training & Evaluation",
-        "Predictions",
-        "Trading Dashboard",
-        "Test Portfolio",
-        "LSH Jobs",
-        "System Health",
-    ])
+    pages.extend(
+        [
+            "Pipeline Overview",
+            "ML Processing",
+            "Model Performance",
+            "Model Training & Evaluation",
+            "Predictions",
+            "Trading Dashboard",
+            "Test Portfolio",
+            "LSH Jobs",
+            "System Health",
+        ]
+    )
 
     # Add scrapers and logs page
     if HAS_SCRAPERS_PAGE:
@@ -946,10 +961,7 @@ def main():
         pages.append("Debug Dependencies")
 
     page = st.sidebar.selectbox(
-        "Choose a page",
-        pages,
-        index=0,  # Default to Pipeline Overview
-        key="main_page_selector"
+        "Choose a page", pages, index=0, key="main_page_selector"  # Default to Pipeline Overview
     )
 
     # Auto-refresh toggle (default off to prevent blocking)
@@ -1006,6 +1018,7 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Error in Trading Dashboard page: {e}")
                     import traceback
+
                     st.code(traceback.format_exc())
             else:
                 st.warning("Trading dashboard not available")
@@ -1016,6 +1029,7 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Error in Test Portfolio page: {e}")
                     import traceback
+
                     st.code(traceback.format_exc())
             else:
                 st.warning("Test portfolio not available")
@@ -1026,6 +1040,7 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Error in Monte Carlo Predictions page: {e}")
                     import traceback
+
                     st.code(traceback.format_exc())
             else:
                 st.warning("Monte Carlo predictions not available")
@@ -1039,6 +1054,7 @@ def main():
             except Exception as e:
                 st.error(f"❌ Error in Scrapers & Logs page: {e}")
                 import traceback
+
                 st.code(traceback.format_exc())
         elif page == "CI/CD Pipelines":
             if show_cicd_dashboard is not None:
@@ -1047,9 +1063,12 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Error in CI/CD Pipelines page: {e}")
                     import traceback
+
                     st.code(traceback.format_exc())
             else:
-                st.warning("CI/CD Pipelines page is not available. This page requires additional dependencies.")
+                st.warning(
+                    "CI/CD Pipelines page is not available. This page requires additional dependencies."
+                )
         elif page == "Workflows":
             if show_workflows_dashboard is not None:
                 try:
@@ -1057,9 +1076,12 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Error in Workflows page: {e}")
                     import traceback
+
                     st.code(traceback.format_exc())
             else:
-                st.warning("Workflows page is not available. This page requires additional dependencies.")
+                st.warning(
+                    "Workflows page is not available. This page requires additional dependencies."
+                )
 
         elif page == "Debug Dependencies":
             if show_debug_dependencies is not None:
@@ -1068,6 +1090,7 @@ def main():
                 except Exception as e:
                     st.error(f"❌ Error in Debug Dependencies page: {e}")
                     import traceback
+
                     st.code(traceback.format_exc())
             else:
                 st.warning("Debug Dependencies page is not available.")
@@ -1100,13 +1123,15 @@ def show_pipeline_overview():
     st.markdown("### 📄 Data Pagination")
 
     # Initialize session state for page number
-    if 'page_number' not in st.session_state:
+    if "page_number" not in st.session_state:
         st.session_state.page_number = 1
 
     col_size, col_page_input, col_nav = st.columns([1, 2, 2])
 
     with col_size:
-        page_size = st.selectbox("Records per page", [100, 500, 1000, 2000], index=2, key="page_size_select")
+        page_size = st.selectbox(
+            "Records per page", [100, 500, 1000, 2000], index=2, key="page_size_select"
+        )
 
     # Get total count first
     client = get_supabase_client()
@@ -1126,7 +1151,7 @@ def show_pipeline_overview():
             max_value=max(1, total_pages),
             value=st.session_state.page_number,
             step=1,
-            key="page_number_input"
+            key="page_number_input",
         )
         st.session_state.page_number = page_input
 
@@ -1323,8 +1348,14 @@ def train_model_with_feedback():
             noise_level = 0.1 / batch_smoothness  # Larger batch = less noise
 
             # Calculate metrics with parameter effects
-            train_loss = (0.5 + np.random.uniform(0, 0.3 * stability)) * np.exp(-(epoch / epochs) * convergence_speed) + np.random.uniform(-noise_level, noise_level)
-            train_acc = 0.5 + (0.4 * (epoch / epochs) * convergence_speed) + np.random.uniform(-noise_level * stability, noise_level * stability)
+            train_loss = (0.5 + np.random.uniform(0, 0.3 * stability)) * np.exp(
+                -(epoch / epochs) * convergence_speed
+            ) + np.random.uniform(-noise_level, noise_level)
+            train_acc = (
+                0.5
+                + (0.4 * (epoch / epochs) * convergence_speed)
+                + np.random.uniform(-noise_level * stability, noise_level * stability)
+            )
             val_loss = train_loss * (1 + np.random.uniform(-0.05 * stability, 0.15 * stability))
             val_acc = train_acc * (1 + np.random.uniform(-0.1 * stability, 0.1 * stability))
 
@@ -1504,45 +1535,55 @@ def show_ml_processing():
 
                 # Select and reorder columns for better display
                 display_columns = [
-                    'transaction_date',
-                    'politician_name' if 'politician_name' in disclosures.columns else 'politician_id',
-                    'transaction_type',
-                    'asset_name',  # The actual stock/asset name
-                    'asset_ticker',  # The stock ticker (e.g., AAPL, TSLA)
-                    'asset_type',  # Type (Stock, Fund, etc.)
-                    'amount_range_min',
-                    'amount_range_max',
+                    "transaction_date",
+                    (
+                        "politician_name"
+                        if "politician_name" in disclosures.columns
+                        else "politician_id"
+                    ),
+                    "transaction_type",
+                    "asset_name",  # The actual stock/asset name
+                    "asset_ticker",  # The stock ticker (e.g., AAPL, TSLA)
+                    "asset_type",  # Type (Stock, Fund, etc.)
+                    "amount_range_min",
+                    "amount_range_max",
                 ]
 
                 # Only include columns that exist in the DataFrame
-                available_display_cols = [col for col in display_columns if col in disclosures.columns]
+                available_display_cols = [
+                    col for col in display_columns if col in disclosures.columns
+                ]
 
                 # Display the data with selected columns
                 display_df = disclosures[available_display_cols].head(100).copy()
 
                 # Rename columns for better readability
                 column_renames = {
-                    'transaction_date': 'Date',
-                    'politician_name': 'Politician',
-                    'politician_id': 'Politician ID',
-                    'transaction_type': 'Type',
-                    'asset_name': 'Asset Name',
-                    'asset_ticker': 'Ticker',
-                    'asset_type': 'Asset Type',
-                    'amount_range_min': 'Min Amount',
-                    'amount_range_max': 'Max Amount',
+                    "transaction_date": "Date",
+                    "politician_name": "Politician",
+                    "politician_id": "Politician ID",
+                    "transaction_type": "Type",
+                    "asset_name": "Asset Name",
+                    "asset_ticker": "Ticker",
+                    "asset_type": "Asset Type",
+                    "amount_range_min": "Min Amount",
+                    "amount_range_max": "Max Amount",
                 }
                 display_df.rename(columns=column_renames, inplace=True)
 
                 # Show info about record counts
-                st.info(f"📊 Processing **{len(disclosures):,} total records** (showing first 100 for preview)")
+                st.info(
+                    f"📊 Processing **{len(disclosures):,} total records** (showing first 100 for preview)"
+                )
 
                 st.dataframe(display_df, width="stretch")
                 st.metric("Total Records Being Processed", len(disclosures))
 
             with tabs[1]:
                 st.subheader("Preprocessed Data")
-                st.info(f"📊 Processing **{len(processed_data):,} total records** (showing first 100 for preview)")
+                st.info(
+                    f"📊 Processing **{len(processed_data):,} total records** (showing first 100 for preview)"
+                )
                 st.dataframe(processed_data.head(100), width="stretch")
 
                 # Data quality metrics
@@ -1580,7 +1621,9 @@ def show_ml_processing():
                     )
                     st.plotly_chart(fig, width="stretch", config={"responsive": True})
 
-                    st.info(f"📊 Generated features for **{len(features):,} total records** (showing first 100 for preview)")
+                    st.info(
+                        f"📊 Generated features for **{len(features):,} total records** (showing first 100 for preview)"
+                    )
                     st.dataframe(features.head(100), width="stretch")
 
             with tabs[3]:
@@ -1626,7 +1669,8 @@ def show_ml_processing():
 
                 elif predictions is None:
                     st.error("❌ ML Pipeline Error: No predictions generated")
-                    st.info("""
+                    st.info(
+                        """
                     **Possible causes:**
                     - No trained model available
                     - Insufficient training data
@@ -1637,19 +1681,25 @@ def show_ml_processing():
                     2. Check 'Preprocessed' tab - verify data preprocessing works
                     3. Go to 'Model Training & Evaluation' page to train a model
                     4. Check Supabase connection in 'System Health' page
-                    """)
+                    """
+                    )
 
                     # Debug info
                     with st.expander("🔍 Debug Information"):
                         st.write("**Data Status:**")
                         st.write(f"- Raw records: {len(disclosures)}")
-                        st.write(f"- Processed records: {len(processed_data) if processed_data is not None else 'N/A'}")
-                        st.write(f"- Features generated: {len(features.columns) if features is not None else 'N/A'}")
+                        st.write(
+                            f"- Processed records: {len(processed_data) if processed_data is not None else 'N/A'}"
+                        )
+                        st.write(
+                            f"- Features generated: {len(features.columns) if features is not None else 'N/A'}"
+                        )
                         st.write(f"- Predictions: None")
 
                 else:
                     st.warning("⚠️ No predictions generated (empty results)")
-                    st.info("""
+                    st.info(
+                        """
                     **This usually means:**
                     - Not enough data to generate predictions
                     - All data was filtered out during feature engineering
@@ -1660,10 +1710,11 @@ def show_ml_processing():
                     - Processed records: {}
                     - Features: {}
                     """.format(
-                        len(disclosures),
-                        len(processed_data) if processed_data is not None else 0,
-                        len(features) if features is not None else 0
-                    ))
+                            len(disclosures),
+                            len(processed_data) if processed_data is not None else 0,
+                            len(features) if features is not None else 0,
+                        )
+                    )
         else:
             st.error("Failed to process data through pipeline")
     else:
@@ -2975,5 +3026,6 @@ except Exception as e:
     st.error(f"❌ Dashboard error: {e}")
     st.info("🔄 Please refresh the page to try again")
     import traceback
+
     with st.expander("Error details"):
         st.code(traceback.format_exc())

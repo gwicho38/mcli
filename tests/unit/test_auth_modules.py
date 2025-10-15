@@ -2,12 +2,13 @@
 Unit tests for mcli.lib.auth modules
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
-import tempfile
-import os
 import json
+import os
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 
 class TestCredentialManager:
@@ -18,7 +19,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test_app")
 
                 assert manager.config_dir == Path(tmpdir) / ".config" / "test_app"
@@ -29,7 +30,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test", config_filename="custom.json")
 
                 assert manager.config_file.name == "custom.json"
@@ -39,7 +40,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 assert manager.config_dir.exists()
@@ -50,7 +51,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 config = manager.read_config()
@@ -62,7 +63,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 test_config = {"key": "value", "number": 42}
@@ -77,7 +78,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 with pytest.raises(ValueError, match="must be a dictionary"):
@@ -88,7 +89,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 manager.update_config("test_key", "test_value")
@@ -101,7 +102,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 manager.update_config("key1", "value1")
@@ -116,7 +117,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 manager.update_config("my_key", "my_value")
@@ -129,7 +130,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 value = manager.get_config_value("nonexistent", default="default_value")
@@ -140,7 +141,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 manager.update_config("key", "value")
@@ -154,7 +155,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 path = manager.get_config_path()
@@ -168,7 +169,7 @@ class TestCredentialManager:
         from mcli.lib.auth.credential_manager import CredentialManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = CredentialManager(app_name="test")
 
                 # Write corrupted JSON
@@ -186,7 +187,7 @@ class TestTokenManager:
         from mcli.lib.auth.token_manager import TokenManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = TokenManager(app_name="test")
 
                 assert manager.config_file.name == "mcli.token.config.json"
@@ -196,7 +197,7 @@ class TestTokenManager:
         from mcli.lib.auth.token_manager import TokenManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = TokenManager(app_name="test")
 
                 manager.save_token("test_token_123")
@@ -209,7 +210,7 @@ class TestTokenManager:
         from mcli.lib.auth.token_manager import TokenManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = TokenManager(app_name="test")
 
                 with pytest.raises(ValueError, match="non-empty string"):
@@ -220,7 +221,7 @@ class TestTokenManager:
         from mcli.lib.auth.token_manager import TokenManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = TokenManager(app_name="test")
 
                 with pytest.raises(ValueError, match="non-empty string"):
@@ -231,7 +232,7 @@ class TestTokenManager:
         from mcli.lib.auth.token_manager import TokenManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = TokenManager(app_name="test")
 
                 token = manager.get_token()
@@ -242,7 +243,7 @@ class TestTokenManager:
         from mcli.lib.auth.token_manager import TokenManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = TokenManager(app_name="test")
 
                 manager.save_token("test_token")
@@ -256,7 +257,7 @@ class TestTokenManager:
         from mcli.lib.auth.token_manager import TokenManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = TokenManager(app_name="test")
 
                 manager.update_config("env_url", "https://api.example.com")
@@ -269,7 +270,7 @@ class TestTokenManager:
         from mcli.lib.auth.token_manager import TokenManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 manager = TokenManager(app_name="test")
 
                 url = manager.get_url()
@@ -284,7 +285,7 @@ class TestAuthFunctions:
         from mcli.lib.auth.auth import get_current_token
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 from mcli.lib.auth.token_manager import TokenManager
 
                 # Setup token
@@ -300,7 +301,7 @@ class TestAuthFunctions:
         from mcli.lib.auth.auth import get_current_token
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 token = get_current_token()
                 assert token is None
 
@@ -309,7 +310,7 @@ class TestAuthFunctions:
         from mcli.lib.auth.auth import get_current_url
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.lib.auth.credential_manager.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.lib.auth.credential_manager.Path.home", return_value=Path(tmpdir)):
                 from mcli.lib.auth.token_manager import TokenManager
 
                 # Setup URL

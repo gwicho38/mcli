@@ -4,25 +4,28 @@ NOTE: Dashboard page tests require streamlit and dashboard modules.
 Tests are conditional on dependencies being available.
 """
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
+import logging
+from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
-import logging
-from unittest.mock import patch, MagicMock, Mock
 
 # Check for streamlit and dashboard modules
 try:
     import streamlit as st
+
     HAS_STREAMLIT = True
 except ImportError:
     HAS_STREAMLIT = False
 
 try:
     if HAS_STREAMLIT:
-        from mcli.ml.dashboard.pages import cicd, workflows, predictions_enhanced
+        from mcli.ml.dashboard.pages import cicd, predictions_enhanced, workflows
     HAS_PAGES = HAS_STREAMLIT
 except ImportError:
     HAS_PAGES = False
@@ -39,9 +42,9 @@ logger = logging.getLogger(__name__)
 class TestCICDPage:
     """Test suite for pages/cicd.py"""
 
-    @patch('streamlit.title')
-    @patch('streamlit.tabs')
-    @patch('requests.get')
+    @patch("streamlit.title")
+    @patch("streamlit.tabs")
+    @patch("requests.get")
     def test_cicd_page_loads(self, mock_get, mock_tabs, mock_title):
         """Test that CI/CD page loads without errors"""
         logger.info("Testing CI/CD page load...")
@@ -55,10 +58,7 @@ class TestCICDPage:
         # Mock API response
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {
-            'builds': [],
-            'webhooks': []
-        }
+        mock_response.json.return_value = {"builds": [], "webhooks": []}
         mock_get.return_value = mock_response
 
         # Mock tabs - CI/CD has 4 tabs
@@ -72,7 +72,7 @@ class TestCICDPage:
 
         logger.info("✅ CI/CD page load test passed!")
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_cicd_fetch_builds_success(self, mock_get):
         """Test fetching builds from API successfully"""
         logger.info("Testing CI/CD builds fetch...")
@@ -87,13 +87,8 @@ class TestCICDPage:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'builds': [
-                {
-                    'id': 1,
-                    'status': 'success',
-                    'timestamp': '2025-01-01T10:00:00Z',
-                    'duration': 120
-                }
+            "builds": [
+                {"id": 1, "status": "success", "timestamp": "2025-01-01T10:00:00Z", "duration": 120}
             ]
         }
         mock_get.return_value = mock_response
@@ -101,10 +96,10 @@ class TestCICDPage:
         data = fetch_cicd_data()
 
         assert data is not None, "Should return data"
-        assert 'builds' in data, "Should have builds key"
+        assert "builds" in data, "Should have builds key"
         logger.info("✅ CI/CD builds fetch test passed!")
 
-    @patch('requests.get', side_effect=Exception("API Error"))
+    @patch("requests.get", side_effect=Exception("API Error"))
     def test_cicd_fetch_builds_failure(self, mock_get):
         """Test CI/CD page handles API errors gracefully"""
         logger.info("Testing CI/CD API error handling...")
@@ -135,12 +130,12 @@ class TestCICDPage:
 
         assert isinstance(mock_data, pd.DataFrame), "Should return DataFrame"
         assert len(mock_data) > 0, "Should have mock builds"
-        assert 'status' in mock_data.columns, "Should have status column"
-        assert 'started_at' in mock_data.columns, "Should have started_at column"
+        assert "status" in mock_data.columns, "Should have status column"
+        assert "started_at" in mock_data.columns, "Should have started_at column"
 
         # Verify status values
-        valid_statuses = ['success', 'failed', 'running', 'cancelled']
-        assert all(mock_data['status'].isin(valid_statuses)), "Invalid status values"
+        valid_statuses = ["success", "failed", "running", "cancelled"]
+        assert all(mock_data["status"].isin(valid_statuses)), "Invalid status values"
 
         logger.info("✅ CI/CD mock data test passed!")
 
@@ -148,9 +143,9 @@ class TestCICDPage:
 class TestWorkflowsPage:
     """Test suite for pages/workflows.py"""
 
-    @patch('streamlit.title')
-    @patch('streamlit.tabs')
-    @patch('requests.get')
+    @patch("streamlit.title")
+    @patch("streamlit.tabs")
+    @patch("requests.get")
     def test_workflows_page_loads(self, mock_get, mock_tabs, mock_title):
         """Test that Workflows page loads without errors"""
         logger.info("Testing Workflows page load...")
@@ -164,7 +159,7 @@ class TestWorkflowsPage:
         # Mock API response
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {'workflows': []}
+        mock_response.json.return_value = {"workflows": []}
         mock_get.return_value = mock_response
 
         # Mock tabs
@@ -178,7 +173,7 @@ class TestWorkflowsPage:
 
         logger.info("✅ Workflows page load test passed!")
 
-    @patch('requests.get')
+    @patch("requests.get")
     def test_workflows_fetch_success(self, mock_get):
         """Test fetching workflows from API successfully"""
         logger.info("Testing workflows fetch...")
@@ -193,13 +188,8 @@ class TestWorkflowsPage:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            'workflows': [
-                {
-                    'id': 1,
-                    'name': 'Test Workflow',
-                    'status': 'active',
-                    'schedule': '0 * * * *'
-                }
+            "workflows": [
+                {"id": 1, "name": "Test Workflow", "status": "active", "schedule": "0 * * * *"}
             ]
         }
         mock_get.return_value = mock_response
@@ -207,7 +197,7 @@ class TestWorkflowsPage:
         data = fetch_workflows_data()
 
         assert data is not None, "Should return data"
-        assert 'workflows' in data, "Should have workflows key"
+        assert "workflows" in data, "Should have workflows key"
         logger.info("✅ Workflows fetch test passed!")
 
     def test_workflows_mock_data_generation(self):
@@ -224,9 +214,9 @@ class TestWorkflowsPage:
 
         assert isinstance(mock_data, pd.DataFrame), "Should return DataFrame"
         assert len(mock_data) > 0, "Should have mock workflows"
-        assert 'name' in mock_data.columns, "Should have name column"
-        assert 'status' in mock_data.columns, "Should have status column"
-        assert 'schedule' in mock_data.columns, "Should have schedule column"
+        assert "name" in mock_data.columns, "Should have name column"
+        assert "status" in mock_data.columns, "Should have status column"
+        assert "schedule" in mock_data.columns, "Should have schedule column"
 
         logger.info("✅ Workflows mock data test passed!")
 
@@ -244,9 +234,9 @@ class TestWorkflowsPage:
 
         assert isinstance(mock_data, pd.DataFrame), "Should return DataFrame"
         assert len(mock_data) > 0, "Should have mock executions"
-        assert 'id' in mock_data.columns, "Should have id column"
-        assert 'status' in mock_data.columns, "Should have status column"
-        assert 'started_at' in mock_data.columns, "Should have started_at column"
+        assert "id" in mock_data.columns, "Should have id column"
+        assert "status" in mock_data.columns, "Should have status column"
+        assert "started_at" in mock_data.columns, "Should have started_at column"
 
         logger.info("✅ Workflow execution mock data test passed!")
 
@@ -254,8 +244,8 @@ class TestWorkflowsPage:
 class TestPredictionsEnhancedPage:
     """Test suite for pages/predictions_enhanced.py"""
 
-    @patch('streamlit.title')
-    @patch('streamlit.tabs')
+    @patch("streamlit.title")
+    @patch("streamlit.tabs")
     def test_predictions_page_loads(self, mock_tabs, mock_title):
         """Test that Predictions Enhanced page loads without errors"""
         logger.info("Testing Predictions Enhanced page load...")
@@ -270,7 +260,9 @@ class TestPredictionsEnhancedPage:
         mock_tabs.return_value = [MagicMock() for _ in range(5)]
 
         # Mock Supabase client
-        with patch('mcli.ml.dashboard.pages.predictions_enhanced.get_supabase_client', return_value=None):
+        with patch(
+            "mcli.ml.dashboard.pages.predictions_enhanced.get_supabase_client", return_value=None
+        ):
             # Should not raise exception even if Supabase unavailable
             try:
                 show_predictions_enhanced()
@@ -279,8 +271,8 @@ class TestPredictionsEnhancedPage:
 
         logger.info("✅ Predictions Enhanced page load test passed!")
 
-    @patch('mcli.ml.dashboard.pages.predictions_enhanced.get_disclosures_data')
-    @patch('mcli.ml.dashboard.pages.predictions_enhanced.run_ml_pipeline')
+    @patch("mcli.ml.dashboard.pages.predictions_enhanced.get_disclosures_data")
+    @patch("mcli.ml.dashboard.pages.predictions_enhanced.run_ml_pipeline")
     def test_predictions_real_data_integration(self, mock_pipeline, mock_disclosures):
         """Test predictions page uses real data from ML pipeline"""
         logger.info("Testing predictions real data integration...")
@@ -292,21 +284,25 @@ class TestPredictionsEnhancedPage:
             return
 
         # Mock real data
-        mock_disclosures.return_value = pd.DataFrame({
-            'politician': ['Senator A', 'Rep B'],
-            'ticker': ['AAPL', 'GOOGL'],
-            'transaction_date': pd.to_datetime(['2025-01-01', '2025-01-02']),
-            'amount': [50000, 75000]
-        })
+        mock_disclosures.return_value = pd.DataFrame(
+            {
+                "politician": ["Senator A", "Rep B"],
+                "ticker": ["AAPL", "GOOGL"],
+                "transaction_date": pd.to_datetime(["2025-01-01", "2025-01-02"]),
+                "amount": [50000, 75000],
+            }
+        )
 
         mock_pipeline.return_value = (
             None,  # X_train
             None,  # X_test
-            pd.DataFrame({  # predictions
-                'politician': ['Senator A'],
-                'prediction': [0.75],
-                'confidence': [0.85]
-            })
+            pd.DataFrame(
+                {  # predictions
+                    "politician": ["Senator A"],
+                    "prediction": [0.75],
+                    "confidence": [0.85],
+                }
+            ),
         )
 
         predictions = get_real_predictions()
@@ -331,10 +327,13 @@ class TestPredictionsEnhancedPage:
             return
 
         # Mock components
-        with patch('streamlit.title'):
-            with patch('streamlit.tabs', return_value=[MagicMock() for _ in range(5)]):
-                with patch('streamlit.caption') as mock_caption:
-                    with patch('mcli.ml.dashboard.pages.predictions_enhanced.get_supabase_client', return_value=None):
+        with patch("streamlit.title"):
+            with patch("streamlit.tabs", return_value=[MagicMock() for _ in range(5)]):
+                with patch("streamlit.caption") as mock_caption:
+                    with patch(
+                        "mcli.ml.dashboard.pages.predictions_enhanced.get_supabase_client",
+                        return_value=None,
+                    ):
                         show_predictions_enhanced()
 
                     # Should show data source indicator
@@ -342,7 +341,7 @@ class TestPredictionsEnhancedPage:
 
         logger.info("✅ Predictions data source indicator test passed!")
 
-    @patch('mcli.ml.dashboard.pages.predictions_enhanced.get_politician_names')
+    @patch("mcli.ml.dashboard.pages.predictions_enhanced.get_politician_names")
     def test_predictions_politician_selector(self, mock_get_politicians):
         """Test politician selector uses real data"""
         logger.info("Testing politician selector...")
@@ -354,7 +353,7 @@ class TestPredictionsEnhancedPage:
             return
 
         # Mock real politician data
-        mock_get_politicians.return_value = ['Senator Alice', 'Rep Bob', 'Gov Charlie']
+        mock_get_politicians.return_value = ["Senator Alice", "Rep Bob", "Gov Charlie"]
 
         # Verify function can be called
         politicians = mock_get_politicians()
@@ -362,7 +361,7 @@ class TestPredictionsEnhancedPage:
 
         logger.info("✅ Politician selector test passed!")
 
-    @patch('mcli.ml.dashboard.pages.predictions_enhanced.get_politician_trading_history')
+    @patch("mcli.ml.dashboard.pages.predictions_enhanced.get_politician_trading_history")
     def test_predictions_trading_history(self, mock_get_history):
         """Test trading history uses real data"""
         logger.info("Testing trading history...")
@@ -374,21 +373,23 @@ class TestPredictionsEnhancedPage:
             return
 
         # Mock real trading history
-        mock_get_history.return_value = pd.DataFrame({
-            'transaction_date': pd.to_datetime(['2025-01-01', '2025-01-02']),
-            'ticker': ['AAPL', 'GOOGL'],
-            'type': ['purchase', 'sale'],
-            'amount': [50000, 25000]
-        })
+        mock_get_history.return_value = pd.DataFrame(
+            {
+                "transaction_date": pd.to_datetime(["2025-01-01", "2025-01-02"]),
+                "ticker": ["AAPL", "GOOGL"],
+                "type": ["purchase", "sale"],
+                "amount": [50000, 25000],
+            }
+        )
 
-        history = mock_get_history('Senator Alice')
+        history = mock_get_history("Senator Alice")
         assert isinstance(history, pd.DataFrame), "Should return DataFrame"
         assert len(history) == 2, "Should have trading records"
 
         logger.info("✅ Trading history test passed!")
 
-    @patch('mcli.ml.dashboard.pages.predictions_enhanced.engineer_features')
-    @patch('mcli.ml.dashboard.pages.predictions_enhanced.generate_production_prediction')
+    @patch("mcli.ml.dashboard.pages.predictions_enhanced.engineer_features")
+    @patch("mcli.ml.dashboard.pages.predictions_enhanced.generate_production_prediction")
     def test_predictions_ml_model_integration(self, mock_predict, mock_features):
         """Test predictions page integrates with real ML model"""
         logger.info("Testing ML model integration...")
@@ -400,25 +401,23 @@ class TestPredictionsEnhancedPage:
             return
 
         # Mock feature engineering
-        mock_features.return_value = pd.DataFrame({
-            'feature1': [0.5],
-            'feature2': [0.7],
-            'feature3': [0.3]
-        })
+        mock_features.return_value = pd.DataFrame(
+            {"feature1": [0.5], "feature2": [0.7], "feature3": [0.3]}
+        )
 
         # Mock prediction
         mock_predict.return_value = {
-            'prediction': 0.75,
-            'confidence': 0.85,
-            'feature_importance': {'feature1': 0.4, 'feature2': 0.35, 'feature3': 0.25}
+            "prediction": 0.75,
+            "confidence": 0.85,
+            "feature_importance": {"feature1": 0.4, "feature2": 0.35, "feature3": 0.25},
         }
 
         # Verify functions can be called
         features = mock_features({})
         prediction = mock_predict(features)
 
-        assert 'prediction' in prediction, "Should have prediction"
-        assert 'confidence' in prediction, "Should have confidence"
+        assert "prediction" in prediction, "Should have prediction"
+        assert "confidence" in prediction, "Should have confidence"
 
         logger.info("✅ ML model integration test passed!")
 
@@ -431,13 +430,11 @@ class TestPageIntegration:
         logger.info("Testing page imports...")
 
         try:
-            from mcli.ml.dashboard.pages import cicd
-            from mcli.ml.dashboard.pages import workflows
-            from mcli.ml.dashboard.pages import predictions_enhanced
+            from mcli.ml.dashboard.pages import cicd, predictions_enhanced, workflows
 
-            assert hasattr(cicd, 'show_cicd_dashboard')
-            assert hasattr(workflows, 'show_workflows_dashboard')
-            assert hasattr(predictions_enhanced, 'show_predictions_enhanced')
+            assert hasattr(cicd, "show_cicd_dashboard")
+            assert hasattr(workflows, "show_workflows_dashboard")
+            assert hasattr(predictions_enhanced, "show_predictions_enhanced")
 
         except ImportError as e:
             pytest.skip(f"Dashboard pages not available: {e}")
@@ -457,17 +454,23 @@ class TestPageIntegration:
             return
 
         # Mock API failures
-        with patch('requests.get', side_effect=Exception("API unavailable")):
-            with patch('streamlit.title'):
+        with patch("requests.get", side_effect=Exception("API unavailable")):
+            with patch("streamlit.title"):
                 # CI/CD needs 4 tabs
-                with patch('streamlit.tabs', return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()]):
+                with patch(
+                    "streamlit.tabs",
+                    return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()],
+                ):
                     try:
                         show_cicd_dashboard()
                     except Exception as e:
                         pytest.fail(f"CI/CD page should handle API errors: {e}")
 
                 # Workflows needs 4 tabs too
-                with patch('streamlit.tabs', return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()]):
+                with patch(
+                    "streamlit.tabs",
+                    return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()],
+                ):
                     try:
                         show_workflows_dashboard()
                     except Exception as e:
@@ -486,11 +489,13 @@ class TestPageIntegration:
             return
 
         # Mock real data functions
-        with patch('mcli.ml.dashboard.pages.predictions_enhanced.get_disclosures_data') as mock_disc:
-            with patch('mcli.ml.dashboard.pages.predictions_enhanced.run_ml_pipeline') as mock_pipe:
+        with patch(
+            "mcli.ml.dashboard.pages.predictions_enhanced.get_disclosures_data"
+        ) as mock_disc:
+            with patch("mcli.ml.dashboard.pages.predictions_enhanced.run_ml_pipeline") as mock_pipe:
                 # Setup mocks to return data
-                mock_disc.return_value = pd.DataFrame({'data': [1, 2, 3]})
-                mock_pipe.return_value = (None, None, pd.DataFrame({'pred': [0.5]}))
+                mock_disc.return_value = pd.DataFrame({"data": [1, 2, 3]})
+                mock_pipe.return_value = (None, None, pd.DataFrame({"pred": [0.5]}))
 
                 # Call function
                 get_real_predictions()
@@ -504,14 +509,14 @@ class TestPageIntegration:
 
 def main():
     """Run all page tests"""
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("STARTING DASHBOARD PAGES TEST SUITE")
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("Testing pages: cicd, workflows, predictions_enhanced")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # Run pytest
-    pytest.main([__file__, '-v', '--tb=short'])
+    pytest.main([__file__, "-v", "--tb=short"])
 
 
 if __name__ == "__main__":

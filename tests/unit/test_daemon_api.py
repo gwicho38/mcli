@@ -2,13 +2,15 @@
 Unit tests for mcli.workflow.daemon.daemon_api module
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Check if watchdog is available
 try:
     import watchdog
+
     HAS_WATCHDOG = True
 except ImportError:
     HAS_WATCHDOG = False
@@ -18,10 +20,11 @@ except ImportError:
 class TestDaemonAPI:
     """Test suite for daemon API endpoints"""
 
-    @patch('mcli.workflow.daemon.daemon_api.service')
+    @patch("mcli.workflow.daemon.daemon_api.service")
     def test_list_commands_basic(self, mock_service):
         """Test listing commands"""
         from fastapi.testclient import TestClient
+
         from mcli.workflow.daemon.daemon_api import app
 
         # Mock command data
@@ -50,10 +53,11 @@ class TestDaemonAPI:
         assert data[0]["language"] == "python"
         assert data[0]["execution_count"] == 5
 
-    @patch('mcli.workflow.daemon.daemon_api.service')
+    @patch("mcli.workflow.daemon.daemon_api.service")
     def test_list_commands_empty(self, mock_service):
         """Test listing commands when none exist"""
         from fastapi.testclient import TestClient
+
         from mcli.workflow.daemon.daemon_api import app
 
         mock_service.db.get_all_commands.return_value = []
@@ -64,10 +68,11 @@ class TestDaemonAPI:
         assert response.status_code == 200
         assert response.json() == []
 
-    @patch('mcli.workflow.daemon.daemon_api.service')
+    @patch("mcli.workflow.daemon.daemon_api.service")
     def test_list_commands_with_all_parameter(self, mock_service):
         """Test listing all commands including inactive"""
         from fastapi.testclient import TestClient
+
         from mcli.workflow.daemon.daemon_api import app
 
         mock_cmd_active = MagicMock()
@@ -108,10 +113,11 @@ class TestDaemonAPI:
         # Verify get_all_commands was called with include_inactive=True
         mock_service.db.get_all_commands.assert_called_once_with(include_inactive=True)
 
-    @patch('mcli.workflow.daemon.daemon_api.service')
+    @patch("mcli.workflow.daemon.daemon_api.service")
     def test_execute_command_success(self, mock_service):
         """Test executing a command successfully"""
         from fastapi.testclient import TestClient
+
         from mcli.workflow.daemon.daemon_api import app
 
         # Mock command
@@ -122,13 +128,12 @@ class TestDaemonAPI:
         mock_service.executor.execute_command.return_value = {
             "status": "success",
             "output": "Command executed",
-            "exit_code": 0
+            "exit_code": 0,
         }
 
         client = TestClient(app)
         response = client.post(
-            "/execute",
-            json={"command_name": "test_command", "args": ["arg1", "arg2"]}
+            "/execute", json={"command_name": "test_command", "args": ["arg1", "arg2"]}
         )
 
         assert response.status_code == 200
@@ -141,27 +146,26 @@ class TestDaemonAPI:
         call_args = mock_service.executor.execute_command.call_args
         assert call_args[0][1] == ["arg1", "arg2"]
 
-    @patch('mcli.workflow.daemon.daemon_api.service')
+    @patch("mcli.workflow.daemon.daemon_api.service")
     def test_execute_command_not_found(self, mock_service):
         """Test executing a non-existent command"""
         from fastapi.testclient import TestClient
+
         from mcli.workflow.daemon.daemon_api import app
 
         mock_service.db.get_all_commands.return_value = []
 
         client = TestClient(app)
-        response = client.post(
-            "/execute",
-            json={"command_name": "nonexistent_command"}
-        )
+        response = client.post("/execute", json={"command_name": "nonexistent_command"})
 
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
-    @patch('mcli.workflow.daemon.daemon_api.service')
+    @patch("mcli.workflow.daemon.daemon_api.service")
     def test_execute_command_no_args(self, mock_service):
         """Test executing a command without arguments"""
         from fastapi.testclient import TestClient
+
         from mcli.workflow.daemon.daemon_api import app
 
         mock_cmd = MagicMock()
@@ -171,14 +175,11 @@ class TestDaemonAPI:
         mock_service.executor.execute_command.return_value = {
             "status": "success",
             "output": "Done",
-            "exit_code": 0
+            "exit_code": 0,
         }
 
         client = TestClient(app)
-        response = client.post(
-            "/execute",
-            json={"command_name": "simple_command"}
-        )
+        response = client.post("/execute", json={"command_name": "simple_command"})
 
         assert response.status_code == 200
 
@@ -186,10 +187,11 @@ class TestDaemonAPI:
         call_args = mock_service.executor.execute_command.call_args
         assert call_args[0][1] == []
 
-    @patch('mcli.workflow.daemon.daemon_api.service')
+    @patch("mcli.workflow.daemon.daemon_api.service")
     def test_list_commands_with_optional_fields(self, mock_service):
         """Test listing commands with None values for optional fields"""
         from fastapi.testclient import TestClient
+
         from mcli.workflow.daemon.daemon_api import app
 
         # Mock command with None values
@@ -241,7 +243,7 @@ class TestDaemonAPI:
             updated_at="2025-01-02T00:00:00",
             execution_count=10,
             last_executed="2025-01-03T00:00:00",
-            is_active=True
+            is_active=True,
         )
 
         assert cmd_out.name == "test_cmd"

@@ -1,8 +1,10 @@
 """Shared fixtures for database testing"""
-import pytest
-from unittest.mock import Mock, MagicMock
+
 import sqlite3
 from pathlib import Path
+from unittest.mock import MagicMock, Mock
+
+import pytest
 
 
 @pytest.fixture
@@ -31,16 +33,19 @@ def temp_sqlite_db(tmp_path):
     conn = sqlite3.connect(str(db_path))
 
     # Create sample tables
-    conn.execute("""
+    conn.execute(
+        """
         CREATE TABLE users (
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """)
+    """
+    )
 
-    conn.execute("""
+    conn.execute(
+        """
         CREATE TABLE posts (
             id INTEGER PRIMARY KEY,
             user_id INTEGER,
@@ -49,7 +54,8 @@ def temp_sqlite_db(tmp_path):
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         )
-    """)
+    """
+    )
 
     # Insert sample data
     conn.execute("INSERT INTO users (name, email) VALUES (?, ?)", ("Alice", "alice@example.com"))
@@ -91,5 +97,5 @@ def sample_db_records():
     return [
         {"id": 1, "name": "Alice", "email": "alice@example.com"},
         {"id": 2, "name": "Bob", "email": "bob@example.com"},
-        {"id": 3, "name": "Charlie", "email": "charlie@example.com"}
+        {"id": 3, "name": "Charlie", "email": "charlie@example.com"},
     ]

@@ -1,5 +1,8 @@
 """Database session management"""
 
+# Synchronous database setup
+# Prioritize DATABASE_URL environment variable over settings
+import os
 from contextlib import asynccontextmanager, contextmanager
 from typing import AsyncGenerator, Generator
 
@@ -12,9 +15,6 @@ from mcli.ml.config import settings
 
 from .models import Base
 
-# Synchronous database setup
-# Prioritize DATABASE_URL environment variable over settings
-import os
 database_url = os.getenv("DATABASE_URL")
 
 # Check if DATABASE_URL has placeholder password
@@ -53,6 +53,7 @@ if not database_url:
 
         # Try to connect to poolers
         import logging
+
         logger = logging.getLogger(__name__)
 
         for pooler_url in pooler_urls:
@@ -61,13 +62,18 @@ if not database_url:
                 test_engine = create_engine(pooler_url, pool_pre_ping=True)
                 with test_engine.connect() as conn:
                     from sqlalchemy import text
+
                     conn.execute(text("SELECT 1"))
                 database_url = pooler_url
-                logger.info(f"Successfully connected via pooler: {pooler_url.split('@')[1].split(':')[0]}")
+                logger.info(
+                    f"Successfully connected via pooler: {pooler_url.split('@')[1].split(':')[0]}"
+                )
                 test_engine.dispose()
                 break
             except Exception as e:
-                logger.warning(f"Failed to connect via {pooler_url.split('@')[1].split(':')[0]}: {e}")
+                logger.warning(
+                    f"Failed to connect via {pooler_url.split('@')[1].split(':')[0]}: {e}"
+                )
                 continue
 
         if not database_url:
@@ -75,6 +81,7 @@ if not database_url:
             database_url = pooler_urls[0]
 
         import warnings
+
         warnings.warn(
             "Using Supabase connection pooler with service role key. "
             "For better performance, set DATABASE_URL with your actual database password. "
@@ -84,6 +91,7 @@ if not database_url:
         # Default to SQLite for development/testing
         database_url = "sqlite:///./ml_system.db"
         import warnings
+
         warnings.warn(
             "No database credentials found. Using SQLite fallback. "
             "Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY or DATABASE_URL in environment."
@@ -91,6 +99,7 @@ if not database_url:
 
 # Debug: Log which database URL is being used
 import logging
+
 logger = logging.getLogger(__name__)
 
 if "pooler.supabase.com" in database_url:
@@ -151,6 +160,7 @@ try:
 except (AttributeError, Exception):
     # Fallback for async engine
     import os
+
     async_database_url = os.getenv("ASYNC_DATABASE_URL")
     if not async_database_url:
         # Convert sync URL to async if possible
@@ -224,6 +234,7 @@ def get_session() -> Generator[Session, None, None]:
         session = SessionLocal()
         # Test the connection
         from sqlalchemy import text
+
         session.execute(text("SELECT 1"))
         yield session
         session.commit()

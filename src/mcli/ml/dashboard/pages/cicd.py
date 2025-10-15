@@ -1,23 +1,24 @@
 """CI/CD Pipeline Monitoring Dashboard"""
 
-import streamlit as st
-import pandas as pd
-import requests
 import os
 from datetime import datetime, timedelta
-import plotly.graph_objects as go
-import plotly.express as px
 from typing import Optional
+
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import requests
+import streamlit as st
 
 # Import components
 try:
-    from ..components.metrics import display_kpi_row, display_status_badge, display_health_indicator
-    from ..components.charts import create_timeline_chart, create_status_pie_chart, render_chart
+    from ..components.charts import create_status_pie_chart, create_timeline_chart, render_chart
+    from ..components.metrics import display_health_indicator, display_kpi_row, display_status_badge
     from ..components.tables import display_filterable_dataframe, export_dataframe
 except ImportError:
     # Fallback for when imported outside package context
-    from components.metrics import display_kpi_row, display_status_badge, display_health_indicator
-    from components.charts import create_timeline_chart, create_status_pie_chart, render_chart
+    from components.charts import create_status_pie_chart, create_timeline_chart, render_chart
+    from components.metrics import display_health_indicator, display_kpi_row, display_status_badge
     from components.tables import display_filterable_dataframe, export_dataframe
 
 
@@ -65,21 +66,27 @@ def create_mock_cicd_data() -> pd.DataFrame:
 
     data = []
     for i in range(50):
-        start_time = datetime.now() - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23))
+        start_time = datetime.now() - timedelta(
+            days=random.randint(0, 30), hours=random.randint(0, 23)
+        )
         duration = random.randint(60, 600)  # seconds
         status = random.choices(statuses, weights=[70, 15, 10, 5])[0]
 
-        data.append({
-            "id": f"build-{i+1}",
-            "pipeline_name": random.choice(pipelines),
-            "branch": random.choice(branches),
-            "status": status,
-            "started_at": start_time.isoformat(),
-            "duration_sec": duration if status != "running" else None,
-            "commit_sha": f"{random.randint(1000000, 9999999):07x}",
-            "triggered_by": random.choice(["github-webhook", "manual", "schedule"]),
-            "success_rate": random.uniform(0.7, 1.0) if status == "success" else random.uniform(0, 0.5)
-        })
+        data.append(
+            {
+                "id": f"build-{i+1}",
+                "pipeline_name": random.choice(pipelines),
+                "branch": random.choice(branches),
+                "status": status,
+                "started_at": start_time.isoformat(),
+                "duration_sec": duration if status != "running" else None,
+                "commit_sha": f"{random.randint(1000000, 9999999):07x}",
+                "triggered_by": random.choice(["github-webhook", "manual", "schedule"]),
+                "success_rate": (
+                    random.uniform(0.7, 1.0) if status == "success" else random.uniform(0, 0.5)
+                ),
+            }
+        )
 
     return pd.DataFrame(data)
 
@@ -104,8 +111,20 @@ def fetch_webhooks() -> list:
 
     # Return mock data
     return [
-        {"id": "wh-1", "name": "GitHub Main", "url": "https://github.com/user/repo", "events": ["push", "pull_request"], "active": True},
-        {"id": "wh-2", "name": "GitLab CI", "url": "https://gitlab.com/user/repo", "events": ["push"], "active": True},
+        {
+            "id": "wh-1",
+            "name": "GitHub Main",
+            "url": "https://github.com/user/repo",
+            "events": ["push", "pull_request"],
+            "active": True,
+        },
+        {
+            "id": "wh-2",
+            "name": "GitLab CI",
+            "url": "https://gitlab.com/user/repo",
+            "events": ["push"],
+            "active": True,
+        },
     ]
 
 
@@ -125,6 +144,7 @@ def show_cicd_dashboard():
 
     if auto_refresh:
         from streamlit_autorefresh import st_autorefresh
+
         # Auto-refresh every 30 seconds
         st_autorefresh(interval=30000, key="cicd_refresh")
 
@@ -155,10 +175,18 @@ def show_cicd_dashboard():
 
     metrics = {
         "Total Builds": {"value": total_builds, "icon": "📦"},
-        "Success Rate": {"value": f"{success_rate:.1f}%", "delta": "+5.2%", "delta_color": "normal", "icon": "✅"},
+        "Success Rate": {
+            "value": f"{success_rate:.1f}%",
+            "delta": "+5.2%",
+            "delta_color": "normal",
+            "icon": "✅",
+        },
         "Failed Builds": {"value": failed_builds, "icon": "❌"},
         "Running": {"value": running_builds, "icon": "🔵"},
-        "Avg Duration": {"value": f"{avg_duration:.0f}s" if pd.notna(avg_duration) else "N/A", "icon": "⏱️"}
+        "Avg Duration": {
+            "value": f"{avg_duration:.0f}s" if pd.notna(avg_duration) else "N/A",
+            "icon": "⏱️",
+        },
     }
 
     display_kpi_row(metrics, columns=5)
@@ -166,7 +194,9 @@ def show_cicd_dashboard():
     st.divider()
 
     # === Tabs for different views ===
-    tab1, tab2, tab3, tab4 = st.tabs(["📈 Overview", "🔍 Build History", "🔔 Webhooks", "⚙️ Configuration"])
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ["📈 Overview", "🔍 Build History", "🔔 Webhooks", "⚙️ Configuration"]
+    )
 
     with tab1:
         show_cicd_overview(builds_df)
@@ -199,9 +229,9 @@ def show_cicd_overview(builds_df: pd.DataFrame):
             fig = px.bar(
                 x=pipeline_counts.values,
                 y=pipeline_counts.index,
-                orientation='h',
+                orientation="h",
                 title="Top Pipelines by Build Count",
-                labels={"x": "Number of Builds", "y": "Pipeline"}
+                labels={"x": "Number of Builds", "y": "Pipeline"},
             )
             render_chart(fig)
 
@@ -211,9 +241,11 @@ def show_cicd_overview(builds_df: pd.DataFrame):
     if "started_at" in builds_df.columns and "status" in builds_df.columns:
         # Group by date and calculate success rate
         builds_df["date"] = builds_df["started_at"].dt.date
-        daily_stats = builds_df.groupby("date").agg({
-            "status": lambda x: (x == "success").sum() / len(x) * 100
-        }).reset_index()
+        daily_stats = (
+            builds_df.groupby("date")
+            .agg({"status": lambda x: (x == "success").sum() / len(x) * 100})
+            .reset_index()
+        )
         daily_stats.columns = ["date", "success_rate"]
 
         fig = px.line(
@@ -222,7 +254,7 @@ def show_cicd_overview(builds_df: pd.DataFrame):
             y="success_rate",
             title="Daily Success Rate",
             labels={"date": "Date", "success_rate": "Success Rate (%)"},
-            markers=True
+            markers=True,
         )
         fig.add_hline(y=90, line_dash="dash", line_color="green", annotation_text="Target: 90%")
         render_chart(fig)
@@ -242,7 +274,7 @@ def show_cicd_overview(builds_df: pd.DataFrame):
                 y="duration_min",
                 color="pipeline_name",
                 title="Build Duration Over Time",
-                labels={"started_at": "Time", "duration_min": "Duration (minutes)"}
+                labels={"started_at": "Time", "duration_min": "Duration (minutes)"},
             )
             render_chart(fig)
 
@@ -256,13 +288,11 @@ def show_build_history(builds_df: pd.DataFrame):
     filter_config = {
         "pipeline_name": "multiselect",
         "status": "multiselect",
-        "branch": "multiselect"
+        "branch": "multiselect",
     }
 
     filtered_df = display_filterable_dataframe(
-        builds_df,
-        filter_columns=filter_config,
-        key_prefix="cicd_filter"
+        builds_df, filter_columns=filter_config, key_prefix="cicd_filter"
     )
 
     # Export option
@@ -274,7 +304,9 @@ def show_build_history(builds_df: pd.DataFrame):
 
     if not filtered_df.empty:
         for _, build in filtered_df.head(20).iterrows():
-            with st.expander(f"{build.get('pipeline_name', 'Unknown')} - {build.get('commit_sha', 'Unknown')[:7]} - {display_status_badge(build.get('status', 'unknown'), 'small')}"):
+            with st.expander(
+                f"{build.get('pipeline_name', 'Unknown')} - {build.get('commit_sha', 'Unknown')[:7]} - {display_status_badge(build.get('status', 'unknown'), 'small')}"
+            ):
                 col1, col2 = st.columns(2)
 
                 with col1:
@@ -284,20 +316,27 @@ def show_build_history(builds_df: pd.DataFrame):
                     st.markdown(f"**Triggered By:** {build.get('triggered_by', 'N/A')}")
 
                 with col2:
-                    st.markdown(f"**Status:** {display_status_badge(build.get('status', 'unknown'), 'small')}")
+                    st.markdown(
+                        f"**Status:** {display_status_badge(build.get('status', 'unknown'), 'small')}"
+                    )
                     st.markdown(f"**Started:** {build.get('started_at', 'N/A')}")
-                    if pd.notna(build.get('duration_sec')):
-                        st.markdown(f"**Duration:** {build['duration_sec']}s ({build['duration_sec']/60:.1f}m)")
+                    if pd.notna(build.get("duration_sec")):
+                        st.markdown(
+                            f"**Duration:** {build['duration_sec']}s ({build['duration_sec']/60:.1f}m)"
+                        )
 
                 # Mock logs
                 if st.button(f"View Logs", key=f"logs_{build.get('id')}"):
-                    st.code(f"""
+                    st.code(
+                        f"""
 [INFO] Starting build for {build.get('pipeline_name')}
 [INFO] Checking out branch: {build.get('branch')}
 [INFO] Installing dependencies...
 [INFO] Running tests...
 [INFO] Build {'completed successfully' if build.get('status') == 'success' else 'failed'}
-                    """, language="bash")
+                    """,
+                        language="bash",
+                    )
 
 
 def show_webhooks_config():
@@ -312,7 +351,9 @@ def show_webhooks_config():
         return
 
     for webhook in webhooks:
-        with st.expander(f"{webhook['name']} - {'✅ Active' if webhook['active'] else '❌ Inactive'}"):
+        with st.expander(
+            f"{webhook['name']} - {'✅ Active' if webhook['active'] else '❌ Inactive'}"
+        ):
             st.markdown(f"**URL:** `{webhook['url']}`")
             st.markdown(f"**Events:** {', '.join(webhook['events'])}")
             st.markdown(f"**Status:** {'Active' if webhook['active'] else 'Inactive'}")
@@ -351,8 +392,12 @@ def show_cicd_configuration():
     with st.form("cicd_config"):
         st.markdown("#### Pipeline Settings")
 
-        max_concurrent_builds = st.number_input("Max Concurrent Builds", min_value=1, max_value=10, value=3)
-        build_timeout = st.number_input("Build Timeout (minutes)", min_value=5, max_value=120, value=30)
+        max_concurrent_builds = st.number_input(
+            "Max Concurrent Builds", min_value=1, max_value=10, value=3
+        )
+        build_timeout = st.number_input(
+            "Build Timeout (minutes)", min_value=5, max_value=120, value=30
+        )
         retry_failed_builds = st.checkbox("Auto-retry Failed Builds", value=True)
         max_retries = st.number_input("Max Retries", min_value=1, max_value=5, value=2)
 
@@ -365,17 +410,19 @@ def show_cicd_configuration():
 
         if submitted:
             st.success("✅ Configuration saved successfully!")
-            st.json({
-                "max_concurrent_builds": max_concurrent_builds,
-                "build_timeout_minutes": build_timeout,
-                "retry_failed_builds": retry_failed_builds,
-                "max_retries": max_retries,
-                "notifications": {
-                    "on_success": notify_on_success,
-                    "on_failure": notify_on_failure,
-                    "email": notification_email
+            st.json(
+                {
+                    "max_concurrent_builds": max_concurrent_builds,
+                    "build_timeout_minutes": build_timeout,
+                    "retry_failed_builds": retry_failed_builds,
+                    "max_retries": max_retries,
+                    "notifications": {
+                        "on_success": notify_on_success,
+                        "on_failure": notify_on_failure,
+                        "email": notification_email,
+                    },
                 }
-            })
+            )
 
 
 if __name__ == "__main__":

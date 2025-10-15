@@ -20,9 +20,7 @@ import torch
 from ml.features.ensemble_features import EnsembleFeatureBuilder
 from ml.features.political_features import PoliticalInfluenceFeatures
 from ml.features.recommendation_engine import RecommendationConfig as FeatureRecommendationConfig
-from ml.features.recommendation_engine import (
-    StockRecommendationEngine,
-)
+from ml.features.recommendation_engine import StockRecommendationEngine
 from ml.features.stock_features import StockRecommendationFeatures
 from ml.models.ensemble_models import (
     DeepEnsembleModel,

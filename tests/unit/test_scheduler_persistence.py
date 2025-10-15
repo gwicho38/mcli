@@ -3,11 +3,12 @@ Unit tests for mcli.workflow.scheduler.persistence module
 """
 
 import json
-import pytest
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 
 class TestJobStorage:
@@ -51,7 +52,7 @@ class TestJobStorage:
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch('mcli.workflow.scheduler.persistence.Path.home', return_value=Path(tmpdir)):
+            with patch("mcli.workflow.scheduler.persistence.Path.home", return_value=Path(tmpdir)):
                 storage = JobStorage()
 
                 expected_dir = Path(tmpdir) / ".mcli" / "scheduler"
@@ -59,8 +60,8 @@ class TestJobStorage:
 
     def test_save_and_load_jobs(self):
         """Test saving and loading jobs"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -71,14 +72,14 @@ class TestJobStorage:
                     name="job1",
                     cron_expression="0 0 * * *",
                     job_type=JobType.COMMAND,
-                    command="echo test1"
+                    command="echo test1",
                 ),
                 ScheduledJob(
                     name="job2",
                     cron_expression="0 12 * * *",
                     job_type=JobType.PYTHON,
-                    command="python script.py"
-                )
+                    command="python script.py",
+                ),
             ]
 
             # Save jobs
@@ -116,8 +117,8 @@ class TestJobStorage:
 
     def test_save_single_job_new(self):
         """Test saving a new single job"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -126,7 +127,7 @@ class TestJobStorage:
                 name="test_job",
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
-                command="test"
+                command="test",
             )
 
             result = storage.save_job(job)
@@ -138,8 +139,8 @@ class TestJobStorage:
 
     def test_save_single_job_update_existing(self):
         """Test updating an existing job"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -150,7 +151,7 @@ class TestJobStorage:
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
                 command="original command",
-                job_id="test-id-123"
+                job_id="test-id-123",
             )
             storage.save_job(job)
 
@@ -165,8 +166,8 @@ class TestJobStorage:
 
     def test_delete_job(self):
         """Test deleting a job"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -177,14 +178,14 @@ class TestJobStorage:
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
                 command="test1",
-                job_id="id1"
+                job_id="id1",
             )
             job2 = ScheduledJob(
                 name="job2",
                 cron_expression="0 12 * * *",
                 job_type=JobType.COMMAND,
                 command="test2",
-                job_id="id2"
+                job_id="id2",
             )
 
             storage.save_jobs([job1, job2])
@@ -210,8 +211,8 @@ class TestJobStorage:
 
     def test_get_job_by_id(self):
         """Test getting a specific job by ID"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -221,7 +222,7 @@ class TestJobStorage:
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
                 command="test",
-                job_id="test-id"
+                job_id="test-id",
             )
 
             storage.save_job(job)
@@ -243,8 +244,8 @@ class TestJobStorage:
 
     def test_record_job_execution(self):
         """Test recording job execution history"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -254,7 +255,7 @@ class TestJobStorage:
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
                 command="test",
-                job_id="test-id"
+                job_id="test-id",
             )
 
             execution_data = {
@@ -263,7 +264,7 @@ class TestJobStorage:
                 "output": "Success",
                 "error": "",
                 "exit_code": 0,
-                "retries": 0
+                "retries": 0,
             }
 
             storage.record_job_execution(job, execution_data)
@@ -277,8 +278,8 @@ class TestJobStorage:
 
     def test_record_job_execution_limits_output_size(self):
         """Test that job execution records limit output size"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -288,16 +289,12 @@ class TestJobStorage:
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
                 command="test",
-                job_id="test-id"
+                job_id="test-id",
             )
 
             # Create very long output
             long_output = "x" * 5000
-            execution_data = {
-                "status": "completed",
-                "output": long_output,
-                "error": ""
-            }
+            execution_data = {"status": "completed", "output": long_output, "error": ""}
 
             storage.record_job_execution(job, execution_data)
 
@@ -307,8 +304,8 @@ class TestJobStorage:
 
     def test_get_job_history_all(self):
         """Test getting all job history"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -318,7 +315,7 @@ class TestJobStorage:
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
                 command="test",
-                job_id="test-id"
+                job_id="test-id",
             )
 
             # Record multiple executions
@@ -331,8 +328,8 @@ class TestJobStorage:
 
     def test_get_job_history_with_limit(self):
         """Test getting job history with limit"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -342,7 +339,7 @@ class TestJobStorage:
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
                 command="test",
-                job_id="test-id"
+                job_id="test-id",
             )
 
             # Record 10 executions
@@ -355,8 +352,8 @@ class TestJobStorage:
 
     def test_get_job_history_for_specific_job(self):
         """Test getting history for a specific job"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -366,7 +363,7 @@ class TestJobStorage:
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
                 command="test1",
-                job_id="id1"
+                job_id="id1",
             )
 
             job2 = ScheduledJob(
@@ -374,7 +371,7 @@ class TestJobStorage:
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
                 command="test2",
-                job_id="id2"
+                job_id="id2",
             )
 
             # Record executions for both jobs
@@ -389,8 +386,8 @@ class TestJobStorage:
 
     def test_cleanup_old_history(self):
         """Test cleaning up old history records"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -402,9 +399,9 @@ class TestJobStorage:
             history_data = {
                 "history": [
                     {"job_id": "1", "executed_at": old_date, "status": "old"},
-                    {"job_id": "2", "executed_at": recent_date, "status": "recent"}
+                    {"job_id": "2", "executed_at": recent_date, "status": "recent"},
                 ],
-                "version": "1.0"
+                "version": "1.0",
             }
 
             storage._write_json_file(storage.history_file, history_data)
@@ -419,8 +416,8 @@ class TestJobStorage:
 
     def test_export_jobs(self):
         """Test exporting jobs to file"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -429,7 +426,7 @@ class TestJobStorage:
                 name="export_job",
                 cron_expression="0 0 * * *",
                 job_type=JobType.COMMAND,
-                command="test"
+                command="test",
             )
 
             storage.save_job(job)
@@ -441,7 +438,7 @@ class TestJobStorage:
             assert export_path.exists()
 
             # Verify export content
-            with open(export_path, 'r') as f:
+            with open(export_path, "r") as f:
                 export_data = json.load(f)
 
             assert "jobs" in export_data
@@ -450,8 +447,8 @@ class TestJobStorage:
 
     def test_import_jobs(self):
         """Test importing jobs from file"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -464,13 +461,13 @@ class TestJobStorage:
                         "cron_expression": "0 0 * * *",
                         "job_type": "command",
                         "command": "test",
-                        "created_at": datetime.now().isoformat()
+                        "created_at": datetime.now().isoformat(),
                     }
                 ]
             }
 
             import_path = Path(tmpdir) / "import.json"
-            with open(import_path, 'w') as f:
+            with open(import_path, "w") as f:
                 json.dump(import_data, f)
 
             # Import jobs
@@ -492,34 +489,38 @@ class TestJobStorage:
 
             # Add existing job
             import_data1 = {
-                "jobs": [{
-                    "name": "old_job",
-                    "cron_expression": "0 0 * * *",
-                    "job_type": "command",
-                    "command": "test",
-                    "created_at": datetime.now().isoformat()
-                }]
+                "jobs": [
+                    {
+                        "name": "old_job",
+                        "cron_expression": "0 0 * * *",
+                        "job_type": "command",
+                        "command": "test",
+                        "created_at": datetime.now().isoformat(),
+                    }
+                ]
             }
 
             import_path1 = Path(tmpdir) / "import1.json"
-            with open(import_path1, 'w') as f:
+            with open(import_path1, "w") as f:
                 json.dump(import_data1, f)
 
             storage.import_jobs(str(import_path1))
 
             # Import new job with replace=True
             import_data2 = {
-                "jobs": [{
-                    "name": "new_job",
-                    "cron_expression": "0 0 * * *",
-                    "job_type": "command",
-                    "command": "test",
-                    "created_at": datetime.now().isoformat()
-                }]
+                "jobs": [
+                    {
+                        "name": "new_job",
+                        "cron_expression": "0 0 * * *",
+                        "job_type": "command",
+                        "command": "test",
+                        "created_at": datetime.now().isoformat(),
+                    }
+                ]
             }
 
             import_path2 = Path(tmpdir) / "import2.json"
-            with open(import_path2, 'w') as f:
+            with open(import_path2, "w") as f:
                 json.dump(import_data2, f)
 
             count = storage.import_jobs(str(import_path2), replace=True)
@@ -544,20 +545,20 @@ class TestJobStorage:
                         "cron_expression": "0 0 * * *",
                         "job_type": "command",
                         "command": "test1",
-                        "created_at": datetime.now().isoformat()
+                        "created_at": datetime.now().isoformat(),
                     },
                     {
                         "name": "duplicate_job",
                         "cron_expression": "0 12 * * *",
                         "job_type": "command",
                         "command": "test2",
-                        "created_at": datetime.now().isoformat()
-                    }
+                        "created_at": datetime.now().isoformat(),
+                    },
                 ]
             }
 
             import_path = Path(tmpdir) / "import.json"
-            with open(import_path, 'w') as f:
+            with open(import_path, "w") as f:
                 json.dump(import_data, f)
 
             count = storage.import_jobs(str(import_path))
@@ -569,18 +570,15 @@ class TestJobStorage:
 
     def test_get_storage_info(self):
         """Test getting storage information"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
 
             # Add some jobs
             job = ScheduledJob(
-                name="test",
-                cron_expression="0 0 * * *",
-                job_type=JobType.COMMAND,
-                command="test"
+                name="test", cron_expression="0 0 * * *", job_type=JobType.COMMAND, command="test"
             )
             storage.save_job(job)
 
@@ -634,7 +632,7 @@ class TestJobStorage:
 
             # Verify file exists and contains correct data
             assert test_file.exists()
-            with open(test_file, 'r') as f:
+            with open(test_file, "r") as f:
                 loaded_data = json.load(f)
 
             assert loaded_data == test_data
@@ -652,13 +650,13 @@ class TestJobStorage:
 
             # Lock should exist
             assert storage.lock is not None
-            assert hasattr(storage.lock, 'acquire')
-            assert hasattr(storage.lock, 'release')
+            assert hasattr(storage.lock, "acquire")
+            assert hasattr(storage.lock, "release")
 
     def test_history_keeps_only_last_1000_records(self):
         """Test that history is limited to 1000 records"""
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
 
         with tempfile.TemporaryDirectory() as tmpdir:
             storage = JobStorage(storage_dir=tmpdir)
@@ -669,17 +667,14 @@ class TestJobStorage:
                     {"job_id": str(i), "executed_at": datetime.now().isoformat()}
                     for i in range(1100)
                 ],
-                "version": "1.0"
+                "version": "1.0",
             }
 
             storage._write_json_file(storage.history_file, history_data)
 
             # Record a new execution (should trigger cleanup)
             job = ScheduledJob(
-                name="test",
-                cron_expression="0 0 * * *",
-                job_type=JobType.COMMAND,
-                command="test"
+                name="test", cron_expression="0 0 * * *", job_type=JobType.COMMAND, command="test"
             )
             storage.record_job_execution(job, {"status": "completed"})
 
@@ -702,14 +697,14 @@ class TestJobStorage:
                         "cron_expression": "0 0 * * *",
                         "job_type": "command",
                         "command": "test",
-                        "created_at": datetime.now().isoformat()
+                        "created_at": datetime.now().isoformat(),
                     },
                     {
                         "name": "invalid_job"
                         # Missing required fields
-                    }
+                    },
                 ],
-                "version": "1.0"
+                "version": "1.0",
             }
 
             storage._write_json_file(storage.jobs_file, jobs_data)

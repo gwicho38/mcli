@@ -3,9 +3,10 @@ Unit tests for mcli.workflow.scheduler.job module
 """
 
 import json
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestJobStatus:
@@ -55,13 +56,13 @@ class TestScheduledJob:
 
     def test_scheduled_job_init_minimal(self):
         """Test ScheduledJob initialization with minimal parameters"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
             name="test_job",
             cron_expression="* * * * *",
             job_type=JobType.COMMAND,
-            command="echo test"
+            command="echo test",
         )
 
         assert job.name == "test_job"
@@ -80,7 +81,7 @@ class TestScheduledJob:
 
     def test_scheduled_job_init_full_parameters(self):
         """Test ScheduledJob initialization with all parameters"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         env = {"PATH": "/usr/bin", "USER": "testuser"}
         notifications = {"email": "test@example.com"}
@@ -99,7 +100,7 @@ class TestScheduledJob:
             working_directory="/tmp",
             output_format="text",
             notifications=notifications,
-            job_id="custom-id-123"
+            job_id="custom-id-123",
         )
 
         assert job.id == "custom-id-123"
@@ -116,20 +117,14 @@ class TestScheduledJob:
 
     def test_scheduled_job_auto_generates_id(self):
         """Test that job auto-generates UUID if not provided"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job1 = ScheduledJob(
-            name="job1",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="echo 1"
+            name="job1", cron_expression="* * * * *", job_type=JobType.COMMAND, command="echo 1"
         )
 
         job2 = ScheduledJob(
-            name="job2",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="echo 2"
+            name="job2", cron_expression="* * * * *", job_type=JobType.COMMAND, command="echo 2"
         )
 
         assert job1.id != job2.id
@@ -137,13 +132,10 @@ class TestScheduledJob:
 
     def test_scheduled_job_runtime_tracking_initialization(self):
         """Test that runtime tracking fields are initialized correctly"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         assert job.status == JobStatus.PENDING
@@ -160,7 +152,7 @@ class TestScheduledJob:
 
     def test_to_dict_serialization(self):
         """Test job serialization to dictionary"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
             name="serialize_test",
@@ -168,7 +160,7 @@ class TestScheduledJob:
             job_type=JobType.COMMAND,
             command="test command",
             description="Test job",
-            job_id="test-id-123"
+            job_id="test-id-123",
         )
 
         job_dict = job.to_dict()
@@ -187,7 +179,7 @@ class TestScheduledJob:
 
     def test_from_dict_deserialization(self):
         """Test job deserialization from dictionary"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         data = {
             "id": "test-id-456",
@@ -214,7 +206,7 @@ class TestScheduledJob:
             "last_output": "Success",
             "last_error": "",
             "runtime_seconds": 45,
-            "current_retry": 0
+            "current_retry": 0,
         }
 
         job = ScheduledJob.from_dict(data)
@@ -250,7 +242,7 @@ class TestScheduledJob:
             "cron_expression": "* * * * *",
             "job_type": "command",
             "command": "echo test",
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
         }
 
         job = ScheduledJob.from_dict(data)
@@ -263,13 +255,10 @@ class TestScheduledJob:
 
     def test_update_status_to_running(self):
         """Test updating job status to RUNNING"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         initial_run_count = job.run_count
@@ -283,13 +272,10 @@ class TestScheduledJob:
 
     def test_update_status_to_completed(self):
         """Test updating job status to COMPLETED"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         job.current_retry = 2
@@ -304,13 +290,10 @@ class TestScheduledJob:
 
     def test_update_status_to_failed(self):
         """Test updating job status to FAILED"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         initial_failure_count = job.failure_count
@@ -323,14 +306,14 @@ class TestScheduledJob:
 
     def test_should_retry_when_retry_available(self):
         """Test should_retry returns True when retries available"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
             name="test",
             cron_expression="* * * * *",
             job_type=JobType.COMMAND,
             command="test",
-            retry_count=3
+            retry_count=3,
         )
 
         job.status = JobStatus.FAILED
@@ -340,14 +323,14 @@ class TestScheduledJob:
 
     def test_should_retry_when_max_retries_reached(self):
         """Test should_retry returns False when max retries reached"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
             name="test",
             cron_expression="* * * * *",
             job_type=JobType.COMMAND,
             command="test",
-            retry_count=3
+            retry_count=3,
         )
 
         job.status = JobStatus.FAILED
@@ -357,14 +340,14 @@ class TestScheduledJob:
 
     def test_should_retry_when_not_failed(self):
         """Test should_retry returns False when job not failed"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
             name="test",
             cron_expression="* * * * *",
             job_type=JobType.COMMAND,
             command="test",
-            retry_count=3
+            retry_count=3,
         )
 
         job.status = JobStatus.COMPLETED
@@ -374,14 +357,14 @@ class TestScheduledJob:
 
     def test_get_next_retry_time(self):
         """Test calculation of next retry time"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
             name="test",
             cron_expression="* * * * *",
             job_type=JobType.COMMAND,
             command="test",
-            retry_delay=120
+            retry_delay=120,
         )
 
         before = datetime.now()
@@ -396,14 +379,14 @@ class TestScheduledJob:
 
     def test_to_json_serialization(self):
         """Test JSON string serialization"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
             name="json_test",
             cron_expression="0 0 * * *",
             job_type=JobType.COMMAND,
             command="test",
-            job_id="json-test-id"
+            job_id="json-test-id",
         )
 
         json_str = job.to_json()
@@ -416,14 +399,14 @@ class TestScheduledJob:
 
     def test_str_representation(self):
         """Test string representation of job"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
             name="test_job",
             cron_expression="* * * * *",
             job_type=JobType.COMMAND,
             command="test",
-            job_id="12345678-1234-1234-1234-123456789012"
+            job_id="12345678-1234-1234-1234-123456789012",
         )
 
         str_repr = str(job)
@@ -435,14 +418,14 @@ class TestScheduledJob:
 
     def test_repr_representation(self):
         """Test repr representation of job"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
             name="repr_test",
             cron_expression="0 12 * * *",
             job_type=JobType.COMMAND,
             command="test",
-            job_id="test-id"
+            job_id="test-id",
         )
 
         repr_str = repr(job)
@@ -454,7 +437,7 @@ class TestScheduledJob:
 
     def test_round_trip_serialization(self):
         """Test serialization and deserialization preserves data"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         original = ScheduledJob(
             name="round_trip",
@@ -469,7 +452,7 @@ class TestScheduledJob:
             environment={"TEST": "value"},
             working_directory="/test",
             output_format="text",
-            notifications={"email": "test@test.com"}
+            notifications={"email": "test@test.com"},
         )
 
         # Serialize and deserialize
@@ -494,14 +477,14 @@ class TestScheduledJob:
 
     def test_job_type_conversion_in_serialization(self):
         """Test JobType enum is properly converted in serialization"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         for job_type in JobType:
             job = ScheduledJob(
                 name=f"test_{job_type.value}",
                 cron_expression="* * * * *",
                 job_type=job_type,
-                command="test"
+                command="test",
             )
 
             job_dict = job.to_dict()
@@ -512,13 +495,10 @@ class TestScheduledJob:
 
     def test_status_conversion_in_serialization(self):
         """Test JobStatus enum is properly converted in serialization"""
-        from mcli.workflow.scheduler.job import ScheduledJob, JobType, JobStatus
+        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
-            name="test",
-            cron_expression="* * * * *",
-            job_type=JobType.COMMAND,
-            command="test"
+            name="test", cron_expression="* * * * *", job_type=JobType.COMMAND, command="test"
         )
 
         for status in JobStatus:

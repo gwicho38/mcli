@@ -29,8 +29,8 @@ try:
 except ImportError:
     process = None
 
-from mcli.lib.logger.logger import get_logger
 from mcli.lib.custom_commands import get_command_manager
+from mcli.lib.logger.logger import get_logger
 
 logger = get_logger()
 
@@ -345,29 +345,35 @@ def collect_commands() -> List[Dict[str, Any]]:
 
                 try:
                     # Suppress Streamlit warnings and logging during module import
-                    import warnings
                     import logging
-                    import sys
                     import os
+                    import sys
+                    import warnings
                     from contextlib import redirect_stderr
                     from io import StringIO
-                    
+
                     # Suppress Python warnings
                     with warnings.catch_warnings():
                         warnings.filterwarnings("ignore", message=".*missing ScriptRunContext.*")
                         warnings.filterwarnings("ignore", message=".*No runtime found.*")
-                        warnings.filterwarnings("ignore", message=".*Session state does not function.*")
+                        warnings.filterwarnings(
+                            "ignore", message=".*Session state does not function.*"
+                        )
                         warnings.filterwarnings("ignore", message=".*to view this Streamlit app.*")
-                        
+
                         # Suppress Streamlit logger warnings
                         streamlit_logger = logging.getLogger("streamlit")
                         original_level = streamlit_logger.level
                         streamlit_logger.setLevel(logging.CRITICAL)
-                        
+
                         # Also suppress specific Streamlit sub-loggers
-                        logging.getLogger("streamlit.runtime.scriptrunner_utils.script_run_context").setLevel(logging.CRITICAL)
-                        logging.getLogger("streamlit.runtime.caching.cache_data_api").setLevel(logging.CRITICAL)
-                        
+                        logging.getLogger(
+                            "streamlit.runtime.scriptrunner_utils.script_run_context"
+                        ).setLevel(logging.CRITICAL)
+                        logging.getLogger("streamlit.runtime.caching.cache_data_api").setLevel(
+                            logging.CRITICAL
+                        )
+
                         # Redirect stderr to suppress Streamlit warnings
                         with redirect_stderr(StringIO()):
                             try:
@@ -417,40 +423,44 @@ def collect_commands() -> List[Dict[str, Any]]:
     return commands
 
 
-def open_editor_for_command(command_name: str, command_group: str, description: str) -> Optional[str]:
+def open_editor_for_command(
+    command_name: str, command_group: str, description: str
+) -> Optional[str]:
     """
     Open the user's default editor to allow them to write command logic.
-    
+
     Args:
         command_name: Name of the command
         command_group: Group for the command
         description: Description of the command
-        
+
     Returns:
         The Python code written by the user, or None if cancelled
     """
-    import tempfile
-    import subprocess
     import os
+    import subprocess
     import sys
+    import tempfile
     from pathlib import Path
-    
+
     # Get the user's default editor
-    editor = os.environ.get('EDITOR')
+    editor = os.environ.get("EDITOR")
     if not editor:
         # Try common editors in order of preference
-        for common_editor in ['vim', 'nano', 'code', 'subl', 'atom', 'emacs']:
-            if subprocess.run(['which', common_editor], capture_output=True).returncode == 0:
+        for common_editor in ["vim", "nano", "code", "subl", "atom", "emacs"]:
+            if subprocess.run(["which", common_editor], capture_output=True).returncode == 0:
                 editor = common_editor
                 break
-    
+
     if not editor:
-        click.echo("❌ No editor found. Please set the EDITOR environment variable or install vim/nano.")
+        click.echo(
+            "❌ No editor found. Please set the EDITOR environment variable or install vim/nano."
+        )
         return None
-    
+
     # Create a temporary file with the template
     template = get_command_template(command_name, command_group)
-    
+
     # Add helpful comments to the template
     enhanced_template = f'''"""
 {command_name} command for mcli.{command_group}.
@@ -491,64 +501,66 @@ logger = get_logger()
 #     logger.info(f"Executing {command_name} command with name: {{name}}")
 #     click.echo(f"Hello, {{name}}! This is the {command_name} command.")
 '''
-    
+
     # Create temporary file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as temp_file:
         temp_file.write(enhanced_template)
         temp_file_path = temp_file.name
-    
+
     try:
         # Check if we're in an interactive environment
         if not sys.stdin.isatty() or not sys.stdout.isatty():
-            click.echo("❌ Editor requires an interactive terminal. Use --template flag for non-interactive mode.")
+            click.echo(
+                "❌ Editor requires an interactive terminal. Use --template flag for non-interactive mode."
+            )
             return None
-            
+
         # Open editor
         click.echo(f"📝 Opening {editor} to edit command logic...")
         click.echo("💡 Write your Python command logic and save the file to continue.")
         click.echo("💡 Press Ctrl+C to cancel command creation.")
-        
+
         # Run the editor
         result = subprocess.run([editor, temp_file_path], check=False)
-        
+
         if result.returncode != 0:
             click.echo("❌ Editor exited with error. Command creation cancelled.")
             return None
-        
+
         # Read the edited content
-        with open(temp_file_path, 'r') as f:
+        with open(temp_file_path, "r") as f:
             edited_code = f.read()
-        
+
         # Check if the file was actually edited (not just the template)
         if edited_code.strip() == enhanced_template.strip():
             click.echo("⚠️  No changes detected. Command creation cancelled.")
             return None
-        
+
         # Extract the actual command code (remove the instructions)
-        lines = edited_code.split('\n')
+        lines = edited_code.split("\n")
         code_lines = []
         in_code_section = False
-        
+
         for line in lines:
-            if line.strip().startswith('# Your command implementation goes here:'):
+            if line.strip().startswith("# Your command implementation goes here:"):
                 in_code_section = True
                 continue
             if in_code_section:
                 code_lines.append(line)
-        
+
         if not code_lines or not any(line.strip() for line in code_lines):
             # Fallback: use the entire file content
             code_lines = lines
-        
-        final_code = '\n'.join(code_lines).strip()
-        
+
+        final_code = "\n".join(code_lines).strip()
+
         if not final_code:
             click.echo("❌ No command code found. Command creation cancelled.")
             return None
-        
+
         click.echo("✅ Command code captured successfully!")
         return final_code
-        
+
     except KeyboardInterrupt:
         click.echo("\n❌ Command creation cancelled by user.")
         return None
@@ -611,7 +623,9 @@ def extract_workflow_commands(output):
 
                     if isinstance(cmd_obj, click.Group):
                         # For groups, create a template
-                        command_info["code"] = f'''"""
+                        command_info[
+                            "code"
+                        ] = f'''"""
 {cmd_name} workflow command.
 """
 import click
@@ -625,7 +639,9 @@ def app():
 '''
                     else:
                         # For regular commands, create a template
-                        command_info["code"] = f'''"""
+                        command_info[
+                            "code"
+                        ] = f'''"""
 {cmd_name} workflow command.
 """
 import click
@@ -650,9 +666,7 @@ def app():
             click.echo(
                 f"\n💡 These are templates. Import with: mcli self import-commands {output_file}"
             )
-            click.echo(
-                "   Then customize the code in ~/.mcli/commands/<command>.json"
-            )
+            click.echo("   Then customize the code in ~/.mcli/commands/<command>.json")
             return 0
         else:
             click.echo("⚠️  No workflow commands found to extract")
@@ -1229,24 +1243,20 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
 
         console.print(f"[dim]{traceback.format_exc()}[/dim]")
 
-
-
         # Validate syntax
         try:
-            compile(new_code, '<string>', 'exec')
+            compile(new_code, "<string>", "exec")
         except SyntaxError as e:
             click.echo(f"❌ Syntax error in edited code: {e}", err=True)
-            should_save = Prompt.ask(
-                "Save anyway?", choices=["y", "n"], default="n"
-            )
+            should_save = Prompt.ask("Save anyway?", choices=["y", "n"], default="n")
             if should_save.lower() != "y":
                 return 1
 
         # Update the command
-        command_data['code'] = new_code
-        command_data['updated_at'] = datetime.now().isoformat()
+        command_data["code"] = new_code
+        command_data["updated_at"] = datetime.now().isoformat()
 
-        with open(command_file, 'w') as f:
+        with open(command_file, "w") as f:
             json.dump(command_data, f, indent=2)
 
         # Update lockfile
@@ -1268,6 +1278,7 @@ self_app.add_command(plugin)
 # Import and register new commands that have been moved to self
 try:
     from mcli.self.completion_cmd import completion
+
     self_app.add_command(completion, name="completion")
     logger.debug("Added completion command to self group")
 except ImportError as e:
@@ -1275,6 +1286,7 @@ except ImportError as e:
 
 try:
     from mcli.self.logs_cmd import logs_group
+
     self_app.add_command(logs_group, name="logs")
     logger.debug("Added logs command to self group")
 except ImportError as e:
@@ -1282,6 +1294,7 @@ except ImportError as e:
 
 try:
     from mcli.self.redis_cmd import redis_group
+
     self_app.add_command(redis_group, name="redis")
     logger.debug("Added redis command to self group")
 except ImportError as e:
@@ -1289,6 +1302,7 @@ except ImportError as e:
 
 try:
     from mcli.self.visual_cmd import visual
+
     self_app.add_command(visual, name="visual")
     logger.debug("Added visual command to self group")
 except ImportError as e:

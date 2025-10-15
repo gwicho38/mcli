@@ -7,19 +7,19 @@ from decimal import Decimal
 from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
-from alpaca.trading.client import TradingClient
-from alpaca.trading.requests import (
-    GetOrdersRequest,
-    MarketOrderRequest,
-    LimitOrderRequest,
-    GetPortfolioHistoryRequest,
-)
-from alpaca.trading.enums import OrderSide, TimeInForce, OrderStatus
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
-from pydantic import BaseModel, Field
+from alpaca.trading.client import TradingClient
+from alpaca.trading.enums import OrderSide, OrderStatus, TimeInForce
+from alpaca.trading.requests import (
+    GetOrdersRequest,
+    GetPortfolioHistoryRequest,
+    LimitOrderRequest,
+    MarketOrderRequest,
+)
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field
 
 # Load environment variables
 load_dotenv()
@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 class TradingConfig(BaseModel):
     """Configuration for Alpaca trading"""
-    
+
     api_key: str = Field(..., description="Alpaca API key")
     secret_key: str = Field(..., description="Alpaca secret key")
     base_url: str = Field(default="https://paper-api.alpaca.markets", description="Alpaca base URL")
@@ -39,7 +39,7 @@ class TradingConfig(BaseModel):
 
 class Position(BaseModel):
     """Represents a trading position"""
-    
+
     symbol: str
     quantity: int
     side: str  # "long" or "short"
@@ -53,7 +53,7 @@ class Position(BaseModel):
 
 class Order(BaseModel):
     """Represents a trading order"""
-    
+
     id: str
     symbol: str
     side: str  # "buy" or "sell"
@@ -68,7 +68,7 @@ class Order(BaseModel):
 
 class Portfolio(BaseModel):
     """Represents portfolio information"""
-    
+
     equity: float
     cash: float
     buying_power: float
@@ -80,19 +80,16 @@ class Portfolio(BaseModel):
 
 class AlpacaTradingClient:
     """Client for Alpaca Trading API operations"""
-    
+
     def __init__(self, config: TradingConfig):
         self.config = config
         self.trading_client = TradingClient(
-            api_key=config.api_key,
-            secret_key=config.secret_key,
-            paper=config.paper_trading
+            api_key=config.api_key, secret_key=config.secret_key, paper=config.paper_trading
         )
         self.data_client = StockHistoricalDataClient(
-            api_key=config.api_key,
-            secret_key=config.secret_key
+            api_key=config.api_key, secret_key=config.secret_key
         )
-    
+
     def get_account(self) -> Dict:
         """Get account information"""
         try:
@@ -101,22 +98,32 @@ class AlpacaTradingClient:
             # Build response with safe attribute access
             response = {
                 "account_id": account.id,
-                "equity": float(account.equity) if hasattr(account, 'equity') else 0.0,
-                "cash": float(account.cash) if hasattr(account, 'cash') else 0.0,
-                "buying_power": float(account.buying_power) if hasattr(account, 'buying_power') else 0.0,
-                "currency": account.currency if hasattr(account, 'currency') else "USD",
-                "status": account.status.value if hasattr(account.status, 'value') else str(account.status),
-                "trading_blocked": account.trading_blocked if hasattr(account, 'trading_blocked') else False,
-                "pattern_day_trader": account.pattern_day_trader if hasattr(account, 'pattern_day_trader') else False,
+                "equity": float(account.equity) if hasattr(account, "equity") else 0.0,
+                "cash": float(account.cash) if hasattr(account, "cash") else 0.0,
+                "buying_power": (
+                    float(account.buying_power) if hasattr(account, "buying_power") else 0.0
+                ),
+                "currency": account.currency if hasattr(account, "currency") else "USD",
+                "status": (
+                    account.status.value
+                    if hasattr(account.status, "value")
+                    else str(account.status)
+                ),
+                "trading_blocked": (
+                    account.trading_blocked if hasattr(account, "trading_blocked") else False
+                ),
+                "pattern_day_trader": (
+                    account.pattern_day_trader if hasattr(account, "pattern_day_trader") else False
+                ),
             }
 
             # Add optional fields that may not exist in all account types
-            if hasattr(account, 'portfolio_value'):
+            if hasattr(account, "portfolio_value"):
                 response["portfolio_value"] = float(account.portfolio_value)
             else:
                 response["portfolio_value"] = response["equity"]
 
-            if hasattr(account, 'long_market_value'):
+            if hasattr(account, "long_market_value"):
                 response["unrealized_pl"] = float(account.long_market_value) - float(account.cash)
             else:
                 response["unrealized_pl"] = 0.0
@@ -127,7 +134,7 @@ class AlpacaTradingClient:
         except Exception as e:
             logger.error(f"Failed to get account info: {e}")
             raise
-    
+
     def get_positions(self) -> List[Position]:
         """Get current positions"""
         try:
@@ -149,7 +156,7 @@ class AlpacaTradingClient:
         except Exception as e:
             logger.error(f"Failed to get positions: {e}")
             return []
-    
+
     def get_orders(self, status: Optional[str] = None, limit: int = 100) -> List[Order]:
         """Get orders with optional status filter"""
         try:
@@ -173,28 +180,26 @@ class AlpacaTradingClient:
         except Exception as e:
             logger.error(f"Failed to get orders: {e}")
             return []
-    
+
     def place_market_order(
-        self, 
-        symbol: str, 
-        quantity: int, 
-        side: str,
-        time_in_force: str = "day"
+        self, symbol: str, quantity: int, side: str, time_in_force: str = "day"
     ) -> Order:
         """Place a market order"""
         try:
             order_side = OrderSide.BUY if side.lower() == "buy" else OrderSide.SELL
-            time_in_force_enum = TimeInForce.DAY if time_in_force.lower() == "day" else TimeInForce.GTC
-            
+            time_in_force_enum = (
+                TimeInForce.DAY if time_in_force.lower() == "day" else TimeInForce.GTC
+            )
+
             order_request = MarketOrderRequest(
                 symbol=symbol,
                 qty=quantity,
                 side=order_side,
                 time_in_force=time_in_force_enum,
             )
-            
+
             order = self.trading_client.submit_order(order_request)
-            
+
             return Order(
                 id=order.id,
                 symbol=order.symbol,
@@ -207,20 +212,17 @@ class AlpacaTradingClient:
         except Exception as e:
             logger.error(f"Failed to place market order: {e}")
             raise
-    
+
     def place_limit_order(
-        self,
-        symbol: str,
-        quantity: int,
-        side: str,
-        limit_price: float,
-        time_in_force: str = "day"
+        self, symbol: str, quantity: int, side: str, limit_price: float, time_in_force: str = "day"
     ) -> Order:
         """Place a limit order"""
         try:
             order_side = OrderSide.BUY if side.lower() == "buy" else OrderSide.SELL
-            time_in_force_enum = TimeInForce.DAY if time_in_force.lower() == "day" else TimeInForce.GTC
-            
+            time_in_force_enum = (
+                TimeInForce.DAY if time_in_force.lower() == "day" else TimeInForce.GTC
+            )
+
             order_request = LimitOrderRequest(
                 symbol=symbol,
                 qty=quantity,
@@ -228,9 +230,9 @@ class AlpacaTradingClient:
                 time_in_force=time_in_force_enum,
                 limit_price=limit_price,
             )
-            
+
             order = self.trading_client.submit_order(order_request)
-            
+
             return Order(
                 id=order.id,
                 symbol=order.symbol,
@@ -243,7 +245,7 @@ class AlpacaTradingClient:
         except Exception as e:
             logger.error(f"Failed to place limit order: {e}")
             raise
-    
+
     def cancel_order(self, order_id: str) -> bool:
         """Cancel an order"""
         try:
@@ -252,12 +254,8 @@ class AlpacaTradingClient:
         except Exception as e:
             logger.error(f"Failed to cancel order {order_id}: {e}")
             return False
-    
-    def get_portfolio_history(
-        self, 
-        period: str = "1M",
-        timeframe: str = "1Day"
-    ) -> pd.DataFrame:
+
+    def get_portfolio_history(self, period: str = "1M", timeframe: str = "1Day") -> pd.DataFrame:
         """Get portfolio history"""
         try:
             # Convert period to start/end dates
@@ -274,78 +272,80 @@ class AlpacaTradingClient:
                 start_date = end_date - timedelta(days=365)
             else:
                 start_date = end_date - timedelta(days=30)
-            
+
             # Convert timeframe
             tf = TimeFrame.Day if timeframe == "1Day" else TimeFrame.Hour
-            
+
             request = GetPortfolioHistoryRequest(
                 start=start_date,
                 end=end_date,
                 timeframe=tf,
             )
-            
+
             history = self.trading_client.get_portfolio_history(request)
-            
+
             # Convert to DataFrame
             data = []
             for i, timestamp in enumerate(history.timestamp):
-                data.append({
-                    "timestamp": timestamp,
-                    "equity": float(history.equity[i]) if history.equity else 0,
-                    "profit_loss": float(history.profit_loss[i]) if history.profit_loss else 0,
-                    "profit_loss_pct": float(history.profit_loss_pct[i]) if history.profit_loss_pct else 0,
-                })
-            
+                data.append(
+                    {
+                        "timestamp": timestamp,
+                        "equity": float(history.equity[i]) if history.equity else 0,
+                        "profit_loss": float(history.profit_loss[i]) if history.profit_loss else 0,
+                        "profit_loss_pct": (
+                            float(history.profit_loss_pct[i]) if history.profit_loss_pct else 0
+                        ),
+                    }
+                )
+
             return pd.DataFrame(data)
         except Exception as e:
             logger.error(f"Failed to get portfolio history: {e}")
             return pd.DataFrame()
-    
+
     def get_stock_data(
-        self, 
-        symbols: List[str], 
-        start_date: datetime, 
-        end_date: datetime,
-        timeframe: str = "1Day"
+        self, symbols: List[str], start_date: datetime, end_date: datetime, timeframe: str = "1Day"
     ) -> pd.DataFrame:
         """Get historical stock data"""
         try:
             tf = TimeFrame.Day if timeframe == "1Day" else TimeFrame.Hour
-            
+
             request = StockBarsRequest(
                 symbol_or_symbols=symbols,
                 timeframe=tf,
                 start=start_date,
                 end=end_date,
             )
-            
+
             bars = self.data_client.get_stock_bars(request)
-            
+
             # Convert to DataFrame
             data = []
             for symbol, bar_list in bars.items():
                 for bar in bar_list:
-                    data.append({
-                        "symbol": symbol,
-                        "timestamp": bar.timestamp,
-                        "open": float(bar.open),
-                        "high": float(bar.high),
-                        "low": float(bar.low),
-                        "close": float(bar.close),
-                        "volume": int(bar.volume),
-                    })
-            
+                    data.append(
+                        {
+                            "symbol": symbol,
+                            "timestamp": bar.timestamp,
+                            "open": float(bar.open),
+                            "high": float(bar.high),
+                            "low": float(bar.low),
+                            "close": float(bar.close),
+                            "volume": int(bar.volume),
+                        }
+                    )
+
             return pd.DataFrame(data)
         except Exception as e:
             logger.error(f"Failed to get stock data: {e}")
             return pd.DataFrame()
-    
+
     def get_portfolio(self) -> Portfolio:
         """Get complete portfolio information"""
         try:
             account = self.get_account()
             positions = self.get_positions()
-            
+
             return Portfolio(
                 equity=account["equity"],
                 cash=account["cash"],
@@ -360,7 +360,9 @@ class AlpacaTradingClient:
             raise
 
 
-def create_trading_client(api_key: str = None, secret_key: str = None, paper_trading: bool = True) -> AlpacaTradingClient:
+def create_trading_client(
+    api_key: str = None, secret_key: str = None, paper_trading: bool = True
+) -> AlpacaTradingClient:
     """
     Create a trading client with the given credentials or from environment variables
 
@@ -387,10 +389,7 @@ def create_trading_client(api_key: str = None, secret_key: str = None, paper_tra
     base_url = os.getenv("ALPACA_BASE_URL", "https://paper-api.alpaca.markets")
 
     config = TradingConfig(
-        api_key=api_key,
-        secret_key=secret_key,
-        base_url=base_url,
-        paper_trading=paper_trading
+        api_key=api_key, secret_key=secret_key, base_url=base_url, paper_trading=paper_trading
     )
     return AlpacaTradingClient(config)
 
@@ -413,5 +412,5 @@ def get_alpaca_config_from_env() -> Optional[Dict[str, str]]:
         "api_key": api_key,
         "secret_key": secret_key,
         "base_url": base_url,
-        "is_paper": "paper" in base_url.lower()
+        "is_paper": "paper" in base_url.lower(),
     }

@@ -2,21 +2,31 @@
 
 import asyncio
 import json
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
-import tempfile
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-import sys
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
 
 # Mock the data pipeline classes for testing
 class DataPipelineConfig:
-    def __init__(self, batch_size=100, batch_timeout=30, output_dir=None,
-                 output_format="jsonl", enable_validation=True,
-                 enable_enrichment=True, enable_deduplication=True,
-                 max_retries=3, retry_delay=1):
+    def __init__(
+        self,
+        batch_size=100,
+        batch_timeout=30,
+        output_dir=None,
+        output_format="jsonl",
+        enable_validation=True,
+        enable_enrichment=True,
+        enable_deduplication=True,
+        max_retries=3,
+        retry_delay=1,
+    ):
         self.batch_size = batch_size
         self.batch_timeout = batch_timeout
         self.output_dir = output_dir or Path("./data/processed")
@@ -27,10 +37,16 @@ class DataPipelineConfig:
         self.max_retries = max_retries
         self.retry_delay = retry_delay
 
+
 class DataValidator:
     async def validate_trading_record(self, record):
-        required = ["politician_name", "transaction_date", "transaction_type",
-                   "asset_name", "transaction_amount"]
+        required = [
+            "politician_name",
+            "transaction_date",
+            "transaction_type",
+            "asset_name",
+            "transaction_amount",
+        ]
         for field in required:
             if field not in record:
                 return False
@@ -44,6 +60,7 @@ class DataValidator:
             if await self.validate_trading_record(record):
                 valid.append(record)
         return valid
+
 
 class DataEnricher:
     async def enrich_trading_record(self, record):
@@ -72,6 +89,7 @@ class DataEnricher:
             enriched.append(await self.enrich_trading_record(record))
         return enriched
 
+
 class DataProcessor:
     def __init__(self, config):
         self.config = config
@@ -99,19 +117,20 @@ class DataProcessor:
 
         if self.config.output_format == "jsonl":
             file_path = self.config.output_dir / f"batch_{timestamp}.jsonl"
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 for record in self.current_batch:
                     f.write(json.dumps(record) + "\n")
         elif self.config.output_format == "json":
             file_path = self.config.output_dir / f"batch_{timestamp}.json"
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 json.dump(self.current_batch, f)
         elif self.config.output_format == "csv":
             import csv
+
             file_path = self.config.output_dir / f"batch_{timestamp}.csv"
             if self.current_batch:
                 keys = self.current_batch[0].keys()
-                with open(file_path, 'w', newline='') as f:
+                with open(file_path, "w", newline="") as f:
                     writer = csv.DictWriter(f, fieldnames=keys)
                     writer.writeheader()
                     writer.writerows(self.current_batch)
@@ -132,8 +151,10 @@ class DataProcessor:
             processed = await enricher.enrich_batch(processed)
         return processed
 
+
 class LSHClient:
     pass
+
 
 class LSHDataPipeline:
     def __init__(self, client, config):
@@ -141,11 +162,7 @@ class LSHDataPipeline:
         self.config = config
         self.processor = DataProcessor(config)
         self.is_running = False
-        self.stats = {
-            "processed_count": 0,
-            "start_time": datetime.now(),
-            "error_count": 0
-        }
+        self.stats = {"processed_count": 0, "start_time": datetime.now(), "error_count": 0}
 
     async def start(self):
         self.is_running = True
@@ -202,7 +219,7 @@ class TestDataPipelineConfig:
             batch_timeout=60,
             output_dir=Path("/tmp/test"),
             output_format="json",
-            enable_validation=False
+            enable_validation=False,
         )
 
         assert config.batch_size == 50
@@ -229,7 +246,7 @@ class TestDataValidator:
             "transaction_date": "2024-01-01T00:00:00Z",
             "transaction_type": "buy",
             "asset_name": "AAPL",
-            "transaction_amount": 10000
+            "transaction_amount": 10000,
         }
 
         assert await validator.validate_trading_record(valid_record) is True
@@ -238,7 +255,7 @@ class TestDataValidator:
         invalid_record = {
             "politician_name": "John Doe",
             "transaction_type": "buy",
-            "asset_name": "AAPL"
+            "asset_name": "AAPL",
             # Missing transaction_amount
         }
 
@@ -259,20 +276,16 @@ class TestDataValidator:
                 "transaction_date": "2024-01-01T00:00:00Z",
                 "transaction_type": "sell",
                 "asset_name": "MSFT",
-                "transaction_amount": 5000
+                "transaction_amount": 5000,
             },
-            {
-                "politician_name": "Invalid",
-                "transaction_type": "invalid",
-                "asset_name": "GOOGL"
-            },
+            {"politician_name": "Invalid", "transaction_type": "invalid", "asset_name": "GOOGL"},
             {
                 "politician_name": "Bob Smith",
                 "transaction_date": "2024-01-02T00:00:00Z",
                 "transaction_type": "buy",
                 "asset_name": "AMZN",
-                "transaction_amount": 15000
-            }
+                "transaction_amount": 15000,
+            },
         ]
 
         valid_records = await validator.validate_batch(records)
@@ -299,7 +312,7 @@ class TestDataEnricher:
             "transaction_date": "2024-01-01T00:00:00Z",
             "transaction_type": "buy",
             "asset_name": "AAPL",
-            "transaction_amount": 25000
+            "transaction_amount": 25000,
         }
 
         enriched = await enricher.enrich_trading_record(record)
@@ -315,26 +328,23 @@ class TestDataEnricher:
     async def test_amount_categorization(self, enricher):
         """Test amount categorization logic"""
         # Small amount
-        small = await enricher.enrich_trading_record({
-            "politician_name": "Test",
-            "transaction_amount": 5000
-        })
+        small = await enricher.enrich_trading_record(
+            {"politician_name": "Test", "transaction_amount": 5000}
+        )
         assert small["amount_category"] == "small"
         assert small["risk_level"] == "low"
 
         # Medium amount
-        medium = await enricher.enrich_trading_record({
-            "politician_name": "Test",
-            "transaction_amount": 30000
-        })
+        medium = await enricher.enrich_trading_record(
+            {"politician_name": "Test", "transaction_amount": 30000}
+        )
         assert medium["amount_category"] == "medium"
         assert medium["risk_level"] == "medium"
 
         # Large amount
-        large = await enricher.enrich_trading_record({
-            "politician_name": "Test",
-            "transaction_amount": 100000
-        })
+        large = await enricher.enrich_trading_record(
+            {"politician_name": "Test", "transaction_amount": 100000}
+        )
         assert large["amount_category"] == "large"
         assert large["risk_level"] == "high"
 
@@ -344,7 +354,7 @@ class TestDataEnricher:
         records = [
             {"politician_name": "Alice", "transaction_amount": 1000},
             {"politician_name": "Bob", "transaction_amount": 50000},
-            {"politician_name": "Charlie", "transaction_amount": 200000}
+            {"politician_name": "Charlie", "transaction_amount": 200000},
         ]
 
         enriched_records = await enricher.enrich_batch(records)
@@ -416,7 +426,7 @@ class TestDataProcessor:
                 "transaction_date": "2024-01-01T00:00:00Z",
                 "transaction_type": "buy",
                 "asset_name": "AAPL",
-                "transaction_amount": 10000
+                "transaction_amount": 10000,
             }
         ]
 
@@ -451,10 +461,7 @@ class TestDataProcessor:
     async def test_write_batch_jsonl(self, processor):
         """Test writing batch to JSONL file"""
         processor.config.output_format = "jsonl"
-        processor.current_batch = [
-            {"id": "1", "value": "test1"},
-            {"id": "2", "value": "test2"}
-        ]
+        processor.current_batch = [{"id": "1", "value": "test1"}, {"id": "2", "value": "test2"}]
 
         await processor._write_batch()
 
@@ -463,7 +470,7 @@ class TestDataProcessor:
         assert len(output_files) == 1
 
         # Verify content
-        with open(output_files[0], 'r') as f:
+        with open(output_files[0], "r") as f:
             lines = f.readlines()
             assert len(lines) == 2
             assert json.loads(lines[0])["id"] == "1"
@@ -473,10 +480,7 @@ class TestDataProcessor:
     async def test_write_batch_json(self, processor):
         """Test writing batch to JSON file"""
         processor.config.output_format = "json"
-        processor.current_batch = [
-            {"id": "1", "value": "test1"},
-            {"id": "2", "value": "test2"}
-        ]
+        processor.current_batch = [{"id": "1", "value": "test1"}, {"id": "2", "value": "test2"}]
 
         await processor._write_batch()
 
@@ -485,7 +489,7 @@ class TestDataProcessor:
         assert len(output_files) == 1
 
         # Verify content
-        with open(output_files[0], 'r') as f:
+        with open(output_files[0], "r") as f:
             data = json.load(f)
             assert len(data) == 2
             assert data[0]["id"] == "1"
@@ -496,7 +500,7 @@ class TestDataProcessor:
         processor.config.output_format = "csv"
         processor.current_batch = [
             {"id": "1", "name": "test1", "value": 100},
-            {"id": "2", "name": "test2", "value": 200}
+            {"id": "2", "name": "test2", "value": 200},
         ]
 
         await processor._write_batch()
@@ -507,7 +511,8 @@ class TestDataProcessor:
 
         # Verify content
         import csv
-        with open(output_files[0], 'r') as f:
+
+        with open(output_files[0], "r") as f:
             reader = csv.DictReader(f)
             rows = list(reader)
             assert len(rows) == 2
@@ -572,8 +577,8 @@ class TestLSHDataPipeline:
             "data": {
                 "id": "job_123",
                 "name": "test-job",
-                "stdout": '{"politician_name": "Test", "transaction_amount": 10000}'
-            }
+                "stdout": '{"politician_name": "Test", "transaction_amount": 10000}',
+            },
         }
 
         with patch.object(pipeline.processor, "process_trading_data") as mock_process:
@@ -591,9 +596,9 @@ class TestLSHDataPipeline:
             "data": {
                 "records": [
                     {"politician_name": "Test1", "transaction_amount": 5000},
-                    {"politician_name": "Test2", "transaction_amount": 15000}
+                    {"politician_name": "Test2", "transaction_amount": 15000},
                 ]
-            }
+            },
         }
 
         with patch.object(pipeline.processor, "process_trading_data") as mock_process:
@@ -607,21 +612,13 @@ class TestLSHDataPipeline:
     async def test_error_handling(self, pipeline):
         """Test error handling in pipeline"""
         # Test job completed with invalid JSON
-        event_data = {
-            "type": "lsh.job.completed",
-            "data": {
-                "stdout": "invalid json"
-            }
-        }
+        event_data = {"type": "lsh.job.completed", "data": {"stdout": "invalid json"}}
 
         # Should not raise
         await pipeline._handle_job_completed(event_data)
 
         # Test data received with missing data
-        event_data = {
-            "type": "lsh.data.received",
-            "data": {}
-        }
+        event_data = {"type": "lsh.data.received", "data": {}}
 
         # Should not raise
         await pipeline._handle_data_received(event_data)
@@ -632,7 +629,7 @@ class TestLSHDataPipeline:
         # Process some records
         records = [
             {"politician_name": "Test1", "transaction_amount": 5000},
-            {"politician_name": "Test2", "transaction_amount": 15000}
+            {"politician_name": "Test2", "transaction_amount": 15000},
         ]
 
         with patch.object(pipeline.processor, "_write_batch"):

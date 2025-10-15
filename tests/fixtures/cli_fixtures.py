@@ -1,9 +1,11 @@
 """Shared fixtures for CLI testing"""
+
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 from click.testing import CliRunner
-from pathlib import Path
-import tempfile
-import shutil
 
 
 @pytest.fixture
@@ -45,7 +47,8 @@ def mock_config_file(tmp_path):
     config_dir.mkdir()
 
     config_file = config_dir / "config.toml"
-    config_file.write_text("""
+    config_file.write_text(
+        """
 [general]
 log_level = "INFO"
 theme = "default"
@@ -58,7 +61,8 @@ temperature = 0.7
 [paths]
 logs_dir = "~/.mcli/logs"
 cache_dir = "~/.mcli/cache"
-""")
+"""
+    )
 
     return config_file
 
@@ -70,7 +74,7 @@ def mock_env_vars(monkeypatch):
         "OPENAI_API_KEY": "test-openai-key",
         "ANTHROPIC_API_KEY": "test-anthropic-key",
         "MCLI_HOME": "/tmp/test_mcli",
-        "MCLI_LOG_LEVEL": "DEBUG"
+        "MCLI_LOG_LEVEL": "DEBUG",
     }
 
     for key, value in test_env.items():
@@ -87,5 +91,5 @@ def sample_cli_output():
         "error": "❌ Error: Something went wrong\n",
         "warning": "⚠️  Warning: This is a test warning\n",
         "info": "ℹ️  Info: Additional information\n",
-        "progress": "📦 Processing... [####------] 40%\n"
+        "progress": "📦 Processing... [####------] 40%\n",
     }

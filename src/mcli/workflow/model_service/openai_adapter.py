@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -116,7 +116,11 @@ class APIKeyManager:
     def list_keys(self) -> List[Dict[str, Any]]:
         """List all API keys (without showing the actual key)"""
         return [
-            {"name": info["name"], "created_at": info["created_at"], "usage_count": info["usage_count"]}
+            {
+                "name": info["name"],
+                "created_at": info["created_at"],
+                "usage_count": info["usage_count"],
+            }
             for info in self.valid_keys.values()
         ]
 

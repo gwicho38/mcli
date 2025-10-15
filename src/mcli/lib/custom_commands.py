@@ -5,8 +5,8 @@ This module provides functionality to store user-created commands in a portable
 format in ~/.mcli/commands/ and automatically load them at startup.
 """
 
-import json
 import importlib.util
+import json
 import sys
 import tempfile
 from datetime import datetime
@@ -259,9 +259,7 @@ class CustomCommandManager:
             module_name = f"mcli_custom_{name}"
 
             # Create a temporary file to store the code
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".py", delete=False
-            ) as temp_file:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as temp_file:
                 temp_file.write(code)
                 temp_file_path = temp_file.name
 
@@ -299,9 +297,7 @@ class CustomCommandManager:
                         logger.info(f"Registered custom command: {name}")
                         return True
                     else:
-                        logger.warning(
-                            f"No Click command found in custom command: {name}"
-                        )
+                        logger.warning(f"No Click command found in custom command: {name}")
                         return False
             finally:
                 # Clean up temporary file
@@ -331,9 +327,7 @@ class CustomCommandManager:
             logger.error(f"Failed to export commands: {e}")
             return False
 
-    def import_commands(
-        self, import_path: Path, overwrite: bool = False
-    ) -> Dict[str, bool]:
+    def import_commands(self, import_path: Path, overwrite: bool = False) -> Dict[str, bool]:
         """
         Import commands from a JSON file.
 

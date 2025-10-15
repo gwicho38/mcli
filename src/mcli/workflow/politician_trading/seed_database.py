@@ -20,11 +20,12 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from uuid import UUID
 
-from supabase import create_client, Client
+from supabase import Client, create_client
 
 # Load environment variables from .env file
 try:
     from dotenv import load_dotenv
+
     # Look for .env in project root
     env_path = Path(__file__).parent.parent.parent.parent.parent / ".env"
     if env_path.exists():
@@ -39,15 +40,11 @@ from .data_sources import ALL_DATA_SOURCES, AccessMethod, DataSource
 from .models import Politician, TradingDisclosure
 from .scrapers_free_sources import FreeDataFetcher
 
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("/tmp/seed_database.log")
-    ]
+    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("/tmp/seed_database.log")],
 )
 logger = logging.getLogger(__name__)
 
@@ -76,11 +73,7 @@ def get_supabase_client() -> Client:
 # =============================================================================
 
 
-def create_data_pull_job(
-    client: Client,
-    job_type: str,
-    config: Optional[Dict] = None
-) -> UUID:
+def create_data_pull_job(client: Client, job_type: str, config: Optional[Dict] = None) -> UUID:
     """
     Create a new data pull job record
 
@@ -93,12 +86,18 @@ def create_data_pull_job(
         Job ID
     """
     try:
-        result = client.table("data_pull_jobs").insert({
-            "job_type": job_type,
-            "status": "running",
-            "started_at": datetime.now().isoformat(),
-            "config_snapshot": config or {}
-        }).execute()
+        result = (
+            client.table("data_pull_jobs")
+            .insert(
+                {
+                    "job_type": job_type,
+                    "status": "running",
+                    "started_at": datetime.now().isoformat(),
+                    "config_snapshot": config or {},
+                }
+            )
+            .execute()
+        )
 
         job_id = result.data[0]["id"]
         logger.info(f"Created data pull job: {job_id} (type: {job_type})")
@@ -114,7 +113,7 @@ def update_data_pull_job(
     job_id: UUID,
     status: str,
     stats: Optional[Dict] = None,
-    error: Optional[str] = None
+    error: Optional[str] = None,
 ):
     """
     Update data pull job with results
@@ -127,10 +126,7 @@ def update_data_pull_job(
         error: Optional error message if failed
     """
     try:
-        update_data = {
-            "status": status,
-            "completed_at": datetime.now().isoformat()
-        }
+        update_data = {"status": status, "completed_at": datetime.now().isoformat()}
 
         if stats:
             update_data.update(stats)
@@ -151,10 +147,7 @@ def update_data_pull_job(
 # =============================================================================
 
 
-def upsert_politicians(
-    client: Client,
-    politicians: List[Politician]
-) -> Dict[str, UUID]:
+def upsert_politicians(client: Client, politicians: List[Politician]) -> Dict[str, UUID]:
     """
     Upsert politicians to database, returning mapping of bioguide_id -> UUID
 
@@ -186,20 +179,23 @@ def upsert_politicians(
             # Try to find existing politician
             if politician.bioguide_id:
                 # Query by bioguide_id if available
-                existing = client.table("politicians").select("id").eq(
-                    "bioguide_id", politician.bioguide_id
-                ).execute()
+                existing = (
+                    client.table("politicians")
+                    .select("id")
+                    .eq("bioguide_id", politician.bioguide_id)
+                    .execute()
+                )
             else:
                 # Query by unique constraint fields (first_name, last_name, role, state_or_country)
-                existing = client.table("politicians").select("id").eq(
-                    "first_name", politician.first_name
-                ).eq(
-                    "last_name", politician.last_name
-                ).eq(
-                    "role", politician.role
-                ).eq(
-                    "state_or_country", politician.state_or_country
-                ).execute()
+                existing = (
+                    client.table("politicians")
+                    .select("id")
+                    .eq("first_name", politician.first_name)
+                    .eq("last_name", politician.last_name)
+                    .eq("role", politician.role)
+                    .eq("state_or_country", politician.state_or_country)
+                    .execute()
+                )
 
             if existing.data:
                 # Update existing
@@ -223,7 +219,9 @@ def upsert_politicians(
             logger.error(f"Error upserting politician {politician.full_name}: {e}")
             continue
 
-    logger.info(f"Upserted {len(politicians)} politicians ({new_count} new, {updated_count} updated)")
+    logger.info(
+        f"Upserted {len(politicians)} politicians ({new_count} new, {updated_count} updated)"
+    )
 
     return politician_map
 
@@ -234,9 +232,7 @@ def upsert_politicians(
 
 
 def upsert_trading_disclosures(
-    client: Client,
-    disclosures: List[TradingDisclosure],
-    politician_map: Dict[str, UUID]
+    client: Client, disclosures: List[TradingDisclosure], politician_map: Dict[str, UUID]
 ) -> Dict[str, int]:
     """
     Upsert trading disclosures to database
@@ -283,17 +279,16 @@ def upsert_trading_disclosures(
             }
 
             # Check for existing disclosure (using unique constraint)
-            existing = client.table("trading_disclosures").select("id").eq(
-                "politician_id", str(pol_id)
-            ).eq(
-                "transaction_date", disclosure.transaction_date.isoformat()
-            ).eq(
-                "asset_name", disclosure.asset_name
-            ).eq(
-                "transaction_type", disclosure.transaction_type
-            ).eq(
-                "disclosure_date", disclosure.disclosure_date.isoformat()
-            ).execute()
+            existing = (
+                client.table("trading_disclosures")
+                .select("id")
+                .eq("politician_id", str(pol_id))
+                .eq("transaction_date", disclosure.transaction_date.isoformat())
+                .eq("asset_name", disclosure.asset_name)
+                .eq("transaction_type", disclosure.transaction_type)
+                .eq("disclosure_date", disclosure.disclosure_date.isoformat())
+                .execute()
+            )
 
             if existing.data:
                 # Update existing
@@ -331,10 +326,7 @@ def upsert_trading_disclosures(
 
 
 def seed_from_senate_watcher(
-    client: Client,
-    test_run: bool = False,
-    recent_only: bool = False,
-    days: int = 90
+    client: Client, test_run: bool = False, recent_only: bool = False, days: int = 90
 ) -> Dict[str, int]:
     """
     Seed database from Senate Stock Watcher GitHub dataset
@@ -353,20 +345,16 @@ def seed_from_senate_watcher(
     logger.info("=" * 80)
 
     # Create job record
-    job_id = create_data_pull_job(client, "senate_watcher_seed", {
-        "recent_only": recent_only,
-        "days": days
-    })
+    job_id = create_data_pull_job(
+        client, "senate_watcher_seed", {"recent_only": recent_only, "days": days}
+    )
 
     try:
         # Initialize fetcher
         fetcher = FreeDataFetcher()
 
         # Fetch data
-        data = fetcher.fetch_from_senate_watcher(
-            recent_only=recent_only,
-            days=days
-        )
+        data = fetcher.fetch_from_senate_watcher(recent_only=recent_only, days=days)
 
         politicians = data["politicians"]
         disclosures = data["disclosures"]
@@ -377,11 +365,16 @@ def seed_from_senate_watcher(
             logger.info("TEST RUN - Not inserting to database")
             logger.info(f"Sample politician: {politicians[0] if politicians else 'None'}")
             logger.info(f"Sample disclosure: {disclosures[0] if disclosures else 'None'}")
-            update_data_pull_job(client, job_id, "completed", {
-                "records_found": len(politicians) + len(disclosures),
-                "records_new": 0,
-                "records_updated": 0,
-            })
+            update_data_pull_job(
+                client,
+                job_id,
+                "completed",
+                {
+                    "records_found": len(politicians) + len(disclosures),
+                    "records_new": 0,
+                    "records_updated": 0,
+                },
+            )
             return {"records_found": len(politicians) + len(disclosures)}
 
         # Upsert politicians
@@ -401,10 +394,7 @@ def seed_from_senate_watcher(
         raise
 
 
-def seed_from_all_sources(
-    client: Client,
-    test_run: bool = False
-) -> Dict[str, Dict[str, int]]:
+def seed_from_all_sources(client: Client, test_run: bool = False) -> Dict[str, Dict[str, int]]:
     """
     Seed database from all available sources
 
@@ -467,33 +457,27 @@ def main():
         "--sources",
         choices=["all", "senate", "finnhub", "sec-edgar"],
         default="all",
-        help="Which data sources to seed from (default: all)"
+        help="Which data sources to seed from (default: all)",
     )
 
     parser.add_argument(
-        "--recent-only",
-        action="store_true",
-        help="Only fetch recent transactions (last 90 days)"
+        "--recent-only", action="store_true", help="Only fetch recent transactions (last 90 days)"
     )
 
     parser.add_argument(
         "--days",
         type=int,
         default=90,
-        help="Number of days to look back when using --recent-only (default: 90)"
+        help="Number of days to look back when using --recent-only (default: 90)",
     )
 
     parser.add_argument(
         "--test-run",
         action="store_true",
-        help="Fetch data but don't insert to database (for testing)"
+        help="Fetch data but don't insert to database (for testing)",
     )
 
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -512,10 +496,7 @@ def main():
     try:
         if args.sources == "senate":
             seed_from_senate_watcher(
-                client,
-                test_run=args.test_run,
-                recent_only=args.recent_only,
-                days=args.days
+                client, test_run=args.test_run, recent_only=args.recent_only, days=args.days
             )
         elif args.sources == "all":
             seed_from_all_sources(client, args.test_run)

@@ -1,23 +1,34 @@
 """Workflow Management Dashboard"""
 
-import streamlit as st
-import pandas as pd
-import requests
-import os
 import json
+import os
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+
+import pandas as pd
 import plotly.express as px
-from typing import Optional, Dict, Any
+import requests
+import streamlit as st
 
 # Import components
 try:
-    from ..components.metrics import display_kpi_row, display_status_badge, display_health_indicator
-    from ..components.charts import create_timeline_chart, create_status_pie_chart, create_gantt_chart, render_chart
+    from ..components.charts import (
+        create_gantt_chart,
+        create_status_pie_chart,
+        create_timeline_chart,
+        render_chart,
+    )
+    from ..components.metrics import display_health_indicator, display_kpi_row, display_status_badge
     from ..components.tables import display_filterable_dataframe, export_dataframe
 except ImportError:
     # Fallback for when imported outside package context
-    from components.metrics import display_kpi_row, display_status_badge, display_health_indicator
-    from components.charts import create_timeline_chart, create_status_pie_chart, create_gantt_chart, render_chart
+    from components.charts import (
+        create_gantt_chart,
+        create_status_pie_chart,
+        create_timeline_chart,
+        render_chart,
+    )
+    from components.metrics import display_health_indicator, display_kpi_row, display_status_badge
     from components.tables import display_filterable_dataframe, export_dataframe
 
 
@@ -67,7 +78,7 @@ def create_mock_workflow_data() -> pd.DataFrame:
             "next_run": (datetime.now() + timedelta(hours=3)).isoformat(),
             "success_rate": 0.95,
             "avg_duration_min": 12,
-            "total_runs": 150
+            "total_runs": 150,
         },
         {
             "id": "wf-2",
@@ -79,7 +90,7 @@ def create_mock_workflow_data() -> pd.DataFrame:
             "next_run": (datetime.now() + timedelta(hours=22)).isoformat(),
             "success_rate": 0.88,
             "avg_duration_min": 45,
-            "total_runs": 30
+            "total_runs": 30,
         },
         {
             "id": "wf-3",
@@ -91,7 +102,7 @@ def create_mock_workflow_data() -> pd.DataFrame:
             "next_run": (datetime.now() + timedelta(minutes=30)).isoformat(),
             "success_rate": 1.0,
             "avg_duration_min": 5,
-            "total_runs": 500
+            "total_runs": 500,
         },
         {
             "id": "wf-4",
@@ -103,8 +114,8 @@ def create_mock_workflow_data() -> pd.DataFrame:
             "next_run": None,
             "success_rate": 0.92,
             "avg_duration_min": 20,
-            "total_runs": 75
-        }
+            "total_runs": 75,
+        },
     ]
 
     return pd.DataFrame(workflows)
@@ -143,22 +154,37 @@ def create_mock_execution_data(workflow_id: Optional[str] = None) -> pd.DataFram
 
     executions = []
     for i in range(50):
-        start_time = datetime.now() - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23))
+        start_time = datetime.now() - timedelta(
+            days=random.randint(0, 30), hours=random.randint(0, 23)
+        )
         duration = random.randint(300, 3600)  # 5-60 minutes in seconds
         status = random.choices(["completed", "failed", "running"], weights=[80, 15, 5])[0]
 
-        executions.append({
-            "id": f"exec-{i+1}",
-            "workflow_id": workflow_id or f"wf-{random.randint(1,4)}",
-            "workflow_name": random.choice(["Data Ingestion Pipeline", "ML Model Training", "Data Validation", "Prediction Generation"]),
-            "status": status,
-            "started_at": start_time.isoformat(),
-            "completed_at": (start_time + timedelta(seconds=duration)).isoformat() if status != "running" else None,
-            "duration_sec": duration if status != "running" else None,
-            "triggered_by": random.choice(["schedule", "manual", "api"]),
-            "steps_completed": random.randint(3, 8),
-            "steps_total": 8
-        })
+        executions.append(
+            {
+                "id": f"exec-{i+1}",
+                "workflow_id": workflow_id or f"wf-{random.randint(1,4)}",
+                "workflow_name": random.choice(
+                    [
+                        "Data Ingestion Pipeline",
+                        "ML Model Training",
+                        "Data Validation",
+                        "Prediction Generation",
+                    ]
+                ),
+                "status": status,
+                "started_at": start_time.isoformat(),
+                "completed_at": (
+                    (start_time + timedelta(seconds=duration)).isoformat()
+                    if status != "running"
+                    else None
+                ),
+                "duration_sec": duration if status != "running" else None,
+                "triggered_by": random.choice(["schedule", "manual", "api"]),
+                "steps_completed": random.randint(3, 8),
+                "steps_total": 8,
+            }
+        )
 
     return pd.DataFrame(executions)
 
@@ -188,7 +214,7 @@ def show_workflows_dashboard():
     # Convert timestamps
     for col in ["last_run", "next_run"]:
         if col in workflows_df.columns:
-            workflows_df[col] = pd.to_datetime(workflows_df[col], errors='coerce')
+            workflows_df[col] = pd.to_datetime(workflows_df[col], errors="coerce")
 
     # === KPIs ===
     st.subheader("📊 Workflow Metrics")
@@ -196,7 +222,9 @@ def show_workflows_dashboard():
     total_workflows = len(workflows_df)
     active_workflows = len(workflows_df[workflows_df["status"] == "active"])
     paused_workflows = len(workflows_df[workflows_df["status"] == "paused"])
-    avg_success_rate = workflows_df["success_rate"].mean() * 100 if "success_rate" in workflows_df.columns else 0
+    avg_success_rate = (
+        workflows_df["success_rate"].mean() * 100 if "success_rate" in workflows_df.columns else 0
+    )
 
     metrics = {
         "Total Workflows": {"value": total_workflows, "icon": "⚙️"},
@@ -210,7 +238,9 @@ def show_workflows_dashboard():
     st.divider()
 
     # === Tabs ===
-    tab1, tab2, tab3, tab4 = st.tabs(["📋 Workflows", "📈 Executions", "➕ Create Workflow", "📚 Templates"])
+    tab1, tab2, tab3, tab4 = st.tabs(
+        ["📋 Workflows", "📈 Executions", "➕ Create Workflow", "📚 Templates"]
+    )
 
     with tab1:
         show_workflow_list(workflows_df)
@@ -236,14 +266,14 @@ def show_workflow_list(workflows_df: pd.DataFrame):
     }
 
     filtered_df = display_filterable_dataframe(
-        workflows_df,
-        filter_columns=filter_config,
-        key_prefix="workflow_filter"
+        workflows_df, filter_columns=filter_config, key_prefix="workflow_filter"
     )
 
     # Workflow details
     for _, workflow in filtered_df.iterrows():
-        with st.expander(f"{workflow['name']} - {display_status_badge(workflow['status'], 'small')}"):
+        with st.expander(
+            f"{workflow['name']} - {display_status_badge(workflow['status'], 'small')}"
+        ):
             col1, col2 = st.columns(2)
 
             with col1:
@@ -264,7 +294,7 @@ def show_workflow_list(workflows_df: pd.DataFrame):
                     st.success(f"Workflow '{workflow['name']}' triggered!")
 
             with col_b:
-                if workflow['status'] == "active":
+                if workflow["status"] == "active":
                     if st.button("⏸️ Pause", key=f"pause_{workflow['id']}"):
                         st.info(f"Workflow '{workflow['name']}' paused")
                 else:
@@ -273,25 +303,25 @@ def show_workflow_list(workflows_df: pd.DataFrame):
 
             with col_c:
                 if st.button("✏️ Edit", key=f"edit_{workflow['id']}"):
-                    st.session_state['edit_workflow_id'] = workflow['id']
+                    st.session_state["edit_workflow_id"] = workflow["id"]
                     st.info("Edit mode activated")
 
             with col_d:
                 if st.button("📊 View Executions", key=f"view_exec_{workflow['id']}"):
-                    st.session_state['selected_workflow'] = workflow['id']
+                    st.session_state["selected_workflow"] = workflow["id"]
 
             # Show workflow definition
             if st.checkbox("Show Workflow Definition", key=f"def_{workflow['id']}"):
                 workflow_def = {
-                    "name": workflow['name'],
-                    "description": workflow['description'],
-                    "schedule": workflow['schedule'],
+                    "name": workflow["name"],
+                    "description": workflow["description"],
+                    "schedule": workflow["schedule"],
                     "steps": [
                         {"name": "Fetch Data", "action": "api_call", "params": {}},
                         {"name": "Transform Data", "action": "python_script", "params": {}},
                         {"name": "Validate Data", "action": "validation", "params": {}},
-                        {"name": "Store Results", "action": "database_write", "params": {}}
-                    ]
+                        {"name": "Store Results", "action": "database_write", "params": {}},
+                    ],
                 }
                 st.json(workflow_def)
 
@@ -311,19 +341,17 @@ def show_workflow_executions():
     # Convert timestamps
     for col in ["started_at", "completed_at"]:
         if col in executions_df.columns:
-            executions_df[col] = pd.to_datetime(executions_df[col], errors='coerce')
+            executions_df[col] = pd.to_datetime(executions_df[col], errors="coerce")
 
     # Filter
     filter_config = {
         "workflow_name": "multiselect",
         "status": "multiselect",
-        "triggered_by": "multiselect"
+        "triggered_by": "multiselect",
     }
 
     filtered_df = display_filterable_dataframe(
-        executions_df,
-        filter_columns=filter_config,
-        key_prefix="exec_filter"
+        executions_df, filter_columns=filter_config, key_prefix="exec_filter"
     )
 
     # Status distribution
@@ -340,8 +368,8 @@ def show_workflow_executions():
             fig = px.bar(
                 x=workflow_counts.values,
                 y=workflow_counts.index,
-                orientation='h',
-                title="Executions by Workflow"
+                orientation="h",
+                title="Executions by Workflow",
             )
             render_chart(fig)
 
@@ -349,7 +377,9 @@ def show_workflow_executions():
     st.markdown("#### Recent Executions")
 
     for _, execution in filtered_df.head(20).iterrows():
-        with st.expander(f"{execution.get('workflow_name')} - {execution.get('started_at')} - {display_status_badge(execution.get('status'), 'small')}"):
+        with st.expander(
+            f"{execution.get('workflow_name')} - {execution.get('started_at')} - {display_status_badge(execution.get('status'), 'small')}"
+        ):
             col1, col2 = st.columns(2)
 
             with col1:
@@ -361,52 +391,57 @@ def show_workflow_executions():
                 st.markdown(f"**Status:** {display_status_badge(execution.get('status'), 'small')}")
                 st.markdown(f"**Triggered By:** {execution.get('triggered_by')}")
 
-                if pd.notna(execution.get('duration_sec')):
+                if pd.notna(execution.get("duration_sec")):
                     st.markdown(f"**Duration:** {execution['duration_sec']/60:.1f} min")
 
-                if execution.get('steps_total'):
-                    progress = execution.get('steps_completed', 0) / execution['steps_total']
+                if execution.get("steps_total"):
+                    progress = execution.get("steps_completed", 0) / execution["steps_total"]
                     st.progress(progress)
-                    st.caption(f"Steps: {execution.get('steps_completed')}/{execution['steps_total']}")
+                    st.caption(
+                        f"Steps: {execution.get('steps_completed')}/{execution['steps_total']}"
+                    )
 
             # Action buttons
             col_btn1, col_btn2, col_btn3 = st.columns(3)
 
             with col_btn1:
                 if st.button("📋 View Logs", key=f"logs_{execution.get('id')}"):
-                    st.code(f"""
+                    st.code(
+                        f"""
 [INFO] Workflow execution started: {execution.get('id')}
 [INFO] Step 1/8: Fetching data from sources...
 [INFO] Step 2/8: Transforming data...
 [INFO] Step 3/8: Validating data quality...
 [INFO] Execution {'completed' if execution.get('status') == 'completed' else execution.get('status')}
-                    """, language="log")
+                    """,
+                        language="log",
+                    )
 
             with col_btn2:
                 # Download results as JSON
                 result_data = {
-                    "execution_id": execution.get('id'),
-                    "workflow_name": execution.get('workflow_name'),
-                    "status": execution.get('status'),
-                    "started_at": str(execution.get('started_at')),
-                    "completed_at": str(execution.get('completed_at')),
-                    "duration_seconds": execution.get('duration_sec'),
-                    "triggered_by": execution.get('triggered_by'),
-                    "steps_completed": execution.get('steps_completed'),
-                    "steps_total": execution.get('steps_total'),
+                    "execution_id": execution.get("id"),
+                    "workflow_name": execution.get("workflow_name"),
+                    "status": execution.get("status"),
+                    "started_at": str(execution.get("started_at")),
+                    "completed_at": str(execution.get("completed_at")),
+                    "duration_seconds": execution.get("duration_sec"),
+                    "triggered_by": execution.get("triggered_by"),
+                    "steps_completed": execution.get("steps_completed"),
+                    "steps_total": execution.get("steps_total"),
                     "results": {
                         "records_processed": 1250,
                         "errors": 0,
                         "warnings": 3,
-                        "output_location": f"/data/workflows/{execution.get('id')}/output.parquet"
-                    }
+                        "output_location": f"/data/workflows/{execution.get('id')}/output.parquet",
+                    },
                 }
                 st.download_button(
                     label="💾 Download Results",
                     data=json.dumps(result_data, indent=2),
                     file_name=f"workflow_result_{execution.get('id')}.json",
                     mime="application/json",
-                    key=f"download_{execution.get('id')}"
+                    key=f"download_{execution.get('id')}",
                 )
 
             with col_btn3:
@@ -432,10 +467,14 @@ def show_workflow_builder():
         col1, col2 = st.columns(2)
 
         with col1:
-            schedule_type = st.selectbox("Schedule Type", ["Cron Expression", "Interval", "Manual Only"])
+            schedule_type = st.selectbox(
+                "Schedule Type", ["Cron Expression", "Interval", "Manual Only"]
+            )
 
             if schedule_type == "Cron Expression":
-                schedule = st.text_input("Cron Schedule", placeholder="0 0 * * *", help="Cron expression for scheduling")
+                schedule = st.text_input(
+                    "Cron Schedule", placeholder="0 0 * * *", help="Cron expression for scheduling"
+                )
             elif schedule_type == "Interval":
                 interval_value = st.number_input("Every", min_value=1, value=1)
                 interval_unit = st.selectbox("Unit", ["minutes", "hours", "days"])
@@ -456,15 +495,21 @@ def show_workflow_builder():
         steps = []
         for i in range(num_steps):
             with st.expander(f"Step {i+1}"):
-                step_name = st.text_input(f"Step Name", key=f"step_name_{i}", placeholder=f"Step {i+1}")
-                step_type = st.selectbox(f"Step Type", ["API Call", "Python Script", "Database Query", "Data Transform", "Validation"], key=f"step_type_{i}")
-                step_config = st.text_area(f"Configuration (JSON)", key=f"step_config_{i}", placeholder='{"param": "value"}')
+                step_name = st.text_input(
+                    f"Step Name", key=f"step_name_{i}", placeholder=f"Step {i+1}"
+                )
+                step_type = st.selectbox(
+                    f"Step Type",
+                    ["API Call", "Python Script", "Database Query", "Data Transform", "Validation"],
+                    key=f"step_type_{i}",
+                )
+                step_config = st.text_area(
+                    f"Configuration (JSON)",
+                    key=f"step_config_{i}",
+                    placeholder='{"param": "value"}',
+                )
 
-                steps.append({
-                    "name": step_name,
-                    "type": step_type,
-                    "config": step_config
-                })
+                steps.append({"name": step_name, "type": step_type, "config": step_config})
 
         submitted = st.form_submit_button("Create Workflow")
 
@@ -477,7 +522,7 @@ def show_workflow_builder():
                     "enabled": enabled,
                     "retry_on_failure": retry_on_failure,
                     "max_retries": max_retries,
-                    "steps": steps
+                    "steps": steps,
                 }
 
                 st.success(f"✅ Workflow '{name}' created successfully!")
@@ -496,26 +541,26 @@ def show_workflow_templates():
             "name": "Data Ingestion Pipeline",
             "description": "Fetch data from external APIs and store in database",
             "category": "Data Engineering",
-            "steps": 4
+            "steps": 4,
         },
         {
             "name": "ML Training Pipeline",
             "description": "Train and evaluate ML models on schedule",
             "category": "Machine Learning",
-            "steps": 6
+            "steps": 6,
         },
         {
             "name": "Data Quality Check",
             "description": "Validate data integrity and quality metrics",
             "category": "Data Quality",
-            "steps": 3
+            "steps": 3,
         },
         {
             "name": "Report Generation",
             "description": "Generate and distribute periodic reports",
             "category": "Reporting",
-            "steps": 5
-        }
+            "steps": 5,
+        },
     ]
 
     for template in templates:

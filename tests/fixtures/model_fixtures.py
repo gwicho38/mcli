@@ -1,7 +1,9 @@
 """Shared fixtures for model testing"""
-import pytest
-from unittest.mock import Mock, MagicMock
+
 from pathlib import Path
+from unittest.mock import MagicMock, Mock
+
+import pytest
 
 
 @pytest.fixture
@@ -31,14 +33,9 @@ def mock_pypi_response():
     return {
         "info": {
             "version": "7.0.6",
-            "project_urls": {
-                "Changelog": "https://github.com/gwicho38/mcli/releases"
-            }
+            "project_urls": {"Changelog": "https://github.com/gwicho38/mcli/releases"},
         },
-        "releases": {
-            "7.0.5": [],
-            "7.0.6": []
-        }
+        "releases": {"7.0.5": [], "7.0.6": []},
     }
 
 
@@ -50,14 +47,14 @@ def sample_model_list():
             "name": "DistilBERT Base Uncased",
             "size": "250MB",
             "description": "Lightweight BERT model",
-            "downloaded": False
+            "downloaded": False,
         },
         "t5-small": {
             "name": "T5 Small",
             "size": "200MB",
             "description": "Text-to-text transfer model",
-            "downloaded": False
-        }
+            "downloaded": False,
+        },
     }
 
 

@@ -2,12 +2,13 @@
 CLI tests for mcli.app.logs_cmd module
 """
 
-import pytest
 import tempfile
-from pathlib import Path
-from click.testing import CliRunner
-from unittest.mock import patch, MagicMock
 from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+from click.testing import CliRunner
 
 
 class TestLogsCommands:
@@ -22,18 +23,18 @@ class TestLogsCommands:
         from mcli.app.logs_cmd import logs_group
 
         assert logs_group is not None
-        assert hasattr(logs_group, 'commands')
+        assert hasattr(logs_group, "commands")
 
     def test_logs_group_help(self):
         """Test logs command group help"""
         from mcli.app.logs_cmd import logs_group
 
-        result = self.runner.invoke(logs_group, ['--help'])
+        result = self.runner.invoke(logs_group, ["--help"])
 
         assert result.exit_code == 0
-        assert 'logs' in result.output.lower() or 'stream' in result.output.lower()
+        assert "logs" in result.output.lower() or "stream" in result.output.lower()
 
-    @patch('mcli.app.logs_cmd.get_logs_dir')
+    @patch("mcli.app.logs_cmd.get_logs_dir")
     def test_show_location_directory_exists(self, mock_get_logs_dir):
         """Test show location with existing directory"""
         from mcli.app.logs_cmd import logs_group
@@ -45,12 +46,12 @@ class TestLogsCommands:
             # Create a sample log file
             (tmp_path / "mcli_20250101.log").touch()
 
-            result = self.runner.invoke(logs_group, ['location'])
+            result = self.runner.invoke(logs_group, ["location"])
 
             assert result.exit_code == 0
             assert tmpdir in result.output
 
-    @patch('mcli.app.logs_cmd.get_logs_dir')
+    @patch("mcli.app.logs_cmd.get_logs_dir")
     def test_show_location_directory_not_exists(self, mock_get_logs_dir):
         """Test show location with non-existent directory"""
         from mcli.app.logs_cmd import logs_group
@@ -59,13 +60,13 @@ class TestLogsCommands:
         nonexistent_path = Path("/nonexistent/logs/path")
         mock_get_logs_dir.return_value = nonexistent_path
 
-        result = self.runner.invoke(logs_group, ['location'])
+        result = self.runner.invoke(logs_group, ["location"])
 
         assert result.exit_code == 0
         # Should show warning about directory not existing
-        assert 'created' in result.output.lower() or 'nonexistent' not in result.output
+        assert "created" in result.output.lower() or "nonexistent" not in result.output
 
-    @patch('mcli.app.logs_cmd.get_logs_dir')
+    @patch("mcli.app.logs_cmd.get_logs_dir")
     def test_list_logs_command(self, mock_get_logs_dir):
         """Test list logs command"""
         from mcli.app.logs_cmd import logs_group
@@ -78,11 +79,11 @@ class TestLogsCommands:
             (tmp_path / "mcli_20250101.log").touch()
             (tmp_path / "mcli_trace_20250101.log").touch()
 
-            result = self.runner.invoke(logs_group, ['list'])
+            result = self.runner.invoke(logs_group, ["list"])
 
             assert result.exit_code == 0
 
-    @patch('mcli.app.logs_cmd.get_logs_dir')
+    @patch("mcli.app.logs_cmd.get_logs_dir")
     def test_list_logs_with_date(self, mock_get_logs_dir):
         """Test list logs with specific date"""
         from mcli.app.logs_cmd import logs_group
@@ -91,11 +92,11 @@ class TestLogsCommands:
             tmp_path = Path(tmpdir)
             mock_get_logs_dir.return_value = tmp_path
 
-            result = self.runner.invoke(logs_group, ['list', '--date', '20250101'])
+            result = self.runner.invoke(logs_group, ["list", "--date", "20250101"])
 
             assert result.exit_code == 0
 
-    @patch('mcli.app.logs_cmd.get_logs_dir')
+    @patch("mcli.app.logs_cmd.get_logs_dir")
     def test_tail_logs_file_not_found(self, mock_get_logs_dir):
         """Test tail logs when file doesn't exist"""
         from mcli.app.logs_cmd import logs_group
@@ -104,12 +105,12 @@ class TestLogsCommands:
             tmp_path = Path(tmpdir)
             mock_get_logs_dir.return_value = tmp_path
 
-            result = self.runner.invoke(logs_group, ['tail', 'main'])
+            result = self.runner.invoke(logs_group, ["tail", "main"])
 
             # Should handle missing file gracefully
             assert result.exit_code in [0, 1]
 
-    @patch('mcli.app.logs_cmd.get_logs_dir')
+    @patch("mcli.app.logs_cmd.get_logs_dir")
     def test_tail_logs_with_lines_option(self, mock_get_logs_dir):
         """Test tail logs with lines option"""
         from mcli.app.logs_cmd import logs_group
@@ -123,12 +124,12 @@ class TestLogsCommands:
             log_file = tmp_path / f"mcli_{today}.log"
             log_file.write_text("line 1\nline 2\nline 3\n")
 
-            result = self.runner.invoke(logs_group, ['tail', 'main', '--lines', '2'])
+            result = self.runner.invoke(logs_group, ["tail", "main", "--lines", "2"])
 
             # Should not crash
             assert result.exit_code in [0, 1]
 
-    @patch('mcli.app.logs_cmd.get_logs_dir')
+    @patch("mcli.app.logs_cmd.get_logs_dir")
     def test_tail_logs_with_date(self, mock_get_logs_dir):
         """Test tail logs with specific date"""
         from mcli.app.logs_cmd import logs_group
@@ -137,7 +138,7 @@ class TestLogsCommands:
             tmp_path = Path(tmpdir)
             mock_get_logs_dir.return_value = tmp_path
 
-            result = self.runner.invoke(logs_group, ['tail', 'main', '--date', '20250101'])
+            result = self.runner.invoke(logs_group, ["tail", "main", "--date", "20250101"])
 
             assert result.exit_code in [0, 1]
 
@@ -145,7 +146,7 @@ class TestLogsCommands:
         """Test location command help"""
         from mcli.app.logs_cmd import logs_group
 
-        result = self.runner.invoke(logs_group, ['location', '--help'])
+        result = self.runner.invoke(logs_group, ["location", "--help"])
 
         assert result.exit_code == 0
 
@@ -153,7 +154,7 @@ class TestLogsCommands:
         """Test list command help"""
         from mcli.app.logs_cmd import logs_group
 
-        result = self.runner.invoke(logs_group, ['list', '--help'])
+        result = self.runner.invoke(logs_group, ["list", "--help"])
 
         assert result.exit_code == 0
 
@@ -161,11 +162,11 @@ class TestLogsCommands:
         """Test tail command help"""
         from mcli.app.logs_cmd import logs_group
 
-        result = self.runner.invoke(logs_group, ['tail', '--help'])
+        result = self.runner.invoke(logs_group, ["tail", "--help"])
 
         assert result.exit_code == 0
 
-    @patch('mcli.app.logs_cmd.get_logs_dir')
+    @patch("mcli.app.logs_cmd.get_logs_dir")
     def test_stream_logs_no_files(self, mock_get_logs_dir):
         """Test stream logs when no files exist"""
         from mcli.app.logs_cmd import logs_group
@@ -174,12 +175,12 @@ class TestLogsCommands:
             tmp_path = Path(tmpdir)
             mock_get_logs_dir.return_value = tmp_path
 
-            result = self.runner.invoke(logs_group, ['stream'])
+            result = self.runner.invoke(logs_group, ["stream"])
 
             # Should handle gracefully
             assert result.exit_code in [0, 1]
 
-    @patch('mcli.app.logs_cmd.get_logs_dir')
+    @patch("mcli.app.logs_cmd.get_logs_dir")
     def test_stream_logs_type_option(self, mock_get_logs_dir):
         """Test stream logs with type option"""
         from mcli.app.logs_cmd import logs_group
@@ -193,7 +194,7 @@ class TestLogsCommands:
             log_file = tmp_path / f"mcli_trace_{today}.log"
             log_file.write_text("trace log content\n")
 
-            result = self.runner.invoke(logs_group, ['stream', '--type', 'trace', '--no-follow'])
+            result = self.runner.invoke(logs_group, ["stream", "--type", "trace", "--no-follow"])
 
             # Should not crash (may have usage errors due to options)
             assert result.exit_code in [0, 1, 2]
@@ -202,7 +203,7 @@ class TestLogsCommands:
         """Test stream command help"""
         from mcli.app.logs_cmd import logs_group
 
-        result = self.runner.invoke(logs_group, ['stream', '--help'])
+        result = self.runner.invoke(logs_group, ["stream", "--help"])
 
         assert result.exit_code == 0
-        assert 'stream' in result.output.lower() or 'type' in result.output.lower()
+        assert "stream" in result.output.lower() or "type" in result.output.lower()

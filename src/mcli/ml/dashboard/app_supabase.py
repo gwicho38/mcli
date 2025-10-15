@@ -10,7 +10,11 @@ import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
 
-from mcli.ml.dashboard.common import get_supabase_client, load_environment_variables, setup_page_config
+from mcli.ml.dashboard.common import (
+    get_supabase_client,
+    load_environment_variables,
+    setup_page_config,
+)
 from mcli.ml.dashboard.styles import apply_dashboard_styles
 
 # Page config must come first
@@ -61,10 +65,10 @@ def get_disclosures_data():
         df = pd.DataFrame(response.data)
 
         # Convert datetime columns to proper datetime format
-        date_columns = ['transaction_date', 'disclosure_date', 'created_at', 'updated_at']
+        date_columns = ["transaction_date", "disclosure_date", "created_at", "updated_at"]
         for col in date_columns:
             if col in df.columns:
-                df[col] = pd.to_datetime(df[col], format='ISO8601', errors='coerce')
+                df[col] = pd.to_datetime(df[col], format="ISO8601", errors="coerce")
 
         return df
     except Exception as e:

@@ -6,8 +6,9 @@ when not installed.
 """
 
 import sys
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 class TestOptionalOllamaImport:
@@ -19,10 +20,11 @@ class TestOptionalOllamaImport:
         # even if ollama is not installed
         try:
             from mcli.chat import chat
-            assert hasattr(chat, 'OLLAMA_AVAILABLE')
+
+            assert hasattr(chat, "OLLAMA_AVAILABLE")
         except ImportError as e:
             # Should not fail due to ollama import
-            if 'ollama' in str(e):
+            if "ollama" in str(e):
                 pytest.fail(f"chat module should not require ollama: {e}")
             raise
 
@@ -48,10 +50,11 @@ class TestOptionalRedisImport:
         """Verify cached_vectorizer module can be imported without redis"""
         try:
             from mcli.lib.search import cached_vectorizer
-            assert hasattr(cached_vectorizer, 'REDIS_AVAILABLE')
+
+            assert hasattr(cached_vectorizer, "REDIS_AVAILABLE")
         except ImportError as e:
             # Should not fail due to redis import
-            if 'redis' in str(e):
+            if "redis" in str(e):
                 pytest.fail(f"cached_vectorizer should not require redis: {e}")
             raise
 
@@ -72,7 +75,7 @@ class TestOptionalRedisImport:
     @pytest.mark.asyncio
     async def test_cached_vectorizer_works_without_redis(self):
         """Verify CachedTfIdfVectorizer can initialize without redis"""
-        from mcli.lib.search.cached_vectorizer import CachedTfIdfVectorizer, REDIS_AVAILABLE
+        from mcli.lib.search.cached_vectorizer import REDIS_AVAILABLE, CachedTfIdfVectorizer
 
         # Should be able to create instance even without redis
         vectorizer = CachedTfIdfVectorizer()

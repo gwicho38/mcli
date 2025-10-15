@@ -18,7 +18,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -104,7 +104,7 @@ class EndToEndTestRunner:
 
             # Parse output as JSON lines
             records = []
-            for line in output.strip().split('\n'):
+            for line in output.strip().split("\n"):
                 if line.strip():
                     try:
                         record = json.loads(line)
@@ -139,7 +139,7 @@ class EndToEndTestRunner:
         print("🛠️  Creating politician trading test job...")
 
         # Create a script that outputs realistic politician trading data
-        test_script = '''
+        test_script = """
 import json
 import random
 from datetime import datetime, timedelta
@@ -170,7 +170,7 @@ for i in range(3):
         "created_at": datetime.now().isoformat()
     }
     print(json.dumps(record))
-'''
+"""
 
         # Create job spec that runs Python script
         job_spec = {
@@ -179,7 +179,7 @@ for i in range(3):
             "type": "shell",
             "description": "Test job for end-to-end integration - generates politician trading data",
             "tags": ["test", "politician-trading", "mcli-integration"],
-            "databaseSync": True  # Enable database sync for testing
+            "databaseSync": True,  # Enable database sync for testing
         }
 
         try:
@@ -254,7 +254,7 @@ for i in range(3):
             "records_processed": len(self.processed_records) > 0,
             "data_enriched": False,
             "files_created": False,
-            "validation_passed": False
+            "validation_passed": False,
         }
 
         # Check if records were processed
@@ -287,7 +287,7 @@ for i in range(3):
             print(f"✅ {len(output_files)} output files created")
 
             # Show sample of saved data
-            with open(output_files[0], 'r') as f:
+            with open(output_files[0], "r") as f:
                 sample_line = f.readline()
                 if sample_line:
                     saved_record = json.loads(sample_line)

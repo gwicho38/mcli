@@ -7,13 +7,14 @@ def test_trading_module_imports():
     """Test that trading module can be imported without errors"""
     try:
         from mcli.ml.trading import (
-            TradingService,
             OrderCreate,
-            PortfolioType,
-            OrderType,
             OrderSide,
+            OrderType,
+            PortfolioType,
             RiskLevel,
+            TradingService,
         )
+
         assert TradingService is not None
         assert OrderCreate is not None
         assert PortfolioType is not None
@@ -26,37 +27,37 @@ def test_trading_module_imports():
 
 def test_trading_enums():
     """Test that trading enums are properly defined"""
-    from mcli.ml.trading import PortfolioType, OrderType, OrderSide, RiskLevel
+    from mcli.ml.trading import OrderSide, OrderType, PortfolioType, RiskLevel
 
     # Test PortfolioType enum
-    assert hasattr(PortfolioType, 'TEST')
-    assert hasattr(PortfolioType, 'PAPER')
-    assert hasattr(PortfolioType, 'LIVE')
+    assert hasattr(PortfolioType, "TEST")
+    assert hasattr(PortfolioType, "PAPER")
+    assert hasattr(PortfolioType, "LIVE")
 
     # Test OrderType enum
-    assert hasattr(OrderType, 'MARKET')
-    assert hasattr(OrderType, 'LIMIT')
+    assert hasattr(OrderType, "MARKET")
+    assert hasattr(OrderType, "LIMIT")
 
     # Test OrderSide enum
-    assert hasattr(OrderSide, 'BUY')
-    assert hasattr(OrderSide, 'SELL')
+    assert hasattr(OrderSide, "BUY")
+    assert hasattr(OrderSide, "SELL")
 
     # Test RiskLevel enum
-    assert hasattr(RiskLevel, 'CONSERVATIVE')
-    assert hasattr(RiskLevel, 'MODERATE')
-    assert hasattr(RiskLevel, 'AGGRESSIVE')
+    assert hasattr(RiskLevel, "CONSERVATIVE")
+    assert hasattr(RiskLevel, "MODERATE")
+    assert hasattr(RiskLevel, "AGGRESSIVE")
 
 
 def test_trading_pydantic_models():
     """Test that trading Pydantic models can be instantiated"""
     from mcli.ml.trading import (
-        TradingAccountCreate,
-        PortfolioCreate,
         OrderCreate,
+        OrderSide,
+        OrderType,
+        PortfolioCreate,
         PortfolioType,
         RiskLevel,
-        OrderType,
-        OrderSide,
+        TradingAccountCreate,
     )
 
     # Test TradingAccountCreate
@@ -89,13 +90,11 @@ def test_trading_pydantic_models():
     assert order.quantity == 10
 
 
-@pytest.mark.skipif(
-    True, reason="Requires database connection - integration test"
-)
+@pytest.mark.skipif(True, reason="Requires database connection - integration test")
 def test_trading_service_initialization():
     """Test that TradingService can be initialized (requires DB)"""
-    from mcli.ml.trading import TradingService
     from mcli.ml.database.session import get_session
+    from mcli.ml.trading import TradingService
 
     with get_session() as db:
         service = TradingService(db)
@@ -106,18 +105,21 @@ def test_trading_page_imports():
     """Test that trading dashboard page can be imported"""
     try:
         import sys
+
         import streamlit as st
 
         # Mock streamlit session state
         class MockSessionState(dict):
             def __getattr__(self, key):
                 return self.get(key)
+
             def __setattr__(self, key, value):
                 self[key] = value
 
         st.session_state = MockSessionState()
 
         from mcli.ml.dashboard.pages.trading import show_trading_dashboard
+
         assert show_trading_dashboard is not None
     except ImportError as e:
         pytest.fail(f"Failed to import trading page: {e}")

@@ -1,23 +1,25 @@
 """Test suite for authentication and authorization"""
 
-import pytest
-import jwt
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
+import jwt
+import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 # Check for aiosqlite dependency
 try:
     import aiosqlite
+
     HAS_AIOSQLITE = True
 except ImportError:
     HAS_AIOSQLITE = False
 
 if HAS_AIOSQLITE:
     from mcli.ml.auth.auth_manager import AuthManager, RateLimiter
-    from mcli.ml.auth.models import UserCreate, UserLogin, PasswordChange
-    from mcli.ml.auth.permissions import Permission, has_permission, check_permission
+    from mcli.ml.auth.models import PasswordChange, UserCreate, UserLogin
+    from mcli.ml.auth.permissions import Permission, check_permission, has_permission
     from mcli.ml.database.models import User, UserRole
 
 
@@ -37,7 +39,9 @@ class TestAuthManager:
         user.id = "test-user-id"
         user.username = "testuser"
         user.email = "test@example.com"
-        user.password_hash = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN4kAaKRcKGdGqHGKJIJu"  # "password123"
+        user.password_hash = (
+            "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN4kAaKRcKGdGqHGKJIJu"  # "password123"
+        )
         user.role = UserRole.USER
         user.is_active = True
         user.is_verified = True
@@ -63,22 +67,14 @@ class TestAuthManager:
         assert isinstance(token, str)
 
         # Decode token
-        payload = jwt.decode(
-            token,
-            auth_manager.secret_key,
-            algorithms=[auth_manager.algorithm]
-        )
+        payload = jwt.decode(token, auth_manager.secret_key, algorithms=[auth_manager.algorithm])
         assert payload["sub"] == user_id
         assert payload["username"] == username
         assert payload["role"] == role
 
     def test_token_verification(self, auth_manager):
         """Test token verification"""
-        token = auth_manager.create_access_token(
-            "user-123",
-            "testuser",
-            "user"
-        )
+        token = auth_manager.create_access_token("user-123", "testuser", "user")
 
         token_data = auth_manager.verify_token(token)
         assert token_data.sub == "user-123"
@@ -89,10 +85,7 @@ class TestAuthManager:
         """Test expired token handling"""
         # Create token that expires immediately
         token = auth_manager.create_access_token(
-            "user-123",
-            "testuser",
-            "user",
-            expires_delta=timedelta(seconds=-1)
+            "user-123", "testuser", "user", expires_delta=timedelta(seconds=-1)
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -113,7 +106,7 @@ class TestAuthManager:
             email="new@example.com",
             password="SecurePass123!",
             first_name="New",
-            last_name="User"
+            last_name="User",
         )
 
         user = await auth_manager.register_user(user_data, mock_db)
@@ -128,7 +121,7 @@ class TestAuthManager:
         mock_db.commit = Mock()
 
         # Mock password verification
-        with patch.object(auth_manager, 'verify_password', return_value=True):
+        with patch.object(auth_manager, "verify_password", return_value=True):
             login_data = UserLogin(username="testuser", password="password123")
             token_response = await auth_manager.login(login_data, mock_db)
 
@@ -156,10 +149,7 @@ class TestAuthManager:
 
         refresh_token = auth_manager.create_refresh_token(str(mock_user.id))
 
-        new_token_response = await auth_manager.refresh_access_token(
-            refresh_token,
-            mock_db
-        )
+        new_token_response = await auth_manager.refresh_access_token(refresh_token, mock_db)
 
         assert new_token_response.access_token is not None
 
@@ -171,52 +161,30 @@ class TestPasswordValidation:
     def test_password_requirements(self):
         """Test password meets requirements"""
         # Valid password
-        valid_user = UserCreate(
-            username="user",
-            email="user@example.com",
-            password="ValidPass123!"
-        )
+        valid_user = UserCreate(username="user", email="user@example.com", password="ValidPass123!")
         assert valid_user.password == "ValidPass123!"
 
         # Too short
         with pytest.raises(ValueError, match="at least 8 characters"):
-            UserCreate(
-                username="user",
-                email="user@example.com",
-                password="Short1!"
-            )
+            UserCreate(username="user", email="user@example.com", password="Short1!")
 
         # No digit
         with pytest.raises(ValueError, match="at least one digit"):
-            UserCreate(
-                username="user",
-                email="user@example.com",
-                password="NoDigitPass!"
-            )
+            UserCreate(username="user", email="user@example.com", password="NoDigitPass!")
 
         # No uppercase
         with pytest.raises(ValueError, match="at least one uppercase"):
-            UserCreate(
-                username="user",
-                email="user@example.com",
-                password="nouppercase123!"
-            )
+            UserCreate(username="user", email="user@example.com", password="nouppercase123!")
 
     def test_password_change_validation(self):
         """Test password change validation"""
         # Valid change
-        valid_change = PasswordChange(
-            current_password="OldPass123!",
-            new_password="NewPass456!"
-        )
+        valid_change = PasswordChange(current_password="OldPass123!", new_password="NewPass456!")
         assert valid_change.new_password == "NewPass456!"
 
         # Same as current
         with pytest.raises(ValueError, match="must be different"):
-            PasswordChange(
-                current_password="SamePass123!",
-                new_password="SamePass123!"
-            )
+            PasswordChange(current_password="SamePass123!", new_password="SamePass123!")
 
 
 @pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
@@ -373,26 +341,24 @@ class TestAuthIntegration:
         mock_db.refresh = Mock()
 
         user_data = UserCreate(
-            username="testuser",
-            email="test@example.com",
-            password="SecurePass123!"
+            username="testuser", email="test@example.com", password="SecurePass123!"
         )
 
         # Simulate registration
-        with patch.object(auth_manager, 'register_user') as mock_register:
+        with patch.object(auth_manager, "register_user") as mock_register:
             mock_user = Mock(
                 id="user-123",
                 username="testuser",
                 email="test@example.com",
                 role=UserRole.USER,
-                is_active=True
+                is_active=True,
             )
             mock_register.return_value = mock_user
 
             registered_user = await auth_manager.register_user(user_data, mock_db)
 
         # Login
-        with patch.object(auth_manager, 'authenticate_user') as mock_auth:
+        with patch.object(auth_manager, "authenticate_user") as mock_auth:
             mock_auth.return_value = mock_user
 
             login_data = UserLogin(username="testuser", password="SecurePass123!")

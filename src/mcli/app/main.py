@@ -259,7 +259,11 @@ class LazyCommand(click.Command):
         if hasattr(cmd, "shell_complete"):
             return cmd.shell_complete(ctx, param, incomplete)
         # Fallback to default Click completion
-        return super().shell_complete(ctx, param, incomplete) if hasattr(super(), "shell_complete") else []
+        return (
+            super().shell_complete(ctx, param, incomplete)
+            if hasattr(super(), "shell_complete")
+            else []
+        )
 
 
 class LazyGroup(click.Group):
@@ -315,7 +319,11 @@ class LazyGroup(click.Group):
         if hasattr(group, "shell_complete"):
             return group.shell_complete(ctx, param, incomplete)
         # Fallback to default Click completion
-        return super().shell_complete(ctx, param, incomplete) if hasattr(super(), "shell_complete") else []
+        return (
+            super().shell_complete(ctx, param, incomplete)
+            if hasattr(super(), "shell_complete")
+            else []
+        )
 
 
 def _add_lazy_commands(app: click.Group):

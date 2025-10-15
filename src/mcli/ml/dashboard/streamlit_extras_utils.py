@@ -5,13 +5,13 @@ import streamlit as st
 # Try to import streamlit-extras components
 HAS_EXTRAS = True
 try:
-    from streamlit_extras.metric_cards import style_metric_cards
-    from streamlit_extras.badges import badge
-    from streamlit_extras.colored_header import colored_header
-    from streamlit_extras.card import card
-    from streamlit_extras.stoggle import stoggle
-    from streamlit_extras.grid import grid
     from streamlit_extras.add_vertical_space import add_vertical_space
+    from streamlit_extras.badges import badge
+    from streamlit_extras.card import card
+    from streamlit_extras.colored_header import colored_header
+    from streamlit_extras.grid import grid
+    from streamlit_extras.metric_cards import style_metric_cards
+    from streamlit_extras.stoggle import stoggle
     from streamlit_extras.stylable_container import stylable_container
 except ImportError:
     HAS_EXTRAS = False
@@ -44,22 +44,14 @@ def enhanced_metrics(metrics_data: list, use_container_width: bool = True):
         cols = st.columns(len(metrics_data))
         for i, metric in enumerate(metrics_data):
             with cols[i]:
-                st.metric(
-                    label=metric["label"],
-                    value=metric["value"],
-                    delta=metric.get("delta")
-                )
+                st.metric(label=metric["label"], value=metric["value"], delta=metric.get("delta"))
         return
 
     # Use streamlit-extras styled metrics
     cols = st.columns(len(metrics_data))
     for i, metric in enumerate(metrics_data):
         with cols[i]:
-            st.metric(
-                label=metric["label"],
-                value=metric["value"],
-                delta=metric.get("delta")
-            )
+            st.metric(label=metric["label"], value=metric["value"], delta=metric.get("delta"))
     style_metric_cards()
 
 
@@ -94,15 +86,17 @@ def section_header(label: str, description: str = None, divider: str = "rainbow"
         st.divider()
         return
 
-    colored_header(
-        label=label,
-        description=description or "",
-        color_name=divider
-    )
+    colored_header(label=label, description=description or "", color_name=divider)
 
 
-def info_card(title: str, text: str, image: str = None, url: str = None,
-              has_button: bool = False, button_text: str = "Learn More"):
+def info_card(
+    title: str,
+    text: str,
+    image: str = None,
+    url: str = None,
+    has_button: bool = False,
+    button_text: str = "Learn More",
+):
     """
     Display an information card
 
@@ -199,14 +193,12 @@ def styled_container(key: str, css_styles: str):
     if not HAS_EXTRAS:
         return st.container()
 
-    return stylable_container(
-        key=key,
-        css_styles=css_styles
-    )
+    return stylable_container(key=key, css_styles=css_styles)
 
 
-def trading_status_card(status: str, portfolio_value: float, daily_pnl: float,
-                       positions: int, cash: float):
+def trading_status_card(
+    status: str, portfolio_value: float, daily_pnl: float, positions: int, cash: float
+):
     """
     Display a trading status summary card
 
@@ -224,28 +216,29 @@ def trading_status_card(status: str, portfolio_value: float, daily_pnl: float,
     section_header(
         f"{status_color} Trading Status: {status}",
         f"Real-time portfolio monitoring and execution",
-        divider="blue"
+        divider="blue",
     )
 
-    enhanced_metrics([
-        {
-            "label": "Portfolio Value",
-            "value": f"${portfolio_value:,.2f}",
-            "delta": f"{pnl_sign}${daily_pnl:,.2f}"
-        },
-        {
-            "label": "Open Positions",
-            "value": str(positions),
-        },
-        {
-            "label": "Available Cash",
-            "value": f"${cash:,.2f}",
-        },
-    ])
+    enhanced_metrics(
+        [
+            {
+                "label": "Portfolio Value",
+                "value": f"${portfolio_value:,.2f}",
+                "delta": f"{pnl_sign}${daily_pnl:,.2f}",
+            },
+            {
+                "label": "Open Positions",
+                "value": str(positions),
+            },
+            {
+                "label": "Available Cash",
+                "value": f"${cash:,.2f}",
+            },
+        ]
+    )
 
 
-def data_quality_indicators(total_records: int, clean_records: int,
-                            errors: int, last_update: str):
+def data_quality_indicators(total_records: int, clean_records: int, errors: int, last_update: str):
     """
     Display data quality indicators
 
@@ -257,41 +250,39 @@ def data_quality_indicators(total_records: int, clean_records: int,
     """
     quality_pct = (clean_records / total_records * 100) if total_records > 0 else 0
 
-    section_header(
-        "📊 Data Quality Metrics",
-        f"Last updated: {last_update}",
-        divider="green"
-    )
+    section_header("📊 Data Quality Metrics", f"Last updated: {last_update}", divider="green")
 
-    enhanced_metrics([
-        {
-            "label": "Total Records",
-            "value": f"{total_records:,}",
-        },
-        {
-            "label": "Data Quality",
-            "value": f"{quality_pct:.1f}%",
-            "delta": f"{clean_records:,} clean"
-        },
-        {
-            "label": "Errors",
-            "value": str(errors),
-            "delta": f"{(errors/total_records*100):.2f}%" if total_records > 0 else "0%"
-        },
-    ])
+    enhanced_metrics(
+        [
+            {
+                "label": "Total Records",
+                "value": f"{total_records:,}",
+            },
+            {
+                "label": "Data Quality",
+                "value": f"{quality_pct:.1f}%",
+                "delta": f"{clean_records:,} clean",
+            },
+            {
+                "label": "Errors",
+                "value": str(errors),
+                "delta": f"{(errors/total_records*100):.2f}%" if total_records > 0 else "0%",
+            },
+        ]
+    )
 
 
 # Export available components
 __all__ = [
-    'HAS_EXTRAS',
-    'enhanced_metrics',
-    'status_badge',
-    'section_header',
-    'info_card',
-    'collapsible_section',
-    'dashboard_grid',
-    'vertical_space',
-    'styled_container',
-    'trading_status_card',
-    'data_quality_indicators',
+    "HAS_EXTRAS",
+    "enhanced_metrics",
+    "status_badge",
+    "section_header",
+    "info_card",
+    "collapsible_section",
+    "dashboard_grid",
+    "vertical_space",
+    "styled_container",
+    "trading_status_card",
+    "data_quality_indicators",
 ]

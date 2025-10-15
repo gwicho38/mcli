@@ -5,8 +5,8 @@ This test verifies that the OpenAI-compatible API adapter works correctly.
 """
 
 import pytest
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from mcli.workflow.model_service.lightweight_model_server import LightweightModelServer
 from mcli.workflow.model_service.openai_adapter import create_openai_adapter

@@ -8,7 +8,7 @@ Android emulators and iOS simulators.
 import json
 import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch, call
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 from click.testing import CliRunner
@@ -68,12 +68,10 @@ class MockEmulatorManager:
     def list_android_emulators(self, running_only=False):
         """Mock list Android emulators"""
         if running_only:
-            return [
-                {"name": "emulator-5554", "status": "running", "type": "android"}
-            ]
+            return [{"name": "emulator-5554", "status": "running", "type": "android"}]
         return [
             {"name": "Pixel_6_API_34", "status": "available", "type": "android"},
-            {"name": "Nexus_5_API_30", "status": "available", "type": "android"}
+            {"name": "Nexus_5_API_30", "status": "available", "type": "android"},
         ]
 
     def list_ios_simulators(self, running_only=False):
@@ -85,7 +83,7 @@ class MockEmulatorManager:
                     "udid": "ABCD-1234",
                     "status": "booted",
                     "runtime": "iOS-17-2",
-                    "type": "ios"
+                    "type": "ios",
                 }
             ]
         return [
@@ -94,15 +92,15 @@ class MockEmulatorManager:
                 "udid": "ABCD-1234",
                 "status": "shutdown",
                 "runtime": "iOS-17-2",
-                "type": "ios"
+                "type": "ios",
             },
             {
                 "name": "iPhone 14",
                 "udid": "EFGH-5678",
                 "status": "shutdown",
                 "runtime": "iOS-16-4",
-                "type": "ios"
-            }
+                "type": "ios",
+            },
         ]
 
     def create_android_emulator(self, name, device, system_image):
@@ -179,9 +177,7 @@ class TestEmulatorManagerLogic:
     def test_create_android_emulator(self):
         """Test creating Android emulator"""
         result = self.manager.create_android_emulator(
-            "test_emu",
-            "pixel_6",
-            "system-images;android-34;google_apis;arm64-v8a"
+            "test_emu", "pixel_6", "system-images;android-34;google_apis;arm64-v8a"
         )
 
         assert result is True
@@ -255,17 +251,12 @@ class TestEmulatorCommandIntegration:
         """Test Android emulator list command calls correct subprocess"""
         # Setup mock
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="Pixel_6_API_34\nNexus_5_API_30\n",
-            stderr=""
+            returncode=0, stdout="Pixel_6_API_34\nNexus_5_API_30\n", stderr=""
         )
 
         # Simulate command execution
         result = subprocess.run(
-            ["emulator", "-list-avds"],
-            capture_output=True,
-            text=True,
-            check=False
+            ["emulator", "-list-avds"], capture_output=True, text=True, check=False
         )
 
         assert result.returncode == 0
@@ -276,17 +267,10 @@ class TestEmulatorCommandIntegration:
         """Test getting running Android devices"""
         # Setup mock
         mock_run.return_value = Mock(
-            returncode=0,
-            stdout="List of devices attached\nemulator-5554\tdevice\n",
-            stderr=""
+            returncode=0, stdout="List of devices attached\nemulator-5554\tdevice\n", stderr=""
         )
 
-        result = subprocess.run(
-            ["adb", "devices"],
-            capture_output=True,
-            text=True,
-            check=False
-        )
+        result = subprocess.run(["adb", "devices"], capture_output=True, text=True, check=False)
 
         assert result.returncode == 0
         assert "emulator-5554" in result.stdout
@@ -299,25 +283,17 @@ class TestEmulatorCommandIntegration:
         mock_data = {
             "devices": {
                 "com.apple.CoreSimulator.SimRuntime.iOS-17-2": [
-                    {
-                        "name": "iPhone 15",
-                        "udid": "ABCD-1234",
-                        "state": "Shutdown"
-                    }
+                    {"name": "iPhone 15", "udid": "ABCD-1234", "state": "Shutdown"}
                 ]
             }
         }
-        mock_run.return_value = Mock(
-            returncode=0,
-            stdout=json.dumps(mock_data),
-            stderr=""
-        )
+        mock_run.return_value = Mock(returncode=0, stdout=json.dumps(mock_data), stderr="")
 
         result = subprocess.run(
             ["xcrun", "simctl", "list", "devices", "-j"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         assert result.returncode == 0
@@ -339,11 +315,11 @@ class TestEmulatorCommandIntegration:
                 "-k",
                 "system-images;android-34;google_apis;arm64-v8a",
                 "-d",
-                "pixel_6"
+                "pixel_6",
             ],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         assert result.returncode == 0
@@ -357,7 +333,7 @@ class TestEmulatorCommandIntegration:
             ["avdmanager", "delete", "avd", "-n", "test_emulator"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         assert result.returncode == 0
@@ -371,7 +347,7 @@ class TestEmulatorCommandIntegration:
             ["emulator", "-avd", "Pixel_6_API_34"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            start_new_session=True
+            start_new_session=True,
         )
 
         assert proc is not None
@@ -385,7 +361,7 @@ class TestEmulatorCommandIntegration:
             ["adb", "-s", "emulator-5554", "emu", "kill"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         assert result.returncode == 0
@@ -398,7 +374,7 @@ class TestEmulatorCommandIntegration:
             "devicetypes": [
                 {
                     "name": "iPhone 15",
-                    "identifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-15"
+                    "identifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-15",
                 }
             ]
         }
@@ -406,10 +382,7 @@ class TestEmulatorCommandIntegration:
         # Mock runtimes list
         mock_runtimes = {
             "runtimes": [
-                {
-                    "name": "iOS 17.2",
-                    "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-17-2"
-                }
+                {"name": "iOS 17.2", "identifier": "com.apple.CoreSimulator.SimRuntime.iOS-17-2"}
             ]
         }
 
@@ -417,7 +390,7 @@ class TestEmulatorCommandIntegration:
         mock_run.side_effect = [
             Mock(returncode=0, stdout=json.dumps(mock_device_types), stderr=""),
             Mock(returncode=0, stdout=json.dumps(mock_runtimes), stderr=""),
-            Mock(returncode=0, stdout="ABCD-1234-5678", stderr="")
+            Mock(returncode=0, stdout="ABCD-1234-5678", stderr=""),
         ]
 
         # Get device types
@@ -425,7 +398,7 @@ class TestEmulatorCommandIntegration:
             ["xcrun", "simctl", "list", "devicetypes", "-j"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
         assert result1.returncode == 0
 
@@ -434,7 +407,7 @@ class TestEmulatorCommandIntegration:
             ["xcrun", "simctl", "list", "runtimes", "-j"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
         assert result2.returncode == 0
 
@@ -446,11 +419,11 @@ class TestEmulatorCommandIntegration:
                 "create",
                 "Test iPhone",
                 "com.apple.CoreSimulator.SimDeviceType.iPhone-15",
-                "com.apple.CoreSimulator.SimRuntime.iOS-17-2"
+                "com.apple.CoreSimulator.SimRuntime.iOS-17-2",
             ],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
         assert result3.returncode == 0
 
@@ -460,10 +433,7 @@ class TestEmulatorCommandIntegration:
         mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
         result = subprocess.run(
-            ["xcrun", "simctl", "delete", "ABCD-1234"],
-            capture_output=True,
-            text=True,
-            check=False
+            ["xcrun", "simctl", "delete", "ABCD-1234"], capture_output=True, text=True, check=False
         )
 
         assert result.returncode == 0
@@ -474,10 +444,7 @@ class TestEmulatorCommandIntegration:
         mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
         result = subprocess.run(
-            ["xcrun", "simctl", "boot", "ABCD-1234"],
-            capture_output=True,
-            text=True,
-            check=False
+            ["xcrun", "simctl", "boot", "ABCD-1234"], capture_output=True, text=True, check=False
         )
 
         assert result.returncode == 0
@@ -491,7 +458,7 @@ class TestEmulatorCommandIntegration:
             ["xcrun", "simctl", "shutdown", "ABCD-1234"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         assert result.returncode == 0
@@ -502,10 +469,7 @@ class TestEmulatorCommandIntegration:
         mock_run.return_value = Mock(returncode=0, stdout="", stderr="")
 
         result = subprocess.run(
-            ["xcrun", "simctl", "shutdown", "all"],
-            capture_output=True,
-            text=True,
-            check=False
+            ["xcrun", "simctl", "shutdown", "all"], capture_output=True, text=True, check=False
         )
 
         assert result.returncode == 0
@@ -524,12 +488,7 @@ class TestEmulatorErrorHandling:
         mock_run.side_effect = FileNotFoundError("emulator: command not found")
 
         with pytest.raises(FileNotFoundError):
-            subprocess.run(
-                ["emulator", "-list-avds"],
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            subprocess.run(["emulator", "-list-avds"], capture_output=True, text=True, check=True)
 
     @patch("subprocess.run")
     def test_ios_list_command_not_found(self, mock_run):
@@ -541,23 +500,21 @@ class TestEmulatorErrorHandling:
                 ["xcrun", "simctl", "list", "devices", "-j"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
     @patch("subprocess.run")
     def test_android_emulator_creation_failure(self, mock_run):
         """Test handling Android emulator creation failure"""
         mock_run.return_value = Mock(
-            returncode=1,
-            stdout="",
-            stderr="Error: Package path is not valid"
+            returncode=1, stdout="", stderr="Error: Package path is not valid"
         )
 
         result = subprocess.run(
             ["avdmanager", "create", "avd", "-n", "test", "-k", "invalid-image"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         assert result.returncode != 0
@@ -566,17 +523,13 @@ class TestEmulatorErrorHandling:
     @patch("subprocess.run")
     def test_ios_simulator_creation_failure(self, mock_run):
         """Test handling iOS simulator creation failure"""
-        mock_run.return_value = Mock(
-            returncode=1,
-            stdout="",
-            stderr="Invalid device type"
-        )
+        mock_run.return_value = Mock(returncode=1, stdout="", stderr="Invalid device type")
 
         result = subprocess.run(
             ["xcrun", "simctl", "create", "test", "invalid-type", "iOS-17-2"],
             capture_output=True,
             text=True,
-            check=False
+            check=False,
         )
 
         assert result.returncode != 0
@@ -586,16 +539,11 @@ class TestEmulatorErrorHandling:
     def test_simulator_already_running(self, mock_run):
         """Test handling when simulator is already running"""
         mock_run.return_value = Mock(
-            returncode=164,
-            stdout="",
-            stderr="Unable to boot device in current state: Booted"
+            returncode=164, stdout="", stderr="Unable to boot device in current state: Booted"
         )
 
         result = subprocess.run(
-            ["xcrun", "simctl", "boot", "ABCD-1234"],
-            capture_output=True,
-            text=True,
-            check=False
+            ["xcrun", "simctl", "boot", "ABCD-1234"], capture_output=True, text=True, check=False
         )
 
         assert result.returncode != 0
@@ -613,11 +561,7 @@ class TestEmulatorRealCommandExecution:
         """Test if Android tools are available on system"""
         try:
             result = subprocess.run(
-                ["emulator", "-version"],
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=5
+                ["emulator", "-version"], capture_output=True, text=True, check=False, timeout=5
             )
             assert result.returncode in [0, 1]  # 0 or 1 both indicate tool exists
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -627,11 +571,7 @@ class TestEmulatorRealCommandExecution:
         """Test if iOS tools are available on system"""
         try:
             result = subprocess.run(
-                ["xcrun", "simctl", "help"],
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=5
+                ["xcrun", "simctl", "help"], capture_output=True, text=True, check=False, timeout=5
             )
             assert result.returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired):

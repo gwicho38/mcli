@@ -9,17 +9,16 @@ politician trading activity:
 - ProPublica Congress API
 """
 
+import logging
 import os
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-import logging
 
 import requests
 from bs4 import BeautifulSoup
 
 from .models import Politician, TradingDisclosure
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +35,9 @@ class StockNearScraper:
 
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-        })
+        self.session.headers.update(
+            {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+        )
 
     def fetch_politicians_list(self) -> List[Dict]:
         """Fetch list of politicians tracked by StockNear"""
@@ -46,7 +45,7 @@ class StockNearScraper:
             response = self.session.get(self.BASE_URL, timeout=30)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
 
             # StockNear loads data via JavaScript - would need Selenium or API access
             # For now, return structure for manual data entry or API integration
@@ -80,18 +79,17 @@ class ProPublicaAPI:
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("PROPUBLICA_API_KEY")
         if not self.api_key:
-            raise ValueError("ProPublica API key required. Set PROPUBLICA_API_KEY environment variable.")
+            raise ValueError(
+                "ProPublica API key required. Set PROPUBLICA_API_KEY environment variable."
+            )
 
         self.session = requests.Session()
-        self.session.headers.update({
-            "X-API-Key": self.api_key,
-            "User-Agent": "PoliticianTradingTracker/1.0"
-        })
+        self.session.headers.update(
+            {"X-API-Key": self.api_key, "User-Agent": "PoliticianTradingTracker/1.0"}
+        )
 
     def get_member_financial_disclosures(
-        self,
-        member_id: str,
-        congress: int = 118  # 118th Congress (2023-2025)
+        self, member_id: str, congress: int = 118  # 118th Congress (2023-2025)
     ) -> List[Dict]:
         """
         Get financial disclosures for a specific member of Congress
@@ -128,11 +126,7 @@ class ProPublicaAPI:
             logger.error(f"Error fetching ProPublica financial disclosures: {e}")
             return []
 
-    def get_recent_stock_transactions(
-        self,
-        congress: int = 118,
-        offset: int = 0
-    ) -> List[Dict]:
+    def get_recent_stock_transactions(self, congress: int = 118, offset: int = 0) -> List[Dict]:
         """
         Get recent stock transactions by members of Congress
 
@@ -144,7 +138,9 @@ class ProPublicaAPI:
             List of stock transactions
         """
         try:
-            url = f"{self.BASE_URL}/{congress}/house/members/financial-disclosures/transactions.json"
+            url = (
+                f"{self.BASE_URL}/{congress}/house/members/financial-disclosures/transactions.json"
+            )
             params = {"offset": offset}
 
             response = self.session.get(url, params=params, timeout=30)
@@ -160,9 +156,7 @@ class ProPublicaAPI:
             return []
 
     def list_current_members(
-        self,
-        chamber: str = "house",  # "house" or "senate"
-        congress: int = 118
+        self, chamber: str = "house", congress: int = 118  # "house" or "senate"
     ) -> List[Dict]:
         """
         Get list of current members of Congress
@@ -220,9 +214,7 @@ class ThirdPartyDataFetcher:
         self.stocknear = StockNearScraper()
 
     def fetch_from_propublica(
-        self,
-        fetch_members: bool = True,
-        fetch_transactions: bool = True
+        self, fetch_members: bool = True, fetch_transactions: bool = True
     ) -> Dict[str, List]:
         """
         Fetch data from ProPublica Congress API
@@ -262,16 +254,9 @@ class ThirdPartyDataFetcher:
             f"{len(disclosures)} disclosures from ProPublica"
         )
 
-        return {
-            "politicians": politicians,
-            "disclosures": disclosures
-        }
+        return {"politicians": politicians, "disclosures": disclosures}
 
-    def _convert_propublica_members(
-        self,
-        members: List[Dict],
-        chamber: str
-    ) -> List[Politician]:
+    def _convert_propublica_members(self, members: List[Dict], chamber: str) -> List[Politician]:
         """Convert ProPublica member data to Politician objects"""
         politicians = []
 
@@ -294,10 +279,7 @@ class ThirdPartyDataFetcher:
 
         return politicians
 
-    def _convert_propublica_transactions(
-        self,
-        transactions: List[Dict]
-    ) -> List[TradingDisclosure]:
+    def _convert_propublica_transactions(self, transactions: List[Dict]) -> List[TradingDisclosure]:
         """Convert ProPublica transaction data to TradingDisclosure objects"""
         disclosures = []
 

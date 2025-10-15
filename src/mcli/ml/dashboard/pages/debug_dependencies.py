@@ -1,36 +1,44 @@
 """Debug Dependencies - Diagnostic page for troubleshooting installation issues"""
 
-import streamlit as st
-import sys
 import subprocess
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
+
+import streamlit as st
 
 
 def show_debug_dependencies():
     """Diagnostic page for dependency debugging"""
 
     st.title("🔍 Dependency Diagnostics")
-    st.markdown("""
+    st.markdown(
+        """
     This page helps diagnose why certain dependencies (like alpaca-py) may not be installing correctly.
-    """)
+    """
+    )
 
     # Python environment info
     st.header("🐍 Python Environment")
 
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("Python Version", f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+        st.metric(
+            "Python Version",
+            f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        )
     with col2:
         st.metric("Platform", sys.platform)
 
     with st.expander("📋 Detailed Python Info", expanded=False):
-        st.code(f"""
+        st.code(
+            f"""
 Python Version: {sys.version}
 Python Path: {sys.executable}
 Prefix: {sys.prefix}
 Platform: {sys.platform}
-        """)
+        """
+        )
 
     # Check Python paths
     st.header("📁 Python Paths")
@@ -92,9 +100,11 @@ Platform: {sys.platform}
     # Detailed alpaca-py investigation
     st.header("🔬 Alpaca-py Deep Dive")
 
-    st.markdown("""
+    st.markdown(
+        """
     Attempting to import alpaca-py components individually to identify specific failure points.
-    """)
+    """
+    )
 
     alpaca_submodules = [
         "alpaca",
@@ -146,20 +156,14 @@ Platform: {sys.platform}
 
     for pm_name, pm_command in package_managers:
         try:
-            result = subprocess.run(
-                pm_command,
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            result = subprocess.run(pm_command, capture_output=True, text=True, timeout=10)
 
             if result.returncode == 0:
                 packages_found = True
 
                 # Search for alpaca-related packages
                 alpaca_packages = [
-                    line for line in result.stdout.split("\n")
-                    if "alpaca" in line.lower()
+                    line for line in result.stdout.split("\n") if "alpaca" in line.lower()
                 ]
 
                 if alpaca_packages:
@@ -193,12 +197,7 @@ Platform: {sys.platform}
 
     for pm_name, pm_command in show_commands:
         try:
-            result = subprocess.run(
-                pm_command,
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            result = subprocess.run(pm_command, capture_output=True, text=True, timeout=10)
 
             if result.returncode == 0:
                 package_info_found = True
@@ -208,6 +207,7 @@ Platform: {sys.platform}
                 # Try to get the version from import
                 try:
                     import alpaca
+
                     if hasattr(alpaca, "__version__"):
                         st.info(f"📦 Alpaca version from import: {alpaca.__version__}")
                 except:
@@ -224,6 +224,7 @@ Platform: {sys.platform}
         # Check if imports work anyway
         try:
             import alpaca
+
             st.success("✅ Alpaca module imports successfully!")
             if hasattr(alpaca, "__version__"):
                 st.info(f"📦 Version from import: {alpaca.__version__}")
@@ -276,6 +277,7 @@ Platform: {sys.platform}
     st.markdown("Checking for relevant environment variables:")
 
     import os
+
     for var in env_vars_to_check:
         value = os.environ.get(var)
         if value:
@@ -296,13 +298,15 @@ Platform: {sys.platform}
 
     if is_cloud:
         st.success("✅ Running on Streamlit Cloud")
-        st.info("""
+        st.info(
+            """
         **Note:** On Streamlit Cloud, packages are installed from requirements.txt during deployment.
         If alpaca-py is not installed, check:
         1. requirements.txt has correct package name and version
         2. Package has no conflicting dependencies
         3. Deployment logs for installation errors
-        """)
+        """
+        )
     else:
         st.info("ℹ️  Running locally (not Streamlit Cloud)")
 
@@ -328,7 +332,8 @@ Platform: {sys.platform}
     st.header("🛠️ Troubleshooting Guide")
 
     with st.expander("🔧 Common Solutions", expanded=True):
-        st.markdown("""
+        st.markdown(
+            """
         ### If alpaca-py import fails:
 
         #### 1. Check Requirements.txt
@@ -372,7 +377,8 @@ Platform: {sys.platform}
         pip uninstall alpaca-py -y
         pip install alpaca-py>=0.20.0
         ```
-        """)
+        """
+        )
 
     # Export diagnostics
     st.header("💾 Export Diagnostics")
@@ -394,7 +400,7 @@ Generated: {pd.Timestamp.now()}
             diagnostics += f"\n- {module_name}: {status}\n  Info: {info}\n"
 
         diagnostics += "\n## Installed Packages\n"
-        if 'result' in locals() and result.returncode == 0:
+        if "result" in locals() and result.returncode == 0:
             diagnostics += result.stdout
 
         st.code(diagnostics)
@@ -403,4 +409,5 @@ Generated: {pd.Timestamp.now()}
 
 if __name__ == "__main__":
     import pandas as pd
+
     show_debug_dependencies()

@@ -2,9 +2,10 @@
 Unit tests for mcli.lib.logger module
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 import logging
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestMcliLogger:
@@ -17,10 +18,10 @@ class TestMcliLogger:
         logger = get_logger(__name__)
 
         assert logger is not None
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'error')
-        assert hasattr(logger, 'warning')
-        assert hasattr(logger, 'debug')
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "error")
+        assert hasattr(logger, "warning")
+        assert hasattr(logger, "debug")
 
     def test_get_logger_singleton(self):
         """Test that get_logger returns same instance"""
@@ -121,11 +122,11 @@ class TestMcliLogger:
         """Test enabling tracing with module exclusions"""
         from mcli.lib.logger.logger import McliLogger
 
-        excluded = ['test_module', 'another_module']
+        excluded = ["test_module", "another_module"]
         McliLogger.enable_runtime_tracing(level=1, excluded_modules=excluded)
 
-        assert 'test_module' in McliLogger._excluded_modules
-        assert 'another_module' in McliLogger._excluded_modules
+        assert "test_module" in McliLogger._excluded_modules
+        assert "another_module" in McliLogger._excluded_modules
 
     def test_get_trace_logger(self):
         """Test getting trace logger instance"""

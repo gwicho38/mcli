@@ -2,29 +2,34 @@
 Integration tests for politician trading workflow
 """
 
-import pytest
-import pytest_asyncio
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Check for postgrest dependency
 try:
     import postgrest
+
     HAS_POSTGREST = True
 except ImportError:
     HAS_POSTGREST = False
 
 if HAS_POSTGREST:
-    from mcli.workflow.politician_trading.config import WorkflowConfig, SupabaseConfig, ScrapingConfig
-    from mcli.workflow.politician_trading.workflow import PoliticianTradingWorkflow
-    from mcli.workflow.politician_trading.monitoring import PoliticianTradingMonitor
+    from mcli.workflow.politician_trading.config import (
+        ScrapingConfig,
+        SupabaseConfig,
+        WorkflowConfig,
+    )
     from mcli.workflow.politician_trading.models import (
         Politician,
-        TradingDisclosure,
         PoliticianRole,
+        TradingDisclosure,
         TransactionType,
     )
+    from mcli.workflow.politician_trading.monitoring import PoliticianTradingMonitor
+    from mcli.workflow.politician_trading.workflow import PoliticianTradingWorkflow
 
 
 @pytest.mark.skipif(not HAS_POSTGREST, reason="postgrest module not installed")
@@ -335,11 +340,11 @@ class TestScrapingIntegration:
 @pytest.mark.asyncio
 async def test_standalone_functions():
     """Test standalone workflow functions"""
-    from mcli.workflow.politician_trading.workflow import (
-        run_politician_trading_collection,
-        check_politician_trading_status,
-    )
     from mcli.workflow.politician_trading.monitoring import run_health_check, run_stats_report
+    from mcli.workflow.politician_trading.workflow import (
+        check_politician_trading_status,
+        run_politician_trading_collection,
+    )
 
     # These functions should be importable and callable
     # In a real test environment with database access, they would return actual data

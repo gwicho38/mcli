@@ -7,14 +7,16 @@ Bug: Supabase has implicit 1000 record limit even without .range()
 Fix: Must explicitly use .range(0, total_count - 1) to fetch all records
 """
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
+
+import logging
+from unittest.mock import MagicMock, call, patch
 
 import pandas as pd
 import pytest
-from unittest.mock import MagicMock, patch, call
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -37,23 +39,23 @@ class TestSupabasePaginationFix:
         # Create 7633 mock records
         data_response.data = [
             {
-                'id': f'record-{i}',
-                'politician_id': f'pol-{i % 100}',
-                'transaction_date': '2024-01-01T00:00:00Z',
-                'disclosure_date': '2024-01-01T00:00:00Z',
-                'transaction_type': 'purchase',
-                'asset_name': f'Asset {i}',
-                'asset_ticker': 'AAPL' if i % 2 == 0 else 'MSFT',
-                'asset_type': 'Stock',
-                'amount_range_min': 1000,
-                'amount_range_max': 10000,
-                'politicians': {
-                    'first_name': 'John',
-                    'last_name': 'Doe',
-                    'full_name': 'John Doe',
-                    'party': 'Democrat',
-                    'state_or_country': 'CA'
-                }
+                "id": f"record-{i}",
+                "politician_id": f"pol-{i % 100}",
+                "transaction_date": "2024-01-01T00:00:00Z",
+                "disclosure_date": "2024-01-01T00:00:00Z",
+                "transaction_type": "purchase",
+                "asset_name": f"Asset {i}",
+                "asset_ticker": "AAPL" if i % 2 == 0 else "MSFT",
+                "asset_type": "Stock",
+                "amount_range_min": 1000,
+                "amount_range_max": 10000,
+                "politicians": {
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "full_name": "John Doe",
+                    "party": "Democrat",
+                    "state_or_country": "CA",
+                },
             }
             for i in range(7633)
         ]
@@ -70,7 +72,7 @@ class TestSupabasePaginationFix:
 
         # For count query
         def select_side_effect(*args, **kwargs):
-            if kwargs.get('count') == 'exact':
+            if kwargs.get("count") == "exact":
                 mock = MagicMock()
                 mock.execute.return_value = count_response
                 return mock
@@ -97,9 +99,12 @@ class TestSupabasePaginationFix:
             return
 
         # Patch the Supabase client
-        with patch('mcli.ml.dashboard.app_integrated.get_supabase_client', return_value=mock_supabase_client):
+        with patch(
+            "mcli.ml.dashboard.app_integrated.get_supabase_client",
+            return_value=mock_supabase_client,
+        ):
             # Patch streamlit to avoid rendering issues
-            with patch('mcli.ml.dashboard.app_integrated.st') as mock_st:
+            with patch("mcli.ml.dashboard.app_integrated.st") as mock_st:
                 # Call with for_training=True
                 result = get_disclosures_data(for_training=True)
 
@@ -136,9 +141,12 @@ class TestSupabasePaginationFix:
             return
 
         # Patch the Supabase client
-        with patch('mcli.ml.dashboard.app_integrated.get_supabase_client', return_value=mock_supabase_client):
+        with patch(
+            "mcli.ml.dashboard.app_integrated.get_supabase_client",
+            return_value=mock_supabase_client,
+        ):
             # Patch streamlit
-            with patch('mcli.ml.dashboard.app_integrated.st') as mock_st:
+            with patch("mcli.ml.dashboard.app_integrated.st") as mock_st:
                 # Call with for_training=False (default), limit=1000, offset=0
                 result = get_disclosures_data(for_training=False, limit=1000, offset=0)
 
@@ -170,8 +178,11 @@ class TestSupabasePaginationFix:
             pytest.skip("Dashboard module not available")
             return
 
-        with patch('mcli.ml.dashboard.app_integrated.get_supabase_client', return_value=mock_supabase_client):
-            with patch('mcli.ml.dashboard.app_integrated.st'):
+        with patch(
+            "mcli.ml.dashboard.app_integrated.get_supabase_client",
+            return_value=mock_supabase_client,
+        ):
+            with patch("mcli.ml.dashboard.app_integrated.st"):
                 # Call with offset=1000 (page 2)
                 result = get_disclosures_data(for_training=False, limit=1000, offset=1000)
 
@@ -182,7 +193,9 @@ class TestSupabasePaginationFix:
                 select_mock = table_mock.select.return_value
                 order_mock = select_mock.order.return_value
 
-                order_mock.range.assert_called_with(1000, 1999)  # offset=1000, limit=1000 -> range(1000, 1999)
+                order_mock.range.assert_called_with(
+                    1000, 1999
+                )  # offset=1000, limit=1000 -> range(1000, 1999)
 
         logger.info("✅ Test passed: pagination with offset works correctly")
 
@@ -197,7 +210,7 @@ class TestSupabasePaginationFix:
             return
 
         # Patch get_supabase_client to return None (unavailable)
-        with patch('mcli.ml.dashboard.app_integrated.get_supabase_client', return_value=None):
+        with patch("mcli.ml.dashboard.app_integrated.get_supabase_client", return_value=None):
             result = get_disclosures_data(for_training=True)
 
             assert result is not None, "Result should not be None"
@@ -205,7 +218,12 @@ class TestSupabasePaginationFix:
             assert not result.empty, "Demo data should not be empty"
 
             # Demo data should have expected columns
-            expected_columns = ['transaction_date', 'politician_name', 'transaction_type', 'asset_name']
+            expected_columns = [
+                "transaction_date",
+                "politician_name",
+                "transaction_type",
+                "asset_name",
+            ]
             for col in expected_columns:
                 assert col in result.columns, f"Demo data should have {col} column"
 

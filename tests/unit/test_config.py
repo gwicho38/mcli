@@ -2,11 +2,12 @@
 Unit tests for mcli.lib.config module
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-import tempfile
 import os
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestConfig:
@@ -16,19 +17,19 @@ class TestConfig:
         """Test getting config file path for a file"""
         from mcli.lib.config.config import get_config_for_file
 
-        result = get_config_for_file('test')
+        result = get_config_for_file("test")
 
-        assert 'test' in str(result)
-        assert 'mcli.test.config.json' in str(result)
+        assert "test" in str(result)
+        assert "mcli.test.config.json" in str(result)
 
     def test_get_config_for_file_custom_type(self):
         """Test getting config file with custom type"""
         from mcli.lib.config.config import get_config_for_file
 
-        result = get_config_for_file('myfile', config_type='settings')
+        result = get_config_for_file("myfile", config_type="settings")
 
-        assert 'myfile' in str(result)
-        assert 'mcli.myfile.settings.json' in str(result)
+        assert "myfile" in str(result)
+        assert "mcli.myfile.settings.json" in str(result)
 
     def test_get_config_directory(self):
         """Test getting config directory"""
@@ -38,24 +39,24 @@ class TestConfig:
 
         assert result is not None
         assert isinstance(result, Path)
-        assert '.config/mcli' in str(result) or 'mcli' in str(result).lower()
+        assert ".config/mcli" in str(result) or "mcli" in str(result).lower()
 
     def test_get_config_file_name(self):
         """Test extracting config file name from path"""
         from mcli.lib.config.config import get_config_file_name
 
-        result = get_config_file_name('/path/to/myconfig/file.json')
+        result = get_config_file_name("/path/to/myconfig/file.json")
 
-        assert result == 'myconfig'
+        assert result == "myconfig"
 
     def test_get_config_file_name_nested(self):
         """Test config file name extraction with nested paths"""
         from mcli.lib.config.config import get_config_file_name
 
-        result = get_config_file_name('/deep/nested/path/config/file.json')
+        result = get_config_file_name("/deep/nested/path/config/file.json")
 
         # Function returns second-to-last path component
-        assert result == 'config'
+        assert result == "config"
 
     def test_user_config_root_exists(self):
         """Test USER_CONFIG_ROOT is defined"""
@@ -63,7 +64,7 @@ class TestConfig:
 
         assert USER_CONFIG_ROOT is not None
         assert isinstance(USER_CONFIG_ROOT, str)
-        assert 'mcli' in USER_CONFIG_ROOT.lower()
+        assert "mcli" in USER_CONFIG_ROOT.lower()
 
     def test_dev_secrets_root_exists(self):
         """Test DEV_SECRETS_ROOT is defined"""
@@ -71,21 +72,21 @@ class TestConfig:
 
         assert DEV_SECRETS_ROOT is not None
         assert isinstance(DEV_SECRETS_ROOT, str)
-        assert 'secrets' in DEV_SECRETS_ROOT
+        assert "secrets" in DEV_SECRETS_ROOT
 
     def test_private_key_path_defined(self):
         """Test PRIVATE_KEY_PATH is defined"""
         from mcli.lib.config.config import PRIVATE_KEY_PATH
 
         assert PRIVATE_KEY_PATH is not None
-        assert 'private_key.pem' in PRIVATE_KEY_PATH
+        assert "private_key.pem" in PRIVATE_KEY_PATH
 
     def test_user_info_file_defined(self):
         """Test USER_INFO_FILE is defined"""
         from mcli.lib.config.config import USER_INFO_FILE
 
         assert USER_INFO_FILE is not None
-        assert 'user_info.json' in USER_INFO_FILE
+        assert "user_info.json" in USER_INFO_FILE
 
     def test_packages_to_sync_defined(self):
         """Test PACKAGES_TO_SYNC constant"""

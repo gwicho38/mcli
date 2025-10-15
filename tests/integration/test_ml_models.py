@@ -4,14 +4,16 @@ NOTE: ML model tests require torch and model modules.
 Tests are conditional on torch installation.
 """
 
-import pytest
-import numpy as np
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock, Mock, patch
+
+import numpy as np
+import pytest
 
 # Check for torch dependency
 try:
     import torch
+
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
@@ -22,9 +24,9 @@ try:
         from mcli.ml.models.base_models import BaseStockModel, MLPBaseModel, ResNetModel
         from mcli.ml.models.ensemble_models import (
             AttentionStockPredictor,
-            TransformerStockModel,
+            DeepEnsembleModel,
             LSTMStockPredictor,
-            DeepEnsembleModel
+            TransformerStockModel,
         )
         from mcli.ml.models.recommendation_models import StockRecommendationModel
     HAS_MODELS = HAS_TORCH
@@ -48,42 +50,30 @@ class TestBaseModels:
         sequence_length = 30
 
         return {
-            'X': torch.randn(batch_size, input_dim),
-            'X_seq': torch.randn(batch_size, sequence_length, input_dim),
-            'y': torch.randn(batch_size, 1),
-            'y_multi': torch.randn(batch_size, 3)
+            "X": torch.randn(batch_size, input_dim),
+            "X_seq": torch.randn(batch_size, sequence_length, input_dim),
+            "y": torch.randn(batch_size, 1),
+            "y_multi": torch.randn(batch_size, 3),
         }
 
     def test_mlp_base_model(self, sample_data):
         """Test MLP base model"""
-        model = MLPBaseModel(
-            input_dim=100,
-            hidden_dims=[64, 32],
-            output_dim=1
-        )
+        model = MLPBaseModel(input_dim=100, hidden_dims=[64, 32], output_dim=1)
 
         # Test forward pass
-        output = model(sample_data['X'])
+        output = model(sample_data["X"])
         assert output.shape == (32, 1)
 
         # Test with different output dimensions
-        model_multi = MLPBaseModel(
-            input_dim=100,
-            hidden_dims=[64, 32],
-            output_dim=3
-        )
-        output_multi = model_multi(sample_data['X'])
+        model_multi = MLPBaseModel(input_dim=100, hidden_dims=[64, 32], output_dim=3)
+        output_multi = model_multi(sample_data["X"])
         assert output_multi.shape == (32, 3)
 
     def test_resnet_model(self, sample_data):
         """Test ResNet model"""
-        model = ResNetModel(
-            input_dim=100,
-            hidden_dims=[64, 64],
-            output_dim=1
-        )
+        model = ResNetModel(input_dim=100, hidden_dims=[64, 64], output_dim=1)
 
-        output = model(sample_data['X'])
+        output = model(sample_data["X"])
         assert output.shape == (32, 1)
 
         # Verify residual connections work
@@ -98,10 +88,10 @@ class TestBaseModels:
 
         metrics = model.calculate_metrics(y_true, y_pred)
 
-        assert 'mae' in metrics
-        assert 'rmse' in metrics
-        assert 'r2' in metrics
-        assert metrics['mae'] > 0
+        assert "mae" in metrics
+        assert "rmse" in metrics
+        assert "r2" in metrics
+        assert metrics["mae"] > 0
 
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
@@ -119,34 +109,21 @@ class TestEnsembleModels:
 
     def test_attention_model(self, sequence_data):
         """Test attention-based model"""
-        model = AttentionStockPredictor(
-            input_dim=50,
-            hidden_dim=64,
-            num_heads=4
-        )
+        model = AttentionStockPredictor(input_dim=50, hidden_dim=64, num_heads=4)
 
         output = model(sequence_data)
         assert output.shape == (16, 1)
 
     def test_transformer_model(self, sequence_data):
         """Test transformer model"""
-        model = TransformerStockModel(
-            input_dim=50,
-            hidden_dim=64,
-            num_heads=4,
-            num_layers=2
-        )
+        model = TransformerStockModel(input_dim=50, hidden_dim=64, num_heads=4, num_layers=2)
 
         output = model(sequence_data)
         assert output.shape == (16, 1)
 
     def test_lstm_model(self, sequence_data):
         """Test LSTM model"""
-        model = LSTMStockPredictor(
-            input_dim=50,
-            hidden_dim=64,
-            num_layers=2
-        )
+        model = LSTMStockPredictor(input_dim=50, hidden_dim=64, num_layers=2)
 
         output = model(sequence_data)
         assert output.shape == (16, 1)
@@ -159,9 +136,7 @@ class TestEnsembleModels:
         ]
 
         ensemble = DeepEnsembleModel(
-            models=models,
-            weights=[0.5, 0.5],
-            voting_method='weighted_average'
+            models=models, weights=[0.5, 0.5], voting_method="weighted_average"
         )
 
         output = ensemble(sequence_data)
@@ -184,46 +159,36 @@ class TestRecommendationModel:
         input_dim = 100
 
         return {
-            'X': torch.randn(batch_size, input_dim),
-            'tickers': ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'FB',
-                       'TSLA', 'NVDA', 'JPM', 'JNJ', 'V'],
-            'market_data': {
-                'market_cap': torch.randn(batch_size),
-                'pe_ratio': torch.randn(batch_size),
-                'volume': torch.randn(batch_size)
-            }
+            "X": torch.randn(batch_size, input_dim),
+            "tickers": ["AAPL", "GOOGL", "MSFT", "AMZN", "FB", "TSLA", "NVDA", "JPM", "JNJ", "V"],
+            "market_data": {
+                "market_cap": torch.randn(batch_size),
+                "pe_ratio": torch.randn(batch_size),
+                "volume": torch.randn(batch_size),
+            },
         }
 
     def test_recommendation_generation(self, mock_data):
         """Test generating recommendations"""
-        model = StockRecommendationModel(
-            input_dim=100,
-            hidden_dims=[64, 32]
-        )
+        model = StockRecommendationModel(input_dim=100, hidden_dims=[64, 32])
 
         # Set to eval mode to avoid dropout randomness
         model.eval()
 
         recommendations = model.generate_recommendations(
-            mock_data['X'],
-            mock_data['tickers'],
-            mock_data['market_data']
+            mock_data["X"], mock_data["tickers"], mock_data["market_data"]
         )
 
         assert len(recommendations) > 0
-        assert all(hasattr(r, 'ticker') for r in recommendations)
-        assert all(hasattr(r, 'action') for r in recommendations)
-        assert all(hasattr(r, 'confidence') for r in recommendations)
+        assert all(hasattr(r, "ticker") for r in recommendations)
+        assert all(hasattr(r, "action") for r in recommendations)
+        assert all(hasattr(r, "confidence") for r in recommendations)
 
     def test_multi_task_learning(self, mock_data):
         """Test multi-task learning outputs"""
-        model = StockRecommendationModel(
-            input_dim=100,
-            hidden_dims=[64, 32],
-            use_multi_task=True
-        )
+        model = StockRecommendationModel(input_dim=100, hidden_dims=[64, 32], use_multi_task=True)
 
-        returns, risks, confidence = model.forward_multi_task(mock_data['X'])
+        returns, risks, confidence = model.forward_multi_task(mock_data["X"])
 
         assert returns.shape == (10, 1)
         assert risks.shape == (10, 1)
@@ -231,26 +196,22 @@ class TestRecommendationModel:
 
     def test_portfolio_optimization(self, mock_data):
         """Test portfolio optimization integration"""
-        model = StockRecommendationModel(
-            input_dim=100,
-            hidden_dims=[64, 32]
-        )
+        model = StockRecommendationModel(input_dim=100, hidden_dims=[64, 32])
 
         model.eval()
 
         # Mock optimizer
-        with patch('mcli.ml.models.recommendation_models.AdvancedPortfolioOptimizer') as mock_optimizer:
+        with patch(
+            "mcli.ml.models.recommendation_models.AdvancedPortfolioOptimizer"
+        ) as mock_optimizer:
             mock_instance = mock_optimizer.return_value
             mock_instance.optimize.return_value = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
 
-            portfolio = model.optimize_portfolio(
-                mock_data['X'][:5],
-                mock_data['tickers'][:5]
-            )
+            portfolio = model.optimize_portfolio(mock_data["X"][:5], mock_data["tickers"][:5])
 
             assert portfolio is not None
-            assert 'weights' in portfolio
-            assert len(portfolio['weights']) == 5
+            assert "weights" in portfolio
+            assert len(portfolio["weights"]) == 5
 
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
@@ -260,11 +221,7 @@ class TestModelTraining:
     @pytest.fixture
     def training_setup(self):
         """Setup for training tests"""
-        model = MLPBaseModel(
-            input_dim=10,
-            hidden_dims=[8, 4],
-            output_dim=1
-        )
+        model = MLPBaseModel(input_dim=10, hidden_dims=[8, 4], output_dim=1)
 
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
         criterion = torch.nn.MSELoss()
@@ -300,11 +257,7 @@ class TestModelTraining:
         torch.save(model.state_dict(), save_path)
 
         # Load model
-        new_model = MLPBaseModel(
-            input_dim=10,
-            hidden_dims=[8, 4],
-            output_dim=1
-        )
+        new_model = MLPBaseModel(input_dim=10, hidden_dims=[8, 4], output_dim=1)
         new_model.load_state_dict(torch.load(save_path))
 
         # Verify weights are same
@@ -318,10 +271,7 @@ class TestModelValidation:
 
     def test_prediction_bounds(self):
         """Test that predictions are within reasonable bounds"""
-        model = StockRecommendationModel(
-            input_dim=50,
-            hidden_dims=[32, 16]
-        )
+        model = StockRecommendationModel(input_dim=50, hidden_dims=[32, 16])
 
         model.eval()
         X = torch.randn(10, 50)
@@ -334,15 +284,10 @@ class TestModelValidation:
 
     def test_ensemble_consistency(self):
         """Test ensemble predictions are consistent"""
-        models = [
-            MLPBaseModel(50, [32], 1),
-            MLPBaseModel(50, [32], 1)
-        ]
+        models = [MLPBaseModel(50, [32], 1), MLPBaseModel(50, [32], 1)]
 
         ensemble = DeepEnsembleModel(
-            models=models,
-            weights=[0.5, 0.5],
-            voting_method='weighted_average'
+            models=models, weights=[0.5, 0.5], voting_method="weighted_average"
         )
 
         X = torch.randn(5, 50)
@@ -357,18 +302,17 @@ class TestModelValidation:
         assert torch.allclose(pred1, pred2)
 
 
-@pytest.mark.parametrize("input_dim,hidden_dims,output_dim", [
-    (10, [8, 4], 1),
-    (50, [32, 16, 8], 3),
-    (100, [64], 1),
-])
+@pytest.mark.parametrize(
+    "input_dim,hidden_dims,output_dim",
+    [
+        (10, [8, 4], 1),
+        (50, [32, 16, 8], 3),
+        (100, [64], 1),
+    ],
+)
 def test_model_architectures(input_dim, hidden_dims, output_dim):
     """Parameterized test for different architectures"""
-    model = MLPBaseModel(
-        input_dim=input_dim,
-        hidden_dims=hidden_dims,
-        output_dim=output_dim
-    )
+    model = MLPBaseModel(input_dim=input_dim, hidden_dims=hidden_dims, output_dim=output_dim)
 
     X = torch.randn(8, input_dim)
     output = model(X)

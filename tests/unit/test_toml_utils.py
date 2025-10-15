@@ -2,10 +2,11 @@
 Unit tests for mcli.lib.toml module
 """
 
-import pytest
-from pathlib import Path
-import tempfile
 import os
+import tempfile
+from pathlib import Path
+
+import pytest
 
 
 class TestTomlUtils:
@@ -23,15 +24,15 @@ port = 5432
 [api]
 timeout = 30
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write(toml_content)
             temp_path = f.name
 
         try:
-            result = read_from_toml(temp_path, 'database')
+            result = read_from_toml(temp_path, "database")
             assert result is not None
-            assert result['host'] == 'localhost'
-            assert result['port'] == 5432
+            assert result["host"] == "localhost"
+            assert result["port"] == 5432
         finally:
             os.unlink(temp_path)
 
@@ -43,13 +44,13 @@ timeout = 30
 name = "mcli"
 version = "1.0.0"
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write(toml_content)
             temp_path = f.name
 
         try:
-            result = read_from_toml(temp_path, 'name')
-            assert result == 'mcli'
+            result = read_from_toml(temp_path, "name")
+            assert result == "mcli"
         finally:
             os.unlink(temp_path)
 
@@ -65,14 +66,14 @@ host = "localhost"
 enabled = true
 cert_path = "/path/to/cert"
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write(toml_content)
             temp_path = f.name
 
         try:
-            result = read_from_toml(temp_path, 'server')
-            assert result['host'] == 'localhost'
-            assert result['ssl']['enabled'] is True
+            result = read_from_toml(temp_path, "server")
+            assert result["host"] == "localhost"
+            assert result["ssl"]["enabled"] is True
         finally:
             os.unlink(temp_path)
 
@@ -84,12 +85,12 @@ cert_path = "/path/to/cert"
 [section]
 key = "value"
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write(toml_content)
             temp_path = f.name
 
         try:
-            result = read_from_toml(temp_path, 'nonexistent')
+            result = read_from_toml(temp_path, "nonexistent")
             assert result is None
         finally:
             os.unlink(temp_path)
@@ -99,7 +100,7 @@ key = "value"
         from mcli.lib.toml.toml import read_from_toml
 
         with pytest.raises(FileNotFoundError):
-            read_from_toml('/nonexistent/path/to/file.toml', 'key')
+            read_from_toml("/nonexistent/path/to/file.toml", "key")
 
     def test_read_from_toml_invalid_syntax(self):
         """Test reading invalid TOML raises error"""
@@ -109,13 +110,13 @@ key = "value"
 [section
 key = "missing closing bracket"
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write(invalid_toml)
             temp_path = f.name
 
         try:
             with pytest.raises(Exception):  # TOMLDecodeError
-                read_from_toml(temp_path, 'section')
+                read_from_toml(temp_path, "section")
         finally:
             os.unlink(temp_path)
 
@@ -127,13 +128,13 @@ key = "missing closing bracket"
 [features]
 supported = ["async", "video", "ml"]
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write(toml_content)
             temp_path = f.name
 
         try:
-            result = read_from_toml(temp_path, 'features')
-            assert result['supported'] == ['async', 'video', 'ml']
+            result = read_from_toml(temp_path, "features")
+            assert result["supported"] == ["async", "video", "ml"]
         finally:
             os.unlink(temp_path)
 
@@ -147,15 +148,15 @@ integer = 42
 float = 3.14
 negative = -10
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write(toml_content)
             temp_path = f.name
 
         try:
-            result = read_from_toml(temp_path, 'numbers')
-            assert result['integer'] == 42
-            assert result['float'] == 3.14
-            assert result['negative'] == -10
+            result = read_from_toml(temp_path, "numbers")
+            assert result["integer"] == 42
+            assert result["float"] == 3.14
+            assert result["negative"] == -10
         finally:
             os.unlink(temp_path)
 
@@ -168,14 +169,14 @@ negative = -10
 enabled = true
 disabled = false
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write(toml_content)
             temp_path = f.name
 
         try:
-            result = read_from_toml(temp_path, 'flags')
-            assert result['enabled'] is True
-            assert result['disabled'] is False
+            result = read_from_toml(temp_path, "flags")
+            assert result["enabled"] is True
+            assert result["disabled"] is False
         finally:
             os.unlink(temp_path)
 
@@ -183,12 +184,12 @@ disabled = false
         """Test reading from empty TOML file"""
         from mcli.lib.toml.toml import read_from_toml
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
-            f.write('')
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+            f.write("")
             temp_path = f.name
 
         try:
-            result = read_from_toml(temp_path, 'anykey')
+            result = read_from_toml(temp_path, "anykey")
             assert result is None
         finally:
             os.unlink(temp_path)

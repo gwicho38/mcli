@@ -238,10 +238,14 @@ class PersonWithSignificantControl:
 
     # PSC details
     name: str = ""
-    kind: str = ""  # individual-person-with-significant-control, corporate-entity-person-with-significant-control, etc.
+    kind: str = (
+        ""  # individual-person-with-significant-control, corporate-entity-person-with-significant-control, etc.
+    )
 
     # Control nature
-    natures_of_control: List[str] = field(default_factory=list)  # ownership-of-shares-75-to-100-percent, etc.
+    natures_of_control: List[str] = field(
+        default_factory=list
+    )  # ownership-of-shares-75-to-100-percent, etc.
     notified_on: Optional[datetime] = None
 
     # Personal details (may be redacted)

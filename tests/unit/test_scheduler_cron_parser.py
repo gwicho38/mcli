@@ -2,9 +2,10 @@
 Unit tests for mcli.workflow.scheduler.cron_parser module
 """
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestCronParseError:

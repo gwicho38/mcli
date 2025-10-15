@@ -49,9 +49,7 @@ class MonteCarloTradingSimulator:
         self.final_prices: Optional[np.ndarray] = None
         self.returns: Optional[np.ndarray] = None
 
-    def estimate_parameters(
-        self, historical_prices: pd.Series
-    ) -> Tuple[float, float]:
+    def estimate_parameters(self, historical_prices: pd.Series) -> Tuple[float, float]:
         """
         Estimate drift (μ) and volatility (σ) from historical data
 
@@ -79,9 +77,7 @@ class MonteCarloTradingSimulator:
 
         return annual_return, annual_volatility
 
-    def simulate_price_paths(
-        self, drift: float, volatility: float
-    ) -> np.ndarray:
+    def simulate_price_paths(self, drift: float, volatility: float) -> np.ndarray:
         """
         Generate Monte Carlo price paths using Geometric Brownian Motion
 
@@ -100,9 +96,7 @@ class MonteCarloTradingSimulator:
         paths[:, 0] = self.initial_price
 
         # Generate random shocks
-        random_shocks = np.random.normal(
-            0, 1, size=(self.num_simulations, self.days_to_simulate)
-        )
+        random_shocks = np.random.normal(0, 1, size=(self.num_simulations, self.days_to_simulate))
 
         # Simulate paths using Geometric Brownian Motion
         # S(t+dt) = S(t) * exp((μ - σ²/2)dt + σ√dt * Z)
@@ -110,9 +104,7 @@ class MonteCarloTradingSimulator:
             drift_component = (drift - 0.5 * volatility**2) * dt
             shock_component = volatility * np.sqrt(dt) * random_shocks[:, t - 1]
 
-            paths[:, t] = paths[:, t - 1] * np.exp(
-                drift_component + shock_component
-            )
+            paths[:, t] = paths[:, t - 1] * np.exp(drift_component + shock_component)
 
         self.simulated_paths = paths
         self.final_prices = paths[:, -1]
@@ -173,9 +165,7 @@ class MonteCarloTradingSimulator:
 
         # Plot sample paths
         num_to_plot = min(num_paths_to_plot, self.num_simulations)
-        sample_indices = np.random.choice(
-            self.num_simulations, num_to_plot, replace=False
-        )
+        sample_indices = np.random.choice(self.num_simulations, num_to_plot, replace=False)
 
         for idx in sample_indices:
             fig.add_trace(
@@ -311,9 +301,7 @@ class MonteCarloTradingSimulator:
         )
 
         # Add vertical line at 0% return
-        fig.add_vline(
-            x=0, line_dash="dash", line_color="red", annotation_text="0%", row=1, col=2
-        )
+        fig.add_vline(x=0, line_dash="dash", line_color="red", annotation_text="0%", row=1, col=2)
 
         fig.update_xaxes(title_text="Price ($)", row=1, col=1)
         fig.update_xaxes(title_text="Return (%)", row=1, col=2)

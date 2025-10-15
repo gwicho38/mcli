@@ -14,6 +14,8 @@ from plotly.subplots import make_subplots
 
 from mcli.ml.cache import cache_manager
 from mcli.ml.config import settings
+from mcli.ml.dashboard.common import setup_page_config
+from mcli.ml.dashboard.styles import apply_dashboard_styles
 from mcli.ml.database.models import (
     BacktestResult,
     Model,
@@ -25,8 +27,6 @@ from mcli.ml.database.models import (
     User,
 )
 from mcli.ml.database.session import SessionLocal
-from mcli.ml.dashboard.common import setup_page_config
-from mcli.ml.dashboard.styles import apply_dashboard_styles
 
 # Page config - must be first
 setup_page_config(page_title="MCLI ML Dashboard")

@@ -2,9 +2,10 @@
 Integration tests that import and exercise major modules to increase coverage
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
 import sys
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestModuleImports:
@@ -23,8 +24,7 @@ class TestModuleImports:
 
     def test_import_scheduler_modules(self):
         """Test importing scheduler modules"""
-        from mcli.workflow.scheduler import job
-        from mcli.workflow.scheduler import monitor
+        from mcli.workflow.scheduler import job, monitor
 
         assert job is not None
         assert monitor is not None
@@ -41,8 +41,7 @@ class TestModuleImports:
 
     def test_import_app_modules(self):
         """Test importing app modules"""
-        from mcli.app import chat_cmd
-        from mcli.app import model_cmd
+        from mcli.app import chat_cmd, model_cmd
 
         assert chat_cmd is not None
         assert model_cmd is not None
@@ -51,8 +50,7 @@ class TestModuleImports:
     def test_import_ml_preprocessing(self):
         """Test importing ML preprocessing modules"""
         try:
-            from mcli.ml.preprocessing import data_cleaners
-            from mcli.ml.preprocessing import feature_extractors
+            from mcli.ml.preprocessing import data_cleaners, feature_extractors
 
             assert data_cleaners is not None
             assert feature_extractors is not None
@@ -68,7 +66,7 @@ class TestWorkflowCommands:
         from mcli.workflow.file.file import file_group
 
         assert file_group is not None
-        assert hasattr(file_group, 'commands') or callable(file_group)
+        assert hasattr(file_group, "commands") or callable(file_group)
 
     def test_gcloud_workflow_commands(self):
         """Test gcloud workflow commands"""
@@ -92,21 +90,22 @@ class TestLibUtilities:
 
         logger = get_logger(__name__)
         assert logger is not None
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'error')
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "error")
 
     def test_toml_read(self):
         """Test TOML reading"""
-        from mcli.lib.toml.toml import read_from_toml
         import tempfile
         from pathlib import Path
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+        from mcli.lib.toml.toml import read_from_toml
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write('[test]\\nkey = "value"')
             temp_path = f.name
 
         try:
-            result = read_from_toml(temp_path, 'test')
+            result = read_from_toml(temp_path, "test")
             assert result is not None
         finally:
             Path(temp_path).unlink()
@@ -125,19 +124,10 @@ class TestDataModels:
 
     def test_politician_trading_models(self):
         """Test politician trading models"""
-        from mcli.workflow.politician_trading.models import (
-            Transaction,
-            Politician,
-            TradingAlert
-        )
+        from mcli.workflow.politician_trading.models import Politician, TradingAlert, Transaction
 
         # Test model instantiation
-        politician = Politician(
-            id="test-1",
-            name="Test Politician",
-            party="Test Party",
-            state="CA"
-        )
+        politician = Politician(id="test-1", name="Test Politician", party="Test Party", state="CA")
         assert politician.id == "test-1"
         assert politician.name == "Test Politician"
 
@@ -147,14 +137,11 @@ class TestDataModels:
             ticker="AAPL",
             transaction_type="purchase",
             amount=10000.0,
-            date="2024-01-01"
+            date="2024-01-01",
         )
         assert transaction.ticker == "AAPL"
 
         alert = TradingAlert(
-            id="alert-1",
-            politician_id="test-1",
-            message="Test alert",
-            severity="high"
+            id="alert-1", politician_id="test-1", message="Test alert", severity="high"
         )
         assert alert.severity == "high"

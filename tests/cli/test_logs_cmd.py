@@ -10,9 +10,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from mcli.app.logs_cmd import logs_group
+from mcli.self.logs_cmd import logs_group
 
 
 @pytest.fixture
@@ -44,10 +44,7 @@ def temp_logs_dir():
 
         # System log
         system_log = logs_dir / f"mcli_system_{today}.log"
-        system_log.write_text(
-            "SYSTEM: CPU usage: 25%\n"
-            "SYSTEM: Memory usage: 512MB\n"
-        )
+        system_log.write_text("SYSTEM: CPU usage: 25%\n" "SYSTEM: Memory usage: 512MB\n")
 
         yield logs_dir
 
@@ -67,7 +64,7 @@ def test_logs_location(runner):
 
 def test_logs_list(runner, temp_logs_dir):
     """Test logs list command"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         result = runner.invoke(logs_group, ["list"])
         assert result.exit_code == 0
         assert "mcli_20251006.log" in result.output
@@ -77,8 +74,8 @@ def test_logs_list(runner, temp_logs_dir):
 
 def test_logs_tail_basic(runner, temp_logs_dir):
     """Test basic tail command without follow"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
             result = runner.invoke(logs_group, ["tail", "main", "-n", "3"])
@@ -91,8 +88,8 @@ def test_logs_tail_basic(runner, temp_logs_dir):
 
 def test_logs_tail_with_lines_option(runner, temp_logs_dir):
     """Test tail command with custom line count"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
             result = runner.invoke(logs_group, ["tail", "main", "-n", "2"])
@@ -106,8 +103,8 @@ def test_logs_tail_with_lines_option(runner, temp_logs_dir):
 
 def test_logs_tail_trace_log(runner, temp_logs_dir):
     """Test tail command on trace log"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
             result = runner.invoke(logs_group, ["tail", "trace"])
@@ -118,8 +115,8 @@ def test_logs_tail_trace_log(runner, temp_logs_dir):
 
 def test_logs_tail_system_log(runner, temp_logs_dir):
     """Test tail command on system log"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
             result = runner.invoke(logs_group, ["tail", "system"])
@@ -130,8 +127,8 @@ def test_logs_tail_system_log(runner, temp_logs_dir):
 
 def test_logs_tail_nonexistent_file(runner, temp_logs_dir):
     """Test tail command with nonexistent log file"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20991231"  # Future date
 
             result = runner.invoke(logs_group, ["tail", "main"])
@@ -141,7 +138,7 @@ def test_logs_tail_nonexistent_file(runner, temp_logs_dir):
 
 def test_logs_tail_with_date_option(runner, temp_logs_dir):
     """Test tail command with specific date"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         result = runner.invoke(logs_group, ["tail", "main", "-d", "20251006"])
         assert result.exit_code == 0
         assert "Application started" in result.output or "Retrying connection" in result.output
@@ -157,14 +154,17 @@ def test_logs_tail_follow_flag_exists(runner):
 
 def test_logs_tail_follow_mode_subprocess_called(runner, temp_logs_dir):
     """Test that follow mode calls subprocess.Popen with tail -f"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
-            with patch("mcli.app.logs_cmd.subprocess.Popen") as mock_popen:
+            with patch("mcli.self.logs_cmd.subprocess.Popen") as mock_popen:
                 # Mock the process
                 mock_process = MagicMock()
-                mock_process.stdout.readline.side_effect = ["INFO: Line 1\n", ""]  # Simulate 1 line then EOF
+                mock_process.stdout.readline.side_effect = [
+                    "INFO: Line 1\n",
+                    "",
+                ]  # Simulate 1 line then EOF
                 mock_popen.return_value = mock_process
 
                 # Run with --follow flag
@@ -180,11 +180,11 @@ def test_logs_tail_follow_mode_subprocess_called(runner, temp_logs_dir):
 
 def test_logs_tail_follow_short_flag(runner, temp_logs_dir):
     """Test that -f short flag works"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
-            with patch("mcli.app.logs_cmd.subprocess.Popen") as mock_popen:
+            with patch("mcli.self.logs_cmd.subprocess.Popen") as mock_popen:
                 mock_process = MagicMock()
                 mock_process.stdout.readline.side_effect = [""]  # EOF immediately
                 mock_popen.return_value = mock_process
@@ -198,30 +198,34 @@ def test_logs_tail_follow_short_flag(runner, temp_logs_dir):
 
 def test_logs_tail_follow_with_custom_lines(runner, temp_logs_dir):
     """Test that follow mode respects -n/--lines option"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
-            with patch("mcli.app.logs_cmd.subprocess.Popen") as mock_popen:
+            with patch("mcli.self.logs_cmd.subprocess.Popen") as mock_popen:
                 mock_process = MagicMock()
                 mock_process.stdout.readline.side_effect = [""]
                 mock_popen.return_value = mock_process
 
                 # Test with custom line count
-                result = runner.invoke(logs_group, ["tail", "main", "-f", "-n", "50"], catch_exceptions=False)
+                result = runner.invoke(
+                    logs_group, ["tail", "main", "-f", "-n", "50"], catch_exceptions=False
+                )
 
                 # Verify tail is called with -n50
                 call_args = mock_popen.call_args[0][0]
-                assert "-n50" in call_args or any("-n" in str(arg) and "50" in str(arg) for arg in call_args)
+                assert "-n50" in call_args or any(
+                    "-n" in str(arg) and "50" in str(arg) for arg in call_args
+                )
 
 
 def test_logs_tail_without_follow_doesnt_use_subprocess(runner, temp_logs_dir):
     """Test that without --follow, we don't use subprocess"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
-            with patch("mcli.app.logs_cmd.subprocess.Popen") as mock_popen:
+            with patch("mcli.self.logs_cmd.subprocess.Popen") as mock_popen:
                 # Run without --follow
                 result = runner.invoke(logs_group, ["tail", "main"])
 
@@ -232,8 +236,8 @@ def test_logs_tail_without_follow_doesnt_use_subprocess(runner, temp_logs_dir):
 
 def test_logs_grep_basic(runner, temp_logs_dir):
     """Test basic grep functionality"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
             result = runner.invoke(logs_group, ["grep", "ERROR"])
@@ -258,11 +262,11 @@ def test_logs_clear_help(runner):
 
 def test_logs_tail_follow_keyboard_interrupt_handling(runner, temp_logs_dir):
     """Test that KeyboardInterrupt is handled gracefully in follow mode"""
-    with patch("mcli.app.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
-        with patch("mcli.app.logs_cmd.datetime") as mock_datetime:
+    with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
+        with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
 
-            with patch("mcli.app.logs_cmd.subprocess.Popen") as mock_popen:
+            with patch("mcli.self.logs_cmd.subprocess.Popen") as mock_popen:
                 mock_process = MagicMock()
                 # Simulate KeyboardInterrupt during readline
                 mock_process.stdout.readline.side_effect = KeyboardInterrupt()

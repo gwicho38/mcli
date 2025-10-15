@@ -3,9 +3,11 @@ End-to-end test for update workflow
 
 Tests the complete mcli self-update process.
 """
+
+from unittest.mock import Mock, patch
+
 import pytest
 from click.testing import CliRunner
-from unittest.mock import patch, Mock
 
 
 @pytest.mark.e2e
@@ -20,8 +22,7 @@ def test_update_check_workflow():
 
     runner = CliRunner()
 
-    with patch('importlib.metadata.version') as mock_version, \
-         patch('requests.get') as mock_get:
+    with patch("importlib.metadata.version") as mock_version, patch("requests.get") as mock_get:
 
         # Mock current version
         mock_version.return_value = "7.0.5"
@@ -32,25 +33,20 @@ def test_update_check_workflow():
         mock_response.json.return_value = {
             "info": {
                 "version": "7.0.6",
-                "project_urls": {
-                    "Changelog": "https://github.com/gwicho38/mcli/releases"
-                }
+                "project_urls": {"Changelog": "https://github.com/gwicho38/mcli/releases"},
             },
-            "releases": {
-                "7.0.5": [],
-                "7.0.6": []
-            }
+            "releases": {"7.0.5": [], "7.0.6": []},
         }
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
         # Step 1: Check for updates
-        result = runner.invoke(self_app, ['update', '--check'])
+        result = runner.invoke(self_app, ["update", "--check"])
 
         # Should show update available
         assert result.exit_code == 0
-        assert '7.0.6' in result.output
-        assert any(word in result.output.lower() for word in ['update', 'available', 'newer'])
+        assert "7.0.6" in result.output
+        assert any(word in result.output.lower() for word in ["update", "available", "newer"])
 
 
 @pytest.mark.e2e
@@ -62,9 +58,11 @@ def test_update_with_confirmation_workflow():
 
     runner = CliRunner()
 
-    with patch('importlib.metadata.version') as mock_version, \
-         patch('requests.get') as mock_get, \
-         patch('mcli.self.self_cmd.check_ci_status') as mock_ci:
+    with (
+        patch("importlib.metadata.version") as mock_version,
+        patch("requests.get") as mock_get,
+        patch("mcli.self.self_cmd.check_ci_status") as mock_ci,
+    ):
 
         # Setup mocks
         mock_version.return_value = "7.0.5"
@@ -73,7 +71,7 @@ def test_update_with_confirmation_workflow():
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "info": {"version": "7.0.6", "project_urls": {}},
-            "releases": {"7.0.5": [], "7.0.6": []}
+            "releases": {"7.0.5": [], "7.0.6": []},
         }
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
@@ -81,10 +79,10 @@ def test_update_with_confirmation_workflow():
         mock_ci.return_value = (True, None)
 
         # User says no to update
-        result = runner.invoke(self_app, ['update'], input='n\n')
+        result = runner.invoke(self_app, ["update"], input="n\n")
 
         assert result.exit_code == 0
-        assert 'cancelled' in result.output.lower() or 'abort' in result.output.lower()
+        assert "cancelled" in result.output.lower() or "abort" in result.output.lower()
 
 
 @pytest.mark.e2e
@@ -96,9 +94,11 @@ def test_update_with_ci_check_workflow():
 
     runner = CliRunner()
 
-    with patch('importlib.metadata.version') as mock_version, \
-         patch('requests.get') as mock_get, \
-         patch('mcli.self.self_cmd.check_ci_status') as mock_ci:
+    with (
+        patch("importlib.metadata.version") as mock_version,
+        patch("requests.get") as mock_get,
+        patch("mcli.self.self_cmd.check_ci_status") as mock_ci,
+    ):
 
         # Setup mocks
         mock_version.return_value = "7.0.5"
@@ -107,7 +107,7 @@ def test_update_with_ci_check_workflow():
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "info": {"version": "7.0.6", "project_urls": {}},
-            "releases": {"7.0.5": [], "7.0.6": []}
+            "releases": {"7.0.5": [], "7.0.6": []},
         }
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
@@ -116,11 +116,11 @@ def test_update_with_ci_check_workflow():
         mock_ci.return_value = (False, "https://github.com/gwicho38/mcli/actions")
 
         # Try to update with failing CI
-        result = runner.invoke(self_app, ['update', '--yes'])
+        result = runner.invoke(self_app, ["update", "--yes"])
 
         # Should be blocked
         assert result.exit_code == 0
-        assert any(word in result.output.lower() for word in ['ci', 'failing', 'blocked'])
+        assert any(word in result.output.lower() for word in ["ci", "failing", "blocked"])
 
 
 @pytest.mark.e2e
@@ -132,10 +132,12 @@ def test_update_skip_ci_check_workflow():
 
     runner = CliRunner()
 
-    with patch('importlib.metadata.version') as mock_version, \
-         patch('requests.get') as mock_get, \
-         patch('subprocess.run') as mock_subprocess, \
-         patch('mcli.self.self_cmd.check_ci_status') as mock_ci:
+    with (
+        patch("importlib.metadata.version") as mock_version,
+        patch("requests.get") as mock_get,
+        patch("subprocess.run") as mock_subprocess,
+        patch("mcli.self.self_cmd.check_ci_status") as mock_ci,
+    ):
 
         # Setup mocks
         mock_version.return_value = "7.0.5"
@@ -144,7 +146,7 @@ def test_update_skip_ci_check_workflow():
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "info": {"version": "7.0.6", "project_urls": {}},
-            "releases": {"7.0.5": [], "7.0.6": []}
+            "releases": {"7.0.5": [], "7.0.6": []},
         }
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
@@ -155,7 +157,7 @@ def test_update_skip_ci_check_workflow():
         mock_subprocess.return_value = mock_result
 
         # Use --skip-ci-check flag
-        result = runner.invoke(self_app, ['update', '--yes', '--skip-ci-check'])
+        result = runner.invoke(self_app, ["update", "--yes", "--skip-ci-check"])
 
         # CI check should not be called
         mock_ci.assert_not_called()
@@ -173,8 +175,7 @@ def test_already_latest_version_workflow():
 
     runner = CliRunner()
 
-    with patch('importlib.metadata.version') as mock_version, \
-         patch('requests.get') as mock_get:
+    with patch("importlib.metadata.version") as mock_version, patch("requests.get") as mock_get:
 
         # Mock same version
         mock_version.return_value = "7.0.6"
@@ -183,12 +184,12 @@ def test_already_latest_version_workflow():
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "info": {"version": "7.0.6", "project_urls": {}},
-            "releases": {"7.0.6": []}
+            "releases": {"7.0.6": []},
         }
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        result = runner.invoke(self_app, ['update', '--check'])
+        result = runner.invoke(self_app, ["update", "--check"])
 
         assert result.exit_code == 0
-        assert any(word in result.output.lower() for word in ['latest', 'up to date', 'already'])
+        assert any(word in result.output.lower() for word in ["latest", "up to date", "already"])

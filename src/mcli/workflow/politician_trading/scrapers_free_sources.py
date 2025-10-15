@@ -7,16 +7,15 @@ This module contains scrapers for free, publicly available politician trading da
 - SEC Edgar Insider Trading API
 """
 
+import logging
 import os
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-import logging
 
 import requests
 
 from .models import Politician, TradingDisclosure
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +35,7 @@ class SenateStockWatcherScraper:
 
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "PoliticianTradingTracker/1.0"
-        })
+        self.session.headers.update({"User-Agent": "PoliticianTradingTracker/1.0"})
 
     def fetch_all_transactions(self) -> List[Dict]:
         """
@@ -156,9 +153,7 @@ class SenateStockWatcherScraper:
         return politicians
 
     def convert_to_disclosures(
-        self,
-        transactions: List[Dict],
-        politician_lookup: Optional[Dict[str, str]] = None
+        self, transactions: List[Dict], politician_lookup: Optional[Dict[str, str]] = None
     ) -> List[TradingDisclosure]:
         """
         Convert transaction data to TradingDisclosure objects
@@ -187,7 +182,11 @@ class SenateStockWatcherScraper:
                     transaction_date = datetime.now()
 
                 try:
-                    disclosure_date = datetime.strptime(disclosure_date_str, "%m/%d/%Y") if disclosure_date_str else transaction_date
+                    disclosure_date = (
+                        datetime.strptime(disclosure_date_str, "%m/%d/%Y")
+                        if disclosure_date_str
+                        else transaction_date
+                    )
                 except ValueError:
                     disclosure_date = transaction_date
 
@@ -285,10 +284,7 @@ class FinnhubCongressionalAPI:
         self.session = requests.Session()
 
     def get_congressional_trading(
-        self,
-        symbol: str,
-        from_date: Optional[str] = None,
-        to_date: Optional[str] = None
+        self, symbol: str, from_date: Optional[str] = None, to_date: Optional[str] = None
     ) -> List[Dict]:
         """
         Get congressional trading for a specific stock symbol
@@ -303,10 +299,7 @@ class FinnhubCongressionalAPI:
         """
         try:
             url = f"{self.BASE_URL}/stock/congressional-trading"
-            params = {
-                "symbol": symbol,
-                "token": self.api_key
-            }
+            params = {"symbol": symbol, "token": self.api_key}
 
             if from_date:
                 params["from"] = from_date
@@ -349,11 +342,13 @@ class SECEdgarInsiderAPI:
     def __init__(self):
         self.session = requests.Session()
         # SEC requires a User-Agent header
-        self.session.headers.update({
-            "User-Agent": "PoliticianTradingTracker/1.0 (contact@example.com)",
-            "Accept-Encoding": "gzip, deflate",
-            "Host": "data.sec.gov"
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": "PoliticianTradingTracker/1.0 (contact@example.com)",
+                "Accept-Encoding": "gzip, deflate",
+                "Host": "data.sec.gov",
+            }
+        )
 
     def get_company_submissions(self, cik: str) -> Dict:
         """
@@ -419,12 +414,18 @@ class SECEdgarInsiderAPI:
 
         for i, form in enumerate(forms):
             if form == "4":  # Form 4 is insider transaction report
-                form4_transactions.append({
-                    "accessionNumber": accession_numbers[i] if i < len(accession_numbers) else None,
-                    "filingDate": filing_dates[i] if i < len(filing_dates) else None,
-                    "primaryDocument": primary_documents[i] if i < len(primary_documents) else None,
-                    "cik": cik
-                })
+                form4_transactions.append(
+                    {
+                        "accessionNumber": (
+                            accession_numbers[i] if i < len(accession_numbers) else None
+                        ),
+                        "filingDate": filing_dates[i] if i < len(filing_dates) else None,
+                        "primaryDocument": (
+                            primary_documents[i] if i < len(primary_documents) else None
+                        ),
+                        "cik": cik,
+                    }
+                )
 
         logger.info(f"Found {len(form4_transactions)} Form 4 filings for CIK {cik}")
         return form4_transactions
@@ -440,10 +441,7 @@ class FreeDataFetcher:
     Unified interface for fetching politician trading data from free sources
     """
 
-    def __init__(
-        self,
-        finnhub_api_key: Optional[str] = None
-    ):
+    def __init__(self, finnhub_api_key: Optional[str] = None):
         """
         Initialize fetcher with optional API keys
 
@@ -461,9 +459,7 @@ class FreeDataFetcher:
                 logger.warning(f"Finnhub API not initialized: {e}")
 
     def fetch_from_senate_watcher(
-        self,
-        recent_only: bool = False,
-        days: int = 90
+        self, recent_only: bool = False, days: int = 90
     ) -> Dict[str, List]:
         """
         Fetch data from Senate Stock Watcher GitHub dataset
@@ -498,10 +494,7 @@ class FreeDataFetcher:
             f"{len(disclosures)} disclosures from Senate Stock Watcher"
         )
 
-        return {
-            "politicians": politicians,
-            "disclosures": disclosures
-        }
+        return {"politicians": politicians, "disclosures": disclosures}
 
 
 # =============================================================================

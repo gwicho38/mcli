@@ -1,9 +1,10 @@
 """Shared utility functions for dashboard pages"""
 
-import os
 import logging
+import os
 import warnings
 from typing import List, Optional
+
 import pandas as pd
 import streamlit as st
 from supabase import Client, create_client
@@ -56,7 +57,9 @@ def get_politician_names() -> List[str]:
 
         result = client.table("politicians").select("first_name, last_name").execute()
         names = [f"{row['first_name']} {row['last_name']}" for row in result.data]
-        return names if names else ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer"]
+        return (
+            names if names else ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer"]
+        )
     except Exception as e:
         logger.error(f"Failed to get politician names: {e}")
         return ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer"]
@@ -70,11 +73,7 @@ def get_disclosures_data() -> pd.DataFrame:
 
     try:
         # First, get total count
-        count_response = (
-            client.table("trading_disclosures")
-            .select("*", count="exact")
-            .execute()
-        )
+        count_response = client.table("trading_disclosures").select("*", count="exact").execute()
         total_count = count_response.count
 
         if total_count == 0:
@@ -103,26 +102,30 @@ def get_disclosures_data() -> pd.DataFrame:
 def _generate_demo_disclosures() -> pd.DataFrame:
     """Generate demo trading disclosure data for testing"""
     st.info("🔵 Using demo trading data (Supabase unavailable)")
-    
+
     import random
     from datetime import datetime, timedelta
-    
+
     politicians = ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw", "Josh Gottheimer"]
     tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "AMD"]
     transaction_types = ["Purchase", "Sale"]
-    
+
     data = []
     for _ in range(50):
-        data.append({
-            "politician_name": random.choice(politicians),
-            "ticker_symbol": random.choice(tickers),
-            "transaction_type": random.choice(transaction_types),
-            "amount_min": random.randint(1000, 100000),
-            "amount_max": random.randint(100000, 1000000),
-            "disclosure_date": (datetime.now() - timedelta(days=random.randint(1, 365))).strftime("%Y-%m-%d"),
-            "asset_description": f"{random.choice(tickers)} Stock",
-        })
-    
+        data.append(
+            {
+                "politician_name": random.choice(politicians),
+                "ticker_symbol": random.choice(tickers),
+                "transaction_type": random.choice(transaction_types),
+                "amount_min": random.randint(1000, 100000),
+                "amount_max": random.randint(100000, 1000000),
+                "disclosure_date": (
+                    datetime.now() - timedelta(days=random.randint(1, 365))
+                ).strftime("%Y-%m-%d"),
+                "asset_description": f"{random.choice(tickers)} Stock",
+            }
+        )
+
     return pd.DataFrame(data)
 
 

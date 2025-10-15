@@ -9,10 +9,11 @@ Tests cover:
 """
 
 import os
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from sqlalchemy.exc import OperationalError
 from contextlib import contextmanager
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
+from sqlalchemy.exc import OperationalError
 
 
 class TestSupabaseConnectionPooler:
@@ -30,18 +31,22 @@ class TestSupabaseConnectionPooler:
 
     def test_placeholder_password_detection(self):
         """Test that placeholder password is detected and triggers pooler fallback"""
-        os.environ['DATABASE_URL'] = 'postgresql://postgres:your_password@db.example.com:5432/postgres'
-        os.environ['SUPABASE_URL'] = 'https://testproject.supabase.co'
-        os.environ['SUPABASE_SERVICE_ROLE_KEY'] = 'test_key_12345'
+        os.environ["DATABASE_URL"] = (
+            "postgresql://postgres:your_password@db.example.com:5432/postgres"
+        )
+        os.environ["SUPABASE_URL"] = "https://testproject.supabase.co"
+        os.environ["SUPABASE_SERVICE_ROLE_KEY"] = "test_key_12345"
 
         # Mock create_engine to prevent actual connection
-        with patch('mcli.ml.database.session.create_engine') as mock_create:
+        with patch("mcli.ml.database.session.create_engine") as mock_create:
             mock_engine = Mock()
             mock_create.return_value = mock_engine
 
             # Import session module to trigger engine creation
             import importlib
+
             import mcli.ml.database.session as session_module
+
             importlib.reload(session_module)
 
             # Verify that create_engine was called with pooler URL, not direct URL
@@ -49,16 +54,17 @@ class TestSupabaseConnectionPooler:
             if call_args:
                 first_call_url = str(call_args[0][0][0])
                 # Should contain pooler.supabase.com, not db.example.com
-                assert 'pooler.supabase.com' in first_call_url or 'sqlite' in first_call_url, \
-                    f"Expected pooler URL, got: {first_call_url}"
+                assert (
+                    "pooler.supabase.com" in first_call_url or "sqlite" in first_call_url
+                ), f"Expected pooler URL, got: {first_call_url}"
 
     def test_pooler_url_construction(self):
         """Test that pooler URL is correctly constructed from Supabase credentials"""
-        supabase_url = 'https://uljsqvwkomdrlnofmlad.supabase.co'
-        service_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test'
+        supabase_url = "https://uljsqvwkomdrlnofmlad.supabase.co"
+        service_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test"
 
         # Extract project reference
-        project_ref = supabase_url.replace('https://', '').split('.')[0]
+        project_ref = supabase_url.replace("https://", "").split(".")[0]
 
         # Expected pooler URLs
         expected_urls = [
@@ -66,26 +72,28 @@ class TestSupabaseConnectionPooler:
             f"postgresql://postgres.{project_ref}:{service_key}@aws-0-us-west-1.pooler.supabase.com:6543/postgres",
         ]
 
-        assert project_ref == 'uljsqvwkomdrlnofmlad'
-        assert all('pooler.supabase.com' in url for url in expected_urls)
+        assert project_ref == "uljsqvwkomdrlnofmlad"
+        assert all("pooler.supabase.com" in url for url in expected_urls)
         assert all(project_ref in url for url in expected_urls)
 
     def test_connection_timeout_configuration(self):
         """Test that connection timeout is configured for PostgreSQL"""
-        with patch('mcli.ml.database.session.create_engine') as mock_create:
+        with patch("mcli.ml.database.session.create_engine") as mock_create:
             mock_engine = Mock()
             mock_create.return_value = mock_engine
 
-            os.environ['DATABASE_URL'] = 'postgresql://user:pass@localhost/db'
+            os.environ["DATABASE_URL"] = "postgresql://user:pass@localhost/db"
 
             import importlib
+
             import mcli.ml.database.session as session_module
+
             importlib.reload(session_module)
 
             # Check that create_engine was called with timeout settings
             if mock_create.called:
                 call_kwargs = mock_create.call_args[1]
-                assert 'connect_args' in call_kwargs or 'pool_timeout' in call_kwargs
+                assert "connect_args" in call_kwargs or "pool_timeout" in call_kwargs
 
 
 class TestIPv6ErrorHandling:
@@ -94,7 +102,7 @@ class TestIPv6ErrorHandling:
     def test_ipv6_error_detection(self):
         """Test that IPv6 connection errors are properly detected"""
         ipv6_error_message = (
-            "connection to server at \"db.uljsqvwkomdrlnofmlad.supabase.co\" "
+            'connection to server at "db.uljsqvwkomdrlnofmlad.supabase.co" '
             "(2a05:d016:571:a402:8455:5460:1249:d73), port 5432 failed: "
             "Cannot assign requested address"
         )
@@ -105,13 +113,11 @@ class TestIPv6ErrorHandling:
 
     def test_get_session_ipv6_error_handling(self):
         """Test that get_session provides helpful error for IPv6 issues"""
-        with patch('mcli.ml.database.session.SessionLocal') as mock_session_local:
+        with patch("mcli.ml.database.session.SessionLocal") as mock_session_local:
             # Mock session that raises IPv6 error
             mock_session = Mock()
             mock_session.execute.side_effect = OperationalError(
-                "statement", "params",
-                "connection failed: Cannot assign requested address",
-                "orig"
+                "statement", "params", "connection failed: Cannot assign requested address", "orig"
             )
             mock_session_local.return_value = mock_session
 
@@ -137,7 +143,7 @@ class TestIPv6ErrorHandling:
 class TestDatabaseSessionManagement:
     """Test database session management and error handling"""
 
-    @patch('mcli.ml.database.session.SessionLocal')
+    @patch("mcli.ml.database.session.SessionLocal")
     def test_session_rollback_on_error(self, mock_session_local):
         """Test that session is rolled back on error"""
         mock_session = Mock()
@@ -158,7 +164,7 @@ class TestDatabaseSessionManagement:
         mock_session.rollback.assert_called_once()
         mock_session.close.assert_called_once()
 
-    @patch('mcli.ml.database.session.SessionLocal')
+    @patch("mcli.ml.database.session.SessionLocal")
     def test_session_commit_on_success(self, mock_session_local):
         """Test that session is committed on success"""
         mock_session = Mock()
@@ -174,7 +180,7 @@ class TestDatabaseSessionManagement:
         mock_session.commit.assert_called_once()
         mock_session.close.assert_called_once()
 
-    @patch('mcli.ml.database.session.SessionLocal')
+    @patch("mcli.ml.database.session.SessionLocal")
     def test_session_connection_test(self, mock_session_local):
         """Test that session connection is tested before use"""
         mock_session = Mock()
@@ -189,6 +195,7 @@ class TestDatabaseSessionManagement:
         mock_session.execute.assert_called()
         # Check that execute was called with a text() wrapper containing SELECT 1
         from sqlalchemy import text
+
         call_args = mock_session.execute.call_args
         # The first positional argument should be a TextClause
         assert call_args is not None
@@ -209,14 +216,14 @@ class TestConnectionPoolerFailover:
         ]
 
         # Verify URLs use different regions
-        assert 'us-east-1' in pooler_urls[0]
-        assert 'us-west-1' in pooler_urls[1]
+        assert "us-east-1" in pooler_urls[0]
+        assert "us-west-1" in pooler_urls[1]
 
         # Verify URLs use different ports (Session vs Transaction mode)
-        assert ':5432' in pooler_urls[0]
-        assert ':6543' in pooler_urls[1]
+        assert ":5432" in pooler_urls[0]
+        assert ":6543" in pooler_urls[1]
 
-    @patch('mcli.ml.database.session.create_engine')
+    @patch("mcli.ml.database.session.create_engine")
     def test_pooler_connection_test(self, mock_create_engine):
         """Test that pooler connection is tested before being used"""
         # This test verifies the test connection logic exists
@@ -240,39 +247,43 @@ class TestEnvironmentConfiguration:
     def test_sqlite_fallback_when_no_credentials(self):
         """Test that SQLite fallback is used when no credentials provided"""
         # Clear all database-related env vars
-        for key in ['DATABASE_URL', 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']:
+        for key in ["DATABASE_URL", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]:
             os.environ.pop(key, None)
 
-        with patch('mcli.ml.database.session.create_engine') as mock_create:
+        with patch("mcli.ml.database.session.create_engine") as mock_create:
             mock_create.return_value = Mock()
 
             import importlib
+
             import mcli.ml.database.session as session_module
+
             importlib.reload(session_module)
 
             # Should create engine with SQLite URL
             if mock_create.called:
                 first_call_url = str(mock_create.call_args_list[0][0][0])
-                assert 'sqlite' in first_call_url.lower()
+                assert "sqlite" in first_call_url.lower()
 
     def test_service_role_key_required_for_pooler(self):
         """Test that service role key is required for pooler connection"""
-        os.environ['SUPABASE_URL'] = 'https://test.supabase.co'
-        os.environ.pop('SUPABASE_SERVICE_ROLE_KEY', None)
-        os.environ['DATABASE_URL'] = 'postgresql://postgres:your_password@db.test.com:5432/postgres'
+        os.environ["SUPABASE_URL"] = "https://test.supabase.co"
+        os.environ.pop("SUPABASE_SERVICE_ROLE_KEY", None)
+        os.environ["DATABASE_URL"] = "postgresql://postgres:your_password@db.test.com:5432/postgres"
 
-        with patch('mcli.ml.database.session.create_engine') as mock_create:
+        with patch("mcli.ml.database.session.create_engine") as mock_create:
             mock_create.return_value = Mock()
 
             import importlib
+
             import mcli.ml.database.session as session_module
+
             importlib.reload(session_module)
 
             # Without service role key, should fall back to SQLite
             if mock_create.called:
                 first_call_url = str(mock_create.call_args_list[0][0][0])
-                assert 'sqlite' in first_call_url.lower() or 'pooler' not in first_call_url
+                assert "sqlite" in first_call_url.lower() or "pooler" not in first_call_url
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '--tb=short'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "--tb=short"])

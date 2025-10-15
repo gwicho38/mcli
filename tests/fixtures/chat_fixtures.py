@@ -1,6 +1,8 @@
 """Shared fixtures for chat testing"""
+
+from unittest.mock import AsyncMock, MagicMock, Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock, AsyncMock
 
 
 @pytest.fixture
@@ -49,11 +51,8 @@ def mock_ollama_client():
 
     # Mock response
     mock_response = {
-        "message": {
-            "role": "assistant",
-            "content": "Test response from Ollama"
-        },
-        "done": True
+        "message": {"role": "assistant", "content": "Test response from Ollama"},
+        "done": True,
     }
 
     client.chat.return_value = mock_response
@@ -68,7 +67,7 @@ def sample_chat_history():
         {"role": "user", "content": "Hello"},
         {"role": "assistant", "content": "Hi! How can I help you?"},
         {"role": "user", "content": "What's the weather?"},
-        {"role": "assistant", "content": "I don't have access to real-time weather data."}
+        {"role": "assistant", "content": "I don't have access to real-time weather data."},
     ]
 
 
@@ -80,5 +79,5 @@ def mock_chat_config():
         "model": "gpt-4",
         "temperature": 0.7,
         "max_tokens": 2000,
-        "stream": False
+        "stream": False,
     }

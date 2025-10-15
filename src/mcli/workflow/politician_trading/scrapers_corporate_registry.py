@@ -15,9 +15,9 @@ politician trading patterns, conflicts of interest, and asset declarations.
 import logging
 import os
 import time
+from base64 import b64encode
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-from base64 import b64encode
 
 import requests
 
@@ -54,10 +54,9 @@ class UKCompaniesHouseScraper:
         # API uses HTTP Basic Auth with API key as username, password empty
         auth_string = f"{self.api_key}:"
         auth_header = b64encode(auth_string.encode()).decode()
-        self.session.headers.update({
-            "Authorization": f"Basic {auth_header}",
-            "User-Agent": "PoliticianTradingTracker/1.0"
-        })
+        self.session.headers.update(
+            {"Authorization": f"Basic {auth_header}", "User-Agent": "PoliticianTradingTracker/1.0"}
+        )
 
     def search_companies(self, query: str, items_per_page: int = 20) -> List[Dict]:
         """
@@ -72,10 +71,7 @@ class UKCompaniesHouseScraper:
         """
         try:
             url = f"{self.BASE_URL}/search/companies"
-            params = {
-                "q": query,
-                "items_per_page": min(items_per_page, 100)
-            }
+            params = {"q": query, "items_per_page": min(items_per_page, 100)}
 
             response = self.session.get(url, params=params, timeout=30)
             response.raise_for_status()
@@ -198,10 +194,9 @@ class InfoFinanciereAPIScraper:
 
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "PoliticianTradingTracker/1.0",
-            "Accept": "application/json"
-        })
+        self.session.headers.update(
+            {"User-Agent": "PoliticianTradingTracker/1.0", "Accept": "application/json"}
+        )
 
     def search_publications(
         self,
@@ -209,7 +204,7 @@ class InfoFinanciereAPIScraper:
         from_date: Optional[str] = None,
         to_date: Optional[str] = None,
         page: int = 1,
-        per_page: int = 20
+        per_page: int = 20,
     ) -> List[Dict]:
         """
         Search financial publications
@@ -226,10 +221,7 @@ class InfoFinanciereAPIScraper:
         """
         try:
             url = f"{self.BASE_URL}/publications"
-            params = {
-                "page": page,
-                "per_page": min(per_page, 100)
-            }
+            params = {"page": page, "per_page": min(per_page, 100)}
 
             if query:
                 params["q"] = query
@@ -298,17 +290,12 @@ class OpenCorporatesScraper:
         # API key is optional for free tier, but recommended
 
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "PoliticianTradingTracker/1.0",
-            "Accept": "application/json"
-        })
+        self.session.headers.update(
+            {"User-Agent": "PoliticianTradingTracker/1.0", "Accept": "application/json"}
+        )
 
     def search_companies(
-        self,
-        query: str,
-        jurisdiction_code: Optional[str] = None,
-        per_page: int = 30,
-        page: int = 1
+        self, query: str, jurisdiction_code: Optional[str] = None, per_page: int = 30, page: int = 1
     ) -> List[Dict]:
         """
         Search for companies across jurisdictions
@@ -324,11 +311,7 @@ class OpenCorporatesScraper:
         """
         try:
             url = f"{self.BASE_URL}/companies/search"
-            params = {
-                "q": query,
-                "per_page": min(per_page, 100),
-                "page": page
-            }
+            params = {"q": query, "per_page": min(per_page, 100), "page": page}
 
             if jurisdiction_code:
                 params["jurisdiction_code"] = jurisdiction_code
@@ -406,7 +389,9 @@ class OpenCorporatesScraper:
             results = data.get("results", {})
             officers = results.get("officers", [])
 
-            logger.info(f"Found {len(officers)} officers for company {jurisdiction_code}/{company_number}")
+            logger.info(
+                f"Found {len(officers)} officers for company {jurisdiction_code}/{company_number}"
+            )
             return officers
 
         except Exception as e:
@@ -432,10 +417,9 @@ class XBRLFilingsScraper:
 
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "PoliticianTradingTracker/1.0",
-            "Accept": "application/vnd.api+json"
-        })
+        self.session.headers.update(
+            {"User-Agent": "PoliticianTradingTracker/1.0", "Accept": "application/vnd.api+json"}
+        )
 
     def get_filings(
         self,
@@ -443,7 +427,7 @@ class XBRLFilingsScraper:
         from_date: Optional[str] = None,
         to_date: Optional[str] = None,
         page_number: int = 1,
-        page_size: int = 100
+        page_size: int = 100,
     ) -> List[Dict]:
         """
         Get XBRL filings with filters
@@ -460,10 +444,7 @@ class XBRLFilingsScraper:
         """
         try:
             url = f"{self.BASE_URL}/filings"
-            params = {
-                "page[number]": page_number,
-                "page[size]": min(page_size, 500)
-            }
+            params = {"page[number]": page_number, "page[size]": min(page_size, 500)}
 
             # Add filters using JSON:API filter syntax
             if country:
@@ -487,10 +468,7 @@ class XBRLFilingsScraper:
             return []
 
     def get_entities(
-        self,
-        country: Optional[str] = None,
-        page_number: int = 1,
-        page_size: int = 100
+        self, country: Optional[str] = None, page_number: int = 1, page_size: int = 100
     ) -> List[Dict]:
         """
         Get filing entities (companies)
@@ -505,10 +483,7 @@ class XBRLFilingsScraper:
         """
         try:
             url = f"{self.BASE_URL}/entities"
-            params = {
-                "page[number]": page_number,
-                "page[size]": min(page_size, 500)
-            }
+            params = {"page[number]": page_number, "page[size]": min(page_size, 500)}
 
             if country:
                 params["filter[country]"] = country
@@ -553,10 +528,9 @@ class XBRLUSScraper:
             )
 
         self.session = requests.Session()
-        self.session.headers.update({
-            "User-Agent": "PoliticianTradingTracker/1.0",
-            "Accept": "application/json"
-        })
+        self.session.headers.update(
+            {"User-Agent": "PoliticianTradingTracker/1.0", "Accept": "application/json"}
+        )
 
     def search_companies(self, query: str, limit: int = 100) -> List[Dict]:
         """
@@ -571,11 +545,7 @@ class XBRLUSScraper:
         """
         try:
             url = f"{self.BASE_URL}/entity/search"
-            params = {
-                "name": query,
-                "limit": min(limit, 2000),
-                "client_id": self.api_key
-            }
+            params = {"name": query, "limit": min(limit, 2000), "client_id": self.api_key}
 
             response = self.session.get(url, params=params, timeout=30)
             response.raise_for_status()
@@ -595,7 +565,7 @@ class XBRLUSScraper:
         entity_id: int,
         filing_date_from: Optional[str] = None,
         filing_date_to: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[Dict]:
         """
         Get filings for an entity
@@ -611,11 +581,7 @@ class XBRLUSScraper:
         """
         try:
             url = f"{self.BASE_URL}/filing/search"
-            params = {
-                "entity.id": entity_id,
-                "limit": min(limit, 2000),
-                "client_id": self.api_key
-            }
+            params = {"entity.id": entity_id, "limit": min(limit, 2000), "client_id": self.api_key}
 
             if filing_date_from:
                 params["filing_date.from"] = filing_date_from
@@ -641,7 +607,7 @@ class XBRLUSScraper:
         entity_id: Optional[int] = None,
         period_end_from: Optional[str] = None,
         period_end_to: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[Dict]:
         """
         Get XBRL facts (financial data points)
@@ -661,7 +627,7 @@ class XBRLUSScraper:
             params = {
                 "concept.local-name": concept_name,
                 "limit": min(limit, 2000),
-                "client_id": self.api_key
+                "client_id": self.api_key,
             }
 
             if entity_id:
@@ -699,7 +665,7 @@ class CorporateRegistryFetcher:
         self,
         uk_companies_house_key: Optional[str] = None,
         opencorporates_key: Optional[str] = None,
-        xbrl_us_key: Optional[str] = None
+        xbrl_us_key: Optional[str] = None,
     ):
         """
         Initialize fetcher with optional API keys
@@ -767,16 +733,10 @@ class CorporateRegistryFetcher:
             f"{len(all_officers)} officers, {len(all_psc)} PSC records"
         )
 
-        return {
-            "companies": companies,
-            "officers": all_officers,
-            "psc": all_psc
-        }
+        return {"companies": companies, "officers": all_officers, "psc": all_psc}
 
     def fetch_french_disclosures(
-        self,
-        query: Optional[str] = None,
-        days_back: int = 30
+        self, query: Optional[str] = None, days_back: int = 30
     ) -> List[Dict]:
         """
         Fetch French financial disclosures
@@ -794,19 +754,14 @@ class CorporateRegistryFetcher:
         to_date = datetime.now().strftime("%Y-%m-%d")
 
         publications = self.info_financiere.search_publications(
-            query=query,
-            from_date=from_date,
-            to_date=to_date,
-            per_page=100
+            query=query, from_date=from_date, to_date=to_date, per_page=100
         )
 
         logger.info(f"Fetched {len(publications)} French publications")
         return publications
 
     def fetch_xbrl_eu_filings(
-        self,
-        country: Optional[str] = None,
-        days_back: int = 30
+        self, country: Optional[str] = None, days_back: int = 30
     ) -> List[Dict]:
         """
         Fetch EU/UK XBRL filings
@@ -822,11 +777,7 @@ class CorporateRegistryFetcher:
 
         from_date = (datetime.now() - timedelta(days=days_back)).strftime("%Y-%m-%d")
 
-        filings = self.xbrl_filings.get_filings(
-            country=country,
-            from_date=from_date,
-            page_size=100
-        )
+        filings = self.xbrl_filings.get_filings(country=country, from_date=from_date, page_size=100)
 
         logger.info(f"Fetched {len(filings)} XBRL filings")
         return filings

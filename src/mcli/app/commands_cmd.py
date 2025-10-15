@@ -290,7 +290,9 @@ def {name}_command(name: str = "World"):
     return template
 
 
-def open_editor_for_command(command_name: str, command_group: str, description: str) -> Optional[str]:
+def open_editor_for_command(
+    command_name: str, command_group: str, description: str
+) -> Optional[str]:
     """
     Open the user's default editor to allow them to write command logic.
 
@@ -306,16 +308,18 @@ def open_editor_for_command(command_name: str, command_group: str, description: 
     import sys
 
     # Get the user's default editor
-    editor = os.environ.get('EDITOR')
+    editor = os.environ.get("EDITOR")
     if not editor:
         # Try common editors in order of preference
-        for common_editor in ['vim', 'nano', 'code', 'subl', 'atom', 'emacs']:
-            if subprocess.run(['which', common_editor], capture_output=True).returncode == 0:
+        for common_editor in ["vim", "nano", "code", "subl", "atom", "emacs"]:
+            if subprocess.run(["which", common_editor], capture_output=True).returncode == 0:
                 editor = common_editor
                 break
 
     if not editor:
-        click.echo("No editor found. Please set the EDITOR environment variable or install vim/nano.")
+        click.echo(
+            "No editor found. Please set the EDITOR environment variable or install vim/nano."
+        )
         return None
 
     # Create a temporary file with the template
@@ -337,7 +341,7 @@ Example Click command structure:
 @click.command()
 @click.argument('name', default='World')
 def my_command(name):
-    \"""My custom command.\"""
+    """My custom command."""
     click.echo(f"Hello, {{name}}!")
 """
 import click
@@ -363,14 +367,16 @@ logger = get_logger()
 '''
 
     # Create temporary file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as temp_file:
         temp_file.write(enhanced_template)
         temp_file_path = temp_file.name
 
     try:
         # Check if we're in an interactive environment
         if not sys.stdin.isatty() or not sys.stdout.isatty():
-            click.echo("Editor requires an interactive terminal. Use --template flag for non-interactive mode.")
+            click.echo(
+                "Editor requires an interactive terminal. Use --template flag for non-interactive mode."
+            )
             return None
 
         # Open editor
@@ -386,7 +392,7 @@ logger = get_logger()
             return None
 
         # Read the edited content
-        with open(temp_file_path, 'r') as f:
+        with open(temp_file_path, "r") as f:
             edited_code = f.read()
 
         # Check if the file was actually edited (not just the template)
@@ -395,12 +401,12 @@ logger = get_logger()
             return None
 
         # Extract the actual command code (remove the instructions)
-        lines = edited_code.split('\n')
+        lines = edited_code.split("\n")
         code_lines = []
         in_code_section = False
 
         for line in lines:
-            if line.strip().startswith('# Your command implementation goes here:'):
+            if line.strip().startswith("# Your command implementation goes here:"):
                 in_code_section = True
                 continue
             if in_code_section:
@@ -410,7 +416,7 @@ logger = get_logger()
             # Fallback: use the entire file content
             code_lines = lines
 
-        final_code = '\n'.join(code_lines).strip()
+        final_code = "\n".join(code_lines).strip()
 
         if not final_code:
             click.echo("No command code found. Command creation cancelled.")
@@ -436,11 +442,12 @@ logger = get_logger()
 @commands.command("add")
 @click.argument("command_name", required=True)
 @click.option("--group", "-g", help="Command group (defaults to 'workflow')", default="workflow")
+@click.option("--description", "-d", help="Description for the command", default="Custom command")
 @click.option(
-    "--description", "-d", help="Description for the command", default="Custom command"
-)
-@click.option(
-    "--template", "-t", is_flag=True, help="Use template mode (skip editor and use predefined template)"
+    "--template",
+    "-t",
+    is_flag=True,
+    help="Use template mode (skip editor and use predefined template)",
 )
 def add_command(command_name, group, description, template):
     """
@@ -734,13 +741,13 @@ def edit_command(command_name, editor):
         return 1
 
     try:
-        with open(command_file, 'r') as f:
+        with open(command_file, "r") as f:
             command_data = json.load(f)
     except Exception as e:
         console.print(f"[red]Failed to load command: {e}[/red]")
         return 1
 
-    code = command_data.get('code', '')
+    code = command_data.get("code", "")
 
     if not code:
         console.print(f"[red]Command has no code: {command_name}[/red]")
@@ -748,13 +755,14 @@ def edit_command(command_name, editor):
 
     # Determine editor
     if not editor:
-        editor = os.environ.get('EDITOR', 'vim')
+        editor = os.environ.get("EDITOR", "vim")
 
     console.print(f"Opening command in {editor}...")
 
     # Create temp file with the code
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False,
-                                      prefix=f"{command_name}_") as tmp:
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".py", delete=False, prefix=f"{command_name}_"
+    ) as tmp:
         tmp.write(code)
         tmp_path = tmp.name
 
@@ -766,7 +774,7 @@ def edit_command(command_name, editor):
             console.print(f"[yellow]Editor exited with code {result.returncode}[/yellow]")
 
         # Read edited content
-        with open(tmp_path, 'r') as f:
+        with open(tmp_path, "r") as f:
             new_code = f.read()
 
         # Check if code changed
@@ -776,20 +784,18 @@ def edit_command(command_name, editor):
 
         # Validate syntax
         try:
-            compile(new_code, '<string>', 'exec')
+            compile(new_code, "<string>", "exec")
         except SyntaxError as e:
             console.print(f"[red]Syntax error in edited code: {e}[/red]")
-            should_save = Prompt.ask(
-                "Save anyway?", choices=["y", "n"], default="n"
-            )
+            should_save = Prompt.ask("Save anyway?", choices=["y", "n"], default="n")
             if should_save.lower() != "y":
                 return 1
 
         # Update the command
-        command_data['code'] = new_code
-        command_data['updated_at'] = datetime.now().isoformat()
+        command_data["code"] = new_code
+        command_data["updated_at"] = datetime.now().isoformat()
 
-        with open(command_file, 'w') as f:
+        with open(command_file, "w") as f:
             json.dump(command_data, f, indent=2)
 
         # Update lockfile
@@ -832,7 +838,7 @@ def import_script(script_path, name, group, description, interactive):
 
     # Read the script content
     try:
-        with open(script_file, 'r') as f:
+        with open(script_file, "r") as f:
             code = f.read()
     except Exception as e:
         console.print(f"[red]Failed to read script: {e}[/red]")
@@ -849,11 +855,11 @@ def import_script(script_path, name, group, description, interactive):
 
     # Interactive editing
     if interactive:
-        editor = os.environ.get('EDITOR', 'vim')
+        editor = os.environ.get("EDITOR", "vim")
         console.print(f"Opening in {editor} for review...")
 
         # Create temp file with the code
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as tmp:
             tmp.write(code)
             tmp_path = tmp.name
 
@@ -861,7 +867,7 @@ def import_script(script_path, name, group, description, interactive):
             subprocess.run([editor, tmp_path], check=True)
 
             # Read edited content
-            with open(tmp_path, 'r') as f:
+            with open(tmp_path, "r") as f:
                 code = f.read()
         finally:
             Path(tmp_path).unlink(missing_ok=True)
@@ -870,6 +876,7 @@ def import_script(script_path, name, group, description, interactive):
     if not description:
         # Try to extract from docstring
         import ast
+
         try:
             tree = ast.parse(code)
             description = ast.get_docstring(tree) or f"Imported from {script_file.name}"
@@ -887,8 +894,8 @@ def import_script(script_path, name, group, description, interactive):
         metadata={
             "source": "import-script",
             "original_file": str(script_file),
-            "imported_at": datetime.now().isoformat()
-        }
+            "imported_at": datetime.now().isoformat(),
+        },
     )
 
     console.print(f"[green]Imported script as command: {name}[/green]")
@@ -902,7 +909,12 @@ def import_script(script_path, name, group, description, interactive):
 @commands.command("export-script")
 @click.argument("command_name")
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
-@click.option("--standalone", "-s", is_flag=True, help="Make script standalone (add if __name__ == '__main__')")
+@click.option(
+    "--standalone",
+    "-s",
+    is_flag=True,
+    help="Make script standalone (add if __name__ == '__main__')",
+)
 def export_script(command_name, output, standalone):
     """
     Export a JSON command to a Python script.
@@ -923,14 +935,14 @@ def export_script(command_name, output, standalone):
         return 1
 
     try:
-        with open(command_file, 'r') as f:
+        with open(command_file, "r") as f:
             command_data = json.load(f)
     except Exception as e:
         console.print(f"[red]Failed to load command: {e}[/red]")
         return 1
 
     # Get the code
-    code = command_data.get('code', '')
+    code = command_data.get("code", "")
 
     if not code:
         console.print(f"[red]Command has no code: {command_name}[/red]")
@@ -950,7 +962,7 @@ def export_script(command_name, output, standalone):
 
     # Write the script
     try:
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             f.write(code)
     except Exception as e:
         console.print(f"[red]Failed to write script: {e}[/red]")
