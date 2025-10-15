@@ -456,8 +456,20 @@ def create_app() -> click.Group:
 def get_version_info(verbose: bool = False) -> str:
     """Get version info, cached to prevent multiple calls."""
     try:
-        mcli_version = version("mcli")
-        meta = metadata("mcli")
+        # Try mcli-framework first (PyPI package name), then mcli (local dev)
+        mcli_version = None
+        meta = None
+
+        for pkg_name in ["mcli-framework", "mcli"]:
+            try:
+                mcli_version = version(pkg_name)
+                meta = metadata(pkg_name)
+                break
+            except Exception:
+                continue
+
+        if mcli_version is None:
+            return "Could not determine version: Package metadata not found"
 
         info = [f"mcli version {mcli_version}"]
 
