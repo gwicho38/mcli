@@ -22,7 +22,7 @@ This guide documents the production environment variables and deployment process
 - **Purpose:** Distribute secrets to various deployment targets
 
 ### 3. `ENV.md` - Original Documentation
-- **Location:** `/Users/lefv/repos/mcli/ENV.md`
+- **Location:** `/Users/lefv/repos/mcli/docs/configuration/ENV.md`
 - **Status:** ⚠️ Untracked in git (contains production secrets)
 - **Note:** Should be added to .gitignore or removed
 

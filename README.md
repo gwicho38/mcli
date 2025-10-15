@@ -119,7 +119,7 @@ After installation, you'll have full tab completion:
 - `mcli workflow <TAB>` → shows workflow subcommands  
 - `mcli workflow politician-trading <TAB>` → shows politician-trading options
 
-See [SHELL_COMPLETION.md](SHELL_COMPLETION.md) for detailed setup and troubleshooting.
+See [SHELL_COMPLETION.md](docs/features/SHELL_COMPLETION.md) for detailed setup and troubleshooting.
 
 ## Development Workflow
 

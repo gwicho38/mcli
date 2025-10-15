@@ -124,5 +124,5 @@ All dashboard targets:
 
 ## See Also
 
-- [DASHBOARD.md](../DASHBOARD.md) - Full dashboard documentation
+- [DASHBOARD.md](guides/DASHBOARD.md) - Full dashboard documentation
 - [Makefile](../Makefile) - Complete build system reference
