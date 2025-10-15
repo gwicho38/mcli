@@ -18,6 +18,86 @@ from mcli.workflow.model_service.lightweight_model_server import (
 logger = get_logger(__name__)
 
 
+def _start_openai_server(server, host: str, port: int, api_key: Optional[str], model: str):
+    """Start FastAPI server with OpenAI compatibility"""
+    try:
+        from fastapi import FastAPI
+        from fastapi.middleware.cors import CORSMiddleware
+        import uvicorn
+
+        from mcli.workflow.model_service.openai_adapter import create_openai_adapter
+
+        # Create FastAPI app
+        app = FastAPI(
+            title="MCLI Model Service (OpenAI Compatible)",
+            description="OpenAI-compatible API for MCLI lightweight models",
+            version="1.0.0",
+        )
+
+        # Add CORS middleware
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+        # Create OpenAI adapter
+        require_auth = api_key is not None
+        adapter = create_openai_adapter(server, require_auth=require_auth)
+
+        # Add API key if provided
+        if api_key:
+            adapter.api_key_manager.add_key(api_key, name="default")
+            click.echo(f"🔐 API key authentication enabled")
+
+        # Include OpenAI routes
+        app.include_router(adapter.router)
+
+        # Add health check endpoint
+        @app.get("/health")
+        async def health():
+            return {"status": "healthy", "model": model}
+
+        # Display server info
+        click.echo(f"\n📝 Server running at:")
+        click.echo(f"   - Base URL: http://{host}:{port}")
+        click.echo(f"   - OpenAI API: http://{host}:{port}/v1")
+        click.echo(f"   - Models: http://{host}:{port}/v1/models")
+        click.echo(f"   - Chat: http://{host}:{port}/v1/chat/completions")
+        click.echo(f"   - Health: http://{host}:{port}/health")
+
+        if require_auth:
+            click.echo(f"\n🔐 Authentication: Required")
+            click.echo(f"   Use: Authorization: Bearer {api_key}")
+        else:
+            click.echo(f"\n⚠️  Authentication: Disabled (not recommended for public access)")
+
+        if host == "0.0.0.0":
+            click.echo(f"\n⚠️  Server is publicly accessible on all interfaces!")
+
+        click.echo(f"\n📚 For aider, use:")
+        if require_auth:
+            click.echo(f"   export OPENAI_API_KEY={api_key}")
+        click.echo(f"   export OPENAI_API_BASE=http://{host}:{port}/v1")
+        click.echo(f"   aider --model {model}")
+
+        click.echo(f"\n   Press Ctrl+C to stop the server")
+
+        # Start server
+        uvicorn.run(app, host=host, port=port, log_level="info")
+
+    except ImportError as e:
+        click.echo(f"❌ Missing dependencies for OpenAI-compatible server: {e}")
+        click.echo(f"   Install with: pip install fastapi uvicorn")
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"❌ Failed to start OpenAI-compatible server: {e}")
+        logger.error(f"Server error: {e}", exc_info=True)
+        sys.exit(1)
+
+
 @click.group()
 def model():
     """Model management commands for offline and online model usage."""
@@ -104,12 +184,33 @@ def download(model_name: str):
     "--port", "-p", default=None, help="Port to run server on (default: from config or 51234)"
 )
 @click.option(
+    "--host", "-h", default="localhost", help="Host to bind to (use 0.0.0.0 for public access)"
+)
+@click.option(
     "--auto-download",
     is_flag=True,
     default=True,
     help="Automatically download model if not available",
 )
-def start(model: Optional[str], port: Optional[int], auto_download: bool):
+@click.option(
+    "--openai-compatible",
+    is_flag=True,
+    default=False,
+    help="Enable OpenAI-compatible API endpoints",
+)
+@click.option(
+    "--api-key",
+    default=None,
+    help="API key for authentication (if not set, auth is disabled)",
+)
+def start(
+    model: Optional[str],
+    port: Optional[int],
+    host: str,
+    auto_download: bool,
+    openai_compatible: bool,
+    api_key: Optional[str],
+):
     """Start the lightweight model server."""
     # Load port from config if not specified
     if port is None:
@@ -155,15 +256,24 @@ def start(model: Optional[str], port: Optional[int], auto_download: bool):
             click.echo(f"❌ Failed to load {model}")
             sys.exit(1)
 
-    # Start server
-    click.echo(f"🚀 Starting lightweight server on port {port}...")
-    server.start_server()
+    # Start server with OpenAI compatibility if requested
+    if openai_compatible:
+        click.echo(f"🚀 Starting OpenAI-compatible server on {host}:{port}...")
+        _start_openai_server(server, host, port, api_key, model)
+    else:
+        click.echo(f"🚀 Starting lightweight server on {host}:{port}...")
+        server.start_server()
 
-    click.echo(f"\n📝 Server running at:")
-    click.echo(f"   - API: http://localhost:{port}")
-    click.echo(f"   - Health: http://localhost:{port}/health")
-    click.echo(f"   - Models: http://localhost:{port}/models")
-    click.echo(f"\n   Press Ctrl+C to stop the server")
+        click.echo(f"\n📝 Server running at:")
+        click.echo(f"   - API: http://{host}:{port}")
+        click.echo(f"   - Health: http://{host}:{port}/health")
+        click.echo(f"   - Models: http://{host}:{port}/models")
+
+        if host == "0.0.0.0":
+            click.echo(f"\n⚠️  Server is publicly accessible!")
+            click.echo(f"   Consider using --openai-compatible with --api-key for security")
+
+        click.echo(f"\n   Press Ctrl+C to stop the server")
 
     try:
         # Keep server running
