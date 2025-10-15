@@ -131,7 +131,7 @@ dependencies = [
   "streamlit-autorefresh>=1.0.1",
   "typer>=0.9.0",
   # Web framework
-  "flask>=2.3.0,<3.0.0",
+  "flask>=2.3.0,<4.0.0",
 ]
 
 [project.urls]
