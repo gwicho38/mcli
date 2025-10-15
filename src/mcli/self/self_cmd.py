@@ -1243,34 +1243,6 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
 
         console.print(f"[dim]{traceback.format_exc()}[/dim]")
 
-        # Validate syntax
-        try:
-            compile(new_code, "<string>", "exec")
-        except SyntaxError as e:
-            click.echo(f"❌ Syntax error in edited code: {e}", err=True)
-            should_save = Prompt.ask("Save anyway?", choices=["y", "n"], default="n")
-            if should_save.lower() != "y":
-                return 1
-
-        # Update the command
-        command_data["code"] = new_code
-        command_data["updated_at"] = datetime.now().isoformat()
-
-        with open(command_file, "w") as f:
-            json.dump(command_data, f, indent=2)
-
-        # Update lockfile
-        manager.generate_lockfile()
-
-        click.echo(f"✅ Updated command: {command_name}")
-        click.echo(f"📁 Saved to: {command_file}")
-        click.echo(f"🔄 Reload with: mcli self reload" or "restart mcli")
-
-    finally:
-        Path(tmp_path).unlink(missing_ok=True)
-
-    return 0
-
 
 # Register the plugin group with self_app
 self_app.add_command(plugin)
