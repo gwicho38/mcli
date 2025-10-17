@@ -160,7 +160,7 @@ def generate_mock_historical_performance() -> pd.DataFrame:
 def get_real_predictions() -> pd.DataFrame:
     """Get real predictions from ML pipeline"""
     if not HAS_REAL_DATA:
-        st.warning("⚠️ Supabase connection not configured. Using demo data.")
+        st.warning("⚠️ Real data functions not available. Using demo data for demonstration.")
         return generate_mock_predictions()
 
     try:
@@ -168,43 +168,56 @@ def get_real_predictions() -> pd.DataFrame:
         disclosures = get_disclosures_data()
 
         if disclosures.empty:
+            st.warning(
+                "📊 No trading disclosure data available yet. Predictions will be generated once data is collected. "
+                "Using demo data for demonstration purposes."
+            )
+            return generate_mock_predictions()
+
+        # Check if we have enough data for ML
+        if len(disclosures) < 10:
             st.info(
-                "No disclosure data available. Click 'Run ML Pipeline' in sidebar to generate predictions."
+                f"📊 Found {len(disclosures)} disclosures. Need at least 10 for ML predictions. "
+                "Using demo data for demonstration."
             )
             return generate_mock_predictions()
 
         # Run ML pipeline to generate predictions
-        _, _, predictions = run_ml_pipeline(disclosures)
+        st.success(f"✅ Loaded {len(disclosures)} real trading disclosures from database!")
 
-        if predictions is not None and not predictions.empty:
-            # Ensure all required columns exist
-            required_cols = [
-                "ticker",
-                "predicted_return",
-                "confidence",
-                "risk_score",
-                "recommendation",
-                "sector",
-                "politician",
-            ]
+        try:
+            _, _, predictions = run_ml_pipeline(disclosures)
 
-            for col in required_cols:
-                if col not in predictions.columns:
-                    if col == "sector":
-                        predictions[col] = "Technology"  # Default
-                    elif col == "politician":
-                        predictions[col] = "Unknown"
-                    elif col == "ticker":
-                        predictions[col] = "UNK"
+            if predictions is not None and not predictions.empty:
+                # Ensure all required columns exist
+                required_cols = [
+                    "ticker",
+                    "predicted_return",
+                    "confidence",
+                    "risk_score",
+                    "recommendation",
+                    "sector",
+                    "politician",
+                ]
 
-            return predictions
-        else:
-            st.info("ML pipeline did not generate predictions. Using demo data for display.")
+                for col in required_cols:
+                    if col not in predictions.columns:
+                        if col == "sector":
+                            predictions[col] = "Technology"  # Default
+                        elif col == "politician":
+                            predictions[col] = "Unknown"
+                        elif col == "ticker":
+                            predictions[col] = "UNK"
+
+                st.success("✅ Generated ML predictions from real data!")
+                return predictions
+        except Exception as ml_error:
+            st.warning(f"ML pipeline not fully configured: {ml_error}. Using demo predictions.")
             return generate_mock_predictions()
 
     except Exception as e:
-        st.error(f"Error loading predictions: {e}")
-        st.info("Falling back to demo data")
+        st.error(f"Error loading data: {e}")
+        st.info("Using demo data for demonstration")
         return generate_mock_predictions()
 
 
