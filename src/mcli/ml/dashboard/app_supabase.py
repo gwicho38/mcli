@@ -49,7 +49,7 @@ def get_politicians_data():
 
 @st.cache_data(ttl=30)
 def get_disclosures_data():
-    """Get trading disclosures from Supabase"""
+    """Get trading disclosures from Supabase with politician details"""
     client = get_supabase_client()
     if not client:
         return pd.DataFrame()
@@ -64,6 +64,32 @@ def get_disclosures_data():
             .execute()
         )
         df = pd.DataFrame(response.data)
+
+        if df.empty:
+            return df
+
+        # Get all unique politician IDs
+        politician_ids = df['politician_id'].dropna().unique()
+
+        # Fetch politician details
+        politicians = {}
+        if len(politician_ids) > 0:
+            pol_response = (
+                client.table("politicians")
+                .select("id, full_name, party, state_or_country")
+                .in_("id", list(politician_ids))
+                .execute()
+            )
+            politicians = {p['id']: p for p in pol_response.data}
+
+        # Add politician details to disclosures
+        df['politician_name'] = df['politician_id'].map(lambda x: politicians.get(x, {}).get('full_name', 'Unknown'))
+        df['politician_party'] = df['politician_id'].map(lambda x: politicians.get(x, {}).get('party', 'Unknown'))
+        df['politician_state'] = df['politician_id'].map(lambda x: politicians.get(x, {}).get('state_or_country', 'Unknown'))
+
+        # Rename columns for compatibility
+        df['ticker_symbol'] = df['asset_ticker']
+        df['amount'] = df['amount_exact'].fillna((df['amount_range_min'] + df['amount_range_max']) / 2)
 
         # Convert datetime columns to proper datetime format
         date_columns = ["transaction_date", "disclosure_date", "created_at", "updated_at"]
@@ -347,21 +373,25 @@ def show_politicians():
             )
         with col2:
             state_filter = st.multiselect(
-                "State",
-                options=politicians["state"].dropna().unique() if "state" in politicians else [],
+                "State/Country",
+                options=politicians["state_or_country"].dropna().unique() if "state_or_country" in politicians else [],
                 default=[],
             )
         with col3:
-            active_only = st.checkbox("Active Only", value=True)
+            active_only = st.checkbox("Active Only", value=False)
 
         # Apply filters
         filtered = politicians.copy()
         if party_filter and "party" in filtered:
             filtered = filtered[filtered["party"].isin(party_filter)]
-        if state_filter and "state" in filtered:
-            filtered = filtered[filtered["state"].isin(state_filter)]
-        if active_only and "is_active" in filtered:
-            filtered = filtered[filtered["is_active"] == True]
+        if state_filter and "state_or_country" in filtered:
+            filtered = filtered[filtered["state_or_country"].isin(state_filter)]
+        if active_only and "term_end" in filtered:
+            # Filter for active (term_end is in the future or null)
+            filtered = filtered[
+                (filtered["term_end"].isna()) |
+                (pd.to_datetime(filtered["term_end"]) > pd.Timestamp.now())
+            ]
 
         # Display data
         st.dataframe(filtered, width="stretch")
@@ -369,17 +399,17 @@ def show_politicians():
         # Stats
         col1, col2 = st.columns(2)
         with col1:
-            if "party" in filtered:
+            if "party" in filtered and not filtered["party"].dropna().empty:
                 party_dist = filtered["party"].value_counts()
                 fig = px.pie(
                     values=party_dist.values, names=party_dist.index, title="Party Distribution"
                 )
                 st.plotly_chart(fig, width="stretch", config={"responsive": True})
         with col2:
-            if "state" in filtered:
-                state_dist = filtered["state"].value_counts().head(10)
+            if "state_or_country" in filtered and not filtered["state_or_country"].dropna().empty:
+                state_dist = filtered["state_or_country"].value_counts().head(10)
                 fig = px.bar(
-                    x=state_dist.values, y=state_dist.index, orientation="h", title="Top States"
+                    x=state_dist.values, y=state_dist.index, orientation="h", title="Top States/Countries"
                 )
                 st.plotly_chart(fig, width="stretch", config={"responsive": True})
     else:
