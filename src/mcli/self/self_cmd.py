@@ -1280,6 +1280,14 @@ try:
 except ImportError as e:
     logger.debug(f"Could not load visual command: {e}")
 
+try:
+    from mcli.self.store_cmd import store
+
+    self_app.add_command(store, name="store")
+    logger.debug("Added store command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load store command: {e}")
+
 # This part is important to make the command available to the CLI
 if __name__ == "__main__":
     self_app()
