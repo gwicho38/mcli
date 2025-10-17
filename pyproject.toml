@@ -1,6 +1,6 @@
 [project]
 name = "mcli-framework"
-version = "7.8.0"
+version = "7.8.1"
 description = "🚀 High-performance CLI framework with Rust extensions, AI chat, and stunning visuals"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -135,12 +135,12 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/lefv/mcli"
-"Repository" = "https://github.com/lefv/mcli"
-"Documentation" = "https://github.com/lefv/mcli#readme"
-"Issues" = "https://github.com/lefv/mcli/issues"
-"Changelog" = "https://github.com/lefv/mcli/releases"
-"Source" = "https://github.com/lefv/mcli"
+"Homepage" = "https://github.com/gwicho38/mcli"
+"Repository" = "https://github.com/gwicho38/mcli"
+"Documentation" = "https://github.com/gwicho38/mcli#readme"
+"Issues" = "https://github.com/gwicho38/mcli/issues"
+"Changelog" = "https://github.com/gwicho38/mcli/releases"
+"Source" = "https://github.com/gwicho38/mcli"
 
 [project.optional-dependencies]
 # GPU support (optional - system specific)
