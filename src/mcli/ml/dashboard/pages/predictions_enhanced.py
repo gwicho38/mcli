@@ -158,29 +158,38 @@ def generate_mock_historical_performance() -> pd.DataFrame:
 
 
 def get_real_predictions() -> pd.DataFrame:
-    """Get real predictions from ML pipeline"""
+    """Get real predictions from ML pipeline - REQUIRES SUPABASE CONNECTION"""
     if not HAS_REAL_DATA:
-        st.warning("⚠️ Real data functions not available. Using demo data for demonstration.")
-        return generate_mock_predictions()
+        st.error("❌ **CONFIGURATION ERROR**: Real data functions not available!")
+        st.error("Cannot import Supabase utilities. Check that `src/mcli/ml/dashboard/utils.py` exists.")
+        st.stop()
 
     try:
         # Get real disclosure data
         disclosures = get_disclosures_data()
 
         if disclosures.empty:
-            st.warning(
-                "📊 No trading disclosure data available yet. Predictions will be generated once data is collected. "
-                "Using demo data for demonstration purposes."
+            st.error("❌ **DATABASE ERROR**: No trading disclosure data available!")
+            st.error("Supabase connection may not be configured. Check secrets configuration.")
+            st.code(
+                """
+# Required Streamlit Secrets:
+SUPABASE_URL = "your_supabase_url"
+SUPABASE_KEY = "your_supabase_key"
+SUPABASE_SERVICE_ROLE_KEY = "your_service_role_key"
+""",
+                language="toml",
             )
-            return generate_mock_predictions()
+            st.stop()
 
         # Check if we have enough data for ML
         if len(disclosures) < 10:
-            st.info(
-                f"📊 Found {len(disclosures)} disclosures. Need at least 10 for ML predictions. "
-                "Using demo data for demonstration."
+            st.error(
+                f"❌ **INSUFFICIENT DATA**: Found only {len(disclosures)} disclosures. "
+                f"Need at least 10 for ML predictions."
             )
-            return generate_mock_predictions()
+            st.info("Please run data collection workflows to populate the database.")
+            st.stop()
 
         # Run ML pipeline to generate predictions
         st.success(f"✅ Loaded {len(disclosures)} real trading disclosures from database!")
@@ -211,14 +220,19 @@ def get_real_predictions() -> pd.DataFrame:
 
                 st.success("✅ Generated ML predictions from real data!")
                 return predictions
+            else:
+                st.error("❌ **ML PIPELINE ERROR**: Predictions returned empty!")
+                st.error("ML pipeline ran but produced no predictions.")
+                st.stop()
         except Exception as ml_error:
-            st.warning(f"ML pipeline not fully configured: {ml_error}. Using demo predictions.")
-            return generate_mock_predictions()
+            st.error(f"❌ **ML PIPELINE ERROR**: {ml_error}")
+            st.exception(ml_error)
+            st.stop()
 
     except Exception as e:
-        st.error(f"Error loading data: {e}")
-        st.info("Using demo data for demonstration")
-        return generate_mock_predictions()
+        st.error(f"❌ **FATAL ERROR**: {e}")
+        st.exception(e)
+        st.stop()
 
 
 def show_predictions_enhanced():
@@ -672,12 +686,25 @@ def show_prediction_generator():
 
 
 def show_performance_tracker():
-    """Show prediction performance over time"""
+    """Show prediction performance over time - REQUIRES REAL ML PREDICTION HISTORY"""
 
     st.subheader("📈 Prediction Performance Tracker")
     st.markdown("Track the accuracy and ROI of our ML predictions over time")
 
-    # Generate historical data
+    # TODO: Implement real performance tracking from database
+    st.error("❌ **FEATURE NOT IMPLEMENTED**: Performance tracking requires ML prediction history database.")
+    st.info(
+        """
+    This feature requires:
+    1. A prediction_history table in Supabase
+    2. Automated prediction tracking and validation
+    3. Historical performance metrics calculation
+
+    Currently showing mock data for demonstration only.
+    """
+    )
+
+    # Generate historical data (mock for now)
     performance_df = generate_mock_historical_performance()
 
     # KPIs
