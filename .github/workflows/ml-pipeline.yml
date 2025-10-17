@@ -92,7 +92,7 @@ jobs:
           pytest tests/unit/test_ml*.py tests/integration/test_ml*.py -v --cov=src/mcli/ml --cov-report=xml --cov-report=term || true
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage.xml
           flags: unittests
