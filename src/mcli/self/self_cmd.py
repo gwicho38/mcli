@@ -1030,6 +1030,14 @@ except ImportError as e:
     logger.debug(f"Could not load redis command: {e}")
 
 try:
+    from mcli.self.zsh_cmd import zsh_group
+
+    self_app.add_command(zsh_group, name="zsh")
+    logger.debug("Added zsh command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load zsh command: {e}")
+
+try:
     from mcli.self.visual_cmd import visual
 
     self_app.add_command(visual, name="visual")

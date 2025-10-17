@@ -3,6 +3,8 @@ import sys
 
 import click
 
+from mcli.lib.secrets.commands import secrets_group
+
 
 def import_public_module(module_name: str):
     prefix = "mcli.public."
@@ -20,9 +22,14 @@ def import_public_module(module_name: str):
     return module
 
 
-@click.group(name="lib")
+@click.group(name="lib", help="Library utilities and secrets management")
 def lib():
+    """Library utilities and management commands."""
     pass
+
+
+# Add secrets as a subcommand
+lib.add_command(secrets_group)
 
 
 if __name__ == "__main__":

@@ -344,6 +344,15 @@ def _add_lazy_commands(app: click.Group):
     except Exception as e:
         logger.debug(f"Could not load self commands: {e}")
 
+    # Library utilities and secrets management
+    try:
+        from mcli.lib.lib import lib
+
+        app.add_command(lib, name="lib")
+        logger.debug("Added lib commands")
+    except Exception as e:
+        logger.debug(f"Could not load lib commands: {e}")
+
     # Add workflow with completion-aware lazy loading
     try:
         from mcli.app.completion_helpers import create_completion_aware_lazy_group
