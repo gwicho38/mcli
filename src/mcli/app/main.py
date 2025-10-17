@@ -12,8 +12,6 @@ from typing import List, Optional
 import click
 import tomli
 
-# Import chat command group
-from mcli.app.chat_cmd import chat
 from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_tracing, get_logger
 from mcli.lib.ui.styling import info, success
 
@@ -346,15 +344,6 @@ def _add_lazy_commands(app: click.Group):
     except Exception as e:
         logger.debug(f"Could not load self commands: {e}")
 
-    # Test group - load immediately for testing commands
-    try:
-        from mcli.test.test_cmd import test_group
-
-        app.add_command(test_group, name="test")
-        logger.debug("Added test group commands")
-    except Exception as e:
-        logger.debug(f"Could not load test commands: {e}")
-
     # Add workflow with completion-aware lazy loading
     try:
         from mcli.app.completion_helpers import create_completion_aware_lazy_group
@@ -377,16 +366,11 @@ def _add_lazy_commands(app: click.Group):
         app.add_command(workflow_group, name="workflow")
 
     # Lazy load other heavy commands that are used less frequently
-    lazy_commands = {
-        "chat": {
-            "import_path": "mcli.app.chat_cmd.chat",
-            "help": "Start an interactive chat session with the MCLI Chat Assistant.",
-        },
-        "model": {
-            "import_path": "mcli.app.model_cmd.model",
-            "help": "Model management commands for offline and online model usage",
-        },
-    }
+    # NOTE: chat and model commands have been removed
+    # - chat: removed from core commands
+    # - model: moved to ~/.mcli/commands workflow
+    # - test: removed from core commands
+    lazy_commands = {}
 
     for cmd_name, cmd_info in lazy_commands.items():
         # Skip workflow since we already added it with completion support

@@ -16,9 +16,9 @@ def test_new_user_complete_workflow():
     1. Check available self commands
     2. Run mcli self logs (should work even with no logs)
     3. Check for updates
-    4. View help for model commands
+    4. View help for model commands (now a workflow command)
     """
-    from mcli.app.model_cmd import model
+    from mcli.app.main import create_app
     from mcli.self.self_cmd import self_app
 
     runner = CliRunner()
@@ -39,8 +39,9 @@ def test_new_user_complete_workflow():
     assert result.exit_code == 0
     assert "--check" in result.output
 
-    # Step 4: View help for model command
-    result = runner.invoke(model, ["--help"])
+    # Step 4: View help for model command (now loaded as workflow command)
+    app = create_app()
+    result = runner.invoke(app, ["model", "--help"])
     assert result.exit_code == 0
     assert "list" in result.output or "start" in result.output
 
@@ -73,26 +74,27 @@ def test_new_user_discovers_features():
 @pytest.mark.e2e
 def test_new_user_model_exploration():
     """
-    Test new user exploring model commands
+    Test new user exploring model commands (now a workflow command)
     """
-    from mcli.app.model_cmd import model
+    from mcli.app.main import create_app
 
     runner = CliRunner()
+    app = create_app()
 
     # View model help
-    result = runner.invoke(model, ["--help"])
+    result = runner.invoke(app, ["model", "--help"])
     assert result.exit_code == 0
 
     # View list help
-    result = runner.invoke(model, ["list", "--help"])
+    result = runner.invoke(app, ["model", "list", "--help"])
     assert result.exit_code == 0
 
     # View recommend help
-    result = runner.invoke(model, ["recommend", "--help"])
+    result = runner.invoke(app, ["model", "recommend", "--help"])
     assert result.exit_code == 0
 
     # View start help
-    result = runner.invoke(model, ["start", "--help"])
+    result = runner.invoke(app, ["model", "start", "--help"])
     assert result.exit_code == 0
     assert "port" in result.output.lower()
 
@@ -122,13 +124,14 @@ def test_new_user_error_handling():
     """
     Test that new users get helpful error messages
     """
-    from mcli.app.model_cmd import model
+    from mcli.app.main import create_app
     from mcli.self.self_cmd import self_app
 
     runner = CliRunner()
+    app = create_app()
 
     # Invalid command for model
-    result = runner.invoke(model, ["nonexistent-command"])
+    result = runner.invoke(app, ["model", "nonexistent-command"])
     # Should fail gracefully
     assert result.exit_code != 0
 

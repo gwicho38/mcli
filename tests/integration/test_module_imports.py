@@ -41,10 +41,11 @@ class TestModuleImports:
 
     def test_import_app_modules(self):
         """Test importing app modules"""
-        from mcli.app import chat_cmd, model_cmd
+        # Note: chat_cmd and model_cmd have been removed from core commands
+        # They are now available as workflow commands in ~/.mcli/commands/
+        from mcli.app import main
 
-        assert chat_cmd is not None
-        assert model_cmd is not None
+        assert main is not None
 
     @pytest.mark.skip(reason="Requires complex dependencies")
     def test_import_ml_preprocessing(self):
