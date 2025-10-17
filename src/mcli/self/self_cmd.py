@@ -102,79 +102,8 @@ def restore_command_state(hash_value):
     return True
 
 
-# Create a Click group for all command management
-@self_app.group("commands")
-def commands_group():
-    """Manage CLI commands and command state."""
-    pass
-
-
-# Move the command-state group under commands_group
-@commands_group.group("state")
-def command_state():
-    """Manage command state lockfile and history."""
-    pass
-
-
-@command_state.command("list")
-def list_states():
-    """List all saved command states (hash, timestamp, #commands)."""
-    states = load_lockfile()
-    if not states:
-        click.echo("No command states found.")
-        return
-    table = Table(title="Command States")
-    table.add_column("Hash", style="cyan")
-    table.add_column("Timestamp", style="green")
-    table.add_column("# Commands", style="yellow")
-    for state in states:
-        table.add_row(state["hash"][:8], state["timestamp"], str(len(state["commands"])))
-    console.print(table)
-
-
-@command_state.command("restore")
-@click.argument("hash_value")
-def restore_state(hash_value):
-    """Restore to a previous command state by hash."""
-    if restore_command_state(hash_value):
-        click.echo(f"Restored to state {hash_value[:8]}")
-    else:
-        click.echo(f"State {hash_value[:8]} not found.", err=True)
-
-
-@command_state.command("write")
-@click.argument("json_file", required=False, type=click.Path(exists=False))
-def write_state(json_file):
-    """Write a new command state to the lockfile from a JSON file or the current app state."""
-    import traceback
-
-    print("[DEBUG] write_state called")
-    print(f"[DEBUG] LOCKFILE_PATH: {LOCKFILE_PATH}")
-    try:
-        if json_file:
-            print(f"[DEBUG] Loading command state from file: {json_file}")
-            with open(json_file, "r") as f:
-                commands = json.load(f)
-            click.echo(f"Loaded command state from {json_file}.")
-        else:
-            print("[DEBUG] Snapshotting current command state.")
-            commands = get_current_command_state()
-        state_hash = hash_command_state(commands)
-        new_state = {
-            "hash": state_hash,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "commands": commands,
-        }
-        append_lockfile(new_state)
-        print(f"[DEBUG] Wrote new command state {state_hash[:8]} to lockfile at {LOCKFILE_PATH}")
-        click.echo(f"Wrote new command state {state_hash[:8]} to lockfile.")
-    except Exception as e:
-        print(f"[ERROR] Exception in write_state: {e}")
-        print(traceback.format_exc())
-        click.echo(f"[ERROR] Failed to write command state: {e}", err=True)
-
-
 # On CLI startup, check and update lockfile if needed
+# NOTE: The commands group has been moved to mcli.app.commands_cmd for better organization
 
 
 def check_and_update_command_lockfile():
@@ -250,76 +179,7 @@ def {name}_command(name: str = "World"):
     return template
 
 
-@self_app.command("search")
-@click.argument("query", required=False)
-@click.option("--full", "-f", is_flag=True, help="Show full command paths and descriptions")
-def search(query, full):
-    """
-    Search for available commands using fuzzy matching.
-
-    Similar to telescope in neovim, this allows quick fuzzy searching
-    through all available commands in mcli.
-
-    If no query is provided, lists all commands.
-    """
-    # Collect all commands from the application
-    commands = collect_commands()
-
-    # Display the commands in a table
-    table = Table(title="mcli Commands")
-    table.add_column("Command", style="green")
-    table.add_column("Group", style="blue")
-    if full:
-        table.add_column("Path", style="dim")
-        table.add_column("Description", style="yellow")
-
-    if query:
-        filtered_commands = []
-
-        # Try to use fuzzywuzzy for better matching if available
-        if process:
-            # Extract command names for matching
-            command_names = [
-                f"{cmd['group']}.{cmd['name']}" if cmd["group"] else cmd["name"] for cmd in commands
-            ]
-            matches = process.extract(query, command_names, limit=10)
-
-            # Filter to matched commands
-            match_indices = [command_names.index(match[0]) for match in matches if match[1] > 50]
-            filtered_commands = [commands[i] for i in match_indices]
-        else:
-            # Fallback to simple substring matching
-            filtered_commands = [
-                cmd
-                for cmd in commands
-                if query.lower() in cmd["name"].lower()
-                or (cmd["group"] and query.lower() in cmd["group"].lower())
-            ]
-
-        commands = filtered_commands
-
-    # Sort commands by group then name
-    commands.sort(key=lambda c: (c["group"] if c["group"] else "", c["name"]))
-
-    # Add rows to the table
-    for cmd in commands:
-        if full:
-            table.add_row(
-                cmd["name"],
-                cmd["group"] if cmd["group"] else "-",
-                cmd["path"],
-                cmd["help"] if cmd["help"] else "",
-            )
-        else:
-            table.add_row(cmd["name"], cmd["group"] if cmd["group"] else "-")
-
-    console.print(table)
-
-    if not commands:
-        logger.info("No commands found matching the search query")
-        click.echo("No commands found matching the search query")
-
-    return 0
+# NOTE: search command has been moved to mcli.app.commands_cmd for better organization
 
 
 def collect_commands() -> List[Dict[str, Any]]:
@@ -575,110 +435,7 @@ logger = get_logger()
             pass
 
 
-@self_app.command("extract-workflow-commands")
-@click.option(
-    "--output", "-o", type=click.Path(), help="Output file (default: workflow-commands.json)"
-)
-def extract_workflow_commands(output):
-    """
-    Extract workflow commands from Python modules to JSON format.
-
-    This command helps migrate existing workflow commands to portable JSON format.
-    """
-    import inspect
-    from pathlib import Path
-
-    output_file = Path(output) if output else Path("workflow-commands.json")
-
-    workflow_commands = []
-
-    # Try to get workflow from the main app
-    try:
-        from mcli.app.main import create_app
-
-        app = create_app()
-
-        # Check if workflow group exists
-        if "workflow" in app.commands:
-            workflow_group = app.commands["workflow"]
-
-            # Force load lazy group if needed
-            if hasattr(workflow_group, "_load_group"):
-                workflow_group = workflow_group._load_group()
-
-            if hasattr(workflow_group, "commands"):
-                for cmd_name, cmd_obj in workflow_group.commands.items():
-                    # Extract command information
-                    command_info = {
-                        "name": cmd_name,
-                        "group": "workflow",
-                        "description": cmd_obj.help or "Workflow command",
-                        "version": "1.0",
-                        "metadata": {"source": "workflow", "migrated": True},
-                    }
-
-                    # Create a template based on command type
-                    # Replace hyphens with underscores for valid Python function names
-                    safe_name = cmd_name.replace("-", "_")
-
-                    if isinstance(cmd_obj, click.Group):
-                        # For groups, create a template
-                        command_info[
-                            "code"
-                        ] = f'''"""
-{cmd_name} workflow command.
-"""
-import click
-
-@click.group(name="{cmd_name}")
-def app():
-    """{cmd_obj.help or 'Workflow command group'}"""
-    pass
-
-# Add your subcommands here
-'''
-                    else:
-                        # For regular commands, create a template
-                        command_info[
-                            "code"
-                        ] = f'''"""
-{cmd_name} workflow command.
-"""
-import click
-
-@click.command(name="{cmd_name}")
-def app():
-    """{cmd_obj.help or 'Workflow command'}"""
-    click.echo("Workflow command: {cmd_name}")
-    # Add your implementation here
-'''
-
-                    workflow_commands.append(command_info)
-
-        if workflow_commands:
-            import json
-
-            with open(output_file, "w") as f:
-                json.dump(workflow_commands, f, indent=2)
-
-            click.echo(f"✅ Extracted {len(workflow_commands)} workflow commands")
-            click.echo(f"📁 Saved to: {output_file}")
-            click.echo(
-                f"\n💡 These are templates. Import with: mcli self import-commands {output_file}"
-            )
-            click.echo("   Then customize the code in ~/.mcli/commands/<command>.json")
-            return 0
-        else:
-            click.echo("⚠️  No workflow commands found to extract")
-            return 1
-
-    except Exception as e:
-        logger.error(f"Failed to extract workflow commands: {e}")
-        click.echo(f"❌ Failed to extract workflow commands: {e}", err=True)
-        import traceback
-
-        click.echo(traceback.format_exc(), err=True)
-        return 1
+# NOTE: extract-workflow-commands has been moved to mcli.app.commands_cmd for better organization
 
 
 @click.group("plugin")
@@ -1280,13 +1037,7 @@ try:
 except ImportError as e:
     logger.debug(f"Could not load visual command: {e}")
 
-try:
-    from mcli.self.store_cmd import store
-
-    self_app.add_command(store, name="store")
-    logger.debug("Added store command to self group")
-except ImportError as e:
-    logger.debug(f"Could not load store command: {e}")
+# NOTE: store command has been moved to mcli.app.commands_cmd for better organization
 
 # This part is important to make the command available to the CLI
 if __name__ == "__main__":

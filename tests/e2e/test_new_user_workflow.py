@@ -58,13 +58,10 @@ def test_new_user_discovers_features():
     # Discover self commands
     result = runner.invoke(self_app, ["--help"])
     assert result.exit_code == 0
-    assert "search" in result.output
     assert "update" in result.output
     assert "logs" in result.output
 
-    # Check search functionality
-    result = runner.invoke(self_app, ["search", "--help"])
-    assert result.exit_code == 0
+    # NOTE: search command has been moved to mcli commands group
 
     # Check update functionality
     result = runner.invoke(self_app, ["update", "--help"])

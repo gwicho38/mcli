@@ -3,14 +3,16 @@ Command Store Management - Sync ~/.mcli/commands/ to git
 Similar to lsh secrets but for workflow commands
 """
 
-import click
 import os
 import shutil
 import subprocess
-from pathlib import Path
 from datetime import datetime
-from mcli.lib.ui.styling import success, error, info, warning
+from pathlib import Path
+
+import click
+
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.ui.styling import error, info, success, warning
 
 logger = get_logger()
 

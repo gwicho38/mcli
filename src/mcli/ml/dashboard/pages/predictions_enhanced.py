@@ -161,7 +161,9 @@ def get_real_predictions() -> pd.DataFrame:
     """Get real predictions from ML pipeline - REQUIRES SUPABASE CONNECTION"""
     if not HAS_REAL_DATA:
         st.error("❌ **CONFIGURATION ERROR**: Real data functions not available!")
-        st.error("Cannot import Supabase utilities. Check that `src/mcli/ml/dashboard/utils.py` exists.")
+        st.error(
+            "Cannot import Supabase utilities. Check that `src/mcli/ml/dashboard/utils.py` exists."
+        )
         st.stop()
 
     try:
@@ -692,7 +694,9 @@ def show_performance_tracker():
     st.markdown("Track the accuracy and ROI of our ML predictions over time")
 
     # TODO: Implement real performance tracking from database
-    st.error("❌ **FEATURE NOT IMPLEMENTED**: Performance tracking requires ML prediction history database.")
+    st.error(
+        "❌ **FEATURE NOT IMPLEMENTED**: Performance tracking requires ML prediction history database."
+    )
     st.info(
         """
     This feature requires:

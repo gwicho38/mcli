@@ -1,5 +1,5 @@
 """
-CLI tests for mcli.app.logs_cmd module
+CLI tests for mcli.self.logs_cmd module
 """
 
 import tempfile
@@ -20,24 +20,24 @@ class TestLogsCommands:
 
     def test_logs_group_exists(self):
         """Test logs command group exists"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         assert logs_group is not None
         assert hasattr(logs_group, "commands")
 
     def test_logs_group_help(self):
         """Test logs command group help"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         result = self.runner.invoke(logs_group, ["--help"])
 
         assert result.exit_code == 0
         assert "logs" in result.output.lower() or "stream" in result.output.lower()
 
-    @patch("mcli.app.logs_cmd.get_logs_dir")
+    @patch("mcli.self.logs_cmd.get_logs_dir")
     def test_show_location_directory_exists(self, mock_get_logs_dir):
         """Test show location with existing directory"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
@@ -51,10 +51,10 @@ class TestLogsCommands:
             assert result.exit_code == 0
             assert tmpdir in result.output
 
-    @patch("mcli.app.logs_cmd.get_logs_dir")
+    @patch("mcli.self.logs_cmd.get_logs_dir")
     def test_show_location_directory_not_exists(self, mock_get_logs_dir):
         """Test show location with non-existent directory"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         # Use a path that doesn't exist
         nonexistent_path = Path("/nonexistent/logs/path")
@@ -66,10 +66,10 @@ class TestLogsCommands:
         # Should show warning about directory not existing
         assert "created" in result.output.lower() or "nonexistent" not in result.output
 
-    @patch("mcli.app.logs_cmd.get_logs_dir")
+    @patch("mcli.self.logs_cmd.get_logs_dir")
     def test_list_logs_command(self, mock_get_logs_dir):
         """Test list logs command"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
@@ -83,10 +83,10 @@ class TestLogsCommands:
 
             assert result.exit_code == 0
 
-    @patch("mcli.app.logs_cmd.get_logs_dir")
+    @patch("mcli.self.logs_cmd.get_logs_dir")
     def test_list_logs_with_date(self, mock_get_logs_dir):
         """Test list logs with specific date"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
@@ -96,10 +96,10 @@ class TestLogsCommands:
 
             assert result.exit_code == 0
 
-    @patch("mcli.app.logs_cmd.get_logs_dir")
+    @patch("mcli.self.logs_cmd.get_logs_dir")
     def test_tail_logs_file_not_found(self, mock_get_logs_dir):
         """Test tail logs when file doesn't exist"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
@@ -110,10 +110,10 @@ class TestLogsCommands:
             # Should handle missing file gracefully
             assert result.exit_code in [0, 1]
 
-    @patch("mcli.app.logs_cmd.get_logs_dir")
+    @patch("mcli.self.logs_cmd.get_logs_dir")
     def test_tail_logs_with_lines_option(self, mock_get_logs_dir):
         """Test tail logs with lines option"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
@@ -129,10 +129,10 @@ class TestLogsCommands:
             # Should not crash
             assert result.exit_code in [0, 1]
 
-    @patch("mcli.app.logs_cmd.get_logs_dir")
+    @patch("mcli.self.logs_cmd.get_logs_dir")
     def test_tail_logs_with_date(self, mock_get_logs_dir):
         """Test tail logs with specific date"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
@@ -144,7 +144,7 @@ class TestLogsCommands:
 
     def test_logs_location_help(self):
         """Test location command help"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         result = self.runner.invoke(logs_group, ["location", "--help"])
 
@@ -152,7 +152,7 @@ class TestLogsCommands:
 
     def test_logs_list_help(self):
         """Test list command help"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         result = self.runner.invoke(logs_group, ["list", "--help"])
 
@@ -160,16 +160,16 @@ class TestLogsCommands:
 
     def test_logs_tail_help(self):
         """Test tail command help"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         result = self.runner.invoke(logs_group, ["tail", "--help"])
 
         assert result.exit_code == 0
 
-    @patch("mcli.app.logs_cmd.get_logs_dir")
+    @patch("mcli.self.logs_cmd.get_logs_dir")
     def test_stream_logs_no_files(self, mock_get_logs_dir):
         """Test stream logs when no files exist"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
@@ -180,10 +180,10 @@ class TestLogsCommands:
             # Should handle gracefully
             assert result.exit_code in [0, 1]
 
-    @patch("mcli.app.logs_cmd.get_logs_dir")
+    @patch("mcli.self.logs_cmd.get_logs_dir")
     def test_stream_logs_type_option(self, mock_get_logs_dir):
         """Test stream logs with type option"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
@@ -201,7 +201,7 @@ class TestLogsCommands:
 
     def test_logs_stream_help(self):
         """Test stream command help"""
-        from mcli.app.logs_cmd import logs_group
+        from mcli.self.logs_cmd import logs_group
 
         result = self.runner.invoke(logs_group, ["stream", "--help"])
 

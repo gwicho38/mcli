@@ -83,14 +83,16 @@ def get_disclosures_data() -> pd.DataFrame:
         )
 
         if not response.data:
-            st.info("📊 No trading disclosures found in database. Data collection may be in progress.")
+            st.info(
+                "📊 No trading disclosures found in database. Data collection may be in progress."
+            )
             return pd.DataFrame()
 
         df = pd.DataFrame(response.data)
 
         # Get politician details and join
-        if not df.empty and 'politician_id' in df.columns:
-            politician_ids = df['politician_id'].dropna().unique()
+        if not df.empty and "politician_id" in df.columns:
+            politician_ids = df["politician_id"].dropna().unique()
             if len(politician_ids) > 0:
                 pol_response = (
                     client.table("politicians")
@@ -98,16 +100,24 @@ def get_disclosures_data() -> pd.DataFrame:
                     .in_("id", list(politician_ids))
                     .execute()
                 )
-                politicians = {p['id']: p for p in pol_response.data}
+                politicians = {p["id"]: p for p in pol_response.data}
 
                 # Add politician details
-                df['politician_name'] = df['politician_id'].map(lambda x: politicians.get(x, {}).get('full_name', 'Unknown'))
-                df['politician_party'] = df['politician_id'].map(lambda x: politicians.get(x, {}).get('party', 'Unknown'))
-                df['politician_state'] = df['politician_id'].map(lambda x: politicians.get(x, {}).get('state_or_country', 'Unknown'))
+                df["politician_name"] = df["politician_id"].map(
+                    lambda x: politicians.get(x, {}).get("full_name", "Unknown")
+                )
+                df["politician_party"] = df["politician_id"].map(
+                    lambda x: politicians.get(x, {}).get("party", "Unknown")
+                )
+                df["politician_state"] = df["politician_id"].map(
+                    lambda x: politicians.get(x, {}).get("state_or_country", "Unknown")
+                )
 
                 # Map column names for compatibility
-                df['ticker_symbol'] = df['asset_ticker']
-                df['amount'] = df['amount_exact'].fillna((df['amount_range_min'] + df['amount_range_max']) / 2)
+                df["ticker_symbol"] = df["asset_ticker"]
+                df["amount"] = df["amount_exact"].fillna(
+                    (df["amount_range_min"] + df["amount_range_max"]) / 2
+                )
 
         return df
 

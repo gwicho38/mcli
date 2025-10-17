@@ -139,6 +139,7 @@ def info():
 def test():
     """Test Supabase connection."""
     import os
+
     from mcli.ml.dashboard.common import get_supabase_client
 
     click.echo("🔍 Testing Supabase connection...")
