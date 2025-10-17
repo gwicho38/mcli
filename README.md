@@ -1,332 +1,456 @@
-# MCLI
+# MCLI - Portable Workflow Framework
 
-A modern CLI framework with chat capabilities, command management, and extensible architecture.
+**Transform any script into a versioned, portable, schedulable workflow command.**
 
-## Features
+MCLI is a modular CLI framework that lets you write scripts once and run them anywhere - as interactive commands, scheduled jobs, or background daemons. Your workflows live in `~/.mcli/commands/`, are versioned via lockfile, and completely decoupled from the engine source code.
 
-- 🚀 **Modern CLI Framework**: Built with Click and Rich for beautiful command-line interfaces
-- 💬 **AI Chat Integration**: Built-in chat capabilities with OpenAI and Anthropic support
-- 🔧 **Command Management**: Dynamic command discovery and registration
-- 🎨 **Rich UI**: Colorful, interactive command-line experience
-- 📦 **Easy Extension**: Simple framework for adding custom commands
-- 🛠️ **Developer Tools**: IPython integration for interactive development
-- ⚡ **Shell Completion**: Full tab completion for bash, zsh, and fish shells
+## 🎯 Core Philosophy
 
-## Quick Start
+Write a script. Store it. Version it. Run it anywhere. Schedule it. Share it.
 
-### Prerequisites
+No coupling to the engine. No vendor lock-in. Just portable workflows that work.
 
-- Python 3.9 or higher
-- [UV](https://docs.astral.sh/uv/) (recommended) or pip
+## ⚡ Quick Start
 
-### Installation from PyPI (Recommended)
-
-The easiest way to install mcli is from PyPI:
+### Installation
 
 ```bash
-# Install latest version (includes all features)
+# Install from PyPI
 pip install mcli-framework
 
 # Or with UV (recommended)
 uv pip install mcli-framework
-
-# Optional: GPU support (CUDA required)
-pip install "mcli-framework[gpu]"
 ```
 
-**Note:** As of v7.0.0, all features are included by default. GPU support is optional as it requires CUDA.
+### Create Your First Workflow
 
-**Self-Update Feature:** Once installed from PyPI, you can update mcli to the latest version with:
+#### Method 1: From a Python Script
 
 ```bash
-# Check for updates
-mcli self update --check
-
-# Install updates automatically
-mcli self update
-
-# Install with confirmation
-mcli self update --yes
-```
-
-### Installation from Source
-
-For development or if you want to customize mcli:
-
-#### With UV
-
-```bash
-# Clone the repository
-git clone https://github.com/gwicho38/mcli.git
-cd mcli
-
-# Install with UV (recommended)
-uv venv
-uv pip install -e .
-
-# Or install development dependencies
-uv pip install -e ".[dev]"
-```
-
-#### With pip
-
-```bash
-# Clone the repository
-git clone https://github.com/gwicho38/mcli.git
-cd mcli
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install the package
-pip install -e .
-```
-
-### Usage
-
-```bash
-# Show available commands
-mcli --help
-
-# Start a chat session
-mcli chat
-
-# Get version information
-mcli version
-
-# Manage the application
-mcli self --help
-
-# List available commands
-mcli commands
-```
-
-### Shell Completion (Optional)
-
-Enable tab completion for faster command discovery:
-
-```bash
-# Install completion for your shell (auto-detects bash/zsh/fish)
-mcli completion install
-
-# Check completion status
-mcli completion status
-```
-
-After installation, you'll have full tab completion:
-- `mcli <TAB>` → shows all available commands
-- `mcli workflow <TAB>` → shows workflow subcommands  
-- `mcli workflow politician-trading <TAB>` → shows politician-trading options
-
-See [SHELL_COMPLETION.md](docs/features/SHELL_COMPLETION.md) for detailed setup and troubleshooting.
-
-## Development Workflow
-
-This project uses [UV](https://docs.astral.sh/uv/) for fast, reliable Python package management.
-
-### Setup Development Environment
-
-```bash
-# 1. Set up the development environment
-make setup
-
-# Or manually with UV
-uv venv
-uv pip install -e ".[dev]"
-
-# 2. Configure environment variables
-cp .env.example .env
-# Edit .env with your API keys and configuration
-```
-
-### Available Make Commands
-
-```bash
-# Setup and Installation
-make setup                  # Setup UV environment with caching
-make install               # Install the package with caching
-
-# Building
-make wheel                 # Build Python wheel package
-make portable              # Build portable executable
-make validate-build        # Validate application for distribution
-
-# Testing
-make test                  # Test basic installation and functionality
-make test-all              # Run complete test suite (if available)
-make validate-build        # Comprehensive build validation
-
-# CI/CD
-make ci-trigger-build      # Trigger GitHub Actions build workflow
-make ci-trigger-test       # Trigger GitHub Actions test workflow
-make ci-watch              # Watch GitHub Actions runs in real-time
-make ci-status             # Show GitHub Actions run status
-
-# Maintenance
-make clean                 # Clean all build artifacts
-make debug                 # Show debug information
-```
-
-### Project Structure
-
-```
-mcli/
-├── src/mcli/              # Main package source
-│   ├── app/               # Application modules
-│   │   ├── main.py        # Main CLI entry point
-│   │   ├── chat_cmd.py    # Chat command implementation
-│   │   └── commands_cmd.py # Command management
-│   ├── chat/              # Chat system
-│   ├── lib/               # Shared libraries
-│   │   ├── api/           # API functionality
-│   │   ├── ui/            # UI components
-│   │   └── logger/        # Logging utilities
-│   └── self/              # Self-management commands
-├── tests/                 # Test suite
-├── .github/workflows/     # CI/CD workflows
-├── pyproject.toml         # Project configuration
-├── Makefile              # Build and development commands
-└── README.md             # This file
-```
-
-## Dependencies
-
-### Core Dependencies
-- **click**: Command-line interface creation
-- **rich**: Rich text and beautiful formatting
-- **requests**: HTTP library
-- **tomli**: TOML parser
-
-### AI & Chat
-- **openai**: OpenAI API integration
-- **anthropic**: Anthropic API integration
-
-### Development Tools
-- **ipython**: Interactive Python shell
-- **inquirerpy**: Interactive command-line prompts
-
-### Optional Dependencies
-
-MCLI has been optimized with minimal core dependencies. Install only what you need:
-
-```bash
-# Chat and AI features
-uv pip install -e ".[chat]"
-
-# Video processing
-uv pip install -e ".[video]"
-
-# Document processing (PDF, Excel, etc.)
-uv pip install -e ".[documents]"
-
-# ML/Trading features
-uv pip install -e ".[ml]"
-
-# Database support
-uv pip install -e ".[database]"
-
-# Web dashboards
-uv pip install -e ".[dashboard]"
-
-# Development tools
-uv pip install -e ".[dev]"
-
-# Everything
-uv pip install -e ".[all]"
-```
-
-Available extras:
-- `chat` - OpenAI, Anthropic, Ollama support
-- `async-extras` - FastAPI, Redis, advanced async features
-- `video` - OpenCV, image processing
-- `documents` - PDF, Excel processing
-- `viz` - Matplotlib, Plotly visualization
-- `database` - Supabase, SQLAlchemy, PostgreSQL
-- `ml` - PyTorch, MLflow, DVC, trading features
-- `gpu` - CUDA support
-- `monitoring` - Prometheus, Datadog
-- `streaming` - Kafka support
-- `dashboard` - Streamlit dashboards
-- `web` - Flask, FastAPI web frameworks
-- `dev` - Testing, linting, type checking
-- `all` - All optional features
-
-## Configuration
-
-MCLI can be configured through environment variables and configuration files.
-
-### Environment Setup
-
-1. **Copy the environment template:**
-   ```bash
-   cp .env.example .env
-   ```
-
-2. **Edit the `.env` file with your configuration:**
-   ```bash
-   # Required for AI chat functionality
-   OPENAI_API_KEY=your-openai-api-key-here
-   ANTHROPIC_API_KEY=your-anthropic-api-key-here
-
-   # Required for politician trading features
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_ANON_KEY=your-supabase-anon-key-here
-   SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key-here
-   ```
-
-3. **Optional development settings:**
-   ```bash
-   # Enable debug logging
-   MCLI_TRACE_LEVEL=1
-   MCLI_DEBUG=true
-
-   # Performance optimization
-   MCLI_AUTO_OPTIMIZE=true
-   ```
-
-See `.env.example` for a complete list of configuration options.
-
-## Creating Custom Commands
-
-MCLI supports dynamic command discovery. Add your commands to the appropriate modules:
-
-```python
+# Write your script
+cat > my_task.py << 'EOF'
 import click
-from mcli.lib.ui.styling import success
 
 @click.command()
-def my_command():
-    """My custom command."""
-    success("Hello from my custom command!")
+@click.option('--message', default='Hello', help='Message to display')
+def app(message):
+    """My custom workflow"""
+    click.echo(f"{message} from my workflow!")
+EOF
+
+# Import as workflow
+mcli commands import-script my_task.py --name my-task --group workflow
+
+# Run it
+mcli workflow my-task --message "Hi"
 ```
 
-## CI/CD
+#### Method 2: Interactive Creation
 
-The project includes comprehensive CI/CD with GitHub Actions:
+```bash
+# Create workflow interactively
+mcli commands add my-task --group workflow
 
-- **Build Workflow**: Multi-platform builds (Ubuntu, macOS)
-- **Test Workflow**: Multi-Python version testing (3.9-3.12)
-- **Automatic Triggers**: Runs on push/PR to main branch
-- **Manual Triggers**: Use `make ci-trigger-*` commands
+# Edit in your $EDITOR, then run
+mcli workflow my-task
+```
 
-## Contributing
+## 📦 Workflow System Features
+
+### 1. **Create Workflows**
+
+Multiple ways to create workflows:
+
+```bash
+# Import from existing Python script
+mcli commands import-script script.py --name my-workflow --group workflow
+
+# Create new workflow interactively
+mcli commands add my-workflow --group workflow --description "Does something useful"
+
+# List all workflows
+mcli commands list-custom
+```
+
+### 2. **Edit & Manage Workflows**
+
+```bash
+# Edit workflow in $EDITOR
+mcli commands edit my-workflow
+
+# Show workflow details
+mcli commands info my-workflow
+
+# Search workflows
+mcli commands search "pdf"
+
+# Remove workflow
+mcli commands remove my-workflow
+```
+
+### 3. **Export & Import (Portability)**
+
+Share workflows across machines or with your team:
+
+```bash
+# Export all workflows to JSON
+mcli commands export my-workflows.json
+
+# Import on another machine
+mcli commands import my-workflows.json
+
+# Export single workflow to Python script
+mcli commands export-script my-workflow --output my_workflow.py
+```
+
+Your workflows are just JSON files in `~/.mcli/commands/`:
+
+```bash
+$ ls ~/.mcli/commands/
+pdf-processor.json
+data-sync.json
+git-commit.json
+commands.lock.json  # Version lockfile
+```
+
+### 4. **Version Control with Lockfile**
+
+MCLI automatically maintains a lockfile for reproducibility:
+
+```bash
+# Update lockfile with current workflow versions
+mcli commands update-lockfile
+
+# Verify workflows match lockfile
+mcli commands verify
+```
+
+Example `commands.lock.json`:
+
+```json
+{
+  "version": "1.0",
+  "generated_at": "2025-10-17T10:30:00Z",
+  "commands": {
+    "pdf-processor": {
+      "name": "pdf-processor",
+      "description": "Intelligent PDF processor",
+      "group": "workflow",
+      "version": "1.2",
+      "updated_at": "2025-10-15T14:30:00Z"
+    }
+  }
+}
+```
+
+**Version control your workflows:**
+
+```bash
+# Add lockfile to git
+git add ~/.mcli/commands/commands.lock.json ~/.mcli/commands/*.json
+git commit -m "Update workflows"
+
+# On another machine
+git pull
+mcli commands verify  # Ensures consistency
+```
+
+### 5. **Run as Daemon or Scheduled Task**
+
+Workflows aren't coupled to the engine - run them however you want:
+
+#### As a Daemon:
+
+```bash
+# Start workflow as background daemon
+mcli workflow daemon start my-task-daemon --workflow my-task
+
+# Check daemon status
+mcli workflow daemon status
+
+# Stop daemon
+mcli workflow daemon stop my-task-daemon
+```
+
+#### As Scheduled Task:
+
+```bash
+# Schedule workflow to run every hour
+mcli workflow scheduler add \
+  --name hourly-sync \
+  --schedule "0 * * * *" \
+  --workflow my-task
+
+# List scheduled workflows
+mcli workflow scheduler list
+
+# View logs
+mcli workflow scheduler logs hourly-sync
+```
+
+## 🎨 Real-World Workflow Examples
+
+### Example 1: PDF Processor
+
+```bash
+# Create PDF processing workflow
+mcli commands import-script pdf_tool.py --name pdf --group workflow
+
+# Use it
+mcli workflow pdf extract ~/Documents/report.pdf
+mcli workflow pdf compress ~/Documents/*.pdf --output compressed/
+mcli workflow pdf split large.pdf --pages 10
+```
+
+### Example 2: Data Sync Workflow
+
+```bash
+# Create sync workflow
+cat > sync.py << 'EOF'
+import click
+import subprocess
+
+@click.group()
+def app():
+    """Multi-cloud sync workflow"""
+    pass
+
+@app.command()
+@click.argument('source')
+@click.argument('dest')
+def backup(source, dest):
+    """Backup data to cloud"""
+    subprocess.run(['rclone', 'sync', source, dest])
+    click.echo(f"Synced {source} to {dest}")
+
+@app.command()
+def status():
+    """Check sync status"""
+    click.echo("Checking sync status...")
+EOF
+
+mcli commands import-script sync.py --name sync --group workflow
+
+# Run manually
+mcli workflow sync backup ~/data remote:backup
+
+# Or schedule it
+mcli workflow scheduler add \
+  --name nightly-backup \
+  --schedule "0 2 * * *" \
+  --workflow "sync backup ~/data remote:backup"
+```
+
+### Example 3: Git Commit Helper
+
+```bash
+# Already included as built-in workflow
+mcli workflow git-commit
+
+# Or create your own variant
+mcli commands export-script git-commit --output my_git_helper.py
+# Edit my_git_helper.py to customize
+mcli commands import-script my_git_helper.py --name my-git --group workflow
+```
+
+## 🔧 Workflow Structure
+
+Each workflow is a JSON file with this structure:
+
+```json
+{
+  "name": "my-workflow",
+  "group": "workflow",
+  "description": "Does something useful",
+  "version": "1.0",
+  "metadata": {
+    "author": "you@example.com",
+    "tags": ["utility", "automation"]
+  },
+  "code": "import click\n\n@click.command()\ndef app():\n    click.echo('Hello!')",
+  "updated_at": "2025-10-17T10:00:00Z"
+}
+```
+
+## 🚀 Built-in Workflows
+
+MCLI comes with powerful built-in workflows:
+
+```bash
+mcli workflow --help
+```
+
+Available workflows:
+- **pdf** - Intelligent PDF processing (extract, compress, split, merge)
+- **clean** - Enhanced Mac system cleaner
+- **emulator** - Android/iOS emulator management
+- **git-commit** - AI-powered commit message generation
+- **scheduler** - Cron-like job scheduling
+- **daemon** - Process management and daemonization
+- **redis** - Redis cache management
+- **videos** - Video processing and overlay removal
+- **sync** - Multi-cloud synchronization
+- **politician-trading** - Financial data collection (specialized)
+
+## 💡 Why MCLI?
+
+### The Problem
+
+You write scripts. They work. Then:
+- ❌ Can't remember where you saved them
+- ❌ Hard to share with team members
+- ❌ No version control or change tracking
+- ❌ Coupling to specific runners or frameworks
+- ❌ No easy way to schedule or daemonize
+
+### The MCLI Solution
+
+- ✅ **Centralized Storage**: All workflows in `~/.mcli/commands/`
+- ✅ **Portable**: Export/import as JSON, share anywhere
+- ✅ **Versioned**: Lockfile for reproducibility
+- ✅ **Decoupled**: Zero coupling to engine source code
+- ✅ **Flexible Execution**: Run interactively, scheduled, or as daemon
+- ✅ **Discoverable**: Tab completion, search, info commands
+
+## 📚 Advanced Features
+
+### Shell Completion
+
+```bash
+# Install completion for your shell
+mcli completion install
+
+# Now use tab completion
+mcli workflow <TAB>          # Shows all workflows
+mcli workflow pdf <TAB>      # Shows pdf subcommands
+```
+
+### AI Chat Integration
+
+```bash
+# Chat with AI about your workflows
+mcli chat
+
+# Configure AI providers
+export OPENAI_API_KEY=your-key
+export ANTHROPIC_API_KEY=your-key
+```
+
+### Self-Update
+
+```bash
+# Update MCLI to latest version
+mcli self update
+
+# Check version
+mcli version
+```
+
+## 🛠️ Development
+
+### For Development or Customization
+
+```bash
+# Clone repository
+git clone https://github.com/gwicho38/mcli.git
+cd mcli
+
+# Setup with UV
+uv venv
+uv pip install -e ".[dev]"
+
+# Run tests
+make test
+
+# Build wheel
+make wheel
+```
+
+## 📖 Documentation
+
+- **Installation**: See [Installation Guide](docs/setup/INSTALLATION.md)
+- **Workflows**: Full workflow documentation (this README)
+- **Shell Completion**: See [Shell Completion Guide](docs/features/SHELL_COMPLETION.md)
+- **Contributing**: See [Contributing Guide](CONTRIBUTING.md)
+
+## 🎯 Common Use Cases
+
+### Use Case 1: Daily Automation Scripts
+
+```bash
+# Create your daily automation
+mcli commands add daily-tasks --group workflow
+# Add your tasks in $EDITOR
+mcli workflow scheduler add --name daily --schedule "0 9 * * *" --workflow daily-tasks
+```
+
+### Use Case 2: Team Workflow Sharing
+
+```bash
+# On your machine
+mcli commands export team-workflows.json
+
+# Share file with team
+# On teammate's machine
+mcli commands import team-workflows.json
+mcli commands verify  # Ensure consistency
+```
+
+### Use Case 3: CI/CD Integration
+
+```bash
+# In your CI pipeline
+- pip install mcli-framework
+- mcli commands import ci-workflows.json
+- mcli workflow build-and-test
+- mcli workflow deploy --env production
+```
+
+## 📦 Dependencies
+
+### Core (Always Installed)
+- **click**: CLI framework
+- **rich**: Beautiful terminal output
+- **requests**: HTTP client
+- **python-dotenv**: Environment management
+
+### Optional Features
+
+All features are included by default as of v7.0.0. For specialized needs:
+
+```bash
+# GPU support (CUDA required)
+pip install "mcli-framework[gpu]"
+
+# Development tools
+pip install "mcli-framework[dev]"
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Especially workflow examples.
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make your changes
-4. Run tests: `make test`
-5. Validate build: `make validate-build`
-6. Commit your changes: `git commit -am 'Add feature'`
-7. Push to your fork: `git push origin feature-name`
-8. Create a Pull Request
+2. Create feature branch: `git checkout -b feature/awesome-workflow`
+3. Create your workflow
+4. Export it: `mcli commands export my-workflow.json`
+5. Submit PR with workflow JSON
 
-## License
+## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
-- Built with [Click](https://click.palletsprojects.com/) for CLI interfaces
-- Styled with [Rich](https://github.com/Textualize/rich) for beautiful output
-- Managed with [UV](https://docs.astral.sh/uv/) for fast Python packaging
+- Built with [Click](https://click.palletsprojects.com/)
+- Styled with [Rich](https://github.com/Textualize/rich)
+- Managed with [UV](https://docs.astral.sh/uv/)
+
+---
+
+**Start transforming your scripts into portable workflows today:**
+
+```bash
+pip install mcli-framework
+mcli commands add my-first-workflow --group workflow
+```
