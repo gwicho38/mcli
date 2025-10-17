@@ -196,7 +196,7 @@ jobs:
           safety check --json > safety-report.json || true
 
       - name: Upload security reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: security-reports
           path: |
@@ -320,7 +320,7 @@ jobs:
           pytest tests/unit/test_ml*.py tests/integration/test_ml*.py -v -m performance --benchmark-only || true
 
       - name: Upload performance results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-results
           path: .benchmarks/
