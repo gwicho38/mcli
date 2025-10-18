@@ -13,9 +13,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
-
-from ml.models.recommendation_models import PortfolioRecommendation, StockRecommendationModel
+from mcli.ml.models.recommendation_models import PortfolioRecommendation, StockRecommendationModel
 
 logger = logging.getLogger(__name__)
 
