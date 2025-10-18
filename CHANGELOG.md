@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.9.5] - 2025-10-18
+
+### Improved
+- **Document Conversion Workflow**: Enhanced LaTeX package management and conversion reliability
+  - Added `collection-latexextra` and `collection-fontsrecommended` for comprehensive LaTeX support
+  - Integrated `mktexlsr` step to automatically refresh font database after package installation
+  - Implemented temp directory system (`~/.mcli/commands/temp/conversions/`) for safe file handling
+  - Added hard link support with automatic fallback to file copying
+  - Enhanced fallback strategies for Jupyter notebook → PDF conversions (4-tier strategy)
+  - Improved error messages with detailed conversion failure information
+  - Complete LaTeX package documentation in init command
+
+### Fixed
+- Resolved path issues with spaces and special characters through temp directory system
+- Fixed font availability issues by adding `mktexlsr` to refresh font database
+- Improved conversion success rate with multiple fallback strategies
+
+### Added
+- Comprehensive LaTeX font support via `collection-fontsrecommended`
+- Temp directory cleanup after conversions
+- Conversion method reporting in summary output
+
+## [7.9.4] - 2025-10-18
+
+### Added
+- **Document Conversion Workflow (doc-convert)**: Comprehensive pandoc wrapper for converting documents between formats
+  - `mcli workflow doc-convert init`: One-command dependency installation (pandoc + BasicTeX via Homebrew)
+  - `mcli workflow doc-convert convert`: Convert documents with smart format detection and glob pattern support
+  - Support for 20+ document formats including Markdown, HTML, PDF, DOCX, Jupyter notebooks, LaTeX, EPUB, and more
+  - Format aliases for common abbreviations (md → markdown, doc → docx, etc.)
+  - Batch conversion with glob patterns (e.g., `"docs/**/*.md"`)
+  - Custom output directory support
+  - Pass-through for additional pandoc arguments
+- **macOS Finder Service**: "Convert File(s) Here" service for right-click document conversion in Finder
+  - Automatic format detection from file extensions
+  - Multi-file selection support
+  - User-friendly dialog for output format selection
+
+### Changed
+- Added comprehensive test coverage for doc-convert workflow
+- Updated documentation with doc-convert usage examples
+
 ## [7.5.1] - 2025-10-13
 
 ### Fixed
