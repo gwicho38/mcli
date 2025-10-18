@@ -257,14 +257,13 @@ def execute_conversion_strategy(
             )
 
         elif strategy.method == ConversionMethod.PANDOC_LATEX:
-            # Pandoc with explicit LaTeX engine
+            # Pandoc with explicit LaTeX engine (xelatex for better Unicode support)
             cmd = [
                 "pandoc",
                 str(temp_input),
                 "-f", from_format,
-                "-t", "latex" if to_format == "pdf" else to_format,
                 "-o", str(temp_output),
-                "--pdf-engine=pdflatex"
+                "--pdf-engine=xelatex"
             ]
             if pandoc_args:
                 cmd.extend(pandoc_args.split())
@@ -325,9 +324,11 @@ def execute_conversion_strategy(
                 "pandoc",
                 str(temp_input),
                 "-f", from_format,
-                "-t", to_format,
                 "-o", str(temp_output)
             ]
+            # Use xelatex for PDF conversions (better Unicode support)
+            if to_format == "pdf":
+                cmd.append("--pdf-engine=xelatex")
             if pandoc_args:
                 cmd.extend(pandoc_args.split())
 
@@ -475,7 +476,7 @@ def init():
     info("=" * 60)
     info("")
     info("Installed tools:")
-    info("  • pandoc - Universal document converter")
+    info("  • pandoc - Universal document converter (with XeLaTeX for Unicode support)")
     info("  • jupyter nbconvert - Best for Jupyter notebooks")
     info("  • basictex - LaTeX for PDF generation")
     info("")
@@ -494,8 +495,14 @@ def init():
     info("   sudo tlmgr install collection-fontsrecommended")
     info("   sudo mktexlsr")
     info("")
+    info("💡 NOTE: The converter uses XeLaTeX for better Unicode/emoji support")
+    info("   in documents. Fallback strategies handle most edge cases.")
+    info("")
     info("You can now use: mcli workflow doc-convert convert <from> <to> <file>")
     info("Example: mcli workflow doc-convert convert ipynb pdf notebook.ipynb")
+    info("")
+    info("To uninstall dependencies later:")
+    info("  mcli workflow doc-convert cleanup")
     info("")
 
 
@@ -659,6 +666,127 @@ def convert(from_format, to_format, path, output_dir, pandoc_args, no_fallback):
         for method, count in conversion_methods_used.items():
             info(f"  • {method}: {count} file(s)")
 
+    info("=" * 60)
+
+
+@doc_convert.command()
+def cleanup():
+    """
+    Generate a cleanup script to uninstall doc-convert dependencies.
+
+    This command creates a shell script that you can review and run to
+    uninstall all the dependencies installed by the init command.
+
+    The script will be created at: ~/.mcli/commands/doc-convert-cleanup.sh
+    """
+    import os
+
+    info("=" * 60)
+    info("📦 Generating cleanup script")
+    info("=" * 60)
+    info("")
+
+    cleanup_script = """#!/bin/bash
+# doc-convert Cleanup Script
+# This script uninstalls dependencies installed by 'mcli workflow doc-convert init'
+#
+# WARNING: Review this script before running it!
+# Some of these tools may be used by other applications.
+
+set -e
+
+echo "================================"
+echo "doc-convert Dependency Cleanup"
+echo "================================"
+echo ""
+echo "This will uninstall the following:"
+echo "  • pandoc (universal document converter)"
+echo "  • basictex (LaTeX distribution)"
+echo "  • jupyter & nbconvert (Jupyter tools)"
+echo "  • LaTeX packages (collection-latexextra, collection-fontsrecommended)"
+echo ""
+read -p "Continue with uninstall? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "Cancelled"
+    exit 0
+fi
+
+echo ""
+echo "Uninstalling Homebrew packages..."
+
+# Uninstall pandoc
+if brew list pandoc &>/dev/null; then
+    echo "  Uninstalling pandoc..."
+    brew uninstall pandoc
+else
+    echo "  pandoc not installed via Homebrew"
+fi
+
+# Uninstall BasicTeX
+if brew list basictex &>/dev/null; then
+    echo "  Uninstalling basictex..."
+    brew uninstall --cask basictex
+
+    # Remove LaTeX distribution directory
+    if [ -d "/usr/local/texlive/2025basic" ]; then
+        echo "  Removing LaTeX directory..."
+        sudo rm -rf /usr/local/texlive/2025basic
+    fi
+else
+    echo "  basictex not installed via Homebrew"
+fi
+
+echo ""
+echo "Uninstalling Python packages..."
+
+# Uninstall jupyter and nbconvert from pyenv Python
+PYENV_VERSION=$(pyenv version-name 2>/dev/null || echo "")
+if [ -n "$PYENV_VERSION" ]; then
+    echo "  Current pyenv version: $PYENV_VERSION"
+    if command -v pip &> /dev/null; then
+        echo "  Uninstalling jupyter..."
+        pip uninstall -y jupyter jupyter-core jupyterlab nbconvert 2>/dev/null || true
+    fi
+else
+    echo "  pyenv not active or not installed"
+fi
+
+echo ""
+echo "================================"
+echo "Cleanup Complete!"
+echo "================================"
+echo ""
+echo "The following may still exist:"
+echo "  • ~/.mcli/commands/temp/ (conversion temp directory)"
+echo "  • Other LaTeX installations (if installed separately)"
+echo ""
+echo "To remove the temp directory:"
+echo "  rm -rf ~/.mcli/commands/temp/"
+echo ""
+"""
+
+    # Write cleanup script
+    commands_dir = get_custom_commands_dir()
+    cleanup_path = commands_dir / "doc-convert-cleanup.sh"
+
+    with open(cleanup_path, 'w') as f:
+        f.write(cleanup_script)
+
+    # Make it executable
+    os.chmod(cleanup_path, 0o755)
+
+    success(f"✅ Cleanup script created: {cleanup_path}")
+    info("")
+    info("To review the script:")
+    info(f"  cat {cleanup_path}")
+    info("")
+    info("To run the cleanup:")
+    info(f"  bash {cleanup_path}")
+    info("")
+    warning("⚠️  IMPORTANT: Review the script before running it!")
+    warning("   Some dependencies may be used by other applications.")
+    info("")
     info("=" * 60)
 
 
