@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.9.6] - 2025-10-18
+
+### Improved
+- **Document Conversion Workflow**: Enhanced Unicode support and dependency management
+  - Switched to XeLaTeX engine for all PDF conversions (better Unicode/emoji handling)
+  - Fixed conversion failures for documents containing special characters
+  - All fallback strategies now support Unicode characters properly
+
+### Added
+- **Cleanup Command**: New `mcli workflow doc-convert cleanup` command
+  - Generates uninstall script for all doc-convert dependencies
+  - Safe removal with confirmation prompts and warnings
+  - Script location: `~/.mcli/commands/doc-convert-cleanup.sh`
+  - Removes: pandoc, basictex, LaTeX packages, jupyter, nbconvert
+
+### Changed
+- Updated init command documentation to mention XeLaTeX and cleanup command
+- Improved conversion success rate for complex documents with Unicode content
+
+### Tested
+- Successfully converted 23 UIUC documents (20 IPYNB + 3 HTML files)
+- 100% success rate with new XeLaTeX engine
+- Verified fallback strategies handle edge cases
+
 ## [7.9.5] - 2025-10-18
 
 ### Improved
