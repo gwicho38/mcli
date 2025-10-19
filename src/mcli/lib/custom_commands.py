@@ -7,6 +7,9 @@ format in ~/.mcli/commands/ and automatically load them at startup.
 
 import importlib.util
 import json
+import os
+import stat
+import subprocess
 import sys
 import tempfile
 from datetime import datetime
@@ -15,7 +18,7 @@ from typing import Any, Dict, List, Optional
 
 import click
 
-from mcli.lib.logger.logger import get_logger
+from mcli.lib.logger.logger import get_logger, register_subprocess
 from mcli.lib.paths import get_custom_commands_dir
 
 logger = get_logger()
@@ -36,16 +39,20 @@ class CustomCommandManager:
         description: str = "",
         group: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        language: str = "python",
+        shell: Optional[str] = None,
     ) -> Path:
         """
         Save a custom command to the commands directory.
 
         Args:
             name: Command name
-            code: Python code for the command
+            code: Python code or shell script for the command
             description: Command description
             group: Optional command group
             metadata: Additional metadata
+            language: Command language ("python" or "shell")
+            shell: Shell type for shell commands (bash, zsh, fish, sh)
 
         Returns:
             Path to the saved command file
@@ -55,11 +62,16 @@ class CustomCommandManager:
             "code": code,
             "description": description,
             "group": group,
+            "language": language,
             "created_at": datetime.utcnow().isoformat() + "Z",
             "updated_at": datetime.utcnow().isoformat() + "Z",
             "version": "1.0",
             "metadata": metadata or {},
         }
+
+        # Add shell type for shell commands
+        if language == "shell":
+            command_data["shell"] = shell or os.environ.get("SHELL", "bash").split("/")[-1]
 
         # Save as JSON file
         command_file = self.commands_dir / f"{name}.json"
@@ -307,6 +319,103 @@ class CustomCommandManager:
             logger.error(f"Failed to register custom command {name}: {e}")
             return False
 
+    def register_shell_command_with_click(
+        self, command_data: Dict[str, Any], target_group: click.Group
+    ) -> bool:
+        """
+        Dynamically register a shell command with a Click group.
+
+        Args:
+            command_data: Command data dictionary
+            target_group: Click group to register the command with
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            name = command_data["name"]
+            code = command_data["code"]
+            shell_type = command_data.get("shell", "bash")
+            description = command_data.get("description", "Shell command")
+
+            # Create a Click command wrapper for the shell script
+            def create_shell_command(script_code: str, shell: str, cmd_name: str):
+                """Factory function to create shell command wrapper."""
+
+                @click.command(name=cmd_name, help=description)
+                @click.argument("args", nargs=-1)
+                @click.pass_context
+                def shell_command(ctx, args):
+                    """Execute shell script command."""
+                    # Create temporary script file
+                    with tempfile.NamedTemporaryFile(
+                        mode="w", suffix=".sh", delete=False, prefix=f"mcli_{cmd_name}_"
+                    ) as temp_file:
+                        # Add shebang if not present
+                        if not script_code.strip().startswith("#!"):
+                            temp_file.write(f"#!/usr/bin/env {shell}\n")
+                        temp_file.write(script_code)
+                        temp_file_path = temp_file.name
+
+                    try:
+                        # Make script executable
+                        os.chmod(temp_file_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+
+                        # Execute the shell script
+                        logger.info(f"Executing shell command: {cmd_name}")
+                        process = subprocess.Popen(
+                            [temp_file_path] + list(args),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            text=True,
+                            env={**os.environ, "MCLI_COMMAND": cmd_name},
+                        )
+
+                        # Register for monitoring
+                        register_subprocess(process)
+
+                        # Wait and capture output
+                        stdout, stderr = process.communicate()
+
+                        # Print output
+                        if stdout:
+                            click.echo(stdout, nl=False)
+                        if stderr:
+                            click.echo(stderr, nl=False, err=True)
+
+                        # Exit with same code as script
+                        if process.returncode != 0:
+                            logger.warning(
+                                f"Shell command {cmd_name} exited with code {process.returncode}"
+                            )
+                            ctx.exit(process.returncode)
+
+                    except Exception as e:
+                        logger.error(f"Failed to execute shell command {cmd_name}: {e}")
+                        click.echo(f"Error executing shell command: {e}", err=True)
+                        ctx.exit(1)
+                    finally:
+                        # Clean up temporary file
+                        try:
+                            Path(temp_file_path).unlink(missing_ok=True)
+                        except Exception:
+                            pass
+
+                return shell_command
+
+            # Create the command
+            command_obj = create_shell_command(code, shell_type, name)
+
+            # Register with the target group
+            target_group.add_command(command_obj, name=name)
+            self.loaded_commands[name] = command_obj
+            logger.info(f"Registered shell command: {name} (shell: {shell_type})")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to register shell command {name}: {e}")
+            return False
+
     def export_commands(self, export_path: Path) -> bool:
         """
         Export all custom commands to a single JSON file.
@@ -396,6 +505,7 @@ def load_custom_commands(target_group: click.Group) -> int:
     for command_data in commands:
         # Check if command should be nested under a group
         group_name = command_data.get("group")
+        language = command_data.get("language", "python")
 
         if group_name:
             # Find or create the group
@@ -414,13 +524,23 @@ def load_custom_commands(target_group: click.Group) -> int:
                 target_group.add_command(group_cmd)
                 logger.info(f"Created command group: {group_name}")
 
-            # Register the command under the group
+            # Register the command under the group based on language
             if isinstance(group_cmd, click.Group):
-                if manager.register_command_with_click(command_data, group_cmd):
+                if language == "shell":
+                    success = manager.register_shell_command_with_click(command_data, group_cmd)
+                else:
+                    success = manager.register_command_with_click(command_data, group_cmd)
+
+                if success:
                     loaded_count += 1
         else:
-            # Register at top level
-            if manager.register_command_with_click(command_data, target_group):
+            # Register at top level based on language
+            if language == "shell":
+                success = manager.register_shell_command_with_click(command_data, target_group)
+            else:
+                success = manager.register_command_with_click(command_data, target_group)
+
+            if success:
                 loaded_count += 1
 
     if loaded_count > 0:

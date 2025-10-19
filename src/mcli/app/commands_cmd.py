@@ -496,6 +496,37 @@ def {name}_command(name: str = "World"):
     return template
 
 
+def get_shell_command_template(name: str, shell: str = "bash", description: str = "") -> str:
+    """Generate template shell script for a new command."""
+    template = f"""#!/usr/bin/env {shell}
+# {name} - {description or "Shell workflow command"}
+#
+# This is a shell-based MCLI workflow command.
+# Arguments are passed as positional parameters: $1, $2, $3, etc.
+# The command name is available in: $MCLI_COMMAND
+
+set -euo pipefail  # Exit on error, undefined variables, and pipe failures
+
+# Command logic
+echo "Hello from {name} shell command!"
+echo "Command: $MCLI_COMMAND"
+
+# Example: Access arguments
+if [ $# -gt 0 ]; then
+    echo "Arguments: $@"
+    for arg in "$@"; do
+        echo "  - $arg"
+    done
+else
+    echo "No arguments provided"
+fi
+
+# Exit successfully
+exit 0
+"""
+    return template
+
+
 def open_editor_for_command(
     command_name: str, command_group: str, description: str
 ) -> Optional[str]:
@@ -655,20 +686,39 @@ logger = get_logger()
     is_flag=True,
     help="Use template mode (skip editor and use predefined template)",
 )
-def add_command(command_name, group, description, template):
+@click.option(
+    "--language",
+    "-l",
+    type=click.Choice(["python", "shell"], case_sensitive=False),
+    default="python",
+    help="Command language (python or shell)",
+)
+@click.option(
+    "--shell",
+    "-s",
+    type=click.Choice(["bash", "zsh", "fish", "sh"], case_sensitive=False),
+    help="Shell type for shell commands (defaults to $SHELL)",
+)
+def add_command(command_name, group, description, template, language, shell):
     """
     Generate a new portable custom command saved to ~/.mcli/commands/.
 
-    This command will open your default editor to allow you to write the Python logic
-    for your command. The editor will be opened with a template that you can modify.
+    This command will open your default editor to allow you to write Python or shell
+    logic for your command. The editor will be opened with a template that you can modify.
 
     Commands are automatically nested under the 'workflow' group by default,
     making them portable and persistent across updates.
 
-    Example:
+    Examples:
+        # Python command (default)
         mcli commands add my_command
         mcli commands add analytics --group data
-        mcli commands add quick_cmd --template  # Use template without editor
+        mcli commands add quick_cmd --template
+
+        # Shell command
+        mcli commands add backup-db --language shell
+        mcli commands add deploy --language shell --shell bash
+        mcli commands add quick-sh -l shell -t  # Template mode
     """
     command_name = command_name.lower().replace("-", "_")
 
@@ -713,18 +763,61 @@ def add_command(command_name, group, description, template):
             click.echo("Command creation aborted.")
             return 1
 
+    # Normalize language
+    language = language.lower()
+
+    # Determine shell type for shell commands
+    if language == "shell":
+        if not shell:
+            # Default to $SHELL environment variable or bash
+            shell_env = os.environ.get("SHELL", "/bin/bash")
+            shell = shell_env.split("/")[-1]
+            click.echo(f"Using shell: {shell} (from $SHELL environment variable)")
+
     # Generate command code
     if template:
         # Use template mode - generate and save directly
-        code = get_command_template(command_name, command_group)
-        click.echo(f"Using template for command: {command_name}")
+        if language == "shell":
+            code = get_shell_command_template(command_name, shell, description)
+            click.echo(f"Using shell template for command: {command_name}")
+        else:
+            code = get_command_template(command_name, command_group)
+            click.echo(f"Using Python template for command: {command_name}")
     else:
         # Editor mode - open editor for user to write code
         click.echo(f"Opening editor for command: {command_name}")
-        code = open_editor_for_command(command_name, command_group, description)
-        if code is None:
-            click.echo("Command creation cancelled.")
-            return 1
+
+        if language == "shell":
+            # For shell commands, open editor with shell template
+            shell_template = get_shell_command_template(command_name, shell, description)
+
+            # Create temp file with shell template
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as tmp:
+                tmp.write(shell_template)
+                tmp_path = tmp.name
+
+            try:
+                editor = os.environ.get("EDITOR", "vim")
+                result = subprocess.run([editor, tmp_path])
+
+                if result.returncode != 0:
+                    click.echo("Editor exited with error. Command creation cancelled.")
+                    return 1
+
+                with open(tmp_path, "r") as f:
+                    code = f.read()
+
+                if not code.strip():
+                    click.echo("No code provided. Command creation cancelled.")
+                    return 1
+            finally:
+                Path(tmp_path).unlink(missing_ok=True)
+        else:
+            # Python command - use existing editor function
+            code = open_editor_for_command(command_name, command_group, description)
+            if code is None:
+                click.echo("Command creation cancelled.")
+                return 1
 
     # Save the command
     saved_path = manager.save_command(
@@ -732,11 +825,18 @@ def add_command(command_name, group, description, template):
         code=code,
         description=description,
         group=command_group,
+        language=language,
+        shell=shell if language == "shell" else None,
     )
 
-    logger.info(f"Created portable custom command: {command_name}")
-    console.print(f"[green]Created portable custom command: {command_name}[/green]")
+    lang_display = f"{language}" if language == "python" else f"{language} ({shell})"
+    logger.info(f"Created portable custom command: {command_name} ({lang_display})")
+    console.print(
+        f"[green]Created portable custom command: {command_name}[/green] [dim]({lang_display})[/dim]"
+    )
     console.print(f"[dim]Saved to: {saved_path}[/dim]")
+    console.print(f"[dim]Group: {command_group}[/dim]")
+    console.print(f"[dim]Execute with: mcli {command_group} {command_name}[/dim]")
     console.print("[dim]Command will be automatically loaded on next mcli startup[/dim]")
     console.print(
         f"[dim]You can share this command by copying {saved_path} to another machine's ~/.mcli/commands/ directory[/dim]"
@@ -903,7 +1003,7 @@ def import_commands(source, script, overwrite, name, group, description, interac
     source_path = Path(source)
 
     if script:
-        # Import Python script as command
+        # Import script as command (Python or Shell)
         if not source_path.exists():
             console.print(f"[red]Script not found: {source_path}[/red]")
             return 1
@@ -915,6 +1015,43 @@ def import_commands(source, script, overwrite, name, group, description, interac
         except Exception as e:
             console.print(f"[red]Failed to read script: {e}[/red]")
             return 1
+
+        # Auto-detect language from shebang or file extension
+        detected_language = "python"
+        detected_shell = None
+
+        if code.strip().startswith("#!"):
+            # Parse shebang
+            shebang = code.strip().split("\n")[0]
+            if "bash" in shebang:
+                detected_language = "shell"
+                detected_shell = "bash"
+            elif "zsh" in shebang:
+                detected_language = "shell"
+                detected_shell = "zsh"
+            elif "fish" in shebang:
+                detected_language = "shell"
+                detected_shell = "fish"
+            elif "/bin/sh" in shebang or "/sh" in shebang:
+                detected_language = "shell"
+                detected_shell = "sh"
+            elif "python" in shebang:
+                detected_language = "python"
+
+        # Also check file extension
+        if source_path.suffix in [".sh", ".bash", ".zsh"]:
+            detected_language = "shell"
+            if not detected_shell:
+                if source_path.suffix == ".bash":
+                    detected_shell = "bash"
+                elif source_path.suffix == ".zsh":
+                    detected_shell = "zsh"
+                else:
+                    detected_shell = "bash"  # Default for .sh
+
+        console.print(f"[dim]Detected language: {detected_language}[/dim]")
+        if detected_language == "shell":
+            console.print(f"[dim]Detected shell: {detected_shell}[/dim]")
 
         # Determine command name
         if not name:
@@ -961,6 +1098,8 @@ def import_commands(source, script, overwrite, name, group, description, interac
             code=code,
             description=description,
             group=group,
+            language=detected_language,
+            shell=detected_shell if detected_language == "shell" else None,
             metadata={
                 "source": "import-script",
                 "original_file": str(source_path),
@@ -968,7 +1107,14 @@ def import_commands(source, script, overwrite, name, group, description, interac
             },
         )
 
-        console.print(f"[green]Imported script as command: {name}[/green]")
+        lang_display = (
+            f"{detected_language}"
+            if detected_language == "python"
+            else f"{detected_language} ({detected_shell})"
+        )
+        console.print(
+            f"[green]Imported script as command: {name}[/green] [dim]({lang_display})[/dim]"
+        )
         console.print(f"[dim]Saved to: {saved_path}[/dim]")
         console.print(f"[dim]Use with: mcli {group} {name}[/dim]")
         console.print("[dim]Command will be available after restart or reload[/dim]")
