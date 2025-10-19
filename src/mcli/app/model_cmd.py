@@ -10,8 +10,6 @@ from pathlib import Path
 
 # Try to load the model command from the workflow system
 try:
-    from mcli.lib.custom_commands import load_command_from_file
-
     # Load model command from ~/.mcli/commands/model.json
     model_json_path = Path.home() / ".mcli" / "commands" / "model.json"
 
