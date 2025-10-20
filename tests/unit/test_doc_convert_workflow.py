@@ -202,9 +202,7 @@ class TestConvertCommand:
             ]
 
             runner = CliRunner()
-            result = runner.invoke(
-                convert, ["md", "html", str(test_file), "-o", str(output_dir)]
-            )
+            result = runner.invoke(convert, ["md", "html", str(test_file), "-o", str(output_dir)])
 
             assert result.exit_code == 0
             # Output directory should be created

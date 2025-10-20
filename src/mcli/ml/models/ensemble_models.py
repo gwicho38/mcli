@@ -9,6 +9,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from mcli.ml.models.base_models import BaseStockModel, ModelMetrics, ValidationResult
 
 logger = logging.getLogger(__name__)

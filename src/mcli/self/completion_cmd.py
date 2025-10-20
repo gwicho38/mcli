@@ -216,10 +216,10 @@ def completion_status():
 
     click.echo()
     click.echo("💡 To install completion for your shell:")
-    click.echo("   mcli completion install")
+    click.echo("   mcli self completion install")
     click.echo()
     click.echo("💡 To generate completion script manually:")
-    click.echo(f"   mcli completion {shell_name}")
+    click.echo(f"   mcli self completion {shell_name}")
 
 
 # Export the CLI group for registration

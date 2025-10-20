@@ -65,6 +65,7 @@ FORMAT_ALIASES = {
 
 class ConversionMethod(Enum):
     """Available conversion methods"""
+
     PANDOC = "pandoc"
     NBCONVERT = "nbconvert"
     PANDOC_LATEX = "pandoc_latex"
@@ -74,6 +75,7 @@ class ConversionMethod(Enum):
 @dataclass
 class ConversionStrategy:
     """Represents a conversion strategy with command and description"""
+
     method: ConversionMethod
     description: str
     check_command: Optional[str] = None
@@ -136,11 +138,7 @@ def cleanup_temp_conversion(temp_dir: Path, preserve_output: Optional[Path] = No
 
 
 def get_conversion_strategies(
-    input_path: Path,
-    output_path: Path,
-    from_format: str,
-    to_format: str,
-    pandoc_args: str = ""
+    input_path: Path, output_path: Path, from_format: str, to_format: str, pandoc_args: str = ""
 ) -> List[ConversionStrategy]:
     """
     Get ordered list of conversion strategies to try based on input/output formats.
@@ -152,60 +150,60 @@ def get_conversion_strategies(
     # Special handling for Jupyter notebook to PDF (notoriously problematic)
     if from_format == "ipynb" and to_format == "pdf":
         # Strategy 1: nbconvert (most reliable for notebooks)
-        strategies.append(ConversionStrategy(
-            method=ConversionMethod.NBCONVERT,
-            description="jupyter nbconvert (best for notebooks)",
-            check_command="jupyter-nbconvert"
-        ))
+        strategies.append(
+            ConversionStrategy(
+                method=ConversionMethod.NBCONVERT,
+                description="jupyter nbconvert (best for notebooks)",
+                check_command="jupyter-nbconvert",
+            )
+        )
 
         # Strategy 2: pandoc with pdflatex
-        strategies.append(ConversionStrategy(
-            method=ConversionMethod.PANDOC_LATEX,
-            description="pandoc with pdflatex engine"
-        ))
+        strategies.append(
+            ConversionStrategy(
+                method=ConversionMethod.PANDOC_LATEX, description="pandoc with pdflatex engine"
+            )
+        )
 
         # Strategy 3: pandoc via HTML intermediate
-        strategies.append(ConversionStrategy(
-            method=ConversionMethod.PANDOC_HTML_INTERMEDIATE,
-            description="pandoc via HTML intermediate (wkhtmltopdf)"
-        ))
+        strategies.append(
+            ConversionStrategy(
+                method=ConversionMethod.PANDOC_HTML_INTERMEDIATE,
+                description="pandoc via HTML intermediate (wkhtmltopdf)",
+            )
+        )
 
         # Strategy 4: standard pandoc
-        strategies.append(ConversionStrategy(
-            method=ConversionMethod.PANDOC,
-            description="pandoc default method"
-        ))
+        strategies.append(
+            ConversionStrategy(method=ConversionMethod.PANDOC, description="pandoc default method")
+        )
 
     # Jupyter to other formats
     elif from_format == "ipynb":
         # Try nbconvert first for notebooks
-        strategies.append(ConversionStrategy(
-            method=ConversionMethod.NBCONVERT,
-            description="jupyter nbconvert",
-            check_command="jupyter-nbconvert"
-        ))
-        strategies.append(ConversionStrategy(
-            method=ConversionMethod.PANDOC,
-            description="pandoc"
-        ))
+        strategies.append(
+            ConversionStrategy(
+                method=ConversionMethod.NBCONVERT,
+                description="jupyter nbconvert",
+                check_command="jupyter-nbconvert",
+            )
+        )
+        strategies.append(ConversionStrategy(method=ConversionMethod.PANDOC, description="pandoc"))
 
     # PDF output (general)
     elif to_format == "pdf":
-        strategies.append(ConversionStrategy(
-            method=ConversionMethod.PANDOC_LATEX,
-            description="pandoc with LaTeX"
-        ))
-        strategies.append(ConversionStrategy(
-            method=ConversionMethod.PANDOC,
-            description="pandoc default"
-        ))
+        strategies.append(
+            ConversionStrategy(
+                method=ConversionMethod.PANDOC_LATEX, description="pandoc with LaTeX"
+            )
+        )
+        strategies.append(
+            ConversionStrategy(method=ConversionMethod.PANDOC, description="pandoc default")
+        )
 
     # Default: just use pandoc
     else:
-        strategies.append(ConversionStrategy(
-            method=ConversionMethod.PANDOC,
-            description="pandoc"
-        ))
+        strategies.append(ConversionStrategy(method=ConversionMethod.PANDOC, description="pandoc"))
 
     return strategies
 
@@ -216,7 +214,7 @@ def execute_conversion_strategy(
     output_path: Path,
     from_format: str,
     to_format: str,
-    pandoc_args: str = ""
+    pandoc_args: str = "",
 ) -> Tuple[bool, str]:
     """
     Execute a specific conversion strategy in a temp directory.
@@ -231,29 +229,25 @@ def execute_conversion_strategy(
         if strategy.method == ConversionMethod.NBCONVERT:
             # Check if nbconvert is available
             check = subprocess.run(
-                ["jupyter", "nbconvert", "--version"],
-                capture_output=True,
-                timeout=5
+                ["jupyter", "nbconvert", "--version"], capture_output=True, timeout=5
             )
             if check.returncode != 0:
                 return False, "jupyter nbconvert not available"
 
             # Build nbconvert command (run in temp directory)
             cmd = [
-                "jupyter", "nbconvert",
-                "--to", to_format,
-                "--output", str(temp_output),
-                str(temp_input)
+                "jupyter",
+                "nbconvert",
+                "--to",
+                to_format,
+                "--output",
+                str(temp_output),
+                str(temp_input),
             ]
 
             # Run in temp directory
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=120,
-                cwd=str(temp_dir)
+                cmd, capture_output=True, text=True, check=True, timeout=120, cwd=str(temp_dir)
             )
 
         elif strategy.method == ConversionMethod.PANDOC_LATEX:
@@ -261,20 +255,17 @@ def execute_conversion_strategy(
             cmd = [
                 "pandoc",
                 str(temp_input),
-                "-f", from_format,
-                "-o", str(temp_output),
-                "--pdf-engine=xelatex"
+                "-f",
+                from_format,
+                "-o",
+                str(temp_output),
+                "--pdf-engine=xelatex",
             ]
             if pandoc_args:
                 cmd.extend(pandoc_args.split())
 
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=120,
-                cwd=str(temp_dir)
+                cmd, capture_output=True, text=True, check=True, timeout=120, cwd=str(temp_dir)
             )
 
         elif strategy.method == ConversionMethod.PANDOC_HTML_INTERMEDIATE:
@@ -285,47 +276,30 @@ def execute_conversion_strategy(
             cmd_html = [
                 "pandoc",
                 str(temp_input),
-                "-f", from_format,
-                "-t", "html",
-                "-o", str(html_temp),
-                "--standalone"
+                "-f",
+                from_format,
+                "-t",
+                "html",
+                "-o",
+                str(html_temp),
+                "--standalone",
             ]
             result = subprocess.run(
-                cmd_html,
-                capture_output=True,
-                text=True,
-                timeout=120,
-                cwd=str(temp_dir)
+                cmd_html, capture_output=True, text=True, timeout=120, cwd=str(temp_dir)
             )
             if result.returncode != 0:
                 return False, f"HTML intermediate failed: {result.stderr}"
 
             # Step 2: Convert HTML to PDF
-            cmd = [
-                "pandoc",
-                str(html_temp),
-                "-f", "html",
-                "-t", "pdf",
-                "-o", str(temp_output)
-            ]
+            cmd = ["pandoc", str(html_temp), "-f", "html", "-t", "pdf", "-o", str(temp_output)]
 
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=120,
-                cwd=str(temp_dir)
+                cmd, capture_output=True, text=True, check=True, timeout=120, cwd=str(temp_dir)
             )
 
         else:  # PANDOC
             # Standard pandoc conversion
-            cmd = [
-                "pandoc",
-                str(temp_input),
-                "-f", from_format,
-                "-o", str(temp_output)
-            ]
+            cmd = ["pandoc", str(temp_input), "-f", from_format, "-o", str(temp_output)]
             # Use xelatex for PDF conversions (better Unicode support)
             if to_format == "pdf":
                 cmd.append("--pdf-engine=xelatex")
@@ -333,12 +307,7 @@ def execute_conversion_strategy(
                 cmd.extend(pandoc_args.split())
 
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=120,
-                cwd=str(temp_dir)
+                cmd, capture_output=True, text=True, check=True, timeout=120, cwd=str(temp_dir)
             )
 
         # Copy output file to final destination
@@ -417,9 +386,7 @@ def init():
         else:
             # Try installing via pip
             result = subprocess.run(
-                ["pip3", "install", "jupyter", "nbconvert"],
-                capture_output=True,
-                text=True
+                ["pip3", "install", "jupyter", "nbconvert"], capture_output=True, text=True
             )
             if result.returncode == 0:
                 success("   ✅ jupyter & nbconvert installed successfully")
@@ -437,13 +404,13 @@ def init():
     info("   ℹ️  This is a large download (~100MB) and may take a few minutes")
     try:
         result = subprocess.run(
-            ["brew", "install", "--cask", "basictex"],
-            capture_output=True,
-            text=True
+            ["brew", "install", "--cask", "basictex"], capture_output=True, text=True
         )
         if result.returncode == 0:
             success("   ✅ BasicTeX installed successfully")
-            info("   ℹ️  You may need to restart your terminal or run: eval $(/usr/libexec/path_helper)")
+            info(
+                "   ℹ️  You may need to restart your terminal or run: eval $(/usr/libexec/path_helper)"
+            )
             info("")
             info("   📦 Installing LaTeX packages for document conversion...")
             info("   ℹ️  This requires sudo access and may take a few minutes")
@@ -512,7 +479,9 @@ def init():
 @click.argument("path")
 @click.option("--output-dir", "-o", help="Output directory (defaults to same directory as input)")
 @click.option("--pandoc-args", "-a", help="Additional pandoc arguments", default="")
-@click.option("--no-fallback", is_flag=True, help="Disable fallback strategies (use only primary method)")
+@click.option(
+    "--no-fallback", is_flag=True, help="Disable fallback strategies (use only primary method)"
+)
 def convert(from_format, to_format, path, output_dir, pandoc_args, no_fallback):
     """
     Convert documents with automatic fallback strategies.
@@ -626,14 +595,15 @@ def convert(from_format, to_format, path, output_dir, pandoc_args, no_fallback):
                 info(f"   ⚙️  Using: {strategy.description}")
 
             success_flag, error_msg = execute_conversion_strategy(
-                strategy, input_path, output_path,
-                from_format_mapped, to_format_mapped, pandoc_args
+                strategy, input_path, output_path, from_format_mapped, to_format_mapped, pandoc_args
             )
 
             if success_flag:
                 conversion_succeeded = True
                 method_name = strategy.description
-                conversion_methods_used[method_name] = conversion_methods_used.get(method_name, 0) + 1
+                conversion_methods_used[method_name] = (
+                    conversion_methods_used.get(method_name, 0) + 1
+                )
                 success(f"   ✅ Created: {output_path}")
                 if i > 0:
                     info(f"   ℹ️  Succeeded with fallback method #{i + 1}")
@@ -770,7 +740,7 @@ echo ""
     commands_dir = get_custom_commands_dir()
     cleanup_path = commands_dir / "doc-convert-cleanup.sh"
 
-    with open(cleanup_path, 'w') as f:
+    with open(cleanup_path, "w") as f:
         f.write(cleanup_script)
 
     # Make it executable

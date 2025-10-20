@@ -14,24 +14,24 @@ MCLI provides comprehensive tab completion support for bash, zsh, and fish shell
 
 ### Install completion for your current shell:
 ```bash
-mcli completion install
+mcli self completion install
 ```
 
 ### Generate completion script manually:
 ```bash
 # For bash
-mcli completion bash
+mcli self completion bash
 
-# For zsh  
-mcli completion zsh
+# For zsh
+mcli self completion zsh
 
 # For fish
-mcli completion fish
+mcli self completion fish
 ```
 
 ### Check completion status:
 ```bash
-mcli completion status
+mcli self completion status
 ```
 
 ## Manual Installation
@@ -39,7 +39,7 @@ mcli completion status
 ### Bash
 1. Generate the completion script:
    ```bash
-   mcli completion bash > ~/.mcli-completion.bash
+   mcli self completion bash > ~/.mcli-completion.bash
    ```
 
 2. Add to your `~/.bashrc`:
@@ -55,7 +55,7 @@ mcli completion status
 ### Zsh
 1. Generate the completion script:
    ```bash
-   mcli completion zsh > ~/.config/zsh/completions/_mcli
+   mcli self completion zsh > ~/.config/zsh/completions/_mcli
    ```
 
 2. Add to your `~/.zshrc`:
@@ -72,7 +72,7 @@ mcli completion status
 ### Fish
 1. Generate the completion script:
    ```bash
-   mcli completion fish > ~/.config/fish/completions/mcli.fish
+   mcli self completion fish > ~/.config/fish/completions/mcli.fish
    ```
 
 2. Fish will automatically load the completion on next shell start.
@@ -102,7 +102,7 @@ mcli workflow politician-trading cron-job <TAB>
 mcli redis <TAB>
 # → flush, start, status, stop
 
-mcli completion <TAB>
+mcli self completion <TAB>
 # → bash, fish, install, status, zsh
 ```
 
@@ -144,12 +144,12 @@ LAZY_COMMAND_COMPLETIONS = {
 ### Completion not working
 1. Check installation status:
    ```bash
-   mcli completion status
+   mcli self completion status
    ```
 
 2. Reinstall completion:
    ```bash
-   mcli completion install
+   mcli self completion install
    ```
 
 3. Restart your shell or source your profile
@@ -159,7 +159,7 @@ If you've updated MCLI and completions seem outdated:
 
 ```bash
 # Reinstall to get the latest completion data
-mcli completion install
+mcli self completion install
 ```
 
 ### Shell-specific issues
@@ -231,5 +231,5 @@ All MCLI commands support completion:
 For more help with specific commands, use:
 ```bash
 mcli <command> --help
-mcli completion --help
+mcli self completion --help
 ```

@@ -161,9 +161,9 @@ Key variables from `.env`:
 - **Multi-Platform**: Supports macOS (arm64/x86_64), Ubuntu, Windows
 
 ### Shell Completion
-- Install with: `mcli completion install`
+- Install with: `mcli self completion install`
 - Auto-detects bash/zsh/fish
-- Completion scripts in `src/mcli/app/completion_cmd.py`
+- Completion scripts in `src/mcli/self/completion_cmd.py`
 - Lazy groups need special wrapper for completion support
 
 ### Pre-commit Hooks

@@ -18,12 +18,14 @@ def cli():
 @click.option("--end-date", required=True, help="End date (YYYY-MM-DD)")
 @click.option("--initial-capital", default=100000, help="Initial capital")
 @click.option("--output", help="Output file for results")
-def run_backtest(strategy: str, start_date: str, end_date: str, initial_capital: float, output: str):
+def run_backtest(
+    strategy: str, start_date: str, end_date: str, initial_capital: float, output: str
+):
     """Run a backtest with the specified parameters."""
     info(f"Running backtest for strategy: {strategy}")
     info(f"Period: {start_date} to {end_date}")
     info(f"Initial capital: ${initial_capital:,.2f}")
-    
+
     # TODO: Implement actual backtesting logic
     error("Backtesting functionality not yet implemented")
 

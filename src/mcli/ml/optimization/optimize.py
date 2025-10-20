@@ -18,13 +18,15 @@ def cli():
 @click.option("--end-date", required=True, help="End date (YYYY-MM-DD)")
 @click.option("--risk-free-rate", default=0.02, help="Risk-free rate")
 @click.option("--output", help="Output file for results")
-def optimize_portfolio(symbols: str, start_date: str, end_date: str, risk_free_rate: float, output: str):
+def optimize_portfolio(
+    symbols: str, start_date: str, end_date: str, risk_free_rate: float, output: str
+):
     """Optimize portfolio allocation for given symbols."""
     symbol_list = [s.strip() for s in symbols.split(",")]
     info(f"Optimizing portfolio for: {', '.join(symbol_list)}")
     info(f"Period: {start_date} to {end_date}")
     info(f"Risk-free rate: {risk_free_rate:.2%}")
-    
+
     # TODO: Implement actual optimization
     error("Portfolio optimization not yet implemented")
 
@@ -37,7 +39,7 @@ def efficient_frontier(symbols: str, points: int):
     symbol_list = [s.strip() for s in symbols.split(",")]
     info(f"Generating efficient frontier for: {', '.join(symbol_list)}")
     info(f"Points: {points}")
-    
+
     # TODO: Implement efficient frontier generation
     error("Efficient frontier generation not yet implemented")
 

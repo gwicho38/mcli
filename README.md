@@ -318,7 +318,7 @@ You write scripts. They work. Then:
 
 ```bash
 # Install completion for your shell
-mcli completion install
+mcli self completion install
 
 # Now use tab completion
 mcli workflow <TAB>          # Shows all workflows

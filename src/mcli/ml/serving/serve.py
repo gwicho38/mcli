@@ -20,7 +20,7 @@ def start_server(model: str, port: int, host: str):
     """Start the model serving server."""
     info(f"Starting model server for: {model}")
     info(f"Serving on {host}:{port}")
-    
+
     # TODO: Implement actual model serving
     error("Model serving functionality not yet implemented")
 
