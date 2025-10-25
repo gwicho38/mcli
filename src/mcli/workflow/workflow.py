@@ -14,5 +14,19 @@ def workflow():
     pass
 
 
+# Add notebook subcommand
+try:
+    from mcli.workflow.notebook.notebook_cmd import notebook
+
+    workflow.add_command(notebook)
+except ImportError as e:
+    # Notebook commands not available
+    import sys
+    from mcli.lib.logger.logger import get_logger
+
+    logger = get_logger()
+    logger.debug(f"Notebook commands not available: {e}")
+
+
 if __name__ == "__main__":
     workflow()
