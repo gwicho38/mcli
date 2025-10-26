@@ -166,13 +166,13 @@ These require human action (cannot be automated):
 
 3. **Create Publisher Account**
    - Visit: https://marketplace.visualstudio.com/manage
-   - Create publisher with ID: `lefv`
+   - Create publisher with ID: `gwicho38`
    - Verify email if required
 
 4. **Publish Extension**
    ```bash
    cd /Users/lefv/repos/mcli/vscode-extension
-   vsce login lefv
+   vsce login gwicho38
    vsce publish
    ```
 
@@ -183,7 +183,7 @@ These require human action (cannot be automated):
 ## 📈 Expected Outcomes
 
 ### Marketplace Listing
-- **URL**: https://marketplace.visualstudio.com/items?itemName=lefv.mcli-workflow-notebooks
+- **URL**: https://marketplace.visualstudio.com/items?itemName=gwicho38.mcli-framework
 - **Search Terms**: MCLI, workflow, notebook, jupyter, visual editor
 - **Categories**: Notebooks, Programming Languages, Data Science
 - **Visibility**: Public, free extension
@@ -191,10 +191,10 @@ These require human action (cannot be automated):
 ### User Installation
 ```bash
 # From VSCode Marketplace
-code --install-extension lefv.mcli-workflow-notebooks
+code --install-extension gwicho38.mcli-framework
 
 # From VSIX (local)
-code --install-extension vscode-extension/mcli-workflow-notebooks-1.0.0.vsix
+code --install-extension vscode-extension/mcli-framework-1.0.0.vsix
 ```
 
 ### Impact
@@ -245,10 +245,10 @@ docs/releases/
 ### Modified Files
 ```
 vscode-extension/
-├── package.json                # Added icon, branding, keywords
+├── package.json                # Added icon, branding, keywords (publisher: gwicho38)
 ├── README.md                   # Complete rewrite with examples
 ├── .vscodeignore              # Updated for new assets
-└── mcli-workflow-notebooks-1.0.0.vsix  # Rebuilt package
+└── mcli-framework-1.0.0.vsix  # Rebuilt package
 
 README.md                       # Added extension section
 ```

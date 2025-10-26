@@ -47,7 +47,7 @@ To publish this extension to the VSCode Marketplace, you need:
 
 ```bash
 cd /Users/lefv/repos/mcli/vscode-extension
-vsce login lefv
+vsce login gwicho38
 ```
 
 When prompted, paste your Personal Access Token.
@@ -67,10 +67,10 @@ vsce publish -p <your-PAT> mcli-workflow-notebooks-1.0.0.vsix
 
 ### 6. Verify Publication
 
-1. Go to https://marketplace.visualstudio.com/manage/publishers/lefv
-2. You should see "MCLI Workflow Notebooks" listed
+1. Go to https://marketplace.visualstudio.com/manage/publishers/gwicho38
+2. You should see "MCLI Framework" listed
 3. Click on it to view the listing
-4. The extension will be available at: https://marketplace.visualstudio.com/items?itemName=lefv.mcli-workflow-notebooks
+4. The extension will be available at: https://marketplace.visualstudio.com/items?itemName=gwicho38.mcli-framework
 
 ## Environment Variables (Optional)
 
@@ -118,7 +118,7 @@ vsce publish major  # 1.0.0 → 2.0.0
 
 ## Troubleshooting
 
-### "Publisher 'lefv' not found"
+### "Publisher 'gwicho38' not found"
 
 You need to create the publisher account first (see Step 3).
 
@@ -155,7 +155,7 @@ Bump the version in `package.json` before publishing again.
 
 ## Current Status
 
-- ✅ Extension packaged: `mcli-workflow-notebooks-1.0.0.vsix`
+- ✅ Extension packaged: `mcli-framework-1.0.0.vsix`
 - ✅ Icon created: `icon.png` (128x128)
 - ✅ README, CHANGELOG, LICENSE included
 - ⏳ Publisher account setup required
@@ -166,8 +166,8 @@ Bump the version in `package.json` before publishing again.
 
 If automated publishing doesn't work, you can manually upload the VSIX:
 
-1. Go to https://marketplace.visualstudio.com/manage/publishers/lefv
+1. Go to https://marketplace.visualstudio.com/manage/publishers/gwicho38
 2. Click "..." menu → "Upload Extension"
-3. Select `mcli-workflow-notebooks-1.0.0.vsix`
+3. Select `mcli-framework-1.0.0.vsix`
 4. Fill in any additional metadata
 5. Click "Upload"

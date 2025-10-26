@@ -2,7 +2,7 @@
 
 ## Status: Ready to Publish ✅
 
-The MCLI Workflow Notebooks extension is **fully prepared** for publication to the VSCode Marketplace!
+The MCLI Framework extension is **fully prepared** for publication to the VSCode Marketplace!
 
 ## 📦 What's Included
 
@@ -26,13 +26,13 @@ The MCLI Workflow Notebooks extension is **fully prepared** for publication to t
 - ✅ `MARKETPLACE-READY.md` - This file!
 
 ### Build Artifacts
-- ✅ `mcli-workflow-notebooks-1.0.0.vsix` - Packaged extension (16.4 KB)
+- ✅ `mcli-framework-1.0.0.vsix` - Packaged extension (21.8 KB)
 - ✅ `dist/extension.js` - Compiled and minified (8.57 KB)
 
 ## 🎨 Branding Features
 
 ### Visual Identity
-- **Display Name**: 🚀 MCLI Workflow Notebooks
+- **Display Name**: 🚀 MCLI Framework
 - **Description**: ✨ Transform your workflow JSON files into beautiful, interactive notebooks...
 - **Icon**: Purple gradient notebook with orange play button
 - **Theme**: Dark gallery banner (#1e1e1e)
@@ -75,9 +75,9 @@ The MCLI Workflow Notebooks extension is **fully prepared** for publication to t
 ## 📊 Package Stats
 
 ```
-File: mcli-workflow-notebooks-1.0.0.vsix
-Size: 16.4 KB
-Files: 10
+File: mcli-framework-1.0.0.vsix
+Size: 21.8 KB
+Files: 12
   - README.md: 8.43 KB
   - package.json: 3.65 KB
   - icon.png: 3.72 KB
@@ -94,7 +94,7 @@ Files: 10
 
 ```bash
 # 1. Login with your PAT
-vsce login lefv
+vsce login gwicho38
 
 # 2. Publish
 vsce publish
@@ -104,9 +104,9 @@ vsce publish
 
 ### Option 2: Manual Upload
 
-1. Go to https://marketplace.visualstudio.com/manage/publishers/lefv
+1. Go to https://marketplace.visualstudio.com/manage/publishers/gwicho38
 2. Click "..." → "Upload Extension"
-3. Upload `mcli-workflow-notebooks-1.0.0.vsix`
+3. Upload `mcli-framework-1.0.0.vsix`
 4. Click "Upload"
 
 ## 📋 Pre-Publication Checklist
@@ -118,7 +118,7 @@ vsce publish
 - ✅ LICENSE.txt included (MIT)
 - ✅ Extension packaged successfully
 - ✅ No validation errors
-- ✅ Publisher ID set (`lefv`)
+- ✅ Publisher ID set (`gwicho38`)
 - ✅ Repository linked (https://github.com/gwicho38/mcli)
 - ⏳ Publisher account created (manual step)
 - ⏳ Personal Access Token generated (manual step)
@@ -141,7 +141,7 @@ You'll need to complete these manual steps:
 
 3. **Create Publisher Account**
    - Go to https://marketplace.visualstudio.com/manage
-   - Create publisher with ID: `lefv`
+   - Create publisher with ID: `gwicho38`
    - Verify email if required
 
 See [PUBLISHING.md](PUBLISHING.md) for detailed instructions.
@@ -164,7 +164,7 @@ Once published, update these files with the marketplace URL:
 ## 📈 Expected Marketplace URL
 
 ```
-https://marketplace.visualstudio.com/items?itemName=lefv.mcli-workflow-notebooks
+https://marketplace.visualstudio.com/items?itemName=gwicho38.mcli-framework
 ```
 
 ## 🎊 Success Criteria
@@ -172,8 +172,8 @@ https://marketplace.visualstudio.com/items?itemName=lefv.mcli-workflow-notebooks
 Extension is considered successfully published when:
 
 1. ✅ Listed on VSCode Marketplace
-2. ✅ Searchable by "MCLI Workflow Notebooks"
-3. ✅ Installable via `code --install-extension lefv.mcli-workflow-notebooks`
+2. ✅ Searchable by "MCLI Framework"
+3. ✅ Installable via `code --install-extension gwicho38.mcli-framework`
 4. ✅ Icon displays correctly
 5. ✅ README renders properly
 6. ✅ Can open and edit workflow JSON files

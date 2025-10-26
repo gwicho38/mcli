@@ -27,10 +27,10 @@ Edit your workflow JSON files like Jupyter notebooks with our VSCode extension!
 **Quick Install:**
 ```bash
 # From VSCode Marketplace (pending publication)
-code --install-extension lefv.mcli-workflow-notebooks
+code --install-extension gwicho38.mcli-framework
 
 # Or install from VSIX
-code --install-extension vscode-extension/mcli-workflow-notebooks-1.0.0.vsix
+code --install-extension vscode-extension/mcli-framework-1.0.0.vsix
 ```
 
 **Learn More:**
