@@ -10,6 +10,35 @@ Write a script. Store it. Version it. Run it anywhere. Schedule it. Share it.
 
 No coupling to the engine. No vendor lock-in. Just portable workflows that work.
 
+## 🚀 Visual Workflow Editing
+
+Edit your workflow JSON files like Jupyter notebooks with our VSCode extension!
+
+[![VSCode Extension](https://img.shields.io/badge/VSCode-Extension-blue?logo=visualstudiocode)](vscode-extension/)
+[![Visual Editing](https://img.shields.io/badge/workflows-visual%20editing-brightgreen)](vscode-extension/)
+
+**Features:**
+- 📝 Cell-based editing (Jupyter-like interface)
+- ⚡ Live code execution (Python, Shell, Bash, Zsh, Fish)
+- 🎯 Monaco editor with IntelliSense
+- 📊 Rich markdown documentation cells
+- 💾 Files stay as `.json` (git-friendly)
+
+**Quick Install:**
+```bash
+# From VSCode Marketplace (pending publication)
+code --install-extension lefv.mcli-workflow-notebooks
+
+# Or install from VSIX
+code --install-extension vscode-extension/mcli-workflow-notebooks-1.0.0.vsix
+```
+
+**Learn More:**
+- [Extension README](vscode-extension/README.md) - Features and usage
+- [Visual Editing Guide](README-VISUAL-EDITING.md) - Quick start
+- [Installation Guide](vscode-extension/INSTALL.md) - Detailed setup
+- [Workflow Notebooks Docs](docs/workflow-notebooks.md) - Complete guide
+
 ## ⚡ Quick Start
 
 ### Installation

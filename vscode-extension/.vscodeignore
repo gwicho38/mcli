@@ -9,3 +9,4 @@ webpack.config.js
 **/.eslintrc.json
 **/*.map
 **/*.ts
+!dist/extension.js
