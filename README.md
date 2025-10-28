@@ -319,7 +319,7 @@ Available workflows:
 - **redis** - Redis cache management
 - **videos** - Video processing and overlay removal
 - **sync** - Multi-cloud synchronization
-- **politician-trading** - Financial data collection (specialized)
+- **politician-trading** - Now available as standalone package: [politician-trading-tracker](https://github.com/gwicho38/politician-trading-tracker)
 
 ## 💡 Why MCLI?
 

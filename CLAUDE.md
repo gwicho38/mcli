@@ -89,7 +89,6 @@ src/mcli/
 │   └── video/            # Video processing commands
 ├── self/                  # Self-management commands (update, performance, etc.)
 ├── workflow/              # Workflow automation commands
-│   ├── politician_trading/ # Trading data scraping & analysis
 │   ├── daemon/           # Daemon management
 │   ├── scheduler/        # Scheduling
 │   └── dashboard/        # Dashboard launch
