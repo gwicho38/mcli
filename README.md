@@ -1,5 +1,10 @@
 # MCLI - Portable Workflow Framework
 
+[![codecov](https://codecov.io/gh/gwicho38/mcli/branch/main/graph/badge.svg)](https://codecov.io/gh/gwicho38/mcli)
+[![Tests](https://github.com/gwicho38/mcli/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/gwicho38/mcli/actions)
+[![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 **Transform any script into a versioned, portable, schedulable workflow command.**
 
 MCLI is a modular CLI framework that lets you write scripts once and run them anywhere - as interactive commands, scheduled jobs, or background daemons. Your workflows live in `~/.mcli/commands/`, are versioned via lockfile, and completely decoupled from the engine source code.
