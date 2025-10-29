@@ -2,10 +2,12 @@ import json
 import logging
 from typing import Any, Dict, Optional
 
-import ollama
-
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.optional_deps import optional_import
 from mcli.lib.toml.toml import read_from_toml
+
+# Gracefully handle optional ollama dependency
+ollama, OLLAMA_AVAILABLE = optional_import("ollama")
 
 logger = get_logger(__name__)
 
@@ -204,6 +206,15 @@ Generate ONLY the commit message, nothing else:"""
     def generate_commit_message(self, changes: Dict[str, Any], diff_content: str) -> str:
         """Generate an AI-powered commit message"""
         try:
+            # Check if ollama is available
+            if not OLLAMA_AVAILABLE:
+                logger.warning(
+                    "Ollama is not installed. Install it with: pip install ollama\n"
+                    "Falling back to rule-based commit message generation."
+                )
+                analysis = self._analyze_file_patterns(changes)
+                return self._generate_fallback_message(changes, analysis)
+
             # Analyze the changes first
             analysis = self._analyze_file_patterns(changes)
 
