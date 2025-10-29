@@ -8,7 +8,16 @@
 
 ## 🎯 What Is This?
 
-Ever wish you could edit your workflow JSON files like Jupyter notebooks? Now you can! This extension brings the magic of cell-based editing to your MCLI workflow files.
+**MCLI Framework** is a portable workflow framework that transforms any script into a versioned, schedulable command. Write a script once, run it anywhere - as interactive commands, scheduled jobs, or background daemons.
+
+**This extension** brings Jupyter-style notebook editing to your MCLI workflows! Edit your workflow JSON files visually with cell-based editing, live code execution, and rich documentation - all while keeping your files as clean, git-friendly JSON.
+
+### Why Use This?
+
+- **For MCLI Users**: Edit your `~/.mcli/commands/` workflows with a visual interface instead of raw JSON
+- **For DevOps Engineers**: Document and execute deployment workflows with inline code and docs
+- **For Data Scientists**: Create reproducible data processing pipelines with cell-based execution
+- **For Automation Enthusiasts**: Build schedulable workflows with visual editing and live testing
 
 ### ✨ The Magic
 
@@ -89,19 +98,46 @@ Your workflow.json file
 
 ## 📦 Installation
 
-### From VSCode Marketplace (Recommended)
+### Step 1: Install MCLI Framework (Optional but Recommended)
+
+```bash
+# Install from PyPI
+pip install mcli-framework
+
+# Or with UV (recommended)
+uv pip install mcli-framework
+
+# Create your first workflow
+mcli commands add my-workflow --group workflow
+```
+
+**What is MCLI Framework?**
+- 🚀 Transform any script into a portable, versioned command
+- 📅 Schedule workflows as cron jobs or background daemons
+- 🔄 Workflows live in `~/.mcli/commands/` - completely decoupled from engine
+- 🎯 Write once, run anywhere - interactive, scheduled, or daemon mode
+- 📦 [Learn more on PyPI](https://pypi.org/project/mcli-framework/)
+
+### Step 2: Install the VSCode Extension
+
+**From VSCode Marketplace (Recommended)**
 
 1. Open VSCode
 2. Go to Extensions (`Cmd+Shift+X`)
-3. Search for **"MCLI Workflow Notebooks"**
+3. Search for **"MCLI Framework"**
 4. Click **Install**
 
-### From VSIX File
+**From Command Line**
 
 ```bash
-# Download the .vsix file
-# Then install:
-code --install-extension mcli-workflow-notebooks-1.0.0.vsix
+code --install-extension gwicho38.mcli-framework
+```
+
+**From VSIX File**
+
+```bash
+# Download the .vsix file, then:
+code --install-extension mcli-framework-1.0.1.vsix
 ```
 
 ## 🎮 Usage
@@ -286,6 +322,9 @@ A: Absolutely! They're just JSON - edit with any editor.
 
 **Q: Does execution run locally?**
 A: Yes, currently runs Python/Shell locally (MCLI daemon integration coming).
+
+**Q: I get "This JSON file is not a valid notebook format" error**
+A: This extension only works with notebook-formatted JSON files (Jupyter nbformat with `cells` array). Regular MCLI command JSON files don't have this format. To convert a command to notebook format, create a new notebook workflow instead. The extension is designed for workflow files in `~/.mcli/workflows/` or files with `*workflow*.json` pattern, not for command definition files in `~/.mcli/commands/`.
 
 ## 🗺️ Roadmap
 

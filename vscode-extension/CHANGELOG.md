@@ -2,6 +2,85 @@
 
 All notable changes to the "MCLI Workflow Notebooks" extension will be documented in this file.
 
+## [2.0.0] - 2025-10-28
+
+### 🚀 Major Release: Full MCLI Command Integration!
+
+This is a **major release** that transforms the extension from a simple notebook editor into a complete visual editing solution for all MCLI commands.
+
+#### 🎯 Breaking Through: Auto-Format Conversion
+
+- **Automatic format detection and conversion** - Seamlessly converts between old mcli command format and notebook format
+- **Bidirectional compatibility** - Opens old format, edits visually, saves back to original format
+- **Zero migration required** - Works with existing `~/.mcli/commands/*.json` files out of the box
+- **Format preservation** - Maintains all metadata, structure, and compatibility with `mcli workflow`
+
+#### ✨ What's New in 2.0
+
+**Core Features:**
+- 🔄 **Smart Format Conversion** - Automatically detects and converts old mcli command JSON to notebook format
+- 💾 **Round-Trip Compatibility** - Saves back to original format when closing
+- 🎨 **Visual Cell Editing** - Edit code and documentation in separate, manageable cells
+- ⚡ **Live Execution** - Run Python/Shell code directly in VS Code
+- 📝 **Rich Documentation** - Add markdown cells for inline documentation
+- 🔧 **Metadata Preservation** - Maintains all original command metadata
+
+**Enhanced Description:**
+- Better explanation of MCLI Framework context
+- Clear use cases for different audiences (DevOps, Data Science, Automation)
+- Installation instructions for both framework and extension
+
+**Bug Fixes:**
+- Fixed crash when opening non-notebook JSON files
+- Added validation and helpful error messages
+- Type safety improvements
+
+### 🎯 Why This is a Major Release:
+
+This version fundamentally changes how you interact with MCLI commands. Instead of editing raw JSON, you now have a **visual, cell-based interface** that makes workflow creation and maintenance dramatically easier while maintaining 100% compatibility with existing workflows.
+
+**Before v2.0:** Edit raw JSON files manually
+**After v2.0:** Visual notebook interface with live execution
+
+This is a **game-changer** for MCLI workflow development!
+
+### 📦 Complete Feature Set (v1.0 + v2.0):
+
+1. ✅ **Visual cell-based editing** - Jupyter-style interface
+2. ✅ **Live code execution** - Python, Shell, Bash, Zsh, Fish
+3. ✅ **Smart auto-conversion** - Old format ↔ Notebook format
+4. ✅ **Monaco editor integration** - IntelliSense, syntax highlighting
+5. ✅ **Rich markdown support** - Document your workflows
+6. ✅ **Git-friendly format** - Clean JSON diffs
+7. ✅ **Format preservation** - Maintains original structure
+8. ✅ **Zero migration cost** - Works with existing files
+
+### 🚀 Upgrade Path:
+
+No action required! Simply update the extension and start using it with your existing `~/.mcli/commands/*.json` files.
+
+## [1.0.2] - 2025-10-28
+
+### 📝 Documentation Improvements
+
+- **Enhanced description with MCLI Framework context** - Updated extension description to explain what MCLI Framework is and why you would use this extension
+- **Added MCLI Framework installation guide** - New section explaining how to install and use mcli-framework PyPI package
+- **Improved README** - Added "Why Use This?" section with use cases for different audiences
+- **Added FAQ entry** - Clarified when the "cells array" error appears and which files the extension works with
+
+### 🎯 What's New
+
+- Better explanation of relationship between MCLI Framework and this extension
+- Clear guidance on which JSON files work with the extension (notebook format vs command files)
+- Installation instructions now include mcli-framework setup
+
+## [1.0.1] - 2025-10-28
+
+### 🐛 Bug Fixes
+
+- **Fixed crash when opening non-notebook JSON files** - Added validation to check if JSON contains a `cells` array before attempting to parse as notebook
+- Now shows a helpful error message when opening incompatible JSON files
+
 ## [1.0.0] - 2025-10-26
 
 ### 🎉 Initial Release
