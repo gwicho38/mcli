@@ -1,0 +1,263 @@
+# Pylint configuration for MCLI
+
+[MAIN]
+# Specify a score threshold to be exceeded before program exits with error.
+fail-under=7.0
+
+# Use multiple processes to speed up Pylint.
+jobs=0
+
+# Allow loading of arbitrary C extensions.
+unsafe-load-any-extension=no
+
+# List of plugins to load
+load-plugins=
+
+# Pickle collected data for later comparisons.
+persistent=yes
+
+# Discover python modules and packages in the file system subtree.
+recursive=yes
+
+# Add files or directories matching the regex patterns to the ignore list.
+ignore=CVS,.git,__pycache__,.venv,venv,.env,env,build,dist,*.egg-info,.tox
+
+# Ignore patterns
+ignore-patterns=^\.#,test_.*\.py$
+
+[MESSAGES CONTROL]
+# Disable specific warnings and errors
+disable=
+    # Design
+    too-few-public-methods,
+    too-many-ancestors,
+    too-many-arguments,
+    too-many-boolean-expressions,
+    too-many-branches,
+    too-many-instance-attributes,
+    too-many-locals,
+    too-many-nested-blocks,
+    too-many-public-methods,
+    too-many-return-statements,
+    too-many-statements,
+    # Format (handled by black)
+    line-too-long,
+    bad-continuation,
+    # Import
+    import-error,
+    no-name-in-module,
+    # Docstrings (handled by flake8-docstrings)
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    # Other
+    fixme,
+    invalid-name,
+    protected-access,
+    broad-except,
+    logging-fstring-interpolation,
+    consider-using-f-string,
+    # Click-specific
+    unused-argument,
+    redefined-outer-name,
+    # Async
+    not-async-context-manager
+
+[REPORTS]
+# Set the output format.
+output-format=colorized
+
+# Include message's id in output
+include-ids=yes
+
+# Display a full report or only the messages
+reports=yes
+
+# Evaluation score formula
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+
+[FORMAT]
+# Maximum number of characters on a single line (consistent with black)
+max-line-length=100
+
+# Maximum number of lines in a module
+max-module-lines=1000
+
+# String used for indentation
+indent-string='    '
+
+# Expected format of line ending
+expected-line-ending-format=LF
+
+[BASIC]
+# Good variable names
+good-names=i,j,k,ex,Run,_,x,y,z,id,db,app,df,dt,e,f,fn,fp,lr,n,p,q,t,v
+
+# Bad variable names
+bad-names=foo,bar,baz,toto,tutu,tata
+
+# Include a hint for the correct naming format with invalid-name
+include-naming-hint=yes
+
+# Naming style matching correct argument names
+argument-naming-style=snake_case
+
+# Naming style matching correct attribute names
+attr-naming-style=snake_case
+
+# Naming style matching correct class names
+class-naming-style=PascalCase
+
+# Naming style matching correct constant names
+const-naming-style=UPPER_CASE
+
+# Naming style matching correct function names
+function-naming-style=snake_case
+
+# Naming style matching correct method names
+method-naming-style=snake_case
+
+# Naming style matching correct module names
+module-naming-style=snake_case
+
+# Naming style matching correct variable names
+variable-naming-style=snake_case
+
+[DESIGN]
+# Maximum number of arguments for function / method
+max-args=7
+
+# Maximum number of attributes for a class
+max-attributes=15
+
+# Maximum number of boolean expressions in a if statement
+max-bool-expr=5
+
+# Maximum number of branch for function / method body
+max-branches=15
+
+# Maximum number of locals for function / method body
+max-locals=20
+
+# Maximum number of parents for a class
+max-parents=7
+
+# Maximum number of public methods for a class
+max-public-methods=25
+
+# Maximum number of return / yield for function / method body
+max-returns=8
+
+# Maximum number of statements in function / method body
+max-statements=60
+
+# Minimum number of public methods for a class
+min-public-methods=0
+
+[IMPORTS]
+# Deprecated modules to check for
+deprecated-modules=optparse,imp
+
+# Allow wildcard imports from modules that define __all__
+allow-wildcard-with-all=no
+
+# Analyse import fallback blocks
+analyse-fallback-blocks=no
+
+[CLASSES]
+# List of method names used to declare instance attributes
+defining-attr-methods=__init__,__new__,setUp,__post_init__
+
+# List of valid names for the first argument in a class method
+valid-classmethod-first-arg=cls
+
+# List of valid names for the first argument in a metaclass class method
+valid-metaclass-classmethod-first-arg=mcs
+
+[EXCEPTIONS]
+# Exceptions that will emit a warning when being caught
+overgeneral-exceptions=BaseException,Exception
+
+[LOGGING]
+# Logging modules to check that the string format arguments are in logging function parameter format
+logging-modules=logging
+
+[MISCELLANEOUS]
+# List of note tags to take in consideration
+notes=FIXME,XXX,TODO,NOTE,HACK
+
+[SIMILARITIES]
+# Minimum lines number of a similarity
+min-similarity-lines=4
+
+# Ignore comments when computing similarities
+ignore-comments=yes
+
+# Ignore docstrings when computing similarities
+ignore-docstrings=yes
+
+# Ignore imports when computing similarities
+ignore-imports=yes
+
+[SPELLING]
+# Spelling dictionary name
+spelling-dict=
+
+# List of comma separated words that should not be checked
+spelling-ignore-words=
+
+# A path to a file that contains private dictionary
+spelling-private-dict-file=
+
+# Tells whether to store unknown words to indicated private dictionary
+spelling-store-unknown-words=no
+
+[TYPECHECK]
+# List of decorators that produce context managers
+contextmanager-decorators=contextlib.contextmanager
+
+# List of members which are set dynamically and missed by pylint inference
+generated-members=
+
+# Tells whether missing members accessed in mixin class should be ignored
+ignore-mixin-members=yes
+
+# This flag controls whether pylint should warn about no-member and similar checks whenever an opaque object is returned when inferring
+ignore-on-opaque-inference=yes
+
+# List of class names for which member attributes should not be checked
+ignored-classes=optparse.Values,thread._local,_thread._local
+
+# List of module names for which member attributes should not be checked
+ignored-modules=
+
+# Show a hint with possible names when a member name was not found
+missing-member-hint=yes
+
+# The minimum edit distance a name should have in order to be considered a similar match for a missing member name
+missing-member-hint-distance=1
+
+# The total number of similar names that should be taken in consideration when showing a hint for a missing member
+missing-member-max-choices=1
+
+[VARIABLES]
+# List of additional names supposed to be defined in builtins
+additional-builtins=
+
+# Tells whether unused global variables should be treated as a violation
+allow-global-unused-variables=yes
+
+# List of strings which can identify a callback function by name
+callbacks=cb_,_cb
+
+# A regular expression matching the name of dummy variables
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_
+
+# Argument names that match this expression will be ignored
+ignored-argument-names=_.*|^ignored_|^unused_
+
+# Tells whether we should check for unused import in __init__ files
+init-import=no
+
+# List of qualified module names which can have objects that can redefine builtins
+redefining-builtins-modules=six.moves,past.builtins,future.builtins,builtins,io

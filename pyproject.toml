@@ -253,6 +253,8 @@ ignore_missing_imports = true
 mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true
+follow_imports = "normal"
+follow_imports_for_stubs = true
 
 # Output
 show_error_codes = true
@@ -260,6 +262,24 @@ show_column_numbers = true
 show_error_context = true
 color_output = true
 error_summary = true
+pretty = true
+
+# Error reporting
+show_traceback = true
+raise_exceptions = false
+
+# Incremental mode
+incremental = true
+cache_dir = ".mypy_cache"
+
+# Strict options for core modules (enable gradually)
+# disallow_any_unimported = false
+# disallow_any_expr = false
+# disallow_any_decorated = false
+# disallow_any_explicit = false
+# disallow_subclassing_any = false
+# strict_optional = true
+# warn_incomplete_stub = true
 
 # Per-module options
 [[tool.mypy.overrides]]
@@ -278,6 +298,19 @@ module = [
 ]
 warn_return_any = false
 
+# Ignore missing imports for optional dependencies
+[[tool.mypy.overrides]]
+module = [
+    "ollama.*",
+    "streamlit.*",
+    "torch.*",
+    "transformers.*",
+    "mlflow.*",
+    "plotly.*",
+    "supabase.*",
+]
+ignore_missing_imports = true
+
 [build-system]
 requires = ["setuptools>=65.0.0", "wheel>=0.40.0"]
 build-backend = "setuptools.build_meta"
@@ -287,6 +320,7 @@ dev = [
     "black>=25.1.0",
     "isort>=5.13.2",
     "mypy>=1.16.1",
+    "pylint>=3.0.0",
     "pytest>=8.4.1",
     "pytest-cov>=4.1.0",
     "pre-commit>=3.6.0",

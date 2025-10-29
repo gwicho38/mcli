@@ -398,6 +398,12 @@ lint: setup ## Run all linting tools
 	$(UV) run mypy src/
 	@echo "$(GREEN)Linting completed ✅$(RESET)"
 
+.PHONY: lint-pylint
+lint-pylint: setup ## Run pylint on source code
+	@echo "$(CYAN)Running pylint...$(RESET)"
+	$(UV) run pylint src/mcli/ --rcfile=.pylintrc || true
+	@echo "$(GREEN)Pylint completed$(RESET)"
+
 .PHONY: format
 format: setup ## Auto-format code
 	@echo "$(CYAN)Formatting code...$(RESET)"
