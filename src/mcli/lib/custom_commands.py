@@ -107,13 +107,23 @@ class CustomCommandManager:
         """
         Load all custom commands from the commands directory.
 
+        Automatically filters out test commands (starting with 'test_' or 'test-')
+        unless MCLI_INCLUDE_TEST_COMMANDS=true is set.
+
         Returns:
             List of command data dictionaries
         """
         commands = []
+        include_test = os.environ.get('MCLI_INCLUDE_TEST_COMMANDS', 'false').lower() == 'true'
+
         for command_file in self.commands_dir.glob("*.json"):
             # Skip the lockfile
             if command_file.name == "commands.lock.json":
+                continue
+
+            # Skip test commands unless explicitly included
+            if not include_test and command_file.stem.startswith(('test_', 'test-')):
+                logger.debug(f"Skipping test command: {command_file.name}")
                 continue
 
             command_data = self.load_command(command_file)
