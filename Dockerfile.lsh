@@ -9,7 +9,7 @@
 #
 # For fly.io deployment, see fly.lsh.toml and docs/lsh_deployment_guide.md
 
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # Set working directory
 WORKDIR /app

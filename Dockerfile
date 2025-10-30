@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for ML System
 
 # Stage 1: Base image with Python dependencies
-FROM python:3.10-slim as base
+FROM python:3.14-slim as base
 
 WORKDIR /app
 
@@ -91,7 +91,7 @@ ENV PYTHONPATH=/app
 CMD ["python", "-m", "mcli.ml.backtesting.backtest_engine"]
 
 # Stage 6: MLflow Server
-FROM python:3.10-slim as mlflow
+FROM python:3.14-slim as mlflow
 
 WORKDIR /mlflow
 
