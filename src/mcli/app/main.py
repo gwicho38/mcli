@@ -347,26 +347,32 @@ def _add_lazy_commands(app: click.Group):
     # Note: lib group removed - secrets moved to workflows
     # Previous: mcli lib secrets -> Now: mcli workflows secrets
 
-    # Add workflows group (renamed from 'workflow') with completion-aware lazy loading
+    # Add workflows group directly (not lazy-loaded) to preserve -g/--global option
     try:
-        from mcli.app.completion_helpers import create_completion_aware_lazy_group
-
-        workflows_group = create_completion_aware_lazy_group(
-            "workflows",
-            "mcli.workflow.workflow.workflows",
-            "Runnable workflows for automation, video processing, and daemon management",
-        )
+        from mcli.workflow.workflow import workflows as workflows_group
         app.add_command(workflows_group, name="workflows")
-        logger.debug("Added completion-aware workflows group")
+        logger.debug("Added workflows group with -g/--global support")
     except ImportError as e:
-        logger.debug(f"Could not load completion helpers, using standard lazy group: {e}")
-        # Fallback to standard lazy group
-        workflows_group = LazyGroup(
-            "workflows",
-            "mcli.workflow.workflow.workflows",
-            help="Runnable workflows for automation, video processing, and daemon management",
-        )
-        app.add_command(workflows_group, name="workflows")
+        logger.error(f"Could not load workflows group: {e}")
+        # Fallback to lazy loading if import fails
+        try:
+            from mcli.app.completion_helpers import create_completion_aware_lazy_group
+
+            workflows_group = create_completion_aware_lazy_group(
+                "workflows",
+                "mcli.workflow.workflow.workflows",
+                "Runnable workflows for automation, video processing, and daemon management",
+            )
+            app.add_command(workflows_group, name="workflows")
+            logger.debug("Added completion-aware workflows group (fallback)")
+        except ImportError:
+            workflows_group = LazyGroup(
+                "workflows",
+                "mcli.workflow.workflow.workflows",
+                help="Runnable workflows for automation, video processing, and daemon management",
+            )
+            app.add_command(workflows_group, name="workflows")
+            logger.debug("Added lazy workflows group (fallback)")
 
     # Lazy load other heavy commands that are used less frequently
     # NOTE: chat and model commands have been removed
