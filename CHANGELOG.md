@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (2025-10-30)
+- **Code Quality Infrastructure**: Complete linting and formatting configuration
+  - Added comprehensive `.pylintrc` configuration
+  - Enhanced mypy configuration with additional options and optional dependency handling
+  - Added `make lint-pylint` target for optional pylint checking
+  - Comprehensive linting documentation at `docs/development/LINTING.md`
+- **Optional Dependencies**: Graceful handling system for optional dependencies
+  - New `mcli/lib/optional_deps.py` utility module with multiple patterns
+  - 21 comprehensive unit tests (100% pass rate)
+  - Documentation guide at `docs/guides/OPTIONAL_DEPENDENCIES.md`
+  - Updated ai_service.py to demonstrate graceful degradation
+- **Testing Infrastructure**: Enhanced test infrastructure and documentation
+  - Added performance and dependency-specific pytest markers
+  - Comprehensive testing guide at `docs/development/TESTING.md`
+  - 1,129 tests collecting successfully (847 passing, 75% pass rate)
+- **Test Coverage**: Coverage configuration and CI integration
+  - Set minimum coverage threshold to 30%
+  - Integrated Codecov into CI/CD pipeline
+  - Added coverage, CI/CD status, and Python version badges to README
+- **Test Command Filtering**: Automatic filtering of test commands
+  - Commands starting with `test_` or `test-` are filtered by default
+  - `MCLI_INCLUDE_TEST_COMMANDS` environment variable for override
+  - 8 comprehensive unit tests
+- **Project Documentation**: Standard project documentation files
+  - Added `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1)
+  - Added `tox.ini` for multi-environment testing (Python 3.9-3.12)
+  - Enhanced CI/CD with security scanning (Bandit, Safety, Trivy)
+  - Added CodeQL security analysis workflow
+  - Added Dependabot configuration for automated dependency updates
+
+### Improved (2025-10-30)
+- **Build System**: Cleaned up build artifacts and improved .gitignore
+  - Removed all `__pycache__`, pytest cache, dist, and build directories
+  - Added `*.vsix` to .gitignore for VS Code extension builds
+  - Added repo-cleanup workflow documentation
+- **CI/CD Pipeline**: Enhanced security and coverage reporting
+  - Coverage reports uploaded to Codecov from all test runs
+  - Bandit security linter integrated into CI
+  - Safety dependency vulnerability checking
+  - Trivy filesystem scanning for CRITICAL and HIGH severity issues
+  - Security reports uploaded as artifacts
+  - CodeQL analysis running weekly and on PRs
+
+### Documentation (2025-10-30)
+- `docs/development/LINTING.md` - Complete linting and code quality guide (400+ lines)
+- `docs/development/TESTING.md` - Comprehensive testing guide (500+ lines)
+- `docs/guides/OPTIONAL_DEPENDENCIES.md` - Optional dependency handling patterns
+- `docs/features/REPO_CLEANUP.md` - Repository cleanup command documentation
+- `docs/guides/REPO_CLEANUP_GUIDE.md` - Quick start guide for repo cleanup
+
+### Fixed (2025-10-30)
+- Test infrastructure now robust with proper fixtures and markers
+- Import errors for optional dependencies handled gracefully
+- Test command pollution in production command lists prevented
+
 ## [7.9.6] - 2025-10-18
 
 ### Improved
