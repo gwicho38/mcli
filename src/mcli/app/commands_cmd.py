@@ -206,8 +206,8 @@ def init_workflows(is_global, git, force):
         mcli workflow init --git        # Also initialize git repository
     """
     from mcli.lib.paths import (
-        get_custom_commands_dir,
-        get_lockfile_path,
+        get_mcli_home,
+        get_local_mcli_dir,
         get_git_root,
         is_git_repository,
     )
@@ -216,9 +216,15 @@ def init_workflows(is_global, git, force):
     in_git_repo = is_git_repository() and not is_global
     git_root = get_git_root() if in_git_repo else None
 
-    # Get the workflows directory
-    workflows_dir = get_custom_commands_dir(global_mode=is_global)
-    lockfile_path = get_lockfile_path(global_mode=is_global)
+    # Explicitly create workflows directory (not commands)
+    # This bypasses the migration logic that would check for old commands/ directory
+    if not is_global and in_git_repo:
+        local_mcli = get_local_mcli_dir()
+        workflows_dir = local_mcli / "workflows"
+    else:
+        workflows_dir = get_mcli_home() / "workflows"
+
+    lockfile_path = workflows_dir / "commands.lock.json"
 
     # Check if already initialized
     if workflows_dir.exists() and not force:
