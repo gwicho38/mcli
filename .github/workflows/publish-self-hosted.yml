@@ -68,6 +68,8 @@ jobs:
         run: |
           export PYENV_ROOT="$HOME/.pyenv"
           export PATH="$PYENV_ROOT/bin:$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+          export UV_CACHE_DIR="${GITHUB_WORKSPACE}/.uv-cache"
+          mkdir -p "${UV_CACHE_DIR}"
           eval "$(pyenv init --path)" 2>/dev/null || true
           eval "$(pyenv init -)" 2>/dev/null || true
           uv venv --python python${{ matrix.python-version }}
