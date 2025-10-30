@@ -46,7 +46,7 @@ jobs:
         run: bandit -r src/ -f json -o bandit-report.json || true
 
       - name: Upload Bandit results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bandit-results
           path: bandit-report.json
@@ -70,7 +70,7 @@ jobs:
         run: safety check --json > safety-report.json || true
 
       - name: Upload Safety results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: safety-results
           path: safety-report.json
