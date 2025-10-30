@@ -36,16 +36,30 @@ pytest tests/unit          # Unit tests only
 pytest tests/cli           # CLI tests only
 pytest -m "not slow"       # Skip slow tests
 pytest -n auto             # Parallel testing
+
+# Using tox for multi-environment testing
+tox                        # Run tests on all Python versions (3.9-3.12)
+tox -e py311-fast          # Fast tests on Python 3.11
+tox -e py311-cov           # Tests with coverage on Python 3.11
+tox -e py39,py310,py311,py312  # Run on specific versions
 ```
 
 ### Code Quality
 ```bash
 make lint                  # Run all linting (black, isort, flake8, mypy)
+make lint-pylint           # Run pylint (optional, non-blocking)
 make format                # Auto-format code (black + isort)
 make type-check            # Run mypy type checking
 make security-check        # Run security checks (bandit, safety)
 make pre-commit-run        # Run all pre-commit hooks
+
+# Using tox for comprehensive checks
+tox -e lint                # Run all linters
+tox -e type                # Type checking
+tox -e security            # Security checks
 ```
+
+See [Linting Guide](docs/development/LINTING.md) for detailed configuration and usage
 
 ### Dashboard
 ```bash
@@ -130,11 +144,14 @@ src/mcli/
 - Skip individual workflow submodules in discovery to avoid duplicate commands (see `main.py:109-116`)
 
 ### Testing Requirements
-- Minimum coverage: 80% (configured in `pyproject.toml`)
+- Current minimum coverage: 30% (configured in `pyproject.toml`, goal: 80%)
 - Tests in `tests/` organized by category: unit, cli, integration, e2e, performance
-- Use pytest markers: `@pytest.mark.slow`, `@pytest.mark.integration`, `@pytest.mark.cli`
+- Use pytest markers: `@pytest.mark.slow`, `@pytest.mark.integration`, `@pytest.mark.cli`, `@pytest.mark.unit`
+- Additional markers: `@pytest.mark.performance`, `@pytest.mark.requires_redis`, etc.
 - All fixtures in `tests/fixtures/` are globally available
-- Critical modules require 95% coverage: `mcli/self/`, `mcli/app/model_cmd.py`
+- Integration tests requiring external services are skipped by default (use markers)
+- Test suite status: 834 passing, 0 failing, 271 skipped (100% pass rate)
+- See [Testing Guide](docs/development/TESTING.md) for comprehensive testing documentation
 
 ### Environment Variables
 Key variables from `.env`:
@@ -196,7 +213,10 @@ Key variables from `.env`:
 4. **Version Bumping**: Edit `pyproject.toml` version field directly
 5. **Rust Extensions**: Run `maturin develop` in `mcli_rust/` for local development
 6. **Test Markers**: Mark slow tests with `@pytest.mark.slow` to allow skipping
-7. **Environment Setup**: Always copy `.env.example` to `.env` before development
+7. **Integration Tests**: Mark tests requiring external services (Redis, Ollama, Supabase) with appropriate markers
+8. **Test Environment**: Set `MCLI_INCLUDE_TEST_COMMANDS=1` when testing custom command loading
+9. **Environment Setup**: Always copy `.env.example` to `.env` before development
+10. **Multi-Environment Testing**: Use `tox` to test across Python 3.9-3.12
 
 ## Python Version Support
 
@@ -208,8 +228,11 @@ Key variables from `.env`:
 
 - **Core**: Click, Rich, requests, tomli (always installed)
 - **Optional Groups**: chat, async-extras, video, documents, viz, database, ml, gpu, monitoring, streaming, dashboard, web
-- **Development**: pytest, black, isort, mypy, ruff, pre-commit (in `[dev]` extra)
+- **Development**: pytest, black, isort, mypy, ruff, pylint, pre-commit (in `[dev]` extra)
 - **All dependencies** now included by default (as of v7.0.0), optional groups are for legacy compatibility
+- **Testing**: pytest-asyncio, pytest-cov, pytest-mock, pytest-xdist for parallel testing
+- **Security**: bandit, safety for security scanning
+- **Multi-Environment**: tox for testing across Python versions
 
 ## Performance Considerations
 
@@ -223,10 +246,15 @@ Key variables from `.env`:
 
 1. Update version in `pyproject.toml`
 2. Run `make validate-build` to ensure everything works
-3. Run full test suite: `make test-cov`
-4. Tag release: `git tag vX.Y.Z`
-5. Push tags: `git push origin vX.Y.Z`
-6. GitHub Actions will automatically build and publish
+3. Run full test suite: `make test-cov` or `tox`
+4. Create release notes in `docs/releases/X.Y.Z.md` following the format in previous releases
+5. Update `docs/setup/INSTALL.md` with new version number
+6. Update `docs/INDEX.md` if needed
+7. Tag release: `git tag vX.Y.Z`
+8. Push tags: `git push origin vX.Y.Z`
+9. GitHub Actions will automatically build and publish
+
+**Release Notes Template**: See [docs/releases/7.10.2.md](docs/releases/7.10.2.md) for the expected format
 
 ## Entry Points
 

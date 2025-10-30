@@ -114,3 +114,5 @@ htmlcov/
 .streamlit/secrets.toml
 ENV.md
 .env.production
+.env.backup.*
+.mcli/

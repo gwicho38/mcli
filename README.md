@@ -402,10 +402,13 @@ make wheel
 
 ## 📖 Documentation
 
-- **Installation**: See [Installation Guide](docs/setup/INSTALLATION.md)
+- **📚 Documentation Index**: [Complete Documentation Index](docs/INDEX.md) - All docs organized by category
+- **Installation**: See [Installation Guide](docs/setup/INSTALL.md)
 - **Workflows**: Full workflow documentation (this README)
 - **Shell Completion**: See [Shell Completion Guide](docs/features/SHELL_COMPLETION.md)
+- **Testing**: See [Testing Guide](docs/development/TESTING.md)
 - **Contributing**: See [Contributing Guide](CONTRIBUTING.md)
+- **Release Notes**: See [Latest Release (7.10.2)](docs/releases/7.10.2.md)
 
 ## 🎯 Common Use Cases
 

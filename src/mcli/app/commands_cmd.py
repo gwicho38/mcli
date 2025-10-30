@@ -182,28 +182,34 @@ def commands():
 @click.option("--include-groups", is_flag=True, help="Include command groups in listing")
 @click.option("--daemon-only", is_flag=True, help="Show only daemon database commands")
 @click.option(
-    "--custom-only", is_flag=True, help="Show only custom commands from ~/.mcli/commands/"
+    "--custom-only", is_flag=True, help="Show only custom commands from command directory"
 )
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
-def list_commands(include_groups: bool, daemon_only: bool, custom_only: bool, as_json: bool):
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Use global commands (~/.mcli/commands/) instead of local (.mcli/commands/)"
+)
+def list_commands(include_groups: bool, daemon_only: bool, custom_only: bool, as_json: bool, is_global: bool):
     """
     List all available commands.
 
     By default, shows all discovered Click commands. Use flags to filter:
-    - --custom-only: Show only custom commands from ~/.mcli/commands/
+    - --custom-only: Show only custom commands
     - --daemon-only: Show only daemon database commands
+    - --global/-g: Use global commands directory instead of local
 
     Examples:
-        mcli commands list                  # Show all commands
-        mcli commands list --custom-only    # Show only custom commands
+        mcli commands list                  # Show all commands (local if in git repo)
+        mcli commands list --custom-only    # Show only custom commands (local if in git repo)
+        mcli commands list --global         # Show all global commands
+        mcli commands list --custom-only -g # Show only global custom commands
         mcli commands list --json           # Output as JSON
     """
     from rich.table import Table
 
     try:
         if custom_only:
-            # Show only custom commands from ~/.mcli/commands/
-            manager = get_command_manager()
+            # Show only custom commands
+            manager = get_command_manager(global_mode=is_global)
             cmds = manager.load_all_commands()
 
             if not cmds:
@@ -232,7 +238,14 @@ def list_commands(include_groups: bool, daemon_only: bool, custom_only: bool, as
                 )
 
             console.print(table)
-            console.print(f"\n[dim]Commands directory: {manager.commands_dir}[/dim]")
+
+            # Show context information
+            scope = "global" if is_global or not manager.is_local else "local"
+            scope_color = "yellow" if scope == "local" else "cyan"
+            console.print(f"\n[dim]Scope: [{scope_color}]{scope}[/{scope_color}][/dim]")
+            if manager.is_local and manager.git_root:
+                console.print(f"[dim]Git repository: {manager.git_root}[/dim]")
+            console.print(f"[dim]Commands directory: {manager.commands_dir}[/dim]")
             console.print(f"[dim]Lockfile: {manager.lockfile_path}[/dim]")
 
             return 0
@@ -291,8 +304,15 @@ def list_commands(include_groups: bool, daemon_only: bool, custom_only: bool, as
 @click.argument("query")
 @click.option("--daemon-only", is_flag=True, help="Search only daemon database commands")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
-def search_commands(query: str, daemon_only: bool, as_json: bool):
-    """Search commands by name, description, or tags"""
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Search global commands instead of local"
+)
+def search_commands(query: str, daemon_only: bool, as_json: bool, is_global: bool):
+    """
+    Search commands by name, description, or tags.
+
+    By default searches local commands (if in git repo), use --global/-g for global commands.
+    """
     try:
         if daemon_only:
             # Search only daemon database commands
@@ -678,7 +698,7 @@ logger = get_logger()
 
 @commands.command("add")
 @click.argument("command_name", required=True)
-@click.option("--group", "-g", help="Command group (defaults to 'workflow')", default="workflow")
+@click.option("--group", help="Command group (defaults to 'workflow')", default="workflow")
 @click.option("--description", "-d", help="Description for the command", default="Custom command")
 @click.option(
     "--template",
@@ -699,7 +719,10 @@ logger = get_logger()
     type=click.Choice(["bash", "zsh", "fish", "sh"], case_sensitive=False),
     help="Shell type for shell commands (defaults to $SHELL)",
 )
-def add_command(command_name, group, description, template, language, shell):
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Add to global commands (~/.mcli/commands/) instead of local (.mcli/commands/)"
+)
+def add_command(command_name, group, description, template, language, shell, is_global):
     """
     Generate a new portable custom command saved to ~/.mcli/commands/.
 
@@ -749,7 +772,7 @@ def add_command(command_name, group, description, template, language, shell):
         command_group = "workflow"  # Default to workflow group
 
     # Get the command manager
-    manager = get_command_manager()
+    manager = get_command_manager(global_mode=is_global)
 
     # Check if command already exists
     command_file = manager.commands_dir / f"{command_name}.json"
@@ -830,17 +853,28 @@ def add_command(command_name, group, description, template, language, shell):
     )
 
     lang_display = f"{language}" if language == "python" else f"{language} ({shell})"
-    logger.info(f"Created portable custom command: {command_name} ({lang_display})")
+    scope = "global" if is_global or not manager.is_local else "local"
+    scope_display = f"[cyan]{scope}[/cyan]" if scope == "global" else f"[yellow]{scope}[/yellow]"
+
+    logger.info(f"Created portable custom command: {command_name} ({lang_display}) [{scope}]")
     console.print(
-        f"[green]Created portable custom command: {command_name}[/green] [dim]({lang_display})[/dim]"
+        f"[green]Created portable custom command: {command_name}[/green] [dim]({lang_display}) [Scope: {scope_display}][/dim]"
     )
     console.print(f"[dim]Saved to: {saved_path}[/dim]")
+    if manager.is_local and manager.git_root:
+        console.print(f"[dim]Git repository: {manager.git_root}[/dim]")
     console.print(f"[dim]Group: {command_group}[/dim]")
     console.print(f"[dim]Execute with: mcli {command_group} {command_name}[/dim]")
     console.print("[dim]Command will be automatically loaded on next mcli startup[/dim]")
-    console.print(
-        f"[dim]You can share this command by copying {saved_path} to another machine's ~/.mcli/commands/ directory[/dim]"
-    )
+
+    if scope == "global":
+        console.print(
+            f"[dim]You can share this command by copying {saved_path} to another machine's ~/.mcli/commands/ directory[/dim]"
+        )
+    else:
+        console.print(
+            f"[dim]This command is local to this git repository. Use --global/-g to create global commands.[/dim]"
+        )
 
     return 0
 
@@ -848,11 +882,16 @@ def add_command(command_name, group, description, template, language, shell):
 @commands.command("remove")
 @click.argument("command_name", required=True)
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
-def remove_command(command_name, yes):
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Remove from global commands instead of local"
+)
+def remove_command(command_name, yes, is_global):
     """
-    Remove a custom command from ~/.mcli/commands/.
+    Remove a custom command.
+
+    By default removes from local commands (if in git repo), use --global/-g for global commands.
     """
-    manager = get_command_manager()
+    manager = get_command_manager(global_mode=is_global)
     command_file = manager.commands_dir / f"{command_name}.json"
 
     if not command_file.exists():
@@ -884,7 +923,10 @@ def remove_command(command_name, yes):
     "--standalone", is_flag=True, help="Make script standalone (add if __name__ == '__main__')"
 )
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
-def export_commands(target, script, standalone, output):
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Export from global commands instead of local"
+)
+def export_commands(target, script, standalone, output, is_global):
     """
     Export custom commands to JSON file or export a single command to Python script.
 
@@ -892,12 +934,13 @@ def export_commands(target, script, standalone, output):
     With --script/-s: Export a single command to Python script
 
     Examples:
-        mcli commands export                    # Export all to commands-export.json
+        mcli commands export                    # Export all local commands
+        mcli commands export --global           # Export all global commands
         mcli commands export my-export.json     # Export all to specified file
         mcli commands export my-cmd -s          # Export command to my-cmd.py
         mcli commands export my-cmd -s -o out.py --standalone
     """
-    manager = get_command_manager()
+    manager = get_command_manager(global_mode=is_global)
 
     if script:
         # Export single command to Python script
@@ -977,7 +1020,7 @@ def export_commands(target, script, standalone, output):
 @click.option("--script", "-s", is_flag=True, help="Import from Python script")
 @click.option("--overwrite", is_flag=True, help="Overwrite existing commands")
 @click.option("--name", "-n", help="Command name (for script import, defaults to script filename)")
-@click.option("--group", "-g", default="workflow", help="Command group (for script import)")
+@click.option("--group", default="workflow", help="Command group (for script import)")
 @click.option("--description", "-d", help="Command description (for script import)")
 @click.option(
     "--interactive",
@@ -985,7 +1028,10 @@ def export_commands(target, script, standalone, output):
     is_flag=True,
     help="Open in $EDITOR for review/editing (for script import)",
 )
-def import_commands(source, script, overwrite, name, group, description, interactive):
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Import to global commands instead of local"
+)
+def import_commands(source, script, overwrite, name, group, description, interactive, is_global):
     """
     Import custom commands from JSON file or import a Python script as a command.
 
@@ -993,13 +1039,14 @@ def import_commands(source, script, overwrite, name, group, description, interac
     With --script/-s: Import a Python script as a command
 
     Examples:
-        mcli commands import commands-export.json
+        mcli commands import commands-export.json        # Import to local (if in git repo)
+        mcli commands import commands-export.json --global  # Import to global
         mcli commands import my_script.py -s
         mcli commands import my_script.py -s --name custom-cmd --interactive
     """
     import subprocess
 
-    manager = get_command_manager()
+    manager = get_command_manager(global_mode=is_global)
     source_path = Path(source)
 
     if script:
@@ -1143,11 +1190,16 @@ def import_commands(source, script, overwrite, name, group, description, interac
 
 
 @commands.command("verify")
-def verify_commands():
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Verify global commands instead of local"
+)
+def verify_commands(is_global):
     """
     Verify that custom commands match the lockfile.
+
+    By default verifies local commands (if in git repo), use --global/-g for global commands.
     """
-    manager = get_command_manager()
+    manager = get_command_manager(global_mode=is_global)
 
     # First, ensure lockfile is up to date
     manager.update_lockfile()
@@ -1181,11 +1233,16 @@ def verify_commands():
 
 
 @commands.command("update-lockfile")
-def update_lockfile():
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Update global lockfile instead of local"
+)
+def update_lockfile(is_global):
     """
     Update the commands lockfile with current state.
+
+    By default updates local lockfile (if in git repo), use --global/-g for global lockfile.
     """
-    manager = get_command_manager()
+    manager = get_command_manager(global_mode=is_global)
 
     if manager.update_lockfile():
         console.print(f"[green]Updated lockfile: {manager.lockfile_path}[/green]")
@@ -1198,7 +1255,10 @@ def update_lockfile():
 @commands.command("edit")
 @click.argument("command_name")
 @click.option("--editor", "-e", help="Editor to use (defaults to $EDITOR)")
-def edit_command(command_name, editor):
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Edit global command instead of local"
+)
+def edit_command(command_name, editor, is_global):
     """
     Edit a command interactively using $EDITOR.
 
@@ -1206,12 +1266,13 @@ def edit_command(command_name, editor):
     allows you to make changes, and saves the updated version.
 
     Examples:
-        mcli commands edit my-command
+        mcli commands edit my-command            # Edit local command (if in git repo)
+        mcli commands edit my-command --global   # Edit global command
         mcli commands edit my-command --editor code
     """
     import subprocess
 
-    manager = get_command_manager()
+    manager = get_command_manager(global_mode=is_global)
 
     # Load the command
     command_file = manager.commands_dir / f"{command_name}.json"
@@ -1466,10 +1527,19 @@ Last updated: {datetime.now().isoformat()}
 @store.command(name="push")
 @click.option("--message", "-m", help="Commit message")
 @click.option("--all", "-a", is_flag=True, help="Push all files (including backups)")
-def push_commands(message, all):
-    """Push commands from ~/.mcli/commands/ to git store"""
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Push global commands instead of local"
+)
+def push_commands(message, all, is_global):
+    """
+    Push commands to git store.
+
+    By default pushes local commands (if in git repo), use --global/-g for global commands.
+    """
     try:
         store_path = _get_store_path()
+        from mcli.lib.paths import get_custom_commands_dir
+        COMMANDS_PATH = get_custom_commands_dir(global_mode=is_global)
 
         # Copy commands to store
         info(f"Copying commands from {COMMANDS_PATH} to {store_path}...")
@@ -1521,10 +1591,19 @@ def push_commands(message, all):
 
 @store.command(name="pull")
 @click.option("--force", "-f", is_flag=True, help="Overwrite local commands without backup")
-def pull_commands(force):
-    """Pull commands from git store to ~/.mcli/commands/"""
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Pull to global commands instead of local"
+)
+def pull_commands(force, is_global):
+    """
+    Pull commands from git store.
+
+    By default pulls to local commands (if in git repo), use --global/-g for global commands.
+    """
     try:
         store_path = _get_store_path()
+        from mcli.lib.paths import get_custom_commands_dir
+        COMMANDS_PATH = get_custom_commands_dir(global_mode=is_global)
 
         # Pull from remote
         try:
@@ -1569,10 +1648,19 @@ def pull_commands(force):
 
 @store.command(name="sync")
 @click.option("--message", "-m", help="Commit message if pushing")
-def sync_commands(message):
-    """Sync commands bidirectionally (pull then push if changes)"""
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Sync global commands instead of local"
+)
+def sync_commands(message, is_global):
+    """
+    Sync commands bidirectionally (pull then push if changes).
+
+    By default syncs local commands (if in git repo), use --global/-g for global commands.
+    """
     try:
         store_path = _get_store_path()
+        from mcli.lib.paths import get_custom_commands_dir
+        COMMANDS_PATH = get_custom_commands_dir(global_mode=is_global)
 
         # First pull
         info("Pulling latest changes...")

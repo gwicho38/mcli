@@ -19,7 +19,12 @@ from typing import Any, Dict, List, Optional
 import click
 
 from mcli.lib.logger.logger import get_logger, register_subprocess
-from mcli.lib.paths import get_custom_commands_dir
+from mcli.lib.paths import (
+    get_custom_commands_dir,
+    get_lockfile_path,
+    is_git_repository,
+    get_git_root,
+)
 
 logger = get_logger()
 
@@ -27,10 +32,22 @@ logger = get_logger()
 class CustomCommandManager:
     """Manages custom user commands stored in JSON format."""
 
-    def __init__(self):
-        self.commands_dir = get_custom_commands_dir()
+    def __init__(self, global_mode: bool = False):
+        """
+        Initialize the custom command manager.
+
+        Args:
+            global_mode: If True, use global commands directory (~/.mcli/commands/).
+                        If False, use local directory (.mcli/commands/) when in a git repository.
+        """
+        self.global_mode = global_mode
+        self.commands_dir = get_custom_commands_dir(global_mode=global_mode)
         self.loaded_commands: Dict[str, Any] = {}
-        self.lockfile_path = self.commands_dir / "commands.lock.json"
+        self.lockfile_path = get_lockfile_path(global_mode=global_mode)
+
+        # Store context information for display
+        self.is_local = not global_mode and is_git_repository()
+        self.git_root = get_git_root() if self.is_local else None
 
     def save_command(
         self,
@@ -486,16 +503,39 @@ class CustomCommandManager:
             return results
 
 
-# Global instance
-_command_manager: Optional[CustomCommandManager] = None
+# Global and local instances
+_global_command_manager: Optional[CustomCommandManager] = None
+_local_command_manager: Optional[CustomCommandManager] = None
 
 
-def get_command_manager() -> CustomCommandManager:
-    """Get the global custom command manager instance."""
-    global _command_manager
-    if _command_manager is None:
-        _command_manager = CustomCommandManager()
-    return _command_manager
+def get_command_manager(global_mode: bool = False) -> CustomCommandManager:
+    """
+    Get the custom command manager instance.
+
+    Args:
+        global_mode: If True, return global manager. If False, return local manager (if in git repo).
+
+    Returns:
+        CustomCommandManager instance for the appropriate scope
+    """
+    global _global_command_manager, _local_command_manager
+
+    if global_mode:
+        if _global_command_manager is None:
+            _global_command_manager = CustomCommandManager(global_mode=True)
+        return _global_command_manager
+    else:
+        # Use local manager if in git repository
+        if is_git_repository():
+            # Recreate local manager if git root changed (e.g., changed directory)
+            if _local_command_manager is None or _local_command_manager.git_root != get_git_root():
+                _local_command_manager = CustomCommandManager(global_mode=False)
+            return _local_command_manager
+        else:
+            # Fallback to global manager when not in a git repository
+            if _global_command_manager is None:
+                _global_command_manager = CustomCommandManager(global_mode=True)
+            return _global_command_manager
 
 
 def load_custom_commands(target_group: click.Group) -> int:

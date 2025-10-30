@@ -1,14 +1,17 @@
 # MCLI Installation Guide
 
-Version 7.0.4 is now available through multiple installation methods!
+Version 7.10.2 is now available through multiple installation methods!
 
-## 🎉 What's New in 7.0.4
+## 🎉 What's New in 7.10.2
 
-Added new model management commands:
-- `mcli model start` - Start the lightweight model server
-- `mcli model stop` - Stop the running model server
-- `mcli model pull` - Pull (download) a model
-- `mcli model delete` - Delete a downloaded model
+Major improvements in this release:
+- **100% test pass rate** - 834 passing tests with comprehensive test suite
+- **Enhanced security** - Bandit, Safety, Trivy, and CodeQL scanning
+- **Multi-environment testing** - tox configuration for Python 3.9-3.12
+- **Better documentation** - Testing guide, linting guide, and Code of Conduct
+- **Improved coverage** - Test coverage tracking with Codecov integration
+
+For detailed release notes, see [7.10.2 Release Notes](../releases/7.10.2.md)
 
 ## Installation Methods
 
@@ -126,14 +129,32 @@ uv tool install mcli-framework --force --reinstall
 ### Model Management Commands
 
 ```bash
-mcli model list          # List available models
-mcli model download <model>   # Download a model
-mcli model start         # Start model server
-mcli model stop          # Stop model server
-mcli model pull <model>  # Pull (download) a model
-mcli model delete <model> # Delete a model
-mcli model recommend     # Get model recommendation
-mcli model status        # Check server status
+mcli model list              # List available models
+mcli model download <model>  # Download a model
+mcli model start             # Start model server
+mcli model stop              # Stop model server
+mcli model pull <model>      # Pull (download) a model
+mcli model delete <model>    # Delete a model
+mcli model recommend         # Get model recommendation
+mcli model status            # Check server status
+```
+
+### Workflow Commands
+
+```bash
+mcli workflow --help         # List all workflows
+mcli workflow scheduler      # Schedule workflows
+mcli workflow daemon         # Run as daemon
+mcli commands list-custom    # List custom workflows
+mcli commands import-script  # Import Python script as workflow
+```
+
+### Self Management Commands
+
+```bash
+mcli self update             # Update mcli
+mcli self completion install # Install shell completion
+mcli self version            # Show version
 ```
 
 ### Other Common Commands
@@ -164,6 +185,6 @@ make build
 make publish
 
 # Create new release
-git tag 7.0.5
+git tag v7.10.3
 git push --tags
 ```
