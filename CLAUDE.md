@@ -137,11 +137,16 @@ src/mcli/
 3. Import UI helpers: `from mcli.lib.ui.styling import success, error, info, warning`
 4. Heavy imports should use lazy loading pattern (see `main.py:_add_lazy_commands()`)
 
-### Workflow Commands
-- Workflow commands are in `src/mcli/workflow/`
-- Main entry point is `workflow.py` which creates a Click group
-- Subcommands are organized by domain (daemon, politician_trading, scheduler, etc.)
-- Skip individual workflow submodules in discovery to avoid duplicate commands (see `main.py:109-116`)
+### Command Structure (Updated in 7.11.0)
+- **`mcli workflow`** - Workflow management (formerly `mcli commands`)
+  - Located in `src/mcli/app/commands_cmd.py`
+  - Commands: add, edit, import, export, list, search, remove, info, verify, update-lockfile, store
+- **`mcli workflows`** - Running workflows (formerly `mcli workflow`)
+  - Located in `src/mcli/workflow/workflow.py`
+  - Contains runnable workflows: secrets, pdf, clean, scheduler, daemon, etc.
+- **Secrets** - Moved from `mcli lib secrets` to `mcli workflows secrets`
+  - Located in `src/mcli/workflow/secrets/secrets_cmd.py`
+- **lib group removed** - No longer a top-level command group
 
 ### Testing Requirements
 - Current minimum coverage: 30% (configured in `pyproject.toml`, goal: 80%)

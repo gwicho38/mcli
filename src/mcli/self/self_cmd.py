@@ -1045,6 +1045,14 @@ try:
 except ImportError as e:
     logger.debug(f"Could not load visual command: {e}")
 
+try:
+    from mcli.self.migrate_cmd import migrate_command
+
+    self_app.add_command(migrate_command, name="migrate")
+    logger.debug("Added migrate command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load migrate command: {e}")
+
 # NOTE: store command has been moved to mcli.app.commands_cmd for better organization
 
 # This part is important to make the command available to the CLI

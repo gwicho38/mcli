@@ -172,13 +172,17 @@ def restore_command_state(hash_value):
     return True
 
 
-@click.group()
-def commands():
-    """Manage and execute available commands."""
+@click.group(name="workflow")
+def workflow():
+    """Manage workflows - create, edit, import, export workflow commands."""
     pass
 
 
-@commands.command("list")
+# For backward compatibility, keep commands as an alias
+commands = workflow
+
+
+@workflow.command("list")
 @click.option("--include-groups", is_flag=True, help="Include command groups in listing")
 @click.option("--daemon-only", is_flag=True, help="Show only daemon database commands")
 @click.option(
@@ -300,7 +304,7 @@ def list_commands(include_groups: bool, daemon_only: bool, custom_only: bool, as
         console.print(f"[red]Error: {e}[/red]")
 
 
-@commands.command("search")
+@workflow.command("search")
 @click.argument("query")
 @click.option("--daemon-only", is_flag=True, help="Search only daemon database commands")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
@@ -378,7 +382,7 @@ def search_commands(query: str, daemon_only: bool, as_json: bool, is_global: boo
         console.print(f"[red]Error: {e}[/red]")
 
 
-@commands.command("execute")
+@workflow.command("execute")
 @click.argument("command_name")
 @click.argument("args", nargs=-1)
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
@@ -408,7 +412,7 @@ def execute_command(command_name: str, args: tuple, as_json: bool, timeout: Opti
         console.print(f"[red]Error: {e}[/red]")
 
 
-@commands.command("info")
+@workflow.command("info")
 @click.argument("command_name")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 def command_info(command_name: str, as_json: bool):
@@ -696,7 +700,7 @@ logger = get_logger()
             pass
 
 
-@commands.command("add")
+@workflow.command("add")
 @click.argument("command_name", required=True)
 @click.option("--group", help="Command group (defaults to 'workflow')", default="workflow")
 @click.option("--description", "-d", help="Description for the command", default="Custom command")
@@ -879,7 +883,7 @@ def add_command(command_name, group, description, template, language, shell, is_
     return 0
 
 
-@commands.command("remove")
+@workflow.command("remove")
 @click.argument("command_name", required=True)
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
 @click.option(
@@ -914,7 +918,7 @@ def remove_command(command_name, yes, is_global):
         return 1
 
 
-@commands.command("export")
+@workflow.command("export")
 @click.argument("target", type=click.Path(), required=False)
 @click.option(
     "--script", "-s", is_flag=True, help="Export as Python script (requires command name)"
@@ -1015,7 +1019,7 @@ def export_commands(target, script, standalone, output, is_global):
             return 1
 
 
-@commands.command("import")
+@workflow.command("import")
 @click.argument("source", type=click.Path(exists=True), required=True)
 @click.option("--script", "-s", is_flag=True, help="Import from Python script")
 @click.option("--overwrite", is_flag=True, help="Overwrite existing commands")
@@ -1189,7 +1193,7 @@ def import_commands(source, script, overwrite, name, group, description, interac
         return 0
 
 
-@commands.command("verify")
+@workflow.command("verify")
 @click.option(
     "--global", "-g", "is_global", is_flag=True, help="Verify global commands instead of local"
 )
@@ -1232,7 +1236,7 @@ def verify_commands(is_global):
     return 1
 
 
-@commands.command("update-lockfile")
+@workflow.command("update-lockfile")
 @click.option(
     "--global", "-g", "is_global", is_flag=True, help="Update global lockfile instead of local"
 )
@@ -1252,7 +1256,7 @@ def update_lockfile(is_global):
         return 1
 
 
-@commands.command("edit")
+@workflow.command("edit")
 @click.argument("command_name")
 @click.option("--editor", "-e", help="Editor to use (defaults to $EDITOR)")
 @click.option(
@@ -1355,7 +1359,7 @@ def edit_command(command_name, editor, is_global):
 # Moved from mcli.self for better organization
 
 
-@commands.group("state")
+@workflow.group("state")
 def command_state():
     """Manage command state lockfile and history."""
     pass
@@ -1440,7 +1444,7 @@ def _get_store_path() -> Path:
     return DEFAULT_STORE_PATH
 
 
-@commands.group("store")
+@workflow.group("store")
 def store():
     """Manage command store - sync ~/.mcli/commands/ to git"""
     pass
@@ -1857,7 +1861,7 @@ def show_command(command_name, store):
 # Moved from mcli.self for better organization
 
 
-@commands.command("extract-workflow-commands")
+@workflow.command("extract-workflow-commands")
 @click.option(
     "--output", "-o", type=click.Path(), help="Output file (default: workflow-commands.json)"
 )

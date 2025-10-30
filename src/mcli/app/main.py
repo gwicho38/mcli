@@ -326,14 +326,14 @@ class LazyGroup(click.Group):
 
 def _add_lazy_commands(app: click.Group):
     """Add command groups with lazy loading."""
-    # Essential commands - load immediately for fast access
+    # Workflow management - load immediately for fast access (renamed from 'commands')
     try:
-        from mcli.app.commands_cmd import commands
+        from mcli.app.commands_cmd import workflow
 
-        app.add_command(commands, name="commands")
-        logger.debug("Added commands group")
+        app.add_command(workflow, name="workflow")
+        logger.debug("Added workflow management group")
     except ImportError as e:
-        logger.debug(f"Could not load commands group: {e}")
+        logger.debug(f"Could not load workflow management group: {e}")
 
     # Self management - load immediately as it's commonly used
     try:
@@ -344,35 +344,29 @@ def _add_lazy_commands(app: click.Group):
     except Exception as e:
         logger.debug(f"Could not load self commands: {e}")
 
-    # Library utilities and secrets management
-    try:
-        from mcli.lib.lib import lib
+    # Note: lib group removed - secrets moved to workflows
+    # Previous: mcli lib secrets -> Now: mcli workflows secrets
 
-        app.add_command(lib, name="lib")
-        logger.debug("Added lib commands")
-    except Exception as e:
-        logger.debug(f"Could not load lib commands: {e}")
-
-    # Add workflow with completion-aware lazy loading
+    # Add workflows group (renamed from 'workflow') with completion-aware lazy loading
     try:
         from mcli.app.completion_helpers import create_completion_aware_lazy_group
 
-        workflow_group = create_completion_aware_lazy_group(
-            "workflow",
-            "mcli.workflow.workflow.workflow",
-            "Workflow commands for automation, video processing, and daemon management",
+        workflows_group = create_completion_aware_lazy_group(
+            "workflows",
+            "mcli.workflow.workflow.workflows",
+            "Runnable workflows for automation, video processing, and daemon management",
         )
-        app.add_command(workflow_group, name="workflow")
-        logger.debug("Added completion-aware workflow group")
+        app.add_command(workflows_group, name="workflows")
+        logger.debug("Added completion-aware workflows group")
     except ImportError as e:
         logger.debug(f"Could not load completion helpers, using standard lazy group: {e}")
         # Fallback to standard lazy group
-        workflow_group = LazyGroup(
-            "workflow",
-            "mcli.workflow.workflow.workflow",
-            help="Workflow commands for automation, video processing, and daemon management",
+        workflows_group = LazyGroup(
+            "workflows",
+            "mcli.workflow.workflow.workflows",
+            help="Runnable workflows for automation, video processing, and daemon management",
         )
-        app.add_command(workflow_group, name="workflow")
+        app.add_command(workflows_group, name="workflows")
 
     # Lazy load other heavy commands that are used less frequently
     # NOTE: chat and model commands have been removed
@@ -382,8 +376,8 @@ def _add_lazy_commands(app: click.Group):
     lazy_commands = {}
 
     for cmd_name, cmd_info in lazy_commands.items():
-        # Skip workflow since we already added it with completion support
-        if cmd_name == "workflow":
+        # Skip workflows since we already added it with completion support
+        if cmd_name == "workflows":
             continue
 
         if cmd_name in ["model"]:

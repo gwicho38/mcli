@@ -142,13 +142,23 @@ def get_local_mcli_dir() -> Optional[Path]:
 
 def get_local_commands_dir() -> Optional[Path]:
     """
-    Get the local commands directory for the current git repository.
+    Get the local workflows directory for the current git repository.
+
+    Note: This function name is kept for backward compatibility but now returns
+    the workflows directory. Checks workflows first, then commands for migration.
 
     Returns:
-        Path to .mcli/commands in git root, or None if not in a git repository
+        Path to .mcli/workflows (or .mcli/commands for migration) in git root,
+        or None if not in a git repository
     """
     local_mcli = get_local_mcli_dir()
     if local_mcli:
+        # Check for new workflows directory first
+        workflows_dir = local_mcli / "workflows"
+        if workflows_dir.exists():
+            return workflows_dir
+
+        # Fall back to old commands directory for migration support
         commands_dir = local_mcli / "commands"
         return commands_dir
     return None
@@ -156,13 +166,16 @@ def get_local_commands_dir() -> Optional[Path]:
 
 def get_custom_commands_dir(global_mode: bool = False) -> Path:
     """
-    Get the custom commands directory for mcli.
+    Get the custom workflows directory for mcli.
+
+    Note: This function name is kept for backward compatibility but now returns
+    the workflows directory. Checks workflows first, then commands for migration.
 
     Args:
         global_mode: If True, always use global directory. If False, use local if in git repo.
 
     Returns:
-        Path to custom commands directory, created if it doesn't exist
+        Path to custom workflows directory, created if it doesn't exist
     """
     # If not in global mode and we're in a git repository, use local directory
     if not global_mode:
@@ -172,14 +185,27 @@ def get_custom_commands_dir(global_mode: bool = False) -> Path:
             return local_dir
 
     # Otherwise, use global directory
+    # Check for new workflows directory first
+    workflows_dir = get_mcli_home() / "workflows"
+    if workflows_dir.exists():
+        return workflows_dir
+
+    # Check for old commands directory (for migration support)
     commands_dir = get_mcli_home() / "commands"
-    commands_dir.mkdir(parents=True, exist_ok=True)
-    return commands_dir
+    if commands_dir.exists():
+        # Return commands directory if it exists (user hasn't migrated yet)
+        return commands_dir
+
+    # If neither exists, create the new workflows directory
+    workflows_dir.mkdir(parents=True, exist_ok=True)
+    return workflows_dir
 
 
 def get_lockfile_path(global_mode: bool = False) -> Path:
     """
-    Get the lockfile path for command management.
+    Get the lockfile path for workflow management.
+
+    Note: Lockfile remains named commands.lock.json for compatibility.
 
     Args:
         global_mode: If True, use global lockfile. If False, use local if in git repo.
@@ -187,5 +213,6 @@ def get_lockfile_path(global_mode: bool = False) -> Path:
     Returns:
         Path to the lockfile
     """
-    commands_dir = get_custom_commands_dir(global_mode=global_mode)
-    return commands_dir / "commands.lock.json"
+    workflows_dir = get_custom_commands_dir(global_mode=global_mode)
+    # Keep the old lockfile name for compatibility
+    return workflows_dir / "commands.lock.json"

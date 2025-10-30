@@ -73,20 +73,20 @@ def app(message):
 EOF
 
 # Import as workflow
-mcli commands import-script my_task.py --name my-task --group workflow
+mcli workflow import-script my_task.py --name my-task
 
 # Run it
-mcli workflow my-task --message "Hi"
+mcli workflowss my-task --message "Hi"
 ```
 
 #### Method 2: Interactive Creation
 
 ```bash
 # Create workflow interactively
-mcli commands add my-task --group workflow
+mcli workflow add my-task
 
 # Edit in your $EDITOR, then run
-mcli workflow my-task
+mcli workflowss my-task
 ```
 
 ## 📦 Workflow System Features
@@ -97,29 +97,28 @@ Multiple ways to create workflows:
 
 ```bash
 # Import from existing Python script
-mcli commands import-script script.py --name my-workflow --group workflow
-
+mcli workflow import-script script.py --name my-workflow
 # Create new workflow interactively
-mcli commands add my-workflow --group workflow --description "Does something useful"
+mcli workflow add my-workflow --group workflow --description "Does something useful"
 
 # List all workflows
-mcli commands list-custom
+mcli workflow list-custom
 ```
 
 ### 2. **Edit & Manage Workflows**
 
 ```bash
 # Edit workflow in $EDITOR
-mcli commands edit my-workflow
+mcli workflow edit my-workflow
 
 # Show workflow details
-mcli commands info my-workflow
+mcli workflow info my-workflow
 
 # Search workflows
-mcli commands search "pdf"
+mcli workflow search "pdf"
 
 # Remove workflow
-mcli commands remove my-workflow
+mcli workflow remove my-workflow
 ```
 
 ### 3. **Export & Import (Portability)**
@@ -128,13 +127,13 @@ Share workflows across machines or with your team:
 
 ```bash
 # Export all workflows to JSON
-mcli commands export my-workflows.json
+mcli workflow export my-workflows.json
 
 # Import on another machine
-mcli commands import my-workflows.json
+mcli workflow import my-workflows.json
 
 # Export single workflow to Python script
-mcli commands export-script my-workflow --output my_workflow.py
+mcli workflow export-script my-workflow --output my_workflow.py
 ```
 
 Your workflows are just JSON files in `~/.mcli/commands/`:
@@ -153,10 +152,10 @@ MCLI automatically maintains a lockfile for reproducibility:
 
 ```bash
 # Update lockfile with current workflow versions
-mcli commands update-lockfile
+mcli workflow update-lockfile
 
 # Verify workflows match lockfile
-mcli commands verify
+mcli workflow verify
 ```
 
 Example `commands.lock.json`:
@@ -186,7 +185,7 @@ git commit -m "Update workflows"
 
 # On another machine
 git pull
-mcli commands verify  # Ensures consistency
+mcli workflow verify  # Ensures consistency
 ```
 
 ### 5. **Run as Daemon or Scheduled Task**
@@ -197,29 +196,29 @@ Workflows aren't coupled to the engine - run them however you want:
 
 ```bash
 # Start workflow as background daemon
-mcli workflow daemon start my-task-daemon --workflow my-task
+mcli workflows daemon start my-task-daemon --workflow my-task
 
 # Check daemon status
-mcli workflow daemon status
+mcli workflows daemon status
 
 # Stop daemon
-mcli workflow daemon stop my-task-daemon
+mcli workflows daemon stop my-task-daemon
 ```
 
 #### As Scheduled Task:
 
 ```bash
 # Schedule workflow to run every hour
-mcli workflow scheduler add \
+mcli workflows scheduler add \
   --name hourly-sync \
   --schedule "0 * * * *" \
   --workflow my-task
 
 # List scheduled workflows
-mcli workflow scheduler list
+mcli workflows scheduler list
 
 # View logs
-mcli workflow scheduler logs hourly-sync
+mcli workflows scheduler logs hourly-sync
 ```
 
 ## 🎨 Real-World Workflow Examples
@@ -228,12 +227,11 @@ mcli workflow scheduler logs hourly-sync
 
 ```bash
 # Create PDF processing workflow
-mcli commands import-script pdf_tool.py --name pdf --group workflow
-
+mcli workflow import-script pdf_tool.py --name pdf
 # Use it
-mcli workflow pdf extract ~/Documents/report.pdf
-mcli workflow pdf compress ~/Documents/*.pdf --output compressed/
-mcli workflow pdf split large.pdf --pages 10
+mcli workflows pdf extract ~/Documents/report.pdf
+mcli workflows pdf compress ~/Documents/*.pdf --output compressed/
+mcli workflows pdf split large.pdf --pages 10
 ```
 
 ### Example 2: Data Sync Workflow
@@ -263,13 +261,12 @@ def status():
     click.echo("Checking sync status...")
 EOF
 
-mcli commands import-script sync.py --name sync --group workflow
-
+mcli workflow import-script sync.py --name sync
 # Run manually
-mcli workflow sync backup ~/data remote:backup
+mcli workflows sync backup ~/data remote:backup
 
 # Or schedule it
-mcli workflow scheduler add \
+mcli workflows scheduler add \
   --name nightly-backup \
   --schedule "0 2 * * *" \
   --workflow "sync backup ~/data remote:backup"
@@ -279,13 +276,12 @@ mcli workflow scheduler add \
 
 ```bash
 # Already included as built-in workflow
-mcli workflow git-commit
+mcli workflows git-commit
 
 # Or create your own variant
-mcli commands export-script git-commit --output my_git_helper.py
+mcli workflow export-script git-commit --output my_git_helper.py
 # Edit my_git_helper.py to customize
-mcli commands import-script my_git_helper.py --name my-git --group workflow
-```
+mcli workflow import-script my_git_helper.py --name my-git```
 
 ## 🔧 Workflow Structure
 
@@ -311,7 +307,7 @@ Each workflow is a JSON file with this structure:
 MCLI comes with powerful built-in workflows:
 
 ```bash
-mcli workflow --help
+mcli workflows --help
 ```
 
 Available workflows:
@@ -355,8 +351,8 @@ You write scripts. They work. Then:
 mcli self completion install
 
 # Now use tab completion
-mcli workflow <TAB>          # Shows all workflows
-mcli workflow pdf <TAB>      # Shows pdf subcommands
+mcli workflows <TAB>          # Shows all workflows
+mcli workflows pdf <TAB>      # Shows pdf subcommands
 ```
 
 ### AI Chat Integration
@@ -416,21 +412,20 @@ make wheel
 
 ```bash
 # Create your daily automation
-mcli commands add daily-tasks --group workflow
-# Add your tasks in $EDITOR
-mcli workflow scheduler add --name daily --schedule "0 9 * * *" --workflow daily-tasks
+mcli workflow add daily-tasks# Add your tasks in $EDITOR
+mcli workflows scheduler add --name daily --schedule "0 9 * * *" --workflow daily-tasks
 ```
 
 ### Use Case 2: Team Workflow Sharing
 
 ```bash
 # On your machine
-mcli commands export team-workflows.json
+mcli workflow export team-workflows.json
 
 # Share file with team
 # On teammate's machine
-mcli commands import team-workflows.json
-mcli commands verify  # Ensure consistency
+mcli workflow import team-workflows.json
+mcli workflow verify  # Ensure consistency
 ```
 
 ### Use Case 3: CI/CD Integration
@@ -438,9 +433,9 @@ mcli commands verify  # Ensure consistency
 ```bash
 # In your CI pipeline
 - pip install mcli-framework
-- mcli commands import ci-workflows.json
-- mcli workflow build-and-test
-- mcli workflow deploy --env production
+- mcli workflow import ci-workflows.json
+- mcli workflows build-and-test
+- mcli workflows deploy --env production
 ```
 
 ## 📦 Dependencies
@@ -470,7 +465,7 @@ We welcome contributions! Especially workflow examples.
 1. Fork the repository
 2. Create feature branch: `git checkout -b feature/awesome-workflow`
 3. Create your workflow
-4. Export it: `mcli commands export my-workflow.json`
+4. Export it: `mcli workflow export my-workflow.json`
 5. Submit PR with workflow JSON
 
 ## 📄 License
@@ -489,5 +484,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ```bash
 pip install mcli-framework
-mcli commands add my-first-workflow --group workflow
-```
+mcli workflow add my-first-workflow```
