@@ -1,6 +1,6 @@
 [project]
 name = "mcli-framework"
-version = "7.10.2"
+version = "7.10.3"
 description = "Portable workflow framework - transform any script into a versioned, schedulable command. Store in ~/.mcli/commands/, version with lockfile, run as daemon or cron job."
 readme = "README.md"
 requires-python = ">=3.9"
