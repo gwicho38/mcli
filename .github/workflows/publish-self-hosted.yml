@@ -11,15 +11,16 @@ on:
           - test-pypi
           - production-pypi
           - both
-  push:
-    branches:
-      - main
-      - dev
-    tags:
-      - 'v*'
-    paths-ignore:
-      - '**.md'
-      - '.github/workflows/publish.yml'
+  # Disabled automatic triggers - self-hosted runner offline
+  # push:
+  #   branches:
+  #     - main
+  #     - dev
+  #   tags:
+  #     - 'v*'
+  #   paths-ignore:
+  #     - '**.md'
+  #     - '.github/workflows/publish.yml'
 
 permissions:
   contents: write
