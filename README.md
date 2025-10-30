@@ -56,6 +56,24 @@ pip install mcli-framework
 uv pip install mcli-framework
 ```
 
+### Initialize Workflows Directory
+
+```bash
+# Initialize workflows in current git repository
+mcli workflow init
+
+# Or initialize global workflows
+mcli workflow init --global
+
+# Initialize with git repository for workflows
+mcli workflow init --git
+```
+
+This creates a `.mcli/workflows/` directory (local to your repo) or `~/.mcli/workflows/` (global) with:
+- README.md with usage instructions
+- commands.lock.json for version tracking
+- .gitignore for backup files
+
 ### Create Your First Workflow
 
 #### Method 1: From a Python Script

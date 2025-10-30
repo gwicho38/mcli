@@ -158,9 +158,13 @@ def get_local_commands_dir() -> Optional[Path]:
         if workflows_dir.exists():
             return workflows_dir
 
-        # Fall back to old commands directory for migration support
+        # Check if old commands directory exists (for migration support)
         commands_dir = local_mcli / "commands"
-        return commands_dir
+        if commands_dir.exists():
+            return commands_dir
+
+        # If neither exists, return workflows path (for new installations)
+        return workflows_dir
     return None
 
 
