@@ -3,6 +3,7 @@ Unit tests for custom_commands module.
 """
 
 import json
+import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -23,6 +24,9 @@ class TestCustomCommandManager:
         self.commands_dir = Path(self.temp_dir) / "commands"
         self.commands_dir.mkdir(parents=True, exist_ok=True)
 
+        # Enable test commands for testing
+        os.environ['MCLI_INCLUDE_TEST_COMMANDS'] = 'true'
+
         # Patch get_custom_commands_dir to return our temp directory
         self.patcher = patch(
             "mcli.lib.custom_commands.get_custom_commands_dir",
@@ -35,6 +39,8 @@ class TestCustomCommandManager:
     def teardown_method(self):
         """Cleanup test environment"""
         self.patcher.stop()
+        # Clean up environment variable
+        os.environ.pop('MCLI_INCLUDE_TEST_COMMANDS', None)
         import shutil
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)
