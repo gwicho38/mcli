@@ -467,54 +467,14 @@ def create_app() -> click.Group:
 
     app = click.Group(name="mcli")
 
-    # Clean top-level commands
-    @app.command()
-    @click.option("--verbose", "-v", is_flag=True, help="Show additional system information")
-    def version(verbose: bool):
-        """Show mcli version and system information"""
-        message = get_version_info(verbose)
-        logger.info(message)
-        info(message)
-
+    # Version command moved to self group (mcli self version)
     # Add lazy-loaded command groups
     _add_lazy_commands(app)
 
     return app
 
 
-@lru_cache()
-def get_version_info(verbose: bool = False) -> str:
-    """Get version info, cached to prevent multiple calls."""
-    try:
-        # Try mcli-framework first (PyPI package name), then mcli (local dev)
-        mcli_version = None
-        meta = None
-
-        for pkg_name in ["mcli-framework", "mcli"]:
-            try:
-                mcli_version = version(pkg_name)
-                meta = metadata(pkg_name)
-                break
-            except Exception:
-                continue
-
-        if mcli_version is None:
-            return "Could not determine version: Package metadata not found"
-
-        info = [f"mcli version {mcli_version}"]
-
-        if verbose:
-            info.extend(
-                [
-                    f"\nPython: {sys.version.split()[0]}",
-                    f"Platform: {platform.platform()}",
-                    f"Description: {meta.get('Summary', 'Not available')}",
-                    f"Author: {meta.get('Author', 'Not available')}",
-                ]
-            )
-        return "\n".join(info)
-    except Exception as e:
-        return f"Could not determine version: {e}"
+# get_version_info moved to self_cmd.py
 
 
 def main():

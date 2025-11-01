@@ -8,9 +8,13 @@ import importlib
 import inspect
 import json
 import os
+import platform
 import re
+import sys
 import time
 from datetime import datetime
+from functools import lru_cache
+from importlib.metadata import metadata, version
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -47,6 +51,43 @@ def self_app():
 console = Console()
 
 LOCKFILE_PATH = Path.home() / ".local" / "mcli" / "command_lock.json"
+
+
+# Version info utility
+@lru_cache()
+def get_version_info(verbose: bool = False) -> str:
+    """Get version info, cached to prevent multiple calls."""
+    try:
+        # Try mcli-framework first (PyPI package name), then mcli (local dev)
+        mcli_version = None
+        meta = None
+
+        for pkg_name in ["mcli-framework", "mcli"]:
+            try:
+                mcli_version = version(pkg_name)
+                meta = metadata(pkg_name)
+                break
+            except Exception:
+                continue
+
+        if mcli_version is None:
+            return "Could not determine version: Package metadata not found"
+
+        info = [f"mcli version {mcli_version}"]
+
+        if verbose:
+            info.extend(
+                [
+                    f"\nPython: {sys.version.split()[0]}",
+                    f"Platform: {platform.platform()}",
+                    f"Description: {meta.get('Summary', 'Not available')}",
+                    f"Author: {meta.get('Author', 'Not available')}",
+                ]
+            )
+        return "\n".join(info)
+    except Exception as e:
+        return f"Error getting version info: {e}"
+
 
 # Utility functions for command state lockfile
 
@@ -647,6 +688,17 @@ def plugin_update(plugin_name):
         return 1
 
     return 0
+
+
+@self_app.command("version")
+@click.option("--verbose", "-v", is_flag=True, help="Show additional system information")
+def version_cmd(verbose: bool):
+    """Show mcli version and system information."""
+    from mcli.lib.ui.styling import info
+
+    message = get_version_info(verbose)
+    logger.info(message)
+    info(message)
 
 
 @self_app.command("hello")
