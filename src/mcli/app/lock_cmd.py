@@ -229,11 +229,15 @@ def write_state(json_file):
 @click.option(
     "--global", "-g", "is_global", is_flag=True, help="Verify global commands instead of local"
 )
-def verify_commands(is_global):
+@click.option(
+    "--code", "-c", is_flag=True, help="Also validate that workflow code is executable"
+)
+def verify_commands(is_global, code):
     """
-    Verify that custom commands match the lockfile.
+    Verify that custom commands match the lockfile and optionally validate code.
 
     By default verifies local commands (if in git repo), use --global/-g for global commands.
+    Use --code/-c to also validate that workflow code is valid and executable.
     """
     manager = get_command_manager(global_mode=is_global)
 
@@ -242,28 +246,82 @@ def verify_commands(is_global):
 
     verification = manager.verify_lockfile()
 
-    if verification["valid"]:
-        console.print("[green]All custom commands are in sync with the lockfile.[/green]")
+    has_issues = False
+
+    if not verification["valid"]:
+        has_issues = True
+        console.print("[yellow]Commands are out of sync with the lockfile:[/yellow]\n")
+
+        if verification["missing"]:
+            console.print("Missing commands (in lockfile but not found):")
+            for name in verification["missing"]:
+                console.print(f"  - {name}")
+
+        if verification["extra"]:
+            console.print("\nExtra commands (not in lockfile):")
+            for name in verification["extra"]:
+                console.print(f"  - {name}")
+
+        if verification["modified"]:
+            console.print("\nModified commands:")
+            for name in verification["modified"]:
+                console.print(f"  - {name}")
+
+        console.print("\n[dim]Run 'mcli lock update' to sync the lockfile[/dim]\n")
+
+    # Validate workflow code if requested
+    if code:
+        console.print("[cyan]Validating workflow code...[/cyan]\n")
+
+        commands = manager.load_all_commands()
+        invalid_workflows = []
+
+        for cmd_data in commands:
+            if cmd_data.get("group") != "workflow":
+                continue
+
+            cmd_name = cmd_data.get("name")
+            temp_group = click.Group()
+            language = cmd_data.get("language", "python")
+
+            try:
+                if language == "shell":
+                    success = manager.register_shell_command_with_click(cmd_data, temp_group)
+                else:
+                    success = manager.register_command_with_click(cmd_data, temp_group)
+
+                if not success or not temp_group.commands.get(cmd_name):
+                    invalid_workflows.append({
+                        "name": cmd_name,
+                        "reason": "Code does not define a valid Click command"
+                    })
+            except SyntaxError as e:
+                invalid_workflows.append({
+                    "name": cmd_name,
+                    "reason": f"Syntax error: {e}"
+                })
+            except Exception as e:
+                invalid_workflows.append({
+                    "name": cmd_name,
+                    "reason": f"Failed to load: {e}"
+                })
+
+        if invalid_workflows:
+            has_issues = True
+            console.print("[red]Invalid workflows found:[/red]\n")
+
+            for item in invalid_workflows:
+                console.print(f"  [red]✗[/red] {item['name']}")
+                console.print(f"    [dim]{item['reason']}[/dim]")
+
+            console.print(f"\n[yellow]Fix with:[/yellow] mcli workflow edit <workflow-name>")
+            console.print(f"[dim]Tip: Workflow code must define a Click command decorated with @click.command()[/dim]\n")
+        else:
+            console.print("[green]✓ All workflow code is valid[/green]\n")
+
+    if not has_issues:
+        console.print("[green]✓ All custom commands are verified[/green]")
         return 0
-
-    console.print("[yellow]Commands are out of sync with the lockfile:[/yellow]\n")
-
-    if verification["missing"]:
-        console.print("Missing commands (in lockfile but not found):")
-        for name in verification["missing"]:
-            console.print(f"  - {name}")
-
-    if verification["extra"]:
-        console.print("\nExtra commands (not in lockfile):")
-        for name in verification["extra"]:
-            console.print(f"  - {name}")
-
-    if verification["modified"]:
-        console.print("\nModified commands:")
-        for name in verification["modified"]:
-            console.print(f"  - {name}")
-
-    console.print("\n[dim]Run 'mcli lock update' to sync the lockfile[/dim]")
 
     return 1
 
