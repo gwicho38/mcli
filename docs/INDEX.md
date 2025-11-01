@@ -2,8 +2,8 @@
 
 Welcome to the MCLI Framework documentation! This index helps you find the documentation you need quickly.
 
-**Current Version**: 7.10.2
-**Last Updated**: 2025-10-30
+**Current Version**: 7.12.2
+**Last Updated**: 2025-11-01
 
 ---
 
@@ -52,6 +52,7 @@ Welcome to the MCLI Framework documentation! This index helps you find the docum
 |----------|-------------|
 | [Custom Commands](custom-commands.md) | Creating and managing custom workflows |
 | [Portable Commands Guide](PORTABLE_COMMANDS_GUIDE.md) | Portable workflow management |
+| [Shell Workflows Guide](guides/SHELL_WORKFLOWS.md) | Creating bash/shell-based workflows |
 | [Workflow Notebooks](workflow-notebooks.md) | Visual editing with VSCode extension |
 
 ### Dashboards
@@ -150,11 +151,11 @@ Welcome to the MCLI Framework documentation! This index helps you find the docum
 ### Latest Releases
 | Version | Date | Highlights |
 |---------|------|------------|
+| [7.12.2](releases/7.12.2.md) | 2025-11-01 | Workflow code validation in verify command |
+| [7.12.1](releases/7.12.1.md) | 2025-11-01 | Version command moved to self group |
+| [7.12.0](releases/7.12.0.md) | 2025-11-01 | Command structure reorganization |
 | [7.10.2](releases/7.10.2.md) | 2025-10-30 | Test suite 100% pass rate, security enhancements |
 | [7.10.1](releases/7.10.1.md) | 2025-10-20 | Documentation fixes for completion commands |
-| [7.10.0](releases/7.10.0.md) | 2025-10-19 | Major feature release |
-| [7.9.7](releases/7.9.7.md) | 2025-10-18 | Bug fixes and improvements |
-| [7.9.6](releases/7.9.6.md) | 2025-10-18 | Performance improvements |
 
 ### Major Version History
 | Version Range | Description |
@@ -276,6 +277,6 @@ Need help? Try these resources:
 
 ---
 
-**Last Updated**: 2025-10-30
-**Version**: 7.10.2
+**Last Updated**: 2025-11-01
+**Version**: 7.12.2
 **Maintained By**: MCLI Contributors
