@@ -21,9 +21,9 @@ import click
 from mcli.lib.logger.logger import get_logger, register_subprocess
 from mcli.lib.paths import (
     get_custom_commands_dir,
+    get_git_root,
     get_lockfile_path,
     is_git_repository,
-    get_git_root,
 )
 
 logger = get_logger()
@@ -131,7 +131,7 @@ class CustomCommandManager:
             List of command data dictionaries
         """
         commands = []
-        include_test = os.environ.get('MCLI_INCLUDE_TEST_COMMANDS', 'false').lower() == 'true'
+        include_test = os.environ.get("MCLI_INCLUDE_TEST_COMMANDS", "false").lower() == "true"
 
         for command_file in self.commands_dir.glob("*.json"):
             # Skip the lockfile
@@ -139,7 +139,7 @@ class CustomCommandManager:
                 continue
 
             # Skip test commands unless explicitly included
-            if not include_test and command_file.stem.startswith(('test_', 'test-')):
+            if not include_test and command_file.stem.startswith(("test_", "test-")):
                 logger.debug(f"Skipping test command: {command_file.name}")
                 continue
 

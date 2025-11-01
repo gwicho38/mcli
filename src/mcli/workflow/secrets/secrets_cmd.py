@@ -10,12 +10,11 @@ from typing import Optional
 
 import click
 
-from mcli.lib.ui.styling import error, info, success, warning
-
 # Import from the original lib.secrets modules (keeping the implementation)
 from mcli.lib.secrets.manager import SecretsManager
 from mcli.lib.secrets.repl import run_repl
 from mcli.lib.secrets.store import SecretsStore
+from mcli.lib.ui.styling import error, info, success, warning
 
 
 @click.command(name="secrets", help="Secure secrets management with encryption and git sync")

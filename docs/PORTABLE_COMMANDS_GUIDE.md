@@ -1,13 +1,13 @@
 # Portable Commands Guide
 
-MCLI now supports portable, JSON-based commands that can be easily shared, edited, and migrated between installations. Commands are stored in `~/.mcli/commands/` and automatically loaded on startup.
+MCLI now supports portable, JSON-based commands that can be easily shared, edited, and migrated between installations. Commands are stored in `~/.mcli/workflows/` (or `.mcli/workflows/` for local repos) and automatically loaded on startup.
 
 ## Overview
 
-- **Storage**: `~/.mcli/commands/` (portable across machines)
+- **Storage**: `~/.mcli/workflows/` (portable across machines) or `.mcli/workflows/` (local to git repos)
 - **Format**: JSON with embedded Python code
-- **Lockfile**: `~/.mcli/commands/commands.lock.json` (npm-style tracking)
-- **Auto-loading**: Commands load automatically under the `workflow` group
+- **Lockfile**: `~/.mcli/workflows/commands.lock.json` (npm-style tracking)
+- **Auto-loading**: Commands load automatically under the `workflows` group
 
 ## Command Management
 
@@ -18,14 +18,14 @@ mcli self list-commands
 
 ### Add a New Command
 ```bash
-mcli self add-command my-command --description "My custom command"
-# Creates ~/.mcli/commands/my-command.json
-# Available as: mcli workflow my-command
+mcli workflow add my-command --description "My custom command"
+# Creates ~/.mcli/workflows/my-command.json (or .mcli/workflows/ in git repos)
+# Available as: mcli workflows my-command
 ```
 
 ### Remove a Command
 ```bash
-mcli self remove-command my-command
+mcli workflow remove my-command
 ```
 
 ## Bidirectional Conversion
@@ -36,13 +36,13 @@ Convert a Python script into a portable JSON command:
 
 ```bash
 # Basic import
-mcli self import-script my_script.py
+mcli workflow import-script my_script.py
 
 # With custom name and group
-mcli self import-script my_script.py --name custom-cmd --group workflow
+mcli workflow import-script my_script.py --name custom-cmd
 
 # Interactive mode (opens in $EDITOR for review)
-mcli self import-script my_script.py --interactive
+mcli workflow import-script my_script.py --interactive
 ```
 
 **Example Workflow:**
@@ -57,8 +57,8 @@ def app():
 ```
 
 ```bash
-mcli self import-script my_script.py --name awesome
-# Now available as: mcli workflow awesome
+mcli workflow import-script my_script.py --name awesome
+# Now available as: mcli workflows awesome
 ```
 
 ### Export JSON Command → Python Script
@@ -67,13 +67,13 @@ Convert a JSON command back to a standalone Python script:
 
 ```bash
 # Basic export
-mcli self export-script redis
+mcli workflow export-script redis
 
 # Export to specific file
-mcli self export-script redis --output my_redis.py
+mcli workflow export-script redis --output my_redis.py
 
 # Add standalone runner (for direct execution)
-mcli self export-script redis --output redis.py --standalone
+mcli workflow export-script redis --output redis.py --standalone
 python redis.py  # Can run directly!
 ```
 
@@ -83,10 +83,10 @@ Edit a command's code using your $EDITOR:
 
 ```bash
 # Uses $EDITOR (vim, code, nano, etc.)
-mcli self edit-command my-command
+mcli workflow edit my-command
 
 # Specify editor
-mcli self edit-command my-command --editor code
+mcli workflow edit my-command --editor code
 ```
 
 ## Round-Trip Workflow
@@ -95,7 +95,7 @@ The most powerful feature is the ability to export, edit, and re-import commands
 
 ```bash
 # 1. Export to Python for easier editing
-mcli self export-script redis --output redis.py --standalone
+mcli workflow export-script redis --output redis.py --standalone
 
 # 2. Edit with your favorite IDE/editor
 code redis.py  # or vim, emacs, etc.
@@ -104,10 +104,10 @@ code redis.py  # or vim, emacs, etc.
 python redis.py --help
 
 # 4. Re-import the modified version
-mcli self import-script redis.py --name redis_v2
+mcli workflow import-script redis.py --name redis_v2
 
 # 5. Or update existing
-mcli self import-script redis.py --name redis
+mcli workflow import-script redis.py --name redis
 ```
 
 ## Migrated Commands
@@ -126,9 +126,9 @@ The following commands are now portable JSON format:
 - `videos` - Video processing
 - `dashboard` - ML dashboard
 
-All stored in `~/.mcli/commands/` and can be:
+All stored in `~/.mcli/workflows/` (or `.mcli/workflows/` in git repos) and can be:
 - Shared by copying JSON files
-- Edited with `mcli self edit-command`
+- Edited with `mcli workflow edit`
 - Exported to Python for major changes
 - Version controlled separately
 
@@ -136,61 +136,68 @@ All stored in `~/.mcli/commands/` and can be:
 
 ### 1. Quick Script Import
 ```bash
-# Got a useful Python script? Make it an mcli command!
-mcli self import-script ~/scripts/deploy.py --name deploy
-mcli workflow deploy
+# Got a useful Python script? Make it an mcli workflow!
+mcli workflow import-script ~/scripts/deploy.py --name deploy
+mcli workflows deploy
 ```
 
 ### 2. Command Development
 ```bash
 # Start with template
-mcli self add-command data-processor
+mcli workflow add data-processor
 
 # Edit in your IDE
-mcli self export-script data-processor --output dp.py
+mcli workflow export-script data-processor --output dp.py
 code dp.py
 
 # Test standalone
 python dp.py
 
 # Import back when ready
-mcli self import-script dp.py --name data-processor
+mcli workflow import-script dp.py --name data-processor
 ```
 
 ### 3. Sharing Commands
 ```bash
 # On machine A
-mcli self export-script my-tool --output my-tool.py
+mcli workflow export-script my-tool --output my-tool.py
 
 # Share my-tool.py or the JSON directly
-scp ~/.mcli/commands/my-tool.json other-machine:~/.mcli/commands/
+scp ~/.mcli/workflows/my-tool.json other-machine:~/.mcli/workflows/
 
 # On machine B - command automatically available!
-mcli workflow my-tool
+mcli workflows my-tool
 ```
 
 ### 4. Interactive Editing
 ```bash
 # Quick in-editor changes
-mcli self edit-command redis
+mcli workflow edit redis
 # Opens in $EDITOR, validates syntax, saves automatically
 
 # Or export → edit → reimport for bigger changes
-mcli self export-script redis --output redis.py
+mcli workflow export-script redis --output redis.py
 vim redis.py
-mcli self import-script redis.py --name redis
+mcli workflow import-script redis.py --name redis
 ```
 
 ## File Structure
 
 ```
 ~/.mcli/
-└── commands/
+└── workflows/
     ├── commands.lock.json       # Lockfile (auto-generated)
     ├── redis.json               # Redis command
     ├── visual.json              # Visual effects
     ├── my-custom.json           # Your custom commands
     └── ...                      # More commands
+
+# Or for local repos:
+.mcli/
+└── workflows/
+    ├── commands.lock.json
+    ├── my-workflow.json
+    └── ...
 ```
 
 ### JSON Format
@@ -222,8 +229,8 @@ mcli self import-script redis.py --name redis
 ## Tips
 
 - **$EDITOR support**: Set `export EDITOR=code` (or vim, nano, etc.)
-- **Syntax validation**: Edit-command validates before saving
-- **Lockfile sync**: Run `mcli self verify-commands` to check
+- **Syntax validation**: Edit validates before saving
+- **Lockfile sync**: Run `mcli workflow verify` to check
 - **Auto-reload**: Commands load on next mcli startup
 - **Standalone testing**: Use `--standalone` flag for direct Python execution
 
@@ -232,10 +239,10 @@ mcli self import-script redis.py --name redis
 ### Command not showing up
 ```bash
 # Verify it's in the directory
-ls ~/.mcli/commands/
+ls ~/.mcli/workflows/  # or .mcli/workflows/ in git repos
 
 # Check lockfile
-mcli self verify-commands
+mcli workflow verify
 
 # Reload mcli
 # (just restart or run a new mcli instance)
@@ -244,18 +251,18 @@ mcli self verify-commands
 ### Syntax errors
 ```bash
 # Edit command will validate
-mcli self edit-command my-cmd
+mcli workflow edit my-cmd
 # If it has errors, it will warn you
 
 # Or export and check manually
-mcli self export-script my-cmd --output test.py
+mcli workflow export-script my-cmd --output test.py
 python -m py_compile test.py
 ```
 
 ### Import failures
 ```bash
 # Use interactive mode to review first
-mcli self import-script script.py --interactive
+mcli workflow import-script script.py --interactive
 # This opens in $EDITOR before saving
 ```
 
@@ -288,18 +295,18 @@ if __name__ == '__main__':
 
 ```bash
 # Import it
-mcli self import-script awesome_tool.py --name awesome --group workflow
+mcli workflow import-script awesome_tool.py --name awesome
 
 # Now use it
-mcli workflow awesome deploy
-mcli workflow awesome status
+mcli workflows awesome deploy
+mcli workflows awesome status
 ```
 
 ### Create Portable Toolkit
 ```bash
 # Export all your commands
 for cmd in redis visual dashboard; do
-    mcli self export-script $cmd --output ~/mcli-toolkit/$cmd.py
+    mcli workflow export-script $cmd --output ~/mcli-toolkit/$cmd.py
 done
 
 # Share the directory
@@ -308,7 +315,7 @@ tar -czf mcli-toolkit.tar.gz ~/mcli-toolkit/
 # On another machine
 tar -xzf mcli-toolkit.tar.gz
 for script in ~/mcli-toolkit/*.py; do
-    mcli self import-script $script
+    mcli workflow import-script $script
 done
 ```
 

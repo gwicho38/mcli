@@ -10,7 +10,9 @@ import pytest
 from click.testing import CliRunner
 
 # Skip all file workflow tests - workflow not yet fully implemented
-pytestmark = pytest.mark.skip(reason="File workflow tests disabled - workflow not yet fully implemented")
+pytestmark = pytest.mark.skip(
+    reason="File workflow tests disabled - workflow not yet fully implemented"
+)
 
 # Check if fitz (PyMuPDF) is available
 try:

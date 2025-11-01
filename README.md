@@ -7,7 +7,7 @@
 
 **Transform any script into a versioned, portable, schedulable workflow command.**
 
-MCLI is a modular CLI framework that lets you write scripts once and run them anywhere - as interactive commands, scheduled jobs, or background daemons. Your workflows live in `~/.mcli/commands/`, are versioned via lockfile, and completely decoupled from the engine source code.
+MCLI is a modular CLI framework that lets you write scripts once and run them anywhere - as interactive commands, scheduled jobs, or background daemons. Your workflows live in `~/.mcli/workflows/`, are versioned via lockfile, and completely decoupled from the engine source code.
 
 ## 🎯 Core Philosophy
 
@@ -35,7 +35,7 @@ Edit your workflow JSON files like Jupyter notebooks with our VSCode extension!
 code --install-extension gwicho38.mcli-framework
 
 # Or install from VSIX
-code --install-extension vscode-extension/mcli-framework-1.0.0.vsix
+code --install-extension vscode-extension/mcli-framework-2.0.0.vsix
 ```
 
 **Learn More:**
@@ -60,13 +60,13 @@ uv pip install mcli-framework
 
 ```bash
 # Initialize workflows in current git repository
-mcli workflow init
+mcli init
 
 # Or initialize global workflows
-mcli workflow init --global
+mcli init --global
 
 # Initialize with git repository for workflows
-mcli workflow init --git
+mcli init --git
 ```
 
 This creates a `.mcli/workflows/` directory (local to your repo) or `~/.mcli/workflows/` (global) with:
@@ -154,10 +154,10 @@ mcli workflow import my-workflows.json
 mcli workflow export-script my-workflow --output my_workflow.py
 ```
 
-Your workflows are just JSON files in `~/.mcli/commands/`:
+Your workflows are just JSON files in `~/.mcli/workflows/`:
 
 ```bash
-$ ls ~/.mcli/commands/
+$ ls ~/.mcli/workflows/
 pdf-processor.json
 data-sync.json
 git-commit.json
@@ -198,7 +198,7 @@ Example `commands.lock.json`:
 
 ```bash
 # Add lockfile to git
-git add ~/.mcli/commands/commands.lock.json ~/.mcli/commands/*.json
+git add ~/.mcli/workflows/commands.lock.json ~/.mcli/workflows/*.json
 git commit -m "Update workflows"
 
 # On another machine
@@ -353,7 +353,7 @@ You write scripts. They work. Then:
 
 ### The MCLI Solution
 
-- ✅ **Centralized Storage**: All workflows in `~/.mcli/commands/`
+- ✅ **Centralized Storage**: All workflows in `~/.mcli/workflows/`
 - ✅ **Portable**: Export/import as JSON, share anywhere
 - ✅ **Versioned**: Lockfile for reproducibility
 - ✅ **Decoupled**: Zero coupling to engine source code

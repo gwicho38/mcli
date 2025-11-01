@@ -10,7 +10,9 @@ from click.testing import CliRunner
 from mcli.app.model_cmd import delete, download, list, model, pull, recommend, start, status, stop
 
 # Skip all model command tests - complex integration requirements
-pytestmark = pytest.mark.skip(reason="Model command tests disabled - require complex integration setup")
+pytestmark = pytest.mark.skip(
+    reason="Model command tests disabled - require complex integration setup"
+)
 
 
 class TestModelCommands:

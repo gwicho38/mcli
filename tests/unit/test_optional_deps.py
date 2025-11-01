@@ -66,10 +66,7 @@ def test_optional_dependency_getattr_unavailable():
 
 def test_optional_dependency_custom_install_hint():
     """Test custom installation hint."""
-    dep = OptionalDependency(
-        "nonexistent_module",
-        install_hint="conda install nonexistent_module"
-    )
+    dep = OptionalDependency("nonexistent_module", install_hint="conda install nonexistent_module")
 
     with pytest.raises(ImportError) as exc_info:
         dep.require()
@@ -94,8 +91,7 @@ def test_optional_import_unavailable():
 def test_optional_import_with_custom_hint():
     """Test optional_import with custom installation hint."""
     module, available = optional_import(
-        "nonexistent_module",
-        install_hint="pip install nonexistent[extra]"
+        "nonexistent_module", install_hint="pip install nonexistent[extra]"
     )
     assert available is False
 
@@ -117,6 +113,7 @@ def test_require_dependency_unavailable():
 
 def test_requires_decorator_all_available():
     """Test @requires decorator when all dependencies are available."""
+
     @requires("os", "sys")
     def func_with_deps():
         return "success"
@@ -127,6 +124,7 @@ def test_requires_decorator_all_available():
 
 def test_requires_decorator_missing_dependency():
     """Test @requires decorator raises ImportError for missing dependency."""
+
     @requires("os", "nonexistent_module_12345")
     def func_with_missing_dep():
         return "should not execute"
@@ -140,6 +138,7 @@ def test_requires_decorator_missing_dependency():
 
 def test_requires_decorator_custom_install_hint():
     """Test @requires decorator with custom install hint."""
+
     @requires("nonexistent_module", install_all_hint="pip install special-package")
     def func_with_custom_hint():
         return "should not execute"
@@ -192,6 +191,7 @@ def test_optional_dependency_different_import_name():
 
 def test_requires_decorator_preserves_function_metadata():
     """Test that @requires decorator preserves function metadata."""
+
     @requires("os")
     def documented_function():
         """This function has documentation."""

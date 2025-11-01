@@ -219,9 +219,7 @@ def check_dependencies(*module_names: str) -> Dict[str, bool]:
         >>> print(status)
         {'torch': True, 'transformers': False, 'streamlit': True}
     """
-    return {
-        name: OptionalDependency(name).available for name in module_names
-    }
+    return {name: OptionalDependency(name).available for name in module_names}
 
 
 # Pre-register common optional dependencies

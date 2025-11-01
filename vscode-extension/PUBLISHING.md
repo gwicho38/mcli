@@ -155,7 +155,7 @@ Bump the version in `package.json` before publishing again.
 
 ## Current Status
 
-- ✅ Extension packaged: `mcli-framework-1.0.0.vsix`
+- ✅ Extension packaged: `mcli-framework-2.0.0.vsix`
 - ✅ Icon created: `icon.png` (128x128)
 - ✅ README, CHANGELOG, LICENSE included
 - ⏳ Publisher account setup required
@@ -168,6 +168,6 @@ If automated publishing doesn't work, you can manually upload the VSIX:
 
 1. Go to https://marketplace.visualstudio.com/manage/publishers/gwicho38
 2. Click "..." menu → "Upload Extension"
-3. Select `mcli-framework-1.0.0.vsix`
+3. Select `mcli-framework-2.0.0.vsix`
 4. Fill in any additional metadata
 5. Click "Upload"

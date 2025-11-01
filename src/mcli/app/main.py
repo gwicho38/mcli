@@ -326,6 +326,42 @@ class LazyGroup(click.Group):
 
 def _add_lazy_commands(app: click.Group):
     """Add command groups with lazy loading."""
+    # Top-level init command
+    try:
+        from mcli.app.init_cmd import init
+
+        app.add_command(init, name="init")
+        logger.debug("Added init command")
+    except ImportError as e:
+        logger.debug(f"Could not load init command: {e}")
+
+    # Top-level teardown command
+    try:
+        from mcli.app.init_cmd import teardown
+
+        app.add_command(teardown, name="teardown")
+        logger.debug("Added teardown command")
+    except ImportError as e:
+        logger.debug(f"Could not load teardown command: {e}")
+
+    # Top-level lock group
+    try:
+        from mcli.app.lock_cmd import lock
+
+        app.add_command(lock, name="lock")
+        logger.debug("Added lock group")
+    except ImportError as e:
+        logger.debug(f"Could not load lock group: {e}")
+
+    # Top-level store group
+    try:
+        from mcli.app.store_cmd import store
+
+        app.add_command(store, name="store")
+        logger.debug("Added store group")
+    except ImportError as e:
+        logger.debug(f"Could not load store group: {e}")
+
     # Workflow management - load immediately for fast access (renamed from 'commands')
     try:
         from mcli.app.commands_cmd import workflow
@@ -350,6 +386,7 @@ def _add_lazy_commands(app: click.Group):
     # Add workflows group directly (not lazy-loaded) to preserve -g/--global option
     try:
         from mcli.workflow.workflow import workflows as workflows_group
+
         app.add_command(workflows_group, name="workflows")
         logger.debug("Added workflows group with -g/--global support")
     except ImportError as e:

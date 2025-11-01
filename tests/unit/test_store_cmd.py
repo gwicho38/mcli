@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from click.testing import CliRunner
 
-from mcli.app.commands_cmd import _get_store_path, commands
+from mcli.app.store_cmd import _get_store_path, store
 
 
 @pytest.fixture
@@ -51,14 +51,14 @@ class TestGetStorePath:
 
         config_file.write_text(str(store_path))
 
-        with patch("mcli.app.commands_cmd.Path.home", return_value=tmp_path):
+        with patch("mcli.app.store_cmd.Path.home", return_value=tmp_path):
             result = _get_store_path()
             assert result == store_path
 
     def test_get_store_path_default(self, tmp_path):
         """Test default store path when config doesn't exist"""
-        with patch("mcli.app.commands_cmd.Path.home", return_value=tmp_path):
-            with patch("mcli.app.commands_cmd.DEFAULT_STORE_PATH", tmp_path / "default"):
+        with patch("mcli.app.store_cmd.Path.home", return_value=tmp_path):
+            with patch("mcli.app.store_cmd.DEFAULT_STORE_PATH", tmp_path / "default"):
                 result = _get_store_path()
                 assert result == tmp_path / "default"
 
@@ -67,8 +67,8 @@ class TestGetStorePath:
         config_file = tmp_path / "store.conf"
         config_file.write_text("/nonexistent/path")
 
-        with patch("mcli.app.commands_cmd.Path.home", return_value=tmp_path):
-            with patch("mcli.app.commands_cmd.DEFAULT_STORE_PATH", tmp_path / "default"):
+        with patch("mcli.app.store_cmd.Path.home", return_value=tmp_path):
+            with patch("mcli.app.store_cmd.DEFAULT_STORE_PATH", tmp_path / "default"):
                 result = _get_store_path()
                 # Should fall back to default when configured path doesn't exist
                 assert result == tmp_path / "default"
@@ -77,26 +77,26 @@ class TestGetStorePath:
 class TestStoreInit:
     """Test store init command"""
 
-    @patch("mcli.app.commands_cmd.subprocess.run")
-    @patch("mcli.app.commands_cmd.Path.home")
+    @patch("mcli.app.store_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd.Path.home")
     def test_init_creates_directory(self, mock_home, mock_run, runner, tmp_path):
         """Test init creates store directory"""
         mock_home.return_value = tmp_path
         store_path = tmp_path / "repos" / "mcli-commands"
 
-        result = runner.invoke(commands, ["store", "init"])
+        result = runner.invoke(store, ["init"])
 
         assert result.exit_code == 0
         assert "initialized" in result.output.lower()
 
-    @patch("mcli.app.commands_cmd.subprocess.run")
-    @patch("mcli.app.commands_cmd.Path.home")
+    @patch("mcli.app.store_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd.Path.home")
     def test_init_creates_gitignore(self, mock_home, mock_run, runner, tmp_path):
         """Test init creates .gitignore"""
         mock_home.return_value = tmp_path
         store_path = tmp_path / "repos" / "mcli-commands"
 
-        result = runner.invoke(commands, ["store", "init"])
+        result = runner.invoke(store, [ "init"])
 
         assert result.exit_code == 0
         gitignore = store_path / ".gitignore"
@@ -105,14 +105,14 @@ class TestStoreInit:
             assert "*.backup" in content
             assert ".DS_Store" in content
 
-    @patch("mcli.app.commands_cmd.subprocess.run")
-    @patch("mcli.app.commands_cmd.Path.home")
+    @patch("mcli.app.store_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd.Path.home")
     def test_init_creates_readme(self, mock_home, mock_run, runner, tmp_path):
         """Test init creates README.md"""
         mock_home.return_value = tmp_path
         store_path = tmp_path / "repos" / "mcli-commands"
 
-        result = runner.invoke(commands, ["store", "init"])
+        result = runner.invoke(store, [ "init"])
 
         assert result.exit_code == 0
         readme = store_path / "README.md"
@@ -120,22 +120,22 @@ class TestStoreInit:
             content = readme.read_text()
             assert "MCLI Commands Store" in content
 
-    @patch("mcli.app.commands_cmd.subprocess.run")
-    @patch("mcli.app.commands_cmd.Path.home")
+    @patch("mcli.app.store_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd.Path.home")
     def test_init_with_remote(self, mock_home, mock_run, runner, tmp_path):
         """Test init with remote URL"""
         mock_home.return_value = tmp_path
 
         result = runner.invoke(
-            commands, ["store", "init", "--remote", "git@github.com:user/repo.git"]
+            store, ["init", "--remote", "git@github.com:user/repo.git"]
         )
 
         assert result.exit_code == 0
         # Check that git remote add was called
         # (would need to inspect mock_run calls in actual implementation)
 
-    @patch("mcli.app.commands_cmd.subprocess.run")
-    @patch("mcli.app.commands_cmd.Path.home")
+    @patch("mcli.app.store_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd.Path.home")
     def test_init_already_exists(self, mock_home, mock_run, runner, tmp_path):
         """Test init when git repo already exists"""
         mock_home.return_value = tmp_path
@@ -143,7 +143,7 @@ class TestStoreInit:
         store_path.mkdir(parents=True)
         (store_path / ".git").mkdir()
 
-        result = runner.invoke(commands, ["store", "init"])
+        result = runner.invoke(store, [ "init"])
 
         assert result.exit_code == 0
         assert "already exists" in result.output.lower()
@@ -152,9 +152,9 @@ class TestStoreInit:
 class TestStorePush:
     """Test store push command"""
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.COMMANDS_PATH")
-    @patch("mcli.app.commands_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.COMMANDS_PATH")
+    @patch("mcli.app.store_cmd.subprocess.run")
     def test_push_copies_commands(
         self, mock_run, mock_commands_path, mock_get_store, runner, tmp_path
     ):
@@ -174,13 +174,13 @@ class TestStorePush:
         # Mock git status to return no changes
         mock_run.return_value = Mock(stdout="", returncode=0)
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "push"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "push"])
 
         assert result.exit_code == 0
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.subprocess.run")
     def test_push_skips_backups_by_default(self, mock_run, mock_get_store, runner, tmp_path):
         """Test push skips .backup files unless --all specified"""
         store_path = tmp_path / "store"
@@ -196,14 +196,14 @@ class TestStorePush:
         mock_get_store.return_value = store_path
         mock_run.return_value = Mock(stdout="", returncode=0)
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "push"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "push"])
 
         # Backup file should not be copied
         assert not (store_path / "test.json.backup").exists()
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.subprocess.run")
     def test_push_with_all_includes_backups(self, mock_run, mock_get_store, runner, tmp_path):
         """Test push with --all includes .backup files"""
         store_path = tmp_path / "store"
@@ -219,8 +219,8 @@ class TestStorePush:
         mock_get_store.return_value = store_path
         mock_run.return_value = Mock(stdout="", returncode=0)
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "push", "--all"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "push", "--all"])
 
         # With --all, backup should be copied
         assert (store_path / "test.json.backup").exists()
@@ -229,8 +229,8 @@ class TestStorePush:
 class TestStorePull:
     """Test store pull command"""
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.subprocess.run")
     def test_pull_copies_from_store(self, mock_run, mock_get_store, runner, tmp_path):
         """Test pull copies commands from store"""
         store_path = tmp_path / "store"
@@ -245,13 +245,13 @@ class TestStorePull:
         mock_get_store.return_value = store_path
         mock_run.return_value = Mock(returncode=0)
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "pull", "--force"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "pull", "--force"])
 
         assert result.exit_code == 0
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.subprocess.run")
     def test_pull_creates_backup(self, mock_run, mock_get_store, runner, tmp_path):
         """Test pull creates backup of existing commands"""
         store_path = tmp_path / "store"
@@ -266,15 +266,15 @@ class TestStorePull:
         mock_get_store.return_value = store_path
         mock_run.return_value = Mock(returncode=0)
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "pull"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "pull"])
 
         # Should create backup directory (check for backup in parent)
         backup_dirs = list(commands_path.parent.glob("commands_backup_*"))
         assert len(backup_dirs) > 0 or result.exit_code == 0
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.subprocess.run")
     def test_pull_skips_git_files(self, mock_run, mock_get_store, runner, tmp_path):
         """Test pull skips .git, README.md, .gitignore"""
         store_path = tmp_path / "store"
@@ -292,8 +292,8 @@ class TestStorePull:
         mock_get_store.return_value = store_path
         mock_run.return_value = Mock(returncode=0)
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "pull", "--force"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "pull", "--force"])
 
         # Git files should not be copied
         assert not (commands_path / ".git").exists()
@@ -304,8 +304,8 @@ class TestStorePull:
 class TestStoreSync:
     """Test store sync command"""
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.subprocess.run")
     def test_sync_pulls_then_pushes(self, mock_run, mock_get_store, runner, tmp_path):
         """Test sync pulls then pushes if changes exist"""
         store_path = tmp_path / "store"
@@ -318,8 +318,8 @@ class TestStoreSync:
         # Mock git status to show changes
         mock_run.return_value = Mock(stdout="M test.json", returncode=0)
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "sync"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "sync"])
 
         # Should succeed (actual git commands would be mocked)
         assert result.exit_code == 0
@@ -328,7 +328,7 @@ class TestStoreSync:
 class TestStoreList:
     """Test store list command"""
 
-    @patch("mcli.app.commands_cmd._get_store_path")
+    @patch("mcli.app.store_cmd._get_store_path")
     def test_list_local_commands(self, mock_get_store, runner, tmp_path):
         """Test listing local commands"""
         commands_path = tmp_path / "commands"
@@ -338,14 +338,14 @@ class TestStoreList:
         (commands_path / "test1.json").write_text('{"test": 1}')
         (commands_path / "test2.json").write_text('{"test": 2}')
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "list"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "list"])
 
         assert result.exit_code == 0
         assert "test1.json" in result.output
         assert "test2.json" in result.output
 
-    @patch("mcli.app.commands_cmd._get_store_path")
+    @patch("mcli.app.store_cmd._get_store_path")
     def test_list_store_commands(self, mock_get_store, runner, tmp_path):
         """Test listing store commands"""
         store_path = tmp_path / "store"
@@ -357,7 +357,7 @@ class TestStoreList:
 
         mock_get_store.return_value = store_path
 
-        result = runner.invoke(commands, ["store", "list", "--store"])
+        result = runner.invoke(store, [ "list", "--store-dir"])
 
         assert result.exit_code == 0
         assert "store1.json" in result.output
@@ -367,8 +367,8 @@ class TestStoreList:
 class TestStoreStatus:
     """Test store status command"""
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.subprocess.run")
     def test_status_shows_git_status(self, mock_run, mock_get_store, runner, tmp_path):
         """Test status shows git repository status"""
         store_path = tmp_path / "store"
@@ -377,7 +377,7 @@ class TestStoreStatus:
         mock_get_store.return_value = store_path
         mock_run.return_value = Mock(stdout="## main", returncode=0)
 
-        result = runner.invoke(commands, ["store", "status"])
+        result = runner.invoke(store, [ "status"])
 
         assert result.exit_code == 0
         assert "Store:" in result.output
@@ -386,7 +386,7 @@ class TestStoreStatus:
 class TestStoreShow:
     """Test store show command"""
 
-    @patch("mcli.app.commands_cmd._get_store_path")
+    @patch("mcli.app.store_cmd._get_store_path")
     def test_show_local_command(self, mock_get_store, runner, tmp_path):
         """Test showing local command file"""
         commands_path = tmp_path / "commands"
@@ -396,13 +396,13 @@ class TestStoreShow:
         test_content = '{"name": "test", "version": "1.0"}'
         (commands_path / "test.json").write_text(test_content)
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "show", "test.json"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "show", "test.json"])
 
         assert result.exit_code == 0
         assert "test" in result.output
 
-    @patch("mcli.app.commands_cmd._get_store_path")
+    @patch("mcli.app.store_cmd._get_store_path")
     def test_show_store_command(self, mock_get_store, runner, tmp_path):
         """Test showing store command file"""
         store_path = tmp_path / "store"
@@ -414,19 +414,19 @@ class TestStoreShow:
 
         mock_get_store.return_value = store_path
 
-        result = runner.invoke(commands, ["store", "show", "test.json", "--store"])
+        result = runner.invoke(store, [ "show", "test.json", "--store-dir"])
 
         assert result.exit_code == 0
         assert "store_test" in result.output
 
-    @patch("mcli.app.commands_cmd._get_store_path")
+    @patch("mcli.app.store_cmd._get_store_path")
     def test_show_nonexistent_command(self, mock_get_store, runner, tmp_path):
         """Test showing nonexistent command"""
         commands_path = tmp_path / "commands"
         commands_path.mkdir()
 
-        with patch("mcli.app.commands_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(commands, ["store", "show", "nonexistent.json"])
+        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
+            result = runner.invoke(store, [ "show", "nonexistent.json"])
 
         assert result.exit_code == 0
         assert "not found" in result.output.lower()
@@ -435,8 +435,8 @@ class TestStoreShow:
 class TestStoreConfig:
     """Test store config command"""
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.Path.home")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.Path.home")
     def test_config_set_path(self, mock_home, mock_get_store, runner, tmp_path):
         """Test setting store path"""
         # Create .mcli directory for config file
@@ -446,13 +446,13 @@ class TestStoreConfig:
         mock_home.return_value = tmp_path
         new_path = tmp_path / "new-store"
 
-        result = runner.invoke(commands, ["store", "config", "--path", str(new_path)])
+        result = runner.invoke(store, [ "config", "--path", str(new_path)])
 
         assert result.exit_code == 0
         assert "updated" in result.output.lower()
 
-    @patch("mcli.app.commands_cmd._get_store_path")
-    @patch("mcli.app.commands_cmd.subprocess.run")
+    @patch("mcli.app.store_cmd._get_store_path")
+    @patch("mcli.app.store_cmd.subprocess.run")
     def test_config_set_remote(self, mock_run, mock_get_store, runner, tmp_path):
         """Test setting git remote"""
         store_path = tmp_path / "store"
@@ -462,7 +462,7 @@ class TestStoreConfig:
         mock_run.return_value = Mock(stdout="", returncode=0)
 
         result = runner.invoke(
-            commands, ["store", "config", "--remote", "git@github.com:user/repo.git"]
+            store, ["config", "--remote", "git@github.com:user/repo.git"]
         )
 
         # Should succeed (git remote commands are mocked)
