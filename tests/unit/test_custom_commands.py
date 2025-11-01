@@ -25,22 +25,28 @@ class TestCustomCommandManager:
         self.commands_dir.mkdir(parents=True, exist_ok=True)
 
         # Enable test commands for testing
-        os.environ['MCLI_INCLUDE_TEST_COMMANDS'] = 'true'
+        os.environ["MCLI_INCLUDE_TEST_COMMANDS"] = "true"
 
-        # Patch get_custom_commands_dir to return our temp directory
-        self.patcher = patch(
+        # Patch get_custom_commands_dir and get_lockfile_path to return our temp directory
+        self.patcher_commands = patch(
             "mcli.lib.custom_commands.get_custom_commands_dir",
             return_value=self.commands_dir,
         )
-        self.patcher.start()
+        self.patcher_lockfile = patch(
+            "mcli.lib.custom_commands.get_lockfile_path",
+            return_value=self.commands_dir / "commands.lock.json",
+        )
+        self.patcher_commands.start()
+        self.patcher_lockfile.start()
 
         self.manager = CustomCommandManager()
 
     def teardown_method(self):
         """Cleanup test environment"""
-        self.patcher.stop()
+        self.patcher_commands.stop()
+        self.patcher_lockfile.stop()
         # Clean up environment variable
-        os.environ.pop('MCLI_INCLUDE_TEST_COMMANDS', None)
+        os.environ.pop("MCLI_INCLUDE_TEST_COMMANDS", None)
         import shutil
 
         shutil.rmtree(self.temp_dir, ignore_errors=True)

@@ -17,16 +17,47 @@ class ScopedWorkflowsGroup(click.Group):
     def list_commands(self, ctx):
         """List available commands based on scope."""
         # Get scope from context
-        is_global = ctx.params.get('is_global', False)
+        is_global = ctx.params.get("is_global", False)
 
         # Load commands from appropriate directory
         from mcli.lib.custom_commands import get_command_manager
+        from mcli.lib.logger.logger import get_logger
 
+        logger = get_logger()
         manager = get_command_manager(global_mode=is_global)
         commands = manager.load_all_commands()
 
-        # Filter to only workflow group commands
-        workflow_commands = [cmd.get('name') for cmd in commands if cmd.get('group') == 'workflow']
+        # Filter to only workflow group commands AND validate they can be loaded
+        workflow_commands = []
+        for cmd_data in commands:
+            if cmd_data.get("group") != "workflow":
+                continue
+
+            cmd_name = cmd_data.get("name")
+            # Validate the command can be loaded
+            temp_group = click.Group()
+            language = cmd_data.get("language", "python")
+
+            try:
+                if language == "shell":
+                    success = manager.register_shell_command_with_click(cmd_data, temp_group)
+                else:
+                    success = manager.register_command_with_click(cmd_data, temp_group)
+
+                if success and temp_group.commands.get(cmd_name):
+                    workflow_commands.append(cmd_name)
+                else:
+                    # Log the issue but don't show to user during list (too noisy)
+                    logger.debug(
+                        f"Workflow '{cmd_name}' has invalid code and will not be loaded. "
+                        f"Edit with: mcli workflow edit {cmd_name}"
+                    )
+            except Exception as e:
+                # Log the issue but don't show to user during list (too noisy)
+                logger.debug(
+                    f"Failed to load workflow '{cmd_name}': {e}. "
+                    f"Edit with: mcli workflow edit {cmd_name}"
+                )
 
         # Also include built-in subcommands
         builtin_commands = list(super().list_commands(ctx))
@@ -41,7 +72,7 @@ class ScopedWorkflowsGroup(click.Group):
             return builtin_cmd
 
         # Get scope from context
-        is_global = ctx.params.get('is_global', False)
+        is_global = ctx.params.get("is_global", False)
 
         # Load the workflow command from appropriate directory
         from mcli.lib.custom_commands import get_command_manager
@@ -51,7 +82,7 @@ class ScopedWorkflowsGroup(click.Group):
 
         # Find the workflow command
         for command_data in commands:
-            if command_data.get('name') == cmd_name and command_data.get('group') == 'workflow':
+            if command_data.get("name") == cmd_name and command_data.get("group") == "workflow":
                 # Create a temporary group to register the command
                 temp_group = click.Group()
                 language = command_data.get("language", "python")
@@ -85,7 +116,7 @@ def workflows(ctx, is_global):
     """
     # Store the is_global flag in the context for subcommands to access
     ctx.ensure_object(dict)
-    ctx.obj['is_global'] = is_global
+    ctx.obj["is_global"] = is_global
 
     # If a subcommand was invoked, the subcommand will handle execution
     if ctx.invoked_subcommand:
@@ -103,6 +134,7 @@ try:
 except ImportError as e:
     # Secrets workflow not available
     import sys
+
     from mcli.lib.logger.logger import get_logger
 
     logger = get_logger()
@@ -116,6 +148,7 @@ try:
 except ImportError as e:
     # Notebook commands not available
     import sys
+
     from mcli.lib.logger.logger import get_logger
 
     logger = get_logger()

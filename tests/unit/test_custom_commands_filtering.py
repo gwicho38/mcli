@@ -22,7 +22,8 @@ def command_manager(temp_commands_dir, monkeypatch):
     """Create a CustomCommandManager with a temporary directory."""
     # Patch get_custom_commands_dir to return our temp dir
     monkeypatch.setattr(
-        "mcli.lib.custom_commands.get_custom_commands_dir", lambda: temp_commands_dir
+        "mcli.lib.custom_commands.get_custom_commands_dir",
+        lambda global_mode=False: temp_commands_dir,
     )
     return CustomCommandManager()
 
