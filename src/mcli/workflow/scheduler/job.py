@@ -6,7 +6,7 @@ import json
 import uuid
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from mcli.lib.logger.logger import get_logger
 
@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 
 class JobStatus(Enum):
-    """Job execution status"""
+    """Job execution status."""
 
     PENDING = "pending"
     RUNNING = "running"
@@ -25,7 +25,7 @@ class JobStatus(Enum):
 
 
 class JobType(Enum):
-    """Types of jobs that can be scheduled"""
+    """Types of jobs that can be scheduled."""
 
     COMMAND = "command"  # Execute shell commands
     PYTHON = "python"  # Execute Python code
@@ -36,7 +36,7 @@ class JobType(Enum):
 
 
 class ScheduledJob:
-    """Represents a scheduled job with all its metadata"""
+    """Represents a scheduled job with all its metadata."""
 
     def __init__(
         self,
@@ -84,7 +84,7 @@ class ScheduledJob:
         self.current_retry = 0
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert job to dictionary for serialization"""
+        """Convert job to dictionary for serialization."""
         return {
             "id": self.id,
             "name": self.name,
@@ -115,7 +115,7 @@ class ScheduledJob:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ScheduledJob":
-        """Create job from dictionary"""
+        """Create job from dictionary."""
         job = cls(
             name=data["name"],
             cron_expression=data["cron_expression"],
@@ -149,7 +149,7 @@ class ScheduledJob:
         return job
 
     def update_status(self, status: JobStatus, output: str = "", error: str = ""):
-        """Update job status and related metadata"""
+        """Update job status and related metadata."""
         self.status = status
         self.last_output = output
         self.last_error = error
@@ -164,15 +164,15 @@ class ScheduledJob:
             self.failure_count += 1
 
     def should_retry(self) -> bool:
-        """Check if job should be retried after failure"""
+        """Check if job should be retried after failure."""
         return self.status == JobStatus.FAILED and self.current_retry < self.retry_count
 
     def get_next_retry_time(self) -> datetime:
-        """Calculate next retry time"""
+        """Calculate next retry time."""
         return datetime.now() + timedelta(seconds=self.retry_delay)
 
     def to_json(self) -> str:
-        """Convert job to JSON string"""
+        """Convert job to JSON string."""
         return json.dumps(self.to_dict(), indent=2)
 
     def __str__(self) -> str:

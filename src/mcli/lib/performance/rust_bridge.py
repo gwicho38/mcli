@@ -2,10 +2,8 @@
 Bridge module for integrating Rust extensions with Python code
 """
 
-import importlib.util
 import os
-import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 from mcli.lib.logger.logger import get_logger
 
@@ -20,7 +18,7 @@ _RUST_PROCESS_MANAGER = None
 
 
 def check_rust_extensions() -> Dict[str, bool]:
-    """Check which Rust extensions are available"""
+    """Check which Rust extensions are available."""
     global _RUST_AVAILABLE, _RUST_TFIDF, _RUST_FILE_WATCHER, _RUST_COMMAND_MATCHER, _RUST_PROCESS_MANAGER
 
     if _RUST_AVAILABLE is not None:
@@ -64,7 +62,7 @@ def check_rust_extensions() -> Dict[str, bool]:
 
 
 def get_tfidf_vectorizer(use_rust: bool = True, **kwargs):
-    """Get the best available TF-IDF vectorizer"""
+    """Get the best available TF-IDF vectorizer."""
     rust_status = check_rust_extensions()
 
     if use_rust and rust_status["tfidf"]:
@@ -85,7 +83,7 @@ def get_tfidf_vectorizer(use_rust: bool = True, **kwargs):
 
 
 def get_file_watcher(use_rust: bool = True):
-    """Get the best available file watcher"""
+    """Get the best available file watcher."""
     rust_status = check_rust_extensions()
 
     if use_rust and rust_status["file_watcher"]:
@@ -106,7 +104,7 @@ def get_file_watcher(use_rust: bool = True):
 
 
 def get_command_matcher(use_rust: bool = True, **kwargs):
-    """Get the best available command matcher"""
+    """Get the best available command matcher."""
     rust_status = check_rust_extensions()
 
     if use_rust and rust_status["command_matcher"]:
@@ -127,7 +125,7 @@ def get_command_matcher(use_rust: bool = True, **kwargs):
 
 
 def get_process_manager(use_rust: bool = True):
-    """Get the best available process manager"""
+    """Get the best available process manager."""
     rust_status = check_rust_extensions()
 
     if use_rust and rust_status["process_manager"]:
@@ -148,14 +146,14 @@ def get_process_manager(use_rust: bool = True):
 
 
 class PerformanceMonitor:
-    """Monitor performance differences between Rust and Python implementations"""
+    """Monitor performance differences between Rust and Python implementations."""
 
     def __init__(self):
         self.benchmarks = {}
         self.rust_status = check_rust_extensions()
 
     def benchmark_tfidf(self, documents: List[str], queries: List[str]) -> Dict[str, Any]:
-        """Benchmark TF-IDF performance"""
+        """Benchmark TF-IDF performance."""
         import time
 
         results = {"rust": None, "python": None, "speedup": None}
@@ -203,7 +201,7 @@ class PerformanceMonitor:
         return results
 
     def _cosine_similarity(self, vec1, vec2):
-        """Simple cosine similarity implementation"""
+        """Simple cosine similarity implementation."""
         import numpy as np
 
         dot_product = np.dot(
@@ -219,7 +217,7 @@ class PerformanceMonitor:
         return dot_product / (norm1 * norm2)
 
     def benchmark_file_watching(self, test_dir: str, num_operations: int = 100) -> Dict[str, Any]:
-        """Benchmark file watching performance"""
+        """Benchmark file watching performance."""
         import os
         import tempfile
         import time
@@ -243,7 +241,7 @@ class PerformanceMonitor:
 
                     # Give time for events to be processed
                     time.sleep(0.1)
-                    events = watcher.get_events()
+                    watcher.get_events()
                     rust_time = time.perf_counter() - start_time
 
                     watcher.stop_watching()
@@ -258,7 +256,7 @@ class PerformanceMonitor:
         return results
 
     def get_system_info(self) -> Dict[str, Any]:
-        """Get system information relevant to performance"""
+        """Get system information relevant to performance."""
         import platform
 
         import psutil
@@ -276,7 +274,7 @@ class PerformanceMonitor:
 
 
 class PythonFileWatcher:
-    """Fallback Python file watcher using watchdog"""
+    """Fallback Python file watcher using watchdog."""
 
     def __init__(self):
         from watchdog.events import FileSystemEventHandler
@@ -300,7 +298,7 @@ class PythonFileWatcher:
         self.is_watching = False
 
     def start_watching(self, paths: List[str], recursive: bool = True):
-        from watchdog.observers import Observer
+        pass
 
         for path in paths:
             self.observer.schedule(self.handler, path, recursive=recursive)
@@ -321,7 +319,7 @@ class PythonFileWatcher:
 
 
 class PythonCommandMatcher:
-    """Fallback Python command matcher"""
+    """Fallback Python command matcher."""
 
     def __init__(self, fuzzy_threshold: float = 0.3):
         self.fuzzy_threshold = fuzzy_threshold
@@ -331,7 +329,7 @@ class PythonCommandMatcher:
         self.commands.extend(commands)
 
     def search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        import re
+        pass
 
         results = []
         query_lower = query.lower()
@@ -376,14 +374,11 @@ _RUST_EXTENSIONS_STATUS = check_rust_extensions()
 
 
 def print_performance_summary():
-    """Print a stunning visual summary of available performance optimizations"""
+    """Print a stunning visual summary of available performance optimizations."""
     try:
-        from rich.columns import Columns
-        from rich.panel import Panel
         from rich.rule import Rule
-        from rich.text import Text
 
-        from mcli.lib.ui.visual_effects import ColorfulOutput, MCLIBanner, VisualTable, console
+        from mcli.lib.ui.visual_effects import ColorfulOutput, VisualTable, console
 
         status = check_rust_extensions()
 
@@ -405,7 +400,7 @@ def print_performance_summary():
 
         # Check UVLoop
         try:
-            import uvloop
+            pass
 
             optimization_data["uvloop"]["success"] = True
             optimization_data["uvloop"]["reason"] = "High-performance event loop active"
@@ -429,7 +424,7 @@ def print_performance_summary():
 
         # Check AIOSQLite
         try:
-            import aiosqlite
+            pass
 
             optimization_data["aiosqlite"]["success"] = True
             optimization_data["aiosqlite"]["reason"] = "Async database operations enabled"
@@ -474,7 +469,7 @@ def print_performance_summary():
 
         # Check other optimizations
         try:
-            import uvloop
+            pass
 
             print("✅ UVLoop available for async performance")
         except ImportError:
@@ -488,7 +483,7 @@ def print_performance_summary():
             print("⚠️  Redis not available - caching disabled")
 
         try:
-            import aiosqlite
+            pass
 
             print("✅ AIOSQLite available for async database operations")
         except ImportError:

@@ -1,5 +1,6 @@
-"""Reusable table components"""
+"""Reusable table components."""
 
+from io import BytesIO
 from typing import Any, Callable, List, Optional
 
 import pandas as pd
@@ -13,7 +14,7 @@ def display_dataframe_with_search(
     page_size: int = 20,
     key_prefix: str = "table",
 ) -> pd.DataFrame:
-    """Display a dataframe with search and pagination"""
+    """Display a dataframe with search and pagination."""
 
     if df.empty:
         st.info("No data available")
@@ -62,7 +63,7 @@ def display_dataframe_with_search(
 def display_filterable_dataframe(
     df: pd.DataFrame, filter_columns: Optional[dict] = None, key_prefix: str = "filter"
 ) -> pd.DataFrame:
-    """Display a dataframe with column-specific filters"""
+    """Display a dataframe with column-specific filters."""
 
     if df.empty:
         st.info("No data available")
@@ -97,7 +98,7 @@ def display_filterable_dataframe(
                                 .str.contains(search_text, case=False, na=False)
                             ]
 
-                    elif filter_type == "date_range":
+                    elif filter_type == "date_range":  # noqa: SIM102
                         if pd.api.types.is_datetime64_any_dtype(df[col_name]):
                             min_date = df[col_name].min()
                             max_date = df[col_name].max()
@@ -127,7 +128,7 @@ def display_table_with_actions(
         st.info("No data available")
         return
 
-    for idx, row in df.iterrows():
+    for _idx, row in df.iterrows():
         with st.container():
             # Display row data in columns
             data_cols = st.columns([3] + [1] * len(actions))
@@ -156,13 +157,13 @@ def display_expandable_table(
     row_id_column: str = "id",
     key_prefix: str = "expand",
 ):
-    """Display a table where each row can be expanded for details"""
+    """Display a table where each row can be expanded for details."""
 
     if df.empty:
         st.info("No data available")
         return
 
-    for idx, row in df.iterrows():
+    for _idx, row in df.iterrows():
         # Summary view
         summary_data = {col: row[col] for col in summary_columns if col in row}
         summary_text = " | ".join([f"{k}: {v}" for k, v in summary_data.items()])
@@ -174,10 +175,12 @@ def display_expandable_table(
 def export_dataframe(
     df: pd.DataFrame,
     filename: str = "data",
-    formats: List[str] = ["csv", "json"],
+    formats: Optional[List[str]] = None,
     key_prefix: str = "export",
 ):
-    """Provide export buttons for a dataframe"""
+    """Provide export buttons for a dataframe."""
+    if formats is None:
+        formats = ["csv", "json"]
 
     if df.empty:
         return

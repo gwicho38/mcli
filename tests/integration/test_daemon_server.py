@@ -6,13 +6,12 @@ Some daemon classes referenced in these tests (like CommandDatabase) were remove
 Tests are skipped until they can be refactored for the new architecture.
 """
 
-import json
 import os
 import sqlite3
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -84,7 +83,7 @@ class TestCommandDatabase:
 
     def test_database_initialization(self, temp_db):
         """Test database initialization"""
-        db = CommandDatabase(temp_db)
+        CommandDatabase(temp_db)
 
         # Check if tables were created
         conn = sqlite3.connect(temp_db)

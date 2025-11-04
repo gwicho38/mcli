@@ -1,16 +1,13 @@
-"""Test portfolio page for paper trading and backtesting"""
+"""Test portfolio page for paper trading and backtesting."""
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 from uuid import UUID
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
-from sqlalchemy.orm import Session
 
 from mcli.ml.database.session import get_session
 from mcli.ml.trading.models import OrderCreate, OrderSide, OrderType
@@ -21,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def show_test_portfolio():
-    """Test portfolio page for paper trading"""
+    """Test portfolio page for paper trading."""
     st.title("🧪 Test Portfolio - Paper Trading")
     st.markdown("Test your trading strategies with paper money before going live")
 
@@ -433,7 +430,7 @@ def show_test_portfolio():
         finally:
             # Clean up database session
             if "db" in locals() and "session_context" in locals():
-                try:
+                try:  # noqa: SIM105
                     session_context.__exit__(None, None, None)
                 except Exception:
                     pass

@@ -2,15 +2,14 @@
 CLI tests for mcli.self.redis_cmd module
 """
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from click.testing import CliRunner
 
 # Check if redis is available
 try:
-    import redis
+    pass
 
     HAS_REDIS = True
 except ImportError:

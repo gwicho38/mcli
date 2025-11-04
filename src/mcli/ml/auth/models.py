@@ -1,4 +1,4 @@
-"""Authentication data models"""
+"""Authentication data models."""
 
 from datetime import datetime
 from typing import List, Optional
@@ -8,7 +8,7 @@ from pydantic import BaseModel, EmailStr, Field, validator
 
 
 class UserCreate(BaseModel):
-    """User registration model"""
+    """User registration model."""
 
     username: str = Field(..., min_length=3, max_length=50, pattern="^[a-zA-Z0-9_-]+$")
     email: EmailStr
@@ -18,7 +18,7 @@ class UserCreate(BaseModel):
 
     @validator("password")
     def validate_password(cls, v):
-        """Ensure password meets security requirements"""
+        """Ensure password meets security requirements."""
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
         if not any(char.isdigit() for char in v):
@@ -31,14 +31,14 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    """User login model"""
+    """User login model."""
 
     username: str
     password: str
 
 
 class UserResponse(BaseModel):
-    """User response model"""
+    """User response model."""
 
     id: UUID
     username: str
@@ -56,7 +56,7 @@ class UserResponse(BaseModel):
 
 
 class TokenResponse(BaseModel):
-    """JWT token response"""
+    """JWT token response."""
 
     access_token: str
     token_type: str = "Bearer"
@@ -66,7 +66,7 @@ class TokenResponse(BaseModel):
 
 
 class TokenData(BaseModel):
-    """JWT token payload"""
+    """JWT token payload."""
 
     sub: str  # User ID
     username: str
@@ -77,27 +77,27 @@ class TokenData(BaseModel):
 
 
 class PasswordReset(BaseModel):
-    """Password reset request"""
+    """Password reset request."""
 
     email: EmailStr
 
 
 class PasswordResetConfirm(BaseModel):
-    """Password reset confirmation"""
+    """Password reset confirmation."""
 
     token: str
     new_password: str = Field(..., min_length=8, max_length=100)
 
 
 class PasswordChange(BaseModel):
-    """Password change request"""
+    """Password change request."""
 
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
 
     @validator("new_password")
     def validate_password(cls, v, values):
-        """Ensure new password is different and meets requirements"""
+        """Ensure new password is different and meets requirements."""
         if "current_password" in values and v == values["current_password"]:
             raise ValueError("New password must be different from current password")
 
@@ -113,14 +113,14 @@ class PasswordChange(BaseModel):
 
 
 class APIKeyCreate(BaseModel):
-    """API key creation model"""
+    """API key creation model."""
 
     name: str = Field(..., min_length=1, max_length=100)
     expires_at: Optional[datetime] = None
 
 
 class APIKeyResponse(BaseModel):
-    """API key response"""
+    """API key response."""
 
     key: str
     name: str
@@ -130,7 +130,7 @@ class APIKeyResponse(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    """User update model"""
+    """User update model."""
 
     email: Optional[EmailStr] = None
     first_name: Optional[str] = Field(None, max_length=50)
@@ -140,7 +140,7 @@ class UserUpdate(BaseModel):
 
 
 class UserPermissions(BaseModel):
-    """User permissions model"""
+    """User permissions model."""
 
     user_id: UUID
     permissions: List[str]
@@ -148,7 +148,7 @@ class UserPermissions(BaseModel):
 
 
 class SessionInfo(BaseModel):
-    """Session information"""
+    """Session information."""
 
     session_id: str
     user_id: UUID
@@ -160,7 +160,7 @@ class SessionInfo(BaseModel):
 
 
 class LoginAttempt(BaseModel):
-    """Login attempt tracking"""
+    """Login attempt tracking."""
 
     username: str
     ip_address: str

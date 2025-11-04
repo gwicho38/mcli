@@ -4,7 +4,7 @@ CLI tests for mcli.workflow.file module
 
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
@@ -16,7 +16,7 @@ pytestmark = pytest.mark.skip(
 
 # Check if fitz (PyMuPDF) is available
 try:
-    import fitz
+    pass
 
     HAS_FITZ = True
 except ImportError:

@@ -1,6 +1,6 @@
 """Shared fixtures for chat testing"""
 
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 

@@ -1,4 +1,4 @@
-"""Celery background tasks for ML system"""
+"""Celery background tasks for ML system."""
 
 import asyncio
 from datetime import datetime, timedelta
@@ -61,24 +61,24 @@ celery_app.conf.beat_schedule = {
 
 
 class MLTask(Task):
-    """Base task with error handling"""
+    """Base task with error handling."""
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        """Log task failure"""
+        """Log task failure."""
         logger.error(f"Task {self.name} failed: {exc}", exc_info=True)
 
     def on_retry(self, exc, task_id, args, kwargs, einfo):
-        """Log task retry"""
+        """Log task retry."""
         logger.warning(f"Task {self.name} retrying: {exc}")
 
     def on_success(self, retval, task_id, args, kwargs):
-        """Log task success"""
+        """Log task success."""
         logger.info(f"Task {self.name} completed successfully")
 
 
 @celery_app.task(base=MLTask, bind=True, max_retries=3)
 def train_model_task(self, model_id: str, retrain: bool = False) -> Dict[str, Any]:
-    """Train or retrain a model"""
+    """Train or retrain a model."""
     try:
         logger.info(f"Starting training for model {model_id}")
 
@@ -127,7 +127,7 @@ def train_model_task(self, model_id: str, retrain: bool = False) -> Dict[str, An
 
 @celery_app.task(base=MLTask, bind=True)
 def update_stock_data_task(self, ticker: str = None) -> Dict[str, Any]:
-    """Update stock data from external APIs"""
+    """Update stock data from external APIs."""
     try:
         logger.info(f"Updating stock data{f' for {ticker}' if ticker else ''}")
 
@@ -180,7 +180,7 @@ def update_stock_data_task(self, ticker: str = None) -> Dict[str, Any]:
 
 @celery_app.task(base=MLTask)
 def check_model_drift_task() -> Dict[str, Any]:
-    """Check for model drift"""
+    """Check for model drift."""
     try:
         logger.info("Checking for model drift")
 
@@ -215,7 +215,7 @@ def check_model_drift_task() -> Dict[str, Any]:
 
 @celery_app.task(base=MLTask)
 def cleanup_predictions_task() -> Dict[str, Any]:
-    """Clean up old predictions"""
+    """Clean up old predictions."""
     try:
         logger.info("Cleaning up old predictions")
 
@@ -241,7 +241,7 @@ def cleanup_predictions_task() -> Dict[str, Any]:
 
 @celery_app.task(base=MLTask)
 def retrain_models_task() -> Dict[str, Any]:
-    """Retrain models on schedule"""
+    """Retrain models on schedule."""
     try:
         logger.info("Starting scheduled model retraining")
 
@@ -278,7 +278,7 @@ def retrain_models_task() -> Dict[str, Any]:
 
 @celery_app.task(base=MLTask)
 def generate_daily_report_task() -> Dict[str, Any]:
-    """Generate daily performance report"""
+    """Generate daily performance report."""
     try:
         logger.info("Generating daily report")
 
@@ -294,7 +294,7 @@ def generate_daily_report_task() -> Dict[str, Any]:
             .count()
         )
 
-        active_portfolios = db.query(Portfolio).filter(Portfolio.is_active == True).count()
+        active_portfolios = db.query(Portfolio).filter(Portfolio.is_active is True).count()
 
         active_users = (
             db.query(User)
@@ -324,12 +324,12 @@ def generate_daily_report_task() -> Dict[str, Any]:
 
 @celery_app.task(base=MLTask)
 def fetch_politician_trades_task() -> Dict[str, Any]:
-    """Fetch latest politician trades"""
+    """Fetch latest politician trades."""
     try:
         logger.info("Fetching politician trades")
 
         from mcli.ml.data_ingestion.api_connectors import CongressionalTradingConnector
-        from mcli.ml.database.models import Politician, Trade
+        from mcli.ml.database.models import Trade
         from mcli.ml.database.session import SessionLocal
 
         connector = CongressionalTradingConnector()
@@ -369,7 +369,7 @@ def fetch_politician_trades_task() -> Dict[str, Any]:
 
 @celery_app.task(base=MLTask, bind=True)
 def process_batch_predictions_task(self, predictions: list) -> Dict[str, Any]:
-    """Process batch predictions asynchronously"""
+    """Process batch predictions asynchronously."""
     try:
         logger.info(f"Processing batch of {len(predictions)} predictions")
 
@@ -384,7 +384,7 @@ def process_batch_predictions_task(self, predictions: list) -> Dict[str, Any]:
             result = model.predict(features)
             results.append({"ticker": pred["ticker"], "prediction": float(result[0])})
 
-        logger.info(f"Batch predictions completed")
+        logger.info("Batch predictions completed")
         return {"predictions": results}
 
     except Exception as e:
@@ -395,5 +395,5 @@ def process_batch_predictions_task(self, predictions: list) -> Dict[str, Any]:
 # Worker health check
 @celery_app.task(name="health_check")
 def health_check():
-    """Health check for Celery worker"""
+    """Health check for Celery worker."""
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}

@@ -1,13 +1,10 @@
-"""Enhanced training dashboard with Bitcoin-style model comparison and analysis"""
-
-from datetime import datetime, timedelta
+"""Enhanced training dashboard with Bitcoin-style model comparison and analysis."""
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
 from scipy import stats
 
 from mcli.ml.dashboard.common import setup_page_config
@@ -43,7 +40,7 @@ st.markdown(
 
 @st.cache_data(ttl=60)
 def get_training_jobs():
-    """Get recent training jobs and experiments"""
+    """Get recent training jobs and experiments."""
     db = SessionLocal()
 
     try:
@@ -72,7 +69,7 @@ def get_training_jobs():
 
 @st.cache_data(ttl=60)
 def get_model_comparison():
-    """Get model comparison data with comprehensive metrics"""
+    """Get model comparison data with comprehensive metrics."""
     db = SessionLocal()
 
     try:
@@ -121,11 +118,11 @@ def get_model_comparison():
 
 @st.cache_data(ttl=60)
 def get_feature_importance(model_id: str):
-    """Get feature importance for a specific model"""
+    """Get feature importance for a specific model."""
     db = SessionLocal()
 
     try:
-        from sqlalchemy.dialects.postgresql import UUID
+        pass
 
         model = db.query(Model).filter(Model.id == model_id).first()
 
@@ -143,7 +140,7 @@ def get_feature_importance(model_id: str):
 
 
 def show_model_comparison():
-    """Show comprehensive model comparison inspired by bitcoin project"""
+    """Show comprehensive model comparison inspired by bitcoin project."""
     st.header("📊 Model Performance Comparison")
 
     models_df = get_model_comparison()
@@ -266,7 +263,7 @@ def show_model_comparison():
 
 
 def show_residual_analysis():
-    """Show residual analysis for model predictions"""
+    """Show residual analysis for model predictions."""
     st.header("📈 Residual Analysis")
 
     models_df = get_model_comparison()
@@ -277,7 +274,7 @@ def show_residual_analysis():
 
     # Model selector
     model_options = models_df["name"].unique()
-    selected_model = st.selectbox("Select Model for Analysis", model_options)
+    st.selectbox("Select Model for Analysis", model_options)
 
     # Generate simulated residuals (in real scenario, load actual predictions)
     np.random.seed(42)
@@ -418,7 +415,7 @@ def show_residual_analysis():
 
 
 def show_feature_importance():
-    """Show feature importance analysis"""
+    """Show feature importance analysis."""
     st.header("🔍 Feature Importance Analysis")
 
     models_df = get_model_comparison()
@@ -527,7 +524,7 @@ def show_feature_importance():
 
 
 def show_training_history():
-    """Show training history and experiments"""
+    """Show training history and experiments."""
     st.header("📚 Training History")
 
     jobs_df = get_training_jobs()
@@ -577,7 +574,7 @@ def show_training_history():
 
 
 def main():
-    """Main dashboard function"""
+    """Main dashboard function."""
     st.title("🔬 ML Training Dashboard")
     st.markdown("Comprehensive model training analysis and comparison")
 

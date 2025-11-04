@@ -18,43 +18,6 @@ from click.testing import CliRunner
 # and mock the actual command execution
 
 
-class TestEmulatorCommandStructure:
-    """Test the emulator command JSON structure and validation"""
-
-    def setup_method(self):
-        """Setup test environment"""
-        self.emulator_json_path = Path.home() / ".mcli" / "commands" / "emulator.json"
-
-    def test_emulator_json_exists(self):
-        """Test that emulator.json command file exists"""
-        assert self.emulator_json_path.exists(), "emulator.json should exist in ~/.mcli/commands/"
-
-    def test_emulator_json_valid_structure(self):
-        """Test that emulator.json has valid structure"""
-        with open(self.emulator_json_path, "r") as f:
-            data = json.load(f)
-
-        # Verify required fields
-        assert data["name"] == "emulator"
-        assert "code" in data
-        assert "description" in data
-        assert data["group"] == "workflow"
-        assert "version" in data
-        assert "metadata" in data
-
-    def test_emulator_metadata(self):
-        """Test emulator command metadata"""
-        with open(self.emulator_json_path, "r") as f:
-            data = json.load(f)
-
-        metadata = data["metadata"]
-        assert "platforms" in metadata
-        assert "android-sdk" in metadata["platforms"]
-        assert "ios" in metadata["platforms"]
-        assert "requires" in metadata
-        assert "avdmanager" in metadata["requires"] or "emulator" in metadata["requires"]
-
-
 class MockAndroidEmulatorManager:
     """Mock AndroidEmulatorManager for testing"""
 

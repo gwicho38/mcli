@@ -5,7 +5,6 @@ Coordinates job scheduling, execution, monitoring, and persistence.
 Provides the primary interface for the cron scheduling system.
 """
 
-import asyncio
 import json
 import os
 import signal
@@ -13,7 +12,7 @@ import subprocess
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from mcli.lib.logger.logger import get_logger
 
@@ -26,14 +25,14 @@ logger = get_logger(__name__)
 
 
 class JobExecutor:
-    """Handles job execution in separate processes/threads"""
+    """Handles job execution in separate processes/threads."""
 
     def __init__(self):
         self.running_processes: Dict[str, subprocess.Popen] = {}
         self.lock = threading.Lock()
 
     def execute_job(self, job: ScheduledJob) -> Dict[str, Any]:
-        """Execute a job and return execution results"""
+        """Execute a job and return execution results."""
         start_time = datetime.now()
         result = {
             "job_id": job.id,
@@ -85,7 +84,7 @@ class JobExecutor:
         return result
 
     def _execute_command(self, job: ScheduledJob) -> Dict[str, Any]:
-        """Execute shell command"""
+        """Execute shell command."""
         env = os.environ.copy()
         env.update(job.environment)
 
@@ -119,7 +118,7 @@ class JobExecutor:
                 self.running_processes.pop(job.id, None)
 
     def _execute_python(self, job: ScheduledJob) -> Dict[str, Any]:
-        """Execute Python code"""
+        """Execute Python code."""
         try:
             # Create temporary Python file
             import tempfile
@@ -156,7 +155,7 @@ class JobExecutor:
             }
 
     def _execute_cleanup(self, job: ScheduledJob) -> Dict[str, Any]:
-        """Execute file system cleanup tasks"""
+        """Execute file system cleanup tasks."""
         try:
             # Parse cleanup command (JSON format expected)
             cleanup_config = json.loads(job.command)
@@ -189,12 +188,12 @@ class JobExecutor:
             }
 
     def _execute_system(self, job: ScheduledJob) -> Dict[str, Any]:
-        """Execute system maintenance tasks"""
+        """Execute system maintenance tasks."""
         # Similar to cleanup but for system-level tasks
         return self._execute_command(job)
 
     def _execute_api_call(self, job: ScheduledJob) -> Dict[str, Any]:
-        """Execute HTTP API calls"""
+        """Execute HTTP API calls."""
         try:
             import requests
 
@@ -237,12 +236,12 @@ class JobExecutor:
             }
 
     def _execute_custom(self, job: ScheduledJob) -> Dict[str, Any]:
-        """Execute custom job types"""
+        """Execute custom job types."""
         # Default to command execution
         return self._execute_command(job)
 
     def _cleanup_old_files(self, path: str, days: int, pattern: str) -> Dict[str, Any]:
-        """Clean up old files in a directory"""
+        """Clean up old files in a directory."""
         try:
             import glob
             from pathlib import Path
@@ -269,7 +268,7 @@ class JobExecutor:
             return {"task": "delete_old_files", "error": str(e)}
 
     def _empty_trash(self) -> Dict[str, Any]:
-        """Empty system trash/recycle bin"""
+        """Empty system trash/recycle bin."""
         try:
             import platform
 
@@ -295,7 +294,7 @@ class JobExecutor:
             return {"task": "empty_trash", "error": str(e)}
 
     def _organize_desktop(self) -> Dict[str, Any]:
-        """Organize desktop files into folders"""
+        """Organize desktop files into folders."""
         try:
             desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
             if not os.path.exists(desktop_path):
@@ -303,8 +302,8 @@ class JobExecutor:
 
             organized_files = []
             file_types = {
-                "Documents": [".pdf", ".doc", ".docx", ".txt", ".rtf"],
-                "Images": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"],
+                "Documents": [".pd", ".doc", ".docx", ".txt", ".rt"],
+                "Images": [".jpg", ".jpeg", ".png", ".gi", ".bmp", ".svg"],
                 "Archives": [".zip", ".rar", ".7z", ".tar", ".gz"],
                 "Videos": [".mp4", ".avi", ".mov", ".mkv", ".wmv"],
                 "Audio": [".mp3", ".wav", ".flac", ".aac", ".ogg"],
@@ -335,7 +334,7 @@ class JobExecutor:
             return {"task": "organize_desktop", "error": str(e)}
 
     def kill_job(self, job_id: str) -> bool:
-        """Kill a running job process"""
+        """Kill a running job process."""
         with self.lock:
             process = self.running_processes.get(job_id)
             if process and process.poll() is None:
@@ -352,7 +351,7 @@ class JobExecutor:
 
 
 class JobScheduler:
-    """Main scheduler that coordinates all cron functionality"""
+    """Main scheduler that coordinates all cron functionality."""
 
     def __init__(self, storage_dir: Optional[str] = None):
         self.storage = JobStorage(storage_dir)
@@ -372,18 +371,18 @@ class JobScheduler:
         signal.signal(signal.SIGTERM, self._signal_handler)
 
     def _load_jobs(self):
-        """Load jobs from persistent storage"""
+        """Load jobs from persistent storage."""
         jobs = self.storage.load_jobs()
         self.jobs = {job.id: job for job in jobs}
         logger.info(f"Loaded {len(self.jobs)} jobs from storage")
 
     def _save_jobs(self):
-        """Save all jobs to persistent storage"""
+        """Save all jobs to persistent storage."""
         jobs_list = list(self.jobs.values())
         self.storage.save_jobs(jobs_list)
 
     def start(self):
-        """Start the scheduler"""
+        """Start the scheduler."""
         if self.running:
             logger.warning("Scheduler already running")
             return
@@ -401,7 +400,7 @@ class JobScheduler:
         logger.info("Job scheduler started")
 
     def stop(self):
-        """Stop the scheduler"""
+        """Stop the scheduler."""
         if not self.running:
             return
 
@@ -417,12 +416,12 @@ class JobScheduler:
         logger.info("Job scheduler stopped")
 
     def _signal_handler(self, signum, frame):
-        """Handle system signals"""
+        """Handle system signals."""
         logger.info(f"Received signal {signum}, shutting down scheduler...")
         self.stop()
 
     def _scheduler_loop(self):
-        """Main scheduling loop"""
+        """Main scheduling loop."""
         while self.running:
             try:
                 current_time = datetime.now()
@@ -455,7 +454,7 @@ class JobScheduler:
                 time.sleep(60)  # Wait longer on error
 
     def _should_run_job(self, job: ScheduledJob, current_time: datetime) -> bool:
-        """Check if a job should run at the current time"""
+        """Check if a job should run at the current time."""
         if job.status == JobStatus.RUNNING:
             return False
 
@@ -478,7 +477,7 @@ class JobScheduler:
             return False
 
     def _queue_job_execution(self, job: ScheduledJob):
-        """Queue a job for execution"""
+        """Queue a job for execution."""
 
         def execute_job_thread():
             try:
@@ -505,7 +504,7 @@ class JobScheduler:
         self.monitor.add_job(job, thread)
 
     def _update_job_next_run(self, job: ScheduledJob):
-        """Update job's next run time"""
+        """Update job's next run time."""
         try:
             cron = CronExpression(job.cron_expression)
             if not cron.is_reboot:
@@ -514,13 +513,13 @@ class JobScheduler:
             logger.error(f"Error updating next run time for {job.name}: {e}")
 
     def _update_next_run_times(self):
-        """Update next run times for all jobs"""
+        """Update next run times for all jobs."""
         for job in self.jobs.values():
             if job.enabled and job.next_run is None:
                 self._update_job_next_run(job)
 
     def _execute_reboot_jobs(self):
-        """Execute jobs marked with @reboot"""
+        """Execute jobs marked with @reboot."""
         reboot_jobs = [
             job
             for job in self.jobs.values()
@@ -534,7 +533,7 @@ class JobScheduler:
     # Public API methods
 
     def add_job(self, job: ScheduledJob) -> bool:
-        """Add a new job to the scheduler"""
+        """Add a new job to the scheduler."""
         try:
             with self.lock:
                 self.jobs[job.id] = job
@@ -549,7 +548,7 @@ class JobScheduler:
             return False
 
     def remove_job(self, job_id: str) -> bool:
-        """Remove a job from the scheduler"""
+        """Remove a job from the scheduler."""
         try:
             with self.lock:
                 job = self.jobs.pop(job_id, None)
@@ -567,15 +566,15 @@ class JobScheduler:
             return False
 
     def get_job(self, job_id: str) -> Optional[ScheduledJob]:
-        """Get a job by ID"""
+        """Get a job by ID."""
         return self.jobs.get(job_id)
 
     def get_all_jobs(self) -> List[ScheduledJob]:
-        """Get all jobs"""
+        """Get all jobs."""
         return list(self.jobs.values())
 
     def get_job_status(self, job_id: str) -> Optional[Dict[str, Any]]:
-        """Get detailed status of a job"""
+        """Get detailed status of a job."""
         job = self.jobs.get(job_id)
         if not job:
             return None
@@ -588,7 +587,7 @@ class JobScheduler:
         }
 
     def get_scheduler_stats(self) -> Dict[str, Any]:
-        """Get scheduler statistics"""
+        """Get scheduler statistics."""
         total_jobs = len(self.jobs)
         enabled_jobs = len([j for j in self.jobs.values() if j.enabled])
         running_jobs = len(self.monitor.get_running_jobs())
@@ -603,7 +602,7 @@ class JobScheduler:
         }
 
     def create_json_response(self) -> Dict[str, Any]:
-        """Create JSON response for frontend integration"""
+        """Create JSON response for frontend integration."""
         jobs_data = []
         for job in self.jobs.values():
             job_data = job.to_dict()
@@ -626,7 +625,7 @@ def create_desktop_cleanup_job(
     cron_expression: str = "0 9 * * 1",  # Monday 9 AM
     enabled: bool = True,
 ) -> ScheduledJob:
-    """Create a job to organize desktop files"""
+    """Create a job to organize desktop files."""
     cleanup_config = {"tasks": [{"type": "organize_desktop"}]}
 
     return ScheduledJob(
@@ -646,7 +645,7 @@ def create_temp_cleanup_job(
     days: int = 7,
     enabled: bool = True,
 ) -> ScheduledJob:
-    """Create a job to clean up old temporary files"""
+    """Create a job to clean up old temporary files."""
     cleanup_config = {
         "tasks": [{"type": "delete_old_files", "path": temp_path, "days": days, "pattern": "*"}]
     }
@@ -667,7 +666,7 @@ def create_system_backup_job(
     backup_command: str = "rsync -av /home/user/ /backup/",
     enabled: bool = True,
 ) -> ScheduledJob:
-    """Create a system backup job"""
+    """Create a system backup job."""
     return ScheduledJob(
         name=name,
         cron_expression=cron_expression,

@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Set
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "src"))
 
-from mcli.lib.erd.erd import ERD, TypeMetadata, TypeSystem
+from mcli.lib.erd.erd import ERD, TypeMetadata
 
 
 class MockTypeMetadata:

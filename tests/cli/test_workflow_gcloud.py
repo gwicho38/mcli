@@ -2,9 +2,8 @@
 CLI tests for mcli.workflow.gcloud module
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 from click.testing import CliRunner
 
 
@@ -40,7 +39,7 @@ class TestGcloudCommands:
         mock_get_path.return_value = "/mock/path/script.sh"
         mock_shell_exec.return_value = {"returncode": 0}
 
-        result = self.runner.invoke(gcloud, ["start"])
+        self.runner.invoke(gcloud, ["start"])
 
         # Verify shell_exec was called
         mock_shell_exec.assert_called_once()
@@ -55,7 +54,7 @@ class TestGcloudCommands:
         mock_get_path.return_value = "/mock/path/script.sh"
         mock_shell_exec.return_value = {"returncode": 0}
 
-        result = self.runner.invoke(gcloud, ["stop"])
+        self.runner.invoke(gcloud, ["stop"])
 
         mock_shell_exec.assert_called_once()
         assert "stop" in str(mock_shell_exec.call_args)
@@ -69,7 +68,7 @@ class TestGcloudCommands:
         mock_get_path.return_value = "/mock/path/script.sh"
         mock_shell_exec.return_value = {"returncode": 0}
 
-        result = self.runner.invoke(gcloud, ["describe"])
+        self.runner.invoke(gcloud, ["describe"])
 
         mock_shell_exec.assert_called_once()
         assert "describe" in str(mock_shell_exec.call_args)

@@ -9,12 +9,10 @@ This script demonstrates how to:
 4. Test different model types
 """
 
-import json
 import os
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 import requests
 
@@ -25,16 +23,16 @@ from client import ModelServiceClient
 
 
 def check_service_running(url: str = "http://localhost:8000") -> bool:
-    """Check if the model service is running"""
+    """Check if the model service is running."""
     try:
         response = requests.get(f"{url}/health", timeout=5)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 
 def start_service():
-    """Start the model service if not running"""
+    """Start the model service if not running."""
     if check_service_running():
         print("✅ Model service is already running")
         return True
@@ -42,7 +40,7 @@ def start_service():
     print("🚀 Starting model service...")
     try:
         # Start the service in the background
-        process = subprocess.Popen(
+        _process = subprocess.Popen(  # noqa: F841
             [sys.executable, "model_service.py", "start"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -64,7 +62,7 @@ def start_service():
 
 
 def test_text_generation():
-    """Test text generation with a simple model"""
+    """Test text generation with a simple model."""
     print("\n" + "=" * 60)
     print("🧪 Testing Text Generation")
     print("=" * 60)
@@ -106,7 +104,7 @@ def test_text_generation():
 
 
 def test_text_classification():
-    """Test text classification with a sentiment model"""
+    """Test text classification with a sentiment model."""
     print("\n" + "=" * 60)
     print("🧪 Testing Text Classification")
     print("=" * 60)
@@ -148,7 +146,7 @@ def test_text_classification():
 
 
 def test_translation():
-    """Test translation with a translation model"""
+    """Test translation with a translation model."""
     print("\n" + "=" * 60)
     print("🧪 Testing Translation")
     print("=" * 60)
@@ -186,7 +184,7 @@ def test_translation():
 
 
 def test_batch_operations():
-    """Test batch operations and performance"""
+    """Test batch operations and performance."""
     print("\n" + "=" * 60)
     print("🧪 Testing Batch Operations")
     print("=" * 60)
@@ -231,7 +229,7 @@ def test_batch_operations():
         total_time = time.time() - start_time
 
         # Display results
-        print(f"\n📊 Batch Results:")
+        print("\n📊 Batch Results:")
         print(f"Total time: {total_time:.2f} seconds")
         print(f"Average time per request: {total_time/len(prompts):.2f} seconds")
 
@@ -249,7 +247,7 @@ def test_batch_operations():
 
 
 def test_service_management():
-    """Test service management functions"""
+    """Test service management functions."""
     print("\n" + "=" * 60)
     print("🧪 Testing Service Management")
     print("=" * 60)
@@ -286,7 +284,7 @@ def test_service_management():
 
 
 def main():
-    """Main test function"""
+    """Main test function."""
     print("🚀 MCLI Model Service Test Suite")
     print("=" * 60)
 

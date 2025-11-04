@@ -10,12 +10,10 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import click
-
 from mcli.lib.api import mcli_decorators as mcli
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.services.data_pipeline import DataPipelineConfig, LSHDataPipeline
-from mcli.lib.services.lsh_client import LSHClient, LSHEventProcessor
+from mcli.lib.services.lsh_client import LSHClient
 
 logger = get_logger(__name__)
 
@@ -26,7 +24,7 @@ logger = get_logger(__name__)
 )
 @mcli.option("--api-key", default=None, help="LSH API key (default: $LSH_API_KEY)")
 async def lsh_status(url: Optional[str], api_key: Optional[str]):
-    """Check LSH daemon connection and status"""
+    """Check LSH daemon connection and status."""
     try:
         async with LSHClient(base_url=url, api_key=api_key) as client:
             # Test connection
@@ -64,7 +62,7 @@ async def lsh_status(url: Optional[str], api_key: Optional[str]):
 @mcli.option("--url", default=None, help="LSH API URL")
 @mcli.option("--api-key", default=None, help="LSH API key")
 async def lsh_jobs(status: Optional[str], format: str, url: Optional[str], api_key: Optional[str]):
-    """List LSH jobs"""
+    """List LSH jobs."""
     try:
         async with LSHClient(base_url=url, api_key=api_key) as client:
             filter_params = {}
@@ -125,7 +123,7 @@ async def lsh_create_job(
     url: Optional[str],
     api_key: Optional[str],
 ):
-    """Create a new LSH job"""
+    """Create a new LSH job."""
     try:
         async with LSHClient(base_url=url, api_key=api_key) as client:
             job_spec = {
@@ -173,7 +171,7 @@ async def lsh_pipeline(
     url: Optional[str],
     api_key: Optional[str],
 ):
-    """Start LSH data pipeline listener"""
+    """Start LSH data pipeline listener."""
     try:
         # Configure pipeline
         config = DataPipelineConfig()
@@ -221,7 +219,7 @@ async def lsh_pipeline(
 @mcli.option("--api-key", default=None, help="LSH API key")
 @mcli.option("--filter", help="Event type filter (e.g., 'job:completed')")
 async def lsh_listen(url: Optional[str], api_key: Optional[str], filter: Optional[str]):
-    """Listen to LSH events for debugging"""
+    """Listen to LSH events for debugging."""
     try:
         mcli.echo(mcli.style("👂 Listening to LSH events...", fg="blue", bold=True))
         mcli.echo("Press Ctrl+C to stop")
@@ -259,7 +257,7 @@ async def lsh_listen(url: Optional[str], api_key: Optional[str], filter: Optiona
 async def lsh_webhook(
     action: str, endpoint: Optional[str], url: Optional[str], api_key: Optional[str]
 ):
-    """Manage LSH webhooks"""
+    """Manage LSH webhooks."""
     try:
         async with LSHClient(base_url=url, api_key=api_key) as client:
             if action == "list":
@@ -289,7 +287,7 @@ async def lsh_webhook(
 @mcli.option("--set-api-key", help="Set LSH API key")
 @mcli.option("--show", is_flag=True, help="Show current configuration")
 def lsh_config(set_url: Optional[str], set_api_key: Optional[str], show: bool):
-    """Configure LSH integration settings"""
+    """Configure LSH integration settings."""
     env_file = Path.home() / ".mcli" / "lsh.env"
     env_file.parent.mkdir(exist_ok=True)
 
@@ -339,5 +337,5 @@ def lsh_config(set_url: Optional[str], set_api_key: Optional[str], show: bool):
 
 # Register all commands with mcli
 def register_lsh_commands():
-    """Register LSH integration commands with mcli"""
+    """Register LSH integration commands with mcli."""
     pass  # Commands are automatically registered via decorators

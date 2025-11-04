@@ -3,13 +3,12 @@
 
 import click
 
-from mcli.lib.ui.styling import error, info, success
+from mcli.lib.ui.styling import error, info
 
 
 @click.group(name="mcli-optimize", help="Portfolio optimization CLI for MCLI trading system")
 def cli():
     """Main CLI group for portfolio optimization."""
-    pass
 
 
 @cli.command(name="portfolio", help="Optimize portfolio allocation")

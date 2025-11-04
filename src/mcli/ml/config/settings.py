@@ -1,7 +1,6 @@
-"""Configuration management for ML system"""
+"""Configuration management for ML system."""
 
 import logging
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseSettings(BaseSettings):
-    """Database configuration"""
+    """Database configuration."""
 
     model_config = SettingsConfigDict(env_prefix="DB_")
 
@@ -29,7 +28,7 @@ class DatabaseSettings(BaseSettings):
 
     @property
     def url(self) -> str:
-        """Get database URL"""
+        """Get database URL."""
         # Use SQLite for local development if no user is specified
         if not self.user:
             return f"sqlite:///{self.name}"
@@ -37,7 +36,7 @@ class DatabaseSettings(BaseSettings):
 
     @property
     def async_url(self) -> str:
-        """Get async database URL"""
+        """Get async database URL."""
         # Use aiosqlite for local development if no user is specified
         if not self.user:
             return f"sqlite+aiosqlite:///{self.name}"
@@ -47,7 +46,7 @@ class DatabaseSettings(BaseSettings):
 
 
 class RedisSettings(BaseSettings):
-    """Redis configuration"""
+    """Redis configuration."""
 
     model_config = SettingsConfigDict(env_prefix="REDIS_")
 
@@ -62,13 +61,13 @@ class RedisSettings(BaseSettings):
 
     @property
     def url(self) -> str:
-        """Get Redis URL"""
+        """Get Redis URL."""
         auth_part = f":{self.password}@" if self.password else ""
         return f"redis://{auth_part}{self.host}:{self.port}/{self.db}"
 
 
 class MLflowSettings(BaseSettings):
-    """MLflow configuration"""
+    """MLflow configuration."""
 
     model_config = SettingsConfigDict(env_prefix="MLFLOW_")
 
@@ -86,7 +85,7 @@ class MLflowSettings(BaseSettings):
 
 
 class ModelSettings(BaseSettings):
-    """Model configuration"""
+    """Model configuration."""
 
     model_config = SettingsConfigDict(env_prefix="MODEL_")
 
@@ -110,12 +109,12 @@ class ModelSettings(BaseSettings):
     @field_validator("model_dir", "cache_dir", mode="before")
     @classmethod
     def validate_paths(cls, v):
-        """Ensure paths are Path objects"""
+        """Ensure paths are Path objects."""
         return Path(v) if not isinstance(v, Path) else v
 
 
 class DataSettings(BaseSettings):
-    """Data configuration"""
+    """Data configuration."""
 
     model_config = SettingsConfigDict(env_prefix="DATA_")
 
@@ -137,12 +136,12 @@ class DataSettings(BaseSettings):
     @field_validator("data_dir", "raw_dir", "processed_dir", "dvc_cache_dir", mode="before")
     @classmethod
     def validate_paths(cls, v):
-        """Ensure paths are Path objects"""
+        """Ensure paths are Path objects."""
         return Path(v) if not isinstance(v, Path) else v
 
 
 class APISettings(BaseSettings):
-    """API configuration"""
+    """API configuration."""
 
     model_config = SettingsConfigDict(env_prefix="API_")
 
@@ -166,7 +165,7 @@ class APISettings(BaseSettings):
 
 
 class MonitoringSettings(BaseSettings):
-    """Monitoring configuration"""
+    """Monitoring configuration."""
 
     model_config = SettingsConfigDict(env_prefix="MONITORING_")
 
@@ -188,7 +187,7 @@ class MonitoringSettings(BaseSettings):
 
 
 class SecuritySettings(BaseSettings):
-    """Security configuration"""
+    """Security configuration."""
 
     model_config = SettingsConfigDict(env_prefix="SECURITY_")
 
@@ -207,12 +206,12 @@ class SecuritySettings(BaseSettings):
     @field_validator("ssl_cert_path", "ssl_key_path", mode="before")
     @classmethod
     def validate_ssl_paths(cls, v):
-        """Ensure SSL paths are Path objects if provided"""
+        """Ensure SSL paths are Path objects if provided."""
         return Path(v) if v and not isinstance(v, Path) else v
 
 
 class Settings(BaseSettings):
-    """Main application settings"""
+    """Main application settings."""
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
@@ -237,7 +236,7 @@ class Settings(BaseSettings):
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v):
-        """Validate environment value"""
+        """Validate environment value."""
         valid_envs = ["development", "staging", "production"]
         if v not in valid_envs:
             raise ValueError(f"Environment must be one of {valid_envs}")
@@ -248,7 +247,7 @@ class Settings(BaseSettings):
         self._create_directories()
 
     def _create_directories(self):
-        """Create necessary directories"""
+        """Create necessary directories."""
         directories = [
             self.model.model_dir,
             self.model.cache_dir,
@@ -263,16 +262,16 @@ class Settings(BaseSettings):
 
     @property
     def is_production(self) -> bool:
-        """Check if running in production"""
+        """Check if running in production."""
         return self.environment == "production"
 
     @property
     def is_development(self) -> bool:
-        """Check if running in development"""
+        """Check if running in development."""
         return self.environment == "development"
 
     def get_database_config(self) -> Dict[str, Any]:
-        """Get database configuration for SQLAlchemy"""
+        """Get database configuration for SQLAlchemy."""
         return {
             "pool_size": self.database.pool_size,
             "max_overflow": self.database.max_overflow,
@@ -282,7 +281,7 @@ class Settings(BaseSettings):
         }
 
     def get_redis_config(self) -> Dict[str, Any]:
-        """Get Redis configuration"""
+        """Get Redis configuration."""
         return {
             "host": self.redis.host,
             "port": self.redis.port,
@@ -299,12 +298,12 @@ settings = Settings()
 
 
 def get_settings() -> Settings:
-    """Get settings instance (for dependency injection)"""
+    """Get settings instance (for dependency injection)."""
     return settings
 
 
 def update_settings(**kwargs) -> Settings:
-    """Update settings with new values"""
+    """Update settings with new values."""
     global settings
 
     # Create new settings instance with updated values
@@ -317,7 +316,7 @@ def update_settings(**kwargs) -> Settings:
 
 # Environment-specific configurations
 def get_development_config() -> Dict[str, Any]:
-    """Get development-specific configuration overrides"""
+    """Get development-specific configuration overrides."""
     return {
         "debug": True,
         "database": {
@@ -341,7 +340,7 @@ def get_development_config() -> Dict[str, Any]:
 
 
 def get_production_config() -> Dict[str, Any]:
-    """Get production-specific configuration overrides"""
+    """Get production-specific configuration overrides."""
     return {
         "debug": False,
         "monitoring": {
@@ -356,7 +355,7 @@ def get_production_config() -> Dict[str, Any]:
 
 
 def get_testing_config() -> Dict[str, Any]:
-    """Get testing-specific configuration overrides"""
+    """Get testing-specific configuration overrides."""
     return {
         "debug": True,
         "database": {
@@ -374,7 +373,7 @@ def get_testing_config() -> Dict[str, Any]:
 
 # Configuration factory
 def create_settings(environment: str = "development") -> Settings:
-    """Create settings for specific environment"""
+    """Create settings for specific environment."""
     base_config = {}
 
     if environment == "development":

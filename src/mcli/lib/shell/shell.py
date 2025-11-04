@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from mcli.lib.logger.logger import get_logger, register_subprocess
 
@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 
 def shell_exec(script_path: str, function_name: str, *args) -> Dict[str, Any]:
-    """Execute a shell script function with security checks and better error handling"""
+    """Execute a shell script function with security checks and better error handling."""
     # Validate script path
     script_path = Path(script_path).resolve()
     if not script_path.exists():

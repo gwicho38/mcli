@@ -3,18 +3,13 @@
 Provides stunning visual elements, animations, and rich formatting for the CLI
 """
 
-import random
-import sys
 import threading
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from rich.align import Align
-from rich.box import ASCII, DOUBLE, HEAVY, ROUNDED
-from rich.columns import Columns
+from rich.box import DOUBLE, HEAVY, ROUNDED
 from rich.console import Console
-from rich.live import Live
-from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.progress import (
     BarColumn,
@@ -26,16 +21,14 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 from rich.rule import Rule
-from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
-from rich.tree import Tree
 
 console = Console()
 
 
 class MCLIBanner:
-    """Stunning ASCII art banners for MCLI"""
+    """Stunning ASCII art banners for MCLI."""
 
     MAIN_BANNER = """
 ╔════════════════════════════════════════════════════════════════╗
@@ -78,7 +71,7 @@ class MCLIBanner:
 
     @classmethod
     def show_main_banner(cls, subtitle: str = "Powered by Rust"):
-        """Display the main MCLI banner with gradient colors"""
+        """Display the main MCLI banner with gradient colors."""
         console.print()
 
         # Create gradient text effect
@@ -100,7 +93,7 @@ class MCLIBanner:
 
     @classmethod
     def show_performance_banner(cls):
-        """Display performance optimization banner"""
+        """Display performance optimization banner."""
         console.print()
 
         banner_text = Text(cls.PERFORMANCE_BANNER)
@@ -119,7 +112,7 @@ class MCLIBanner:
 
     @classmethod
     def show_rust_banner(cls):
-        """Display Rust extensions banner"""
+        """Display Rust extensions banner."""
         console.print()
 
         banner_text = Text(cls.RUST_BANNER)
@@ -138,7 +131,7 @@ class MCLIBanner:
 
 
 class AnimatedSpinner:
-    """Fancy animated spinners and loading indicators"""
+    """Fancy animated spinners and loading indicators."""
 
     SPINNERS = {
         "rocket": ["🚀", "🌟", "⭐", "✨", "💫", "🌠"],
@@ -157,14 +150,14 @@ class AnimatedSpinner:
         self.thread = None
 
     def start(self, message: str = "Loading..."):
-        """Start the animated spinner"""
+        """Start the animated spinner."""
         self.running = True
         self.thread = threading.Thread(target=self._animate, args=(message,))
         self.thread.daemon = True
         self.thread.start()
 
     def stop(self):
-        """Stop the spinner"""
+        """Stop the spinner."""
         self.running = False
         if self.thread:
             self.thread.join()
@@ -172,7 +165,7 @@ class AnimatedSpinner:
         console.print("\r" + " " * 80 + "\r", end="")
 
     def _animate(self, message: str):
-        """Animation loop"""
+        """Animation loop."""
         frame_idx = 0
         while self.running:
             frame = self.frames[frame_idx % len(self.frames)]
@@ -182,11 +175,11 @@ class AnimatedSpinner:
 
 
 class MCLIProgressBar:
-    """Enhanced progress bars with visual flair"""
+    """Enhanced progress bars with visual flair."""
 
     @staticmethod
     def create_fancy_progress():
-        """Create a fancy progress bar with multiple columns"""
+        """Create a fancy progress bar with multiple columns."""
         return Progress(
             SpinnerColumn("dots"),
             TextColumn("[progress.description]{task.description}"),
@@ -201,7 +194,7 @@ class MCLIProgressBar:
 
     @staticmethod
     def show_rust_compilation_progress():
-        """Simulate Rust compilation with progress"""
+        """Simulate Rust compilation with progress."""
         progress = MCLIProgressBar.create_fancy_progress()
 
         with progress:
@@ -220,7 +213,7 @@ class MCLIProgressBar:
             for stage_name, duration in stages:
                 task = progress.add_task(f"🦀 {stage_name}...", total=duration)
 
-                for i in range(duration):
+                for _i in range(duration):
                     progress.update(task, advance=1)
                     time.sleep(0.1)
 
@@ -228,11 +221,11 @@ class MCLIProgressBar:
 
 
 class VisualTable:
-    """Enhanced tables with visual styling"""
+    """Enhanced tables with visual styling."""
 
     @staticmethod
     def create_performance_table(data: Dict[str, Any]) -> Table:
-        """Create a beautiful performance status table"""
+        """Create a beautiful performance status table."""
         table = Table(
             title="🚀 Performance Optimization Status",
             box=ROUNDED,
@@ -275,7 +268,7 @@ class VisualTable:
 
     @staticmethod
     def create_rust_extensions_table(extensions: Dict[str, bool]) -> Table:
-        """Create a table showing Rust extension status"""
+        """Create a table showing Rust extension status."""
         table = Table(
             title="🦀 Rust Extensions Status",
             box=HEAVY,
@@ -318,14 +311,14 @@ class VisualTable:
 
 
 class LiveDashboard:
-    """Live updating dashboard for system status"""
+    """Live updating dashboard for system status."""
 
     def __init__(self):
         self.console = Console()
         self.running = False
 
     def create_system_overview(self) -> Panel:
-        """Create a live system overview panel"""
+        """Create a live system overview panel."""
         try:
             import psutil
 
@@ -354,7 +347,7 @@ class LiveDashboard:
             )
 
     def create_mcli_status_panel(self) -> Panel:
-        """Create MCLI status overview panel"""
+        """Create MCLI status overview panel."""
         try:
             import platform
 
@@ -396,7 +389,7 @@ class LiveDashboard:
             )
 
     def create_services_panel(self) -> Panel:
-        """Create services status panel"""
+        """Create services status panel."""
         services = Text()
         services.append("🔧 Services Status\n\n", style="bold yellow")
 
@@ -427,7 +420,7 @@ class LiveDashboard:
         return Panel(services, box=ROUNDED, border_style="bright_yellow", padding=(1, 2))
 
     def create_recent_activity_panel(self) -> Panel:
-        """Create recent activity panel"""
+        """Create recent activity panel."""
         activity = Text()
         activity.append("📊 Recent Activity\n\n", style="bold blue")
 
@@ -440,7 +433,7 @@ class LiveDashboard:
         return Panel(activity, box=ROUNDED, border_style="bright_blue", padding=(1, 2))
 
     def create_full_dashboard(self):
-        """Create a complete dashboard layout"""
+        """Create a complete dashboard layout."""
         from rich.layout import Layout
 
         layout = Layout()
@@ -476,8 +469,7 @@ class LiveDashboard:
         return layout
 
     def start_live_dashboard(self, refresh_interval: float = 2.0):
-        """Start the live updating dashboard"""
-        import threading
+        """Start the live updating dashboard."""
         import time
 
         self.running = True
@@ -506,34 +498,34 @@ class LiveDashboard:
             self.running = False
 
     def stop_dashboard(self):
-        """Stop the live dashboard"""
+        """Stop the live dashboard."""
         self.running = False
 
 
 class ColorfulOutput:
-    """Enhanced colorful output utilities"""
+    """Enhanced colorful output utilities."""
 
     @staticmethod
     def success(message: str, icon: str = "✅"):
-        """Display a success message with style"""
+        """Display a success message with style."""
         panel = Panel(f"{icon} {message}", box=ROUNDED, border_style="bright_green", padding=(0, 1))
         console.print(panel)
 
     @staticmethod
     def error(message: str, icon: str = "❌"):
-        """Display an error message with style"""
+        """Display an error message with style."""
         panel = Panel(f"{icon} {message}", box=HEAVY, border_style="bright_red", padding=(0, 1))
         console.print(panel)
 
     @staticmethod
     def info(message: str, icon: str = "ℹ️"):
-        """Display an info message with style"""
+        """Display an info message with style."""
         panel = Panel(f"{icon} {message}", box=ROUNDED, border_style="bright_cyan", padding=(0, 1))
         console.print(panel)
 
     @staticmethod
     def warning(message: str, icon: str = "⚠️"):
-        """Display a warning message with style"""
+        """Display a warning message with style."""
         panel = Panel(
             f"{icon} {message}", box=ROUNDED, border_style="bright_yellow", padding=(0, 1)
         )
@@ -541,11 +533,11 @@ class ColorfulOutput:
 
 
 class StartupSequence:
-    """Fancy startup sequence with animations"""
+    """Fancy startup sequence with animations."""
 
     @staticmethod
     def run_startup_animation():
-        """Run the full startup sequence"""
+        """Run the full startup sequence."""
         console.clear()
 
         # Show main banner
@@ -581,7 +573,7 @@ class StartupSequence:
 
 
 def demo_visual_effects():
-    """Demonstrate all visual effects"""
+    """Demonstrate all visual effects."""
     console.clear()
 
     # Show banners

@@ -2,6 +2,7 @@
 Top-level lock management commands for MCLI.
 Manages workflow lockfile and verification.
 """
+
 import hashlib
 import json
 from datetime import datetime
@@ -63,7 +64,7 @@ def restore_command_state(hash_value):
 
 
 def get_current_command_state():
-    """Collect all command metadata (names, groups, etc.)"""
+    """Collect all command metadata (names, groups, etc.)."""
     # Import here to avoid circular imports
     import importlib
     import inspect
@@ -110,7 +111,7 @@ def get_current_command_state():
                             streamlit_logger.setLevel(original_level)
 
                     # Extract command and group objects
-                    for name, obj in inspect.getmembers(module):
+                    for _name, obj in inspect.getmembers(module):
                         # Handle Click commands and groups
                         if isinstance(obj, click.Command):
                             if isinstance(obj, click.Group):
@@ -160,7 +161,6 @@ def hash_command_state(commands):
 @click.group(name="lock")
 def lock():
     """Manage workflow lockfile and verification."""
-    pass
 
 
 @lock.command("list")
@@ -229,9 +229,7 @@ def write_state(json_file):
 @click.option(
     "--global", "-g", "is_global", is_flag=True, help="Verify global commands instead of local"
 )
-@click.option(
-    "--code", "-c", is_flag=True, help="Also validate that workflow code is executable"
-)
+@click.option("--code", "-c", is_flag=True, help="Also validate that workflow code is executable")
 def verify_commands(is_global, code):
     """
     Verify that custom commands match the lockfile and optionally validate code.
@@ -291,20 +289,13 @@ def verify_commands(is_global, code):
                     success = manager.register_command_with_click(cmd_data, temp_group)
 
                 if not success or not temp_group.commands.get(cmd_name):
-                    invalid_workflows.append({
-                        "name": cmd_name,
-                        "reason": "Code does not define a valid Click command"
-                    })
+                    invalid_workflows.append(
+                        {"name": cmd_name, "reason": "Code does not define a valid Click command"}
+                    )
             except SyntaxError as e:
-                invalid_workflows.append({
-                    "name": cmd_name,
-                    "reason": f"Syntax error: {e}"
-                })
+                invalid_workflows.append({"name": cmd_name, "reason": f"Syntax error: {e}"})
             except Exception as e:
-                invalid_workflows.append({
-                    "name": cmd_name,
-                    "reason": f"Failed to load: {e}"
-                })
+                invalid_workflows.append({"name": cmd_name, "reason": f"Failed to load: {e}"})
 
         if invalid_workflows:
             has_issues = True
@@ -314,8 +305,10 @@ def verify_commands(is_global, code):
                 console.print(f"  [red]✗[/red] {item['name']}")
                 console.print(f"    [dim]{item['reason']}[/dim]")
 
-            console.print(f"\n[yellow]Fix with:[/yellow] mcli workflow edit <workflow-name>")
-            console.print(f"[dim]Tip: Workflow code must define a Click command decorated with @click.command()[/dim]\n")
+            console.print("\n[yellow]Fix with:[/yellow] mcli workflow edit <workflow-name>")
+            console.print(
+                "[dim]Tip: Workflow code must define a Click command decorated with @click.command()[/dim]\n"
+            )
         else:
             console.print("[green]✓ All workflow code is valid[/green]\n")
 

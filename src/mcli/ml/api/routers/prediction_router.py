@@ -1,14 +1,15 @@
-"""Prediction API routes"""
+"""Prediction API routes."""
 
 from datetime import datetime, timedelta
 from typing import List, Optional
 from uuid import UUID
 
+import numpy as np
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from mcli.ml.api.schemas import BatchPredictionRequest, PredictionRequest, PredictionResponse
+from mcli.ml.api.schemas import BatchPredictionRequest, PredictionResponse
 from mcli.ml.auth import get_current_active_user
 from mcli.ml.cache import cache_set, cached
 from mcli.ml.database.models import Model, Prediction, StockData, User
@@ -32,7 +33,7 @@ async def create_prediction(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Create a new prediction"""
+    """Create a new prediction."""
 
     # Get model (use default if not specified)
     if request.model_id:
@@ -107,7 +108,7 @@ async def create_batch_predictions(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Create predictions for multiple tickers"""
+    """Create predictions for multiple tickers."""
     predictions = []
 
     for ticker_data in request.tickers:
@@ -135,7 +136,7 @@ async def list_predictions(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """List user's predictions"""
+    """List user's predictions."""
     query = db.query(Prediction).filter(Prediction.user_id == current_user.id)
 
     if ticker:
@@ -159,7 +160,7 @@ async def get_prediction(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Get specific prediction details"""
+    """Get specific prediction details."""
     prediction = (
         db.query(Prediction)
         .filter(Prediction.id == prediction_id, Prediction.user_id == current_user.id)
@@ -178,7 +179,7 @@ async def get_prediction_outcome(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Get actual outcome of a prediction"""
+    """Get actual outcome of a prediction."""
     prediction = (
         db.query(Prediction)
         .filter(Prediction.id == prediction_id, Prediction.user_id == current_user.id)
@@ -221,7 +222,7 @@ async def get_latest_recommendations(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Get latest stock recommendations"""
+    """Get latest stock recommendations."""
     # Get recent predictions with high confidence
     predictions = (
         db.query(Prediction)
@@ -254,7 +255,7 @@ async def get_latest_recommendations(
 
 
 async def update_stock_data(ticker: str, db: Session):
-    """Background task to update stock data"""
+    """Background task to update stock data."""
     # In real implementation, fetch latest stock data
     stock = db.query(StockData).filter(StockData.ticker == ticker).first()
     if stock:

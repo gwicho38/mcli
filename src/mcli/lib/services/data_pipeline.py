@@ -8,7 +8,7 @@ import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from mcli.lib.logger.logger import get_logger
 
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 
 class DataPipelineConfig:
-    """Configuration for data pipeline"""
+    """Configuration for data pipeline."""
 
     def __init__(self):
         self.batch_size = 100
@@ -31,13 +31,13 @@ class DataPipelineConfig:
 
 
 class DataValidator:
-    """Validates incoming data"""
+    """Validates incoming data."""
 
     def __init__(self):
         self.logger = get_logger(f"{__name__}.validator")
 
     async def validate_trading_record(self, record: Dict[str, Any]) -> bool:
-        """Validate politician trading record"""
+        """Validate politician trading record."""
         required_fields = [
             "politician_name",
             "transaction_date",
@@ -69,7 +69,7 @@ class DataValidator:
         return True
 
     async def validate_supabase_record(self, table: str, record: Dict[str, Any]) -> bool:
-        """Validate Supabase record based on table schema"""
+        """Validate Supabase record based on table schema."""
         if not record:
             return False
 
@@ -82,13 +82,13 @@ class DataValidator:
 
 
 class DataEnricher:
-    """Enriches data with additional information"""
+    """Enriches data with additional information."""
 
     def __init__(self):
         self.logger = get_logger(f"{__name__}.enricher")
 
     async def enrich_trading_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
-        """Enrich trading record with additional data"""
+        """Enrich trading record with additional data."""
         enriched = record.copy()
 
         # Add processing timestamp
@@ -115,7 +115,7 @@ class DataEnricher:
         return enriched
 
     def _categorize_amount(self, amount: float) -> str:
-        """Categorize transaction amount"""
+        """Categorize transaction amount."""
         if amount < 1000:
             return "micro"
         elif amount < 15000:
@@ -128,7 +128,7 @@ class DataEnricher:
             return "mega"
 
     def _bucket_amount(self, amount: float) -> str:
-        """Bucket amounts for analysis"""
+        """Bucket amounts for analysis."""
         if amount < 1000:
             return "0-1K"
         elif amount < 10000:
@@ -145,7 +145,7 @@ class DataEnricher:
             return "1M+"
 
     async def _get_politician_metadata(self, politician_name: str) -> Dict[str, Any]:
-        """Get politician metadata (placeholder for external API)"""
+        """Get politician metadata (placeholder for external API)."""
         # This would typically call an external API
         return {
             "enriched_at": datetime.now(timezone.utc).isoformat(),
@@ -154,7 +154,7 @@ class DataEnricher:
         }
 
     async def _get_market_context(self, asset_name: str, transaction_date: str) -> Dict[str, Any]:
-        """Get market context for the transaction (placeholder)"""
+        """Get market context for the transaction (placeholder)."""
         # This would typically call financial APIs
         return {
             "enriched_at": datetime.now(timezone.utc).isoformat(),
@@ -164,7 +164,7 @@ class DataEnricher:
 
 
 class DataProcessor:
-    """Main data processing engine"""
+    """Main data processing engine."""
 
     def __init__(self, config: DataPipelineConfig):
         self.config = config
@@ -179,13 +179,13 @@ class DataProcessor:
         self.config.output_dir.mkdir(parents=True, exist_ok=True)
 
     async def process_trading_data(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Process politician trading data"""
+        """Process politician trading data."""
         processed_records = []
 
         for record in records:
             try:
                 # Validate
-                if self.config.enable_validation:
+                if self.config.enable_validation:  # noqa: SIM102
                     if not await self.validator.validate_trading_record(record):
                         self.logger.warning(
                             f"Validation failed for record: {record.get('id', 'unknown')}"
@@ -214,10 +214,10 @@ class DataProcessor:
     async def process_supabase_sync(
         self, table: str, operation: str, data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Process Supabase sync data"""
+        """Process Supabase sync data."""
         try:
             # Validate
-            if self.config.enable_validation:
+            if self.config.enable_validation:  # noqa: SIM102
                 if not await self.validator.validate_supabase_record(table, data):
                     self.logger.warning(f"Validation failed for {table} record")
                     return {}
@@ -239,7 +239,7 @@ class DataProcessor:
     async def _transform_supabase_data(
         self, table: str, operation: str, data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Transform Supabase data based on table schema"""
+        """Transform Supabase data based on table schema."""
         transformed = data.copy()
 
         # Apply table-specific transformations
@@ -251,7 +251,7 @@ class DataProcessor:
         return transformed
 
     async def _transform_politician_table(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Transform politician table data"""
+        """Transform politician table data."""
         # Normalize names
         if "name" in data:
             data["name_normalized"] = data["name"].title()
@@ -263,14 +263,14 @@ class DataProcessor:
         return data
 
     async def _transform_trading_table(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Transform trading table data"""
+        """Transform trading table data."""
         # Normalize asset names
         if "asset_name" in data:
             data["asset_name_normalized"] = data["asset_name"].upper()
 
         # Convert amounts to float
         if "amount" in data and isinstance(data["amount"], str):
-            try:
+            try:  # noqa: SIM105
                 data["amount_float"] = float(data["amount"])
             except ValueError:
                 pass
@@ -278,7 +278,7 @@ class DataProcessor:
         return data
 
     async def add_to_batch(self, record: Dict[str, Any]):
-        """Add record to batch for processing"""
+        """Add record to batch for processing."""
         async with self._processing_lock:
             self.batch_buffer.append(record)
 
@@ -293,7 +293,7 @@ class DataProcessor:
                 await self._process_batch()
 
     async def _process_batch(self):
-        """Process accumulated batch"""
+        """Process accumulated batch."""
         if not self.batch_buffer:
             return
 
@@ -319,7 +319,7 @@ class DataProcessor:
             self.batch_buffer.extend(batch)
 
     async def _save_batch(self, batch: List[Dict[str, Any]]):
-        """Save processed batch to file"""
+        """Save processed batch to file."""
         if not batch:
             return
 
@@ -338,18 +338,18 @@ class DataProcessor:
             self.logger.error(f"Failed to save batch: {e}")
 
     async def _emit_batch_completed(self, batch: List[Dict[str, Any]]):
-        """Emit batch completion event"""
+        """Emit batch completion event."""
         self.logger.info(f"Batch processing completed: {len(batch)} records")
 
     async def flush_batch(self):
-        """Force process current batch"""
+        """Force process current batch."""
         async with self._processing_lock:
             if self.batch_buffer:
                 await self._process_batch()
 
 
 class LSHDataPipeline:
-    """Main integration service for LSH-mcli data pipeline"""
+    """Main integration service for LSH-mcli data pipeline."""
 
     def __init__(self, lsh_client: LSHClient, config: Optional[DataPipelineConfig] = None):
         self.lsh_client = lsh_client
@@ -363,13 +363,13 @@ class LSHDataPipeline:
         self._setup_pipeline_handlers()
 
     def _setup_pipeline_handlers(self):
-        """Setup event handlers for pipeline processing"""
+        """Setup event handlers for pipeline processing."""
         self.lsh_client.on("lsh.job.completed", self._handle_job_completed)
         self.lsh_client.on("lsh.supabase.sync", self._handle_supabase_sync)
         self.lsh_client.on("trading.data.processed", self._handle_trading_data)
 
     async def _handle_job_completed(self, event_data: Dict[str, Any]):
-        """Handle LSH job completion"""
+        """Handle LSH job completion."""
         job_name = event_data.get("job_name", "")
         job_id = event_data.get("job_id", "")
 
@@ -382,7 +382,7 @@ class LSHDataPipeline:
                 await self._process_job_output(job_id, stdout)
 
     async def _handle_supabase_sync(self, event_data: Dict[str, Any]):
-        """Handle Supabase sync event"""
+        """Handle Supabase sync event."""
         table = event_data.get("table", "")
         operation = event_data.get("operation", "")
         data = event_data.get("data", {})
@@ -394,7 +394,7 @@ class LSHDataPipeline:
             await self.processor.add_to_batch(processed_data)
 
     async def _handle_trading_data(self, event_data: Dict[str, Any]):
-        """Handle processed trading data"""
+        """Handle processed trading data."""
         records = event_data.get("records", [])
 
         self.logger.info(f"Received {len(records)} trading records for pipeline processing")
@@ -403,7 +403,7 @@ class LSHDataPipeline:
             await self.processor.add_to_batch(record)
 
     async def _process_job_output(self, job_id: str, output: str):
-        """Process job output data"""
+        """Process job output data."""
         try:
             # Parse output lines as JSON
             records = []
@@ -425,7 +425,7 @@ class LSHDataPipeline:
             self.logger.error(f"Error processing job output: {e}")
 
     async def start(self):
-        """Start the data pipeline"""
+        """Start the data pipeline."""
         if self._is_running:
             self.logger.warning("Pipeline already running")
             return
@@ -443,7 +443,7 @@ class LSHDataPipeline:
             raise
 
     async def stop(self):
-        """Stop the data pipeline"""
+        """Stop the data pipeline."""
         if not self._is_running:
             return
 
@@ -454,7 +454,7 @@ class LSHDataPipeline:
         await self.processor.flush_batch()
 
     async def get_stats(self) -> Dict[str, Any]:
-        """Get pipeline statistics"""
+        """Get pipeline statistics."""
         return {
             "is_running": self._is_running,
             "batch_buffer_size": len(self.processor.batch_buffer),

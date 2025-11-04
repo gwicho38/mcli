@@ -69,7 +69,6 @@ def test_agent_context():
     print("=" * 40)
 
     try:
-        from mcli.workflow.scheduler.job import Job, JobStatus
         from mcli.workflow.scheduler.persistence import JobPersistence
 
         # Check job persistence

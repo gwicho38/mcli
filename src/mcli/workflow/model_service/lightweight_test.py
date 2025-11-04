@@ -3,7 +3,6 @@
 Test script for the lightweight model server.
 """
 
-import os
 import sys
 import time
 from pathlib import Path
@@ -15,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 
 def test_lightweight_models():
-    """Test the lightweight models configuration"""
+    """Test the lightweight models configuration."""
     print("🧪 Testing lightweight models configuration...")
 
     try:
@@ -44,7 +43,7 @@ def test_lightweight_models():
 
 
 def test_downloader():
-    """Test the downloader functionality"""
+    """Test the downloader functionality."""
     print("\n🧪 Testing downloader functionality...")
 
     try:
@@ -76,7 +75,7 @@ def test_downloader():
 
 
 def test_server():
-    """Test the server functionality"""
+    """Test the server functionality."""
     print("\n🧪 Testing server functionality...")
 
     try:
@@ -88,7 +87,7 @@ def test_server():
 
         # Test system info
         system_info = server.get_system_info()
-        print(f"✅ System info collected:")
+        print("✅ System info collected:")
         print(f"  - CPU cores: {system_info['cpu_count']}")
         print(f"  - Memory: {system_info['memory_gb']:.1f} GB")
         print(f"  - Free disk: {system_info['disk_free_gb']:.1f} GB")
@@ -105,12 +104,10 @@ def test_server():
 
 
 def test_http_server():
-    """Test the HTTP server functionality"""
+    """Test the HTTP server functionality."""
     print("\n🧪 Testing HTTP server...")
 
     try:
-        import threading
-        import time
 
         from mcli.workflow.model_service.lightweight_model_server import LightweightModelServer
 
@@ -162,7 +159,7 @@ def test_http_server():
 
 
 def test_model_download():
-    """Test model download functionality"""
+    """Test model download functionality."""
     print("\n🧪 Testing model download...")
 
     try:
@@ -199,7 +196,7 @@ def test_model_download():
 
 
 def main():
-    """Run all tests"""
+    """Run all tests."""
     print("🚀 Testing Lightweight Model Server")
     print("=" * 50)
 

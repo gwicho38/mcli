@@ -4,24 +4,15 @@ Enhanced async daemon with Rust extensions and performance optimizations
 
 import asyncio
 import json
-import os
 import signal
 import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import aiosqlite
-import redis.asyncio as redis
-
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.performance.rust_bridge import (
-    get_command_matcher,
-    get_file_watcher,
-    get_process_manager,
-    get_tfidf_vectorizer,
-)
-from mcli.lib.search.cached_vectorizer import CachedTfIdfVectorizer, SmartVectorizerManager
+from mcli.lib.performance.rust_bridge import get_command_matcher, get_file_watcher
+from mcli.lib.search.cached_vectorizer import SmartVectorizerManager
 from mcli.workflow.daemon.async_command_database import (
     AsyncCommandDatabase,
     Command,
@@ -33,7 +24,7 @@ logger = get_logger(__name__)
 
 
 class EnhancedDaemon:
-    """High-performance async daemon with Rust extensions"""
+    """High-performance async daemon with Rust extensions."""
 
     def __init__(
         self, db_path: Optional[str] = None, redis_url: Optional[str] = None, use_rust: bool = True
@@ -64,7 +55,7 @@ class EnhancedDaemon:
         }
 
     async def initialize(self):
-        """Initialize all daemon components"""
+        """Initialize all daemon components."""
         logger.info("Initializing Enhanced Daemon...")
 
         try:
@@ -96,7 +87,7 @@ class EnhancedDaemon:
             raise
 
     async def _initialize_rust_components(self):
-        """Initialize Rust-based components"""
+        """Initialize Rust-based components."""
         try:
             # File watcher
             self.file_watcher = get_file_watcher(use_rust=self.use_rust)
@@ -138,7 +129,7 @@ class EnhancedDaemon:
             logger.warning(f"Failed to initialize some Rust components: {e}")
 
     def _setup_signal_handlers(self):
-        """Setup signal handlers for graceful shutdown"""
+        """Setup signal handlers for graceful shutdown."""
 
         def signal_handler():
             logger.info("Received shutdown signal")
@@ -152,7 +143,7 @@ class EnhancedDaemon:
                 signal.signal(sig, lambda s, f: asyncio.create_task(self.shutdown()))
 
     async def start(self):
-        """Start the daemon"""
+        """Start the daemon."""
         if self.running:
             logger.warning("Daemon is already running")
             return
@@ -182,7 +173,7 @@ class EnhancedDaemon:
             logger.info("Enhanced Daemon stopped")
 
     async def shutdown(self):
-        """Graceful shutdown"""
+        """Graceful shutdown."""
         if not self.running:
             return
 
@@ -208,7 +199,7 @@ class EnhancedDaemon:
             await self.vectorizer_manager.close_all()
 
     async def _file_watcher_loop(self):
-        """Background loop for processing file system events"""
+        """Background loop for processing file system events."""
         if not self.file_watcher:
             return
 
@@ -227,7 +218,7 @@ class EnhancedDaemon:
                 await asyncio.sleep(5)  # Back off on error
 
     async def _handle_file_event(self, event):
-        """Handle a file system event"""
+        """Handle a file system event."""
         try:
             event_type = event.get("event_type") or event.get("type", "unknown")
             path = event.get("path", "")
@@ -244,7 +235,7 @@ class EnhancedDaemon:
             logger.error(f"Error handling file event {event}: {e}")
 
     async def _reload_command_file(self, file_path: str):
-        """Reload a command from a JSON file"""
+        """Reload a command from a JSON file."""
         try:
             with open(file_path, "r") as f:
                 data = json.load(f)
@@ -286,7 +277,7 @@ class EnhancedDaemon:
             logger.error(f"Failed to reload command file {file_path}: {e}")
 
     async def _remove_command_file(self, file_path: str):
-        """Remove a command when its file is deleted"""
+        """Remove a command when its file is deleted."""
         try:
             # Extract command ID from filename
             command_id = Path(file_path).stem
@@ -300,7 +291,7 @@ class EnhancedDaemon:
             logger.error(f"Failed to remove command file {file_path}: {e}")
 
     async def _maintenance_loop(self):
-        """Background maintenance tasks"""
+        """Background maintenance tasks."""
         while self.running:
             try:
                 # Clean up finished processes
@@ -320,7 +311,7 @@ class EnhancedDaemon:
                 await asyncio.sleep(60)
 
     async def _metrics_loop(self):
-        """Background metrics collection"""
+        """Background metrics collection."""
         while self.running:
             try:
                 # Log performance metrics every 10 minutes
@@ -339,7 +330,7 @@ class EnhancedDaemon:
                 await asyncio.sleep(60)
 
     async def _update_search_indexes(self):
-        """Update search indexes for better performance"""
+        """Update search indexes for better performance."""
         try:
             # Get all commands
             commands = await self.command_db.get_all_commands()
@@ -366,7 +357,7 @@ class EnhancedDaemon:
     # Public API methods
 
     async def add_command(self, command_data: Dict[str, Any]) -> str:
-        """Add a new command"""
+        """Add a new command."""
         command = Command(
             id=command_data.get("id") or str(uuid.uuid4()),
             name=command_data["name"],
@@ -396,7 +387,7 @@ class EnhancedDaemon:
         return command_id
 
     async def search_commands(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        """Search for commands"""
+        """Search for commands."""
         self.metrics["search_queries"] += 1
 
         # Try Rust command matcher first
@@ -465,7 +456,7 @@ class EnhancedDaemon:
     async def execute_command(
         self, command_id: str, context: Optional[Dict[str, Any]] = None
     ) -> str:
-        """Execute a command"""
+        """Execute a command."""
         self.metrics["commands_executed"] += 1
 
         # Get command
@@ -498,7 +489,7 @@ class EnhancedDaemon:
         return process_id
 
     def _get_command_executor(self, language: str) -> str:
-        """Get the appropriate executor for a language"""
+        """Get the appropriate executor for a language."""
         executors = {
             "python": "python",
             "node": "node",
@@ -509,7 +500,7 @@ class EnhancedDaemon:
         return executors.get(language, "bash")
 
     def _prepare_command_args(self, command: Command) -> List[str]:
-        """Prepare command arguments based on language"""
+        """Prepare command arguments based on language."""
         if command.language == "python":
             return ["-c", command.code]
         elif command.language == "node":
@@ -522,7 +513,7 @@ class EnhancedDaemon:
             return [command.code]
 
     async def get_status(self) -> Dict[str, Any]:
-        """Get daemon status"""
+        """Get daemon status."""
         return {
             "running": self.running,
             "uptime": (
@@ -546,7 +537,7 @@ _daemon_instance: Optional[EnhancedDaemon] = None
 
 
 async def get_daemon() -> EnhancedDaemon:
-    """Get the global daemon instance"""
+    """Get the global daemon instance."""
     global _daemon_instance
 
     if _daemon_instance is None:
@@ -557,13 +548,13 @@ async def get_daemon() -> EnhancedDaemon:
 
 
 async def start_daemon():
-    """Start the global daemon"""
+    """Start the global daemon."""
     daemon = await get_daemon()
     await daemon.start()
 
 
 async def stop_daemon():
-    """Stop the global daemon"""
+    """Stop the global daemon."""
     global _daemon_instance
 
     if _daemon_instance:

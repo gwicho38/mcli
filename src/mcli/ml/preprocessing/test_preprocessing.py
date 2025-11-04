@@ -1,4 +1,4 @@
-"""Test script for the ML preprocessing pipeline"""
+"""Test script for the ML preprocessing pipeline."""
 
 import logging
 from datetime import datetime, timedelta
@@ -6,7 +6,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from ml_pipeline import MLDataPipeline, MLDataPipelineConfig
 from politician_trading_preprocessor import PoliticianTradingPreprocessor, PreprocessingConfig
 
 # Setup logging
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def generate_sample_data(n_records: int = 100) -> pd.DataFrame:
-    """Generate sample politician trading data for testing"""
+    """Generate sample politician trading data for testing."""
     np.random.seed(42)
 
     # Sample politicians
@@ -94,7 +93,7 @@ def generate_sample_data(n_records: int = 100) -> pd.DataFrame:
 
 
 def test_data_cleaning():
-    """Test data cleaning functionality"""
+    """Test data cleaning functionality."""
     logger.info("Testing data cleaning...")
 
     # Generate sample data with issues
@@ -140,7 +139,7 @@ def test_data_cleaning():
 
 
 def test_feature_extraction():
-    """Test feature extraction functionality"""
+    """Test feature extraction functionality."""
     logger.info("Testing feature extraction...")
 
     data = generate_sample_data(100)
@@ -185,7 +184,7 @@ def test_feature_extraction():
 
 
 def test_full_preprocessing():
-    """Test full preprocessing pipeline"""
+    """Test full preprocessing pipeline."""
     logger.info("Testing full preprocessing pipeline...")
 
     data = generate_sample_data(200)
@@ -236,7 +235,7 @@ def test_full_preprocessing():
 
 
 def test_transform_new_data():
-    """Test transforming new data with fitted preprocessor"""
+    """Test transforming new data with fitted preprocessor."""
     logger.info("Testing new data transformation...")
 
     # Train on initial data
@@ -274,7 +273,7 @@ def test_transform_new_data():
 
 
 def main():
-    """Run all tests"""
+    """Run all tests."""
     logger.info("Starting preprocessing pipeline tests...")
 
     try:

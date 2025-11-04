@@ -2,9 +2,6 @@ import json
 import os
 import signal
 import subprocess
-import tempfile
-import threading
-import time
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -29,7 +26,7 @@ class ProcessStatus(Enum):
 
 @dataclass
 class ProcessInfo:
-    """Information about a managed process"""
+    """Information about a managed process."""
 
     id: str
     name: str
@@ -50,7 +47,7 @@ class ProcessInfo:
 
 
 class ProcessContainer:
-    """Manages a single containerized process"""
+    """Manages a single containerized process."""
 
     def __init__(self, process_info: ProcessInfo):
         self.info = process_info
@@ -61,7 +58,7 @@ class ProcessContainer:
         self._setup_container_environment()
 
     def _setup_container_environment(self):
-        """Setup isolated environment for the process"""
+        """Setup isolated environment for the process."""
         # Create container directory
         base_dir = Path.home() / ".local" / "mcli" / "containers"
         self.container_dir = base_dir / self.info.id
@@ -77,15 +74,15 @@ class ProcessContainer:
             json.dump(asdict(self.info), f, indent=2, default=str)
 
     def start(self) -> bool:
-        """Start the containerized process"""
+        """Start the containerized process."""
         try:
             if self.process and self.process.poll() is None:
                 logger.warning(f"Process {self.info.id} is already running")
                 return False
 
             # Open log files
-            stdout_handle = open(self.stdout_file, "w")
-            stderr_handle = open(self.stderr_file, "w")
+            stdout_handle = open(self.stdout_file, "w")  # noqa: SIM115
+            stderr_handle = open(self.stderr_file, "w")  # noqa: SIM115
 
             # Start process
             self.process = subprocess.Popen(
@@ -110,7 +107,7 @@ class ProcessContainer:
             return False
 
     def stop(self, timeout: int = 10) -> bool:
-        """Stop the process gracefully"""
+        """Stop the process gracefully."""
         if not self.process or self.process.poll() is not None:
             return True
 
@@ -140,7 +137,7 @@ class ProcessContainer:
             return False
 
     def kill(self) -> bool:
-        """Force kill the process"""
+        """Force kill the process."""
         if not self.process or self.process.poll() is not None:
             return True
 
@@ -160,13 +157,13 @@ class ProcessContainer:
             return False
 
     def is_running(self) -> bool:
-        """Check if process is currently running"""
+        """Check if process is currently running."""
         if not self.process:
             return False
         return self.process.poll() is None
 
     def get_logs(self, lines: Optional[int] = None, follow: bool = False) -> Dict[str, str]:
-        """Get process logs"""
+        """Get process logs."""
         logs = {"stdout": "", "stderr": ""}
 
         try:
@@ -190,7 +187,7 @@ class ProcessContainer:
         return logs
 
     def get_stats(self) -> Dict[str, Any]:
-        """Get process statistics"""
+        """Get process statistics."""
         stats = {
             "cpu_percent": 0.0,
             "memory_mb": 0.0,
@@ -215,7 +212,7 @@ class ProcessContainer:
         return stats
 
     def cleanup(self):
-        """Clean up container resources"""
+        """Clean up container resources."""
         try:
             # Stop process if running
             if self.is_running():
@@ -229,7 +226,7 @@ class ProcessContainer:
 
 
 class ProcessManager:
-    """Docker-like process management system"""
+    """Docker-like process management system."""
 
     def __init__(self):
         self.containers: Dict[str, ProcessContainer] = {}
@@ -240,7 +237,7 @@ class ProcessManager:
         self._load_existing_containers()
 
     def _load_existing_containers(self):
-        """Load existing containers from disk"""
+        """Load existing containers from disk."""
         try:
             for container_dir in self.base_dir.iterdir():
                 if container_dir.is_dir():
@@ -281,7 +278,7 @@ class ProcessManager:
         working_dir: str = None,
         environment: Dict[str, str] = None,
     ) -> str:
-        """Create a new process container"""
+        """Create a new process container."""
         process_id = str(uuid.uuid4())
 
         process_info = ProcessInfo(
@@ -301,7 +298,7 @@ class ProcessManager:
         return process_id
 
     def start(self, process_id: str) -> bool:
-        """Start a process container"""
+        """Start a process container."""
         if process_id not in self.containers:
             logger.error(f"Container {process_id} not found")
             return False
@@ -309,7 +306,7 @@ class ProcessManager:
         return self.containers[process_id].start()
 
     def stop(self, process_id: str, timeout: int = 10) -> bool:
-        """Stop a process container"""
+        """Stop a process container."""
         if process_id not in self.containers:
             logger.error(f"Container {process_id} not found")
             return False
@@ -317,7 +314,7 @@ class ProcessManager:
         return self.containers[process_id].stop(timeout)
 
     def kill(self, process_id: str) -> bool:
-        """Kill a process container"""
+        """Kill a process container."""
         if process_id not in self.containers:
             logger.error(f"Container {process_id} not found")
             return False
@@ -325,7 +322,7 @@ class ProcessManager:
         return self.containers[process_id].kill()
 
     def remove(self, process_id: str, force: bool = False) -> bool:
-        """Remove a process container"""
+        """Remove a process container."""
         if process_id not in self.containers:
             logger.error(f"Container {process_id} not found")
             return False
@@ -347,7 +344,7 @@ class ProcessManager:
         return True
 
     def list_processes(self, all_processes: bool = False) -> List[Dict[str, Any]]:
-        """List all process containers (Docker ps style)"""
+        """List all process containers (Docker ps style)."""
         result = []
 
         for container in self.containers.values():
@@ -380,7 +377,7 @@ class ProcessManager:
         return result
 
     def inspect(self, process_id: str) -> Optional[Dict[str, Any]]:
-        """Get detailed information about a process container"""
+        """Get detailed information about a process container."""
         if process_id not in self.containers:
             return None
 
@@ -413,7 +410,7 @@ class ProcessManager:
     def logs(
         self, process_id: str, lines: Optional[int] = None, follow: bool = False
     ) -> Optional[Dict[str, str]]:
-        """Get logs from a process container"""
+        """Get logs from a process container."""
         if process_id not in self.containers:
             return None
 
@@ -428,7 +425,7 @@ class ProcessManager:
         environment: Dict[str, str] = None,
         detach: bool = True,
     ) -> str:
-        """Create and start a process container in one step"""
+        """Create and start a process container in one step."""
         process_id = self.create(name, command, args, working_dir, environment)
 
         if self.start(process_id):

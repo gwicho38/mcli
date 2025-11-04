@@ -1,4 +1,4 @@
-"""Integration tests for the complete ML pipeline"""
+"""Integration tests for the complete ML pipeline."""
 
 import os
 import sys
@@ -12,14 +12,13 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pytest
 from ml.backtesting.backtest_engine import BacktestConfig, BacktestEngine, TradingStrategy
 from ml.backtesting.performance_metrics import PerformanceAnalyzer
 from ml.features.ensemble_features import EnsembleFeatureBuilder
 from ml.features.political_features import PoliticalInfluenceFeatures
 from ml.features.stock_features import StockRecommendationFeatures
-from ml.mlops.experiment_tracker import ExperimentTracker, MLflowConfig, ModelRegistry
-from ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig, PipelineExecutor
+from ml.mlops.experiment_tracker import MLflowConfig
+from ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig
 from ml.models.ensemble_models import DeepEnsembleModel, EnsembleConfig, ModelConfig
 from ml.models.recommendation_models import RecommendationConfig, StockRecommendationModel
 
@@ -31,13 +30,13 @@ logger = logging.getLogger(__name__)
 
 
 class TestDataIntegration:
-    """Test data processing integration"""
+    """Test data processing integration."""
 
     def test_data_pipeline(self):
-        """Test complete data processing pipeline"""
+        """Test complete data processing pipeline."""
         # Generate mock data
         trading_data = self._generate_mock_trading_data()
-        stock_data = self._generate_mock_stock_data()
+        self._generate_mock_stock_data()
 
         # Initialize processor
         config = ProcessingConfig()
@@ -53,7 +52,7 @@ class TestDataIntegration:
         assert cleaned_data.isnull().sum().sum() == 0  # No nulls
 
     def test_feature_extraction_pipeline(self):
-        """Test feature extraction pipeline"""
+        """Test feature extraction pipeline."""
         # Generate mock data
         trading_data = self._generate_mock_trading_data()
         stock_data = self._generate_mock_stock_data()
@@ -77,7 +76,7 @@ class TestDataIntegration:
         assert ensemble_features.shape[1] > combined.shape[1]  # More features
 
     def _generate_mock_trading_data(self):
-        """Generate mock trading data"""
+        """Generate mock trading data."""
         n_records = 100
         data = []
         for _ in range(n_records):
@@ -94,7 +93,7 @@ class TestDataIntegration:
         return pd.DataFrame(data)
 
     def _generate_mock_stock_data(self):
-        """Generate mock stock data"""
+        """Generate mock stock data."""
         dates = pd.date_range(end=datetime.now(), periods=100)
         tickers = ["AAPL", "MSFT", "GOOGL"]
         data = []
@@ -119,15 +118,15 @@ class TestDataIntegration:
 
 
 class TestModelIntegration:
-    """Test model training and prediction integration"""
+    """Test model training and prediction integration."""
 
     def test_model_training_pipeline(self):
-        """Test complete model training pipeline"""
+        """Test complete model training pipeline."""
         # Generate data
         X = np.random.randn(200, 50)
-        y = np.random.randint(0, 2, 200)
-        returns = np.random.normal(0.05, 0.15, 200)
-        risk_labels = np.random.choice([0, 1, 2], 200)
+        np.random.randint(0, 2, 200)
+        np.random.normal(0.05, 0.15, 200)
+        np.random.choice([0, 1, 2], 200)
 
         # Configure model
         model_configs = [
@@ -154,7 +153,7 @@ class TestModelIntegration:
         assert len(predictions) == 10
 
     def test_model_serving(self):
-        """Test model serving capabilities"""
+        """Test model serving capabilities."""
         from ml.mlops.model_serving import ModelEndpoint, PredictionRequest
 
         # Create endpoint
@@ -172,10 +171,10 @@ class TestModelIntegration:
 
 
 class TestPipelineIntegration:
-    """Test complete ML pipeline integration"""
+    """Test complete ML pipeline integration."""
 
     def test_end_to_end_pipeline(self):
-        """Test complete end-to-end pipeline"""
+        """Test complete end-to-end pipeline."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Configure pipeline
             config = PipelineConfig(
@@ -195,7 +194,7 @@ class TestPipelineIntegration:
             assert result["model"] is not None
 
     def test_pipeline_with_mlflow(self):
-        """Test pipeline with MLflow tracking"""
+        """Test pipeline with MLflow tracking."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Configure MLflow
             mlflow_config = MLflowConfig(
@@ -220,10 +219,10 @@ class TestPipelineIntegration:
 
 
 class TestBacktestIntegration:
-    """Test backtesting framework integration"""
+    """Test backtesting framework integration."""
 
     def test_backtesting_pipeline(self):
-        """Test complete backtesting pipeline"""
+        """Test complete backtesting pipeline."""
         # Generate mock price data
         dates = pd.date_range(end=datetime.now(), periods=252)
         price_data = []
@@ -265,7 +264,7 @@ class TestBacktestIntegration:
         assert result.metrics["total_return"] is not None
 
     def test_performance_analysis(self):
-        """Test performance analysis"""
+        """Test performance analysis."""
         # Generate mock returns
         returns = pd.Series(np.random.normal(0.001, 0.02, 252))
         benchmark_returns = pd.Series(np.random.normal(0.0008, 0.015, 252))
@@ -280,11 +279,11 @@ class TestBacktestIntegration:
 
 
 class TestSystemIntegration:
-    """Test full system integration"""
+    """Test full system integration."""
 
     def test_complete_workflow(self):
-        """Test complete ML workflow from data to backtest"""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        """Test complete ML workflow from data to backtest."""
+        with tempfile.TemporaryDirectory() as tmpdir:  # noqa: F841
             logger.info("Starting complete workflow test...")
 
             # Step 1: Data Processing
@@ -305,7 +304,7 @@ class TestSystemIntegration:
             # Step 3: Model Training
             logger.info("Step 3: Training model...")
             X = np.random.randn(100, 50)
-            y = np.random.randint(0, 2, 100)
+            np.random.randint(0, 2, 100)
 
             model_configs = [
                 ModelConfig(
@@ -344,7 +343,7 @@ class TestSystemIntegration:
             logger.info("Complete workflow test successful!")
 
     def _generate_trading_data(self):
-        """Generate comprehensive trading data"""
+        """Generate comprehensive trading data."""
         n_records = 500
         data = []
 
@@ -364,7 +363,7 @@ class TestSystemIntegration:
         return pd.DataFrame(data)
 
     def _generate_stock_data(self):
-        """Generate comprehensive stock data"""
+        """Generate comprehensive stock data."""
         dates = pd.date_range(end=datetime.now(), periods=365)
         tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", "SPY"]
         data = []
@@ -373,7 +372,7 @@ class TestSystemIntegration:
             base_price = np.random.uniform(50, 500)
             prices = [base_price]
 
-            for i, date in enumerate(dates):
+            for _i, date in enumerate(dates):
                 # Random walk with momentum
                 change = np.random.normal(0.001, 0.02)
                 new_price = prices[-1] * (1 + change)
@@ -395,7 +394,7 @@ class TestSystemIntegration:
 
 
 def test_smoke():
-    """Smoke test to ensure all imports work"""
+    """Smoke test to ensure all imports work."""
     assert DataProcessor is not None
     assert StockRecommendationFeatures is not None
     assert DeepEnsembleModel is not None

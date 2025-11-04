@@ -1,8 +1,7 @@
-"""Database models for ML system"""
+"""Database models for ML system."""
 
 from datetime import datetime
 from enum import Enum as PyEnum
-from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -26,7 +25,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import declarative_base, relationship, validates
-from sqlalchemy.sql import func
 
 Base = declarative_base()
 
@@ -52,7 +50,7 @@ experiment_models = Table(
 
 
 class UserRole(PyEnum):
-    """User role enumeration"""
+    """User role enumeration."""
 
     ADMIN = "admin"
     USER = "user"
@@ -61,7 +59,7 @@ class UserRole(PyEnum):
 
 
 class ModelStatus(PyEnum):
-    """Model status enumeration"""
+    """Model status enumeration."""
 
     TRAINING = "training"
     TRAINED = "trained"
@@ -71,7 +69,7 @@ class ModelStatus(PyEnum):
 
 
 class TradeType(PyEnum):
-    """Trade type enumeration"""
+    """Trade type enumeration."""
 
     BUY = "buy"
     SELL = "sell"
@@ -79,7 +77,7 @@ class TradeType(PyEnum):
 
 
 class AlertType(PyEnum):
-    """Alert type enumeration"""
+    """Alert type enumeration."""
 
     POLITICIAN_TRADE = "politician_trade"
     PRICE_MOVEMENT = "price_movement"
@@ -89,7 +87,7 @@ class AlertType(PyEnum):
 
 
 class User(Base):
-    """User model for authentication and authorization"""
+    """User model for authentication and authorization."""
 
     __tablename__ = "users"
 
@@ -127,7 +125,7 @@ class User(Base):
 
     @validates("email")
     def validate_email(self, key, email):
-        """Validate email format"""
+        """Validate email format."""
         import re
 
         if not re.match(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$", email):
@@ -136,7 +134,7 @@ class User(Base):
 
 
 class Politician(Base):
-    """Politician information"""
+    """Politician information."""
 
     __tablename__ = "politicians"
 
@@ -169,7 +167,7 @@ class Politician(Base):
 
 
 class Trade(Base):
-    """Political trading records"""
+    """Political trading records."""
 
     __tablename__ = "trades"
 
@@ -206,14 +204,14 @@ class Trade(Base):
 
     @hybrid_property
     def estimated_amount(self):
-        """Get estimated trade amount (midpoint)"""
+        """Get estimated trade amount (midpoint)."""
         if self.amount_min and self.amount_max:
             return (self.amount_min + self.amount_max) / 2
         return self.amount_min or self.amount_max
 
 
 class StockData(Base):
-    """Stock market data"""
+    """Stock market data."""
 
     __tablename__ = "stock_data"
 
@@ -264,7 +262,7 @@ class StockData(Base):
 
 
 class Prediction(Base):
-    """Model predictions"""
+    """Model predictions."""
 
     __tablename__ = "predictions"
 
@@ -313,7 +311,7 @@ class Prediction(Base):
 
 
 class Portfolio(Base):
-    """User portfolios"""
+    """User portfolios."""
 
     __tablename__ = "portfolios"
 
@@ -358,7 +356,7 @@ class Portfolio(Base):
 
 
 class Alert(Base):
-    """User alerts and notifications"""
+    """User alerts and notifications."""
 
     __tablename__ = "alerts"
 
@@ -396,7 +394,7 @@ class Alert(Base):
 
 
 class BacktestResult(Base):
-    """Backtesting results"""
+    """Backtesting results."""
 
     __tablename__ = "backtest_results"
 
@@ -448,7 +446,7 @@ class BacktestResult(Base):
 
 
 class Experiment(Base):
-    """ML experiments tracking"""
+    """ML experiments tracking."""
 
     __tablename__ = "experiments"
 
@@ -496,7 +494,7 @@ class Experiment(Base):
 
 
 class Model(Base):
-    """ML models registry"""
+    """ML models registry."""
 
     __tablename__ = "models"
 
@@ -578,7 +576,7 @@ class Model(Base):
 
 
 class FeatureSet(Base):
-    """Feature sets for models"""
+    """Feature sets for models."""
 
     __tablename__ = "feature_sets"
 
@@ -617,7 +615,7 @@ class FeatureSet(Base):
 
 
 class DataVersion(Base):
-    """Data versioning for DVC"""
+    """Data versioning for DVC."""
 
     __tablename__ = "data_versions"
 
@@ -658,7 +656,7 @@ class DataVersion(Base):
 # Database events and triggers
 @event.listens_for(User, "before_insert")
 def generate_api_key(mapper, connection, target):
-    """Generate API key for new users"""
+    """Generate API key for new users."""
     if not target.api_key:
         import secrets
 
@@ -668,7 +666,7 @@ def generate_api_key(mapper, connection, target):
 
 @event.listens_for(Portfolio, "before_update")
 def update_portfolio_metrics(mapper, connection, target):
-    """Update portfolio performance metrics"""
+    """Update portfolio performance metrics."""
     if target.current_value and target.initial_capital:
         target.total_return = (
             (target.current_value - target.initial_capital) / target.initial_capital
@@ -677,7 +675,7 @@ def update_portfolio_metrics(mapper, connection, target):
 
 # Create indexes for better query performance
 def create_indexes(engine):
-    """Create additional database indexes"""
+    """Create additional database indexes."""
     from sqlalchemy import text
 
     indexes = [

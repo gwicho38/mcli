@@ -1,16 +1,14 @@
 import json
 import subprocess
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.toml.toml import read_from_toml
 
 logger = get_logger(__name__)
 
 
 class LocalDaemonClient:
-    """Client for interacting with the MCLI Daemon via CLI subprocess (local IPC)"""
+    """Client for interacting with the MCLI Daemon via CLI subprocess (local IPC)."""
 
     def __init__(self):
         self.daemon_cmd = ["python", "-m", "mcli.workflow.daemon.daemon"]

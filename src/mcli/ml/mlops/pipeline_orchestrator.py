@@ -1,33 +1,25 @@
-"""End-to-end ML pipeline orchestrator"""
+"""End-to-end ML pipeline orchestrator."""
 
 import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 
-import json
 import logging
 import pickle
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 import torch
 from ml.features.ensemble_features import EnsembleFeatureBuilder
 from ml.features.political_features import PoliticalInfluenceFeatures
-from ml.features.recommendation_engine import RecommendationConfig as FeatureRecommendationConfig
-from ml.features.recommendation_engine import StockRecommendationEngine
 from ml.features.stock_features import StockRecommendationFeatures
-from ml.models.ensemble_models import (
-    DeepEnsembleModel,
-    EnsembleConfig,
-    EnsembleTrainer,
-    ModelConfig,
-)
+from ml.models.ensemble_models import EnsembleConfig, ModelConfig
 from ml.models.recommendation_models import (
     RecommendationConfig,
     RecommendationTrainer,
@@ -41,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class PipelineStage(Enum):
-    """Pipeline execution stages"""
+    """Pipeline execution stages."""
 
     DATA_INGESTION = "data_ingestion"
     DATA_PREPROCESSING = "data_preprocessing"
@@ -53,7 +45,7 @@ class PipelineStage(Enum):
 
 @dataclass
 class PipelineStep:
-    """Individual pipeline step configuration"""
+    """Individual pipeline step configuration."""
 
     name: str
     stage: PipelineStage
@@ -68,7 +60,7 @@ class PipelineStep:
 
 @dataclass
 class PipelineConfig:
-    """Complete pipeline configuration"""
+    """Complete pipeline configuration."""
 
     name: str = "politician-trading-ml-pipeline"
     version: str = "1.0.0"
@@ -93,7 +85,7 @@ class PipelineConfig:
 
 
 class MLPipeline:
-    """End-to-end ML pipeline orchestrator"""
+    """End-to-end ML pipeline orchestrator."""
 
     def __init__(self, config: PipelineConfig):
         self.config = config
@@ -115,7 +107,7 @@ class MLPipeline:
         self._setup_default_pipeline()
 
     def _setup_default_pipeline(self):
-        """Setup default pipeline steps"""
+        """Setup default pipeline steps."""
         # Data ingestion
         self.add_step(
             PipelineStep(
@@ -189,12 +181,12 @@ class MLPipeline:
         )
 
     def add_step(self, step: PipelineStep):
-        """Add step to pipeline"""
+        """Add step to pipeline."""
         self.steps.append(step)
         logger.debug(f"Added pipeline step: {step.name}")
 
     def _load_raw_data(self) -> Dict[str, pd.DataFrame]:
-        """Load raw data from sources"""
+        """Load raw data from sources."""
         logger.info("Loading raw data...")
 
         # Load politician trading data
@@ -222,7 +214,7 @@ class MLPipeline:
     def _preprocess_data(
         self, trading_data: pd.DataFrame, stock_data: pd.DataFrame
     ) -> Dict[str, pd.DataFrame]:
-        """Preprocess raw data"""
+        """Preprocess raw data."""
         logger.info("Preprocessing data...")
 
         # Initialize data processor
@@ -251,7 +243,7 @@ class MLPipeline:
     def _extract_features(
         self, trading_data: pd.DataFrame, stock_data: pd.DataFrame
     ) -> Dict[str, Any]:
-        """Extract features from preprocessed data"""
+        """Extract features from preprocessed data."""
         logger.info("Extracting features...")
 
         # Initialize feature extractors
@@ -294,7 +286,7 @@ class MLPipeline:
         }
 
     def _train_model(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
-        """Train ensemble model"""
+        """Train ensemble model."""
         logger.info("Training model...")
 
         # Split data
@@ -380,7 +372,7 @@ class MLPipeline:
     def _evaluate_model(
         self, model: StockRecommendationModel, X_test: np.ndarray, y_test: np.ndarray
     ) -> Dict[str, Any]:
-        """Evaluate trained model"""
+        """Evaluate trained model."""
         logger.info("Evaluating model...")
 
         # Generate predictions
@@ -407,9 +399,9 @@ class MLPipeline:
 
         # Calculate AUC if binary classification
         if probabilities.shape[1] == 2:
-            try:
+            try:  # noqa: SIM105
                 evaluation_metrics["test_auc"] = roc_auc_score(y_test, probabilities[:, 1])
-            except:
+            except Exception:
                 pass
 
         logger.info(f"Model evaluation - Test accuracy: {evaluation_metrics['test_accuracy']:.3f}")
@@ -419,7 +411,7 @@ class MLPipeline:
     def _deploy_model(
         self, model: StockRecommendationModel, metrics: Dict[str, float]
     ) -> Dict[str, Any]:
-        """Deploy model (save to disk)"""
+        """Deploy model (save to disk)."""
         logger.info("Deploying model...")
 
         # Save model
@@ -445,7 +437,7 @@ class MLPipeline:
     def run(
         self, start_step: Optional[str] = None, end_step: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Execute pipeline"""
+        """Execute pipeline."""
         logger.info(f"Starting pipeline: {self.config.name} v{self.config.version}")
 
         # Start MLflow run if enabled
@@ -502,7 +494,7 @@ class MLPipeline:
                                 self.artifacts[output_key] = value
 
                 # Log to MLflow
-                if self.experiment_tracker and "metrics" in str(result):
+                if self.experiment_tracker and "metrics" in str(result):  # noqa: SIM102
                     if isinstance(result, dict) and any("metric" in k for k in result.keys()):
                         metrics_dict = result.get(
                             "training_metrics", result.get("evaluation_metrics", {})
@@ -540,7 +532,7 @@ class MLPipeline:
         return {"artifacts": self.artifacts, "metrics": self.metrics, "model": self.model}
 
     def _save_checkpoint(self, step_number: int):
-        """Save pipeline checkpoint"""
+        """Save pipeline checkpoint."""
         checkpoint_path = self.config.cache_dir / f"checkpoint_step_{step_number}.pkl"
 
         checkpoint = {
@@ -560,7 +552,7 @@ class MLPipeline:
         logger.debug(f"Saved checkpoint at step {step_number}")
 
     def load_checkpoint(self, checkpoint_path: Path):
-        """Load pipeline checkpoint"""
+        """Load pipeline checkpoint."""
         with open(checkpoint_path, "rb") as f:
             checkpoint = pickle.load(f)
 
@@ -570,7 +562,7 @@ class MLPipeline:
         logger.info(f"Loaded checkpoint from step {checkpoint['step_number']}")
 
     def _generate_mock_trading_data(self) -> pd.DataFrame:
-        """Generate mock politician trading data for testing"""
+        """Generate mock politician trading data for testing."""
         np.random.seed(42)
         n_records = 500
 
@@ -593,7 +585,7 @@ class MLPipeline:
         return pd.DataFrame(data)
 
     def _generate_mock_stock_data(self) -> pd.DataFrame:
-        """Generate mock stock price data for testing"""
+        """Generate mock stock price data for testing."""
         np.random.seed(42)
         tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "TSLA"]
         dates = pd.date_range(end=pd.Timestamp.now(), periods=100)
@@ -619,20 +611,20 @@ class MLPipeline:
 
 
 class PipelineExecutor:
-    """Execute and manage multiple pipeline runs"""
+    """Execute and manage multiple pipeline runs."""
 
     def __init__(self, config: PipelineConfig):
         self.config = config
         self.pipelines: Dict[str, MLPipeline] = {}
 
     def create_pipeline(self, name: str) -> MLPipeline:
-        """Create new pipeline instance"""
+        """Create new pipeline instance."""
         pipeline = MLPipeline(self.config)
         self.pipelines[name] = pipeline
         return pipeline
 
     def run_pipeline(self, name: str, **kwargs) -> Dict[str, Any]:
-        """Run specific pipeline"""
+        """Run specific pipeline."""
         if name not in self.pipelines:
             self.pipelines[name] = MLPipeline(self.config)
 
@@ -641,7 +633,7 @@ class PipelineExecutor:
     def run_experiment(
         self, n_runs: int = 5, param_grid: Optional[Dict[str, List]] = None
     ) -> pd.DataFrame:
-        """Run multiple experiments with different parameters"""
+        """Run multiple experiments with different parameters."""
         results = []
 
         for i in range(n_runs):

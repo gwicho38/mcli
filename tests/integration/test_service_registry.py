@@ -1,12 +1,9 @@
-import os
-from pathlib import Path
-
 import pytest
 from click.testing import CliRunner
 
 # Check for fuzzywuzzy dependency
 try:
-    import fuzzywuzzy
+    pass
 
     HAS_FUZZYWUZZY = True
 except ImportError:

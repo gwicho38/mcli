@@ -4,18 +4,18 @@ Job monitoring and execution tracking for the MCLI scheduler
 
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Callable, Dict, List, Optional
 
 from mcli.lib.logger.logger import get_logger
 
-from .job import JobStatus, ScheduledJob
+from .job import ScheduledJob
 
 logger = get_logger(__name__)
 
 
 class JobMonitor:
-    """Monitors running jobs and handles timeouts, retries, and status updates"""
+    """Monitors running jobs and handles timeouts, retries, and status updates."""
 
     def __init__(self, status_callback: Optional[Callable] = None):
         self.running_jobs: Dict[str, threading.Thread] = {}
@@ -26,7 +26,7 @@ class JobMonitor:
         self.lock = threading.Lock()
 
     def start_monitoring(self):
-        """Start the monitoring thread"""
+        """Start the monitoring thread."""
         if self.monitoring:
             return
 
@@ -36,14 +36,14 @@ class JobMonitor:
         logger.info("Job monitor started")
 
     def stop_monitoring(self):
-        """Stop the monitoring thread"""
+        """Stop the monitoring thread."""
         self.monitoring = False
         if self.monitor_thread:
             self.monitor_thread.join(timeout=5)
         logger.info("Job monitor stopped")
 
     def _monitor_loop(self):
-        """Main monitoring loop"""
+        """Main monitoring loop."""
         while self.monitoring:
             try:
                 self._check_running_jobs()
@@ -52,7 +52,7 @@ class JobMonitor:
                 logger.error(f"Error in monitor loop: {e}")
 
     def _check_running_jobs(self):
-        """Check status of running jobs"""
+        """Check status of running jobs."""
         with self.lock:
             current_time = datetime.now()
             jobs_to_remove = []
@@ -61,7 +61,7 @@ class JobMonitor:
                 start_time = self.job_start_times.get(job_id)
 
                 if start_time:
-                    runtime = (current_time - start_time).total_seconds()
+                    (current_time - start_time).total_seconds()
 
                     # Check if thread is still alive
                     if not thread.is_alive():
@@ -76,29 +76,29 @@ class JobMonitor:
                 self._remove_job(job_id)
 
     def add_job(self, job: ScheduledJob, thread: threading.Thread):
-        """Add a job to monitoring"""
+        """Add a job to monitoring."""
         with self.lock:
             self.running_jobs[job.id] = thread
             self.job_start_times[job.id] = datetime.now()
             logger.debug(f"Added job {job.id} to monitor")
 
     def _remove_job(self, job_id: str):
-        """Remove a job from monitoring"""
+        """Remove a job from monitoring."""
         self.running_jobs.pop(job_id, None)
         self.job_start_times.pop(job_id, None)
 
     def get_running_jobs(self) -> List[str]:
-        """Get list of currently running job IDs"""
+        """Get list of currently running job IDs."""
         with self.lock:
             return list(self.running_jobs.keys())
 
     def is_job_running(self, job_id: str) -> bool:
-        """Check if a specific job is currently running"""
+        """Check if a specific job is currently running."""
         with self.lock:
             return job_id in self.running_jobs
 
     def get_job_runtime(self, job_id: str) -> Optional[int]:
-        """Get runtime in seconds for a running job"""
+        """Get runtime in seconds for a running job."""
         with self.lock:
             start_time = self.job_start_times.get(job_id)
             if start_time:
@@ -106,7 +106,7 @@ class JobMonitor:
         return None
 
     def kill_job(self, job_id: str) -> bool:
-        """Attempt to kill a running job"""
+        """Attempt to kill a running job."""
         with self.lock:
             thread = self.running_jobs.get(job_id)
             if thread and thread.is_alive():
@@ -117,7 +117,7 @@ class JobMonitor:
         return True
 
     def get_monitor_stats(self) -> dict:
-        """Get monitoring statistics"""
+        """Get monitoring statistics."""
         with self.lock:
             stats = {
                 "monitoring": self.monitoring,

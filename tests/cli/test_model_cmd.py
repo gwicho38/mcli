@@ -2,12 +2,12 @@
 Unit tests for mcli.app.model_cmd module
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from click.testing import CliRunner
 
-from mcli.app.model_cmd import delete, download, list, model, pull, recommend, start, status, stop
+from mcli.app.model_cmd import list, model
 
 # Skip all model command tests - complex integration requirements
 pytestmark = pytest.mark.skip(
@@ -289,7 +289,7 @@ class TestModelCommands:
         signal.alarm(1)
 
         try:
-            result = self.runner.invoke(model, ["start", "--auto-download"])
+            self.runner.invoke(model, ["start", "--auto-download"])
             # Command will be interrupted by KeyboardInterrupt
         except KeyboardInterrupt:
             pass
@@ -433,7 +433,7 @@ class TestModelCommandEdgeCases:
         signal.alarm(1)
 
         try:
-            result = self.runner.invoke(model, ["start", "--port", "9999"])
+            self.runner.invoke(model, ["start", "--port", "9999"])
         except KeyboardInterrupt:
             pass
         finally:

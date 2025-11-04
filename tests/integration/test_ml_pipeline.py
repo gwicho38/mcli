@@ -4,9 +4,8 @@ NOTE: ML pipeline tests require torch and ML pipeline modules.
 Tests are conditional on torch installation and module availability.
 """
 
-import asyncio
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -14,7 +13,7 @@ import pytest
 
 # Check for torch dependency
 try:
-    import torch
+    pass
 
     HAS_TORCH = True
 except ImportError:

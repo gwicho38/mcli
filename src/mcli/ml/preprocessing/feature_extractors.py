@@ -1,11 +1,8 @@
-"""Feature extraction utilities for ML preprocessing"""
+"""Feature extraction utilities for ML preprocessing."""
 
 import logging
-import re
-from collections import Counter, defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -15,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class FeatureExtractionStats:
-    """Statistics about feature extraction operations"""
+    """Statistics about feature extraction operations."""
 
     total_records: int
     features_extracted: int
@@ -25,7 +22,7 @@ class FeatureExtractionStats:
 
 
 class PoliticianFeatureExtractor:
-    """Extracts features related to politicians"""
+    """Extracts features related to politicians."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
@@ -39,7 +36,7 @@ class PoliticianFeatureExtractor:
         }
 
     def extract_politician_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract politician-related features"""
+        """Extract politician-related features."""
         df_features = df.copy()
 
         # Basic politician features
@@ -51,7 +48,7 @@ class PoliticianFeatureExtractor:
         return df_features
 
     def _extract_name_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract features from politician names"""
+        """Extract features from politician names."""
         if "politician_name_cleaned" not in df.columns:
             return df
 
@@ -72,7 +69,7 @@ class PoliticianFeatureExtractor:
         return df
 
     def _extract_trading_patterns(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract trading pattern features for each politician"""
+        """Extract trading pattern features for each politician."""
         if "politician_name_cleaned" not in df.columns:
             return df
 
@@ -147,7 +144,7 @@ class PoliticianFeatureExtractor:
         return df
 
     def _extract_frequency_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract trading frequency features"""
+        """Extract trading frequency features."""
         if not all(
             col in df.columns for col in ["politician_name_cleaned", "transaction_date_cleaned"]
         ):
@@ -189,7 +186,7 @@ class PoliticianFeatureExtractor:
         return df
 
     def _extract_timing_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract timing-related features"""
+        """Extract timing-related features."""
         if "transaction_date_dt" not in df.columns:
             return df
 
@@ -220,14 +217,14 @@ class PoliticianFeatureExtractor:
 
 
 class MarketFeatureExtractor:
-    """Extracts market-related features"""
+    """Extracts market-related features."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.sector_mapping = self._load_sector_mapping()
 
     def extract_market_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract market-related features"""
+        """Extract market-related features."""
         df_features = df.copy()
 
         # Asset features
@@ -238,7 +235,7 @@ class MarketFeatureExtractor:
         return df_features
 
     def _extract_asset_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract features from asset names"""
+        """Extract features from asset names."""
         if "asset_name_cleaned" not in df.columns:
             return df
 
@@ -270,7 +267,7 @@ class MarketFeatureExtractor:
         return df
 
     def _extract_ticker_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract features from stock tickers"""
+        """Extract features from stock tickers."""
         if "ticker_cleaned" not in df.columns:
             return df
 
@@ -288,7 +285,7 @@ class MarketFeatureExtractor:
         return df
 
     def _extract_market_cap_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract market cap related features (placeholder)"""
+        """Extract market cap related features (placeholder)."""
         # This would typically connect to external APIs
         # For now, create estimated features based on transaction amounts
 
@@ -311,7 +308,7 @@ class MarketFeatureExtractor:
         return df
 
     def _load_sector_mapping(self) -> Dict[str, str]:
-        """Load ticker to sector mapping (simplified)"""
+        """Load ticker to sector mapping (simplified)."""
         # This would typically be loaded from a data file or API
         return {
             "AAPL": "technology",
@@ -333,14 +330,14 @@ class MarketFeatureExtractor:
 
 
 class TemporalFeatureExtractor:
-    """Extracts temporal features for time series analysis"""
+    """Extracts temporal features for time series analysis."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.lookback_periods = config.get("lookback_periods", [7, 30, 90, 365])
 
     def extract_temporal_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract temporal features"""
+        """Extract temporal features."""
         df_features = df.copy()
 
         if "transaction_date_dt" not in df.columns:
@@ -357,7 +354,7 @@ class TemporalFeatureExtractor:
         return df_features
 
     def _extract_rolling_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract rolling window features"""
+        """Extract rolling window features."""
         # Set date as index temporarily
         df_indexed = df.set_index("transaction_date_dt")
 
@@ -389,7 +386,7 @@ class TemporalFeatureExtractor:
         return df
 
     def _extract_lag_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract lagged features"""
+        """Extract lagged features."""
         lag_periods = [1, 7, 30]
 
         for lag in lag_periods:
@@ -406,7 +403,7 @@ class TemporalFeatureExtractor:
         return df
 
     def _extract_trend_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract trend features"""
+        """Extract trend features."""
         # Calculate percentage changes
         df["amount_pct_change_1d"] = df.groupby("politician_name_cleaned")[
             "transaction_amount_cleaned"
@@ -439,7 +436,7 @@ class TemporalFeatureExtractor:
 
 
 class SentimentFeatureExtractor:
-    """Extracts sentiment and text-based features"""
+    """Extracts sentiment and text-based features."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
@@ -447,7 +444,7 @@ class SentimentFeatureExtractor:
         self.negative_words = ["loss", "down", "bear", "decline", "weak", "fall", "drop"]
 
     def extract_sentiment_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract sentiment features from text fields"""
+        """Extract sentiment features from text fields."""
         df_features = df.copy()
 
         # Asset name sentiment
@@ -465,7 +462,7 @@ class SentimentFeatureExtractor:
     def _extract_text_sentiment(
         self, df: pd.DataFrame, text_column: str, prefix: str
     ) -> pd.DataFrame:
-        """Extract sentiment from text column"""
+        """Extract sentiment from text column."""
         if text_column not in df.columns:
             return df
 

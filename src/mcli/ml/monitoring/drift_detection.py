@@ -1,22 +1,18 @@
-"""Model monitoring and drift detection for ML systems"""
+"""Model monitoring and drift detection for ML systems."""
 
-import asyncio
 import json
 import logging
 import pickle
-import warnings
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import ks_2samp
-from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +33,7 @@ class AlertSeverity(Enum):
 
 @dataclass
 class DriftAlert:
-    """Drift detection alert"""
+    """Drift detection alert."""
 
     timestamp: datetime
     drift_type: DriftType
@@ -51,7 +47,7 @@ class DriftAlert:
 
 @dataclass
 class ModelMetrics:
-    """Model performance metrics"""
+    """Model performance metrics."""
 
     timestamp: datetime
     accuracy: float
@@ -67,7 +63,7 @@ class ModelMetrics:
 
 @dataclass
 class DataProfile:
-    """Statistical profile of data"""
+    """Statistical profile of data."""
 
     feature_means: Dict[str, float]
     feature_stds: Dict[str, float]
@@ -79,7 +75,7 @@ class DataProfile:
 
 
 class StatisticalDriftDetector:
-    """Detect statistical drift in data distributions"""
+    """Detect statistical drift in data distributions."""
 
     def __init__(
         self, reference_data: pd.DataFrame, significance_level: float = 0.05, min_samples: int = 100
@@ -90,7 +86,7 @@ class StatisticalDriftDetector:
         self.min_samples = min_samples
 
     def detect_drift(self, current_data: pd.DataFrame) -> Dict[str, Any]:
-        """Detect drift between reference and current data"""
+        """Detect drift between reference and current data."""
         if len(current_data) < self.min_samples:
             return {"drift_detected": False, "message": "Insufficient samples"}
 
@@ -138,7 +134,7 @@ class StatisticalDriftDetector:
         return drift_results
 
     def _create_data_profile(self, data: pd.DataFrame) -> DataProfile:
-        """Create statistical profile of data"""
+        """Create statistical profile of data."""
         numeric_data = data.select_dtypes(include=[np.number])
 
         return DataProfile(
@@ -156,7 +152,7 @@ class StatisticalDriftDetector:
     def _calculate_psi(
         self, reference_data: pd.DataFrame, current_data: pd.DataFrame
     ) -> Dict[str, float]:
-        """Calculate Population Stability Index for each feature"""
+        """Calculate Population Stability Index for each feature."""
         psi_scores = {}
 
         for feature in reference_data.columns:
@@ -173,7 +169,7 @@ class StatisticalDriftDetector:
         return psi_scores
 
     def _psi_score(self, reference: pd.Series, current: pd.Series, bins: int = 10) -> float:
-        """Calculate PSI score between two distributions"""
+        """Calculate PSI score between two distributions."""
         try:
             # Create bins based on reference data
             ref_min, ref_max = reference.min(), reference.max()
@@ -203,7 +199,7 @@ class StatisticalDriftDetector:
     def _compare_feature_distributions(
         self, ref_profile: DataProfile, curr_profile: DataProfile
     ) -> Dict[str, Dict[str, float]]:
-        """Compare feature distributions between profiles"""
+        """Compare feature distributions between profiles."""
         comparisons = {}
 
         for feature in ref_profile.feature_means.keys():
@@ -231,7 +227,7 @@ class StatisticalDriftDetector:
 
 
 class ConceptDriftDetector:
-    """Detect concept drift in model predictions"""
+    """Detect concept drift in model predictions."""
 
     def __init__(self, window_size: int = 1000, detection_threshold: float = 0.05):
         self.window_size = window_size
@@ -239,7 +235,7 @@ class ConceptDriftDetector:
         self.historical_metrics = []
 
     def add_batch_metrics(self, metrics: ModelMetrics):
-        """Add batch metrics for drift detection"""
+        """Add batch metrics for drift detection."""
         self.historical_metrics.append(metrics)
 
         # Keep only recent metrics
@@ -247,7 +243,7 @@ class ConceptDriftDetector:
             self.historical_metrics = self.historical_metrics[-self.window_size :]
 
     def detect_concept_drift(self) -> Dict[str, Any]:
-        """Detect concept drift using model performance degradation"""
+        """Detect concept drift using model performance degradation."""
         if len(self.historical_metrics) < self.window_size:
             return {"drift_detected": False, "message": "Insufficient historical data"}
 
@@ -292,7 +288,7 @@ class ConceptDriftDetector:
         }
 
     def _calculate_average_performance(self, metrics_list: List[ModelMetrics]) -> Dict[str, float]:
-        """Calculate average performance metrics"""
+        """Calculate average performance metrics."""
         if not metrics_list:
             return {}
 
@@ -312,7 +308,7 @@ class ConceptDriftDetector:
 
 
 class OutlierDetector:
-    """Detect outliers in incoming data"""
+    """Detect outliers in incoming data."""
 
     def __init__(self, contamination: float = 0.1):
         self.contamination = contamination
@@ -320,7 +316,7 @@ class OutlierDetector:
         self.is_fitted = False
 
     def fit(self, reference_data: pd.DataFrame):
-        """Fit outlier detector on reference data"""
+        """Fit outlier detector on reference data."""
         numeric_data = reference_data.select_dtypes(include=[np.number])
 
         if numeric_data.empty:
@@ -332,7 +328,7 @@ class OutlierDetector:
         self.is_fitted = True
 
     def detect_outliers(self, data: pd.DataFrame) -> Dict[str, Any]:
-        """Detect outliers in new data"""
+        """Detect outliers in new data."""
         if not self.is_fitted:
             return {"outliers_detected": False, "message": "Detector not fitted"}
 
@@ -358,7 +354,7 @@ class OutlierDetector:
 
 
 class ModelMonitor:
-    """Comprehensive model monitoring system"""
+    """Comprehensive model monitoring system."""
 
     def __init__(self, model_name: str, storage_path: Path = Path("monitoring")):
         self.model_name = model_name
@@ -385,7 +381,7 @@ class ModelMonitor:
         self.monitoring_history = []
 
     def setup_reference_data(self, reference_data: pd.DataFrame):
-        """Set up reference data for drift detection"""
+        """Set up reference data for drift detection."""
         self.statistical_detector = StatisticalDriftDetector(reference_data)
         self.outlier_detector.fit(reference_data)
 
@@ -398,7 +394,7 @@ class ModelMonitor:
         predictions: np.ndarray,
         true_labels: Optional[np.ndarray] = None,
     ) -> Dict[str, Any]:
-        """Monitor a batch of data and predictions"""
+        """Monitor a batch of data and predictions."""
         monitoring_result = {
             "timestamp": datetime.now(),
             "batch_size": len(current_data),
@@ -480,11 +476,11 @@ class ModelMonitor:
         return monitoring_result
 
     def add_alert_handler(self, handler: Callable[[DriftAlert], None]):
-        """Add alert handler function"""
+        """Add alert handler function."""
         self.alert_handlers.append(handler)
 
     def get_monitoring_summary(self, days: int = 7) -> Dict[str, Any]:
-        """Get monitoring summary for the last N days"""
+        """Get monitoring summary for the last N days."""
         cutoff_date = datetime.now() - timedelta(days=days)
         recent_results = [
             result for result in self.monitoring_history if result["timestamp"] >= cutoff_date
@@ -521,7 +517,7 @@ class ModelMonitor:
         }
 
     def _analyze_predictions(self, predictions: np.ndarray) -> Dict[str, Any]:
-        """Analyze prediction distribution"""
+        """Analyze prediction distribution."""
         return {
             "mean": float(np.mean(predictions)),
             "std": float(np.std(predictions)),
@@ -533,7 +529,7 @@ class ModelMonitor:
     def _calculate_performance_metrics(
         self, predictions: np.ndarray, true_labels: np.ndarray
     ) -> ModelMetrics:
-        """Calculate model performance metrics"""
+        """Calculate model performance metrics."""
         # Convert to binary if needed
         if len(np.unique(true_labels)) == 2:
             # Binary classification
@@ -575,7 +571,7 @@ class ModelMonitor:
             )
 
     def _handle_alert(self, alert: DriftAlert):
-        """Handle drift alert"""
+        """Handle drift alert."""
         logger.warning(
             f"DRIFT ALERT: {alert.description} "
             f"(Type: {alert.drift_type.value}, Severity: {alert.severity.value})"
@@ -589,7 +585,7 @@ class ModelMonitor:
                 logger.error(f"Alert handler failed: {e}")
 
     def _save_monitoring_result(self, result: Dict[str, Any]):
-        """Save monitoring result to storage"""
+        """Save monitoring result to storage."""
         timestamp_str = result["timestamp"].strftime("%Y%m%d_%H%M%S")
         filename = self.storage_path / f"monitoring_{timestamp_str}.json"
 
@@ -606,14 +602,14 @@ class ModelMonitor:
             self.monitoring_history = self.monitoring_history[-500:]
 
     def _save_reference_profile(self, reference_data: pd.DataFrame):
-        """Save reference data profile"""
+        """Save reference data profile."""
         profile_file = self.storage_path / "reference_profile.pkl"
 
         with open(profile_file, "wb") as f:
             pickle.dump(reference_data, f)
 
     def _make_serializable(self, obj: Any) -> Any:
-        """Convert object to JSON-serializable format"""
+        """Convert object to JSON-serializable format."""
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         elif isinstance(obj, np.integer):
@@ -622,7 +618,7 @@ class ModelMonitor:
             return float(obj)
         elif isinstance(obj, datetime):
             return obj.isoformat()
-        elif isinstance(obj, DriftAlert):
+        elif isinstance(obj, DriftAlert):  # noqa: SIM114
             return asdict(obj)
         elif isinstance(obj, ModelMetrics):
             return asdict(obj)
@@ -638,13 +634,13 @@ class ModelMonitor:
 
 # Example alert handlers
 def email_alert_handler(alert: DriftAlert):
-    """Example email alert handler"""
+    """Example email alert handler."""
     logger.info(f"EMAIL ALERT: {alert.description}")
     # In production, would send actual email
 
 
 def slack_alert_handler(alert: DriftAlert):
-    """Example Slack alert handler"""
+    """Example Slack alert handler."""
     logger.info(f"SLACK ALERT: {alert.description}")
     # In production, would send to Slack
 

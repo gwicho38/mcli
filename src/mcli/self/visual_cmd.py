@@ -14,8 +14,7 @@ logger = get_logger(__name__)
 
 @click.group()
 def visual():
-    """🎨 Visual effects and enhancements showcase"""
-    pass
+    """🎨 Visual effects and enhancements showcase."""
 
 
 @visual.command()
@@ -26,10 +25,9 @@ def visual():
     help="Type of visual demo to run",
 )
 def demo(demo_type: str):
-    """🎭 Demonstrate MCLI's visual capabilities"""
+    """🎭 Demonstrate MCLI's visual capabilities."""
     try:
         from rich.rule import Rule
-        from rich.text import Text
 
         from mcli.lib.ui.styling import celebrate
         from mcli.lib.ui.visual_effects import (
@@ -37,10 +35,8 @@ def demo(demo_type: str):
             ColorfulOutput,
             MCLIBanner,
             MCLIProgressBar,
-            StartupSequence,
             VisualTable,
             console,
-            demo_visual_effects,
         )
 
         console.clear()
@@ -91,7 +87,7 @@ def demo(demo_type: str):
                 for task_name, duration in tasks:
                     task = progress.add_task(task_name, total=duration)
 
-                    for i in range(duration):
+                    for _i in range(duration):
                         progress.update(task, advance=1)
                         time.sleep(0.1)
 
@@ -143,7 +139,7 @@ def demo(demo_type: str):
 
 @visual.command()
 def startup():
-    """🚀 Show the full startup animation sequence"""
+    """🚀 Show the full startup animation sequence."""
     try:
         from mcli.lib.ui.visual_effects import StartupSequence
 
@@ -163,7 +159,7 @@ def startup():
 @click.option("--duration", default=5, help="Duration in seconds")
 @click.option("--message", default="Processing...", help="Loading message")
 def spinner(spinner_type: str, duration: int, message: str):
-    """⚡ Show an animated spinner"""
+    """⚡ Show an animated spinner."""
     try:
         from mcli.lib.ui.visual_effects import AnimatedSpinner
 
@@ -180,7 +176,7 @@ def spinner(spinner_type: str, duration: int, message: str):
 
 @visual.command()
 def performance():
-    """📊 Show enhanced performance summary"""
+    """📊 Show enhanced performance summary."""
     try:
         from mcli.lib.performance.rust_bridge import print_performance_summary
 
@@ -199,7 +195,7 @@ def performance():
 )
 @click.argument("message", default="This is a test message!")
 def message(style: str, message: str):
-    """💬 Show styled message examples"""
+    """💬 Show styled message examples."""
     try:
         from mcli.lib.ui.styling import celebrate
         from mcli.lib.ui.visual_effects import ColorfulOutput
@@ -221,7 +217,7 @@ def message(style: str, message: str):
 
 @visual.command()
 def banner():
-    """🎯 Show all available banners"""
+    """🎯 Show all available banners."""
     try:
         from mcli.lib.ui.visual_effects import MCLIBanner
 
@@ -239,13 +235,12 @@ def banner():
 
 @visual.command()
 def interactive():
-    """🎮 Interactive visual experience"""
+    """🎮 Interactive visual experience."""
     try:
         import random
 
         from rich.panel import Panel
         from rich.prompt import Confirm, Prompt
-        from rich.text import Text
 
         from mcli.lib.ui.visual_effects import AnimatedSpinner, ColorfulOutput, MCLIBanner, console
 

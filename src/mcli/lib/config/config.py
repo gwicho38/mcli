@@ -2,7 +2,6 @@ from pathlib import Path
 
 from mcli.lib.fs import get_user_home
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.toml import read_from_toml
 
 logger = get_logger(__name__)
 logger.info("")

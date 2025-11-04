@@ -3,9 +3,6 @@ Unit tests for mcli.lib.logger module
 """
 
 import logging
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 class TestMcliLogger:

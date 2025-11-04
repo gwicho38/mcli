@@ -1,15 +1,13 @@
-"""Authentication manager with JWT support"""
+"""Authentication manager with JWT support."""
 
 import secrets
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Union
-from uuid import UUID
+from typing import Optional
 
 import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from mcli.ml.config import settings
@@ -23,7 +21,7 @@ security = HTTPBearer()
 
 
 class AuthManager:
-    """Authentication and authorization manager"""
+    """Authentication and authorization manager."""
 
     def __init__(self):
         self.secret_key = settings.api.secret_key
@@ -32,19 +30,19 @@ class AuthManager:
         self.refresh_token_expire_days = 7
 
     def hash_password(self, password: str) -> str:
-        """Hash a password using bcrypt"""
+        """Hash a password using bcrypt."""
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
         return hashed.decode("utf-8")
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        """Verify a password against a hash"""
+        """Verify a password against a hash."""
         return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
     def create_access_token(
         self, user_id: str, username: str, role: str, expires_delta: Optional[timedelta] = None
     ) -> str:
-        """Create a JWT access token"""
+        """Create a JWT access token."""
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
@@ -63,7 +61,7 @@ class AuthManager:
         return encoded_jwt
 
     def create_refresh_token(self, user_id: str, expires_delta: Optional[timedelta] = None) -> str:
-        """Create a refresh token"""
+        """Create a refresh token."""
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
@@ -81,7 +79,7 @@ class AuthManager:
         return encoded_jwt
 
     def verify_token(self, token: str) -> Optional[TokenData]:
-        """Verify and decode a JWT token"""
+        """Verify and decode a JWT token."""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
 
@@ -110,7 +108,7 @@ class AuthManager:
             )
 
     async def register_user(self, user_data: UserCreate, db: Session) -> User:
-        """Register a new user"""
+        """Register a new user."""
         # Check if user already exists
         existing_user = (
             db.query(User)
@@ -149,7 +147,7 @@ class AuthManager:
         return new_user
 
     async def authenticate_user(self, login_data: UserLogin, db: Session) -> Optional[User]:
-        """Authenticate a user"""
+        """Authenticate a user."""
         user = db.query(User).filter(User.username == login_data.username).first()
 
         if not user:
@@ -165,7 +163,7 @@ class AuthManager:
         return user
 
     async def login(self, login_data: UserLogin, db: Session) -> TokenResponse:
-        """Login user and return tokens"""
+        """Login user and return tokens."""
         user = await self.authenticate_user(login_data, db)
 
         if not user:
@@ -195,7 +193,7 @@ class AuthManager:
         )
 
     async def refresh_access_token(self, refresh_token: str, db: Session) -> TokenResponse:
-        """Refresh access token using refresh token"""
+        """Refresh access token using refresh token."""
         try:
             payload = jwt.decode(refresh_token, self.secret_key, algorithms=[self.algorithm])
 
@@ -238,7 +236,7 @@ class AuthManager:
         credentials: HTTPAuthorizationCredentials = Depends(security),
         db: Session = Depends(get_db),
     ) -> User:
-        """Get current authenticated user from JWT token"""
+        """Get current authenticated user from JWT token."""
         token = credentials.credentials
 
         token_data = self.verify_token(token)
@@ -256,7 +254,7 @@ class AuthManager:
         return user
 
     def require_role(self, *allowed_roles: UserRole):
-        """Decorator/dependency to require specific roles"""
+        """Decorator/dependency to require specific roles."""
 
         async def role_checker(current_user: User = Depends(self.get_current_user)) -> User:
             if current_user.role not in allowed_roles:
@@ -281,14 +279,14 @@ require_role = auth_manager.require_role
 
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
-    """Get current active user"""
+    """Get current active user."""
     if not current_user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
     return current_user
 
 
 async def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
-    """Get current admin user"""
+    """Get current admin user."""
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return current_user
@@ -298,11 +296,12 @@ import asyncio
 
 # Rate limiting
 from collections import defaultdict
-from datetime import datetime, timedelta
+
+# datetime and timedelta already imported at top
 
 
 class RateLimiter:
-    """Simple rate limiter"""
+    """Simple rate limiter."""
 
     def __init__(self, requests: int = 100, window: int = 60):
         self.requests = requests
@@ -311,7 +310,7 @@ class RateLimiter:
         self._cleanup_task = None
 
     async def check_rate_limit(self, client_id: str) -> bool:
-        """Check if client has exceeded rate limit"""
+        """Check if client has exceeded rate limit."""
         now = datetime.utcnow()
         minute_ago = now - timedelta(seconds=self.window)
 
@@ -329,7 +328,7 @@ class RateLimiter:
         return True
 
     async def cleanup(self):
-        """Periodic cleanup of old entries"""
+        """Periodic cleanup of old entries."""
         while True:
             await asyncio.sleep(300)  # Clean every 5 minutes
             now = datetime.utcnow()
@@ -349,7 +348,7 @@ rate_limiter = RateLimiter(requests=settings.api.rate_limit, window=60)
 
 
 async def check_rate_limit(request: Request):
-    """FastAPI dependency to check rate limit"""
+    """FastAPI dependency to check rate limit."""
     client_ip = request.client.host
 
     if not await rate_limiter.check_rate_limit(client_ip):

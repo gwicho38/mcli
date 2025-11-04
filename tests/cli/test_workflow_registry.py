@@ -14,7 +14,7 @@ pytestmark = pytest.mark.skip(
 
 # Check if fuzzywuzzy is available
 try:
-    import fuzzywuzzy
+    pass
 
     HAS_FUZZYWUZZY = True
 except ImportError:

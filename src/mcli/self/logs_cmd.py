@@ -2,9 +2,7 @@
 Log streaming and management commands
 """
 
-import os
 import subprocess
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -12,8 +10,6 @@ from typing import Optional
 
 import click
 from rich.console import Console
-from rich.live import Live
-from rich.panel import Panel
 from rich.text import Text
 
 from mcli.lib.paths import get_logs_dir
@@ -23,16 +19,15 @@ console = Console()
 
 @click.group(name="logs")
 def logs_group():
-    """Stream and manage MCLI log files"""
-    pass
+    """Stream and manage MCLI log files."""
 
 
 @logs_group.command(name="location")
 def show_location():
-    """Show the location of the logs directory"""
+    """Show the location of the logs directory."""
     logs_dir = get_logs_dir()
     console.print(f"📁 [cyan]Logs directory:[/cyan] {logs_dir}")
-    console.print(f"   [dim]Set MCLI_HOME environment variable to change location[/dim]")
+    console.print("   [dim]Set MCLI_HOME environment variable to change location[/dim]")
 
     # Show if directory exists and has files
     if logs_dir.exists():
@@ -40,9 +35,9 @@ def show_location():
         if log_files:
             console.print(f"   [green]✓ {len(log_files)} log file(s) found[/green]")
         else:
-            console.print(f"   [yellow]⚠ Directory exists but no log files yet[/yellow]")
+            console.print("   [yellow]⚠ Directory exists but no log files yet[/yellow]")
     else:
-        console.print(f"   [yellow]⚠ Directory will be created on first use[/yellow]")
+        console.print("   [yellow]⚠ Directory will be created on first use[/yellow]")
 
 
 @logs_group.command(name="stream")
@@ -111,7 +106,7 @@ def stream_logs(type: str, lines: int, follow: bool):
 @logs_group.command(name="list")
 @click.option("--date", "-d", help="Show logs for specific date (YYYYMMDD format)")
 def list_logs(date: Optional[str]):
-    """List available log files"""
+    """List available log files."""
     logs_dir = get_logs_dir()
     _list_available_logs(logs_dir, date)
 
@@ -207,7 +202,7 @@ def tail_logs(log_type: str, lines: int, date: Optional[str], follow: bool):
     "--context", "-C", type=int, default=3, help="Lines of context around matches (default: 3)"
 )
 def grep_logs(pattern: str, type: str, date: Optional[str], context: int):
-    """Search for patterns in log files"""
+    """Search for patterns in log files."""
     logs_dir = get_logs_dir()
 
     # Use provided date or default to today
@@ -251,7 +246,7 @@ def grep_logs(pattern: str, type: str, date: Optional[str], context: int):
 @click.option("--older-than", type=int, help="Clear logs older than N days")
 @click.option("--confirm", "-y", is_flag=True, help="Skip confirmation prompt")
 def clear_logs(older_than: Optional[int], confirm: bool):
-    """Clear old log files"""
+    """Clear old log files."""
     logs_dir = get_logs_dir()
 
     # Find log files
@@ -273,7 +268,7 @@ def clear_logs(older_than: Optional[int], confirm: bool):
             return
 
     # Show what will be deleted
-    console.print(f"📋 **Log files to clear:**", style="yellow")
+    console.print("📋 **Log files to clear:**", style="yellow")
     total_size = 0
     for log_file in log_files:
         size = log_file.stat().st_size
@@ -283,7 +278,7 @@ def clear_logs(older_than: Optional[int], confirm: bool):
     console.print(f"\n📊 **Total size:** {_format_file_size(total_size)}", style="cyan")
 
     # Confirm deletion
-    if not confirm:
+    if not confirm:  # noqa: SIM102
         if not click.confirm(f"\nDelete {len(log_files)} log files?"):
             console.print("❌ Operation cancelled", style="yellow")
             return
@@ -304,7 +299,7 @@ def clear_logs(older_than: Optional[int], confirm: bool):
 
 
 def _stream_single_file(log_file: Path, lines: int, follow: bool):
-    """Stream a single log file"""
+    """Stream a single log file."""
     console.print(f"📡 **Streaming {log_file.name}**", style="cyan")
     console.print("Press Ctrl+C to stop\n")
 
@@ -332,7 +327,7 @@ def _stream_single_file(log_file: Path, lines: int, follow: bool):
 
 
 def _stream_multiple_files(log_files: list, lines: int, follow: bool):
-    """Stream multiple log files simultaneously"""
+    """Stream multiple log files simultaneously."""
     console.print(f"📡 **Streaming {len(log_files)} log files**", style="cyan")
     for log_file in log_files:
         console.print(f"   • {log_file.name}")
@@ -340,7 +335,7 @@ def _stream_multiple_files(log_files: list, lines: int, follow: bool):
 
     # Use multitail or custom implementation
     # For simplicity, we'll cycle through files
-    try:
+    try:  # noqa: SIM105
         while True:
             for log_file in log_files:
                 if log_file.exists():
@@ -365,7 +360,7 @@ def _stream_multiple_files(log_files: list, lines: int, follow: bool):
 
 
 def _format_log_line(line: str) -> Text:
-    """Format a log line with syntax highlighting"""
+    """Format a log line with syntax highlighting."""
     text = Text()
 
     # Color-code by log level
@@ -384,7 +379,7 @@ def _format_log_line(line: str) -> Text:
 
 
 def _list_available_logs(logs_dir: Path, date_filter: Optional[str] = None):
-    """List available log files"""
+    """List available log files."""
     log_files = sorted(logs_dir.glob("mcli*.log"))
 
     if not log_files:
@@ -409,7 +404,7 @@ def _list_available_logs(logs_dir: Path, date_filter: Optional[str] = None):
 
 
 def _search_log_file(log_file: Path, pattern: str, context: int) -> list:
-    """Search for pattern in log file with context"""
+    """Search for pattern in log file with context."""
     matches = []
 
     try:
@@ -425,7 +420,7 @@ def _search_log_file(log_file: Path, pattern: str, context: int) -> list:
                 context_lines = []
                 for j in range(start, end):
                     prefix = ">>> " if j == i else "    "
-                    style = "bright_yellow" if j == i else "dim"
+                    _style = "bright_yellow" if j == i else "dim"  # noqa: F841
                     context_lines.append(f"{prefix}{lines[j].rstrip()}")
 
                 matches.append("\n".join(context_lines) + "\n")
@@ -437,7 +432,7 @@ def _search_log_file(log_file: Path, pattern: str, context: int) -> list:
 
 
 def _format_file_size(size_bytes: int) -> str:
-    """Format file size in human readable format"""
+    """Format file size in human readable format."""
     for unit in ["B", "KB", "MB", "GB"]:
         if size_bytes < 1024.0:
             return f"{size_bytes:.1f} {unit}"
@@ -447,5 +442,5 @@ def _format_file_size(size_bytes: int) -> str:
 
 # Register with main CLI
 def register_logs_commands(cli):
-    """Register logs commands with the main CLI"""
+    """Register logs commands with the main CLI."""
     cli.add_command(logs_group)

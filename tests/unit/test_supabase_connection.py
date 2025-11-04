@@ -9,8 +9,7 @@ Tests cover:
 """
 
 import os
-from contextlib import contextmanager
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from sqlalchemy.exc import OperationalError
@@ -194,7 +193,6 @@ class TestDatabaseSessionManagement:
         # Verify SELECT 1 was executed to test connection
         mock_session.execute.assert_called()
         # Check that execute was called with a text() wrapper containing SELECT 1
-        from sqlalchemy import text
 
         call_args = mock_session.execute.call_args
         # The first positional argument should be a TextClause

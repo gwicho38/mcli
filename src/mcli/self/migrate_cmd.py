@@ -7,7 +7,6 @@ Handles migrations between different versions of mcli, including:
 - Command structure changes
 """
 
-import json
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -15,11 +14,10 @@ from typing import List, Tuple
 
 import click
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
 
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.ui.styling import error, info, success, warning
+from mcli.lib.ui.styling import error, info, success
 
 logger = get_logger(__name__)
 console = Console()
@@ -82,9 +80,7 @@ def get_migration_status() -> dict:
         }
 
         if local_old.exists():
-            files = [
-                f for f in local_old.iterdir() if f.is_file() and not f.name.startswith(".")
-            ]
+            files = [f for f in local_old.iterdir() if f.is_file() and not f.name.startswith(".")]
             status["local"]["files_to_migrate"] = [f.name for f in files]
             status["local"]["needs_migration"] = len(files) > 0
 
@@ -289,19 +285,19 @@ def migrate_command(dry_run: bool, force: bool, status: bool, scope: str):
 
         # Show global status
         global_status = migration_status["global"]
-        console.print(f"\n[bold]Global (~/.mcli)[/bold]")
+        console.print("\n[bold]Global (~/.mcli)[/bold]")
         console.print(f"  Old location: {global_status['old_dir_path']}")
         console.print(f"    Exists: {'✓ Yes' if global_status['old_dir_exists'] else '✗ No'}")
         console.print(f"  New location: {global_status['new_dir_path']}")
         console.print(f"    Exists: {'✓ Yes' if global_status['new_dir_exists'] else '✗ No'}")
 
         if global_status["needs_migration"]:
-            console.print(f"  [yellow]⚠ Migration needed[/yellow]")
+            console.print("  [yellow]⚠ Migration needed[/yellow]")
             console.print(f"  Files to migrate: {len(global_status['files_to_migrate'])}")
         elif global_status["migration_done"]:
-            console.print(f"  [green]✓ Migration completed[/green]")
+            console.print("  [green]✓ Migration completed[/green]")
         else:
-            console.print(f"  [green]✓ No migration needed[/green]")
+            console.print("  [green]✓ No migration needed[/green]")
 
         # Show local status if in git repo
         if migration_status["local"]:
@@ -313,12 +309,12 @@ def migrate_command(dry_run: bool, force: bool, status: bool, scope: str):
             console.print(f"    Exists: {'✓ Yes' if local_status['new_dir_exists'] else '✗ No'}")
 
             if local_status["needs_migration"]:
-                console.print(f"  [yellow]⚠ Migration needed[/yellow]")
+                console.print("  [yellow]⚠ Migration needed[/yellow]")
                 console.print(f"  Files to migrate: {len(local_status['files_to_migrate'])}")
             elif local_status["migration_done"]:
-                console.print(f"  [green]✓ Migration completed[/green]")
+                console.print("  [green]✓ Migration completed[/green]")
             else:
-                console.print(f"  [green]✓ No migration needed[/green]")
+                console.print("  [green]✓ No migration needed[/green]")
 
         # Show files to migrate if any
         all_files = global_status.get("files_to_migrate", [])
@@ -326,7 +322,7 @@ def migrate_command(dry_run: bool, force: bool, status: bool, scope: str):
             all_files.extend(migration_status["local"].get("files_to_migrate", []))
 
         if all_files:
-            console.print(f"\n[bold]Files to migrate:[/bold]")
+            console.print("\n[bold]Files to migrate:[/bold]")
             table = Table()
             table.add_column("Location", style="cyan")
             table.add_column("File Name", style="yellow")
@@ -339,7 +335,7 @@ def migrate_command(dry_run: bool, force: bool, status: bool, scope: str):
                     table.add_row("Local", filename)
 
             console.print(table)
-            console.print(f"\n[dim]Run 'mcli self migrate' to perform migration[/dim]")
+            console.print("\n[dim]Run 'mcli self migrate' to perform migration[/dim]")
 
         return
 
@@ -356,19 +352,25 @@ def migrate_command(dry_run: bool, force: bool, status: bool, scope: str):
     console.print("\n[bold cyan]Migration Plan[/bold cyan]")
 
     if scope in ["global", "all"] and global_status["needs_migration"]:
-        console.print(f"\n[bold]Global:[/bold]")
+        console.print("\n[bold]Global:[/bold]")
         console.print(f"  Source: [cyan]{global_status['old_dir_path']}[/cyan]")
         console.print(f"  Target: [cyan]{global_status['new_dir_path']}[/cyan]")
         console.print(f"  Files: [yellow]{len(global_status['files_to_migrate'])}[/yellow]")
 
-    if scope in ["local", "all"] and migration_status["local"] and migration_status["local"]["needs_migration"]:
-        console.print(f"\n[bold]Local:[/bold]")
+    if (
+        scope in ["local", "all"]
+        and migration_status["local"]
+        and migration_status["local"]["needs_migration"]
+    ):
+        console.print("\n[bold]Local:[/bold]")
         console.print(f"  Source: [cyan]{migration_status['local']['old_dir_path']}[/cyan]")
         console.print(f"  Target: [cyan]{migration_status['local']['new_dir_path']}[/cyan]")
-        console.print(f"  Files: [yellow]{len(migration_status['local']['files_to_migrate'])}[/yellow]")
+        console.print(
+            f"  Files: [yellow]{len(migration_status['local']['files_to_migrate'])}[/yellow]"
+        )
 
     if dry_run:
-        console.print(f"\n[yellow]DRY RUN MODE - No changes will be made[/yellow]")
+        console.print("\n[yellow]DRY RUN MODE - No changes will be made[/yellow]")
 
     # Perform migration
     success_flag, message = migrate_commands_to_workflows(dry_run=dry_run, force=force, scope=scope)

@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class DiscoveredCommand:
-    """Represents a discovered Click command"""
+    """Represents a discovered Click command."""
 
     name: str
     full_name: str  # e.g., "workflow.file.oxps_to_pdf"
@@ -27,14 +27,14 @@ class DiscoveredCommand:
 
 
 class ClickCommandDiscovery:
-    """Discovers all Click commands in the MCLI application"""
+    """Discovers all Click commands in the MCLI application."""
 
     def __init__(self, base_path: Optional[Path] = None):
         self.base_path = base_path or Path(__file__).parent.parent.parent
         self.discovered_commands: Dict[str, DiscoveredCommand] = {}
 
     def discover_all_commands(self) -> List[DiscoveredCommand]:
-        """Discover all Click commands in the application"""
+        """Discover all Click commands in the application."""
         self.discovered_commands.clear()
 
         # Get the included directories from config
@@ -63,7 +63,7 @@ class ClickCommandDiscovery:
         return list(self.discovered_commands.values())
 
     def _discover_in_directory(self, directory: str):
-        """Discover commands in a specific directory"""
+        """Discover commands in a specific directory."""
         if "/" in directory:
             # Handle nested paths like "workflow/daemon"
             parts = directory.split("/")
@@ -90,7 +90,7 @@ class ClickCommandDiscovery:
                 logger.debug(f"Error discovering commands in {py_file}: {e}")
 
     def _discover_in_file(self, py_file: Path, base_directory: str):
-        """Discover commands in a specific Python file"""
+        """Discover commands in a specific Python file."""
         # Convert file path to module name
         relative_path = py_file.relative_to(self.base_path.parent)
         module_name = str(relative_path).replace("/", ".").replace(".py", "")
@@ -101,13 +101,13 @@ class ClickCommandDiscovery:
 
         try:
             # Import the module
-            if module_name not in sys.modules:
+            if module_name not in sys.modules:  # noqa: SIM401
                 module = importlib.import_module(module_name)
             else:
                 module = sys.modules[module_name]
 
             # Find Click objects
-            for name, obj in inspect.getmembers(module):
+            for _name, obj in inspect.getmembers(module):
                 if isinstance(obj, click.Group):
                     self._register_group(obj, module_name, base_directory)
                 elif isinstance(obj, click.Command):
@@ -117,7 +117,7 @@ class ClickCommandDiscovery:
             logger.debug(f"Could not import or inspect module {module_name}: {e}")
 
     def _register_group(self, group: click.Group, module_name: str, base_directory: str):
-        """Register a Click group and its commands"""
+        """Register a Click group and its commands."""
         group_full_name = f"{base_directory}.{group.name}" if group.name else base_directory
 
         # Register the group itself
@@ -156,7 +156,7 @@ class ClickCommandDiscovery:
                 self._register_group_recursive(cmd, cmd_full_name, module_name)
 
     def _register_command(self, command: click.Command, module_name: str, base_directory: str):
-        """Register a standalone Click command"""
+        """Register a standalone Click command."""
         cmd_full_name = f"{base_directory}.{command.name}" if command.name else base_directory
 
         cmd = DiscoveredCommand(
@@ -172,7 +172,7 @@ class ClickCommandDiscovery:
         self.discovered_commands[cmd_full_name] = cmd
 
     def _register_group_recursive(self, group: click.Group, parent_name: str, module_name: str):
-        """Recursively register nested group commands"""
+        """Recursively register nested group commands."""
         for cmd_name, cmd in group.commands.items():
             cmd_full_name = f"{parent_name}.{cmd_name}"
 
@@ -192,7 +192,7 @@ class ClickCommandDiscovery:
                 self._register_group_recursive(cmd, cmd_full_name, module_name)
 
     def get_commands(self, include_groups: bool = True) -> List[Dict[str, Any]]:
-        """Get all discovered commands as dictionaries"""
+        """Get all discovered commands as dictionaries."""
         commands = []
 
         for cmd in self.discovered_commands.values():
@@ -224,7 +224,7 @@ class ClickCommandDiscovery:
         return sorted(commands, key=lambda x: x["full_name"])
 
     def search_commands(self, query: str) -> List[Dict[str, Any]]:
-        """Search commands by name, description, or module"""
+        """Search commands by name, description, or module."""
         query = query.lower()
         all_commands = self.get_commands()
 
@@ -241,7 +241,7 @@ class ClickCommandDiscovery:
         return matching_commands
 
     def get_command_by_name(self, name: str) -> Optional[DiscoveredCommand]:
-        """Get a command by its name or full name"""
+        """Get a command by its name or full name."""
         # First try exact match by full name
         if name in self.discovered_commands:
             return self.discovered_commands[name]
@@ -259,7 +259,7 @@ _discovery_instance = None
 
 
 def get_command_discovery() -> ClickCommandDiscovery:
-    """Get a cached command discovery instance"""
+    """Get a cached command discovery instance."""
     global _discovery_instance
     if _discovery_instance is None:
         _discovery_instance = ClickCommandDiscovery()
@@ -268,7 +268,7 @@ def get_command_discovery() -> ClickCommandDiscovery:
 
 
 def refresh_command_discovery():
-    """Refresh the command discovery cache"""
+    """Refresh the command discovery cache."""
     global _discovery_instance
     _discovery_instance = None
     return get_command_discovery()

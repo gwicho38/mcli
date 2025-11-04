@@ -2,11 +2,9 @@
 Unit tests for mcli.lib.auth modules
 """
 
-import json
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -326,4 +324,3 @@ class TestAuthFunctions:
         # Note: get_mcli_basic_auth() in auth.py calls TokenManager.get_mcli_basic_auth()
         # but this method doesn't exist in TokenManager class yet
         # Skipping this test until the method is implemented
-        pass

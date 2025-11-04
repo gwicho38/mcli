@@ -1,21 +1,19 @@
-"""Performance metrics and analysis for backtesting"""
+"""Performance metrics and analysis for backtesting."""
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class PortfolioMetrics:
-    """Portfolio performance metrics"""
+    """Portfolio performance metrics."""
 
     total_return: float
     annualized_return: float
@@ -39,7 +37,7 @@ class PortfolioMetrics:
 
 @dataclass
 class RiskMetrics:
-    """Risk metrics"""
+    """Risk metrics."""
 
     value_at_risk_95: float
     conditional_var_95: float
@@ -56,7 +54,7 @@ class RiskMetrics:
 
 
 class PerformanceAnalyzer:
-    """Analyze backtest performance"""
+    """Analyze backtest performance."""
 
     def __init__(self, risk_free_rate: float = 0.02):
         self.risk_free_rate = risk_free_rate
@@ -67,7 +65,7 @@ class PerformanceAnalyzer:
         benchmark_returns: Optional[pd.Series] = None,
         trades: Optional[pd.DataFrame] = None,
     ) -> Tuple[PortfolioMetrics, RiskMetrics]:
-        """Calculate comprehensive performance metrics"""
+        """Calculate comprehensive performance metrics."""
 
         # Portfolio metrics
         portfolio_metrics = self._calculate_portfolio_metrics(returns, trades)
@@ -80,7 +78,7 @@ class PerformanceAnalyzer:
     def _calculate_portfolio_metrics(
         self, returns: pd.Series, trades: Optional[pd.DataFrame] = None
     ) -> PortfolioMetrics:
-        """Calculate portfolio performance metrics"""
+        """Calculate portfolio performance metrics."""
 
         # Basic returns
         total_return = (1 + returns).prod() - 1
@@ -148,7 +146,7 @@ class PerformanceAnalyzer:
     def _calculate_risk_metrics(
         self, returns: pd.Series, benchmark_returns: Optional[pd.Series] = None
     ) -> RiskMetrics:
-        """Calculate risk metrics"""
+        """Calculate risk metrics."""
 
         # Value at Risk (VaR)
         var_95 = np.percentile(returns, 5)
@@ -231,7 +229,7 @@ class PerformanceAnalyzer:
         )
 
     def _calculate_max_drawdown_duration(self, drawdown: pd.Series) -> int:
-        """Calculate maximum drawdown duration in days"""
+        """Calculate maximum drawdown duration in days."""
         is_drawdown = drawdown < 0
         drawdown_periods = []
         current_duration = 0
@@ -250,7 +248,7 @@ class PerformanceAnalyzer:
         return max(drawdown_periods) if drawdown_periods else 0
 
     def _analyze_trades(self, trades: pd.DataFrame) -> Dict[str, float]:
-        """Analyze trade statistics"""
+        """Analyze trade statistics."""
         # Filter for trades with PnL
         pnl_trades = trades[trades["pnl"].notna()].copy()
 
@@ -308,7 +306,7 @@ class PerformanceAnalyzer:
         }
 
     def _max_consecutive(self, arr: np.ndarray, value: bool) -> int:
-        """Calculate maximum consecutive occurrences of value"""
+        """Calculate maximum consecutive occurrences of value."""
         max_count = 0
         current_count = 0
 
@@ -323,7 +321,7 @@ class PerformanceAnalyzer:
 
 
 def plot_performance(backtest_result, save_path: Optional[str] = None):
-    """Plot backtest performance charts"""
+    """Plot backtest performance charts."""
     fig, axes = plt.subplots(3, 2, figsize=(15, 12))
 
     # Portfolio value

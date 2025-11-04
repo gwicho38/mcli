@@ -1,6 +1,4 @@
-import json
-import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.optional_deps import optional_import
@@ -13,7 +11,7 @@ logger = get_logger(__name__)
 
 
 class GitCommitAIService:
-    """AI service for generating intelligent git commit messages"""
+    """AI service for generating intelligent git commit messages."""
 
     def __init__(self):
         self.config = self._load_config()
@@ -24,7 +22,7 @@ class GitCommitAIService:
         self.ollama_base_url = self.config.get("ollama_base_url", "http://localhost:11434")
 
     def _load_config(self) -> Dict[str, Any]:
-        """Load LLM configuration from config.toml"""
+        """Load LLM configuration from config.toml."""
         try:
             config = read_from_toml("config.toml", "llm") or {}
 
@@ -48,7 +46,7 @@ class GitCommitAIService:
             }
 
     def _analyze_file_patterns(self, changes: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze file patterns to understand the scope of changes"""
+        """Analyze file patterns to understand the scope of changes."""
         analysis = {"languages": set(), "categories": set(), "scope": "unknown", "confidence": 0.0}
 
         all_files = (
@@ -109,7 +107,7 @@ class GitCommitAIService:
             ],
             "backend": [".py", ".go", ".rs", ".java", ".cpp", "api/", "server/", "backend/"],
             "database": [".sql", "migration", "schema", "models/", "db/"],
-            "infra": ["docker", "deploy", "infrastructure", ".tf", "kubernetes", "helm"],
+            "infra": ["docker", "deploy", "infrastructure", ".t", "kubernetes", "helm"],
         }
 
         for file in all_files:
@@ -149,12 +147,14 @@ class GitCommitAIService:
     def _create_commit_prompt(
         self, changes: Dict[str, Any], diff_content: str, analysis: Dict[str, Any]
     ) -> str:
-        """Create a detailed prompt for AI commit message generation"""
+        """Create a detailed prompt for AI commit message generation."""
 
         # Truncate diff if too long (keep first 2000 chars)
-        truncated_diff = diff_content[:2000] + "..." if len(diff_content) > 2000 else diff_content
+        _truncated_diff = (
+            diff_content[:2000] + "..." if len(diff_content) > 2000 else diff_content
+        )  # noqa: F841
 
-        prompt = f"""You are an expert software developer writing git commit messages following conventional commit standards.
+        prompt = """You are an expert software developer writing git commit messages following conventional commit standards.
 
 CHANGE ANALYSIS:
 - Files changed: {changes['total_files']}
@@ -204,7 +204,7 @@ Generate ONLY the commit message, nothing else:"""
         return prompt
 
     def generate_commit_message(self, changes: Dict[str, Any], diff_content: str) -> str:
-        """Generate an AI-powered commit message"""
+        """Generate an AI-powered commit message."""
         try:
             # Check if ollama is available
             if not OLLAMA_AVAILABLE:
@@ -254,7 +254,7 @@ Generate ONLY the commit message, nothing else:"""
             )
 
     def _clean_commit_message(self, message: str) -> str:
-        """Clean up AI generated commit message"""
+        """Clean up AI generated commit message."""
         lines = message.strip().split("\n")
 
         # Remove any introductory text
@@ -274,8 +274,7 @@ Generate ONLY the commit message, nothing else:"""
         return "\n".join(cleaned_lines) if cleaned_lines else ""
 
     def _generate_fallback_message(self, changes: Dict[str, Any], analysis: Dict[str, Any]) -> str:
-        """Generate fallback commit message using rules"""
-        summary_parts = []
+        """Generate fallback commit message using rules."""
 
         # Determine commit type based on analysis
         if "tests" in analysis["categories"]:
@@ -317,7 +316,7 @@ Generate ONLY the commit message, nothing else:"""
         return f"{commit_type}{scope}: {description}"
 
     def test_ai_service(self) -> bool:
-        """Test if the AI service is working properly"""
+        """Test if the AI service is working properly."""
         try:
             # Test with minimal changes
             test_changes = {

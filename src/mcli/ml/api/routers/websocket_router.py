@@ -1,10 +1,9 @@
-"""WebSocket API routes for real-time updates"""
+"""WebSocket API routes for real-time updates."""
 
 import asyncio
-import json
 from typing import Dict, Set
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from mcli.ml.logging import get_logger
 
@@ -13,7 +12,7 @@ logger = get_logger(__name__)
 
 
 class ConnectionManager:
-    """Manage WebSocket connections"""
+    """Manage WebSocket connections."""
 
     def __init__(self):
         self.active_connections: Dict[str, Set[WebSocket]] = {}
@@ -36,7 +35,7 @@ class ConnectionManager:
             for connection in self.active_connections[channel]:
                 try:
                     await connection.send_json(message)
-                except:
+                except Exception:
                     disconnected.add(connection)
 
             # Remove disconnected clients
@@ -49,7 +48,7 @@ manager = ConnectionManager()
 
 @router.websocket("/predictions")
 async def websocket_predictions(websocket: WebSocket):
-    """Real-time prediction updates"""
+    """Real-time prediction updates."""
     await manager.connect(websocket, "predictions")
     try:
         while True:
@@ -62,7 +61,7 @@ async def websocket_predictions(websocket: WebSocket):
 
 @router.websocket("/prices")
 async def websocket_prices(websocket: WebSocket):
-    """Real-time price updates"""
+    """Real-time price updates."""
     await manager.connect(websocket, "prices")
     try:
         while True:

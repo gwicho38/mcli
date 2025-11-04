@@ -1,6 +1,5 @@
-"""DVC Configuration for Data Versioning and Pipeline Management"""
+"""DVC Configuration for Data Versioning and Pipeline Management."""
 
-import os
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -9,7 +8,7 @@ import yaml
 
 
 class DVCConfig:
-    """Configuration class for DVC data versioning and pipeline management"""
+    """Configuration class for DVC data versioning and pipeline management."""
 
     def __init__(self, project_root: Optional[Path] = None):
         self.project_root = project_root or Path(__file__).parent.parent.parent.parent.parent
@@ -18,7 +17,7 @@ class DVCConfig:
         self.models_dir = self.project_root / "models"
 
     def setup_data_directories(self) -> None:
-        """Create and configure data directories for DVC tracking"""
+        """Create and configure data directories for DVC tracking."""
         directories = [
             self.data_dir / "raw",
             self.data_dir / "processed",
@@ -33,7 +32,7 @@ class DVCConfig:
             print(f"Created directory: {directory}")
 
     def add_data_to_dvc(self, data_path: Path, message: Optional[str] = None) -> None:
-        """Add data file or directory to DVC tracking"""
+        """Add data file or directory to DVC tracking."""
         try:
             # Add to DVC
             cmd = ["dvc", "add", str(data_path)]
@@ -64,7 +63,7 @@ class DVCConfig:
         parameters: Optional[Dict[str, Any]] = None,
         metrics: Optional[List[str]] = None,
     ) -> None:
-        """Create a DVC pipeline stage"""
+        """Create a DVC pipeline stage."""
         try:
             cmd = [
                 "dvc",
@@ -99,7 +98,7 @@ class DVCConfig:
             raise
 
     def run_pipeline(self, stage_name: Optional[str] = None) -> None:
-        """Run DVC pipeline or specific stage"""
+        """Run DVC pipeline or specific stage."""
         try:
             cmd = ["dvc", "repro"]
             if stage_name:
@@ -110,7 +109,7 @@ class DVCConfig:
             if result.returncode != 0:
                 raise Exception(f"DVC pipeline run failed: {result.stderr}")
 
-            print(f"DVC pipeline completed successfully")
+            print("DVC pipeline completed successfully")
             if result.stdout:
                 print(result.stdout)
 
@@ -119,7 +118,7 @@ class DVCConfig:
             raise
 
     def get_data_version(self, data_path: Path) -> Optional[str]:
-        """Get the current version hash of a data file"""
+        """Get the current version hash of a data file."""
         try:
             dvc_file = data_path.with_suffix(data_path.suffix + ".dvc")
             if not dvc_file.exists():
@@ -134,7 +133,7 @@ class DVCConfig:
             return None
 
     def pull_data(self, path: Optional[str] = None) -> None:
-        """Pull data from DVC remote storage"""
+        """Pull data from DVC remote storage."""
         try:
             cmd = ["dvc", "pull"]
             if path:
@@ -152,7 +151,7 @@ class DVCConfig:
             raise
 
     def push_data(self, path: Optional[str] = None) -> None:
-        """Push data to DVC remote storage"""
+        """Push data to DVC remote storage."""
         try:
             cmd = ["dvc", "push"]
             if path:
@@ -172,7 +171,7 @@ class DVCConfig:
     def configure_remote_storage(
         self, remote_name: str, storage_url: str, default: bool = True
     ) -> None:
-        """Configure DVC remote storage"""
+        """Configure DVC remote storage."""
         try:
             # Add remote
             cmd = ["dvc", "remote", "add", remote_name, storage_url]
@@ -193,7 +192,7 @@ class DVCConfig:
             raise
 
     def get_pipeline_status(self) -> Dict[str, Any]:
-        """Get status of DVC pipeline"""
+        """Get status of DVC pipeline."""
         try:
             cmd = ["dvc", "status"]
             result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
@@ -214,12 +213,12 @@ dvc_config = DVCConfig()
 
 
 def get_dvc_config() -> DVCConfig:
-    """Get the global DVC configuration instance"""
+    """Get the global DVC configuration instance."""
     return dvc_config
 
 
 def setup_dvc() -> None:
-    """Setup DVC data directories and configuration"""
+    """Setup DVC data directories and configuration."""
     dvc_config.setup_data_directories()
     print(f"DVC project root: {dvc_config.project_root}")
     print(f"Data directory: {dvc_config.data_dir}")

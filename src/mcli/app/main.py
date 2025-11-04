@@ -1,19 +1,13 @@
-import functools
 import importlib
-import inspect
 import os
-import platform
-import sys
-from functools import lru_cache
-from importlib.metadata import metadata, version
 from pathlib import Path
 from typing import List, Optional
 
 import click
 import tomli
 
+from mcli.lib.api.api import register_command_as_api
 from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_tracing, get_logger
-from mcli.lib.ui.styling import info, success
 
 # Defer performance optimizations until needed
 _optimization_results = None
@@ -78,7 +72,7 @@ def discover_modules(base_path: Path, config_path: Optional[Path] = None) -> Lis
             logger.warning(f"Error reading config file {config_path}: {e}")
             config = {"paths": {"included_dirs": ["app", "self", "workflow", "public"]}}
     else:
-        logger.warning(f"Config file not found, using default configuration")
+        logger.warning("Config file not found, using default configuration")
         config = {"paths": {"included_dirs": ["app", "self", "workflow", "public"]}}
     excluded_files = {"setup.py", "__init__.py"}
     excluded_dirs = {"resources", "models", "scripts", "private", "venv", ".venv", "__pycache__"}

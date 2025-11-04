@@ -1,4 +1,4 @@
-"""Ensemble models for stock prediction"""
+"""Ensemble models for stock prediction."""
 
 import logging
 from dataclasses import dataclass
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ModelConfig:
-    """Configuration for individual models"""
+    """Configuration for individual models."""
 
     model_type: str
     hidden_dims: List[int]
@@ -30,7 +30,7 @@ class ModelConfig:
 
 @dataclass
 class EnsembleConfig:
-    """Configuration for ensemble model"""
+    """Configuration for ensemble model."""
 
     base_models: List[ModelConfig]
     ensemble_method: str = "weighted_average"  # weighted_average, stacking, voting
@@ -41,7 +41,7 @@ class EnsembleConfig:
 
 
 class AttentionStockPredictor(BaseStockModel):
-    """Attention-based stock predictor"""
+    """Attention-based stock predictor."""
 
     def __init__(
         self,
@@ -104,7 +104,7 @@ class AttentionStockPredictor(BaseStockModel):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass with attention mechanism"""
+        """Forward pass with attention mechanism."""
         # Project input
         x = self.input_proj(x)
 
@@ -131,7 +131,7 @@ class AttentionStockPredictor(BaseStockModel):
         return self.output_layer(x)
 
     def predict_proba(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Predict class probabilities"""
+        """Predict class probabilities."""
         self.eval()
         with torch.no_grad():
             X_tensor = self.preprocess_input(X)
@@ -141,7 +141,7 @@ class AttentionStockPredictor(BaseStockModel):
 
 
 class TransformerStockModel(BaseStockModel):
-    """Transformer model for stock prediction"""
+    """Transformer model for stock prediction."""
 
     def __init__(
         self,
@@ -185,7 +185,7 @@ class TransformerStockModel(BaseStockModel):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through transformer"""
+        """Forward pass through transformer."""
         # Embed input
         x = self.input_embedding(x)
 
@@ -205,7 +205,7 @@ class TransformerStockModel(BaseStockModel):
         return self.classifier(x)
 
     def predict_proba(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Predict class probabilities"""
+        """Predict class probabilities."""
         self.eval()
         with torch.no_grad():
             X_tensor = self.preprocess_input(X)
@@ -215,7 +215,7 @@ class TransformerStockModel(BaseStockModel):
 
 
 class PositionalEncoding(nn.Module):
-    """Positional encoding for transformer"""
+    """Positional encoding for transformer."""
 
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
@@ -235,7 +235,7 @@ class PositionalEncoding(nn.Module):
 
 
 class LSTMStockPredictor(BaseStockModel):
-    """LSTM-based stock predictor"""
+    """LSTM-based stock predictor."""
 
     def __init__(
         self,
@@ -272,7 +272,7 @@ class LSTMStockPredictor(BaseStockModel):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through LSTM"""
+        """Forward pass through LSTM."""
         # Add sequence dimension if needed
         if x.dim() == 2:
             x = x.unsqueeze(1)
@@ -286,7 +286,7 @@ class LSTMStockPredictor(BaseStockModel):
         return self.classifier(x)
 
     def predict_proba(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Predict class probabilities"""
+        """Predict class probabilities."""
         self.eval()
         with torch.no_grad():
             X_tensor = self.preprocess_input(X)
@@ -296,7 +296,7 @@ class LSTMStockPredictor(BaseStockModel):
 
 
 class CNNFeatureExtractor(BaseStockModel):
-    """CNN-based feature extractor for tabular data"""
+    """CNN-based feature extractor for tabular data."""
 
     def __init__(
         self,
@@ -350,8 +350,8 @@ class CNNFeatureExtractor(BaseStockModel):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through CNN"""
-        batch_size = x.size(0)
+        """Forward pass through CNN."""
+        batch_size = x.size(0)  # noqa: F841
 
         # Apply padding if needed
         if self.input_padding is not None:
@@ -373,7 +373,7 @@ class CNNFeatureExtractor(BaseStockModel):
         return self.classifier(x)
 
     def predict_proba(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Predict class probabilities"""
+        """Predict class probabilities."""
         self.eval()
         with torch.no_grad():
             X_tensor = self.preprocess_input(X)
@@ -383,7 +383,7 @@ class CNNFeatureExtractor(BaseStockModel):
 
 
 class DeepEnsembleModel(BaseStockModel):
-    """Deep ensemble combining multiple models"""
+    """Deep ensemble combining multiple models."""
 
     def __init__(self, input_dim: int, config: EnsembleConfig):
         super().__init__(input_dim, config.__dict__)
@@ -406,7 +406,7 @@ class DeepEnsembleModel(BaseStockModel):
         self.softmax = nn.Softmax(dim=1)
 
     def _create_model(self, model_config: ModelConfig, input_dim: int) -> BaseStockModel:
-        """Create individual model based on configuration"""
+        """Create individual model based on configuration."""
         if model_config.model_type == "attention":
             return AttentionStockPredictor(
                 input_dim=input_dim,
@@ -442,7 +442,7 @@ class DeepEnsembleModel(BaseStockModel):
             )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through ensemble"""
+        """Forward pass through ensemble."""
         model_outputs = []
 
         for model in self.models:
@@ -480,7 +480,7 @@ class DeepEnsembleModel(BaseStockModel):
         return ensemble_output
 
     def predict_proba(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Predict class probabilities"""
+        """Predict class probabilities."""
         self.eval()
         with torch.no_grad():
             X_tensor = self.preprocess_input(X)
@@ -489,13 +489,13 @@ class DeepEnsembleModel(BaseStockModel):
             return probas.cpu().numpy()
 
     def set_model_weights(self, weights: List[float]):
-        """Set weights for weighted ensemble"""
+        """Set weights for weighted ensemble."""
         self.model_weights = torch.FloatTensor(weights)
 
     def get_individual_predictions(
         self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]
     ) -> List[np.ndarray]:
-        """Get predictions from individual models"""
+        """Get predictions from individual models."""
         predictions = []
         self.eval()
 
@@ -508,7 +508,7 @@ class DeepEnsembleModel(BaseStockModel):
 
 
 class EnsembleTrainer:
-    """Trainer for ensemble models"""
+    """Trainer for ensemble models."""
 
     def __init__(self, ensemble_model: DeepEnsembleModel, config: EnsembleConfig):
         self.ensemble_model = ensemble_model
@@ -523,7 +523,7 @@ class EnsembleTrainer:
         X_val: Optional[np.ndarray] = None,
         y_val: Optional[np.ndarray] = None,
     ) -> ValidationResult:
-        """Train the ensemble model"""
+        """Train the ensemble model."""
         logger.info("Training ensemble model...")
 
         # Train individual models first
@@ -568,7 +568,7 @@ class EnsembleTrainer:
     def _create_subset(
         self, X: np.ndarray, y: np.ndarray, model_config: ModelConfig
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """Create data subset for individual model training"""
+        """Create data subset for individual model training."""
         if self.config.bootstrap_samples:
             # Bootstrap sampling
             n_samples = len(X)
@@ -586,7 +586,7 @@ class EnsembleTrainer:
         X_val: Optional[np.ndarray],
         y_val: Optional[np.ndarray],
     ) -> Dict[str, Any]:
-        """Train individual model"""
+        """Train individual model."""
         from torch.utils.data import DataLoader, TensorDataset
 
         # Convert to tensors
@@ -629,7 +629,7 @@ class EnsembleTrainer:
         return {"train_losses": train_losses}
 
     def _calculate_ensemble_weights(self, X_val: np.ndarray, y_val: np.ndarray):
-        """Calculate optimal ensemble weights based on validation performance"""
+        """Calculate optimal ensemble weights based on validation performance."""
         individual_predictions = self.ensemble_model.get_individual_predictions(X_val)
 
         # Calculate individual model accuracies
@@ -653,21 +653,21 @@ class EnsembleTrainer:
         X_val: Optional[np.ndarray],
         y_val: Optional[np.ndarray],
     ):
-        """Train meta-learner for stacking ensemble"""
+        """Train meta-learner for stacking ensemble."""
         # Get predictions from base models
         train_predictions = self.ensemble_model.get_individual_predictions(X_train)
         meta_X_train = np.concatenate(train_predictions, axis=1)
 
         # Train meta-learner
         meta_config = self.config.meta_learner_config
-        result = self._train_individual_model(
+        result = self._train_individual_model(  # noqa: F841
             self.ensemble_model.meta_learner, meta_config, meta_X_train, y_train, None, None
         )
 
         logger.info("Meta-learner training completed")
 
     def _evaluate(self, X: np.ndarray, y: np.ndarray) -> ModelMetrics:
-        """Evaluate ensemble model"""
+        """Evaluate ensemble model."""
         if X is None or y is None:
             return ModelMetrics(0, 0, 0, 0, 0)
 

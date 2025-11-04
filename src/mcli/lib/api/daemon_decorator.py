@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
 
-from .daemon_client import APIDaemonClient, get_daemon_client
+from .daemon_client import get_daemon_client
 
 logger = get_logger(__name__)
 
@@ -77,7 +77,7 @@ def daemon_command(
 
 
 def _is_daemon_routing_enabled() -> bool:
-    """Check if daemon routing is enabled in configuration"""
+    """Check if daemon routing is enabled in configuration."""
     # Check environment variable
     if os.environ.get("MCLI_DAEMON_ROUTING", "false").lower() in ("true", "1", "yes"):
         return True
@@ -102,7 +102,7 @@ def _is_daemon_routing_enabled() -> bool:
 
 
 def _convert_to_command_args(args: tuple, kwargs: dict, func: Callable) -> List[str]:
-    """Convert function arguments to command line arguments"""
+    """Convert function arguments to command line arguments."""
     cmd_args = []
 
     # Get function signature
@@ -140,7 +140,7 @@ def _convert_to_command_args(args: tuple, kwargs: dict, func: Callable) -> List[
             # *args
             if isinstance(param_value, (list, tuple)):
                 cmd_args.extend([str(arg) for arg in param_value])
-        elif param.kind == inspect.Parameter.VAR_KEYWORD:
+        elif param.kind == inspect.Parameter.VAR_KEYWORD:  # noqa: SIM102
             # **kwargs
             if isinstance(param_value, dict):
                 for key, value in param_value.items():
@@ -199,7 +199,7 @@ def daemon_group(
 
 # Convenience function to check if daemon is available
 def is_daemon_available() -> bool:
-    """Check if the API daemon is available and running"""
+    """Check if the API daemon is available and running."""
     try:
         client = get_daemon_client()
         return client.is_running()
@@ -209,7 +209,7 @@ def is_daemon_available() -> bool:
 
 # Convenience function to get daemon status
 def get_daemon_status() -> Optional[Dict[str, Any]]:
-    """Get daemon status if available"""
+    """Get daemon status if available."""
     try:
         client = get_daemon_client()
         return client.status()

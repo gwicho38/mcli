@@ -4,8 +4,6 @@ Test Chat System Control
 Demonstrates how MCLI chat can control system applications directly
 """
 
-import json
-import os
 import sys
 
 # Add src to path

@@ -1,5 +1,5 @@
-import os
-import readline
+import re
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import requests
@@ -51,7 +51,7 @@ logger = get_logger(__name__)
 # Fallbacks if not set in config.toml
 LLM_PROVIDER = config.get("provider", "local")
 MODEL_NAME = config.get("model", "prajjwal1/bert-tiny")  # Default to lightweight model
-OPENAI_API_KEY = config.get("openai_api_key", None)
+OPENAI_API_KEY = config.get("openai_api_key")
 OLLAMA_BASE_URL = config.get(
     "ollama_base_url", "http://localhost:8080"
 )  # Default to lightweight server
@@ -79,7 +79,7 @@ I'm designed to be your digital assistant that keeps things running smoothly."""
 
 
 class ChatClient:
-    """Interactive chat client for MCLI command management"""
+    """Interactive chat client for MCLI command management."""
 
     def __init__(self, use_remote: bool = False, model_override: str = None):
         self.daemon = get_daemon_client()
@@ -92,7 +92,7 @@ class ChatClient:
         self._load_scheduled_jobs()
 
     def _configure_model_settings(self):
-        """Configure model settings based on remote/local preferences"""
+        """Configure model settings based on remote/local preferences."""
         global LLM_PROVIDER, MODEL_NAME, OLLAMA_BASE_URL
 
         if not self.use_remote:
@@ -115,7 +115,7 @@ class ChatClient:
             # Keep existing provider settings from config
 
     def _ensure_lightweight_model_server(self):
-        """Ensure the lightweight model server is running"""
+        """Ensure the lightweight model server is running."""
         import time
 
         import requests
@@ -139,10 +139,10 @@ class ChatClient:
                                 f"[yellow]Model {MODEL_NAME} not loaded, will auto-load on first use[/yellow]"
                             )
                             return  # Server will auto-load model when needed
-                except:
+                except Exception:
                     # If we can't check models, assume server will handle it
                     return
-        except:
+        except Exception:
             pass
 
         # Try to start the server automatically
@@ -173,7 +173,7 @@ class ChatClient:
 
                 # Wait longer for server to start and verify it's working
                 max_retries = 10
-                for i in range(max_retries):
+                for _i in range(max_retries):
                     time.sleep(1)
                     try:
                         response = requests.get(f"{OLLAMA_BASE_URL}/health", timeout=1)
@@ -182,10 +182,10 @@ class ChatClient:
                                 f"[green]✅ Lightweight model server started with {model_name}[/green]"
                             )
                             return
-                    except:
+                    except Exception:
                         pass
 
-                console.print(f"[yellow]⚠️ Server started but health check failed[/yellow]")
+                console.print("[yellow]⚠️ Server started but health check failed[/yellow]")
                 console.print("Falling back to remote models...")
                 self.use_remote = True
             else:
@@ -199,7 +199,7 @@ class ChatClient:
             self.use_remote = True
 
     def start_interactive_session(self):
-        """Start the chat interface"""
+        """Start the chat interface."""
         console.print("[bold green]MCLI Personal Assistant[/bold green] (type 'exit' to quit)")
 
         # Show current configuration
@@ -250,7 +250,7 @@ class ChatClient:
                 console.print(f"[red]Error:[/red] {str(e)}")
 
     def process_input(self, user_input: str):
-        """Process user input and generate response"""
+        """Process user input and generate response."""
         self.history.append({"user": user_input})
 
         # Check for commands list request
@@ -383,7 +383,6 @@ class ChatClient:
             return "hello"
 
         # Try to extract command name using common patterns
-        import re
 
         patterns = [
             r"(?:call|execute|run)\s+(?:the\s+)?([a-zA-Z0-9\-_]+)(?:\s+command)?",
@@ -413,11 +412,11 @@ class ChatClient:
                         # For the hello command, we need to call it appropriately
                         if command.name == "hello" and command.full_name.startswith("self."):
                             # This is the hello command from self module - call with default argument
-                            result = command.callback("World")
-                            console.print(f"[green]✅ Command executed successfully[/green]")
+                            command.callback("World")
+                            console.print("[green]✅ Command executed successfully[/green]")
                         else:
-                            result = command.callback()
-                            console.print(f"[green]✅ Command executed successfully[/green]")
+                            command.callback()
+                            console.print("[green]✅ Command executed successfully[/green]")
                     else:
                         console.print("[yellow]Command found but has no callback[/yellow]")
                 except Exception as e:
@@ -430,16 +429,16 @@ class ChatClient:
             console.print(f"[red]Error finding command:[/red] {e}")
 
     def handle_command_queries(self, query: str):
-        """Handle command-related queries using existing command registry"""
+        """Handle command-related queries using existing command registry."""
         try:
             # Always fetch all commands (active and inactive)
             result = self.daemon.list_commands(all=True)
             if isinstance(result, dict):
-                commands = result.get("commands", [])
+                result.get("commands", [])
             elif isinstance(result, list):
-                commands = result
+                pass
             else:
-                commands = []
+                pass
         except Exception as e:
             logger.debug(
                 f"Could not fetch commands from daemon: {e}. Falling back to LLM-only mode."
@@ -466,7 +465,7 @@ class ChatClient:
                 self.generate_llm_response(query)
 
     def list_commands(self, commands: List[Dict] = None):
-        """List available commands"""
+        """List available commands."""
         if commands is None:
             # Use discovery system to get all commands
             try:
@@ -505,7 +504,7 @@ class ChatClient:
             console.print("[dim]Use 'mcli commands list' to see all commands[/dim]")
 
     def search_commands(self, query: str, commands: List[Dict] = None):
-        """Search commands based on query"""
+        """Search commands based on query."""
         search_term = query.lower().replace("search", "").replace("find", "").strip()
 
         if commands is None:
@@ -548,7 +547,7 @@ class ChatClient:
             console.print(f"[dim]... and {len(results) - 10} more results[/dim]")
 
     def handle_commands_list(self):
-        """Handle 'commands' command to list available functions"""
+        """Handle 'commands' command to list available functions."""
         try:
             # Get commands from daemon
             if hasattr(self.daemon, "list_commands"):
@@ -560,7 +559,7 @@ class ChatClient:
 
                 console.print(f"[bold green]Available Commands ({len(commands)}):[/bold green]")
 
-                for i, cmd in enumerate(commands[:20]):  # Show first 20 commands
+                for _i, cmd in enumerate(commands[:20]):  # Show first 20 commands
                     name = cmd.get("name", "Unknown")
                     description = cmd.get("description", cmd.get("help", "No description"))
 
@@ -597,7 +596,7 @@ class ChatClient:
             console.print("• [cyan]start/stop <id>[/cyan] - Control process lifecycle")
 
     def handle_process_list(self):
-        """Handle 'ps' command to list running processes"""
+        """Handle 'ps' command to list running processes."""
         try:
             import requests
 
@@ -627,7 +626,7 @@ class ChatClient:
             console.print(f"[red]Error connecting to daemon: {e}[/red]")
 
     def handle_process_logs(self, process_id: str):
-        """Handle 'logs' command to show process logs"""
+        """Handle 'logs' command to show process logs."""
         try:
             import requests
 
@@ -651,7 +650,7 @@ class ChatClient:
             console.print(f"[red]Error connecting to daemon: {e}[/red]")
 
     def handle_process_inspect(self, process_id: str):
-        """Handle 'inspect' command to show detailed process info"""
+        """Handle 'inspect' command to show detailed process info."""
         try:
             import requests
 
@@ -682,7 +681,7 @@ class ChatClient:
             console.print(f"[red]Error connecting to daemon: {e}[/red]")
 
     def handle_process_stop(self, process_id: str):
-        """Handle 'stop' command to stop a process"""
+        """Handle 'stop' command to stop a process."""
         try:
             import requests
 
@@ -699,7 +698,7 @@ class ChatClient:
             console.print(f"[red]Error connecting to daemon: {e}[/red]")
 
     def handle_process_start(self, process_id: str):
-        """Handle 'start' command to start a process"""
+        """Handle 'start' command to start a process."""
         try:
             import requests
 
@@ -716,7 +715,7 @@ class ChatClient:
             console.print(f"[red]Error connecting to daemon: {e}[/red]")
 
     def handle_containerized_run(self, command: str, args: List[str]):
-        """Handle 'run' command to execute in a containerized process"""
+        """Handle 'run' command to execute in a containerized process."""
         try:
             import requests
 
@@ -755,7 +754,7 @@ class ChatClient:
                         )
                         console.print("Use 'logs <id>' to view output or 'ps' to see status")
                     else:
-                        console.print(f"[red]Failed to start containerized command[/red]")
+                        console.print("[red]Failed to start containerized command[/red]")
                     return
             except Exception:
                 pass  # Fall through to shell command execution
@@ -773,13 +772,13 @@ class ChatClient:
                 )
                 console.print("Use 'logs <id>' to view output or 'ps' to see status")
             else:
-                console.print(f"[red]Failed to start containerized process[/red]")
+                console.print("[red]Failed to start containerized process[/red]")
 
         except Exception as e:
             console.print(f"[red]Error connecting to daemon: {e}[/red]")
 
     def _ensure_daemon_running(self):
-        """Ensure the API daemon is running, start it if not"""
+        """Ensure the API daemon is running, start it if not."""
         try:
             if not self.daemon.is_running():
                 console.print("[yellow]Starting MCLI daemon...[/yellow]")
@@ -813,7 +812,7 @@ class ChatClient:
             console.print("[yellow]Try starting manually: mcli workflow api-daemon start[/yellow]")
 
     def _pull_model_if_needed(self, model_name: str):
-        """Pull the model from Ollama if it doesn't exist locally"""
+        """Pull the model from Ollama if it doesn't exist locally."""
         try:
             console.print(
                 f"[yellow]Downloading model '{model_name}'. This may take a few minutes...[/yellow]"
@@ -844,7 +843,7 @@ class ChatClient:
             console.print(f"[red]❌ Error downloading model '{model_name}': {e}[/red]")
 
     def generate_llm_response(self, query: str):
-        """Generate response using LLM integration"""
+        """Generate response using LLM integration."""
         try:
             # Try to get all commands, including inactive
             try:
@@ -858,7 +857,7 @@ class ChatClient:
             except Exception:
                 commands = []
 
-            command_context = (
+            _command_context = (  # noqa: F841
                 "\n".join(
                     f"Command: {cmd['name']}\nDescription: {cmd.get('description', '')}\nTags: {', '.join(cmd.get('tags', []))}\nStatus: {'INACTIVE' if not cmd.get('is_active', True) else 'ACTIVE'}"
                     for cmd in commands
@@ -883,7 +882,7 @@ class ChatClient:
             )
 
             if is_creation_request:
-                prompt = f"""{SYSTEM_PROMPT}
+                prompt = """{SYSTEM_PROMPT}
 
 IMPORTANT CONTEXT:
 - Available MCLI Commands: {command_context}
@@ -903,7 +902,7 @@ This is a command creation request. You must:
 
 NEVER suggest commands that don't exist. ALWAYS create new code for missing functionality."""
             else:
-                prompt = f"""{SYSTEM_PROMPT}
+                prompt = """{SYSTEM_PROMPT}
 
 AVAILABLE MCLI COMMANDS:
 {command_context}
@@ -954,7 +953,6 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                     content = response.get("response", "")
 
                     # Clean up response like we do for OpenAI
-                    import re
 
                     split_patterns = [
                         r"\n2\.",
@@ -994,7 +992,6 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                                     },
                                 )
                                 content = response.get("response", "")
-                                import re
 
                                 split_patterns = [
                                     r"\n2\.",
@@ -1034,7 +1031,6 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                                     },
                                 )
                                 content = response.get("response", "")
-                                import re
 
                                 split_patterns = [
                                     r"\n2\.",
@@ -1059,7 +1055,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                     else:
                         raise Exception(f"Ollama API error: {e}")
 
-                except (requests.exceptions.ConnectionError, ollama.RequestError if OLLAMA_AVAILABLE else Exception):  # type: ignore
+                except (requests.exceptions.ConnectionError, ollama.RequestError if OLLAMA_AVAILABLE else Exception):  # type: ignore  # noqa: B030
                     console.print(
                         "[red]Could not connect to Ollama. Please ensure Ollama is running:[/red]"
                     )
@@ -1072,7 +1068,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                         "[yellow]Request timed out. The model might be processing a complex query.[/yellow]"
                     )
                     return
-                except Exception as api_exc:
+                except Exception:
                     raise
 
             elif LLM_PROVIDER == "openai":
@@ -1093,7 +1089,6 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                     # Only print the first section (natural language answer) before any markdown/code block
                     content = response.choices[0].message.content
                     # Split on '```' or '2.' or 'Relevant commands' to avoid printing command/code blocks
-                    import re
 
                     # Try to split on numbered sections or code block
                     split_patterns = [
@@ -1110,13 +1105,13 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                             split_idx = min(split_idx, m.start())
                     main_answer = content[:split_idx].strip()
                     return console.print(main_answer)
-                except Exception as api_exc:
+                except Exception:
                     raise
 
             elif LLM_PROVIDER == "anthropic":
                 from anthropic import Anthropic
 
-                api_key = config.get("anthropic_api_key", None)
+                api_key = config.get("anthropic_api_key")
                 client = Anthropic(api_key=api_key)
                 try:
                     response = client.messages.create(
@@ -1127,7 +1122,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                         messages=[{"role": "user", "content": query}],
                     )
                     return console.print(response.content)
-                except Exception as api_exc:
+                except Exception:
                     raise
 
             else:
@@ -1158,9 +1153,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
             r"\bhelp\s+me\s+create",  # "help me create"
         ]
 
-        import re
-
-        for pattern in creation_patterns:
+        for pattern in creation_patterns:  # noqa: SIM110
             if re.search(pattern, lower_input):
                 return True
 
@@ -1208,7 +1201,6 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
 
     def validate_and_correct_response(self, response_text: str, available_commands: list) -> str:
         """Validate AI response and correct any hallucinated commands."""
-        import re
 
         # Extract command names from available commands
         real_commands = set()
@@ -1276,9 +1268,6 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
 
     def _create_complete_command(self, user_input: str):
         """Create a complete working command with full automation."""
-        import os
-        import re
-        from pathlib import Path
 
         console.print("[bold blue]🤖 Starting automated command creation...[/bold blue]")
         console.print()
@@ -1336,7 +1325,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
         except Exception:
             commands = []
 
-        command_context = (
+        _command_context = (  # noqa: F841
             "\n".join(
                 f"Command: {cmd['name']}\nDescription: {cmd.get('description', '')}"
                 for cmd in commands
@@ -1345,7 +1334,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
             else "(No command context available)"
         )
 
-        prompt = f"""You are creating a complete MCLI command. Generate ONLY the Python code with this exact structure:
+        prompt = """You are creating a complete MCLI command. Generate ONLY the Python code with this exact structure:
 
 COMMAND_NAME: [single word command name]
 FILENAME: [snake_case_filename.py]
@@ -1389,7 +1378,6 @@ Generate a working command that implements the requested functionality. Use prop
 
     def _parse_command_response(self, response: str) -> dict:
         """Parse AI response to extract command information."""
-        import re
 
         # Extract command name
         name_match = re.search(r"COMMAND_NAME:\s*([a-zA-Z_][a-zA-Z0-9_-]*)", response)
@@ -1422,7 +1410,6 @@ Generate a working command that implements the requested functionality. Use prop
 
     def _create_command_file(self, command_info: dict) -> str:
         """Create the command file in the appropriate directory."""
-        from pathlib import Path
 
         # Choose directory based on command type
         base_dir = Path(__file__).parent.parent.parent  # mcli src directory
@@ -1457,7 +1444,7 @@ Generate a working command that implements the requested functionality. Use prop
             return False
 
     def is_system_control_request(self, user_input: str) -> bool:
-        """Check if user input is requesting system control functionality"""
+        """Check if user input is requesting system control functionality."""
         lower_input = user_input.lower()
 
         # System control keywords
@@ -1547,9 +1534,7 @@ Generate a working command that implements the requested functionality. Use prop
             r"\bclear\s+(cache|system)",  # "clear cache" or "clear system"
         ]
 
-        import re
-
-        for pattern in system_patterns:
+        for pattern in system_patterns:  # noqa: SIM110
             if re.search(pattern, lower_input):
                 return True
 
@@ -1557,7 +1542,7 @@ Generate a working command that implements the requested functionality. Use prop
         return any(keyword in lower_input for keyword in system_keywords)
 
     def handle_system_control(self, user_input: str):
-        """Handle system control requests with intelligent reasoning and suggestions"""
+        """Handle system control requests with intelligent reasoning and suggestions."""
         try:
             console.print("[dim]🤖 Processing system control request...[/dim]")
 
@@ -1609,7 +1594,7 @@ Generate a working command that implements the requested functionality. Use prop
             console.print("  • 'Close TextEdit'")
 
     def _provide_intelligent_suggestions(self, user_input: str, result: dict):
-        """Provide intelligent suggestions based on system control results"""
+        """Provide intelligent suggestions based on system control results."""
         try:
             lower_input = user_input.lower()
             data = result.get("data", {})
@@ -1630,12 +1615,12 @@ Generate a working command that implements the requested functionality. Use prop
             elif "time" in lower_input:
                 self._suggest_time_actions(data)
 
-        except Exception as e:
+        except Exception:
             # Don't let suggestion errors break the main flow
             pass
 
     def _suggest_disk_cleanup(self, disk_data: dict):
-        """Suggest disk cleanup actions based on usage"""
+        """Suggest disk cleanup actions based on usage."""
         if not disk_data:
             return
 
@@ -1671,7 +1656,7 @@ Generate a working command that implements the requested functionality. Use prop
                 console.print(f"  {suggestion}")
 
     def _suggest_memory_optimization(self, memory_data: dict):
-        """Suggest memory optimization actions"""
+        """Suggest memory optimization actions."""
         if not memory_data:
             return
 
@@ -1696,7 +1681,7 @@ Generate a working command that implements the requested functionality. Use prop
                 console.print(f"  {suggestion}")
 
     def _suggest_system_actions(self, system_data: dict):
-        """Suggest system-related actions"""
+        """Suggest system-related actions."""
         if not system_data:
             return
 
@@ -1734,7 +1719,7 @@ Generate a working command that implements the requested functionality. Use prop
                 console.print(f"  {suggestion}")
 
     def _suggest_time_actions(self, time_data: dict):
-        """Suggest time-related actions"""
+        """Suggest time-related actions."""
         if not time_data:
             return
 
@@ -1756,7 +1741,7 @@ Generate a working command that implements the requested functionality. Use prop
                 elif 17 < hour < 22:  # Evening
                     suggestions.append("🌆 Good evening! Wrapping up for the day?")
 
-            except:
+            except Exception:
                 pass
 
         suggestions.append("I can also help you schedule tasks with the workflow system!")
@@ -1767,7 +1752,7 @@ Generate a working command that implements the requested functionality. Use prop
                 console.print(f"  {suggestion}")
 
     def _is_system_help_request(self, query: str) -> bool:
-        """Detect if this is a request for system help or cleanup"""
+        """Detect if this is a request for system help or cleanup."""
         lower_query = query.lower()
 
         help_patterns = [
@@ -1788,16 +1773,14 @@ Generate a working command that implements the requested functionality. Use prop
             r"help me.*clean",
         ]
 
-        import re
-
-        for pattern in help_patterns:
+        for pattern in help_patterns:  # noqa: SIM110
             if re.search(pattern, lower_query):
                 return True
 
         return False
 
     def _handle_system_help_request(self, query: str):
-        """Handle requests for system help and cleanup"""
+        """Handle requests for system help and cleanup."""
         lower_query = query.lower()
 
         console.print("[dim]🤖 I can definitely help you with system cleanup![/dim]")
@@ -1846,7 +1829,7 @@ Generate a working command that implements the requested functionality. Use prop
         )
 
     def _load_scheduled_jobs(self):
-        """Load and start monitoring existing scheduled jobs"""
+        """Load and start monitoring existing scheduled jobs."""
         try:
             # Lazy import to avoid circular dependencies
             from mcli.workflow.scheduler.job import JobStatus
@@ -1863,12 +1846,12 @@ Generate a working command that implements the requested functionality. Use prop
             if active_count > 0:
                 console.print(f"[dim]📅 {active_count} scheduled jobs loaded[/dim]")
 
-        except Exception as e:
+        except Exception:
             # Silently handle import/loading errors at startup
             pass
 
     def _is_job_management_request(self, query: str) -> bool:
-        """Detect if this is a job/schedule management request"""
+        """Detect if this is a job/schedule management request."""
         lower_query = query.lower()
 
         job_patterns = [
@@ -1901,16 +1884,14 @@ Generate a working command that implements the requested functionality. Use prop
             r".*completion.*",
         ]
 
-        import re
-
-        for pattern in job_patterns:
+        for pattern in job_patterns:  # noqa: SIM110
             if re.search(pattern, lower_query):
                 return True
 
         return False
 
     def _handle_job_management(self, query: str):
-        """Handle job scheduling and management requests"""
+        """Handle job scheduling and management requests."""
         lower_query = query.lower()
 
         console.print("[dim]🤖 Processing job management request...[/dim]")
@@ -1982,12 +1963,13 @@ Generate a working command that implements the requested functionality. Use prop
             console.print(f"[red]❌ Error handling job request: {e}[/red]")
 
     def _show_agent_status(self):
-        """Show comprehensive agent status including jobs, system state, and context"""
+        """Show comprehensive agent status including jobs, system state, and context."""
         console.print("\n[bold cyan]🤖 Personal Assistant Status Report[/bold cyan]")
 
         # Jobs and schedules
         try:
-            from mcli.workflow.scheduler.job import JobStatus, ScheduledJob
+            from mcli.workflow.scheduler.job import JobStatus
+            from mcli.workflow.scheduler.job import ScheduledJob as Job
             from mcli.workflow.scheduler.persistence import JobStorage
 
             job_storage = JobStorage()
@@ -2024,13 +2006,13 @@ Generate a working command that implements the requested functionality. Use prop
                 elif status == JobStatus.FAILED.value:
                     failed_jobs.append(job_dict)
 
-        except Exception as e:
+        except Exception:
             jobs = []
             active_jobs = []
             completed_jobs = []
             failed_jobs = []
 
-        console.print(f"\n[green]📅 Scheduled Jobs:[/green]")
+        console.print("\n[green]📅 Scheduled Jobs:[/green]")
         if active_jobs:
             for job_data in active_jobs[:5]:  # Show first 5
                 try:
@@ -2053,7 +2035,7 @@ Generate a working command that implements the requested functionality. Use prop
 
         # Recent activity
         if completed_jobs or failed_jobs:
-            console.print(f"\n[blue]📊 Recent Activity:[/blue]")
+            console.print("\n[blue]📊 Recent Activity:[/blue]")
             if completed_jobs:
                 console.print(f"  ✅ {len(completed_jobs)} completed jobs")
             if failed_jobs:
@@ -2067,7 +2049,7 @@ Generate a working command that implements the requested functionality. Use prop
             memory_result = system_controller.get_memory_usage()
             disk_result = system_controller.get_disk_usage()
 
-            console.print(f"\n[yellow]💻 System Context:[/yellow]")
+            console.print("\n[yellow]💻 System Context:[/yellow]")
 
             if memory_result.get("success"):
                 mem_data = memory_result["data"]["virtual_memory"]
@@ -2086,10 +2068,10 @@ Generate a working command that implements the requested functionality. Use prop
                     )
 
         except Exception:
-            console.print(f"\n[yellow]💻 System Context: Unable to get current status[/yellow]")
+            console.print("\n[yellow]💻 System Context: Unable to get current status[/yellow]")
 
         # Agent capabilities reminder
-        console.print(f"\n[magenta]🛠️ I can help you with:[/magenta]")
+        console.print("\n[magenta]🛠️ I can help you with:[/magenta]")
         console.print("  • System monitoring and cleanup")
         console.print("  • Application control and automation")
         console.print("  • Scheduled tasks and reminders")
@@ -2101,7 +2083,7 @@ Generate a working command that implements the requested functionality. Use prop
         )
 
     def _handle_job_scheduling(self, query: str):
-        """Handle requests to schedule new jobs"""
+        """Handle requests to schedule new jobs."""
         console.print("[green]📅 Let me help you schedule that task![/green]")
 
         # For now, provide guidance on scheduling
@@ -2124,9 +2106,10 @@ Generate a working command that implements the requested functionality. Use prop
         )
 
     def _handle_job_cancellation(self, query: str):
-        """Handle requests to cancel jobs"""
+        """Handle requests to cancel jobs."""
         try:
             from mcli.workflow.scheduler.job import JobStatus
+            from mcli.workflow.scheduler.job import ScheduledJob as Job
             from mcli.workflow.scheduler.persistence import JobStorage
 
             job_storage = JobStorage()
@@ -2156,7 +2139,7 @@ Generate a working command that implements the requested functionality. Use prop
         console.print("\n[dim]To cancel a specific job, use: 'cancel job [name]'[/dim]")
 
     def _show_startup_status(self):
-        """Show proactive status update when assistant starts"""
+        """Show proactive status update when assistant starts."""
         try:
             # Quick system check
             from mcli.chat.system_controller import system_controller
@@ -2215,11 +2198,11 @@ Generate a working command that implements the requested functionality. Use prop
             else:
                 console.print("\n[green]🤖 All systems running smoothly![/green]")
 
-        except Exception as e:
-            console.print(f"\n[green]🤖 All systems running smoothly![/green]")
+        except Exception:
+            console.print("\n[green]🤖 All systems running smoothly![/green]")
 
     def _handle_cron_test(self, query: str):
-        """Handle cron test execution requests"""
+        """Handle cron test execution requests."""
         console.print("[green]🕒 Running MCLI Cron Validation Test...[/green]")
 
         try:
@@ -2247,7 +2230,7 @@ Generate a working command that implements the requested functionality. Use prop
                 # Show successful output
                 console.print(result.stdout)
             else:
-                console.print(f"[red]❌ Cron test failed:[/red]")
+                console.print("[red]❌ Cron test failed:[/red]")
                 console.print(result.stderr if result.stderr else result.stdout)
 
         except subprocess.TimeoutExpired:
@@ -2258,7 +2241,7 @@ Generate a working command that implements the requested functionality. Use prop
             console.print("  mcli cron-test --quick --verbose")
 
     def _show_failed_jobs(self):
-        """Show detailed information about failed jobs"""
+        """Show detailed information about failed jobs."""
         console.print("[red]❌ Analyzing Failed Jobs...[/red]")
 
         try:
@@ -2304,7 +2287,7 @@ Generate a working command that implements the requested functionality. Use prop
                 console.print(f"\n[dim]... and {len(failed_jobs) - 10} more failed jobs[/dim]")
 
             # Show helpful actions
-            console.print(f"\n[cyan]💡 Recommended Actions:[/cyan]")
+            console.print("\n[cyan]💡 Recommended Actions:[/cyan]")
             console.print("• Check job commands and file paths")
             console.print("• Verify system permissions")
             console.print("• Review error messages above")
@@ -2314,11 +2297,10 @@ Generate a working command that implements the requested functionality. Use prop
             console.print(f"[red]❌ Failed to analyze jobs: {e}[/red]")
 
     def _show_job_completion_details(self):
-        """Show comprehensive job completion analysis"""
+        """Show comprehensive job completion analysis."""
         console.print("[blue]📊 Job Completion Analysis...[/blue]")
 
         try:
-            from datetime import datetime, timedelta
 
             from mcli.workflow.scheduler.job import JobStatus
             from mcli.workflow.scheduler.persistence import JobStorage
@@ -2348,7 +2330,7 @@ Generate a working command that implements the requested functionality. Use prop
                         pending_jobs.append(job)
 
             # Status summary
-            console.print(f"\n[green]📈 Job Status Summary:[/green]")
+            console.print("\n[green]📈 Job Status Summary:[/green]")
             console.print(f"  ✅ Completed: {len(completed_jobs)}")
             console.print(f"  🔄 Running: {len(running_jobs)}")
             console.print(f"  ❌ Failed: {len(failed_jobs)}")
@@ -2361,7 +2343,7 @@ Generate a working command that implements the requested functionality. Use prop
 
             if total_runs > 0:
                 success_rate = total_successes / total_runs * 100
-                console.print(f"\n[cyan]⚡ Performance Metrics:[/cyan]")
+                console.print("\n[cyan]⚡ Performance Metrics:[/cyan]")
                 console.print(f"  Total Executions: {total_runs}")
                 console.print(f"  Success Rate: {success_rate:.1f}%")
                 console.print(f"  Successful: {total_successes}")
@@ -2375,7 +2357,7 @@ Generate a working command that implements the requested functionality. Use prop
             )[:5]
 
             if recent_completed:
-                console.print(f"\n[green]🎯 Recent Completions:[/green]")
+                console.print("\n[green]🎯 Recent Completions:[/green]")
                 for job in recent_completed:
                     runtime = (
                         f" ({job.runtime_seconds:.2f}s)"
@@ -2391,12 +2373,12 @@ Generate a working command that implements the requested functionality. Use prop
                 job_types[job_type] = job_types.get(job_type, 0) + 1
 
             if job_types:
-                console.print(f"\n[blue]📋 Job Types:[/blue]")
+                console.print("\n[blue]📋 Job Types:[/blue]")
                 for job_type, count in sorted(job_types.items()):
                     console.print(f"  {job_type}: {count} jobs")
 
             # Helpful commands
-            console.print(f"\n[yellow]🔧 Available Commands:[/yellow]")
+            console.print("\n[yellow]🔧 Available Commands:[/yellow]")
             console.print("• 'show failed jobs' - Analyze job failures")
             console.print("• 'run cron test' - Validate cron system")
             console.print("• 'cancel job <name>' - Remove specific job")

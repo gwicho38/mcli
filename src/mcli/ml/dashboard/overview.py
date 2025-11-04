@@ -1,4 +1,4 @@
-"""Overview page - Introduction to the Politician Trading Tracker"""
+"""Overview page - Introduction to the Politician Trading Tracker."""
 
 import streamlit as st
 
@@ -15,7 +15,7 @@ except ImportError:
 
 
 def show_overview():
-    """Main overview page"""
+    """Main overview page."""
 
     # Hero section
     st.markdown(

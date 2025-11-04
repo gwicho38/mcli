@@ -3,8 +3,7 @@ System Integration for MCLI Chat
 Provides system control capabilities directly within chat conversations
 """
 
-import json
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from mcli.lib.logger.logger import get_logger
 
@@ -692,7 +691,7 @@ class ChatSystemIntegration:
                 swap = memory_data["swap_memory"]
 
                 summary = [
-                    f"💾 Memory Usage:",
+                    "💾 Memory Usage:",
                     f"  RAM: {vm['used_gb']:.1f}GB used / {vm['total_gb']:.1f}GB total ({vm['usage_percent']}%)",
                     f"  Available: {vm['available_gb']:.1f}GB",
                     f"  Swap: {swap['used_gb']:.1f}GB used / {swap['total_gb']:.1f}GB total ({swap['usage_percent']}%)",
@@ -723,7 +722,7 @@ class ChatSystemIntegration:
             if result["success"]:
                 disk_data = result["data"]
 
-                summary = [f"💽 Disk Usage:"]
+                summary = ["💽 Disk Usage:"]
 
                 # Show main disk first
                 if disk_data["total_disk_gb"] > 0:
@@ -763,7 +762,7 @@ class ChatSystemIntegration:
             if result["success"]:
                 cache_data = result["data"]
 
-                summary = [f"🧹 Cache Cleanup Results:"]
+                summary = ["🧹 Cache Cleanup Results:"]
 
                 if cache_data["cleared_items"]:
                     for item in cache_data["cleared_items"]:

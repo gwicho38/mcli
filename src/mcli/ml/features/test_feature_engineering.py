@@ -1,4 +1,4 @@
-"""Test script for feature engineering system"""
+"""Test script for feature engineering system."""
 
 import os
 import sys
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def generate_mock_trading_data(n_records: int = 100) -> pd.DataFrame:
-    """Generate mock politician trading data"""
+    """Generate mock politician trading data."""
     np.random.seed(42)
 
     politicians = ["Nancy Pelosi", "Mitch McConnell", "Chuck Schumer", "Kevin McCarthy"]
@@ -36,7 +36,7 @@ def generate_mock_trading_data(n_records: int = 100) -> pd.DataFrame:
     records = []
     start_date = datetime.now() - timedelta(days=365)
 
-    for i in range(n_records):
+    for _i in range(n_records):
         days_ago = np.random.randint(0, 365)
         trade_date = start_date + timedelta(days=days_ago)
 
@@ -60,7 +60,7 @@ def generate_mock_trading_data(n_records: int = 100) -> pd.DataFrame:
 
 
 def generate_mock_stock_data(tickers: list, days: int = 365) -> pd.DataFrame:
-    """Generate mock stock price data"""
+    """Generate mock stock price data."""
     np.random.seed(42)
 
     stock_data = []
@@ -99,7 +99,7 @@ def generate_mock_stock_data(tickers: list, days: int = 365) -> pd.DataFrame:
 
 
 def test_stock_features():
-    """Test stock feature extraction"""
+    """Test stock feature extraction."""
     logger.info("Testing stock features...")
 
     from stock_features import StockRecommendationFeatures, TechnicalIndicatorFeatures
@@ -135,7 +135,7 @@ def test_stock_features():
 
 
 def test_political_features():
-    """Test political feature extraction"""
+    """Test political feature extraction."""
     logger.info("Testing political features...")
 
     from political_features import PoliticalInfluenceFeatures
@@ -171,7 +171,7 @@ def test_political_features():
 
 
 def test_ensemble_features():
-    """Test ensemble feature engineering"""
+    """Test ensemble feature engineering."""
     logger.info("Testing ensemble features...")
 
     from ensemble_features import EnsembleFeatureBuilder
@@ -207,7 +207,7 @@ def test_ensemble_features():
 
 
 def test_recommendation_engine():
-    """Test the full recommendation engine"""
+    """Test the full recommendation engine."""
     logger.info("Testing recommendation engine...")
 
     from recommendation_engine import RecommendationConfig, StockRecommendationEngine
@@ -257,12 +257,11 @@ def test_recommendation_engine():
 
 
 def test_feature_integration():
-    """Test integration of all feature components"""
+    """Test integration of all feature components."""
     logger.info("Testing feature integration...")
 
     from ensemble_features import EnsembleFeatureBuilder
     from political_features import PoliticalInfluenceFeatures
-    from stock_features import StockRecommendationFeatures
 
     # Generate test data
     trading_data = generate_mock_trading_data(30)
@@ -304,7 +303,7 @@ def test_feature_integration():
 
 
 def main():
-    """Run all feature engineering tests"""
+    """Run all feature engineering tests."""
     logger.info("Starting feature engineering tests...")
 
     try:

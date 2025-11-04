@@ -4,7 +4,7 @@ End-to-end test for model server workflow
 Tests the complete lifecycle of using the model server.
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from click.testing import CliRunner

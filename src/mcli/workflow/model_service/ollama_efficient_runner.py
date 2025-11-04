@@ -6,13 +6,11 @@ This script uses the Ollama API to pull the most efficient models and then
 integrates them with the MCLI model service for local inference.
 """
 
-import json
-import os
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import click
 import requests
@@ -20,7 +18,6 @@ import requests
 # Add the parent directory to the path so we can import the model service
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from mcli.workflow.model_service.model_service import ModelManager, ModelService
 
 # Efficient models from Ollama with their model names
 EFFICIENT_MODELS = {
@@ -73,7 +70,7 @@ EFFICIENT_MODELS = {
 
 
 def check_ollama_installed():
-    """Check if Ollama is installed and running"""
+    """Check if Ollama is installed and running."""
     try:
         # Check if ollama command exists
         result = subprocess.run(["ollama", "--version"], capture_output=True, text=True, timeout=5)
@@ -93,7 +90,7 @@ def check_ollama_installed():
 
 
 def check_ollama_server():
-    """Check if Ollama server is running"""
+    """Check if Ollama server is running."""
     try:
         response = requests.get("http://localhost:11434/api/tags", timeout=5)
         if response.status_code == 200:
@@ -116,7 +113,7 @@ def check_ollama_server():
 
 
 def get_system_info():
-    """Get system information for model selection"""
+    """Get system information for model selection."""
     import psutil
 
     # Get CPU info
@@ -151,7 +148,7 @@ def get_system_info():
 
 
 def recommend_model(system_info: Dict) -> str:
-    """Recommend the best model based on system capabilities"""
+    """Recommend the best model based on system capabilities."""
     print("🔍 Analyzing system capabilities...")
     print(f"  CPU Cores: {system_info['cpu_count']}")
     print(f"  CPU Frequency: {system_info['cpu_freq_mhz']:.0f} MHz")
@@ -175,7 +172,7 @@ def recommend_model(system_info: Dict) -> str:
 
 
 def pull_ollama_model(model_key: str) -> bool:
-    """Pull a model from Ollama"""
+    """Pull a model from Ollama."""
     model_info = EFFICIENT_MODELS[model_key]
 
     print(f"\n📥 Pulling {model_info['name']} from Ollama...")
@@ -209,7 +206,7 @@ def pull_ollama_model(model_key: str) -> bool:
 
 
 def test_ollama_model(model_key: str):
-    """Test the Ollama model with sample prompts"""
+    """Test the Ollama model with sample prompts."""
     model_info = EFFICIENT_MODELS[model_key]
 
     print(f"\n🧪 Testing {model_info['name']} via Ollama...")
@@ -247,7 +244,7 @@ def test_ollama_model(model_key: str):
 
 
 def list_available_models():
-    """List models available in Ollama"""
+    """List models available in Ollama."""
     try:
         response = requests.get("http://localhost:11434/api/tags", timeout=5)
         if response.status_code == 200:
@@ -265,17 +262,16 @@ def list_available_models():
 
 
 def create_mcli_integration_script(model_key: str):
-    """Create a script to integrate the Ollama model with MCLI"""
-    model_info = EFFICIENT_MODELS[model_key]
+    """Create a script to integrate the Ollama model with MCLI."""
+    EFFICIENT_MODELS[model_key]
 
-    script_content = f'''#!/usr/bin/env python3
+    script_content = '''#!/usr/bin/env python3
 """
 Integration script for {model_info['name']} with MCLI model service.
 This script provides a bridge between Ollama and MCLI model service.
 """
 
 import requests
-import json
 import time
 from typing import Dict, Any
 
@@ -363,7 +359,7 @@ if __name__ == "__main__":
 @click.option("--list-models", is_flag=True, help="List available models in Ollama")
 @click.option("--create-bridge", is_flag=True, help="Create MCLI integration script")
 def main(model: Optional[str], auto: bool, test: bool, list_models: bool, create_bridge: bool):
-    """Download and run efficient models from Ollama"""
+    """Download and run efficient models from Ollama."""
 
     print("🚀 Ollama Efficient Model Runner")
     print("=" * 50)
@@ -415,8 +411,8 @@ def main(model: Optional[str], auto: bool, test: bool, list_models: bool, create
     model_info = EFFICIENT_MODELS[selected_model]
     print(f"\n🎉 Setup complete! Model {model_info['name']} is ready to use.")
     print(f"📊 Model: {model_info['ollama_name']}")
-    print(f"🌐 Ollama API: http://localhost:11434")
-    print(f"📝 Use 'ollama list' to see all models")
+    print("🌐 Ollama API: http://localhost:11434")
+    print("📝 Use 'ollama list' to see all models")
 
     return 0
 

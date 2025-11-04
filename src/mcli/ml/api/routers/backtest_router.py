@@ -1,4 +1,4 @@
-"""Backtesting API routes"""
+"""Backtesting API routes."""
 
 from fastapi import APIRouter, Depends
 
@@ -10,5 +10,5 @@ router = APIRouter()
 
 @router.post("/run")
 async def run_backtest(current_user: User = Depends(get_current_active_user)):
-    """Run backtest"""
+    """Run backtest."""
     return {"status": "started"}

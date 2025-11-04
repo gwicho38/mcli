@@ -5,9 +5,7 @@ Unit tests for mcli.workflow.scheduler.monitor module
 import threading
 import time
 from datetime import datetime
-from unittest.mock import MagicMock, call, patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 
 class TestJobMonitor:
@@ -23,7 +21,6 @@ class TestJobMonitor:
     def teardown_method(self):
         """Cleanup after each test"""
         # Make sure monitoring is stopped
-        pass
 
     def test_job_monitor_init_without_callback(self):
         """Test JobMonitor initialization without callback"""

@@ -2,14 +2,10 @@ import base64
 import json
 import os
 import queue
-import shutil
-import sys
-import tempfile
 import threading
 import time
 import uuid
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import click
 import cv2
@@ -323,7 +319,7 @@ class ComfyUIClient:
             "subfolder": "v2v_input",  # Custom subfolder for our workflow
             "type": "input",
         }
-        response = self.session.post(f"{self.api_url}/upload/image", json=data)
+        self.session.post(f"{self.api_url}/upload/image", json=data)
         return filename, "v2v_input"
 
     def wait_for_prompt(self, prompt_id: str) -> Dict[str, Any]:
@@ -418,7 +414,7 @@ class ComfyUIClient:
 
         # Get the output image
         output_node = None
-        for node_id, node_output in result["outputs"].items():
+        for _node_id, node_output in result["outputs"].items():
             if "images" in node_output:
                 output_node = node_output
                 break
@@ -678,7 +674,7 @@ class VideoToVideoGenerator:
             with click.progressbar(
                 enumerate(frame_paths), length=len(frame_paths), label="Processing frames"
             ) as bar:
-                for i, frame_path in bar:
+                for _i, frame_path in bar:
                     processed_frame_path = self.comfyui_client.process_frame(
                         frame_path=frame_path,
                         prompt=prompt,
@@ -795,7 +791,6 @@ class VideoToVideoGenerator:
 @click.group(name="model")
 def model():
     """Video-to-video generation workflow using ComfyUI and Hunyuan video models."""
-    pass
 
 
 @model.command()
@@ -1012,7 +1007,7 @@ def check_comfyui():
 
                 # Check for hunyuan models
                 hunyuan_found = False
-                for model_type, models in models_info.items():
+                for _model_type, models in models_info.items():
                     for model in models:
                         if "hunyuan" in model.lower():
                             hunyuan_found = True

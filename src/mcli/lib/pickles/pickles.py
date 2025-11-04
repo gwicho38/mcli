@@ -3,8 +3,6 @@ import pickle
 from pathlib import Path
 from typing import Callable, Generic, Type, TypeVar
 
-import click
-
 T = TypeVar("T")
 
 

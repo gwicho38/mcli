@@ -54,7 +54,6 @@ def test_new_user_discovers_features():
     """
     Test new user discovering features through help commands
     """
-    from mcli.app.main import main
     from mcli.self.self_cmd import self_app
 
     runner = CliRunner()

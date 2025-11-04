@@ -1,15 +1,12 @@
-"""Streamlit dashboard for ML system monitoring - Supabase version"""
+"""Streamlit dashboard for ML system monitoring - Supabase version."""
 
-import asyncio
 import os
 from datetime import datetime, timedelta
 
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
 
 from mcli.ml.dashboard.common import (
     get_supabase_client,
@@ -30,7 +27,7 @@ apply_dashboard_styles()
 
 @st.cache_data(ttl=30)
 def get_politicians_data():
-    """Get politicians data from Supabase"""
+    """Get politicians data from Supabase."""
     client = get_supabase_client()
     if not client:
         st.warning("No Supabase client available")
@@ -49,7 +46,7 @@ def get_politicians_data():
 
 @st.cache_data(ttl=30)
 def get_disclosures_data():
-    """Get trading disclosures from Supabase with politician details"""
+    """Get trading disclosures from Supabase with politician details."""
     client = get_supabase_client()
     if not client:
         return pd.DataFrame()
@@ -114,7 +111,7 @@ def get_disclosures_data():
 
 @st.cache_data(ttl=30)
 def get_predictions_data():
-    """Get ML predictions from Supabase"""
+    """Get ML predictions from Supabase."""
     client = get_supabase_client()
     if not client:
         return pd.DataFrame()
@@ -129,14 +126,14 @@ def get_predictions_data():
             .execute()
         )
         return pd.DataFrame(response.data)
-    except:
+    except Exception:
         # Table might not exist yet
         return pd.DataFrame()
 
 
 @st.cache_data(ttl=30)
 def get_portfolios_data():
-    """Get portfolio data from Supabase"""
+    """Get portfolio data from Supabase."""
     client = get_supabase_client()
     if not client:
         return pd.DataFrame()
@@ -145,14 +142,14 @@ def get_portfolios_data():
         # Try to get portfolios if table exists
         response = client.table("portfolios").select("*").execute()
         return pd.DataFrame(response.data)
-    except:
+    except Exception:
         # Table might not exist yet
         return pd.DataFrame()
 
 
 @st.cache_data(ttl=30)
 def get_jobs_data():
-    """Get data pull jobs from Supabase"""
+    """Get data pull jobs from Supabase."""
     client = get_supabase_client()
     if not client:
         return pd.DataFrame()
@@ -172,7 +169,7 @@ def get_jobs_data():
 
 
 def main():
-    """Main dashboard function"""
+    """Main dashboard function."""
 
     # Title and header
     st.title("🤖 MCLI ML System Dashboard")
@@ -280,7 +277,7 @@ def main():
 
 
 def show_overview():
-    """Show overview dashboard"""
+    """Show overview dashboard."""
     st.header("System Overview")
 
     # Get data
@@ -365,7 +362,7 @@ def show_overview():
 
 
 def show_politicians():
-    """Show politicians dashboard"""
+    """Show politicians dashboard."""
     st.header("Politicians")
 
     politicians = get_politicians_data()
@@ -432,7 +429,7 @@ def show_politicians():
 
 
 def show_disclosures():
-    """Show trading disclosures dashboard"""
+    """Show trading disclosures dashboard."""
     st.header("Trading Disclosures")
 
     disclosures = get_disclosures_data()
@@ -507,7 +504,7 @@ def show_disclosures():
 
 
 def show_predictions():
-    """Show ML predictions dashboard"""
+    """Show ML predictions dashboard."""
     st.header("ML Predictions")
 
     predictions = get_predictions_data()
@@ -528,7 +525,7 @@ def show_predictions():
 
 
 def show_jobs():
-    """Show data pull jobs dashboard"""
+    """Show data pull jobs dashboard."""
     st.header("Data Pull Jobs")
 
     jobs = get_jobs_data()
@@ -575,7 +572,7 @@ def show_jobs():
 
 
 def show_system_health():
-    """Show system health dashboard"""
+    """Show system health dashboard."""
     st.header("System Health")
 
     client = get_supabase_client()
@@ -589,7 +586,7 @@ def show_system_health():
                 # Try a simple query to test connection
                 client.table("politicians").select("id").limit(1).execute()
                 st.success("✅ Supabase: Connected")
-            except:
+            except Exception:
                 st.error("❌ Supabase: Connection Error")
         else:
             st.warning("⚠️ Supabase: Not Configured")

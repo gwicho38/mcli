@@ -17,7 +17,6 @@ from .store import SecretsStore
 @click.group(name="secrets", help="Secure secrets management with encryption and git sync")
 def secrets_group():
     """Secrets management commands."""
-    pass
 
 
 @secrets_group.command(name="repl", help="Launch interactive secrets shell")
@@ -127,7 +126,6 @@ def secrets_import(env_file: str, namespace: str):
 @secrets_group.group(name="store", help="Git-based secrets synchronization")
 def store_group():
     """Store management commands."""
-    pass
 
 
 @store_group.command(name="init", help="Initialize secrets store")

@@ -1,29 +1,28 @@
-"""Risk management module for trading portfolios"""
+"""Risk management module for trading portfolios."""
 
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Dict, List, Tuple
 from uuid import UUID
 
 import numpy as np
-import pandas as pd
 from sqlalchemy.orm import Session
 
-from mcli.ml.trading.models import Portfolio, Position, RiskLevel, TradingOrder
+from mcli.ml.trading.models import Position, RiskLevel
 from mcli.ml.trading.trading_service import TradingService
 
 logger = logging.getLogger(__name__)
 
 
 class RiskManager:
-    """Risk management system for trading portfolios"""
+    """Risk management system for trading portfolios."""
 
     def __init__(self, trading_service: TradingService):
         self.trading_service = trading_service
         self.db = trading_service.db
 
     def calculate_portfolio_risk(self, portfolio_id: UUID) -> Dict:
-        """Calculate comprehensive risk metrics for a portfolio"""
+        """Calculate comprehensive risk metrics for a portfolio."""
         try:
             portfolio = self.trading_service.get_portfolio(portfolio_id)
             if not portfolio:
@@ -60,7 +59,7 @@ class RiskManager:
             return {}
 
     def _calculate_position_risk(self, position: Position, total_market_value: float) -> Dict:
-        """Calculate risk metrics for an individual position"""
+        """Calculate risk metrics for an individual position."""
         try:
             # Position size as percentage of portfolio
             position_size_pct = (position.market_value / total_market_value) * 100
@@ -88,7 +87,7 @@ class RiskManager:
             return {}
 
     def _estimate_volatility(self, symbol: str, days: int = 30) -> float:
-        """Estimate volatility for a symbol (simplified)"""
+        """Estimate volatility for a symbol (simplified)."""
         try:
             # In practice, you would calculate historical volatility
             # For now, use a simplified approach based on market cap and sector
@@ -117,7 +116,7 @@ class RiskManager:
     def _calculate_portfolio_risk_metrics(
         self, positions: List, position_risks: List[Dict]
     ) -> Dict:
-        """Calculate portfolio-level risk metrics"""
+        """Calculate portfolio-level risk metrics."""
         try:
             if not positions or not position_risks:
                 return {}
@@ -162,7 +161,7 @@ class RiskManager:
             return {}
 
     def _estimate_beta(self, symbol: str) -> float:
-        """Estimate beta for a symbol (simplified)"""
+        """Estimate beta for a symbol (simplified)."""
         try:
             # In practice, calculate beta against market index
             # For now, use simplified estimates
@@ -186,7 +185,7 @@ class RiskManager:
             return 1.0
 
     def check_risk_limits(self, portfolio_id: UUID, new_order: Dict) -> Tuple[bool, List[str]]:
-        """Check if a new order would violate risk limits"""
+        """Check if a new order would violate risk limits."""
         try:
             portfolio = self.trading_service.get_portfolio(portfolio_id)
             if not portfolio:
@@ -215,7 +214,7 @@ class RiskManager:
 
             # Check if adding to existing position
             existing_position = next((pos for pos in positions if pos.symbol == symbol), None)
-            if existing_position:
+            if existing_position:  # noqa: SIM102
                 if side == "buy":
                     new_total_size = (
                         (existing_position.market_value + order_value)
@@ -248,7 +247,7 @@ class RiskManager:
             return False, [f"Risk check failed: {e}"]
 
     def _estimate_order_value(self, symbol: str, quantity: int) -> float:
-        """Estimate the value of an order"""
+        """Estimate the value of an order."""
         try:
             import yfinance as yf
 
@@ -269,7 +268,7 @@ class RiskManager:
         signal_strength: float,
         risk_level: RiskLevel = RiskLevel.MODERATE,
     ) -> float:
-        """Calculate recommended position size based on signal strength and risk level"""
+        """Calculate recommended position size based on signal strength and risk level."""
         try:
             portfolio = self.trading_service.get_portfolio(portfolio_id)
             if not portfolio:
@@ -303,7 +302,7 @@ class RiskManager:
             return 0.0
 
     def generate_risk_report(self, portfolio_id: UUID) -> Dict:
-        """Generate comprehensive risk report for a portfolio"""
+        """Generate comprehensive risk report for a portfolio."""
         try:
             portfolio = self.trading_service.get_portfolio(portfolio_id)
             if not portfolio:
@@ -352,7 +351,7 @@ class RiskManager:
             return {}
 
     def _generate_risk_recommendations(self, risk_metrics: Dict, max_drawdown: float) -> List[str]:
-        """Generate risk management recommendations"""
+        """Generate risk management recommendations."""
         recommendations = []
 
         # Concentration risk
@@ -386,6 +385,6 @@ class RiskManager:
 
 
 def create_risk_manager(db_session: Session) -> RiskManager:
-    """Create a risk manager instance"""
+    """Create a risk manager instance."""
     trading_service = TradingService(db_session)
     return RiskManager(trading_service)

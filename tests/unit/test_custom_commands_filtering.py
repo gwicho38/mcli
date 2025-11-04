@@ -1,7 +1,6 @@
 """Tests for custom command test filtering functionality."""
 
 import json
-import os
 import tempfile
 from pathlib import Path
 

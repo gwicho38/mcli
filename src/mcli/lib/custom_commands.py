@@ -423,7 +423,7 @@ class CustomCommandManager:
                         ctx.exit(1)
                     finally:
                         # Clean up temporary file
-                        try:
+                        try:  # noqa: SIM105
                             Path(temp_file_path).unlink(missing_ok=True)
                         except Exception:
                             pass

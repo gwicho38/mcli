@@ -9,7 +9,6 @@ Uses temporary directory with hard links to avoid path issues.
 import os
 import shutil
 import subprocess
-import tempfile
 from dataclasses import dataclass
 from enum import Enum
 from glob import glob as file_glob
@@ -39,7 +38,7 @@ FORMAT_ALIASES = {
     "htm": "html",
     "xhtml": "html",
     # PDF
-    "pdf": "pdf",
+    "pd": "pd",
     # LaTeX
     "tex": "latex",
     "latex": "latex",
@@ -58,13 +57,13 @@ FORMAT_ALIASES = {
     "org": "org",
     "mediawiki": "mediawiki",
     "textile": "textile",
-    "rtf": "rtf",
+    "rt": "rt",
     "epub": "epub",
 }
 
 
 class ConversionMethod(Enum):
-    """Available conversion methods"""
+    """Available conversion methods."""
 
     PANDOC = "pandoc"
     NBCONVERT = "nbconvert"
@@ -74,7 +73,7 @@ class ConversionMethod(Enum):
 
 @dataclass
 class ConversionStrategy:
-    """Represents a conversion strategy with command and description"""
+    """Represents a conversion strategy with command and description."""
 
     method: ConversionMethod
     description: str
@@ -82,7 +81,7 @@ class ConversionStrategy:
 
 
 def get_temp_conversion_dir() -> Path:
-    """Get or create temporary conversion directory in ~/.mcli/commands/temp/"""
+    """Get or create temporary conversion directory in ~/.mcli/commands/temp/."""
     commands_dir = get_custom_commands_dir()
     temp_dir = commands_dir / "temp" / "conversions"
     temp_dir.mkdir(parents=True, exist_ok=True)
@@ -148,7 +147,7 @@ def get_conversion_strategies(
     strategies = []
 
     # Special handling for Jupyter notebook to PDF (notoriously problematic)
-    if from_format == "ipynb" and to_format == "pdf":
+    if from_format == "ipynb" and to_format == "pd":
         # Strategy 1: nbconvert (most reliable for notebooks)
         strategies.append(
             ConversionStrategy(
@@ -191,7 +190,7 @@ def get_conversion_strategies(
         strategies.append(ConversionStrategy(method=ConversionMethod.PANDOC, description="pandoc"))
 
     # PDF output (general)
-    elif to_format == "pdf":
+    elif to_format == "pd":
         strategies.append(
             ConversionStrategy(
                 method=ConversionMethod.PANDOC_LATEX, description="pandoc with LaTeX"
@@ -255,7 +254,7 @@ def execute_conversion_strategy(
             cmd = [
                 "pandoc",
                 str(temp_input),
-                "-f",
+                "-",
                 from_format,
                 "-o",
                 str(temp_output),
@@ -276,7 +275,7 @@ def execute_conversion_strategy(
             cmd_html = [
                 "pandoc",
                 str(temp_input),
-                "-f",
+                "-",
                 from_format,
                 "-t",
                 "html",
@@ -291,7 +290,7 @@ def execute_conversion_strategy(
                 return False, f"HTML intermediate failed: {result.stderr}"
 
             # Step 2: Convert HTML to PDF
-            cmd = ["pandoc", str(html_temp), "-f", "html", "-t", "pdf", "-o", str(temp_output)]
+            cmd = ["pandoc", str(html_temp), "-", "html", "-t", "pd", "-o", str(temp_output)]
 
             result = subprocess.run(
                 cmd, capture_output=True, text=True, check=True, timeout=120, cwd=str(temp_dir)
@@ -299,9 +298,9 @@ def execute_conversion_strategy(
 
         else:  # PANDOC
             # Standard pandoc conversion
-            cmd = ["pandoc", str(temp_input), "-f", from_format, "-o", str(temp_output)]
+            cmd = ["pandoc", str(temp_input), "-", from_format, "-o", str(temp_output)]
             # Use xelatex for PDF conversions (better Unicode support)
-            if to_format == "pdf":
+            if to_format == "pd":
                 cmd.append("--pdf-engine=xelatex")
             if pandoc_args:
                 cmd.extend(pandoc_args.split())
@@ -330,8 +329,7 @@ def execute_conversion_strategy(
 
 @click.group(name="doc-convert")
 def doc_convert():
-    """Document conversion with automatic fallback strategies"""
-    pass
+    """Document conversion with automatic fallback strategies."""
 
 
 @doc_convert.command()
@@ -573,7 +571,7 @@ def convert(from_format, to_format, path, output_dir, pandoc_args, no_fallback):
             output_path = input_path.parent / f"{input_path.stem}.{output_ext}"
 
         info(f"🔄 Converting: {input_path.name} → {output_path.name}")
-        info(f"   📁 Using temp directory: ~/.mcli/commands/temp/conversions/")
+        info("   📁 Using temp directory: ~/.mcli/commands/temp/conversions/")
 
         # Get conversion strategies
         strategies = get_conversion_strategies(
@@ -616,7 +614,7 @@ def convert(from_format, to_format, path, output_dir, pandoc_args, no_fallback):
         if conversion_succeeded:
             success_count += 1
         else:
-            error(f"   ❌ All conversion methods failed")
+            error("   ❌ All conversion methods failed")
             if last_error:
                 error(f"   ℹ️  Last error: {last_error[:200]}")
             error_count += 1

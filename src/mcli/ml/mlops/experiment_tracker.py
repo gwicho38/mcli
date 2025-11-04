@@ -1,4 +1,4 @@
-"""MLflow experiment tracking and model registry"""
+"""MLflow experiment tracking and model registry."""
 
 import json
 import logging
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MLflowConfig:
-    """Configuration for MLflow tracking"""
+    """Configuration for MLflow tracking."""
 
     tracking_uri: str = "sqlite:///mlruns.db"
     experiment_name: str = "politician-trading-predictions"
@@ -40,7 +40,7 @@ class MLflowConfig:
 
 @dataclass
 class ExperimentRun:
-    """Container for experiment run information"""
+    """Container for experiment run information."""
 
     run_id: str
     experiment_id: str
@@ -55,7 +55,7 @@ class ExperimentRun:
 
 
 class ExperimentTracker:
-    """MLflow experiment tracker for ML pipeline"""
+    """MLflow experiment tracker for ML pipeline."""
 
     def __init__(self, config: MLflowConfig):
         self.config = config
@@ -64,7 +64,7 @@ class ExperimentTracker:
         self.setup_mlflow()
 
     def setup_mlflow(self):
-        """Initialize MLflow tracking"""
+        """Initialize MLflow tracking."""
         mlflow.set_tracking_uri(self.config.tracking_uri)
 
         if self.config.registry_uri:
@@ -89,7 +89,7 @@ class ExperimentTracker:
         logger.info(f"Experiment: {self.config.experiment_name} (ID: {experiment_id})")
 
     def start_run(self, run_name: str, tags: Optional[Dict[str, str]] = None) -> ExperimentRun:
-        """Start a new MLflow run"""
+        """Start a new MLflow run."""
         if self.current_run:
             self.end_run()
 
@@ -115,7 +115,7 @@ class ExperimentTracker:
         return self.current_run
 
     def log_params(self, params: Dict[str, Any]):
-        """Log parameters to current run"""
+        """Log parameters to current run."""
         if not self.current_run:
             raise ValueError("No active MLflow run. Call start_run() first.")
 
@@ -132,7 +132,7 @@ class ExperimentTracker:
         logger.debug(f"Logged {len(params)} parameters")
 
     def log_metrics(self, metrics: Dict[str, float], step: Optional[int] = None):
-        """Log metrics to current run"""
+        """Log metrics to current run."""
         if not self.current_run:
             raise ValueError("No active MLflow run. Call start_run() first.")
 
@@ -143,7 +143,7 @@ class ExperimentTracker:
         logger.debug(f"Logged {len(metrics)} metrics at step {step}")
 
     def log_artifact(self, artifact_path: Union[str, Path], artifact_type: Optional[str] = None):
-        """Log artifact to current run"""
+        """Log artifact to current run."""
         if not self.current_run:
             raise ValueError("No active MLflow run. Call start_run() first.")
 
@@ -168,7 +168,7 @@ class ExperimentTracker:
         conda_env: Optional[Dict] = None,
         pip_requirements: Optional[List[str]] = None,
     ):
-        """Log model to current run"""
+        """Log model to current run."""
         if not self.current_run:
             raise ValueError("No active MLflow run. Call start_run() first.")
 
@@ -224,7 +224,7 @@ class ExperimentTracker:
         return self.current_run.model_uri
 
     def log_figure(self, figure, artifact_name: str):
-        """Log matplotlib figure"""
+        """Log matplotlib figure."""
         if not self.current_run:
             raise ValueError("No active MLflow run. Call start_run() first.")
 
@@ -233,7 +233,7 @@ class ExperimentTracker:
         logger.debug(f"Logged figure: {artifact_name}")
 
     def log_dict(self, dictionary: Dict, artifact_name: str):
-        """Log dictionary as JSON artifact"""
+        """Log dictionary as JSON artifact."""
         if not self.current_run:
             raise ValueError("No active MLflow run. Call start_run() first.")
 
@@ -242,7 +242,7 @@ class ExperimentTracker:
         logger.debug(f"Logged dictionary: {artifact_name}")
 
     def end_run(self, status: str = "FINISHED"):
-        """End current MLflow run"""
+        """End current MLflow run."""
         if not self.current_run:
             return
 
@@ -262,13 +262,13 @@ class ExperimentTracker:
         return current_run
 
     def get_run(self, run_id: str) -> mlflow.entities.Run:
-        """Get run by ID"""
+        """Get run by ID."""
         return self.client.get_run(run_id)
 
     def search_runs(
         self, filter_string: str = "", max_results: int = 100
     ) -> List[mlflow.entities.Run]:
-        """Search for runs in experiment"""
+        """Search for runs in experiment."""
         return self.client.search_runs(
             experiment_ids=[self.experiment_id],
             filter_string=filter_string,
@@ -276,7 +276,7 @@ class ExperimentTracker:
         )
 
     def compare_runs(self, run_ids: List[str], metrics: Optional[List[str]] = None) -> pd.DataFrame:
-        """Compare multiple runs"""
+        """Compare multiple runs."""
         runs_data = []
 
         for run_id in run_ids:
@@ -306,7 +306,7 @@ class ExperimentTracker:
 
 
 class ModelRegistry:
-    """MLflow model registry for model versioning and deployment"""
+    """MLflow model registry for model versioning and deployment."""
 
     def __init__(self, config: MLflowConfig):
         self.config = config
@@ -319,7 +319,7 @@ class ModelRegistry:
     def register_model(
         self, model_uri: str, model_name: str, tags: Optional[Dict[str, str]] = None
     ) -> str:
-        """Register model in MLflow registry"""
+        """Register model in MLflow registry."""
         try:
             # Create registered model if it doesn't exist
             self.client.create_registered_model(
@@ -342,7 +342,7 @@ class ModelRegistry:
     def transition_model_stage(
         self, model_name: str, version: int, stage: str, archive_existing: bool = True
     ):
-        """Transition model version to new stage"""
+        """Transition model version to new stage."""
         self.client.transition_model_version_stage(
             name=model_name,
             version=version,
@@ -355,7 +355,7 @@ class ModelRegistry:
     def load_model(
         self, model_name: str, version: Optional[int] = None, stage: Optional[str] = None
     ) -> Any:
-        """Load model from registry"""
+        """Load model from registry."""
         if version:
             model_uri = f"models:/{model_name}/{version}"
         elif stage:
@@ -368,18 +368,18 @@ class ModelRegistry:
         return model
 
     def get_model_version(self, model_name: str, version: int):
-        """Get specific model version details"""
+        """Get specific model version details."""
         return self.client.get_model_version(model_name, version)
 
     def get_latest_versions(self, model_name: str, stages: Optional[List[str]] = None):
-        """Get latest model versions for given stages"""
+        """Get latest model versions for given stages."""
         return self.client.get_latest_versions(model_name, stages=stages)
 
     def delete_model_version(self, model_name: str, version: int):
-        """Delete model version"""
+        """Delete model version."""
         self.client.delete_model_version(model_name, version)
         logger.info(f"Deleted {model_name} version {version}")
 
     def search_models(self, filter_string: str = "") -> List:
-        """Search registered models"""
+        """Search registered models."""
         return self.client.search_registered_models(filter_string=filter_string)

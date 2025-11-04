@@ -1,4 +1,3 @@
-import pytest
 from click.testing import CliRunner
 
 from mcli.workflow.wakatime.wakatime import wakatime

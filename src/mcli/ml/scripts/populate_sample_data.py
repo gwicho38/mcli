@@ -1,12 +1,8 @@
 """Populate database with sample data for dashboard testing."""
 
-import asyncio
 import random
 from datetime import datetime, timedelta
 
-import numpy as np
-
-from mcli.ml.config import settings
 from mcli.ml.database.models import (
     BacktestResult,
     Model,

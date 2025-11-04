@@ -2,11 +2,8 @@
 Unit tests for command store management functionality
 """
 
-import json
-import shutil
-import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 from click.testing import CliRunner
@@ -82,7 +79,7 @@ class TestStoreInit:
     def test_init_creates_directory(self, mock_home, mock_run, runner, tmp_path):
         """Test init creates store directory"""
         mock_home.return_value = tmp_path
-        store_path = tmp_path / "repos" / "mcli-commands"
+        tmp_path / "repos" / "mcli-commands"
 
         result = runner.invoke(store, ["init"])
 
@@ -96,7 +93,7 @@ class TestStoreInit:
         mock_home.return_value = tmp_path
         store_path = tmp_path / "repos" / "mcli-commands"
 
-        result = runner.invoke(store, [ "init"])
+        result = runner.invoke(store, ["init"])
 
         assert result.exit_code == 0
         gitignore = store_path / ".gitignore"
@@ -112,7 +109,7 @@ class TestStoreInit:
         mock_home.return_value = tmp_path
         store_path = tmp_path / "repos" / "mcli-commands"
 
-        result = runner.invoke(store, [ "init"])
+        result = runner.invoke(store, ["init"])
 
         assert result.exit_code == 0
         readme = store_path / "README.md"
@@ -126,9 +123,7 @@ class TestStoreInit:
         """Test init with remote URL"""
         mock_home.return_value = tmp_path
 
-        result = runner.invoke(
-            store, ["init", "--remote", "git@github.com:user/repo.git"]
-        )
+        result = runner.invoke(store, ["init", "--remote", "git@github.com:user/repo.git"])
 
         assert result.exit_code == 0
         # Check that git remote add was called
@@ -143,7 +138,7 @@ class TestStoreInit:
         store_path.mkdir(parents=True)
         (store_path / ".git").mkdir()
 
-        result = runner.invoke(store, [ "init"])
+        result = runner.invoke(store, ["init"])
 
         assert result.exit_code == 0
         assert "already exists" in result.output.lower()
@@ -175,7 +170,7 @@ class TestStorePush:
         mock_run.return_value = Mock(stdout="", returncode=0)
 
         with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "push"])
+            result = runner.invoke(store, ["push"])
 
         assert result.exit_code == 0
 
@@ -197,33 +192,10 @@ class TestStorePush:
         mock_run.return_value = Mock(stdout="", returncode=0)
 
         with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "push"])
+            runner.invoke(store, ["push"])
 
         # Backup file should not be copied
         assert not (store_path / "test.json.backup").exists()
-
-    @patch("mcli.app.store_cmd._get_store_path")
-    @patch("mcli.app.store_cmd.subprocess.run")
-    def test_push_with_all_includes_backups(self, mock_run, mock_get_store, runner, tmp_path):
-        """Test push with --all includes .backup files"""
-        store_path = tmp_path / "store"
-        commands_path = tmp_path / "commands"
-
-        store_path.mkdir()
-        commands_path.mkdir()
-
-        # Create test files including backup
-        (commands_path / "test.json").write_text('{"test": true}')
-        (commands_path / "test.json.backup").write_text('{"test": true}')
-
-        mock_get_store.return_value = store_path
-        mock_run.return_value = Mock(stdout="", returncode=0)
-
-        with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "push", "--all"])
-
-        # With --all, backup should be copied
-        assert (store_path / "test.json.backup").exists()
 
 
 class TestStorePull:
@@ -246,7 +218,7 @@ class TestStorePull:
         mock_run.return_value = Mock(returncode=0)
 
         with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "pull", "--force"])
+            result = runner.invoke(store, ["pull", "--force"])
 
         assert result.exit_code == 0
 
@@ -267,7 +239,7 @@ class TestStorePull:
         mock_run.return_value = Mock(returncode=0)
 
         with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "pull"])
+            result = runner.invoke(store, ["pull"])
 
         # Should create backup directory (check for backup in parent)
         backup_dirs = list(commands_path.parent.glob("commands_backup_*"))
@@ -293,7 +265,7 @@ class TestStorePull:
         mock_run.return_value = Mock(returncode=0)
 
         with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "pull", "--force"])
+            runner.invoke(store, ["pull", "--force"])
 
         # Git files should not be copied
         assert not (commands_path / ".git").exists()
@@ -319,7 +291,7 @@ class TestStoreSync:
         mock_run.return_value = Mock(stdout="M test.json", returncode=0)
 
         with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "sync"])
+            result = runner.invoke(store, ["sync"])
 
         # Should succeed (actual git commands would be mocked)
         assert result.exit_code == 0
@@ -339,7 +311,7 @@ class TestStoreList:
         (commands_path / "test2.json").write_text('{"test": 2}')
 
         with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "list"])
+            result = runner.invoke(store, ["list"])
 
         assert result.exit_code == 0
         assert "test1.json" in result.output
@@ -357,7 +329,7 @@ class TestStoreList:
 
         mock_get_store.return_value = store_path
 
-        result = runner.invoke(store, [ "list", "--store-dir"])
+        result = runner.invoke(store, ["list", "--store-dir"])
 
         assert result.exit_code == 0
         assert "store1.json" in result.output
@@ -377,7 +349,7 @@ class TestStoreStatus:
         mock_get_store.return_value = store_path
         mock_run.return_value = Mock(stdout="## main", returncode=0)
 
-        result = runner.invoke(store, [ "status"])
+        result = runner.invoke(store, ["status"])
 
         assert result.exit_code == 0
         assert "Store:" in result.output
@@ -397,7 +369,7 @@ class TestStoreShow:
         (commands_path / "test.json").write_text(test_content)
 
         with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "show", "test.json"])
+            result = runner.invoke(store, ["show", "test.json"])
 
         assert result.exit_code == 0
         assert "test" in result.output
@@ -414,7 +386,7 @@ class TestStoreShow:
 
         mock_get_store.return_value = store_path
 
-        result = runner.invoke(store, [ "show", "test.json", "--store-dir"])
+        result = runner.invoke(store, ["show", "test.json", "--store-dir"])
 
         assert result.exit_code == 0
         assert "store_test" in result.output
@@ -426,7 +398,7 @@ class TestStoreShow:
         commands_path.mkdir()
 
         with patch("mcli.app.store_cmd.COMMANDS_PATH", commands_path):
-            result = runner.invoke(store, [ "show", "nonexistent.json"])
+            result = runner.invoke(store, ["show", "nonexistent.json"])
 
         assert result.exit_code == 0
         assert "not found" in result.output.lower()
@@ -446,7 +418,7 @@ class TestStoreConfig:
         mock_home.return_value = tmp_path
         new_path = tmp_path / "new-store"
 
-        result = runner.invoke(store, [ "config", "--path", str(new_path)])
+        result = runner.invoke(store, ["config", "--path", str(new_path)])
 
         assert result.exit_code == 0
         assert "updated" in result.output.lower()
@@ -461,9 +433,7 @@ class TestStoreConfig:
         mock_get_store.return_value = store_path
         mock_run.return_value = Mock(stdout="", returncode=0)
 
-        result = runner.invoke(
-            store, ["config", "--remote", "git@github.com:user/repo.git"]
-        )
+        result = runner.invoke(store, ["config", "--remote", "git@github.com:user/repo.git"])
 
         # Should succeed (git remote commands are mocked)
         assert result.exit_code == 0

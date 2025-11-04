@@ -7,18 +7,13 @@ that integrate with the lightweight model service for AI-powered
 document analysis.
 """
 
-import base64
 import json
 import logging
 import os
-import shutil
-import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-
-import requests
 
 # PDF processing libraries
 try:
@@ -34,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 class PDFProcessor:
-    """PDF processing with lightweight model integration"""
+    """PDF processing with lightweight model integration."""
 
     def __init__(self, models_dir: str = "./models/lightweight", port: int = 8080):
         self.models_dir = Path(models_dir)
@@ -43,7 +38,7 @@ class PDFProcessor:
         self.temp_dir = Path(tempfile.mkdtemp(prefix="pdf_processor_"))
 
     def extract_text_from_pdf(self, pdf_path: str) -> Dict[str, Any]:
-        """Extract text from PDF with enhanced processing"""
+        """Extract text from PDF with enhanced processing."""
         try:
             pdf_path = Path(pdf_path)
             if not pdf_path.exists():
@@ -69,7 +64,7 @@ class PDFProcessor:
             return {"error": str(e)}
 
     def _extract_pdf_text_enhanced(self, pdf_path: Path) -> str:
-        """Enhanced PDF text extraction using multiple methods"""
+        """Enhanced PDF text extraction using multiple methods."""
         text_content = ""
 
         try:
@@ -100,7 +95,7 @@ class PDFProcessor:
         return text_content
 
     def process_pdf_with_ai(self, pdf_path: str, model_key: Optional[str] = None) -> Dict[str, Any]:
-        """Process PDF with AI model for enhanced analysis"""
+        """Process PDF with AI model for enhanced analysis."""
         try:
             # Extract text first
             extraction_result = self.extract_text_from_pdf(pdf_path)
@@ -137,7 +132,7 @@ class PDFProcessor:
             return {"error": str(e)}
 
     def _analyze_text_with_ai(self, text_content: str, model_key: str) -> Dict[str, Any]:
-        """Analyze text content with AI model"""
+        """Analyze text content with AI model."""
         try:
             # For now, provide basic analysis
             # In a full implementation, this would use the actual model for inference
@@ -159,7 +154,7 @@ class PDFProcessor:
             return {"error": str(e)}
 
     def _generate_summary(self, text: str) -> str:
-        """Generate a basic summary of the text"""
+        """Generate a basic summary of the text."""
         sentences = text.split(".")
         if len(sentences) <= 3:
             return text[:500] + "..." if len(text) > 500 else text
@@ -169,7 +164,7 @@ class PDFProcessor:
         return summary[:500] + "..." if len(summary) > 500 else summary
 
     def _extract_key_topics(self, text: str) -> List[str]:
-        """Extract key topics from text"""
+        """Extract key topics from text."""
         # Simple keyword extraction
         words = text.lower().split()
         word_freq = {}
@@ -187,7 +182,7 @@ class PDFProcessor:
             "at",
             "to",
             "for",
-            "of",
+            "o",
             "with",
             "by",
             "is",
@@ -236,7 +231,7 @@ class PDFProcessor:
         return [word for word, freq in sorted_words[:5]]
 
     def _classify_document_type(self, text: str) -> str:
-        """Classify the type of document"""
+        """Classify the type of document."""
         text_lower = text.lower()
 
         if any(word in text_lower for word in ["contract", "agreement", "terms", "conditions"]):
@@ -253,7 +248,7 @@ class PDFProcessor:
             return "general"
 
     def _calculate_complexity_score(self, text: str) -> float:
-        """Calculate text complexity score (0-1)"""
+        """Calculate text complexity score (0-1)."""
         sentences = text.split(".")
         words = text.split()
 
@@ -268,7 +263,7 @@ class PDFProcessor:
         return min(1.0, max(0.0, complexity))
 
     def start_pdf_processing_service(self, port: int = 8080) -> bool:
-        """Start the PDF processing service"""
+        """Start the PDF processing service."""
         try:
             self.port = port
             self.lightweight_server.port = port
@@ -280,7 +275,7 @@ class PDFProcessor:
             return False
 
     def get_service_status(self) -> Dict[str, Any]:
-        """Get the status of the PDF processing service"""
+        """Get the status of the PDF processing service."""
         return {
             "service_running": self.lightweight_server.running,
             "port": self.port,
@@ -291,9 +286,9 @@ class PDFProcessor:
 
 
 def create_pdf_processor_api():
-    """Create a simple API for PDF processing"""
+    """Create a simple API for PDF processing."""
     import urllib.parse
-    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from http.server import BaseHTTPRequestHandler
 
     class PDFProcessorHandler(BaseHTTPRequestHandler):
         def __init__(self, *args, processor=None, **kwargs):
@@ -301,11 +296,11 @@ def create_pdf_processor_api():
             super().__init__(*args, **kwargs)
 
         def do_POST(self):
-            """Handle PDF processing requests"""
+            """Handle PDF processing requests."""
             parsed_path = urllib.parse.urlparse(self.path)
             path = parsed_path.path
 
-            if path == "/process-pdf":
+            if path == "/process-pd":
                 self._handle_process_pdf()
             elif path == "/extract-text":
                 self._handle_extract_text()
@@ -313,7 +308,7 @@ def create_pdf_processor_api():
                 self._send_response(404, {"error": "Endpoint not found"})
 
         def do_GET(self):
-            """Handle status requests"""
+            """Handle status requests."""
             parsed_path = urllib.parse.urlparse(self.path)
             path = parsed_path.path
 
@@ -324,7 +319,7 @@ def create_pdf_processor_api():
                 self._send_response(404, {"error": "Endpoint not found"})
 
         def _handle_process_pdf(self):
-            """Handle PDF processing with AI"""
+            """Handle PDF processing with AI."""
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
                 post_data = self.rfile.read(content_length)
@@ -344,7 +339,7 @@ def create_pdf_processor_api():
                 self._send_response(500, {"error": str(e)})
 
         def _handle_extract_text(self):
-            """Handle text extraction from PDF"""
+            """Handle text extraction from PDF."""
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
                 post_data = self.rfile.read(content_length)
@@ -363,7 +358,7 @@ def create_pdf_processor_api():
                 self._send_response(500, {"error": str(e)})
 
         def _send_response(self, status_code, data):
-            """Send JSON response"""
+            """Send JSON response."""
             self.send_response(status_code)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
@@ -378,7 +373,7 @@ if __name__ == "__main__":
     processor = PDFProcessor()
 
     # Test with a sample PDF if available
-    test_pdf = "test.pdf"
+    test_pdf = "test.pd"
     if os.path.exists(test_pdf):
         result = processor.process_pdf_with_ai(test_pdf)
         print(json.dumps(result, indent=2))

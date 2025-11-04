@@ -14,15 +14,14 @@ API_BASE_URL = "http://localhost:8000"
 
 @click.group(name="process")
 def process_cli():
-    """Docker-like process management commands"""
-    pass
+    """Docker-like process management commands."""
 
 
 @process_cli.command("ps")
 @click.option("--all", "-a", is_flag=True, help="Show all processes including exited ones")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 def list_processes(all: bool, as_json: bool):
-    """List processes (like 'docker ps')"""
+    """List processes (like 'docker ps')."""
     try:
         params = {"all": "true"} if all else {}
         response = requests.get(f"{API_BASE_URL}/processes", params=params)
@@ -66,7 +65,7 @@ def list_processes(all: bool, as_json: bool):
 def run_process(
     command: str, args: tuple, name: Optional[str], detach: bool, working_dir: Optional[str]
 ):
-    """Create and start a process (like 'docker run')"""
+    """Create and start a process (like 'docker run')."""
     try:
         data = {
             "name": name or f"proc-{command}",
@@ -98,7 +97,7 @@ def run_process(
 @click.argument("process_id")
 @click.option("--lines", "-n", type=int, help="Number of lines to show from end of logs")
 def show_logs(process_id: str, lines: Optional[int]):
-    """Show logs for a process (like 'docker logs')"""
+    """Show logs for a process (like 'docker logs')."""
     try:
         params = {}
         if lines:
@@ -128,7 +127,7 @@ def show_logs(process_id: str, lines: Optional[int]):
 @click.argument("process_id")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 def inspect_process(process_id: str, as_json: bool):
-    """Show detailed information about a process (like 'docker inspect')"""
+    """Show detailed information about a process (like 'docker inspect')."""
     try:
         response = requests.get(f"{API_BASE_URL}/processes/{process_id}")
 
@@ -150,7 +149,7 @@ def inspect_process(process_id: str, as_json: bool):
 
             if info.get("stats"):
                 stats = info["stats"]
-                click.echo(f"\nResource Usage:")
+                click.echo("\nResource Usage:")
                 click.echo(f"  CPU: {stats.get('cpu_percent', 0):.1f}%")
                 click.echo(f"  Memory: {stats.get('memory_mb', 0):.1f} MB")
                 click.echo(f"  Uptime: {stats.get('uptime_seconds', 0)} seconds")
@@ -168,7 +167,7 @@ def inspect_process(process_id: str, as_json: bool):
 @click.argument("process_id")
 @click.option("--timeout", "-t", type=int, default=10, help="Timeout in seconds")
 def stop_process(process_id: str, timeout: int):
-    """Stop a process (like 'docker stop')"""
+    """Stop a process (like 'docker stop')."""
     try:
         data = {"timeout": timeout}
         response = requests.post(f"{API_BASE_URL}/processes/{process_id}/stop", json=data)
@@ -187,7 +186,7 @@ def stop_process(process_id: str, timeout: int):
 @process_cli.command("start")
 @click.argument("process_id")
 def start_process(process_id: str):
-    """Start a stopped process (like 'docker start')"""
+    """Start a stopped process (like 'docker start')."""
     try:
         response = requests.post(f"{API_BASE_URL}/processes/{process_id}/start")
 
@@ -205,7 +204,7 @@ def start_process(process_id: str):
 @process_cli.command("kill")
 @click.argument("process_id")
 def kill_process(process_id: str):
-    """Kill a process (like 'docker kill')"""
+    """Kill a process (like 'docker kill')."""
     try:
         response = requests.post(f"{API_BASE_URL}/processes/{process_id}/kill")
 
@@ -222,9 +221,9 @@ def kill_process(process_id: str):
 
 @process_cli.command("rm")
 @click.argument("process_id")
-@click.option("--force", "-f", is_flag=True, help="Force remove running process")
+@click.option("--force", "-", is_flag=True, help="Force remove running process")
 def remove_process(process_id: str, force: bool):
-    """Remove a process (like 'docker rm')"""
+    """Remove a process (like 'docker rm')."""
     try:
         params = {"force": "true"} if force else {}
         response = requests.delete(f"{API_BASE_URL}/processes/{process_id}", params=params)

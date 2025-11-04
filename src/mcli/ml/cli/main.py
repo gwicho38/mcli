@@ -1,4 +1,4 @@
-"""Main CLI interface for ML system"""
+"""Main CLI interface for ML system."""
 
 import asyncio
 from pathlib import Path
@@ -14,10 +14,7 @@ from mcli.ml.config import create_settings, settings
 from mcli.ml.experimentation.ab_testing import ABTestingFramework
 from mcli.ml.mlops.pipeline_orchestrator import MLPipeline, PipelineConfig
 from mcli.ml.monitoring.drift_detection import ModelMonitor
-from mcli.ml.optimization.portfolio_optimizer import (
-    AdvancedPortfolioOptimizer,
-    OptimizationObjective,
-)
+from mcli.ml.optimization.portfolio_optimizer import OptimizationObjective
 
 app = typer.Typer(
     name="mcli-ml",
@@ -41,9 +38,9 @@ def train(
         False, "--dry-run", help="Validate configuration without training"
     ),
 ):
-    """Train ML models for stock recommendations"""
+    """Train ML models for stock recommendations."""
 
-    console.print(f"[bold blue]Training ML Model[/bold blue]")
+    console.print("[bold blue]Training ML Model[/bold blue]")
     console.print(f"Experiment: {experiment_name}")
 
     # Override settings if provided
@@ -66,7 +63,7 @@ def train(
 
     if dry_run:
         console.print("[yellow]Dry run mode - validating configuration...[/yellow]")
-        pipeline = MLPipeline(pipeline_config)
+        MLPipeline(pipeline_config)
         console.print("[green]✓ Configuration valid[/green]")
         return
 
@@ -114,9 +111,9 @@ def serve(
     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload"),
     model_path: Optional[Path] = typer.Option(None, "--model", help="Path to model file"),
 ):
-    """Serve trained models via REST API"""
+    """Serve trained models via REST API."""
 
-    console.print(f"[bold blue]Starting Model Server[/bold blue]")
+    console.print("[bold blue]Starting Model Server[/bold blue]")
     console.print(f"Host: {host}")
     console.print(f"Port: {port}")
     console.print(f"Workers: {workers}")
@@ -143,9 +140,9 @@ def backtest(
     commission: float = typer.Option(0.001, "--commission", help="Commission rate"),
     output_dir: Optional[Path] = typer.Option(None, "--output", help="Output directory"),
 ):
-    """Run backtesting on trading strategies"""
+    """Run backtesting on trading strategies."""
 
-    console.print(f"[bold blue]Running Backtest[/bold blue]")
+    console.print("[bold blue]Running Backtest[/bold blue]")
     console.print(f"Strategy: {strategy}")
     console.print(f"Initial Capital: ${initial_capital:,.2f}")
 
@@ -157,7 +154,7 @@ def backtest(
     )
 
     async def run_backtest():
-        engine = BacktestEngine(config)
+        BacktestEngine(config)
 
         with Progress(
             SpinnerColumn(),
@@ -203,14 +200,14 @@ def optimize(
     max_weight: float = typer.Option(0.4, "--max-weight", help="Maximum weight per asset"),
     risk_free_rate: float = typer.Option(0.02, "--risk-free-rate", help="Risk-free rate"),
 ):
-    """Optimize portfolio allocation"""
+    """Optimize portfolio allocation."""
 
-    console.print(f"[bold blue]Portfolio Optimization[/bold blue]")
+    console.print("[bold blue]Portfolio Optimization[/bold blue]")
     console.print(f"Objective: {objective}")
     console.print(f"Tickers: {', '.join(tickers)}")
 
     try:
-        obj_enum = OptimizationObjective(objective)
+        OptimizationObjective(objective)
     except ValueError:
         console.print(f"[red]Invalid objective: {objective}[/red]")
         console.print(
@@ -272,12 +269,12 @@ def monitor(
     check_drift: bool = typer.Option(True, "--drift", help="Check for data drift"),
     generate_report: bool = typer.Option(False, "--report", help="Generate monitoring report"),
 ):
-    """Monitor model performance and data drift"""
+    """Monitor model performance and data drift."""
 
-    console.print(f"[bold blue]Model Monitoring[/bold blue]")
+    console.print("[bold blue]Model Monitoring[/bold blue]")
     console.print(f"Model: {model_name}")
 
-    monitor = ModelMonitor(model_name)
+    ModelMonitor(model_name)
 
     if check_drift:
         console.print(
@@ -296,9 +293,9 @@ def experiment(
     experiment_id: Optional[str] = typer.Option(None, "--id", help="Experiment ID"),
     name: Optional[str] = typer.Option(None, "--name", help="Experiment name"),
 ):
-    """Manage A/B testing experiments"""
+    """Manage A/B testing experiments."""
 
-    console.print(f"[bold blue]A/B Testing Experiment[/bold blue]")
+    console.print("[bold blue]A/B Testing Experiment[/bold blue]")
     console.print(f"Action: {action}")
 
     framework = ABTestingFramework()
@@ -339,7 +336,7 @@ def experiment(
 
 @app.command()
 def status():
-    """Show system status and health"""
+    """Show system status and health."""
 
     status_table = Table(title="ML System Status")
     status_table.add_column("Component", style="cyan")
@@ -376,11 +373,11 @@ def config(
     environment: Optional[str] = typer.Option(None, "--env", help="Set environment"),
     debug: Optional[bool] = typer.Option(None, "--debug", help="Set debug mode"),
 ):
-    """Manage system configuration"""
+    """Manage system configuration."""
     global settings
 
     if show:
-        console.print(f"[bold blue]Current Configuration[/bold blue]")
+        console.print("[bold blue]Current Configuration[/bold blue]")
 
         # Show all settings in a tree structure
         console.print(f"Environment: {settings.environment}")

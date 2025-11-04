@@ -7,7 +7,6 @@ Supports standard cron expressions with some extensions:
 - Special: @reboot (run at scheduler start)
 """
 
-import re
 from datetime import datetime, timedelta
 from typing import List, Optional, Set
 
@@ -17,13 +16,11 @@ logger = get_logger(__name__)
 
 
 class CronParseError(Exception):
-    """Exception raised when cron expression cannot be parsed"""
-
-    pass
+    """Exception raised when cron expression cannot be parsed."""
 
 
 class CronExpression:
-    """Parser and calculator for cron expressions"""
+    """Parser and calculator for cron expressions."""
 
     # Predefined cron shortcuts
     SHORTCUTS = {
@@ -47,7 +44,7 @@ class CronExpression:
             self._validate_fields()
 
     def _normalize_expression(self, expression: str) -> str:
-        """Convert shortcuts to standard cron format"""
+        """Convert shortcuts to standard cron format."""
         expression = expression.strip().lower()
 
         if expression in self.SHORTCUTS:
@@ -56,7 +53,7 @@ class CronExpression:
         return expression
 
     def _parse_expression(self) -> List[Set[int]]:
-        """Parse cron expression into field sets"""
+        """Parse cron expression into field sets."""
         if self.is_reboot:
             return []
 
@@ -73,14 +70,14 @@ class CronExpression:
             (0, 6),  # weekday (0=Sunday)
         ]
 
-        for i, (part, (min_val, max_val)) in enumerate(zip(parts, ranges)):
+        for _i, (part, (min_val, max_val)) in enumerate(zip(parts, ranges)):
             field_values = self._parse_field(part, min_val, max_val)
             fields.append(field_values)
 
         return fields
 
     def _parse_field(self, field: str, min_val: int, max_val: int) -> Set[int]:
-        """Parse a single cron field"""
+        """Parse a single cron field."""
         if field == "*":
             return set(range(min_val, max_val + 1))
 
@@ -121,12 +118,12 @@ class CronExpression:
         return values
 
     def _validate_fields(self):
-        """Validate parsed cron fields"""
+        """Validate parsed cron fields."""
         if len(self.fields) != 5:
             raise CronParseError("Invalid number of parsed fields")
 
     def get_next_run_time(self, from_time: Optional[datetime] = None) -> Optional[datetime]:
-        """Calculate the next time this cron expression should run"""
+        """Calculate the next time this cron expression should run."""
         if self.is_reboot:
             return None  # @reboot jobs run only at scheduler start
 
@@ -151,7 +148,7 @@ class CronExpression:
         return None
 
     def _matches_time(self, dt: datetime) -> bool:
-        """Check if datetime matches this cron expression"""
+        """Check if datetime matches this cron expression."""
         if self.is_reboot:
             return False
 
@@ -166,11 +163,11 @@ class CronExpression:
         )
 
     def matches_now(self) -> bool:
-        """Check if cron expression matches current time"""
+        """Check if cron expression matches current time."""
         return self._matches_time(datetime.now())
 
     def get_description(self) -> str:
-        """Get human-readable description of cron expression"""
+        """Get human-readable description of cron expression."""
         if self.is_reboot:
             return "Run at scheduler startup"
 
@@ -191,12 +188,12 @@ class CronExpression:
             return f"Custom schedule: {self.original_expression}"
 
     def is_valid(self) -> bool:
-        """Check if cron expression is valid"""
+        """Check if cron expression is valid."""
         try:
             if self.is_reboot:
                 return True
             return len(self.fields) == 5
-        except:
+        except Exception:
             return False
 
     def __str__(self) -> str:
@@ -207,16 +204,16 @@ class CronExpression:
 
 
 def validate_cron_expression(expression: str) -> bool:
-    """Validate a cron expression without creating a full object"""
+    """Validate a cron expression without creating a full object."""
     try:
         cron = CronExpression(expression)
         return cron.is_valid()
-    except:
+    except Exception:
         return False
 
 
 def get_next_run_times(expression: str, count: int = 5) -> List[datetime]:
-    """Get the next N run times for a cron expression"""
+    """Get the next N run times for a cron expression."""
     try:
         cron = CronExpression(expression)
         if cron.is_reboot:

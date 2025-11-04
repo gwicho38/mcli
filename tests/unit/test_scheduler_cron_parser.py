@@ -2,8 +2,7 @@
 Unit tests for mcli.workflow.scheduler.cron_parser module
 """
 
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from datetime import datetime
 
 import pytest
 

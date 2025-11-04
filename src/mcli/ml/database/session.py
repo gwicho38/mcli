@@ -1,4 +1,4 @@
-"""Database session management"""
+"""Database session management."""
 
 # Synchronous database setup
 # Prioritize DATABASE_URL environment variable over settings
@@ -9,7 +9,7 @@ from typing import AsyncGenerator, Generator
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import NullPool, StaticPool
+from sqlalchemy.pool import StaticPool
 
 from mcli.ml.config import settings
 
@@ -28,7 +28,7 @@ if not database_url:
         settings_url = settings.database.url
         if settings_url and "sqlite" not in settings_url:
             database_url = settings_url
-    except (AttributeError, Exception):
+    except Exception:
         pass  # Continue with database_url=None
 
 # If still no valid DATABASE_URL, try to use Supabase REST API via connection pooler
@@ -103,7 +103,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 if "pooler.supabase.com" in database_url:
-    logger.info(f"🔗 Using Supabase connection pooler")
+    logger.info("🔗 Using Supabase connection pooler")
 elif "sqlite" in database_url:
     logger.warning("📁 Using SQLite fallback (database features limited)")
 else:
@@ -157,7 +157,7 @@ try:
         pool_pre_ping=True,
         echo=settings.debug,
     )
-except (AttributeError, Exception):
+except Exception:
     # Fallback for async engine
     import os
 
@@ -284,7 +284,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 def init_db() -> None:
-    """Initialize database tables"""
+    """Initialize database tables."""
     Base.metadata.create_all(bind=engine)
 
     # Create additional indexes
@@ -294,25 +294,25 @@ def init_db() -> None:
 
 
 async def init_async_db() -> None:
-    """Initialize database tables asynchronously"""
+    """Initialize database tables asynchronously."""
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
 def drop_db() -> None:
-    """Drop all database tables (use with caution!)"""
+    """Drop all database tables (use with caution!)."""
     Base.metadata.drop_all(bind=engine)
 
 
 async def drop_async_db() -> None:
-    """Drop all database tables asynchronously"""
+    """Drop all database tables asynchronously."""
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
 # Test database setup (for unit tests)
 def get_test_engine():
-    """Create test database engine with in-memory SQLite"""
+    """Create test database engine with in-memory SQLite."""
     from sqlalchemy import create_engine
 
     engine = create_engine(
@@ -326,7 +326,7 @@ def get_test_engine():
 
 
 def get_test_session():
-    """Create test database session"""
+    """Create test database session."""
     engine = get_test_engine()
     TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     return TestSessionLocal()
@@ -334,7 +334,7 @@ def get_test_session():
 
 # Database health check
 async def check_database_health() -> bool:
-    """Check if database is accessible and healthy"""
+    """Check if database is accessible and healthy."""
     try:
         async with get_async_session() as session:
             await session.execute("SELECT 1")
@@ -346,14 +346,14 @@ async def check_database_health() -> bool:
 
 # Utility functions for bulk operations
 async def bulk_insert(model_class, data: list) -> None:
-    """Bulk insert data into database"""
+    """Bulk insert data into database."""
     async with get_async_session() as session:
         session.add_all([model_class(**item) for item in data])
         await session.commit()
 
 
 async def bulk_update(model_class, data: list, key_field: str = "id") -> None:
-    """Bulk update data in database"""
+    """Bulk update data in database."""
     async with get_async_session() as session:
         for item in data:
             key_value = item.pop(key_field)

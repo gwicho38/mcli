@@ -7,13 +7,12 @@ import shutil
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import click
 from git import GitCommandError, Repo
 
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.ui.styling import error, info, success, warning
 
 logger = get_logger(__name__)
-from mcli.lib.ui.styling import error, info, success, warning
 
 
 class SecretsStore:

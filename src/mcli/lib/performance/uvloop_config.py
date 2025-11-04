@@ -5,7 +5,6 @@ UVLoop configuration for enhanced asyncio performance
 import asyncio
 import os
 import sys
-from typing import Optional
 
 
 def install_uvloop(force: bool = False) -> bool:

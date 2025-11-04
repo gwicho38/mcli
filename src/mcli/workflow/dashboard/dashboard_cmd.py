@@ -14,7 +14,6 @@ logger = get_logger(__name__)
 @click.group(name="dashboard")
 def dashboard():
     """ML monitoring dashboard commands."""
-    pass
 
 
 @dashboard.command()

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -78,8 +77,6 @@ def test_logs_help():
 
 def test_logs_uses_correct_directory():
     """Test that logs command uses get_logs_dir() from mcli.lib.paths"""
-    import tempfile
-    from pathlib import Path
 
     from mcli.lib.paths import get_logs_dir
 
@@ -314,7 +311,7 @@ def test_update_skip_ci_check(mock_pypi_response):
 
 def test_update_pypi_connection_error(mock_pypi_response):
     """Test update when PyPI connection fails"""
-    from unittest.mock import Mock, patch
+    from unittest.mock import patch
 
     import requests
 
@@ -373,7 +370,6 @@ def test_update_installation_failure(mock_pypi_response):
 
 def test_update_uses_uv_tool_when_detected(mock_pypi_response):
     """Test update uses 'uv tool install' when running from uv tool environment"""
-    import sys
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -421,7 +417,6 @@ def test_update_uses_uv_tool_when_detected(mock_pypi_response):
 
 def test_update_uses_pip_when_not_uv_tool(mock_pypi_response):
     """Test update uses pip when not running from uv tool environment"""
-    import sys
     from unittest.mock import Mock, patch
 
     runner = CliRunner()

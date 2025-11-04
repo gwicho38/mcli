@@ -1,12 +1,11 @@
-"""Redis caching layer for ML system"""
+"""Redis caching layer for ML system."""
 
 import asyncio
 import hashlib
 import json
 import pickle
-from datetime import timedelta
 from functools import wraps
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional
 
 import redis
 from redis import asyncio as aioredis
@@ -18,7 +17,7 @@ logger = get_logger(__name__)
 
 
 class CacheManager:
-    """Manage Redis cache connections and operations"""
+    """Manage Redis cache connections and operations."""
 
     def __init__(self):
         self.redis_client: Optional[redis.Redis] = None
@@ -26,7 +25,7 @@ class CacheManager:
         self._initialized = False
 
     def initialize(self):
-        """Initialize Redis connections"""
+        """Initialize Redis connections."""
         if self._initialized:
             return
 
@@ -59,7 +58,7 @@ class CacheManager:
             self.redis_client = None
 
     async def initialize_async(self):
-        """Initialize async Redis connection"""
+        """Initialize async Redis connection."""
         if self.async_redis_client:
             return
 
@@ -80,41 +79,41 @@ class CacheManager:
             self.async_redis_client = None
 
     def _make_key(self, key: str, prefix: str = "mcli:ml:") -> str:
-        """Create cache key with prefix"""
+        """Create cache key with prefix."""
         return f"{prefix}{key}"
 
     def _serialize(self, value: Any) -> bytes:
-        """Serialize value for storage"""
-        try:
+        """Serialize value for storage."""
+        try:  # noqa: SIM105
             # Try JSON first (for simple types)
             if isinstance(value, (dict, list, str, int, float, bool, type(None))):
                 return json.dumps(value).encode("utf-8")
-        except:
+        except Exception:
             pass
 
         # Fall back to pickle for complex objects
         return pickle.dumps(value)
 
     def _deserialize(self, value: bytes) -> Any:
-        """Deserialize value from storage"""
+        """Deserialize value from storage."""
         if value is None:
             return None
 
         # Try JSON first
-        try:
+        try:  # noqa: SIM105
             return json.loads(value.decode("utf-8"))
-        except:
+        except Exception:
             pass
 
         # Fall back to pickle
         try:
             return pickle.loads(value)
-        except:
+        except Exception:
             logger.error("Failed to deserialize cache value")
             return None
 
     def set(self, key: str, value: Any, expire: int = 3600) -> bool:
-        """Set cache value"""
+        """Set cache value."""
         if not self.redis_client:
             self.initialize()
 
@@ -130,7 +129,7 @@ class CacheManager:
             return False
 
     def get(self, key: str) -> Any:
-        """Get cache value"""
+        """Get cache value."""
         if not self.redis_client:
             self.initialize()
 
@@ -146,7 +145,7 @@ class CacheManager:
             return None
 
     async def set_async(self, key: str, value: Any, expire: int = 3600) -> bool:
-        """Set cache value asynchronously"""
+        """Set cache value asynchronously."""
         if not self.async_redis_client:
             await self.initialize_async()
 
@@ -163,7 +162,7 @@ class CacheManager:
             return False
 
     async def get_async(self, key: str) -> Any:
-        """Get cache value asynchronously"""
+        """Get cache value asynchronously."""
         if not self.async_redis_client:
             await self.initialize_async()
 
@@ -179,7 +178,7 @@ class CacheManager:
             return None
 
     def delete(self, key: str) -> bool:
-        """Delete cache entry"""
+        """Delete cache entry."""
         if not self.redis_client:
             return False
 
@@ -191,7 +190,7 @@ class CacheManager:
             return False
 
     async def delete_async(self, key: str) -> bool:
-        """Delete cache entry asynchronously"""
+        """Delete cache entry asynchronously."""
         if not self.async_redis_client:
             return False
 
@@ -204,7 +203,7 @@ class CacheManager:
             return False
 
     def invalidate_pattern(self, pattern: str) -> int:
-        """Invalidate all keys matching pattern"""
+        """Invalidate all keys matching pattern."""
         if not self.redis_client:
             return 0
 
@@ -219,7 +218,7 @@ class CacheManager:
             return 0
 
     def get_or_set(self, key: str, func: Callable, expire: int = 3600) -> Any:
-        """Get from cache or compute and set"""
+        """Get from cache or compute and set."""
         value = self.get(key)
         if value is not None:
             return value
@@ -229,7 +228,7 @@ class CacheManager:
         return value
 
     async def get_or_set_async(self, key: str, func: Callable, expire: int = 3600) -> Any:
-        """Get from cache or compute and set asynchronously"""
+        """Get from cache or compute and set asynchronously."""
         value = await self.get_async(key)
         if value is not None:
             return value
@@ -243,13 +242,13 @@ class CacheManager:
         return value
 
     def close(self):
-        """Close Redis connections"""
+        """Close Redis connections."""
         if self.redis_client:
             self.redis_client.close()
             self.redis_client = None
 
     async def close_async(self):
-        """Close async Redis connection"""
+        """Close async Redis connection."""
         if self.async_redis_client:
             await self.async_redis_client.close()
             self.async_redis_client = None
@@ -261,7 +260,7 @@ cache_manager = CacheManager()
 
 # Decorator for caching function results
 def cached(expire: int = 3600, key_prefix: str = None):
-    """Decorator to cache function results"""
+    """Decorator to cache function results."""
 
     def decorator(func: Callable):
         @wraps(func)
@@ -334,19 +333,19 @@ def cached(expire: int = 3600, key_prefix: str = None):
 
 # Cache invalidation helpers
 def invalidate_user_cache(user_id: str):
-    """Invalidate all cache entries for a user"""
+    """Invalidate all cache entries for a user."""
     pattern = f"user:{user_id}:*"
     return cache_manager.invalidate_pattern(pattern)
 
 
 def invalidate_model_cache(model_id: str):
-    """Invalidate all cache entries for a model"""
+    """Invalidate all cache entries for a model."""
     pattern = f"model:{model_id}:*"
     return cache_manager.invalidate_pattern(pattern)
 
 
 def invalidate_prediction_cache(prediction_id: str = None):
-    """Invalidate prediction cache"""
+    """Invalidate prediction cache."""
     if prediction_id:
         pattern = f"prediction:{prediction_id}:*"
     else:
@@ -356,17 +355,17 @@ def invalidate_prediction_cache(prediction_id: str = None):
 
 # Convenience functions
 async def init_cache():
-    """Initialize cache manager"""
+    """Initialize cache manager."""
     await cache_manager.initialize_async()
 
 
 async def close_cache():
-    """Close cache connections"""
+    """Close cache connections."""
     await cache_manager.close_async()
 
 
 async def check_cache_health() -> bool:
-    """Check if cache is healthy"""
+    """Check if cache is healthy."""
     try:
         if not cache_manager.async_redis_client:
             await cache_manager.initialize_async()
@@ -375,20 +374,20 @@ async def check_cache_health() -> bool:
             await cache_manager.async_redis_client.ping()
             return True
         return False
-    except:
+    except Exception:
         return False
 
 
 def cache_set(key: str, value: Any, expire: int = 3600):
-    """Set cache value"""
+    """Set cache value."""
     return cache_manager.set(key, value, expire)
 
 
 def cache_get(key: str):
-    """Get cache value"""
+    """Get cache value."""
     return cache_manager.get(key)
 
 
 def cache_delete(key: str):
-    """Delete cache entry"""
+    """Delete cache entry."""
     return cache_manager.delete(key)

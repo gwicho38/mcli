@@ -1,4 +1,4 @@
-"""Base classes for ML models"""
+"""Base classes for ML models."""
 
 import logging
 from abc import ABC, abstractmethod
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ModelMetrics:
-    """Container for model performance metrics"""
+    """Container for model performance metrics."""
 
     accuracy: float
     precision: float
@@ -30,7 +30,7 @@ class ModelMetrics:
     avg_loss: Optional[float] = None
 
     def to_dict(self) -> Dict[str, float]:
-        """Convert metrics to dictionary"""
+        """Convert metrics to dictionary."""
         return {
             "accuracy": self.accuracy,
             "precision": self.precision,
@@ -48,7 +48,7 @@ class ModelMetrics:
 
 @dataclass
 class ValidationResult:
-    """Container for validation results"""
+    """Container for validation results."""
 
     train_metrics: ModelMetrics
     val_metrics: ModelMetrics
@@ -60,7 +60,7 @@ class ValidationResult:
 
 
 class BaseStockModel(nn.Module, ABC):
-    """Abstract base class for all stock prediction models"""
+    """Abstract base class for all stock prediction models."""
 
     def __init__(self, input_dim: int, config: Optional[Dict[str, Any]] = None):
         super().__init__()
@@ -73,21 +73,21 @@ class BaseStockModel(nn.Module, ABC):
 
     @abstractmethod
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through the model"""
+        """Forward pass through the model."""
         pass
 
     @abstractmethod
     def predict_proba(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Predict class probabilities"""
+        """Predict class probabilities."""
         pass
 
     def predict(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Make binary predictions"""
+        """Make binary predictions."""
         probas = self.predict_proba(X)
         return (probas[:, 1] > 0.5).astype(int)
 
     def preprocess_input(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> torch.Tensor:
-        """Preprocess input data for model"""
+        """Preprocess input data for model."""
         if isinstance(X, pd.DataFrame):
             X = X.values
 
@@ -102,13 +102,13 @@ class BaseStockModel(nn.Module, ABC):
         return X.to(self.device)
 
     def get_feature_importance(self) -> Optional[Dict[str, float]]:
-        """Get feature importance scores"""
+        """Get feature importance scores."""
         # Base implementation returns None
         # Override in specific models that support feature importance
         return None
 
     def save_model(self, path: str) -> None:
-        """Save model state"""
+        """Save model state."""
         state = {
             "model_state_dict": self.state_dict(),
             "config": self.config,
@@ -121,7 +121,7 @@ class BaseStockModel(nn.Module, ABC):
         logger.info(f"Model saved to {path}")
 
     def load_model(self, path: str) -> None:
-        """Load model state"""
+        """Load model state."""
         state = torch.load(path, map_location=self.device)
         self.load_state_dict(state["model_state_dict"])
         self.config = state["config"]
@@ -134,7 +134,7 @@ class BaseStockModel(nn.Module, ABC):
     def calculate_metrics(
         self, y_true: np.ndarray, y_pred: np.ndarray, y_proba: Optional[np.ndarray] = None
     ) -> ModelMetrics:
-        """Calculate comprehensive model metrics"""
+        """Calculate comprehensive model metrics."""
         from sklearn.metrics import (
             accuracy_score,
             f1_score,
@@ -173,13 +173,13 @@ class BaseStockModel(nn.Module, ABC):
         )
 
     def to(self, device):
-        """Move model to device and update internal device reference"""
+        """Move model to device and update internal device reference."""
         self.device = device
         return super().to(device)
 
 
 class MLPBaseModel(BaseStockModel):
-    """Basic Multi-Layer Perceptron base model"""
+    """Basic Multi-Layer Perceptron base model."""
 
     def __init__(
         self,
@@ -220,18 +220,18 @@ class MLPBaseModel(BaseStockModel):
         self.apply(self._init_weights)
 
     def _init_weights(self, module):
-        """Initialize model weights"""
+        """Initialize model weights."""
         if isinstance(module, nn.Linear):
             torch.nn.init.xavier_uniform_(module.weight)
             if module.bias is not None:
                 torch.nn.init.zeros_(module.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass"""
+        """Forward pass."""
         return self.network(x)
 
     def predict_proba(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Predict class probabilities"""
+        """Predict class probabilities."""
         self.eval()
         with torch.no_grad():
             X_tensor = self.preprocess_input(X)
@@ -241,7 +241,7 @@ class MLPBaseModel(BaseStockModel):
 
 
 class ResidualBlock(nn.Module):
-    """Residual block for deeper networks"""
+    """Residual block for deeper networks."""
 
     def __init__(self, dim: int, dropout_rate: float = 0.1):
         super().__init__()
@@ -263,7 +263,7 @@ class ResidualBlock(nn.Module):
 
 
 class ResNetModel(BaseStockModel):
-    """ResNet-style model for tabular data"""
+    """ResNet-style model for tabular data."""
 
     def __init__(
         self,
@@ -300,14 +300,14 @@ class ResNetModel(BaseStockModel):
         self.apply(self._init_weights)
 
     def _init_weights(self, module):
-        """Initialize weights"""
+        """Initialize weights."""
         if isinstance(module, nn.Linear):
             torch.nn.init.kaiming_normal_(module.weight, mode="fan_out", nonlinearity="relu")
             if module.bias is not None:
                 torch.nn.init.zeros_(module.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass"""
+        """Forward pass."""
         x = self.input_proj(x)
 
         for block in self.blocks:
@@ -316,7 +316,7 @@ class ResNetModel(BaseStockModel):
         return self.output_layer(x)
 
     def predict_proba(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Predict class probabilities"""
+        """Predict class probabilities."""
         self.eval()
         with torch.no_grad():
             X_tensor = self.preprocess_input(X)

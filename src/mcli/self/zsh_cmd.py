@@ -5,7 +5,6 @@ ZSH-specific commands and utilities for MCLI.
 import os
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 import click
 
@@ -18,7 +17,6 @@ from mcli.lib.ui.styling import error, info, success, warning
 @click.group(name="zsh", help="ZSH shell integration and utilities")
 def zsh_group():
     """ZSH-specific commands and utilities."""
-    pass
 
 
 @zsh_group.command(name="config", help="Configure ZSH for optimal MCLI experience")
@@ -160,7 +158,7 @@ def zsh_prompt(style: str):
         # Update existing prompt
         lines = content.split("\n")
         for i, line in enumerate(lines):
-            if line.strip() == prompt_marker:
+            if line.strip() == prompt_marker:  # noqa: SIM102
                 if i + 1 < len(lines) and lines[i + 1].startswith("PS1="):
                     lines[i + 1] = config
                     content = "\n".join(lines)
@@ -244,7 +242,7 @@ def zsh_test():
     try:
         result = subprocess.run(["zsh", "-c", "alias | grep mcli"], capture_output=True, text=True)
         checks.append(("Aliases configured", result.returncode == 0))
-    except:
+    except Exception:
         checks.append(("Aliases configured", False))
 
     # Display results

@@ -7,10 +7,10 @@ import sys
 import tempfile
 import time
 import uuid
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import click
 import psutil
@@ -44,12 +44,11 @@ class CommandDatabase:
 
     def __init__(self, db_path: Optional[str] = None):
         logger.debug("CommandDatabase stub initialized - commands now managed via JSON files")
-        pass
 
 
 @dataclass
 class Command:
-    """Represents a stored command"""
+    """Represents a stored command."""
 
     id: str
     name: str
@@ -155,7 +154,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
         self._update_embeddings()
 
     def init_database(self):
-        """Initialize SQLite database"""
+        """Initialize SQLite database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -213,7 +212,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
         conn.close()
 
     def _update_embeddings(self):
-        """Update TF-IDF embeddings for similarity search"""
+        """Update TF-IDF embeddings for similarity search."""
         commands = self.get_all_commands()
         if not commands:
             return
@@ -229,7 +228,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
             self.vectorizer.fit(texts)
 
     def add_command(self, command: Command) -> str:
-        """Add a new command to the database"""
+        """Add a new command to the database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -269,7 +268,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
             conn.close()
 
     def get_command(self, command_id: str) -> Optional[Command]:
-        """Get a command by ID"""
+        """Get a command by ID."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -292,7 +291,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
             conn.close()
 
     def get_all_commands(self, include_inactive: bool = False) -> List[Command]:
-        """Get all commands, optionally including inactive ones"""
+        """Get all commands, optionally including inactive ones."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         try:
@@ -319,7 +318,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
             conn.close()
 
     def search_commands(self, query: str, limit: int = 10) -> List[Command]:
-        """Search commands by name, description, or tags"""
+        """Search commands by name, description, or tags."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -345,7 +344,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
             conn.close()
 
     def find_similar_commands(self, query: str, limit: int = 5) -> List[tuple]:
-        """Find similar commands using cosine similarity"""
+        """Find similar commands using cosine similarity."""
         commands = self.get_all_commands()
         if not commands:
             return []
@@ -383,7 +382,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
             return []
 
     def update_command(self, command: Command) -> bool:
-        """Update an existing command"""
+        """Update an existing command."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -420,7 +419,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
             conn.close()
 
     def delete_command(self, command_id: str) -> bool:
-        """Delete a command (soft delete)"""
+        """Delete a command (soft delete)."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -451,7 +450,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
         error: str = None,
         execution_time_ms: int = None,
     ):
-        """Record command execution"""
+        """Record command execution."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -495,7 +494,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
             conn.close()
 
     def _row_to_command(self, row) -> Command:
-        """Convert database row to Command object"""
+        """Convert database row to Command object."""
         return Command(
             id=row[0],
             name=row[1],
@@ -513,7 +512,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
 
 
 class CommandExecutor:
-    """Handles safe execution of commands in different languages"""
+    """Handles safe execution of commands in different languages."""
 
     def __init__(self, temp_dir: Optional[str] = None):
         self.temp_dir = Path(temp_dir) if temp_dir else Path(tempfile.gettempdir()) / "mcli_daemon"
@@ -528,7 +527,7 @@ class CommandExecutor:
         }
 
     def execute_command(self, command: Command, args: List[str] = None) -> Dict[str, Any]:
-        """Execute a command safely"""
+        """Execute a command safely."""
         start_time = time.time()
 
         try:
@@ -561,7 +560,7 @@ class CommandExecutor:
             }
 
     def _execute_python(self, command: Command, args: List[str]) -> Dict[str, str]:
-        """Execute Python code safely"""
+        """Execute Python code safely."""
         # Create temporary file
         script_file = self.temp_dir / f"{command.id}_{int(time.time())}.py"
 
@@ -587,7 +586,7 @@ class CommandExecutor:
                 script_file.unlink()
 
     def _execute_node(self, command: Command, args: List[str]) -> Dict[str, str]:
-        """Execute Node.js code safely"""
+        """Execute Node.js code safely."""
         script_file = self.temp_dir / f"{command.id}_{int(time.time())}.js"
 
         try:
@@ -609,7 +608,7 @@ class CommandExecutor:
                 script_file.unlink()
 
     def _execute_lua(self, command: Command, args: List[str]) -> Dict[str, str]:
-        """Execute Lua code safely"""
+        """Execute Lua code safely."""
         script_file = self.temp_dir / f"{command.id}_{int(time.time())}.lua"
 
         try:
@@ -631,7 +630,7 @@ class CommandExecutor:
                 script_file.unlink()
 
     def _execute_shell(self, command: Command, args: List[str]) -> Dict[str, str]:
-        """Execute shell commands safely"""
+        """Execute shell commands safely."""
         script_file = self.temp_dir / f"{command.id}_{int(time.time())}.sh"
 
         try:
@@ -658,7 +657,7 @@ class CommandExecutor:
 
 
 class DaemonService:
-    """Background daemon service for command management"""
+    """Background daemon service for command management."""
 
     def __init__(self, config_path: Optional[str] = None):
         # Load configuration from TOML
@@ -696,7 +695,7 @@ class DaemonService:
         self.pid_file.parent.mkdir(parents=True, exist_ok=True)
 
     def start(self):
-        """Start the daemon service"""
+        """Start the daemon service."""
         if self.running:
             logger.info("Daemon is already running")
             return
@@ -734,7 +733,7 @@ class DaemonService:
             self.stop()
 
     def stop(self):
-        """Stop the daemon service"""
+        """Stop the daemon service."""
         if not self.running:
             return
 
@@ -747,13 +746,13 @@ class DaemonService:
         logger.info("Daemon stopped")
 
     def _signal_handler(self, signum, frame):
-        """Handle shutdown signals"""
+        """Handle shutdown signals."""
         logger.info(f"Received signal {signum}, shutting down...")
         self.stop()
         sys.exit(0)
 
     def _main_loop(self):
-        """Main daemon loop"""
+        """Main daemon loop."""
         logger.info("Daemon main loop started")
 
         while self.running:
@@ -768,7 +767,7 @@ class DaemonService:
                 time.sleep(5)
 
     def status(self) -> Dict[str, Any]:
-        """Get daemon status"""
+        """Get daemon status."""
         is_running = False
         pid = None
 
@@ -791,21 +790,20 @@ class DaemonService:
 # CLI Commands
 @click.group(name="daemon")
 def daemon():
-    """Daemon service for command management"""
-    pass
+    """Daemon service for command management."""
 
 
 @daemon.command()
 @click.option("--config", help="Path to configuration file")
 def start(config: Optional[str]):
-    """Start the daemon service"""
+    """Start the daemon service."""
     service = DaemonService(config)
     service.start()
 
 
 @daemon.command()
 def stop():
-    """Stop the daemon service"""
+    """Stop the daemon service."""
     pid_file = Path.home() / ".local" / "mcli" / "daemon" / "daemon.pid"
 
     if not pid_file.exists():
@@ -833,7 +831,7 @@ def stop():
 
 @daemon.command()
 def status():
-    """Show daemon status"""
+    """Show daemon status."""
     service = DaemonService()
     status_info = service.status()
     if status_info["running"]:
@@ -849,8 +847,7 @@ def status():
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @click.option("--all", "show_all", is_flag=True, help="Show all commands, including inactive")
 def list_commands(as_json, show_all):
-    """List all available commands (optionally including inactive)"""
-    import sys
+    """List all available commands (optionally including inactive)."""
 
     service = DaemonService()
     commands = service.db.get_all_commands(include_inactive=show_all)
@@ -887,8 +884,7 @@ def list_commands(as_json, show_all):
 @click.argument("args", nargs=-1)
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 def execute_command(command_name, args, as_json):
-    """Execute a command by name with optional arguments"""
-    import sys
+    """Execute a command by name with optional arguments."""
 
     service = DaemonService()
     # Find command by name

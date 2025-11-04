@@ -1,4 +1,4 @@
-"""Warning suppression utilities for Streamlit components used outside runtime context"""
+"""Warning suppression utilities for Streamlit components used outside runtime context."""
 
 import logging
 import warnings
@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 @contextmanager
 def suppress_streamlit_warnings():
-    """Context manager to suppress Streamlit warnings when used outside runtime context"""
+    """Context manager to suppress Streamlit warnings when used outside runtime context."""
     # Suppress specific Streamlit warnings
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message=".*missing ScriptRunContext.*")
@@ -27,7 +27,7 @@ def suppress_streamlit_warnings():
 
 
 def suppress_streamlit_warnings_decorator(func):
-    """Decorator to suppress Streamlit warnings for a function"""
+    """Decorator to suppress Streamlit warnings for a function."""
 
     def wrapper(*args, **kwargs):
         with suppress_streamlit_warnings():

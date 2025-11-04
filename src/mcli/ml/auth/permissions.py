@@ -1,9 +1,9 @@
-"""Permission management system"""
+"""Permission management system."""
 
 from datetime import datetime
 from enum import Enum
 from functools import wraps
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, Set
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ from mcli.ml.database.models import User, UserRole
 
 
 class Permission(Enum):
-    """System permissions"""
+    """System permissions."""
 
     # Model permissions
     MODEL_VIEW = "model:view"
@@ -97,13 +97,13 @@ ROLE_PERMISSIONS: Dict[UserRole, Set[Permission]] = {
 
 
 def has_permission(user: User, permission: Permission) -> bool:
-    """Check if user has specific permission"""
+    """Check if user has specific permission."""
     user_permissions = ROLE_PERMISSIONS.get(user.role, set())
     return permission in user_permissions
 
 
 def check_permission(user: User, permission: Permission) -> None:
-    """Check permission and raise exception if not allowed"""
+    """Check permission and raise exception if not allowed."""
     if not has_permission(user, permission):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=f"Permission denied: {permission.value}"
@@ -111,7 +111,7 @@ def check_permission(user: User, permission: Permission) -> None:
 
 
 def require_permission(permission: Permission):
-    """Decorator to require specific permission"""
+    """Decorator to require specific permission."""
 
     def decorator(func):
         @wraps(func)
@@ -133,7 +133,7 @@ def require_permission(permission: Permission):
 
 
 def require_any_permission(*permissions: Permission):
-    """Decorator to require any of the specified permissions"""
+    """Decorator to require any of the specified permissions."""
 
     def decorator(func):
         @wraps(func)
@@ -159,7 +159,7 @@ def require_any_permission(*permissions: Permission):
 
 
 def require_all_permissions(*permissions: Permission):
-    """Decorator to require all of the specified permissions"""
+    """Decorator to require all of the specified permissions."""
 
     def decorator(func):
         @wraps(func)
@@ -182,7 +182,7 @@ def require_all_permissions(*permissions: Permission):
 
 
 class PermissionChecker:
-    """FastAPI dependency for permission checking"""
+    """FastAPI dependency for permission checking."""
 
     def __init__(self, permission: Permission):
         self.permission = permission
@@ -194,11 +194,11 @@ class PermissionChecker:
 
 # Resource-based permissions
 class ResourcePermission:
-    """Check permissions for specific resources"""
+    """Check permissions for specific resources."""
 
     @staticmethod
     def can_edit_portfolio(user: User, portfolio) -> bool:
-        """Check if user can edit a specific portfolio"""
+        """Check if user can edit a specific portfolio."""
         # Admin can edit any portfolio
         if user.role == UserRole.ADMIN:
             return True
@@ -211,7 +211,7 @@ class ResourcePermission:
 
     @staticmethod
     def can_view_portfolio(user: User, portfolio) -> bool:
-        """Check if user can view a specific portfolio"""
+        """Check if user can view a specific portfolio."""
         # Admin can view any portfolio
         if user.role == UserRole.ADMIN:
             return True
@@ -228,20 +228,20 @@ class ResourcePermission:
 
     @staticmethod
     def can_delete_model(user: User, model) -> bool:
-        """Check if user can delete a specific model"""
+        """Check if user can delete a specific model."""
         # Only admin can delete models
         return user.role == UserRole.ADMIN
 
     @staticmethod
     def can_deploy_model(user: User, model) -> bool:
-        """Check if user can deploy a specific model"""
+        """Check if user can deploy a specific model."""
         # Admin and Analyst can deploy models
         return user.role in [UserRole.ADMIN, UserRole.ANALYST]
 
 
 # Audit logging
 class AuditLogger:
-    """Log permission-related actions"""
+    """Log permission-related actions."""
 
     @staticmethod
     async def log_access(
@@ -252,7 +252,7 @@ class AuditLogger:
         details: Dict[str, Any] = None,
         db: Session = None,
     ):
-        """Log access attempt"""
+        """Log access attempt."""
         log_entry = {
             "user_id": str(user.id),
             "username": user.username,
@@ -269,7 +269,7 @@ class AuditLogger:
 
 # Permission groups for easier management
 class PermissionGroup:
-    """Predefined permission groups"""
+    """Predefined permission groups."""
 
     BASIC_USER = {
         Permission.MODEL_VIEW,

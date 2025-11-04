@@ -104,7 +104,7 @@ def test_trading_service_initialization():
 def test_trading_page_imports():
     """Test that trading dashboard page can be imported"""
     try:
-        import sys
+        pass
 
         import streamlit as st
 

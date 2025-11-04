@@ -1,7 +1,6 @@
-"""Unified MLOps Manager for Stock Recommendation System"""
+"""Unified MLOps Manager for Stock Recommendation System."""
 
 import json
-import os
 import pickle
 from datetime import datetime
 from pathlib import Path
@@ -11,14 +10,13 @@ import joblib
 import mlflow
 import mlflow.pytorch
 import mlflow.sklearn
-from mlflow.tracking import MlflowClient
 
 from .dvc_config import DVCConfig, get_dvc_config
 from .mlflow_config import MLflowConfig, get_mlflow_config
 
 
 class MLOpsManager:
-    """Unified manager for MLflow and DVC operations"""
+    """Unified manager for MLflow and DVC operations."""
 
     def __init__(
         self, mlflow_config: Optional[MLflowConfig] = None, dvc_config: Optional[DVCConfig] = None
@@ -28,7 +26,7 @@ class MLOpsManager:
         self._setup_completed = False
 
     def setup(self) -> None:
-        """Initialize MLOps infrastructure"""
+        """Initialize MLOps infrastructure."""
         if self._setup_completed:
             return
 
@@ -49,7 +47,7 @@ class MLOpsManager:
         tags: Optional[Dict[str, str]] = None,
         description: Optional[str] = None,
     ) -> str:
-        """Start a new MLflow experiment run"""
+        """Start a new MLflow experiment run."""
         if not self._setup_completed:
             self.setup()
 
@@ -62,17 +60,17 @@ class MLOpsManager:
         return run.info.run_id
 
     def log_parameters(self, params: Dict[str, Any]) -> None:
-        """Log parameters to MLflow"""
+        """Log parameters to MLflow."""
         for key, value in params.items():
             mlflow.log_param(key, value)
 
     def log_metrics(self, metrics: Dict[str, float], step: Optional[int] = None) -> None:
-        """Log metrics to MLflow"""
+        """Log metrics to MLflow."""
         for key, value in metrics.items():
             mlflow.log_metric(key, value, step=step)
 
     def log_artifacts(self, artifact_path: Path, artifact_name: Optional[str] = None) -> None:
-        """Log artifacts to MLflow"""
+        """Log artifacts to MLflow."""
         if artifact_path.is_file():
             mlflow.log_artifact(str(artifact_path), artifact_name)
         else:
@@ -87,7 +85,7 @@ class MLOpsManager:
         input_example: Optional[Any] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
-        """Save model locally and log to MLflow"""
+        """Save model locally and log to MLflow."""
         # Create model directory
         model_dir = self.dvc_config.models_dir / model_type / model_name
         model_dir.mkdir(parents=True, exist_ok=True)
@@ -149,7 +147,7 @@ class MLOpsManager:
         description: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
     ) -> str:
-        """Register model in MLflow Model Registry"""
+        """Register model in MLflow Model Registry."""
         # Get the current run
         run = mlflow.active_run()
         if not run:
@@ -173,7 +171,7 @@ class MLOpsManager:
     def load_model(
         self, model_name: str, version: Optional[str] = None, stage: Optional[str] = None
     ) -> Any:
-        """Load model from MLflow Model Registry"""
+        """Load model from MLflow Model Registry."""
         if version:
             model_uri = f"models:/{model_name}/{version}"
         elif stage:
@@ -184,11 +182,11 @@ class MLOpsManager:
         return mlflow.pytorch.load_model(model_uri)
 
     def end_run(self, status: str = "FINISHED") -> None:
-        """End the current MLflow run"""
+        """End the current MLflow run."""
         mlflow.end_run(status=status)
 
     def version_data(self, data_path: Path, message: Optional[str] = None) -> str:
-        """Version data using DVC"""
+        """Version data using DVC."""
         self.dvc_config.add_data_to_dvc(data_path, message)
         return self.dvc_config.get_data_version(data_path) or "unknown"
 
@@ -200,7 +198,7 @@ class MLOpsManager:
         outputs: List[str],
         parameters: Optional[List[str]] = None,
     ) -> None:
-        """Create a DVC pipeline stage for ML workflow"""
+        """Create a DVC pipeline stage for ML workflow."""
         command = f"python {script_path}"
 
         self.dvc_config.create_pipeline_stage(
@@ -212,11 +210,11 @@ class MLOpsManager:
         )
 
     def run_ml_pipeline(self, stage_name: Optional[str] = None) -> None:
-        """Run DVC ML pipeline"""
+        """Run DVC ML pipeline."""
         self.dvc_config.run_pipeline(stage_name)
 
     def get_experiment_metrics(self, experiment_name: str) -> List[Dict[str, Any]]:
-        """Get metrics from all runs in an experiment"""
+        """Get metrics from all runs in an experiment."""
         experiment = mlflow.get_experiment_by_name(experiment_name)
         if not experiment:
             return []
@@ -227,7 +225,7 @@ class MLOpsManager:
     def compare_models(
         self, model_names: List[str], metric_name: str = "accuracy"
     ) -> Dict[str, Any]:
-        """Compare models by a specific metric"""
+        """Compare models by a specific metric."""
         comparison = {}
 
         for model_name in model_names:
@@ -252,13 +250,13 @@ class MLOpsManager:
         return comparison
 
     def cleanup_old_runs(self, days_old: int = 30) -> None:
-        """Clean up old experiment runs"""
+        """Clean up old experiment runs."""
         # This would implement cleanup logic for old runs
         # For now, just a placeholder
         print(f"Cleanup of runs older than {days_old} days would be implemented here")
 
     def get_system_info(self) -> Dict[str, Any]:
-        """Get MLOps system information"""
+        """Get MLOps system information."""
         return {
             "mlflow_tracking_uri": self.mlflow_config.tracking_uri,
             "mlflow_experiment": self.mlflow_config.experiment_name,
@@ -275,7 +273,7 @@ mlops_manager = MLOpsManager()
 
 
 def get_mlops_manager() -> MLOpsManager:
-    """Get the global MLOps manager instance"""
+    """Get the global MLOps manager instance."""
     return mlops_manager
 
 

@@ -1,21 +1,18 @@
-"""REST API for model serving"""
+"""REST API for model serving."""
 
-import asyncio
 import json
 import logging
 import os
 import sys
 from contextlib import asynccontextmanager
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 import torch
 import uvicorn
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
@@ -30,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Pydantic models for API
 class PredictionRequest(BaseModel):
-    """Request model for predictions"""
+    """Request model for predictions."""
 
     trading_data: Dict[str, Any] = Field(..., description="Politician trading data")
     stock_data: Optional[Dict[str, Any]] = Field(None, description="Stock price data")
@@ -39,7 +36,7 @@ class PredictionRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    """Response model for predictions"""
+    """Response model for predictions."""
 
     recommendations: List[Dict[str, Any]]
     timestamp: str
@@ -48,7 +45,7 @@ class PredictionResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """Health check response"""
+    """Health check response."""
 
     status: str
     model_loaded: bool
@@ -57,7 +54,7 @@ class HealthResponse(BaseModel):
 
 
 class ModelMetricsResponse(BaseModel):
-    """Model metrics response"""
+    """Model metrics response."""
 
     accuracy: float
     precision: float
@@ -67,14 +64,14 @@ class ModelMetricsResponse(BaseModel):
 
 
 class BatchPredictionRequest(BaseModel):
-    """Batch prediction request"""
+    """Batch prediction request."""
 
     batch_id: str
     data: List[PredictionRequest]
 
 
 class BatchPredictionResponse(BaseModel):
-    """Batch prediction response"""
+    """Batch prediction response."""
 
     batch_id: str
     status: str
@@ -83,7 +80,7 @@ class BatchPredictionResponse(BaseModel):
 
 
 class ModelEndpoint:
-    """Model endpoint manager"""
+    """Model endpoint manager."""
 
     def __init__(self, model_path: Optional[str] = None):
         self.model = None
@@ -100,7 +97,7 @@ class ModelEndpoint:
         self._setup_feature_extractors()
 
     def _setup_feature_extractors(self):
-        """Initialize feature extractors"""
+        """Initialize feature extractors."""
         self.feature_extractors = {
             "stock": StockRecommendationFeatures(),
             "political": PoliticalInfluenceFeatures(),
@@ -109,7 +106,7 @@ class ModelEndpoint:
         logger.info("Feature extractors initialized")
 
     def load_model(self, model_path: str):
-        """Load model from file"""
+        """Load model from file."""
         try:
             checkpoint = torch.load(model_path, map_location="cpu")
 
@@ -151,7 +148,7 @@ class ModelEndpoint:
     def extract_features(
         self, trading_data: pd.DataFrame, stock_data: Optional[pd.DataFrame] = None
     ) -> np.ndarray:
-        """Extract features from raw data"""
+        """Extract features from raw data."""
         features = pd.DataFrame()
 
         # Extract political features
@@ -176,7 +173,7 @@ class ModelEndpoint:
         return features.values if not features.empty else np.array([[]])
 
     async def predict(self, request: PredictionRequest) -> PredictionResponse:
-        """Generate predictions"""
+        """Generate predictions."""
         start_time = datetime.now()
 
         try:
@@ -259,7 +256,7 @@ class ModelEndpoint:
             raise HTTPException(status_code=500, detail=str(e))
 
     def _generate_mock_recommendations(self, tickers: List[str]) -> List[PortfolioRecommendation]:
-        """Generate mock recommendations for testing"""
+        """Generate mock recommendations for testing."""
         recommendations = []
         for ticker in tickers:
             rec = PortfolioRecommendation(
@@ -276,7 +273,7 @@ class ModelEndpoint:
         return recommendations
 
     def get_health(self) -> HealthResponse:
-        """Get endpoint health status"""
+        """Get endpoint health status."""
         uptime = (datetime.now() - self.start_time).total_seconds()
 
         return HealthResponse(
@@ -287,7 +284,7 @@ class ModelEndpoint:
         )
 
     def get_metrics(self) -> Dict[str, Any]:
-        """Get endpoint metrics"""
+        """Get endpoint metrics."""
         return {
             **self.metrics,
             "model_version": self.model_version,
@@ -297,7 +294,7 @@ class ModelEndpoint:
 
 
 class PredictionService:
-    """Async prediction service for batch processing"""
+    """Async prediction service for batch processing."""
 
     def __init__(self, model_endpoint: ModelEndpoint):
         self.model_endpoint = model_endpoint
@@ -305,7 +302,7 @@ class PredictionService:
         self.executor = None
 
     async def process_batch(self, batch_request: BatchPredictionRequest) -> BatchPredictionResponse:
-        """Process batch predictions asynchronously"""
+        """Process batch predictions asynchronously."""
         batch_id = batch_request.batch_id
 
         # Initialize batch job
@@ -341,7 +338,7 @@ class PredictionService:
         )
 
     def get_batch_status(self, batch_id: str) -> BatchPredictionResponse:
-        """Get batch job status"""
+        """Get batch job status."""
         if batch_id not in self.batch_jobs:
             raise HTTPException(status_code=404, detail="Batch job not found")
 
@@ -356,7 +353,7 @@ class PredictionService:
 
 
 class ModelServer:
-    """FastAPI model server"""
+    """FastAPI model server."""
 
     def __init__(self, model_path: Optional[str] = None):
         self.model_endpoint = ModelEndpoint(model_path)
@@ -365,7 +362,7 @@ class ModelServer:
 
     @asynccontextmanager
     async def lifespan(self, app: FastAPI):
-        """Manage application lifecycle"""
+        """Manage application lifecycle."""
         # Startup
         logger.info("Starting model server...")
         yield
@@ -373,7 +370,7 @@ class ModelServer:
         logger.info("Shutting down model server...")
 
     def _create_app(self) -> FastAPI:
-        """Create FastAPI application"""
+        """Create FastAPI application."""
         app = FastAPI(
             title="Stock Recommendation API",
             description="ML-powered stock recommendation system based on politician trading data",
@@ -384,19 +381,19 @@ class ModelServer:
         # Health check
         @app.get("/health", response_model=HealthResponse)
         async def health():
-            """Health check endpoint"""
+            """Health check endpoint."""
             return self.model_endpoint.get_health()
 
         # Metrics
         @app.get("/metrics")
         async def metrics():
-            """Get service metrics"""
+            """Get service metrics."""
             return self.model_endpoint.get_metrics()
 
         # Single prediction
         @app.post("/predict", response_model=PredictionResponse)
         async def predict(request: PredictionRequest):
-            """Generate stock recommendations"""
+            """Generate stock recommendations."""
             return await self.model_endpoint.predict(request)
 
         # Batch prediction
@@ -404,7 +401,7 @@ class ModelServer:
         async def batch_predict(
             batch_request: BatchPredictionRequest, background_tasks: BackgroundTasks
         ):
-            """Submit batch prediction job"""
+            """Submit batch prediction job."""
             background_tasks.add_task(self.prediction_service.process_batch, batch_request)
 
             return BatchPredictionResponse(
@@ -414,13 +411,13 @@ class ModelServer:
         # Batch status
         @app.get("/batch/{batch_id}", response_model=BatchPredictionResponse)
         async def batch_status(batch_id: str):
-            """Get batch job status"""
+            """Get batch job status."""
             return self.prediction_service.get_batch_status(batch_id)
 
         # Model reload
         @app.post("/model/reload")
         async def reload_model(model_path: str):
-            """Reload model from new path"""
+            """Reload model from new path."""
             try:
                 self.model_endpoint.load_model(model_path)
                 return {"status": "success", "model_version": self.model_endpoint.model_version}
@@ -430,7 +427,7 @@ class ModelServer:
         # Upload and predict
         @app.post("/upload/predict")
         async def upload_predict(file: UploadFile = File(...)):
-            """Upload CSV and get predictions"""
+            """Upload CSV and get predictions."""
             try:
                 # Read uploaded file
                 content = await file.read()
@@ -455,12 +452,12 @@ class ModelServer:
         return app
 
     def run(self, host: str = "0.0.0.0", port: int = 8000):
-        """Run the server"""
+        """Run the server."""
         uvicorn.run(self.app, host=host, port=port)
 
 
 def main():
-    """Run the model server"""
+    """Run the model server."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Stock Recommendation Model Server")

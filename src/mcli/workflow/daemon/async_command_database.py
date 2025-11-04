@@ -1,9 +1,8 @@
 import asyncio
 import json
-import sqlite3
 import uuid
 from contextlib import asynccontextmanager
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -18,7 +17,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class Command:
-    """Represents a stored command with enhanced metadata"""
+    """Represents a stored command with enhanced metadata."""
 
     id: str
     name: str
@@ -49,7 +48,7 @@ class Command:
 
 @dataclass
 class ExecutionRecord:
-    """Represents a command execution record"""
+    """Represents a command execution record."""
 
     id: str
     command_id: str
@@ -63,7 +62,7 @@ class ExecutionRecord:
 
 
 class AsyncCommandDatabase:
-    """High-performance async command database with connection pooling and caching"""
+    """High-performance async command database with connection pooling and caching."""
 
     def __init__(
         self, db_path: Optional[str] = None, redis_url: Optional[str] = None, pool_size: int = 10
@@ -88,7 +87,7 @@ class AsyncCommandDatabase:
         self.enable_caching = True
 
     async def initialize(self):
-        """Initialize database and connection pool"""
+        """Initialize database and connection pool."""
         if self._initialized:
             return
 
@@ -100,7 +99,7 @@ class AsyncCommandDatabase:
         logger.info("AsyncCommandDatabase initialized successfully")
 
     async def _init_database(self):
-        """Initialize SQLite database with optimizations"""
+        """Initialize SQLite database with optimizations."""
         async with aiosqlite.connect(self.db_path) as db:
             # Enable performance optimizations
             await db.execute("PRAGMA journal_mode=WAL")
@@ -231,7 +230,7 @@ class AsyncCommandDatabase:
             await db.commit()
 
     async def _init_redis(self):
-        """Initialize Redis connection for caching"""
+        """Initialize Redis connection for caching."""
         if not self.enable_caching:
             return
 
@@ -245,7 +244,7 @@ class AsyncCommandDatabase:
             self.enable_caching = False
 
     async def _init_connection_pool(self):
-        """Initialize connection pool"""
+        """Initialize connection pool."""
         async with self._pool_lock:
             for _ in range(self.pool_size):
                 conn = await aiosqlite.connect(self.db_path)
@@ -255,7 +254,7 @@ class AsyncCommandDatabase:
 
     @asynccontextmanager
     async def _get_connection(self):
-        """Get a database connection from the pool"""
+        """Get a database connection from the pool."""
         async with self._pool_lock:
             if self._connection_pool:
                 conn = self._connection_pool.pop()
@@ -273,7 +272,7 @@ class AsyncCommandDatabase:
                     await conn.close()
 
     async def add_command(self, command: Command) -> str:
-        """Add a new command to the database"""
+        """Add a new command to the database."""
         if not command.id:
             command.id = str(uuid.uuid4())
 
@@ -323,7 +322,7 @@ class AsyncCommandDatabase:
                 raise
 
     async def get_command(self, command_id: str) -> Optional[Command]:
-        """Get a command by ID with caching"""
+        """Get a command by ID with caching."""
         # Try cache first
         if self.enable_caching and self.redis_client:
             cached = await self._get_cached_command(command_id)
@@ -347,7 +346,7 @@ class AsyncCommandDatabase:
         return None
 
     async def update_command(self, command: Command) -> bool:
-        """Update an existing command"""
+        """Update an existing command."""
         command.updated_at = datetime.now()
 
         async with self._get_connection() as db:
@@ -396,7 +395,7 @@ class AsyncCommandDatabase:
                 raise
 
     async def delete_command(self, command_id: str) -> bool:
-        """Delete a command (soft delete)"""
+        """Delete a command (soft delete)."""
         async with self._get_connection() as db:
             try:
                 result = await db.execute(
@@ -422,7 +421,7 @@ class AsyncCommandDatabase:
                 raise
 
     async def search_commands(self, query: str, limit: int = 50) -> List[Command]:
-        """Full-text search for commands"""
+        """Full-text search for commands."""
         if not query.strip():
             return await self.get_all_commands(limit=limit)
 
@@ -453,7 +452,7 @@ class AsyncCommandDatabase:
         limit: int = 100,
         offset: int = 0,
     ) -> List[Command]:
-        """Get all commands with optional filtering"""
+        """Get all commands with optional filtering."""
         where_clauses = ["is_active = 1"]
         params = []
 
@@ -467,7 +466,7 @@ class AsyncCommandDatabase:
 
         params.extend([limit, offset])
 
-        query = f"""
+        query = """
             SELECT * FROM commands 
             WHERE {" AND ".join(where_clauses)}
             ORDER BY execution_count DESC, updated_at DESC
@@ -482,7 +481,7 @@ class AsyncCommandDatabase:
                 return commands
 
     async def get_popular_commands(self, limit: int = 10) -> List[Command]:
-        """Get most popular commands by execution count"""
+        """Get most popular commands by execution count."""
         async with self._get_connection() as db:
             async with db.execute(
                 """
@@ -499,7 +498,7 @@ class AsyncCommandDatabase:
                 return commands
 
     async def record_execution(self, execution: ExecutionRecord):
-        """Record a command execution"""
+        """Record a command execution."""
         async with self._get_connection() as db:
             try:
                 await db.execute(
@@ -546,7 +545,7 @@ class AsyncCommandDatabase:
     async def get_execution_history(
         self, command_id: Optional[str] = None, limit: int = 100
     ) -> List[ExecutionRecord]:
-        """Get execution history"""
+        """Get execution history."""
         query = "SELECT * FROM executions"
         params = []
 
@@ -577,7 +576,7 @@ class AsyncCommandDatabase:
                 return executions
 
     async def _cache_command(self, command: Command):
-        """Cache a command in Redis"""
+        """Cache a command in Redis."""
         if not self.redis_client:
             return
 
@@ -609,7 +608,7 @@ class AsyncCommandDatabase:
             logger.warning(f"Failed to cache command {command.id}: {e}")
 
     async def _get_cached_command(self, command_id: str) -> Optional[Command]:
-        """Get a command from Redis cache"""
+        """Get a command from Redis cache."""
         if not self.redis_client:
             return None
 
@@ -649,7 +648,7 @@ class AsyncCommandDatabase:
             return None
 
     def _row_to_command(self, row) -> Command:
-        """Convert database row to Command object"""
+        """Convert database row to Command object."""
         return Command(
             id=row[0],
             name=row[1],
@@ -669,7 +668,7 @@ class AsyncCommandDatabase:
         )
 
     async def close(self):
-        """Clean up resources"""
+        """Clean up resources."""
         async with self._pool_lock:
             for conn in self._connection_pool:
                 await conn.close()

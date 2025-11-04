@@ -1,6 +1,6 @@
-"""Reusable chart components for Streamlit dashboards"""
+"""Reusable chart components for Streamlit dashboards."""
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 import plotly.express as px
@@ -16,11 +16,13 @@ def create_timeline_chart(
     color_col: Optional[str] = None,
     height: int = 400,
 ) -> go.Figure:
-    """Create a timeline chart with Plotly"""
+    """Create a timeline chart with Plotly."""
 
     fig = px.line(data, x=x_col, y=y_col, color=color_col, title=title, markers=True)
 
-    fig.update_layout(height=height, hovermode="x unified", showlegend=True if color_col else False)
+    fig.update_layout(
+        height=height, hovermode="x unified", showlegend=True if color_col else False
+    )  # noqa: SIM210
 
     return fig
 
@@ -31,7 +33,7 @@ def create_status_pie_chart(
     title: str = "Status Distribution",
     color_map: Optional[Dict[str, str]] = None,
 ) -> go.Figure:
-    """Create a pie chart for status distribution"""
+    """Create a pie chart for status distribution."""
 
     status_counts = data[status_col].value_counts()
 
@@ -69,7 +71,7 @@ def create_metric_trend_chart(
     title: str,
     target_value: Optional[float] = None,
 ) -> go.Figure:
-    """Create a metric trend chart with optional target line"""
+    """Create a metric trend chart with optional target line."""
 
     fig = go.Figure()
 
@@ -109,7 +111,7 @@ def create_heatmap(
     title: str = "Heatmap",
     color_scale: str = "Blues",
 ) -> go.Figure:
-    """Create a heatmap visualization"""
+    """Create a heatmap visualization."""
 
     pivot_data = data.pivot_table(index=y_col, columns=x_col, values=value_col, aggfunc="mean")
 
@@ -128,7 +130,7 @@ def create_gantt_chart(
     status_col: Optional[str] = None,
     title: str = "Timeline",
 ) -> go.Figure:
-    """Create a Gantt chart for job/task scheduling"""
+    """Create a Gantt chart for job/task scheduling."""
 
     fig = px.timeline(
         data, x_start=start_col, x_end=end_col, y=task_col, color=status_col, title=title
@@ -143,7 +145,7 @@ def create_gantt_chart(
 def create_multi_metric_gauge(
     values: Dict[str, float], max_values: Dict[str, float], title: str = "Metrics"
 ) -> go.Figure:
-    """Create multiple gauge charts in a grid"""
+    """Create multiple gauge charts in a grid."""
 
     from plotly.subplots import make_subplots
 
@@ -194,7 +196,7 @@ def create_multi_metric_gauge(
 def create_waterfall_chart(
     categories: List[str], values: List[float], title: str = "Waterfall Chart"
 ) -> go.Figure:
-    """Create a waterfall chart for step-by-step changes"""
+    """Create a waterfall chart for step-by-step changes."""
 
     fig = go.Figure(
         go.Waterfall(
@@ -213,5 +215,5 @@ def create_waterfall_chart(
 
 
 def render_chart(fig: go.Figure, key: Optional[str] = None):
-    """Helper to render Plotly chart with consistent configuration"""
+    """Helper to render Plotly chart with consistent configuration."""
     st.plotly_chart(fig, width="stretch", config={"responsive": True}, key=key)

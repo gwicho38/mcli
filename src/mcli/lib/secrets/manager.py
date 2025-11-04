@@ -3,7 +3,6 @@ Secrets manager for handling secure storage and retrieval of secrets.
 """
 
 import base64
-import json
 import os
 from pathlib import Path
 from typing import Dict, List, Optional

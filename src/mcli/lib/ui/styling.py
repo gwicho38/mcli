@@ -1,7 +1,6 @@
 from rich.box import HEAVY, ROUNDED
 from rich.console import Console
 from rich.panel import Panel
-from rich.text import Text
 
 console = Console()
 

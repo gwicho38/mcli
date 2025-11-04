@@ -1,6 +1,5 @@
-"""Streamlit dashboard for ML system monitoring"""
+"""Streamlit dashboard for ML system monitoring."""
 
-import asyncio
 import time
 from datetime import datetime, timedelta
 
@@ -16,16 +15,7 @@ from mcli.ml.cache import cache_manager
 from mcli.ml.config import settings
 from mcli.ml.dashboard.common import setup_page_config
 from mcli.ml.dashboard.styles import apply_dashboard_styles
-from mcli.ml.database.models import (
-    BacktestResult,
-    Model,
-    ModelStatus,
-    Portfolio,
-    Prediction,
-    StockData,
-    Trade,
-    User,
-)
+from mcli.ml.database.models import Model, ModelStatus, Portfolio, Prediction, User
 from mcli.ml.database.session import SessionLocal
 
 # Page config - must be first
@@ -37,7 +27,7 @@ apply_dashboard_styles()
 
 @st.cache_data(ttl=30)
 def get_system_metrics():
-    """Get real-time system metrics"""
+    """Get real-time system metrics."""
     db = SessionLocal()
 
     try:
@@ -62,7 +52,7 @@ def get_system_metrics():
         )
 
         # Portfolio metrics
-        active_portfolios = db.query(Portfolio).filter(Portfolio.is_active == True).count()
+        active_portfolios = db.query(Portfolio).filter(Portfolio.is_active is True).count()
 
         return {
             "total_models": total_models,
@@ -80,7 +70,7 @@ def get_system_metrics():
 
 @st.cache_data(ttl=60)
 def get_model_performance():
-    """Get model performance data"""
+    """Get model performance data."""
     db = SessionLocal()
 
     try:
@@ -104,7 +94,7 @@ def get_model_performance():
 
 @st.cache_data(ttl=30)
 def get_recent_predictions():
-    """Get recent predictions"""
+    """Get recent predictions."""
     db = SessionLocal()
 
     try:
@@ -131,11 +121,11 @@ def get_recent_predictions():
 
 @st.cache_data(ttl=60)
 def get_portfolio_performance():
-    """Get portfolio performance data"""
+    """Get portfolio performance data."""
     db = SessionLocal()
 
     try:
-        portfolios = db.query(Portfolio).filter(Portfolio.is_active == True).all()
+        portfolios = db.query(Portfolio).filter(Portfolio.is_active is True).all()
 
         data = []
         for portfolio in portfolios:
@@ -155,25 +145,25 @@ def get_portfolio_performance():
 
 
 def check_api_health():
-    """Check API health"""
+    """Check API health."""
     try:
         response = requests.get(f"http://localhost:{settings.api.port}/health", timeout=5)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 
 def check_redis_health():
-    """Check Redis health"""
+    """Check Redis health."""
     try:
         cache_manager.initialize()
         return cache_manager.redis_client.ping() if cache_manager.redis_client else False
-    except:
+    except Exception:
         return False
 
 
 def main():
-    """Main dashboard function"""
+    """Main dashboard function."""
 
     # Title and header
     st.title("🤖 MCLI ML System Dashboard")
@@ -213,7 +203,7 @@ def main():
 
 
 def show_overview():
-    """Show overview dashboard"""
+    """Show overview dashboard."""
     st.header("System Overview")
 
     # Get metrics
@@ -268,7 +258,7 @@ def show_overview():
 
 
 def show_models():
-    """Show models dashboard"""
+    """Show models dashboard."""
     st.header("Model Management")
 
     # Model performance table
@@ -288,7 +278,7 @@ def show_models():
 
 
 def show_predictions():
-    """Show predictions dashboard"""
+    """Show predictions dashboard."""
     st.header("Predictions Analysis")
 
     pred_data = get_recent_predictions()
@@ -347,7 +337,7 @@ def show_predictions():
 
 
 def show_portfolios():
-    """Show portfolios dashboard"""
+    """Show portfolios dashboard."""
     st.header("Portfolio Performance")
 
     portfolio_data = get_portfolio_performance()
@@ -382,7 +372,7 @@ def show_portfolios():
 
 
 def show_system_health():
-    """Show system health dashboard"""
+    """Show system health dashboard."""
     st.header("System Health")
 
     # Check various system components
@@ -438,7 +428,7 @@ def show_system_health():
 
 
 def show_live_monitoring():
-    """Show live monitoring with real-time updates"""
+    """Show live monitoring with real-time updates."""
     st.header("Live Monitoring")
 
     # Real-time metrics placeholder
@@ -454,7 +444,7 @@ def show_live_monitoring():
 
     # Auto-update every 5 seconds
     if st.button("Start Live Monitoring"):
-        for i in range(60):  # Run for 5 minutes
+        for _i in range(60):  # Run for 5 minutes
             # Update metrics
             metrics = get_system_metrics()
             with metrics_placeholder.container():

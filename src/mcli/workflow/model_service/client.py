@@ -1,9 +1,5 @@
 import json
-import os
-import time
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import click
 import requests
@@ -14,7 +10,7 @@ logger = get_logger(__name__)
 
 
 class ModelServiceClient:
-    """Client for interacting with the model service daemon"""
+    """Client for interacting with the model service daemon."""
 
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url.rstrip("/")
@@ -24,7 +20,7 @@ class ModelServiceClient:
         )
 
     def _make_request(self, method: str, endpoint: str, data: Optional[Dict] = None) -> Dict:
-        """Make a request to the model service"""
+        """Make a request to the model service."""
         url = f"{self.base_url}{endpoint}"
 
         try:
@@ -54,15 +50,15 @@ class ModelServiceClient:
             raise RuntimeError(f"Request failed: {e}")
 
     def get_status(self) -> Dict[str, Any]:
-        """Get service status"""
+        """Get service status."""
         return self._make_request("GET", "/")
 
     def get_health(self) -> Dict[str, Any]:
-        """Get service health"""
+        """Get service health."""
         return self._make_request("GET", "/health")
 
     def list_models(self) -> List[Dict[str, Any]]:
-        """List all available models"""
+        """List all available models."""
         return self._make_request("GET", "/models")
 
     def load_model(
@@ -77,7 +73,7 @@ class ModelServiceClient:
         top_p: float = 0.9,
         top_k: int = 50,
     ) -> str:
-        """Load a new model"""
+        """Load a new model."""
         data = {
             "name": name,
             "model_type": model_type,
@@ -94,7 +90,7 @@ class ModelServiceClient:
         return result["model_id"]
 
     def unload_model(self, model_id: str) -> bool:
-        """Unload a model"""
+        """Unload a model."""
         try:
             self._make_request("DELETE", f"/models/{model_id}")
             return True
@@ -102,7 +98,7 @@ class ModelServiceClient:
             return False
 
     def update_model(self, model_id: str, updates: Dict[str, Any]) -> bool:
-        """Update model configuration"""
+        """Update model configuration."""
         try:
             self._make_request("PUT", f"/models/{model_id}", updates)
             return True
@@ -110,7 +106,7 @@ class ModelServiceClient:
             return False
 
     def remove_model(self, model_id: str) -> bool:
-        """Remove a model from the database"""
+        """Remove a model from the database."""
         try:
             self._make_request("DELETE", f"/models/{model_id}/remove")
             return True
@@ -126,7 +122,7 @@ class ModelServiceClient:
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """Generate text using a model"""
+        """Generate text using a model."""
         data = {
             "prompt": prompt,
             "max_length": max_length,
@@ -141,14 +137,14 @@ class ModelServiceClient:
         return self._make_request("POST", f"/models/{model_id}/generate", data)
 
     def classify_text(self, model_id: str, text: str) -> Dict[str, Any]:
-        """Classify text using a model"""
+        """Classify text using a model."""
         data = {"text": text}
         return self._make_request("POST", f"/models/{model_id}/classify", data)
 
     def translate_text(
         self, model_id: str, text: str, source_lang: str = "en", target_lang: str = "fr"
     ) -> Dict[str, Any]:
-        """Translate text using a model"""
+        """Translate text using a model."""
         data = {"text": text, "source_lang": source_lang, "target_lang": target_lang}
         return self._make_request("POST", f"/models/{model_id}/translate", data)
 
@@ -156,14 +152,13 @@ class ModelServiceClient:
 # CLI Commands
 @click.group(name="model-client")
 def model_client():
-    """Client for interacting with the model service daemon"""
-    pass
+    """Client for interacting with the model service daemon."""
 
 
 @model_client.command()
 @click.option("--url", default="http://localhost:8000", help="Model service URL")
 def status(url: str):
-    """Get model service status"""
+    """Get model service status."""
     try:
         client = ModelServiceClient(url)
         status_info = client.get_status()
@@ -187,7 +182,7 @@ def status(url: str):
 @model_client.command()
 @click.option("--url", default="http://localhost:8000", help="Model service URL")
 def list_models(url: str):
-    """List all available models"""
+    """List all available models."""
     try:
         client = ModelServiceClient(url)
         models = client.list_models()
@@ -240,7 +235,7 @@ def load_model(
     top_p: float = 0.9,
     top_k: int = 50,
 ):
-    """Load a model into the service"""
+    """Load a model into the service."""
     try:
         client = ModelServiceClient(url)
 
@@ -268,7 +263,7 @@ def load_model(
 @click.argument("model_id")
 @click.option("--url", default="http://localhost:8000", help="Model service URL")
 def unload_model(model_id: str, url: str):
-    """Unload a model from the service"""
+    """Unload a model from the service."""
     try:
         client = ModelServiceClient(url)
 
@@ -303,7 +298,7 @@ def update_model(
     top_k: Optional[int] = None,
     device: Optional[str] = None,
 ):
-    """Update model configuration"""
+    """Update model configuration."""
     try:
         client = ModelServiceClient(url)
 
@@ -350,7 +345,7 @@ def update_model(
 @click.option("--url", default="http://localhost:8000", help="Model service URL")
 @click.option("--force", is_flag=True, help="Force removal without confirmation")
 def remove_model(model_id: str, url: str, force: bool = False):
-    """Remove a model from the database"""
+    """Remove a model from the database."""
     try:
         client = ModelServiceClient(url)
 
@@ -364,7 +359,7 @@ def remove_model(model_id: str, url: str, force: bool = False):
                     break
 
             if model_info:
-                click.echo(f"Model to remove:")
+                click.echo("Model to remove:")
                 click.echo(f"  Name: {model_info['name']}")
                 click.echo(f"  Type: {model_info['model_type']}")
                 click.echo(f"  Path: {model_info['model_path']}")
@@ -406,7 +401,7 @@ def generate(
     top_p: Optional[float] = None,
     top_k: Optional[int] = None,
 ):
-    """Generate text using a model"""
+    """Generate text using a model."""
     try:
         client = ModelServiceClient(url)
 
@@ -437,7 +432,7 @@ def generate(
 @click.argument("text")
 @click.option("--url", default="http://localhost:8000", help="Model service URL")
 def classify(model_id: str, text: str, url: str):
-    """Classify text using a model"""
+    """Classify text using a model."""
     try:
         client = ModelServiceClient(url)
 
@@ -465,7 +460,7 @@ def classify(model_id: str, text: str, url: str):
 @click.option("--source-lang", default="en", help="Source language")
 @click.option("--target-lang", default="fr", help="Target language")
 def translate(model_id: str, text: str, url: str, source_lang: str = "en", target_lang: str = "fr"):
-    """Translate text using a model"""
+    """Translate text using a model."""
     try:
         client = ModelServiceClient(url)
 
@@ -491,7 +486,7 @@ def translate(model_id: str, text: str, url: str, source_lang: str = "en", targe
 @click.option("--model-id", required=True, help="Model ID to test")
 @click.option("--prompt", default="Hello, how are you?", help="Test prompt")
 def test_model(url: str, model_id: str, prompt: str):
-    """Test a model with a simple prompt"""
+    """Test a model with a simple prompt."""
     try:
         client = ModelServiceClient(url)
 
@@ -524,7 +519,7 @@ def batch_test(
     model_id: Optional[str] = None,
     output: Optional[str] = None,
 ):
-    """Run batch tests on a model"""
+    """Run batch tests on a model."""
     try:
         client = ModelServiceClient(url)
 

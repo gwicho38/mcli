@@ -86,7 +86,7 @@ class MCLITypeSystem:
                     attr = getattr(self.mcli_obj, attr_name)
                     if hasattr(attr, "meta") and callable(attr.meta):
                         type_names.append(attr_name)
-                except:
+                except Exception:
                     pass
         return type_names
 
@@ -102,7 +102,7 @@ class MCLITypeSystem:
                     attr = getattr(pkg, attr_name)
                     if hasattr(attr, "meta") and callable(attr.meta):
                         type_names.append(f"{package_name}.{attr_name}")
-                except:
+                except Exception:
                     pass
         except Exception:
             pass
@@ -255,7 +255,7 @@ class ERD:
                         label_ = getattr(vt, "name", str(vt))
                 else:
                     label_ = str(field_metadata)
-            except:
+            except Exception:
                 label_ = str(field_metadata)
 
             entries.append((name, label_))
@@ -435,9 +435,9 @@ def do_erd(max_depth=1, type_system: Optional[TypeSystem] = None):
                                         if hasattr(sub_attr, "meta") and callable(sub_attr.meta):
                                             packages.append(attr_name)
                                             break
-                                    except:
+                                    except Exception:
                                         pass
-                        except:
+                        except Exception:
                             pass
 
                 if packages:
@@ -487,9 +487,9 @@ def do_erd(max_depth=1, type_system: Optional[TypeSystem] = None):
                                             ):
                                                 packages.append(attr_name)
                                                 break
-                                        except:
+                                        except Exception:
                                             pass
-                            except:
+                            except Exception:
                                 pass
 
                     if packages:

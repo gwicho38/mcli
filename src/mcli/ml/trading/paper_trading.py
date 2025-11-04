@@ -1,9 +1,9 @@
-"""Paper trading implementation for testing portfolios without real money"""
+"""Paper trading implementation for testing portfolios without real money."""
 
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 from uuid import UUID
 
 import pandas as pd
@@ -15,6 +15,7 @@ from mcli.ml.trading.models import (
     OrderStatus,
     OrderType,
     Portfolio,
+    PortfolioCreate,
     Position,
     PositionSide,
     TradingOrder,
@@ -25,14 +26,14 @@ logger = logging.getLogger(__name__)
 
 
 class PaperTradingEngine:
-    """Paper trading engine for testing strategies without real money"""
+    """Paper trading engine for testing strategies without real money."""
 
     def __init__(self, trading_service: TradingService):
         self.trading_service = trading_service
         self.db = trading_service.db
 
     def execute_paper_order(self, order: TradingOrder) -> bool:
-        """Execute a paper trade order"""
+        """Execute a paper trade order."""
         try:
             # Get current market price
             current_price = self._get_current_price(order.symbol)
@@ -44,7 +45,9 @@ class PaperTradingEngine:
             if order.order_type == OrderType.MARKET:
                 execution_price = current_price
             elif order.order_type == OrderType.LIMIT:
-                if order.side == OrderSide.BUY and order.limit_price >= current_price:
+                if (
+                    order.side == OrderSide.BUY and order.limit_price >= current_price
+                ):  # noqa: SIM114
                     execution_price = current_price
                 elif order.side == OrderSide.SELL and order.limit_price <= current_price:
                     execution_price = current_price
@@ -80,7 +83,7 @@ class PaperTradingEngine:
             return False
 
     def _get_current_price(self, symbol: str) -> Optional[float]:
-        """Get current market price for a symbol"""
+        """Get current market price for a symbol."""
         try:
             ticker = yf.Ticker(symbol)
             data = ticker.history(period="1d", interval="1m")
@@ -92,7 +95,7 @@ class PaperTradingEngine:
             return None
 
     def _update_portfolio_positions(self, order: TradingOrder, execution_price: float):
-        """Update portfolio positions after order execution"""
+        """Update portfolio positions after order execution."""
         try:
             portfolio = self.trading_service.get_portfolio(order.portfolio_id)
             if not portfolio:
@@ -190,7 +193,7 @@ class PaperTradingEngine:
             raise
 
     def _update_portfolio_value(self, portfolio: Portfolio):
-        """Update portfolio value and metrics"""
+        """Update portfolio value and metrics."""
         try:
             # Get all positions
             positions = self.db.query(Position).filter(Position.portfolio_id == portfolio.id).all()
@@ -218,7 +221,7 @@ class PaperTradingEngine:
             raise
 
     def simulate_market_movement(self, portfolio_id: UUID, days: int = 1):
-        """Simulate market movement for paper trading"""
+        """Simulate market movement for paper trading."""
         try:
             portfolio = self.trading_service.get_portfolio(portfolio_id)
             if not portfolio:
@@ -261,7 +264,7 @@ class PaperTradingEngine:
     def create_test_portfolio(
         self, user_id: UUID, name: str = "Test Portfolio", initial_capital: float = 100000.0
     ) -> Portfolio:
-        """Create a test portfolio for paper trading"""
+        """Create a test portfolio for paper trading."""
         try:
             # Create trading account
             from mcli.ml.trading.models import TradingAccountCreate
@@ -293,7 +296,7 @@ class PaperTradingEngine:
         end_date: datetime,
         initial_capital: float = 100000.0,
     ) -> Dict:
-        """Run a backtest on historical data"""
+        """Run a backtest on historical data."""
         try:
             portfolio = self.trading_service.get_portfolio(portfolio_id)
             if not portfolio:
@@ -309,7 +312,7 @@ class PaperTradingEngine:
             self.db.query(Position).filter(Position.portfolio_id == portfolio_id).delete()
 
             # Get historical data for the period
-            date_range = pd.date_range(start=start_date, end=end_date, freq="D")
+            _date_range = pd.date_range(start=start_date, end=end_date, freq="D")  # noqa: F841
 
             # This is a simplified backtest - in practice you'd want to:
             # 1. Get historical signals
@@ -339,6 +342,6 @@ class PaperTradingEngine:
 
 
 def create_paper_trading_engine(db_session: Session) -> PaperTradingEngine:
-    """Create a paper trading engine"""
+    """Create a paper trading engine."""
     trading_service = TradingService(db_session)
     return PaperTradingEngine(trading_service)

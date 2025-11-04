@@ -1,17 +1,15 @@
 import asyncio
 import json
 import os
-import signal
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 import aiosqlite
-import psutil
 import redis.asyncio as redis
 
 from mcli.lib.logger.logger import get_logger
@@ -30,7 +28,7 @@ class ProcessStatus(Enum):
 
 @dataclass
 class ProcessInfo:
-    """Information about a managed process"""
+    """Information about a managed process."""
 
     id: str
     name: str
@@ -57,7 +55,7 @@ class ProcessInfo:
 
 
 class AsyncProcessContainer:
-    """Manages a single async process with enhanced monitoring"""
+    """Manages a single async process with enhanced monitoring."""
 
     def __init__(self, process_info: ProcessInfo, redis_client: Optional[redis.Redis] = None):
         self.info = process_info
@@ -69,7 +67,7 @@ class AsyncProcessContainer:
         self._setup_container_environment()
 
     def _setup_container_environment(self):
-        """Setup isolated environment for the process"""
+        """Setup isolated environment for the process."""
         base_dir = Path.home() / ".local" / "mcli" / "containers"
         self.container_dir = base_dir / self.info.id
         self.container_dir.mkdir(parents=True, exist_ok=True)
@@ -80,7 +78,7 @@ class AsyncProcessContainer:
             json.dump(asdict(self.info), f, indent=2, default=str)
 
     async def start(self, timeout: Optional[float] = None) -> bool:
-        """Start the async process with optional timeout"""
+        """Start the async process with optional timeout."""
         try:
             if self.process and self.process.returncode is None:
                 logger.warning(f"Process {self.info.id} is already running")
@@ -122,7 +120,7 @@ class AsyncProcessContainer:
             return False
 
     async def stop(self, timeout: float = 10.0) -> bool:
-        """Stop the process gracefully with timeout"""
+        """Stop the process gracefully with timeout."""
         if not self.process or self.process.returncode is not None:
             return True
 
@@ -161,7 +159,7 @@ class AsyncProcessContainer:
             return False
 
     async def kill(self) -> bool:
-        """Force kill the process"""
+        """Force kill the process."""
         if not self.process or self.process.returncode is not None:
             return True
 
@@ -191,7 +189,7 @@ class AsyncProcessContainer:
             return False
 
     async def wait(self, timeout: Optional[float] = None) -> int:
-        """Wait for process to complete with optional timeout"""
+        """Wait for process to complete with optional timeout."""
         if not self.process:
             raise RuntimeError("Process not started")
 
@@ -218,7 +216,7 @@ class AsyncProcessContainer:
         return self.process.returncode
 
     async def _monitor_stdout(self):
-        """Monitor stdout and collect lines"""
+        """Monitor stdout and collect lines."""
         if not self.process or not self.process.stdout:
             return
 
@@ -246,7 +244,7 @@ class AsyncProcessContainer:
             logger.error(f"Error monitoring stdout for {self.info.id}: {e}")
 
     async def _monitor_stderr(self):
-        """Monitor stderr and collect lines"""
+        """Monitor stderr and collect lines."""
         if not self.process or not self.process.stderr:
             return
 
@@ -274,7 +272,7 @@ class AsyncProcessContainer:
             logger.error(f"Error monitoring stderr for {self.info.id}: {e}")
 
     async def _timeout_handler(self, timeout: float):
-        """Handle process timeout"""
+        """Handle process timeout."""
         await asyncio.sleep(timeout)
 
         if self.process and self.process.returncode is None:
@@ -282,7 +280,7 @@ class AsyncProcessContainer:
             await self.kill()
 
     async def _cache_process_info(self):
-        """Cache process info in Redis"""
+        """Cache process info in Redis."""
         if not self.redis_client:
             return
 
@@ -306,7 +304,7 @@ class AsyncProcessContainer:
 
 
 class AsyncProcessManager:
-    """High-performance async process manager with SQLite and Redis"""
+    """High-performance async process manager with SQLite and Redis."""
 
     def __init__(self, db_path: Optional[str] = None, redis_url: Optional[str] = None):
         if db_path is None:
@@ -325,13 +323,13 @@ class AsyncProcessManager:
         self._db_pool_lock = asyncio.Lock()
 
     async def initialize(self):
-        """Initialize the process manager"""
+        """Initialize the process manager."""
         await self._init_database()
         await self._init_redis()
         await self._init_db_pool()
 
     async def _init_database(self):
-        """Initialize SQLite database with optimizations"""
+        """Initialize SQLite database with optimizations."""
         async with aiosqlite.connect(self.db_path) as db:
             # Enable WAL mode for better concurrency
             await db.execute("PRAGMA journal_mode=WAL")
@@ -370,7 +368,7 @@ class AsyncProcessManager:
             await db.commit()
 
     async def _init_redis(self):
-        """Initialize Redis connection for caching"""
+        """Initialize Redis connection for caching."""
         try:
             self.redis_client = redis.from_url(self.redis_url, decode_responses=True)
             await self.redis_client.ping()
@@ -380,7 +378,7 @@ class AsyncProcessManager:
             self.redis_client = None
 
     async def _init_db_pool(self):
-        """Initialize connection pool for SQLite"""
+        """Initialize connection pool for SQLite."""
         async with self._db_pool_lock:
             for _ in range(self._db_pool_size):
                 conn = await aiosqlite.connect(self.db_path)
@@ -389,7 +387,7 @@ class AsyncProcessManager:
 
     @asynccontextmanager
     async def _get_db_connection(self):
-        """Get a database connection from the pool"""
+        """Get a database connection from the pool."""
         async with self._db_pool_lock:
             if self._db_pool:
                 conn = self._db_pool.pop()
@@ -415,7 +413,7 @@ class AsyncProcessManager:
         environment: Optional[Dict[str, str]] = None,
         timeout: Optional[float] = None,
     ) -> str:
-        """Start a new async process"""
+        """Start a new async process."""
         process_info = ProcessInfo(
             id=str(uuid.uuid4()),
             name=name,
@@ -442,7 +440,7 @@ class AsyncProcessManager:
             raise RuntimeError(f"Failed to start process: {name}")
 
     async def stop_process(self, process_id: str, timeout: float = 10.0) -> bool:
-        """Stop a process gracefully"""
+        """Stop a process gracefully."""
         if process_id not in self.processes:
             raise KeyError(f"Process not found: {process_id}")
 
@@ -455,7 +453,7 @@ class AsyncProcessManager:
         return success
 
     async def kill_process(self, process_id: str) -> bool:
-        """Force kill a process"""
+        """Force kill a process."""
         if process_id not in self.processes:
             raise KeyError(f"Process not found: {process_id}")
 
@@ -468,7 +466,7 @@ class AsyncProcessManager:
         return success
 
     async def get_process_info(self, process_id: str) -> ProcessInfo:
-        """Get process information"""
+        """Get process information."""
         if process_id in self.processes:
             return self.processes[process_id].info
 
@@ -482,7 +480,7 @@ class AsyncProcessManager:
         raise KeyError(f"Process not found: {process_id}")
 
     async def list_processes(self, status_filter: Optional[str] = None) -> List[ProcessInfo]:
-        """List all processes with optional status filter"""
+        """List all processes with optional status filter."""
         processes = []
 
         # Add active processes
@@ -511,7 +509,7 @@ class AsyncProcessManager:
         return processes
 
     async def cleanup_finished(self) -> List[str]:
-        """Remove finished processes from memory"""
+        """Remove finished processes from memory."""
         finished_ids = []
 
         for process_id, container in list(self.processes.items()):
@@ -527,7 +525,7 @@ class AsyncProcessManager:
         return finished_ids
 
     async def _save_process_info(self, process_info: ProcessInfo):
-        """Save process info to database"""
+        """Save process info to database."""
         async with self._get_db_connection() as db:
             await db.execute(
                 """
@@ -556,7 +554,7 @@ class AsyncProcessManager:
             await db.commit()
 
     def _row_to_process_info(self, row) -> ProcessInfo:
-        """Convert database row to ProcessInfo"""
+        """Convert database row to ProcessInfo."""
         return ProcessInfo(
             id=row[0],
             name=row[1],
@@ -575,7 +573,7 @@ class AsyncProcessManager:
         )
 
     async def close(self):
-        """Clean up resources"""
+        """Clean up resources."""
         # Close all active processes
         for container in self.processes.values():
             await container.stop()

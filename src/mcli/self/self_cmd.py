@@ -9,7 +9,6 @@ import inspect
 import json
 import os
 import platform
-import re
 import sys
 import time
 from datetime import datetime
@@ -21,7 +20,6 @@ from typing import Any, Dict, List, Optional
 import click
 import tomli
 from rich.console import Console
-from rich.prompt import Prompt
 from rich.table import Table
 
 try:
@@ -33,7 +31,6 @@ try:
 except ImportError:
     process = None
 
-from mcli.lib.custom_commands import get_command_manager
 from mcli.lib.logger.logger import get_logger
 
 logger = get_logger()
@@ -45,7 +42,6 @@ def self_app():
     """
     Self-management commands for mcli.
     """
-    pass
 
 
 console = Console()
@@ -93,7 +89,7 @@ def get_version_info(verbose: bool = False) -> str:
 
 
 def get_current_command_state():
-    """Collect all command metadata (names, groups, etc.)"""
+    """Collect all command metadata (names, groups, etc.)."""
     # This should use your actual command collection logic
     # For now, use the collect_commands() function
     return collect_commands()
@@ -247,8 +243,6 @@ def collect_commands() -> List[Dict[str, Any]]:
                 try:
                     # Suppress Streamlit warnings and logging during module import
                     import logging
-                    import os
-                    import sys
                     import warnings
                     from contextlib import redirect_stderr
                     from io import StringIO
@@ -285,7 +279,7 @@ def collect_commands() -> List[Dict[str, Any]]:
                                 streamlit_logger.setLevel(original_level)
 
                     # Extract command and group objects
-                    for name, obj in inspect.getmembers(module):
+                    for _name, obj in inspect.getmembers(module):
                         # Handle Click commands and groups
                         if isinstance(obj, click.Command):
                             if isinstance(obj, click.Group):
@@ -342,7 +336,6 @@ def open_editor_for_command(
     import subprocess
     import sys
     import tempfile
-    from pathlib import Path
 
     # Get the user's default editor
     editor = os.environ.get("EDITOR")
@@ -470,7 +463,7 @@ logger = get_logger()
         return None
     finally:
         # Clean up temporary file
-        try:
+        try:  # noqa: SIM105
             os.unlink(temp_file_path)
         except OSError:
             pass
@@ -487,7 +480,6 @@ def plugin():
     Use one of the subcommands: add, remove, update.
     """
     logger.info("Plugin management commands loaded")
-    pass
 
 
 @plugin.command("add")
@@ -732,7 +724,7 @@ def logs():
 @click.option("--detailed", "-d", is_flag=True, help="Show detailed performance information")
 @click.option("--benchmark", "-b", is_flag=True, help="Run performance benchmarks")
 def performance(detailed: bool, benchmark: bool):
-    """🚀 Show performance optimization status and benchmarks"""
+    """🚀 Show performance optimization status and benchmarks."""
     try:
         from mcli.lib.performance.optimizer import get_global_optimizer
         from mcli.lib.performance.rust_bridge import print_performance_summary
@@ -784,7 +776,7 @@ def performance(detailed: bool, benchmark: bool):
                     optimizer = get_global_optimizer()
 
                     # Update progress
-                    for i in range(20):
+                    for _i in range(20):
                         progress.update(task, advance=5)
                         time.sleep(0.05)
 
@@ -806,7 +798,7 @@ def performance(detailed: bool, benchmark: bool):
 
                     system_info = benchmark_results.get("system_info", {})
                     if system_info:
-                        console.print(f"\n💻 System Info:")
+                        console.print("\n💻 System Info:")
                         console.print(f"   Platform: {system_info.get('platform', 'Unknown')}")
                         console.print(f"   CPUs: {system_info.get('cpu_count', 'Unknown')}")
                         console.print(
@@ -828,7 +820,7 @@ def performance(detailed: bool, benchmark: bool):
 @click.option("--refresh", "-r", default=2.0, help="Refresh interval in seconds")
 @click.option("--once", is_flag=True, help="Show dashboard once and exit")
 def dashboard(refresh: float, once: bool):
-    """📊 Launch live system dashboard"""
+    """📊 Launch live system dashboard."""
     try:
         from mcli.lib.ui.visual_effects import LiveDashboard
 
@@ -895,7 +887,7 @@ def check_ci_status(version: str) -> tuple[bool, Optional[str]]:
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
 @click.option("--skip-ci-check", is_flag=True, help="Skip CI status check and install anyway")
 def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
-    """🔄 Check for and install mcli updates from PyPI"""
+    """🔄 Check for and install mcli updates from PyPI."""
     import subprocess
     import sys
     from importlib.metadata import version as get_version
@@ -950,7 +942,7 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
         def parse_version(v):
             try:
                 return tuple(int(x) for x in v.split(".") if x.isdigit())
-            except:
+            except Exception:
                 return (0, 0, 0)
 
         current_parsed = parse_version(current_version)
@@ -1043,7 +1035,7 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
                     "[yellow]ℹ️  Restart your terminal or run 'hash -r' to use the new version[/yellow]"
                 )
         else:
-            console.print(f"[red]❌ Update failed:[/red]")
+            console.print("[red]❌ Update failed:[/red]")
             console.print(result.stderr)
 
     except Exception as e:

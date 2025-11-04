@@ -3,8 +3,7 @@ import click
 
 @click.group(name="wakatime")
 def wakatime():
-    """WakaTime commands"""
-    pass
+    """WakaTime commands."""
 
 
 if __name__ == "__main__":

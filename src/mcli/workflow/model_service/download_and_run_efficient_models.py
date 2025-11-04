@@ -6,21 +6,17 @@ This script identifies the most efficient models in terms of compute and accurac
 downloads them, and runs them using the MCLI model service.
 """
 
-import json
-import os
-import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import click
-import requests
 
 # Add the parent directory to the path so we can import the model service
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from mcli.workflow.model_service.model_service import ModelManager, ModelService
+from mcli.workflow.model_service.model_service import ModelService
 
 # Efficient models from Ollama search results
 EFFICIENT_MODELS = {
@@ -68,7 +64,7 @@ EFFICIENT_MODELS = {
 
 
 def get_system_info():
-    """Get system information for model selection"""
+    """Get system information for model selection."""
     import psutil
 
     # Get CPU info
@@ -103,7 +99,7 @@ def get_system_info():
 
 
 def recommend_model(system_info: Dict) -> str:
-    """Recommend the best model based on system capabilities"""
+    """Recommend the best model based on system capabilities."""
     print("🔍 Analyzing system capabilities...")
     print(f"  CPU Cores: {system_info['cpu_count']}")
     print(f"  CPU Frequency: {system_info['cpu_freq_mhz']:.0f} MHz")
@@ -127,7 +123,7 @@ def recommend_model(system_info: Dict) -> str:
 
 
 def download_and_setup_model(model_key: str, service: ModelService) -> Optional[str]:
-    """Download and setup a model using the MCLI service"""
+    """Download and setup a model using the MCLI service."""
     model_info = EFFICIENT_MODELS[model_key]
 
     print(f"\n🚀 Setting up {model_info['name']}...")
@@ -159,7 +155,7 @@ def download_and_setup_model(model_key: str, service: ModelService) -> Optional[
 
 
 def test_model(service: ModelService, model_id: str, model_name: str):
-    """Test the model with sample prompts"""
+    """Test the model with sample prompts."""
     print(f"\n🧪 Testing {model_name}...")
 
     test_prompts = [
@@ -190,7 +186,7 @@ def test_model(service: ModelService, model_id: str, model_name: str):
 
 
 def start_model_service():
-    """Start the MCLI model service"""
+    """Start the MCLI model service."""
     print("🔧 Starting MCLI model service...")
 
     try:
@@ -233,7 +229,7 @@ def start_model_service():
     "--service-only", is_flag=True, help="Only start the model service without downloading models"
 )
 def main(model: Optional[str], auto: bool, test: bool, service_only: bool):
-    """Download and run efficient models from Ollama using MCLI"""
+    """Download and run efficient models from Ollama using MCLI."""
 
     print("🚀 MCLI Efficient Model Runner")
     print("=" * 50)
@@ -278,8 +274,8 @@ def main(model: Optional[str], auto: bool, test: bool, service_only: bool):
 
     print(f"\n🎉 Setup complete! Model {EFFICIENT_MODELS[selected_model]['name']} is ready to use.")
     print(f"📊 Model ID: {model_id}")
-    print(f"🌐 API available at: http://localhost:8000")
-    print(f"📝 Use 'mcli model-service list-models' to see all models")
+    print("🌐 API available at: http://localhost:8000")
+    print("📝 Use 'mcli model-service list-models' to see all models")
 
     return 0
 

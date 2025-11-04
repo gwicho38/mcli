@@ -43,7 +43,7 @@ class OpenAI:
 
         See https://platform.openai.com/docs/guides/moderation/quickstart for details.
         """
-        allowed_categories = {"violence"}  # Can be triggered by some AI safety terms
+        _allowed_categories = {"violence"}  # Can be triggered by some AI safety terms  # noqa: F841
 
         response = None
         try:
@@ -79,7 +79,6 @@ class OpenAI:
 @click.group(name="openai")
 def openai():
     """OpenAI CLI command group."""
-    pass
 
 
 @openai.command(name="is_text_risky")

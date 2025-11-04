@@ -1,8 +1,3 @@
-import json
-import os
-import subprocess
-import sys
-import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -17,11 +12,10 @@ from .commands import Command, CommandDatabase, CommandExecutor
 @click.group()
 def client():
     """Client CLI for daemon commands."""
-    pass
 
 
 class DaemonClient:
-    """Client interface for interacting with the daemon service"""
+    """Client interface for interacting with the daemon service."""
 
     def __init__(self, timeout: int = 30):
         self.db = CommandDatabase()
@@ -30,7 +24,7 @@ class DaemonClient:
         self._validate_connection()
 
     def _validate_connection(self):
-        """Verify connection to the daemon service"""
+        """Verify connection to the daemon service."""
         try:
             self.db.get_all_commands()  # Simple query to test connection
         except Exception as e:
@@ -45,7 +39,7 @@ class DaemonClient:
         group: Optional[str] = None,
         tags: Optional[List[str]] = None,
     ) -> str:
-        """Add a command from a file"""
+        """Add a command from a file."""
         # Read the file
         with open(file_path, "r") as f:
             code = f.read()
@@ -84,12 +78,12 @@ class DaemonClient:
         group: Optional[str] = None,
         tags: Optional[List[str]] = None,
     ) -> str:
-        """Add a command from stdin"""
+        """Add a command from stdin."""
         click.echo("Enter your code (Ctrl+D when done):")
 
         # Read from stdin
         lines = []
-        try:
+        try:  # noqa: SIM105
             while True:
                 line = input()
                 lines.append(line)
@@ -105,7 +99,7 @@ class DaemonClient:
         command = Command(
             id=str(uuid.uuid4()),
             name=name,
-            description=description or f"Command from stdin",
+            description=description or "Command from stdin",
             code=code,
             language=language,
             group=group,
@@ -116,13 +110,13 @@ class DaemonClient:
         return self.db.add_command(command)
 
     def add_command_interactive(self) -> Optional[str]:
-        """Interactive command creation"""
+        """Interactive command creation."""
         # Get command name
         name = click.prompt("Command name", type=str)
 
         # Check if name already exists
         existing = self.db.search_commands(name, limit=1)
-        if existing and existing[0].name == name:
+        if existing and existing[0].name == name:  # noqa: SIM102
             if not click.confirm(f"Command '{name}' already exists. Overwrite?"):
                 return None
 
@@ -156,7 +150,7 @@ class DaemonClient:
         else:  # paste
             click.echo("Paste your code below (Ctrl+D when done):")
             lines = []
-            try:
+            try:  # noqa: SIM105
                 while True:
                     line = input()
                     lines.append(line)
@@ -172,7 +166,7 @@ class DaemonClient:
             command = Command(
                 id=str(uuid.uuid4()),
                 name=name,
-                description=description or f"Command from paste",
+                description=description or "Command from paste",
                 code=code,
                 language=language,
                 group=group,
@@ -183,7 +177,7 @@ class DaemonClient:
             return self.db.add_command(command)
 
     def execute_command(self, command_id: str, args: List[str] = None) -> Dict[str, Any]:
-        """Execute a command"""
+        """Execute a command."""
         command = self.db.get_command(command_id)
         if not command:
             raise ValueError(f"Command '{command_id}' not found")
@@ -203,27 +197,27 @@ class DaemonClient:
         return result
 
     def search_commands(self, query: str, limit: int = 10) -> List[Command]:
-        """Search for commands"""
+        """Search for commands."""
         return self.db.search_commands(query, limit)
 
     def find_similar_commands(self, query: str, limit: int = 5) -> List[tuple]:
-        """Find similar commands using cosine similarity"""
+        """Find similar commands using cosine similarity."""
         return self.db.find_similar_commands(query, limit)
 
     def get_all_commands(self) -> List[Command]:
-        """Get all commands"""
+        """Get all commands."""
         return self.db.get_all_commands()
 
     def get_command(self, command_id: str) -> Optional[Command]:
-        """Get a command by ID"""
+        """Get a command by ID."""
         return self.db.get_command(command_id)
 
     def update_command(self, command: Command) -> bool:
-        """Update a command"""
+        """Update a command."""
         return self.db.update_command(command)
 
     def delete_command(self, command_id: str) -> bool:
-        """Delete a command"""
+        """Delete a command."""
         return self.db.delete_command(command_id)
 
 
@@ -241,7 +235,7 @@ class DaemonClient:
 @click.option("--group", help="Command group")
 @click.option("--tags", help="Comma-separated tags")
 def add_file(name: str, file_path: str, description: str, language: str, group: str, tags: str):
-    """Add a command from a file"""
+    """Add a command from a file."""
     client = DaemonClient()
 
     # Parse tags
@@ -273,7 +267,7 @@ def add_file(name: str, file_path: str, description: str, language: str, group: 
 @click.option("--group", help="Command group")
 @click.option("--tags", help="Comma-separated tags")
 def add_stdin(name: str, description: str, language: str, group: str, tags: str):
-    """Add a command from stdin"""
+    """Add a command from stdin."""
     client = DaemonClient()
 
     # Parse tags
@@ -290,7 +284,7 @@ def add_stdin(name: str, description: str, language: str, group: str, tags: str)
 
 @client.command()
 def add_interactive():
-    """Add a command interactively"""
+    """Add a command interactively."""
     client = DaemonClient()
 
     try:
@@ -307,7 +301,7 @@ def add_interactive():
 @click.argument("command_id")
 @click.argument("args", nargs=-1)
 def execute(command_id: str, args: List[str]):
-    """Execute a command"""
+    """Execute a command."""
     client = DaemonClient()
 
     try:
@@ -334,7 +328,7 @@ def execute(command_id: str, args: List[str]):
 @click.option("--limit", default=10, help="Maximum number of results")
 @click.option("--similar", is_flag=True, help="Use similarity search")
 def search(query: str, limit: int, similar: bool):
-    """Search for commands"""
+    """Search for commands."""
     client = DaemonClient()
 
     try:
@@ -370,7 +364,7 @@ def search(query: str, limit: int, similar: bool):
 @click.option("--group", help="Filter by group")
 @click.option("--language", help="Filter by language")
 def list(group: str, language: str):
-    """List all commands"""
+    """List all commands."""
     client = DaemonClient()
 
     try:
@@ -403,7 +397,7 @@ def list(group: str, language: str):
 @client.command()
 @click.argument("command_id")
 def show(command_id: str):
-    """Show command details"""
+    """Show command details."""
     client = DaemonClient()
 
     try:
@@ -438,7 +432,7 @@ def show(command_id: str):
 @client.command()
 @click.argument("command_id")
 def delete(command_id: str):
-    """Delete a command"""
+    """Delete a command."""
     client = DaemonClient()
 
     try:
@@ -466,7 +460,7 @@ def delete(command_id: str):
 @click.option("--group", help="New group")
 @click.option("--tags", help="New tags (comma-separated)")
 def edit(command_id: str, name: str, description: str, group: str, tags: str):
-    """Edit a command"""
+    """Edit a command."""
     client = DaemonClient()
 
     try:
@@ -498,7 +492,7 @@ def edit(command_id: str, name: str, description: str, group: str, tags: str):
 
 @client.command()
 def groups():
-    """List all command groups"""
+    """List all command groups."""
     client = DaemonClient()
 
     try:

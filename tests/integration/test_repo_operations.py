@@ -3,7 +3,7 @@ from click.testing import CliRunner
 
 # Check for openai dependency
 try:
-    import openai
+    pass
 
     HAS_OPENAI = True
 except ImportError:

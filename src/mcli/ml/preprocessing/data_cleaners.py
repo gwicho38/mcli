@@ -1,10 +1,10 @@
-"""Data cleaning utilities for ML preprocessing"""
+"""Data cleaning utilities for ML preprocessing."""
 
 import logging
 import re
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CleaningStats:
-    """Statistics about data cleaning operations"""
+    """Statistics about data cleaning operations."""
 
     total_records: int
     cleaned_records: int
@@ -25,7 +25,7 @@ class CleaningStats:
 
 
 class TradingDataCleaner:
-    """Cleans and standardizes politician trading data for ML"""
+    """Cleans and standardizes politician trading data for ML."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
@@ -41,7 +41,7 @@ class TradingDataCleaner:
     def clean_trading_records(
         self, records: List[Dict[str, Any]]
     ) -> Tuple[List[Dict[str, Any]], CleaningStats]:
-        """Clean a batch of trading records"""
+        """Clean a batch of trading records."""
         self.cleaning_stats.total_records = len(records)
         cleaned_records = []
 
@@ -56,7 +56,7 @@ class TradingDataCleaner:
         return cleaned_records, self.cleaning_stats
 
     def _clean_single_record(self, record: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Clean a single trading record"""
+        """Clean a single trading record."""
         try:
             cleaned = record.copy()
 
@@ -86,7 +86,7 @@ class TradingDataCleaner:
             return None
 
     def _clean_politician_name(self, record: Dict[str, Any]) -> Dict[str, Any]:
-        """Clean and standardize politician names"""
+        """Clean and standardize politician names."""
         name_fields = ["politician_name", "name", "representative_name", "senator_name"]
 
         for field in name_fields:
@@ -113,7 +113,7 @@ class TradingDataCleaner:
         return record
 
     def _clean_transaction_amount(self, record: Dict[str, Any]) -> Dict[str, Any]:
-        """Clean and standardize transaction amounts"""
+        """Clean and standardize transaction amounts."""
         amount_fields = ["transaction_amount", "amount", "value", "transaction_value"]
 
         for field in amount_fields:
@@ -148,7 +148,7 @@ class TradingDataCleaner:
         return record
 
     def _clean_transaction_date(self, record: Dict[str, Any]) -> Dict[str, Any]:
-        """Clean and standardize transaction dates"""
+        """Clean and standardize transaction dates."""
         date_fields = ["transaction_date", "date", "trade_date", "disclosure_date"]
 
         for field in date_fields:
@@ -183,7 +183,7 @@ class TradingDataCleaner:
                         date_obj = pd.to_datetime(date_str)
                         record["transaction_date_cleaned"] = date_obj.strftime("%Y-%m-%d")
                         self._increment_cleaning_operation("transaction_date_cleaned")
-                    except:
+                    except Exception:
                         continue
 
                 if "transaction_date_cleaned" in record:
@@ -192,8 +192,7 @@ class TradingDataCleaner:
         return record
 
     def _clean_asset_info(self, record: Dict[str, Any]) -> Dict[str, Any]:
-        """Clean and standardize asset information"""
-        asset_fields = ["asset_name", "stock_symbol", "ticker", "security_name"]
+        """Clean and standardize asset information."""
 
         # Clean ticker/symbol
         for field in ["stock_symbol", "ticker", "symbol"]:
@@ -230,7 +229,7 @@ class TradingDataCleaner:
         return record
 
     def _clean_transaction_type(self, record: Dict[str, Any]) -> Dict[str, Any]:
-        """Clean and standardize transaction types"""
+        """Clean and standardize transaction types."""
         type_fields = ["transaction_type", "type", "action", "trade_type"]
 
         for field in type_fields:
@@ -254,7 +253,7 @@ class TradingDataCleaner:
         return record
 
     def _validate_required_fields(self, record: Dict[str, Any]) -> bool:
-        """Validate that required fields exist after cleaning"""
+        """Validate that required fields exist after cleaning."""
         required_fields = [
             "politician_name_cleaned",
             "transaction_date_cleaned",
@@ -272,14 +271,14 @@ class TradingDataCleaner:
         return has_required and amount_or_asset
 
     def _increment_cleaning_operation(self, operation: str):
-        """Track cleaning operations"""
+        """Track cleaning operations."""
         if operation not in self.cleaning_stats.cleaning_operations:
             self.cleaning_stats.cleaning_operations[operation] = 0
         self.cleaning_stats.cleaning_operations[operation] += 1
 
 
 class OutlierDetector:
-    """Detects and handles outliers in trading data"""
+    """Detects and handles outliers in trading data."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
@@ -297,7 +296,7 @@ class OutlierDetector:
         }
 
     def detect_outliers(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Detect outliers in the dataset"""
+        """Detect outliers in the dataset."""
         outlier_info = {"total_outliers": 0, "outliers_by_field": {}, "outlier_indices": set()}
 
         # Amount-based outliers
@@ -328,7 +327,7 @@ class OutlierDetector:
         return df, outlier_info
 
     def _detect_amount_outliers(self, df: pd.DataFrame) -> List[int]:
-        """Detect amount-based outliers"""
+        """Detect amount-based outliers."""
         outliers = []
         amount_col = "transaction_amount_cleaned"
 
@@ -344,7 +343,7 @@ class OutlierDetector:
         return list(set(outliers))
 
     def _detect_date_outliers(self, df: pd.DataFrame) -> List[int]:
-        """Detect date-based outliers"""
+        """Detect date-based outliers."""
         outliers = []
         date_col = "transaction_date_cleaned"
 
@@ -365,7 +364,7 @@ class OutlierDetector:
         return list(set(outliers))
 
     def _detect_statistical_outliers(self, df: pd.DataFrame, column: str) -> List[int]:
-        """Detect statistical outliers using Z-score"""
+        """Detect statistical outliers using Z-score."""
         outliers = []
 
         if column not in df.columns or df[column].dtype not in [np.number, "float64", "int64"]:
@@ -387,7 +386,7 @@ class OutlierDetector:
 
 
 class MissingValueHandler:
-    """Handles missing values in trading data"""
+    """Handles missing values in trading data."""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
@@ -401,7 +400,7 @@ class MissingValueHandler:
         }
 
     def handle_missing_values(self, df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Handle missing values according to strategies"""
+        """Handle missing values according to strategies."""
         missing_info = {
             "original_shape": df.shape,
             "missing_counts": df.isnull().sum().to_dict(),

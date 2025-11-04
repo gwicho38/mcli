@@ -5,8 +5,7 @@ from mcli.lib.api.mcli_decorators import chat
 
 @click.group()
 def cli():
-    """MCLI - Modern Command Line Interface"""
-    pass
+    """MCLI - Modern Command Line Interface."""
 
 
 # Add the chat command group
@@ -15,7 +14,7 @@ cli.add_command(chat(name="chat"))
 
 @cli.command()
 def version():
-    """Show MCLI version"""
+    """Show MCLI version."""
     from mcli import __version__
 
     click.echo(f"MCLI version {__version__}")

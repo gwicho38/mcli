@@ -1,23 +1,11 @@
-import base64
-import json
 import os
-import queue
-import shutil
-import sys
-import tempfile
-import threading
-import time
-import uuid
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import click
 import cv2
 import numpy as np
-import requests
 from PIL import Image
-from scipy import ndimage, spatial
-from skimage import feature, morphology, restoration
+from skimage import morphology
 
 # Add this to your existing CONFIG
 CONFIG = {"temp_dir": "./temp", "output_dir": "./output"}
@@ -1105,7 +1093,6 @@ def remove_overlay(input_video, output, fps, output_fps, context, method):
 @click.group()
 def main():
     """Advanced video overlay removal tool with intelligent content reconstruction."""
-    pass
 
 
 main.add_command(remove_overlay)

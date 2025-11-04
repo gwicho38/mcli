@@ -9,13 +9,9 @@ directly from the internet without requiring Ollama or heavy dependencies.
 import json
 import os
 import shutil
-import subprocess
 import sys
-import tarfile
-import tempfile
 import threading
 import time
-import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -26,7 +22,6 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 # Import only what we need to avoid circular imports
-from mcli.lib.logger.logger import get_logger
 
 # Ultra-lightweight models (under 1B parameters)
 LIGHTWEIGHT_MODELS = {
@@ -99,7 +94,7 @@ LIGHTWEIGHT_MODELS = {
 
 
 class LightweightModelDownloader:
-    """Downloads and manages lightweight models"""
+    """Downloads and manages lightweight models."""
 
     def __init__(self, models_dir: str = "./lightweight_models"):
         self.models_dir = Path(models_dir)
@@ -108,7 +103,7 @@ class LightweightModelDownloader:
         self.session.headers.update({"User-Agent": "MCLI-Lightweight-Model-Server/1.0"})
 
     def download_file(self, url: str, filepath: Path, description: str = "file") -> bool:
-        """Download a file with progress tracking"""
+        """Download a file with progress tracking."""
         try:
             print(f"📥 Downloading {description}...")
             response = self.session.get(url, stream=True)
@@ -137,7 +132,7 @@ class LightweightModelDownloader:
             return False
 
     def download_model(self, model_key: str) -> Optional[str]:
-        """Download a complete model"""
+        """Download a complete model."""
         model_info = LIGHTWEIGHT_MODELS[model_key]
 
         print(f"\n🚀 Downloading {model_info['name']}...")
@@ -182,13 +177,12 @@ class LightweightModelDownloader:
                 self.download_file(url, filepath, file_type)
             except Exception:
                 print(f"⚠️ Optional file {file_type} not available (this is OK)")
-                pass
 
         print(f"✅ Successfully downloaded {model_info['name']}")
         return str(model_dir)
 
     def get_downloaded_models(self) -> List[str]:
-        """Get list of downloaded models"""
+        """Get list of downloaded models."""
         models = []
         # Check for nested structure like prajjwal1/bert-tiny
         for org_dir in self.models_dir.iterdir():
@@ -204,7 +198,7 @@ class LightweightModelDownloader:
 
 
 class LightweightModelServer:
-    """Lightweight model server without heavy dependencies"""
+    """Lightweight model server without heavy dependencies."""
 
     def __init__(self, models_dir: str = "./lightweight_models", port: int = 8080):
         self.models_dir = Path(models_dir)
@@ -215,7 +209,7 @@ class LightweightModelServer:
         self.running = False
 
     def start_server(self):
-        """Start the lightweight server"""
+        """Start the lightweight server."""
         if self.running:
             print("⚠️  Server already running")
             return
@@ -233,7 +227,7 @@ class LightweightModelServer:
         print(f"🌐 API available at: http://localhost:{self.port}")
 
     def load_existing_models(self):
-        """Load all downloaded models into memory"""
+        """Load all downloaded models into memory."""
         downloaded_models = self.downloader.get_downloaded_models()
         for model_key in downloaded_models:
             if model_key in LIGHTWEIGHT_MODELS and model_key not in self.loaded_models:
@@ -249,7 +243,7 @@ class LightweightModelServer:
         return len(self.loaded_models)
 
     def _run_server(self):
-        """Run the HTTP server"""
+        """Run the HTTP server."""
         import urllib.parse
         from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -259,7 +253,7 @@ class LightweightModelServer:
                 super().__init__(*args, **kwargs)
 
             def do_GET(self):
-                """Handle GET requests"""
+                """Handle GET requests."""
                 parsed_path = urllib.parse.urlparse(self.path)
                 path = parsed_path.path
 
@@ -292,7 +286,7 @@ class LightweightModelServer:
                     self._send_response(404, {"error": "Not found"})
 
             def do_POST(self):
-                """Handle POST requests"""
+                """Handle POST requests."""
                 parsed_path = urllib.parse.urlparse(self.path)
                 path = parsed_path.path
 
@@ -306,7 +300,7 @@ class LightweightModelServer:
                     self._send_response(404, {"error": "Not found"})
 
             def _handle_generate(self, model_name):
-                """Handle text generation requests"""
+                """Handle text generation requests."""
                 loaded_models = getattr(self.server_instance, "loaded_models", {})
                 if model_name not in loaded_models:
                     self._send_response(404, {"error": f"Model {model_name} not found"})
@@ -331,7 +325,7 @@ class LightweightModelServer:
                     self._send_response(500, {"error": str(e)})
 
             def _handle_ollama_generate(self):
-                """Handle Ollama-compatible generation requests"""
+                """Handle Ollama-compatible generation requests."""
                 try:
                     content_length = int(self.headers.get("Content-Length", 0))
                     post_data = self.rfile.read(content_length)
@@ -401,7 +395,7 @@ class LightweightModelServer:
                     self._send_response(500, {"error": str(e)})
 
             def _handle_ollama_tags(self):
-                """Handle Ollama-compatible model listing requests"""
+                """Handle Ollama-compatible model listing requests."""
                 try:
                     loaded_models = getattr(self.server_instance, "loaded_models", {})
 
@@ -418,7 +412,7 @@ class LightweightModelServer:
                                 "digest": f"sha256:{'0' * 64}",  # Placeholder digest
                                 "details": {
                                     "parent_model": "",
-                                    "format": "gguf",
+                                    "format": "ggu",
                                     "family": "bert",
                                     "families": ["bert"],
                                     "parameter_size": model_info.get("parameters", "0M"),
@@ -434,7 +428,7 @@ class LightweightModelServer:
                     self._send_response(500, {"error": str(e)})
 
             def _generate_response(self, prompt: str, model_name: str) -> str:
-                """Generate a response based on the prompt and model"""
+                """Generate a response based on the prompt and model."""
                 # For now, provide intelligent responses based on prompt analysis
                 prompt_lower = prompt.lower()
 
@@ -476,7 +470,7 @@ class LightweightModelServer:
                     return f"I'm your local AI assistant running the {model_name} model. I can help with system management, command creation, file operations, task scheduling, and general assistance. I'm designed to be helpful while running entirely on your machine for privacy. How can I assist you today?"
 
             def _send_response(self, status_code, data):
-                """Send JSON response"""
+                """Send JSON response."""
                 self.send_response(status_code)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
@@ -502,7 +496,7 @@ class LightweightModelServer:
             print(f"❌ Server error: {e}")
 
     def download_and_load_model(self, model_key: str) -> bool:
-        """Download and load a model"""
+        """Download and load a model."""
         try:
             # Download model
             model_path = self.downloader.download_model(model_key)
@@ -526,7 +520,7 @@ class LightweightModelServer:
             return False
 
     def list_models(self):
-        """List available and downloaded models"""
+        """List available and downloaded models."""
         print("\n📋 Available Lightweight Models:")
         print("=" * 60)
 
@@ -538,7 +532,7 @@ class LightweightModelServer:
             print()
 
     def get_system_info(self) -> Dict[str, Any]:
-        """Get system information"""
+        """Get system information."""
         import psutil
 
         return {
@@ -550,7 +544,7 @@ class LightweightModelServer:
         }
 
     def recommend_model(self) -> str:
-        """Recommend the best model based on system capabilities"""
+        """Recommend the best model based on system capabilities."""
         system_info = self.get_system_info()
 
         print("🔍 System Analysis:")
@@ -567,7 +561,7 @@ class LightweightModelServer:
             return "distilbert-base-uncased"  # Standard small model
 
     def stop_server(self) -> bool:
-        """Stop the lightweight server"""
+        """Stop the lightweight server."""
         if not self.running:
             print("⚠️  Server is not running")
             return False
@@ -581,7 +575,7 @@ class LightweightModelServer:
             return False
 
     def delete_model(self, model_key: str) -> bool:
-        """Delete a downloaded model"""
+        """Delete a downloaded model."""
         try:
             model_dir = self.models_dir / model_key
 
@@ -605,7 +599,7 @@ class LightweightModelServer:
 
 
 def create_simple_client():
-    """Create a simple client script for testing"""
+    """Create a simple client script for testing."""
     client_script = '''#!/usr/bin/env python3
 """
 Simple client for the lightweight model server
@@ -689,7 +683,7 @@ def main(
     create_client: bool,
     download_only: bool,
 ):
-    """Lightweight model server for extremely small and efficient models"""
+    """Lightweight model server for extremely small and efficient models."""
 
     print("🚀 MCLI Lightweight Model Server")
     print("=" * 50)
@@ -733,11 +727,11 @@ def main(
     print(f"\n🚀 Starting lightweight server on port {port}...")
     server.start_server()
 
-    print(f"\n📝 Usage:")
+    print("\n📝 Usage:")
     print(f"  - API: http://localhost:{port}")
     print(f"  - Health: http://localhost:{port}/health")
     print(f"  - Models: http://localhost:{port}/models")
-    print(f"  - Test: python lightweight_client.py")
+    print("  - Test: python lightweight_client.py")
 
     try:
         # Keep server running

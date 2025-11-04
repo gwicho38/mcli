@@ -9,7 +9,6 @@ from mcli.lib.ui.styling import error, info, success
 @click.group(name="mcli-train", help="Model training CLI for MCLI ML system")
 def cli():
     """Main CLI group for model training."""
-    pass
 
 
 @cli.command(name="model", help="Train a model")

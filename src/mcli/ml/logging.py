@@ -1,4 +1,4 @@
-"""Logging configuration for ML system"""
+"""Logging configuration for ML system."""
 
 import json
 import logging
@@ -11,7 +11,7 @@ from mcli.ml.config import settings
 
 
 class StructuredFormatter(logging.Formatter):
-    """JSON structured logging formatter"""
+    """JSON structured logging formatter."""
 
     def format(self, record):
         log_obj = {
@@ -34,7 +34,7 @@ class StructuredFormatter(logging.Formatter):
 
 
 def setup_logging():
-    """Configure logging for the application"""
+    """Configure logging for the application."""
 
     # Create logs directory
     log_dir = Path("logs")
@@ -76,5 +76,5 @@ def setup_logging():
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Get a logger instance"""
+    """Get a logger instance."""
     return logging.getLogger(name)

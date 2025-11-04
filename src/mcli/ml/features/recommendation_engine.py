@@ -1,10 +1,10 @@
-"""Stock recommendation engine that combines all feature engineering components"""
+"""Stock recommendation engine that combines all feature engineering components."""
 
 import logging
-from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class RecommendationConfig:
-    """Configuration for stock recommendation engine"""
+    """Configuration for stock recommendation engine."""
 
     # Feature engineering components
     enable_technical_features: bool = True
@@ -73,7 +73,7 @@ class RecommendationConfig:
 
 @dataclass
 class RecommendationResult:
-    """Result from stock recommendation engine"""
+    """Result from stock recommendation engine."""
 
     # Basic information
     ticker: str
@@ -105,7 +105,7 @@ class RecommendationResult:
 
 
 class StockRecommendationEngine:
-    """Comprehensive stock recommendation engine"""
+    """Comprehensive stock recommendation engine."""
 
     def __init__(self, config: Optional[RecommendationConfig] = None):
         self.config = config or RecommendationConfig()
@@ -132,7 +132,7 @@ class StockRecommendationEngine:
         politician_metadata: Optional[pd.DataFrame] = None,
         market_data: Optional[Dict[str, pd.DataFrame]] = None,
     ) -> List[RecommendationResult]:
-        """Generate stock recommendations based on politician trading data"""
+        """Generate stock recommendations based on politician trading data."""
 
         logger.info("Starting stock recommendation generation")
 
@@ -170,7 +170,7 @@ class StockRecommendationEngine:
         politician_metadata: Optional[pd.DataFrame],
         market_data: Optional[Dict[str, pd.DataFrame]],
     ) -> pd.DataFrame:
-        """Extract all features for recommendation generation"""
+        """Extract all features for recommendation generation."""
 
         logger.info("Extracting comprehensive feature set")
         df = trading_data.copy()
@@ -204,7 +204,7 @@ class StockRecommendationEngine:
     def _add_technical_features(
         self, df: pd.DataFrame, stock_price_data: pd.DataFrame
     ) -> pd.DataFrame:
-        """Add technical analysis features"""
+        """Add technical analysis features."""
         logger.info("Adding technical features")
 
         # Merge stock price data
@@ -254,7 +254,7 @@ class StockRecommendationEngine:
     def _add_political_features(
         self, df: pd.DataFrame, politician_metadata: Optional[pd.DataFrame]
     ) -> pd.DataFrame:
-        """Add political influence features"""
+        """Add political influence features."""
         logger.info("Adding political features")
 
         # Political influence features
@@ -275,7 +275,7 @@ class StockRecommendationEngine:
         stock_price_data: pd.DataFrame,
         market_data: Optional[Dict[str, pd.DataFrame]],
     ) -> pd.DataFrame:
-        """Add market regime features"""
+        """Add market regime features."""
         logger.info("Adding market regime features")
 
         # Add market regime features from stock price data
@@ -294,7 +294,7 @@ class StockRecommendationEngine:
         return df
 
     def _add_ensemble_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add ensemble features"""
+        """Add ensemble features."""
         logger.info("Adding ensemble features")
 
         # Build ensemble features
@@ -309,7 +309,7 @@ class StockRecommendationEngine:
         return df
 
     def _add_interaction_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add feature interactions"""
+        """Add feature interactions."""
         logger.info("Adding interaction features")
 
         # Get important feature pairs (mock implementation)
@@ -333,7 +333,7 @@ class StockRecommendationEngine:
         return df
 
     def _perform_feature_selection(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Perform feature selection"""
+        """Perform feature selection."""
         logger.info("Performing feature selection")
 
         # Create a synthetic target for feature selection if none exists
@@ -387,7 +387,7 @@ class StockRecommendationEngine:
     def _generate_stock_recommendation(
         self, stock_data: pd.DataFrame, ticker: str
     ) -> Optional[RecommendationResult]:
-        """Generate recommendation for a specific stock"""
+        """Generate recommendation for a specific stock."""
 
         try:
             # Calculate component scores
@@ -460,7 +460,7 @@ class StockRecommendationEngine:
             return None
 
     def _calculate_technical_score(self, stock_data: pd.DataFrame) -> float:
-        """Calculate technical analysis score"""
+        """Calculate technical analysis score."""
         try:
             technical_indicators = []
 
@@ -497,7 +497,7 @@ class StockRecommendationEngine:
             return 0.5
 
     def _calculate_political_score(self, stock_data: pd.DataFrame) -> float:
-        """Calculate political influence score"""
+        """Calculate political influence score."""
         try:
             political_factors = []
 
@@ -528,7 +528,7 @@ class StockRecommendationEngine:
             return 0.5
 
     def _calculate_regime_score(self, stock_data: pd.DataFrame) -> float:
-        """Calculate market regime score"""
+        """Calculate market regime score."""
         try:
             regime_factors = []
 
@@ -571,7 +571,7 @@ class StockRecommendationEngine:
             return 0.5
 
     def _calculate_ensemble_score(self, stock_data: pd.DataFrame) -> float:
-        """Calculate ensemble model score"""
+        """Calculate ensemble model score."""
         try:
             # Use cluster-based scoring as proxy for ensemble
             ensemble_factors = []
@@ -596,7 +596,7 @@ class StockRecommendationEngine:
             return 0.5
 
     def _assess_risk_level(self, stock_data: pd.DataFrame) -> str:
-        """Assess risk level for the stock"""
+        """Assess risk level for the stock."""
         try:
             risk_factors = []
 
@@ -629,11 +629,11 @@ class StockRecommendationEngine:
             return "medium"
 
     def _risk_to_numeric(self, risk_level: str) -> float:
-        """Convert risk level to numeric value"""
+        """Convert risk level to numeric value."""
         return {"low": 0.2, "medium": 0.5, "high": 0.8}.get(risk_level, 0.5)
 
     def _calculate_confidence(self, stock_data: pd.DataFrame, final_score: float) -> float:
-        """Calculate confidence in the recommendation"""
+        """Calculate confidence in the recommendation."""
         try:
             confidence_factors = []
 
@@ -658,7 +658,7 @@ class StockRecommendationEngine:
     def _generate_outlooks(
         self, stock_data: pd.DataFrame, final_score: float
     ) -> Tuple[str, str, str]:
-        """Generate short, medium, and long-term outlooks"""
+        """Generate short, medium, and long-term outlooks."""
 
         def score_to_outlook(score):
             if score >= 0.7:
@@ -676,7 +676,7 @@ class StockRecommendationEngine:
         return short_term, medium_term, long_term
 
     def _get_key_features(self, stock_data: pd.DataFrame) -> Tuple[List[str], Dict[str, float]]:
-        """Get key features and their importance"""
+        """Get key features and their importance."""
         try:
             # Get numerical features
             numerical_features = [
@@ -695,7 +695,7 @@ class StockRecommendationEngine:
                     variance = stock_data[feature].var()
                     importance = value * (1 + variance)
                     feature_importance[feature] = importance
-                except:
+                except Exception:
                     feature_importance[feature] = 0
 
             # Sort by importance
@@ -715,7 +715,7 @@ class StockRecommendationEngine:
     def _generate_explanation(
         self, stock_data: pd.DataFrame, final_score: float, key_features: List[str]
     ) -> str:
-        """Generate human-readable explanation for the recommendation"""
+        """Generate human-readable explanation for the recommendation."""
 
         try:
             if final_score >= 0.7:
@@ -746,7 +746,7 @@ class StockRecommendationEngine:
             return "Recommendation based on comprehensive analysis."
 
     def _generate_warnings(self, stock_data: pd.DataFrame, final_score: float) -> List[str]:
-        """Generate warnings for the recommendation"""
+        """Generate warnings for the recommendation."""
 
         warnings = []
 
@@ -777,7 +777,7 @@ class StockRecommendationEngine:
         return warnings
 
     def save_model_artifacts(self, artifacts_dir: Path):
-        """Save model artifacts and configurations"""
+        """Save model artifacts and configurations."""
         artifacts_dir.mkdir(parents=True, exist_ok=True)
 
         # Save configuration
@@ -792,7 +792,7 @@ class StockRecommendationEngine:
         logger.info(f"Saved model artifacts to {artifacts_dir}")
 
     def load_model_artifacts(self, artifacts_dir: Path):
-        """Load model artifacts and configurations"""
+        """Load model artifacts and configurations."""
         try:
             # Load configuration
             config_path = artifacts_dir / "recommendation_config.joblib"

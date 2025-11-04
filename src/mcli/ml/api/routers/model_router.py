@@ -1,18 +1,17 @@
-"""Model management API routes"""
+"""Model management API routes."""
 
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from mcli.ml.api.schemas import ModelCreate, ModelMetrics, ModelResponse, ModelUpdate
-from mcli.ml.auth import Permission, get_current_active_user, require_role
+from mcli.ml.auth import get_current_active_user, require_role
 from mcli.ml.cache import cached
 from mcli.ml.database.models import Model, ModelStatus, User, UserRole
-from mcli.ml.database.session import get_async_db, get_db
+from mcli.ml.database.session import get_db
 from mcli.ml.tasks import train_model_task
 
 router = APIRouter()
@@ -27,7 +26,7 @@ async def list_models(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """List all available models"""
+    """List all available models."""
     query = db.query(Model)
 
     if status:
@@ -44,7 +43,7 @@ async def get_model(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Get specific model details"""
+    """Get specific model details."""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
@@ -59,7 +58,7 @@ async def create_model(
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    """Create a new model"""
+    """Create a new model."""
     model = Model(
         **model_data.dict(), created_by=current_user.username, status=ModelStatus.TRAINING
     )
@@ -81,7 +80,7 @@ async def update_model(
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    """Update model metadata"""
+    """Update model metadata."""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
@@ -104,7 +103,7 @@ async def deploy_model(
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    """Deploy model to production"""
+    """Deploy model to production."""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
@@ -132,7 +131,7 @@ async def archive_model(
     current_user: User = Depends(require_role(UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    """Archive a model"""
+    """Archive a model."""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
@@ -151,7 +150,7 @@ async def get_model_metrics(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Get model performance metrics"""
+    """Get model performance metrics."""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
@@ -176,7 +175,7 @@ async def retrain_model(
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    """Retrain an existing model"""
+    """Retrain an existing model."""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
@@ -202,7 +201,7 @@ async def upload_model_artifact(
     current_user: User = Depends(require_role(UserRole.ANALYST, UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    """Upload model artifact file"""
+    """Upload model artifact file."""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
@@ -224,7 +223,7 @@ async def delete_model(
     current_user: User = Depends(require_role(UserRole.ADMIN)),
     db: Session = Depends(get_db),
 ):
-    """Delete a model"""
+    """Delete a model."""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:
@@ -248,7 +247,7 @@ async def download_model(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Download model artifact"""
+    """Download model artifact."""
     model = db.query(Model).filter(Model.id == model_id).first()
 
     if not model:

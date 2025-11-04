@@ -14,14 +14,14 @@ logger = get_logger(__name__)
 
 @click.group(name="repo")
 def repo():
-    """repo utility - use this to interact with git and relevant utilities"""
+    """repo utility - use this to interact with git and relevant utilities."""
     click.echo("repo")
 
 
 @repo.command()
 @click.argument("path")
 def analyze(path: str):
-    """Provides a source lines of code analysis for a given pkg path"""
+    """Provides a source lines of code analysis for a given pkg path."""
     _analyze(path)
 
 
@@ -68,7 +68,6 @@ def _analyze(path: str):
                         max_length = len(cell.value)
                 except Exception as e:
                     logger.info(e)
-                    pass
             adjusted_width = max_length + 2
             worksheet.column_dimensions[column].width = adjusted_width
             for cell in col:
@@ -147,20 +146,20 @@ def _analyze(path: str):
 
 @repo.command(name="wt")
 def worktree():
-    """Create and manage worktrees"""
+    """Create and manage worktrees."""
     scripts_path = get_shell_script_path("repo", __file__)
     shell_exec(scripts_path, "wt")
 
 
 @repo.command(name="commit")
 def commit():
-    """Edit commits to a repository"""
+    """Edit commits to a repository."""
     click.echo("commit")
 
 
 @repo.command(name="revert")
 def revert():
-    """Create and manage worktrees"""
+    """Create and manage worktrees."""
     scripts_path = get_shell_script_path("repo", __file__)
     shell_exec(scripts_path, "revert")
 
@@ -169,7 +168,7 @@ def revert():
 @click.argument("branch-a")
 @click.argument("branch-b")
 def loe(branch_a: str, branch_b: str):
-    """Create and manage worktrees"""
+    """Create and manage worktrees."""
     scripts_path = get_shell_script_path("repo", __file__)
     result = shell_exec(scripts_path, "migration_loe", branch_a, branch_b)
     # Assume result['result'] contains the output from the shell script

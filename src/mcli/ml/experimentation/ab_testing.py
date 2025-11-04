@@ -1,16 +1,15 @@
-"""A/B Testing framework for ML model experiments"""
+"""A/B Testing framework for ML model experiments."""
 
-import asyncio
 import hashlib
 import json
 import logging
 import random
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -34,7 +33,7 @@ class VariantType(Enum):
 
 @dataclass
 class Variant:
-    """A/B test variant configuration"""
+    """A/B test variant configuration."""
 
     id: str
     name: str
@@ -47,7 +46,7 @@ class Variant:
 
 @dataclass
 class Metric:
-    """A/B test metric definition"""
+    """A/B test metric definition."""
 
     name: str
     type: str  # "binary", "continuous", "count"
@@ -60,7 +59,7 @@ class Metric:
 
 @dataclass
 class ExperimentConfig:
-    """A/B test experiment configuration"""
+    """A/B test experiment configuration."""
 
     id: str
     name: str
@@ -93,7 +92,7 @@ class ExperimentConfig:
 
 @dataclass
 class UserAssignment:
-    """User assignment to experiment variant"""
+    """User assignment to experiment variant."""
 
     user_id: str
     experiment_id: str
@@ -104,7 +103,7 @@ class UserAssignment:
 
 @dataclass
 class ExperimentResult:
-    """Results of an A/B test experiment"""
+    """Results of an A/B test experiment."""
 
     experiment_id: str
     variant_results: Dict[str, Dict[str, Any]]
@@ -121,13 +120,13 @@ class ExperimentResult:
 
 
 class TrafficSplitter:
-    """Handle traffic splitting for A/B tests"""
+    """Handle traffic splitting for A/B tests."""
 
     def __init__(self):
         self.assignments = {}
 
     def assign_variant(self, user_id: str, experiment: ExperimentConfig) -> str:
-        """Assign user to experiment variant"""
+        """Assign user to experiment variant."""
         # Check if user already assigned
         cache_key = f"{user_id}:{experiment.id}"
         if cache_key in self.assignments:
@@ -159,13 +158,13 @@ class TrafficSplitter:
         return control_variant.id
 
     def get_assignment(self, user_id: str, experiment_id: str) -> Optional[str]:
-        """Get existing assignment"""
+        """Get existing assignment."""
         cache_key = f"{user_id}:{experiment_id}"
         return self.assignments.get(cache_key)
 
 
 class MetricsCollector:
-    """Collect and store experiment metrics"""
+    """Collect and store experiment metrics."""
 
     def __init__(self, storage_path: Path = Path("experiments/metrics")):
         self.storage_path = storage_path
@@ -181,7 +180,7 @@ class MetricsCollector:
         value: Union[float, int, bool],
         timestamp: Optional[datetime] = None,
     ):
-        """Record a metric value for a user"""
+        """Record a metric value for a user."""
         if timestamp is None:
             timestamp = datetime.now()
 
@@ -201,7 +200,7 @@ class MetricsCollector:
             self.flush_metrics()
 
     def flush_metrics(self):
-        """Flush metrics buffer to storage"""
+        """Flush metrics buffer to storage."""
         if not self.metrics_buffer:
             return
 
@@ -215,7 +214,7 @@ class MetricsCollector:
         self.metrics_buffer.clear()
 
     def get_experiment_metrics(self, experiment_id: str) -> pd.DataFrame:
-        """Get all metrics for an experiment"""
+        """Get all metrics for an experiment."""
         all_metrics = []
 
         # Load from all metric files
@@ -234,7 +233,7 @@ class MetricsCollector:
 
 
 class StatisticalAnalyzer:
-    """Perform statistical analysis on A/B test results"""
+    """Perform statistical analysis on A/B test results."""
 
     def __init__(self, significance_level: float = 0.05):
         self.significance_level = significance_level
@@ -242,7 +241,7 @@ class StatisticalAnalyzer:
     def analyze_experiment(
         self, experiment: ExperimentConfig, metrics_df: pd.DataFrame
     ) -> ExperimentResult:
-        """Analyze experiment results"""
+        """Analyze experiment results."""
         if metrics_df.empty:
             return self._empty_result(experiment.id)
 
@@ -298,7 +297,7 @@ class StatisticalAnalyzer:
     def _analyze_variant_metrics(
         self, variant_df: pd.DataFrame, metrics_config: List[Metric]
     ) -> Dict[str, Any]:
-        """Analyze metrics for a single variant"""
+        """Analyze metrics for a single variant."""
         if variant_df.empty:
             return {}
 
@@ -341,7 +340,7 @@ class StatisticalAnalyzer:
         treatment_id: str,
         metrics_config: List[Metric],
     ) -> tuple:
-        """Compare treatment variant against control"""
+        """Compare treatment variant against control."""
         tests = {}
         intervals = {}
 
@@ -379,7 +378,7 @@ class StatisticalAnalyzer:
         return tests, intervals
 
     def _binary_test(self, control: pd.Series, treatment: pd.Series) -> Dict[str, Any]:
-        """Perform statistical test for binary metric"""
+        """Perform statistical test for binary metric."""
         control_success = control.sum()
         control_total = len(control)
         treatment_success = treatment.sum()
@@ -409,7 +408,7 @@ class StatisticalAnalyzer:
         }
 
     def _continuous_test(self, control: pd.Series, treatment: pd.Series) -> Dict[str, Any]:
-        """Perform statistical test for continuous metric"""
+        """Perform statistical test for continuous metric."""
         # Two-sample t-test
         statistic, p_value = stats.ttest_ind(treatment, control)
 
@@ -435,7 +434,7 @@ class StatisticalAnalyzer:
         }
 
     def _count_test(self, control: pd.Series, treatment: pd.Series) -> Dict[str, Any]:
-        """Perform statistical test for count metric"""
+        """Perform statistical test for count metric."""
         # Poisson test (approximated with normal for large samples)
         control_sum = control.sum()
         treatment_sum = treatment.sum()
@@ -461,7 +460,7 @@ class StatisticalAnalyzer:
         }
 
     def _binary_confidence_interval(self, data: pd.Series, confidence: float = 0.95) -> tuple:
-        """Calculate confidence interval for binary metric"""
+        """Calculate confidence interval for binary metric."""
         n = len(data)
         p = data.mean()
         z = stats.norm.ppf(1 - (1 - confidence) / 2)
@@ -469,7 +468,7 @@ class StatisticalAnalyzer:
         return (max(0, p - margin), min(1, p + margin))
 
     def _continuous_confidence_interval(self, data: pd.Series, confidence: float = 0.95) -> tuple:
-        """Calculate confidence interval for continuous metric"""
+        """Calculate confidence interval for continuous metric."""
         n = len(data)
         mean = data.mean()
         sem = data.std() / np.sqrt(n) if n > 0 else 0
@@ -478,7 +477,7 @@ class StatisticalAnalyzer:
         return (mean - margin, mean + margin)
 
     def _binary_effect_interval(self, control: pd.Series, treatment: pd.Series) -> tuple:
-        """Calculate confidence interval for binary effect size"""
+        """Calculate confidence interval for binary effect size."""
         p1 = control.mean()
         p2 = treatment.mean()
         n1 = len(control)
@@ -492,7 +491,7 @@ class StatisticalAnalyzer:
         return (diff - margin, diff + margin)
 
     def _continuous_effect_interval(self, control: pd.Series, treatment: pd.Series) -> tuple:
-        """Calculate confidence interval for continuous effect size"""
+        """Calculate confidence interval for continuous effect size."""
         diff = treatment.mean() - control.mean()
         n1 = len(control)
         n2 = len(treatment)
@@ -510,10 +509,10 @@ class StatisticalAnalyzer:
     def _generate_recommendations(
         self, variant_data: Dict, statistical_tests: Dict, metrics_config: List[Metric]
     ) -> List[str]:
-        """Generate recommendations based on results"""
+        """Generate recommendations based on results."""
         recommendations = []
 
-        primary_metrics = [m for m in metrics_config if m.primary]
+        [m for m in metrics_config if m.primary]
 
         for variant_id, tests in statistical_tests.items():
             significant_improvements = []
@@ -559,7 +558,7 @@ class StatisticalAnalyzer:
     def _determine_winner(
         self, statistical_tests: Dict, metrics_config: List[Metric]
     ) -> Optional[str]:
-        """Determine winning variant based on primary metrics"""
+        """Determine winning variant based on primary metrics."""
         primary_metrics = [m for m in metrics_config if m.primary]
 
         if not primary_metrics:
@@ -575,7 +574,7 @@ class StatisticalAnalyzer:
                 if test and test.get("significant", False):
                     effect_size = test.get("effect_size", 0)
 
-                    if metric.goal == "increase" and effect_size > 0:
+                    if metric.goal == "increase" and effect_size > 0:  # noqa: SIM114
                         score += 1
                     elif metric.goal == "decrease" and effect_size < 0:
                         score += 1
@@ -591,7 +590,7 @@ class StatisticalAnalyzer:
         return None
 
     def _empty_result(self, experiment_id: str) -> ExperimentResult:
-        """Return empty result for experiments with no data"""
+        """Return empty result for experiments with no data."""
         return ExperimentResult(
             experiment_id=experiment_id,
             variant_results={},
@@ -603,7 +602,7 @@ class StatisticalAnalyzer:
 
 
 class ABTestingFramework:
-    """Main A/B testing framework orchestrator"""
+    """Main A/B testing framework orchestrator."""
 
     def __init__(self, storage_path: Path = Path("experiments")):
         self.storage_path = storage_path
@@ -617,7 +616,7 @@ class ABTestingFramework:
         self.load_experiments()
 
     def create_experiment(self, config: ExperimentConfig) -> str:
-        """Create new A/B test experiment"""
+        """Create new A/B test experiment."""
         # Validate configuration
         self._validate_experiment_config(config)
 
@@ -637,7 +636,7 @@ class ABTestingFramework:
         return config.id
 
     def start_experiment(self, experiment_id: str):
-        """Start an experiment"""
+        """Start an experiment."""
         if experiment_id not in self.experiments:
             raise ValueError(f"Experiment {experiment_id} not found")
 
@@ -649,7 +648,7 @@ class ABTestingFramework:
         logger.info(f"Started experiment: {experiment.name}")
 
     def stop_experiment(self, experiment_id: str):
-        """Stop an experiment"""
+        """Stop an experiment."""
         if experiment_id not in self.experiments:
             raise ValueError(f"Experiment {experiment_id} not found")
 
@@ -661,7 +660,7 @@ class ABTestingFramework:
         logger.info(f"Stopped experiment: {experiment.name}")
 
     def assign_user(self, user_id: str, experiment_id: str) -> str:
-        """Assign user to experiment variant"""
+        """Assign user to experiment variant."""
         if experiment_id not in self.experiments:
             return "control"
 
@@ -683,7 +682,7 @@ class ABTestingFramework:
     def record_metric(
         self, user_id: str, experiment_id: str, metric_name: str, value: Union[float, int, bool]
     ):
-        """Record metric for user"""
+        """Record metric for user."""
         # Get user's variant assignment
         variant_id = self.traffic_splitter.get_assignment(user_id, experiment_id)
         if not variant_id:
@@ -693,7 +692,7 @@ class ABTestingFramework:
         self.metrics_collector.record_metric(user_id, experiment_id, variant_id, metric_name, value)
 
     def analyze_experiment(self, experiment_id: str) -> ExperimentResult:
-        """Analyze experiment results"""
+        """Analyze experiment results."""
         if experiment_id not in self.experiments:
             raise ValueError(f"Experiment {experiment_id} not found")
 
@@ -703,7 +702,7 @@ class ABTestingFramework:
         return self.analyzer.analyze_experiment(experiment, metrics_df)
 
     def get_experiment_summary(self, experiment_id: str) -> Dict[str, Any]:
-        """Get experiment summary"""
+        """Get experiment summary."""
         if experiment_id not in self.experiments:
             raise ValueError(f"Experiment {experiment_id} not found")
 
@@ -722,7 +721,7 @@ class ABTestingFramework:
         return summary
 
     def list_experiments(self) -> List[Dict[str, Any]]:
-        """List all experiments"""
+        """List all experiments."""
         return [
             {
                 "id": exp.id,
@@ -737,7 +736,7 @@ class ABTestingFramework:
         ]
 
     def save_experiment(self, experiment: ExperimentConfig):
-        """Save experiment to storage"""
+        """Save experiment to storage."""
         experiment_file = self.storage_path / f"experiment_{experiment.id}.json"
 
         # Convert to dict and handle non-serializable types
@@ -760,7 +759,7 @@ class ABTestingFramework:
             json.dump(experiment_dict, f, indent=2)
 
     def load_experiments(self):
-        """Load experiments from storage"""
+        """Load experiments from storage."""
         for experiment_file in self.storage_path.glob("experiment_*.json"):
             try:
                 with open(experiment_file, "r") as f:
@@ -774,7 +773,7 @@ class ABTestingFramework:
                 logger.error(f"Failed to load experiment from {experiment_file}: {e}")
 
     def _dict_to_experiment(self, experiment_dict: Dict) -> ExperimentConfig:
-        """Convert dictionary back to ExperimentConfig"""
+        """Convert dictionary back to ExperimentConfig."""
         # Convert datetime strings back to objects
         if experiment_dict.get("start_date"):
             experiment_dict["start_date"] = datetime.fromisoformat(experiment_dict["start_date"])
@@ -800,7 +799,7 @@ class ABTestingFramework:
         return ExperimentConfig(**experiment_dict)
 
     def _validate_experiment_config(self, config: ExperimentConfig):
-        """Validate experiment configuration"""
+        """Validate experiment configuration."""
         # Check traffic percentages sum to 100%
         total_traffic = sum(v.traffic_percentage for v in config.variants)
         if abs(total_traffic - 100.0) > 0.01:
@@ -886,7 +885,7 @@ if __name__ == "__main__":
     # Analyze results
     results = framework.analyze_experiment(experiment_id)
 
-    print(f"Experiment Results:")
+    print("Experiment Results:")
     print(f"Total Users: {results.total_users}")
     print(f"Statistical Significance: {results.statistical_significance}")
     print(f"Winner: {results.winner_variant}")

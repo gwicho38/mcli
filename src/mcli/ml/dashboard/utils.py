@@ -1,4 +1,4 @@
-"""Shared utility functions for dashboard pages"""
+"""Shared utility functions for dashboard pages."""
 
 import logging
 import os
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_supabase_client() -> Optional[Client]:
-    """Get Supabase client with Streamlit Cloud secrets support"""
+    """Get Supabase client with Streamlit Cloud secrets support."""
     # Try Streamlit secrets first (for Streamlit Cloud), then fall back to environment variables (for local dev)
     try:
         url = st.secrets.get("SUPABASE_URL", "")
@@ -37,7 +37,7 @@ def get_supabase_client() -> Optional[Client]:
         client = create_client(url, key)
         # Test connection with a simple query
         try:
-            test_result = client.table("politicians").select("id").limit(1).execute()
+            client.table("politicians").select("id").limit(1).execute()
             logger.info(f"✅ Supabase connection successful (URL: {url[:30]}...)")
             return client
         except Exception as conn_error:
@@ -49,7 +49,7 @@ def get_supabase_client() -> Optional[Client]:
 
 
 def get_politician_names() -> List[str]:
-    """Get all politician names from database for searchable dropdown"""
+    """Get all politician names from database for searchable dropdown."""
     try:
         client = get_supabase_client()
         if not client:
@@ -66,7 +66,7 @@ def get_politician_names() -> List[str]:
 
 
 def get_disclosures_data() -> pd.DataFrame:
-    """Get trading disclosures from Supabase with proper schema mapping"""
+    """Get trading disclosures from Supabase with proper schema mapping."""
     client = get_supabase_client()
     if not client:
         st.warning("⚠️ Supabase connection not available. Configure SUPABASE_URL and SUPABASE_KEY.")
@@ -128,7 +128,7 @@ def get_disclosures_data() -> pd.DataFrame:
 
 
 def _generate_demo_disclosures() -> pd.DataFrame:
-    """Generate demo trading disclosure data for testing"""
+    """Generate demo trading disclosure data for testing."""
     st.info("🔵 Using demo trading data (Supabase unavailable)")
 
     import random
@@ -158,7 +158,7 @@ def _generate_demo_disclosures() -> pd.DataFrame:
 
 
 def get_politician_trading_history(politician_name: str) -> pd.DataFrame:
-    """Get trading history for a specific politician"""
+    """Get trading history for a specific politician."""
     try:
         client = get_supabase_client()
         if not client:
@@ -169,8 +169,8 @@ def get_politician_trading_history(politician_name: str) -> pd.DataFrame:
         if len(name_parts) < 2:
             return pd.DataFrame()
 
-        first_name = name_parts[0]
-        last_name = " ".join(name_parts[1:])
+        name_parts[0]
+        _last_name = " ".join(name_parts[1:])  # noqa: F841
 
         # Get trading disclosures for this politician
         response = (

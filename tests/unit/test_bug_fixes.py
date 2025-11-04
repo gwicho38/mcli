@@ -4,7 +4,6 @@ Test script to verify our fix to the find_top_nodes_in_graph function.
 """
 
 import json
-import os
 
 from mcli.lib.erd import find_top_nodes_in_graph
 from mcli.lib.logger.logger import get_logger

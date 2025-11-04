@@ -1,20 +1,15 @@
 import functools
 import inspect
-import json
 import os
 import random
 import socket
-import sys
 import threading
 import time
-from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-import click
-import requests
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -228,7 +223,7 @@ class ClickToAPIDecorator:
         fields = {}
 
         for param_name, param in sig.parameters.items():
-            if param_name in ["self", "ctx"]:
+            if param_name in ["sel", "ctx"]:
                 continue
 
             # Get parameter type and default
@@ -243,7 +238,7 @@ class ClickToAPIDecorator:
                 # Handle boolean flags
                 param_type = bool
             elif param_type in [int, float]:
-                param_type = param_type
+                param_type = param_type  # noqa: SIM909
             else:
                 param_type = str
 
@@ -544,7 +539,7 @@ def register_command_as_api(
         logger.debug("API app not available, skipping endpoint registration")
         return
 
-    logger.info(f"API app available, proceeding with registration")
+    logger.info("API app available, proceeding with registration")
 
     decorator = ClickToAPIDecorator(
         endpoint_path=endpoint_path,

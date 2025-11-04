@@ -6,7 +6,6 @@ This module provides sample data and utility functions for testing.
 import json
 import os
 import tempfile
-from pathlib import Path
 
 # Sample graph data that represents a subset of realGraph.json
 SAMPLE_GRAPH_DATA = {

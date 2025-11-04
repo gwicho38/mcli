@@ -1,10 +1,10 @@
-"""Authentication API routes"""
+"""Authentication API routes."""
 
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 from mcli.ml.auth import (
@@ -17,7 +17,6 @@ from mcli.ml.auth import (
     UserResponse,
     check_rate_limit,
     get_current_active_user,
-    get_current_user,
 )
 from mcli.ml.database.models import User
 from mcli.ml.database.session import get_db
@@ -31,7 +30,7 @@ security = HTTPBearer()
 async def register(
     user_data: UserCreate, db: Session = Depends(get_db), _: bool = Depends(check_rate_limit)
 ):
-    """Register a new user"""
+    """Register a new user."""
     try:
         user = await auth_manager.register_user(user_data, db)
         return UserResponse.from_orm(user)
@@ -45,26 +44,26 @@ async def register(
 async def login(
     login_data: UserLogin, db: Session = Depends(get_db), _: bool = Depends(check_rate_limit)
 ):
-    """Login and receive access token"""
+    """Login and receive access token."""
     return await auth_manager.login(login_data, db)
 
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(refresh_token: str, db: Session = Depends(get_db)):
-    """Refresh access token using refresh token"""
+    """Refresh access token using refresh token."""
     return await auth_manager.refresh_access_token(refresh_token, db)
 
 
 @router.post("/logout")
 async def logout(current_user: User = Depends(get_current_active_user)):
-    """Logout current user"""
+    """Logout current user."""
     # In a real implementation, you might want to blacklist the token
     return {"message": "Successfully logged out"}
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_active_user)):
-    """Get current user information"""
+    """Get current user information."""
     return UserResponse.from_orm(current_user)
 
 
@@ -74,7 +73,7 @@ async def update_current_user(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Update current user information"""
+    """Update current user information."""
     # Update allowed fields
     allowed_fields = ["first_name", "last_name", "email"]
     for field in allowed_fields:
@@ -92,7 +91,7 @@ async def change_password(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Change current user's password"""
+    """Change current user's password."""
     # Verify current password
     if not auth_manager.verify_password(password_data.current_password, current_user.password_hash):
         raise HTTPException(
@@ -110,7 +109,7 @@ async def change_password(
 async def reset_password_request(
     reset_data: PasswordReset, db: Session = Depends(get_db), _: bool = Depends(check_rate_limit)
 ):
-    """Request password reset"""
+    """Request password reset."""
     # Find user by email
     user = db.query(User).filter(User.email == reset_data.email).first()
 
@@ -125,7 +124,7 @@ async def reset_password_request(
 
 @router.post("/verify-email/{token}")
 async def verify_email(token: str, db: Session = Depends(get_db)):
-    """Verify email address"""
+    """Verify email address."""
     # In a real implementation, verify the token and update user
     return {"message": "Email verified successfully"}
 
@@ -134,7 +133,7 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
 async def get_user_sessions(
     current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)
 ):
-    """Get all active sessions for current user"""
+    """Get all active sessions for current user."""
     # In a real implementation, return active sessions from database
     return {
         "sessions": [
@@ -155,7 +154,7 @@ async def revoke_session(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Revoke a specific session"""
+    """Revoke a specific session."""
     # In a real implementation, revoke the session
     return {"message": f"Session {session_id} revoked successfully"}
 
@@ -167,7 +166,7 @@ async def create_api_key(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Create a new API key"""
+    """Create a new API key."""
     import secrets
     from datetime import timedelta
 
@@ -194,7 +193,7 @@ async def create_api_key(
 
 @router.get("/api-keys")
 async def list_api_keys(current_user: User = Depends(get_current_active_user)):
-    """List all API keys for current user"""
+    """List all API keys for current user."""
     # In a real implementation, return API keys from database
     return {
         "api_keys": [
@@ -215,6 +214,6 @@ async def revoke_api_key(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    """Revoke an API key"""
+    """Revoke an API key."""
     # In a real implementation, revoke the API key
     return {"message": f"API key {key_id} revoked successfully"}

@@ -1,9 +1,7 @@
-"""Trading dashboard page for portfolio management and trade execution"""
+"""Trading dashboard page for portfolio management and trade execution."""
 
 import logging
 import warnings
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 from uuid import UUID
 
 import pandas as pd
@@ -20,7 +18,7 @@ warnings.filterwarnings("ignore", message=".*to view this Streamlit app.*")
 
 # Try to import trading dependencies with fallbacks
 try:
-    from sqlalchemy.orm import Session
+    pass
 
     from mcli.ml.database.session import get_session
     from mcli.ml.trading.models import (
@@ -87,7 +85,7 @@ logger = logging.getLogger(__name__)
 
 
 def show_trading_dashboard():
-    """Main trading dashboard page"""
+    """Main trading dashboard page."""
     st.title("📈 Trading Dashboard")
     st.markdown("Manage your portfolios and execute trades based on politician trading insights")
 
@@ -163,7 +161,7 @@ def show_trading_dashboard():
 
 
 def show_trading_overview():
-    """Show trading overview with key metrics"""
+    """Show trading overview with key metrics."""
     st.header("📊 Trading Overview")
 
     try:
@@ -300,7 +298,7 @@ def show_trading_overview():
 
 
 def show_portfolios_page():
-    """Show portfolios management page"""
+    """Show portfolios management page."""
     st.header("💼 Portfolio Management")
 
     try:
@@ -308,7 +306,7 @@ def show_portfolios_page():
             trading_service = TradingService(db)
 
             # Create new portfolio section
-            with st.expander("➕ Create New Portfolio", expanded=False):
+            with st.expander("➕ Create New Portfolio", expanded=False):  # noqa: SIM117
                 with st.form("create_portfolio"):
                     col1, col2 = st.columns(2)
 
@@ -400,12 +398,12 @@ def show_portfolios_page():
                     col1, col2, col3 = st.columns(3)
 
                     with col1:
-                        if st.button(f"View Details", key=f"view_{portfolio.id}"):
+                        if st.button("View Details", key=f"view_{portfolio.id}"):
                             st.session_state.selected_portfolio = portfolio.id
                             st.session_state.trading_page = "trading"
 
                     with col2:
-                        if st.button(f"Sync with Alpaca", key=f"sync_{portfolio.id}"):
+                        if st.button("Sync with Alpaca", key=f"sync_{portfolio.id}"):
                             with st.spinner("Syncing with Alpaca..."):
                                 success = trading_service.sync_portfolio_with_alpaca(portfolio)
                                 if success:
@@ -415,7 +413,7 @@ def show_portfolios_page():
                                     st.error("Failed to sync portfolio")
 
                     with col3:
-                        if st.button(f"Performance", key=f"perf_{portfolio.id}"):
+                        if st.button("Performance", key=f"perf_{portfolio.id}"):
                             st.session_state.selected_portfolio = portfolio.id
                             st.session_state.trading_page = "performance"
 
@@ -427,7 +425,7 @@ def show_portfolios_page():
 
 
 def show_trading_page():
-    """Show trading interface page"""
+    """Show trading interface page."""
     st.header("🎯 Trading Interface")
 
     try:
@@ -565,7 +563,7 @@ def show_trading_page():
 
 
 def show_performance_page():
-    """Show portfolio performance analytics"""
+    """Show portfolio performance analytics."""
     st.header("📊 Performance Analytics")
 
     try:
@@ -668,7 +666,7 @@ def show_performance_page():
 
 
 def show_signals_page():
-    """Show trading signals page"""
+    """Show trading signals page."""
     st.header("🎯 Trading Signals")
 
     try:
@@ -724,15 +722,15 @@ def show_signals_page():
                     col1, col2, col3 = st.columns(3)
 
                     with col1:
-                        if st.button(f"Execute Trade", key=f"execute_{signal.id}"):
+                        if st.button("Execute Trade", key=f"execute_{signal.id}"):
                             st.info("Trade execution would be implemented here")
 
                     with col2:
-                        if st.button(f"View Details", key=f"details_{signal.id}"):
+                        if st.button("View Details", key=f"details_{signal.id}"):
                             st.info("Signal details would be shown here")
 
                     with col3:
-                        if st.button(f"Dismiss", key=f"dismiss_{signal.id}"):
+                        if st.button("Dismiss", key=f"dismiss_{signal.id}"):
                             st.info("Signal would be dismissed here")
 
                     st.divider()
@@ -743,7 +741,7 @@ def show_signals_page():
 
 
 def show_settings_page():
-    """Show trading settings page"""
+    """Show trading settings page."""
     import os
 
     st.header("⚙️ Trading Settings")

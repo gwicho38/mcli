@@ -1,15 +1,15 @@
-"""Debug Dependencies - Diagnostic page for troubleshooting installation issues"""
+"""Debug Dependencies - Diagnostic page for troubleshooting installation issues."""
 
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import streamlit as st
 
 
 def show_debug_dependencies():
-    """Diagnostic page for dependency debugging"""
+    """Diagnostic page for dependency debugging."""
 
     st.title("🔍 Dependency Diagnostics")
     st.markdown(
@@ -90,11 +90,11 @@ Platform: {sys.platform}
     for module_name, description, success, info in import_results:
         if success:
             with st.expander(f"✅ **{module_name}** - {description}", expanded=False):
-                st.success(f"Successfully imported")
+                st.success("Successfully imported")
                 st.code(f"Version: {info}")
         else:
             with st.expander(f"❌ **{module_name}** - {description}", expanded=True):
-                st.error(f"Import failed")
+                st.error("Import failed")
                 st.code(info)
 
     # Detailed alpaca-py investigation
@@ -143,7 +143,7 @@ Platform: {sys.platform}
         uv_available = uv_check.returncode == 0
         if uv_available:
             st.info(f"🚀 Detected `uv` package manager: {uv_check.stdout.strip()}")
-    except:
+    except Exception:
         pass
 
     # Try uv pip list first (for Streamlit Cloud), fallback to pip
@@ -210,7 +210,7 @@ Platform: {sys.platform}
 
                     if hasattr(alpaca, "__version__"):
                         st.info(f"📦 Alpaca version from import: {alpaca.__version__}")
-                except:
+                except Exception:
                     pass
 
                 break  # Stop after first successful show

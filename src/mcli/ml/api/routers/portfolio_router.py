@@ -1,4 +1,4 @@
-"""Portfolio management API routes"""
+"""Portfolio management API routes."""
 
 from fastapi import APIRouter, Depends
 
@@ -10,5 +10,5 @@ router = APIRouter()
 
 @router.get("/")
 async def list_portfolios(current_user: User = Depends(get_current_active_user)):
-    """List user portfolios"""
+    """List user portfolios."""
     return {"portfolios": []}

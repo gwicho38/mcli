@@ -3,13 +3,12 @@
 
 import click
 
-from mcli.lib.ui.styling import error, info, success
+from mcli.lib.ui.styling import error, info
 
 
 @click.group(name="mcli-serve", help="Model serving CLI for MCLI ML models")
 def cli():
     """Main CLI group for model serving."""
-    pass
 
 
 @cli.command(name="start", help="Start model serving server")

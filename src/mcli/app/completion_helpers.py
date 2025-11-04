@@ -2,7 +2,7 @@
 Completion helpers for MCLI that provide tab completion without loading heavy modules
 """
 
-from typing import Any, Dict, List
+from typing import List
 
 import click
 from click.shell_completion import CompletionItem
@@ -103,7 +103,7 @@ LAZY_COMMAND_COMPLETIONS = {
 
 
 def get_completion_items(cmd_path: List[str], incomplete: str = "") -> List[CompletionItem]:
-    """Get completion items for a given command path without loading modules"""
+    """Get completion items for a given command path without loading modules."""
     items = []
 
     # Navigate to the completion data for this path
@@ -131,7 +131,7 @@ def get_completion_items(cmd_path: List[str], incomplete: str = "") -> List[Comp
 
 
 class CompletionAwareLazyGroup(click.Group):
-    """A Click group that provides completion without loading modules"""
+    """A Click group that provides completion without loading modules."""
 
     def __init__(self, name, import_path, *args, **kwargs):
         self.import_path = import_path
@@ -147,7 +147,7 @@ class CompletionAwareLazyGroup(click.Group):
                 module_path, attr_name = self.import_path.rsplit(".", 1)
                 module = importlib.import_module(module_path)
                 self._loaded_group = getattr(module, attr_name)
-            except Exception as e:
+            except Exception:
                 # Return a dummy group that shows an error
                 def error_callback():
                     click.echo(f"Error: Command group {self.name} is not available")
@@ -201,5 +201,5 @@ class CompletionAwareLazyGroup(click.Group):
 def create_completion_aware_lazy_group(
     name: str, import_path: str, help_text: str = None
 ) -> CompletionAwareLazyGroup:
-    """Create a completion-aware lazy group"""
+    """Create a completion-aware lazy group."""
     return CompletionAwareLazyGroup(name, import_path, help=help_text)

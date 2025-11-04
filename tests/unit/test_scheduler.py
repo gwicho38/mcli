@@ -4,11 +4,7 @@ Unit tests for mcli.workflow.scheduler.scheduler module
 
 import subprocess
 import tempfile
-from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, call, patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 from mcli.workflow.scheduler.scheduler import JobExecutor, JobScheduler
@@ -212,8 +208,8 @@ class TestJobExecutor:
                 command="echo test",
             )
 
-            initial_status = job.status
-            result = self.executor.execute_job(job)
+            job.status
+            self.executor.execute_job(job)
 
             # Job should transition from PENDING -> RUNNING -> COMPLETED
             assert job.status == JobStatus.COMPLETED

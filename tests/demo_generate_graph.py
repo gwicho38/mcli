@@ -6,10 +6,8 @@ This script creates a mock realGraph.json file and patches the modified_do_erd
 function to use this mock file instead of the real one.
 """
 
-import json
 import os
 import sys
-import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -19,7 +17,7 @@ project_root = os.path.abspath(os.path.join(script_dir, ".."))
 sys.path.insert(0, project_root)
 
 # Import the test harness
-from test_harness import SAMPLE_GRAPH_DATA, create_mock_graph_json
+from test_harness import create_mock_graph_json
 
 # Import the modules to test
 from mcli.app.main import generate_graph

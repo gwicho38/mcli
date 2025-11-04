@@ -1,17 +1,14 @@
 import inspect
 import logging
 import os
-import platform
-import signal
 import subprocess
 import sys
 import threading
 import time
 import traceback
 from datetime import datetime
-from pathlib import Path
 from types import FrameType
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Set
 
 import psutil
 
@@ -163,7 +160,7 @@ class McliLogger:
         Register a subprocess.Popen object for monitoring.
         Returns the process ID if successful, 0 otherwise.
         """
-        if proc and proc.pid:
+        if proc and proc.pid:  # noqa: SIM102
             if cls.register_process(proc.pid):
                 return proc.pid
         return 0
@@ -271,7 +268,7 @@ class McliLogger:
             module_name = module_name[:-3]
 
         # Skip excluded modules
-        for excluded in self._excluded_modules:
+        for excluded in self._excluded_modules:  # noqa: SIM111
             if module_name.startswith(excluded):
                 return False
 
@@ -459,7 +456,7 @@ class McliLogger:
                                 if len(arg_val) > 100:
                                     arg_val = arg_val[:97] + "..."
                                 args_str.append(f"{arg_name}={arg_val}")
-                            except:
+                            except Exception:
                                 args_str.append(f"{arg_name}=<error>")
                     args_repr = ", ".join(args_str)
                     self.trace_logger.debug(
@@ -481,7 +478,7 @@ class McliLogger:
                                 else "<source not available>"
                             )
                         self.trace_logger.debug(f"LINE {filename}:{lineno} -> {source}")
-                    except:
+                    except Exception:
                         self.trace_logger.debug(f"LINE {filename}:{lineno}")
                 else:
                     self.trace_logger.debug(f"LINE {filename}:{lineno}")
@@ -507,9 +504,9 @@ class McliLogger:
                     self.trace_logger.debug(f"Traceback:\n{tb_str}")
         except Exception as e:
             # Never let tracing errors crash the program
-            try:
+            try:  # noqa: SIM105
                 self.trace_logger.error(f"Error in trace callback: {e}")
-            except:
+            except Exception:
                 pass
             return None
 

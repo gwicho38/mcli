@@ -6,7 +6,6 @@ Test runner for mcli tests
 import argparse
 import os
 import sys
-import unittest
 
 import pytest
 

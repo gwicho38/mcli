@@ -1,6 +1,5 @@
-"""MLflow Configuration for Stock Recommendation System"""
+"""MLflow Configuration for Stock Recommendation System."""
 
-import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -9,7 +8,7 @@ from mlflow.tracking import MlflowClient
 
 
 class MLflowConfig:
-    """Configuration class for MLflow tracking and model registry"""
+    """Configuration class for MLflow tracking and model registry."""
 
     def __init__(
         self,
@@ -23,17 +22,17 @@ class MLflowConfig:
         self._client = None
 
     def _default_tracking_uri(self) -> str:
-        """Get default MLflow tracking URI"""
+        """Get default MLflow tracking URI."""
         project_root = Path(__file__).parent.parent.parent.parent.parent
         return f"file://{project_root}/mlruns"
 
     def _default_artifact_root(self) -> str:
-        """Get default artifact storage location"""
+        """Get default artifact storage location."""
         project_root = Path(__file__).parent.parent.parent.parent.parent
         return f"{project_root}/artifacts"
 
     def setup_tracking(self) -> None:
-        """Initialize MLflow tracking configuration"""
+        """Initialize MLflow tracking configuration."""
         mlflow.set_tracking_uri(self.tracking_uri)
 
         # Create or get experiment
@@ -56,17 +55,17 @@ class MLflowConfig:
 
     @property
     def client(self) -> MlflowClient:
-        """Get MLflow client instance"""
+        """Get MLflow client instance."""
         if self._client is None:
             self._client = MlflowClient(tracking_uri=self.tracking_uri)
         return self._client
 
     def get_model_registry_uri(self) -> str:
-        """Get model registry URI"""
+        """Get model registry URI."""
         return self.tracking_uri
 
     def log_model_metadata(self, run_id: str, metadata: Dict[str, Any]) -> None:
-        """Log additional metadata for a model"""
+        """Log additional metadata for a model."""
         for key, value in metadata.items():
             self.client.log_param(run_id, key, value)
 
@@ -77,7 +76,7 @@ class MLflowConfig:
         tags: Optional[Dict[str, str]] = None,
         description: Optional[str] = None,
     ) -> None:
-        """Register a model in MLflow Model Registry"""
+        """Register a model in MLflow Model Registry."""
         try:
             model_version = mlflow.register_model(model_uri=model_uri, name=model_name, tags=tags)
 
@@ -96,7 +95,7 @@ class MLflowConfig:
     def transition_model_stage(
         self, model_name: str, version: str, stage: str, archive_existing_versions: bool = False
     ) -> None:
-        """Transition model to a different stage"""
+        """Transition model to a different stage."""
         try:
             self.client.transition_model_version_stage(
                 name=model_name,
@@ -116,12 +115,12 @@ mlflow_config = MLflowConfig()
 
 
 def get_mlflow_config() -> MLflowConfig:
-    """Get the global MLflow configuration instance"""
+    """Get the global MLflow configuration instance."""
     return mlflow_config
 
 
 def setup_mlflow() -> None:
-    """Setup MLflow tracking and experiment"""
+    """Setup MLflow tracking and experiment."""
     mlflow_config.setup_tracking()
     print(f"MLflow tracking URI: {mlflow_config.tracking_uri}")
     print(f"Artifact root: {mlflow_config.artifact_root}")

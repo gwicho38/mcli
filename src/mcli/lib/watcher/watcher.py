@@ -182,4 +182,3 @@
 
 def watch(*args, **kwargs):
     """Dummy watch function for CLI test pass."""
-    pass

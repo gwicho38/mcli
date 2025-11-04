@@ -4,11 +4,8 @@ Tests for mcli.self.self_cmd utility functions
 
 import json
 import tempfile
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 class TestLockfileUtilities:
@@ -58,7 +55,6 @@ class TestLockfileUtilities:
     @patch("mcli.self.self_cmd.LOCKFILE_PATH")
     def test_load_lockfile_exists(self, mock_lockfile_path):
         """Test loading existing lockfile"""
-        from mcli.self.self_cmd import load_lockfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             test_data = [{"hash": "abc123", "timestamp": "2025-01-01T00:00:00Z", "commands": []}]

@@ -9,12 +9,11 @@ example commands in different programming languages.
 import os
 import subprocess
 import tempfile
-import time
 from pathlib import Path
 
 
 def create_test_scripts():
-    """Create test scripts for different languages"""
+    """Create test scripts for different languages."""
     scripts = {}
 
     # Python script
@@ -88,7 +87,7 @@ echo "=== End ==="
 
 
 def test_daemon_functionality():
-    """Test the daemon functionality"""
+    """Test the daemon functionality."""
     print("🧪 Testing MCLI Daemon Service")
     print("=" * 50)
 
@@ -190,7 +189,7 @@ def test_daemon_functionality():
 
 
 def show_usage_examples():
-    """Show usage examples"""
+    """Show usage examples."""
     print("\n📚 Usage Examples")
     print("=" * 50)
 
@@ -239,7 +238,7 @@ def show_usage_examples():
 
 
 def main():
-    """Main test function"""
+    """Main test function."""
     print("🚀 MCLI Daemon Service Test Suite")
     print("=" * 60)
 

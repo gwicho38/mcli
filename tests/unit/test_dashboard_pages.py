@@ -17,7 +17,7 @@ import pytest
 
 # Check for streamlit and dashboard modules
 try:
-    import streamlit as st
+    pass
 
     HAS_STREAMLIT = True
 except ImportError:
@@ -25,7 +25,7 @@ except ImportError:
 
 try:
     if HAS_STREAMLIT:
-        from mcli.ml.dashboard.pages import cicd, predictions_enhanced, workflows
+        pass
     HAS_PAGES = HAS_STREAMLIT
 except ImportError:
     HAS_PAGES = False
@@ -348,7 +348,7 @@ class TestPredictionsEnhancedPage:
         logger.info("Testing politician selector...")
 
         try:
-            from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
+            pass
         except ImportError:
             pytest.skip("Predictions Enhanced page not available")
             return
@@ -368,7 +368,7 @@ class TestPredictionsEnhancedPage:
         logger.info("Testing trading history...")
 
         try:
-            from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
+            pass
         except ImportError:
             pytest.skip("Predictions Enhanced page not available")
             return
@@ -396,7 +396,7 @@ class TestPredictionsEnhancedPage:
         logger.info("Testing ML model integration...")
 
         try:
-            from mcli.ml.dashboard.pages.predictions_enhanced import show_predictions_enhanced
+            pass
         except ImportError:
             pytest.skip("Predictions Enhanced page not available")
             return

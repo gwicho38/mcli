@@ -1,4 +1,4 @@
-"""CLI interface for ML dashboard"""
+"""CLI interface for ML dashboard."""
 
 import subprocess
 import sys
@@ -17,7 +17,7 @@ def launch(
     host: str = typer.Option("localhost", "--host", "-h", help="Host to bind to"),
     debug: bool = typer.Option(False, "--debug", help="Run in debug mode"),
 ):
-    """Launch the ML monitoring dashboard"""
+    """Launch the ML monitoring dashboard."""
 
     # Get the dashboard app path
     dashboard_path = Path(__file__).parent / "app.py"

@@ -6,11 +6,8 @@ This module provides lightweight text embedding capabilities
 that don't require heavy ML libraries like PyTorch or transformers.
 """
 
-import hashlib
 import json
 import logging
-import os
-import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -18,27 +15,21 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 # Try to import lightweight alternatives
-try:
-    import sentence_transformers
-
-    HAS_SENTENCE_TRANSFORMERS = True
-except ImportError:
-    HAS_SENTENCE_TRANSFORMERS = False
+HAS_SENTENCE_TRANSFORMERS = False  # Placeholder for future implementation
 
 try:
-    import sklearn
     from sklearn.feature_extraction.text import TfidfVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity
 
     HAS_SKLEARN = True
 except ImportError:
     HAS_SKLEARN = False
+    TfidfVectorizer = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
 
 class LightweightEmbedder:
-    """Lightweight text embedder with multiple fallback methods"""
+    """Lightweight text embedder with multiple fallback methods."""
 
     def __init__(self, models_dir: str = "./models/embeddings"):
         self.models_dir = Path(models_dir)
@@ -47,23 +38,23 @@ class LightweightEmbedder:
         self.embedding_cache = {}
 
     def get_embedding_method(self) -> str:
-        """Determine the best available embedding method"""
+        """Determine the best available embedding method."""
         if HAS_SENTENCE_TRANSFORMERS:
             return "sentence_transformers"
         elif HAS_SKLEARN:
-            return "tfidf"
+            return "tfid"
         else:
             return "simple_hash"
 
     def embed_text(self, text: str, method: Optional[str] = None) -> Dict[str, Any]:
-        """Embed text using the specified or best available method"""
+        """Embed text using the specified or best available method."""
         if not method:
             method = self.get_embedding_method()
 
         try:
             if method == "sentence_transformers":
                 return self._embed_with_sentence_transformers(text)
-            elif method == "tfidf":
+            elif method == "tfid":
                 return self._embed_with_tfidf(text)
             else:
                 return self._embed_with_simple_hash(text)
@@ -73,7 +64,7 @@ class LightweightEmbedder:
             return self._embed_with_simple_hash(text)
 
     def _embed_with_sentence_transformers(self, text: str) -> Dict[str, Any]:
-        """Embed text using sentence-transformers"""
+        """Embed text using sentence-transformers."""
         try:
             from sentence_transformers import SentenceTransformer
 
@@ -97,9 +88,8 @@ class LightweightEmbedder:
             raise
 
     def _embed_with_tfidf(self, text: str) -> Dict[str, Any]:
-        """Embed text using TF-IDF"""
+        """Embed text using TF-IDF."""
         try:
-            from sklearn.feature_extraction.text import TfidfVectorizer
 
             # Create or reuse vectorizer
             if self.vectorizer is None:
@@ -114,8 +104,8 @@ class LightweightEmbedder:
             embedding = tfidf_vector.toarray()[0]
 
             return {
-                "method": "tfidf",
-                "model": "sklearn_tfidf",
+                "method": "tfid",
+                "model": "sklearn_tfid",
                 "embedding": embedding.tolist(),
                 "dimensions": len(embedding),
                 "text_length": len(text),
@@ -126,7 +116,7 @@ class LightweightEmbedder:
             raise
 
     def _embed_with_simple_hash(self, text: str) -> Dict[str, Any]:
-        """Embed text using simple hash-based method"""
+        """Embed text using simple hash-based method."""
         try:
             # Create a simple hash-based embedding
             words = text.lower().split()
@@ -165,7 +155,7 @@ class LightweightEmbedder:
             raise
 
     def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
-        """Split text into overlapping chunks"""
+        """Split text into overlapping chunks."""
         chunks = []
         start = 0
 
@@ -181,7 +171,7 @@ class LightweightEmbedder:
         return chunks
 
     def embed_document(self, text: str, chunk_size: int = 1000) -> Dict[str, Any]:
-        """Embed a document by chunking and embedding each chunk"""
+        """Embed a document by chunking and embedding each chunk."""
         try:
             # Split text into chunks
             chunks = self.chunk_text(text, chunk_size)
@@ -222,7 +212,7 @@ class LightweightEmbedder:
             return {"success": False, "error": str(e)}
 
     def search_similar(self, query: str, embeddings: List[Dict], top_k: int = 5) -> List[Dict]:
-        """Search for similar documents using embeddings"""
+        """Search for similar documents using embeddings."""
         try:
             # Embed the query
             query_embedding = self.embed_text(query)
@@ -263,11 +253,11 @@ class LightweightEmbedder:
             return []
 
     def get_status(self) -> Dict[str, Any]:
-        """Get the status of the embedder"""
+        """Get the status of the embedder."""
         return {
             "available_methods": {
                 "sentence_transformers": HAS_SENTENCE_TRANSFORMERS,
-                "tfidf": HAS_SKLEARN,
+                "tfid": HAS_SKLEARN,
                 "simple_hash": True,  # Always available
             },
             "current_method": self.get_embedding_method(),
@@ -277,9 +267,9 @@ class LightweightEmbedder:
 
 
 def create_embedder_api():
-    """Create a simple API for the embedder"""
+    """Create a simple API for the embedder."""
     import urllib.parse
-    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from http.server import BaseHTTPRequestHandler
 
     class EmbedderHandler(BaseHTTPRequestHandler):
         def __init__(self, *args, embedder=None, **kwargs):
@@ -287,7 +277,7 @@ def create_embedder_api():
             super().__init__(*args, **kwargs)
 
         def do_POST(self):
-            """Handle embedding requests"""
+            """Handle embedding requests."""
             parsed_path = urllib.parse.urlparse(self.path)
             path = parsed_path.path
 
@@ -301,7 +291,7 @@ def create_embedder_api():
                 self._send_response(404, {"error": "Endpoint not found"})
 
         def do_GET(self):
-            """Handle status requests"""
+            """Handle status requests."""
             parsed_path = urllib.parse.urlparse(self.path)
             path = parsed_path.path
 
@@ -312,7 +302,7 @@ def create_embedder_api():
                 self._send_response(404, {"error": "Endpoint not found"})
 
         def _handle_embed_text(self):
-            """Handle text embedding requests"""
+            """Handle text embedding requests."""
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
                 post_data = self.rfile.read(content_length)
@@ -332,7 +322,7 @@ def create_embedder_api():
                 self._send_response(500, {"error": str(e)})
 
         def _handle_embed_document(self):
-            """Handle document embedding requests"""
+            """Handle document embedding requests."""
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
                 post_data = self.rfile.read(content_length)
@@ -352,7 +342,7 @@ def create_embedder_api():
                 self._send_response(500, {"error": str(e)})
 
         def _handle_search(self):
-            """Handle search requests"""
+            """Handle search requests."""
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
                 post_data = self.rfile.read(content_length)
@@ -373,7 +363,7 @@ def create_embedder_api():
                 self._send_response(500, {"error": str(e)})
 
         def _send_response(self, status_code, data):
-            """Send JSON response"""
+            """Send JSON response."""
             self.send_response(status_code)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")

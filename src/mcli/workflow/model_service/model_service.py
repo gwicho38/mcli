@@ -1,18 +1,11 @@
-import asyncio
-import base64
 import json
-import logging
 import os
-import shutil
 import signal
 import sqlite3
 import sys
-import tempfile
 import threading
 import time
-import urllib.parse
 import uuid
-from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -21,20 +14,17 @@ from urllib.parse import urlparse
 
 # CLI Commands
 import click
-import numpy as np
 import psutil
 import requests
 
 # Model loading and inference
 import torch
-import transformers
 import uvicorn
 
 # FastAPI for REST API
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from transformers import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
 
 # Import existing utilities
@@ -66,7 +56,7 @@ DEFAULT_CONFIG = {
 
 @dataclass
 class ModelInfo:
-    """Represents a loaded model"""
+    """Represents a loaded model."""
 
     id: str
     name: str
@@ -91,7 +81,7 @@ class ModelInfo:
 
 
 class ModelDatabase:
-    """Manages model metadata storage"""
+    """Manages model metadata storage."""
 
     def __init__(self, db_path: Optional[str] = None):
         if db_path is None:
@@ -103,7 +93,7 @@ class ModelDatabase:
         self.init_database()
 
     def init_database(self):
-        """Initialize SQLite database"""
+        """Initialize SQLite database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -150,7 +140,7 @@ class ModelDatabase:
         conn.close()
 
     def add_model(self, model_info: ModelInfo) -> str:
-        """Add a new model to the database"""
+        """Add a new model to the database."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -192,7 +182,7 @@ class ModelDatabase:
             conn.close()
 
     def get_model(self, model_id: str) -> Optional[ModelInfo]:
-        """Get a model by ID"""
+        """Get a model by ID."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -216,7 +206,7 @@ class ModelDatabase:
             conn.close()
 
     def get_all_models(self) -> List[ModelInfo]:
-        """Get all models"""
+        """Get all models."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -236,7 +226,7 @@ class ModelDatabase:
             conn.close()
 
     def update_model(self, model_info: ModelInfo) -> bool:
-        """Update model information"""
+        """Update model information."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -277,7 +267,7 @@ class ModelDatabase:
             conn.close()
 
     def delete_model(self, model_id: str) -> bool:
-        """Delete a model"""
+        """Delete a model."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -302,7 +292,7 @@ class ModelDatabase:
         execution_time_ms: int = int(),
         error_message: str = str(),
     ):
-        """Record inference request"""
+        """Record inference request."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -335,7 +325,7 @@ class ModelDatabase:
             conn.close()
 
     def _row_to_model_info(self, row) -> ModelInfo:
-        """Convert database row to ModelInfo object"""
+        """Convert database row to ModelInfo object."""
         return ModelInfo(
             id=row[0],
             name=row[1],
@@ -355,7 +345,7 @@ class ModelDatabase:
 
 
 class ModelManager:
-    """Manages model loading, caching, and inference"""
+    """Manages model loading, caching, and inference."""
 
     def __init__(self, models_dir: str = "./models", max_cache_size: int = 2):
         self.models_dir = Path(models_dir)
@@ -370,7 +360,7 @@ class ModelManager:
         logger.info(f"Using device: {self.device}")
 
     def load_model(self, model_info: ModelInfo) -> bool:
-        """Load a model into memory"""
+        """Load a model into memory."""
         with self.model_lock:
             try:
                 logger.info(f"Loading model: {model_info.name}")
@@ -418,7 +408,7 @@ class ModelManager:
                 return False
 
     def unload_model(self, model_id: str) -> bool:
-        """Unload a model from memory"""
+        """Unload a model from memory."""
         with self.model_lock:
             if model_id in self.loaded_models:
                 del self.loaded_models[model_id]
@@ -435,7 +425,7 @@ class ModelManager:
             return False
 
     def _load_text_generation_model(self, model_info: ModelInfo):
-        """Load a text generation model"""
+        """Load a text generation model."""
         tokenizer = AutoTokenizer.from_pretrained(
             model_info.tokenizer_path or model_info.model_path, trust_remote_code=True
         )
@@ -453,7 +443,7 @@ class ModelManager:
         return model, tokenizer
 
     def _load_text_classification_model(self, model_info: ModelInfo):
-        """Load a text classification model"""
+        """Load a text classification model."""
         tokenizer = AutoTokenizer.from_pretrained(
             model_info.tokenizer_path or model_info.model_path
         )
@@ -470,7 +460,7 @@ class ModelManager:
         return model, tokenizer
 
     def _load_translation_model(self, model_info: ModelInfo):
-        """Load a translation model"""
+        """Load a translation model."""
         tokenizer = AutoTokenizer.from_pretrained(
             model_info.tokenizer_path or model_info.model_path
         )
@@ -487,13 +477,13 @@ class ModelManager:
         return model, tokenizer
 
     def _load_image_generation_model(self, model_info: ModelInfo):
-        """Load an image generation model (placeholder)"""
+        """Load an image generation model (placeholder)."""
         # This would be implemented based on specific image generation frameworks
         # like Stable Diffusion, DALL-E, etc.
         raise NotImplementedError("Image generation models not yet implemented")
 
     def _evict_oldest_model(self):
-        """Evict the oldest loaded model from cache"""
+        """Evict the oldest loaded model from cache."""
         if not self.loaded_models:
             return
 
@@ -501,7 +491,7 @@ class ModelManager:
         self.unload_model(oldest_id)
 
     def _get_model_memory_usage(self, model) -> float:
-        """Get model memory usage in MB"""
+        """Get model memory usage in MB."""
         try:
             if self.device == "cuda":
                 return torch.cuda.memory_allocated() / 1024 / 1024
@@ -509,7 +499,7 @@ class ModelManager:
                 # Rough estimation for CPU
                 total_params = sum(p.numel() for p in model.parameters())
                 return total_params * 4 / 1024 / 1024  # 4 bytes per float32
-        except:
+        except Exception:
             return 0.0
 
     def generate_text(
@@ -521,7 +511,7 @@ class ModelManager:
         top_p: float = float(),
         top_k: int = int(),
     ) -> str:
-        """Generate text using a loaded model"""
+        """Generate text using a loaded model."""
         if model_id not in self.loaded_models:
             raise ValueError(f"Model {model_id} not loaded")
 
@@ -568,7 +558,7 @@ class ModelManager:
             raise
 
     def classify_text(self, model_id: str, text: str) -> Dict[str, float]:
-        """Classify text using a loaded model"""
+        """Classify text using a loaded model."""
         if model_id not in self.loaded_models:
             raise ValueError(f"Model {model_id} not loaded")
 
@@ -599,7 +589,7 @@ class ModelManager:
     def translate_text(
         self, model_id: str, text: str, source_lang: str = "en", target_lang: str = "fr"
     ) -> str:
-        """Translate text using a loaded model"""
+        """Translate text using a loaded model."""
         if model_id not in self.loaded_models:
             raise ValueError(f"Model {model_id} not loaded")
 
@@ -635,7 +625,7 @@ class ModelManager:
     def download_model_from_url(
         self, model_url: str, tokenizer_url: Optional[str] = None
     ) -> tuple[str, Optional[str]]:
-        """Download model and tokenizer from URLs and return local paths"""
+        """Download model and tokenizer from URLs and return local paths."""
         try:
             # Parse URLs
             model_parsed = urlparse(model_url)
@@ -686,7 +676,7 @@ class ModelManager:
         top_p: float = 0.9,
         top_k: int = 50,
     ) -> str:
-        """Add a model from URL by downloading it first"""
+        """Add a model from URL by downloading it first."""
         try:
             # Download model and tokenizer
             model_path, tokenizer_path = self.download_model_from_url(model_url, tokenizer_url)
@@ -721,7 +711,7 @@ class ModelManager:
             raise
 
     def get_models_summary(self) -> Dict[str, Any]:
-        """Get a summary of all models with statistics"""
+        """Get a summary of all models with statistics."""
         models = self.db.get_all_models()
 
         summary = {
@@ -802,7 +792,7 @@ class TranslationRequest(BaseModel):
 
 
 class ModelService:
-    """Main model service daemon"""
+    """Main model service daemon."""
 
     def __init__(self, config: Dict[str, Any] = dict[str(), object()]()):
         self.config = {**DEFAULT_CONFIG, **(config or {})}
@@ -850,7 +840,7 @@ class ModelService:
         self._setup_routes()
 
     def _setup_routes(self):
-        """Setup FastAPI routes"""
+        """Setup FastAPI routes."""
 
         @self.app.get("/")
         async def root():
@@ -863,18 +853,18 @@ class ModelService:
 
         @self.app.get("/models")
         async def list_models():
-            """List all available models"""
+            """List all available models."""
             models = self.model_manager.db.get_all_models()
             return [asdict(model) for model in models]
 
         @self.app.get("/models/summary")
         async def get_models_summary():
-            """Get a summary of all models with statistics"""
+            """Get a summary of all models with statistics."""
             return self.model_manager.get_models_summary()
 
         @self.app.post("/models")
         async def load_model(request: ModelLoadRequest):
-            """Load a new model"""
+            """Load a new model."""
             try:
                 model_info = ModelInfo(
                     id=str(uuid.uuid4()),
@@ -907,7 +897,7 @@ class ModelService:
 
         @self.app.post("/models/from-url")
         async def load_model_from_url(request: ModelLoadFromUrlRequest):
-            """Load a new model from URL"""
+            """Load a new model from URL."""
             try:
                 model_id = self.model_manager.add_model_from_url(
                     name=request.name,
@@ -928,7 +918,7 @@ class ModelService:
 
         @self.app.delete("/models/{model_id}")
         async def unload_model(model_id: str):
-            """Unload a model"""
+            """Unload a model."""
             try:
                 success = self.model_manager.unload_model(model_id)
                 if success:
@@ -940,7 +930,7 @@ class ModelService:
 
         @self.app.put("/models/{model_id}")
         async def update_model(model_id: str, request: Dict[str, Any]):
-            """Update model configuration"""
+            """Update model configuration."""
             try:
                 # Get current model info
                 model_info = self.model_manager.db.get_model(model_id)
@@ -966,7 +956,7 @@ class ModelService:
 
         @self.app.delete("/models/{model_id}/remove")
         async def remove_model(model_id: str):
-            """Remove a model from the database"""
+            """Remove a model from the database."""
             try:
                 # First unload if loaded
                 self.model_manager.unload_model(model_id)
@@ -985,7 +975,7 @@ class ModelService:
 
         @self.app.post("/models/{model_id}/generate")
         async def generate_text(model_id: str, request: TextGenerationRequest):
-            """Generate text using a model"""
+            """Generate text using a model."""
             try:
                 start_time = time.time()
 
@@ -1023,7 +1013,7 @@ class ModelService:
 
         @self.app.post("/models/{model_id}/classify")
         async def classify_text(model_id: str, request: TextClassificationRequest):
-            """Classify text using a model"""
+            """Classify text using a model."""
             try:
                 start_time = time.time()
 
@@ -1056,7 +1046,7 @@ class ModelService:
 
         @self.app.post("/models/{model_id}/translate")
         async def translate_text(model_id: str, request: TranslationRequest):
-            """Translate text using a model"""
+            """Translate text using a model."""
             try:
                 start_time = time.time()
 
@@ -1092,7 +1082,7 @@ class ModelService:
 
         @self.app.get("/health")
         async def health_check():
-            """Health check endpoint"""
+            """Health check endpoint."""
             return {
                 "status": "healthy",
                 "models_loaded": len(self.model_manager.loaded_models),
@@ -1105,7 +1095,7 @@ class ModelService:
         # Lightweight server endpoints
         @self.app.get("/lightweight/models")
         async def list_lightweight_models():
-            """List available lightweight models"""
+            """List available lightweight models."""
             return {
                 "models": LIGHTWEIGHT_MODELS,
                 "downloaded": self.lightweight_server.downloader.get_downloaded_models(),
@@ -1114,7 +1104,7 @@ class ModelService:
 
         @self.app.post("/lightweight/models/{model_key}/download")
         async def download_lightweight_model(model_key: str):
-            """Download a lightweight model"""
+            """Download a lightweight model."""
             if model_key not in LIGHTWEIGHT_MODELS:
                 raise HTTPException(status_code=404, detail="Model not found")
 
@@ -1129,7 +1119,7 @@ class ModelService:
 
         @self.app.post("/lightweight/start")
         async def start_lightweight_server():
-            """Start the lightweight server"""
+            """Start the lightweight server."""
             try:
                 self.lightweight_server.start_server()
                 return {
@@ -1142,7 +1132,7 @@ class ModelService:
 
         @self.app.get("/lightweight/status")
         async def lightweight_status():
-            """Get lightweight server status"""
+            """Get lightweight server status."""
             return {
                 "running": self.lightweight_server.running,
                 "port": self.lightweight_server.port,
@@ -1153,7 +1143,7 @@ class ModelService:
         # PDF processing endpoints
         @self.app.post("/pdf/extract-text")
         async def extract_pdf_text(request: Dict[str, Any]):
-            """Extract text from PDF"""
+            """Extract text from PDF."""
             try:
                 pdf_path = request.get("pdf_path")
                 if not pdf_path:
@@ -1166,7 +1156,7 @@ class ModelService:
 
         @self.app.post("/pdf/process-with-ai")
         async def process_pdf_with_ai(request: Dict[str, Any]):
-            """Process PDF with AI analysis"""
+            """Process PDF with AI analysis."""
             try:
                 pdf_path = request.get("pdf_path")
                 model_key = request.get("model_key")
@@ -1185,13 +1175,13 @@ class ModelService:
 
         @self.app.get("/pdf/status")
         async def pdf_processor_status():
-            """Get PDF processor status"""
+            """Get PDF processor status."""
             return self.pdf_processor.get_service_status()
 
         # Embedding endpoints
         @self.app.post("/embed/text")
         async def embed_text(request: Dict[str, Any]):
-            """Embed text using lightweight embedder"""
+            """Embed text using lightweight embedder."""
             try:
                 text = request.get("text")
                 method = request.get("method")
@@ -1210,7 +1200,7 @@ class ModelService:
 
         @self.app.post("/embed/document")
         async def embed_document(request: Dict[str, Any]):
-            """Embed document using lightweight embedder"""
+            """Embed document using lightweight embedder."""
             try:
                 text = request.get("text")
                 chunk_size = request.get("chunk_size", 1000)
@@ -1225,7 +1215,7 @@ class ModelService:
 
         @self.app.post("/embed/search")
         async def search_embeddings(request: Dict[str, Any]):
-            """Search similar documents using embeddings"""
+            """Search similar documents using embeddings."""
             try:
                 query = request.get("query")
                 embeddings = request.get("embeddings", [])
@@ -1241,11 +1231,11 @@ class ModelService:
 
         @self.app.get("/embed/status")
         async def embedder_status():
-            """Get embedder status"""
+            """Get embedder status."""
             return self.embedder.get_status()
 
     def start(self):
-        """Start the model service"""
+        """Start the model service."""
         if self.running:
             logger.info("Model service is already running")
             return
@@ -1289,7 +1279,7 @@ class ModelService:
             self.stop()
 
     def stop(self):
-        """Stop the model service"""
+        """Stop the model service."""
         if not self.running:
             return
 
@@ -1306,13 +1296,13 @@ class ModelService:
         logger.info("Model service stopped")
 
     def _signal_handler(self, signum, frame):
-        """Handle shutdown signals"""
+        """Handle shutdown signals."""
         logger.info(f"Received signal {signum}, shutting down...")
         self.stop()
         sys.exit(0)
 
     def status(self) -> Dict[str, Any]:
-        """Get service status"""
+        """Get service status."""
         is_running = False
         pid = None
 
@@ -1334,13 +1324,12 @@ class ModelService:
 
 
 # CLI Commands
-import click
+# import click  # Already imported above
 
 
 @click.group(name="model-service")
 def model_service():
-    """Model service daemon for hosting language models"""
-    pass
+    """Model service daemon for hosting language models."""
 
 
 @model_service.command()
@@ -1349,7 +1338,7 @@ def model_service():
 @click.option("--port", default=8000, help="Port to bind to")
 @click.option("--models-dir", default="./models", help="Directory for model storage")
 def start(config: Optional[str], host: str, port: int, models_dir: str):
-    """Start the model service daemon"""
+    """Start the model service daemon."""
     # Load config if provided
     service_config = DEFAULT_CONFIG.copy()
     if config:
@@ -1371,7 +1360,7 @@ def start(config: Optional[str], host: str, port: int, models_dir: str):
 
 @model_service.command()
 def stop():
-    """Stop the model service daemon"""
+    """Stop the model service daemon."""
     pid_file = Path.home() / ".local" / "mcli" / "model_service" / "model_service.pid"
 
     if not pid_file.exists():
@@ -1399,7 +1388,7 @@ def stop():
 
 @model_service.command()
 def status():
-    """Show model service status"""
+    """Show model service status."""
     service = ModelService()
     status_info = service.status()
 
@@ -1416,7 +1405,7 @@ def status():
 @model_service.command()
 @click.option("--summary", is_flag=True, help="Show summary statistics")
 def list_models(summary: bool = False):
-    """List all models in the service"""
+    """List all models in the service."""
     service = ModelService()
 
     try:
@@ -1481,7 +1470,7 @@ def list_models(summary: bool = False):
 def add_model(
     model_path: str, name: str, model_type: str, tokenizer_path: str = str(), device: str = "auto"
 ):
-    """Add a model to the service"""
+    """Add a model to the service."""
     service = ModelService()
 
     try:
@@ -1534,7 +1523,7 @@ def add_model_from_url(
     top_p: float = 0.9,
     top_k: int = 50,
 ):
-    """Add a model from URL to the service"""
+    """Add a model from URL to the service."""
     service = ModelService()
 
     try:
@@ -1577,7 +1566,7 @@ def update_model(
     top_k: Optional[int] = None,
     device: Optional[str] = None,
 ):
-    """Update model configuration"""
+    """Update model configuration."""
     service = ModelService()
 
     try:
@@ -1627,7 +1616,7 @@ def update_model(
 @click.argument("model_id")
 @click.option("--force", is_flag=True, help="Force removal without confirmation")
 def remove_model(model_id: str, force: bool = False):
-    """Remove a model from the service"""
+    """Remove a model from the service."""
     service = ModelService()
 
     try:
@@ -1638,7 +1627,7 @@ def remove_model(model_id: str, force: bool = False):
             return
 
         if not force:
-            click.echo(f"Model to remove:")
+            click.echo("Model to remove:")
             click.echo(f"  Name: {model_info.name}")
             click.echo(f"  Type: {model_info.model_type}")
             click.echo(f"  Path: {model_info.model_path}")
@@ -1672,7 +1661,7 @@ def remove_model(model_id: str, force: bool = False):
 @click.option("--start-server", is_flag=True, help="Start the lightweight server")
 @click.option("--port", default=8080, help="Port for lightweight server")
 def lightweight(list: bool, download: str, auto: bool, start_server: bool, port: int):
-    """Manage lightweight models and server"""
+    """Manage lightweight models and server."""
     service = ModelService()
 
     if list:
@@ -1725,7 +1714,7 @@ def lightweight(list: bool, download: str, auto: bool, start_server: bool, port:
         service.lightweight_server.port = port
         service.lightweight_server.start_server()
 
-        click.echo(f"✅ Server started!")
+        click.echo("✅ Server started!")
         click.echo(f"🌐 API: http://localhost:{port}")
         click.echo(f"📊 Health: http://localhost:{port}/health")
         click.echo(f"📋 Models: http://localhost:{port}/models")
@@ -1760,7 +1749,7 @@ def lightweight(list: bool, download: str, auto: bool, start_server: bool, port:
 def lightweight_run(
     model: Optional[str], auto: bool, port: int, list_models: bool, download_only: bool
 ):
-    """Run lightweight model server (standalone mode)"""
+    """Run lightweight model server (standalone mode)."""
     service = ModelService()
 
     click.echo("🚀 MCLI Lightweight Model Server")
@@ -1799,7 +1788,7 @@ def lightweight_run(
     service.lightweight_server.port = port
     service.lightweight_server.start_server()
 
-    click.echo(f"\n📝 Usage:")
+    click.echo("\n📝 Usage:")
     click.echo(f"  - API: http://localhost:{port}")
     click.echo(f"  - Health: http://localhost:{port}/health")
     click.echo(f"  - Models: http://localhost:{port}/models")
@@ -1818,7 +1807,7 @@ def lightweight_run(
 @click.option("--model", help="Specific model to use for AI analysis")
 @click.option("--extract-only", is_flag=True, help="Only extract text, no AI analysis")
 def process_pdf(pdf_path: str, model: str, extract_only: bool):
-    """Process PDF with AI analysis"""
+    """Process PDF with AI analysis."""
     service = ModelService()
 
     try:
@@ -1839,7 +1828,7 @@ def process_pdf(pdf_path: str, model: str, extract_only: bool):
                 click.echo(f"📝 Preview: {result['text'][:200]}...")
             else:
                 analysis = result["pdf_analysis"]["ai_analysis"]
-                click.echo(f"✅ PDF processed successfully!")
+                click.echo("✅ PDF processed successfully!")
                 click.echo(f"📊 Document type: {analysis['document_type']}")
                 click.echo(f"📝 Summary: {analysis['summary'][:200]}...")
                 click.echo(f"🔑 Key topics: {', '.join(analysis['key_topics'])}")
@@ -1854,7 +1843,7 @@ def process_pdf(pdf_path: str, model: str, extract_only: bool):
 @model_service.command()
 @click.option("--port", default=8080, help="Port for PDF processing service")
 def start_pdf_service(port: int):
-    """Start PDF processing service"""
+    """Start PDF processing service."""
     service = ModelService()
 
     try:
@@ -1862,7 +1851,7 @@ def start_pdf_service(port: int):
         success = service.pdf_processor.start_pdf_processing_service(port)
 
         if success:
-            click.echo(f"✅ PDF processing service started!")
+            click.echo("✅ PDF processing service started!")
             click.echo(f"🌐 API: http://localhost:{port}")
             click.echo(f"📊 Status: http://localhost:{port}/status")
 
@@ -1883,7 +1872,7 @@ def start_pdf_service(port: int):
 @click.argument("text")
 @click.option("--method", help="Embedding method (sentence_transformers, tfidf, simple_hash)")
 def embed_text(text: str, method: str):
-    """Embed text using lightweight embedder"""
+    """Embed text using lightweight embedder."""
     service = ModelService()
 
     try:
@@ -1895,7 +1884,7 @@ def embed_text(text: str, method: str):
             result = service.embedder.embed_text(text)
 
         if result:
-            click.echo(f"✅ Text embedded successfully!")
+            click.echo("✅ Text embedded successfully!")
             click.echo(f"📊 Method: {result['method']}")
             click.echo(f"📏 Dimensions: {result['dimensions']}")
             click.echo(f"📝 Text length: {result['text_length']}")
@@ -1910,7 +1899,7 @@ def embed_text(text: str, method: str):
 @click.argument("text")
 @click.option("--chunk-size", default=1000, help="Chunk size for document embedding")
 def embed_document(text: str, chunk_size: int):
-    """Embed document using lightweight embedder"""
+    """Embed document using lightweight embedder."""
     service = ModelService()
 
     try:
@@ -1919,7 +1908,7 @@ def embed_document(text: str, chunk_size: int):
 
         if result.get("success"):
             doc_embedding = result["document_embedding"]
-            click.echo(f"✅ Document embedded successfully!")
+            click.echo("✅ Document embedded successfully!")
             click.echo(f"📊 Method: {doc_embedding['method']}")
             click.echo(f"📄 Total chunks: {doc_embedding['total_chunks']}")
             click.echo(f"📏 Text length: {doc_embedding['total_text_length']}")
@@ -1932,7 +1921,7 @@ def embed_document(text: str, chunk_size: int):
 
 @model_service.command()
 def embedder_status():
-    """Show embedder status"""
+    """Show embedder status."""
     service = ModelService()
 
     try:

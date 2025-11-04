@@ -1,4 +1,4 @@
-"""Custom middleware for API"""
+"""Custom middleware for API."""
 
 import time
 import uuid
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
-    """Log all incoming requests and responses"""
+    """Log all incoming requests and responses."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # Generate request ID
@@ -45,7 +45,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
-    """Rate limiting middleware"""
+    """Rate limiting middleware."""
 
     def __init__(self, app: ASGIApp, requests_per_minute: int = 60):
         super().__init__(app)
@@ -86,7 +86,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
-    """Global error handling middleware"""
+    """Global error handling middleware."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         try:
@@ -110,7 +110,7 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
 
 
 class CompressionMiddleware(BaseHTTPMiddleware):
-    """Response compression middleware"""
+    """Response compression middleware."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
@@ -125,7 +125,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
 
 
 class CacheControlMiddleware(BaseHTTPMiddleware):
-    """Add cache control headers"""
+    """Add cache control headers."""
 
     def __init__(self, app: ASGIApp, max_age: int = 0):
         super().__init__(app)
@@ -137,7 +137,7 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
         # Add cache control headers based on endpoint
         if request.url.path.startswith("/api/v1/data"):
             # Cache data endpoints
-            response.headers["Cache-Control"] = f"public, max-age=300"
+            response.headers["Cache-Control"] = "public, max-age=300"
         elif request.url.path.startswith("/api/v1/predictions"):
             # Don't cache predictions
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
@@ -149,7 +149,7 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """Add security headers to responses"""
+    """Add security headers to responses."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         response = await call_next(request)
@@ -175,7 +175,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 class MetricsMiddleware(BaseHTTPMiddleware):
-    """Collect metrics for monitoring"""
+    """Collect metrics for monitoring."""
 
     def __init__(self, app: ASGIApp):
         super().__init__(app)
@@ -202,7 +202,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         return response
 
     def get_metrics(self) -> dict:
-        """Get collected metrics"""
+        """Get collected metrics."""
         metrics = {}
         for endpoint, count in self.request_count.items():
             durations = self.request_duration[endpoint]

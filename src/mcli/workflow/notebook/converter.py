@@ -47,7 +47,7 @@ class WorkflowConverter:
 
         if len(segments) > 1:
             # Found cell markers
-            for i, segment in enumerate(segments):
+            for _i, segment in enumerate(segments):
                 if segment.strip():
                     cells.append(
                         NotebookCell(

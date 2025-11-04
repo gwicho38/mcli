@@ -1,4 +1,4 @@
-"""Prometheus metrics for monitoring"""
+"""Prometheus metrics for monitoring."""
 
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
 
@@ -29,5 +29,5 @@ cache_hit_rate = Gauge("cache_hit_rate", "Cache hit rate")
 
 
 def get_metrics():
-    """Get Prometheus metrics in text format"""
+    """Get Prometheus metrics in text format."""
     return generate_latest().decode("utf-8")

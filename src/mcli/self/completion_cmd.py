@@ -10,19 +10,16 @@ from pathlib import Path
 
 import click
 
-from mcli.lib.ui.styling import success
-
 
 @click.group(name="completion")
 def completion():
-    """Shell completion utilities"""
-    pass
+    """Shell completion utilities."""
 
 
 @completion.command(name="bash")
 @click.pass_context
 def bash_completion(ctx):
-    """Generate bash completion script"""
+    """Generate bash completion script."""
     from click.shell_completion import BashComplete
 
     # Get the root CLI app
@@ -39,7 +36,7 @@ def bash_completion(ctx):
 @completion.command(name="zsh")
 @click.pass_context
 def zsh_completion(ctx):
-    """Generate zsh completion script"""
+    """Generate zsh completion script."""
     from click.shell_completion import ZshComplete
 
     # Get the root CLI app
@@ -56,7 +53,7 @@ def zsh_completion(ctx):
 @completion.command(name="fish")
 @click.pass_context
 def fish_completion(ctx):
-    """Generate fish completion script"""
+    """Generate fish completion script."""
     from click.shell_completion import FishComplete
 
     # Get the root CLI app
@@ -78,8 +75,7 @@ def fish_completion(ctx):
 )
 @click.pass_context
 def install_completion(ctx, shell):
-    """Install shell completion for the current user"""
-    import subprocess
+    """Install shell completion for the current user."""
 
     # Auto-detect shell if not specified
     if not shell:
@@ -180,7 +176,7 @@ def install_completion(ctx, shell):
 
 @completion.command(name="status")
 def completion_status():
-    """Check current shell completion status"""
+    """Check current shell completion status."""
     current_shell = os.environ.get("SHELL", "unknown")
     shell_name = Path(current_shell).name if current_shell != "unknown" else "unknown"
 

@@ -2,6 +2,7 @@
 Top-level store management commands for MCLI.
 Manages command store - sync ~/.mcli/commands/ to git.
 """
+
 import shutil
 import subprocess
 from datetime import datetime
@@ -20,7 +21,7 @@ COMMANDS_PATH = Path.home() / ".mcli" / "commands"
 
 
 def _get_store_path() -> Path:
-    """Get store path from config or default"""
+    """Get store path from config or default."""
     config_file = Path.home() / ".mcli" / "store.conf"
 
     if config_file.exists():
@@ -34,15 +35,14 @@ def _get_store_path() -> Path:
 
 @click.group(name="store")
 def store():
-    """Manage command store - sync ~/.mcli/commands/ to git"""
-    pass
+    """Manage command store - sync ~/.mcli/commands/ to git."""
 
 
 @store.command(name="init")
 @click.option("--path", "-p", type=click.Path(), help=f"Store path (default: {DEFAULT_STORE_PATH})")
 @click.option("--remote", "-r", help="Git remote URL (optional)")
 def init_store(path, remote):
-    """Initialize command store with git"""
+    """Initialize command store with git."""
     store_path = Path(path) if path else DEFAULT_STORE_PATH
 
     try:
@@ -305,7 +305,7 @@ def sync_commands(message, is_global):
 
 @store.command(name="status")
 def store_status():
-    """Show git status of command store"""
+    """Show git status of command store."""
     try:
         store_path = _get_store_path()
 
@@ -341,7 +341,7 @@ def store_status():
 @click.option("--remote", "-r", help="Set git remote URL")
 @click.option("--path", "-p", type=click.Path(), help="Change store path")
 def configure_store(remote, path):
-    """Configure store settings"""
+    """Configure store settings."""
     try:
         store_path = _get_store_path()
 
@@ -377,7 +377,7 @@ def configure_store(remote, path):
 @store.command(name="list")
 @click.option("--store-dir", "-s", is_flag=True, help="List store instead of local")
 def list_commands(store_dir):
-    """List all commands"""
+    """List all commands."""
     try:
         if store_dir:
             store_path = _get_store_path()
@@ -421,7 +421,7 @@ def list_commands(store_dir):
 @click.argument("command_name")
 @click.option("--store-dir", "-s", is_flag=True, help="Show from store instead of local")
 def show_command(command_name, store_dir):
-    """Show command file contents"""
+    """Show command file contents."""
     try:
         if store_dir:
             store_path = _get_store_path()

@@ -1,4 +1,4 @@
-"""Test script for ensemble models"""
+"""Test script for ensemble models."""
 
 import os
 import sys
@@ -6,7 +6,6 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
 import logging
-from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def generate_mock_features(n_samples: int = 500, n_features: int = 150) -> pd.DataFrame:
-    """Generate mock feature data for testing"""
+    """Generate mock feature data for testing."""
     np.random.seed(42)
 
     # Create realistic feature names
@@ -50,7 +49,7 @@ def generate_mock_features(n_samples: int = 500, n_features: int = 150) -> pd.Da
 
     # Generate correlated features that simulate real market data
     features = []
-    for i in range(n_samples):
+    for _i in range(n_samples):
         # Base market trend
         market_trend = np.random.normal(0, 1)
 
@@ -85,7 +84,7 @@ def generate_mock_features(n_samples: int = 500, n_features: int = 150) -> pd.Da
 
 
 def generate_mock_targets(n_samples: int) -> tuple:
-    """Generate realistic target variables"""
+    """Generate realistic target variables."""
     np.random.seed(42)
 
     # Generate correlated targets
@@ -104,7 +103,7 @@ def generate_mock_targets(n_samples: int) -> tuple:
 
 
 def test_base_models():
-    """Test base model functionality"""
+    """Test base model functionality."""
     logger.info("Testing base models...")
 
     from base_models import MLPBaseModel, ResNetModel
@@ -122,7 +121,7 @@ def test_base_models():
     logger.info(f"MLP output shape: {output.shape}")
 
     # Test prediction
-    probas = mlp_model.predict_proba(X)
+    mlp_model.predict_proba(X)
     predictions = mlp_model.predict(X)
     logger.info(f"MLP predictions shape: {predictions.shape}")
 
@@ -140,7 +139,7 @@ def test_base_models():
 
 
 def test_ensemble_models():
-    """Test ensemble model functionality"""
+    """Test ensemble model functionality."""
     logger.info("Testing ensemble models...")
 
     from ensemble_models import (
@@ -233,7 +232,7 @@ def test_ensemble_models():
     logger.info(f"Individual predictions: {len(individual_preds)} models")
 
     # Test prediction methods
-    ensemble_probas = ensemble_model.predict_proba(X.values[:20])
+    _ensemble_probas = ensemble_model.predict_proba(X.values[:20])  # noqa: F841
     ensemble_preds = ensemble_model.predict(X.values[:20])
     logger.info(f"Ensemble predictions shape: {ensemble_preds.shape}")
 
@@ -241,14 +240,13 @@ def test_ensemble_models():
 
 
 def test_recommendation_model():
-    """Test recommendation model"""
+    """Test recommendation model."""
     logger.info("Testing recommendation model...")
 
     from ensemble_models import EnsembleConfig, ModelConfig
     from recommendation_models import (
         PortfolioRecommendation,
         RecommendationConfig,
-        RecommendationTrainer,
         StockRecommendationModel,
     )
 
@@ -329,7 +327,7 @@ def test_recommendation_model():
 
 
 def test_model_training():
-    """Test model training functionality"""
+    """Test model training functionality."""
     logger.info("Testing model training...")
 
     from ensemble_models import EnsembleConfig, EnsembleTrainer, ModelConfig
@@ -376,7 +374,7 @@ def test_model_training():
     logger.info("Training ensemble model...")
     ensemble_result = ensemble_trainer.train(X_train.values, y_train, X_val.values, y_val)
 
-    logger.info(f"Ensemble training metrics:")
+    logger.info("Ensemble training metrics:")
     logger.info(f"  Train accuracy: {ensemble_result.train_metrics.accuracy:.3f}")
     logger.info(f"  Val accuracy: {ensemble_result.val_metrics.accuracy:.3f}")
 
@@ -398,7 +396,7 @@ def test_model_training():
         batch_size=32,
     )
 
-    logger.info(f"Recommendation training metrics:")
+    logger.info("Recommendation training metrics:")
     logger.info(f"  Train accuracy: {rec_result.train_metrics.accuracy:.3f}")
     logger.info(f"  Val accuracy: {rec_result.val_metrics.accuracy:.3f}")
 
@@ -413,7 +411,7 @@ def test_model_training():
 
 
 def test_model_persistence():
-    """Test model saving and loading"""
+    """Test model saving and loading."""
     logger.info("Testing model persistence...")
 
     import tempfile
@@ -450,7 +448,7 @@ def test_model_persistence():
 
 
 def main():
-    """Run all model tests"""
+    """Run all model tests."""
     logger.info("Starting ensemble model tests...")
 
     try:

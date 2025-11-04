@@ -155,7 +155,6 @@ class McliSyncTester:
 @click.group(name="test")
 def test():
     """Testing commands for sync functionality."""
-    pass
 
 
 @test.command()

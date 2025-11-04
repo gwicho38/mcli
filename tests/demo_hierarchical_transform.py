@@ -7,12 +7,10 @@ with a sample graph, without requiring an actual JSON file.
 It also generates DOT and PNG visualizations of the hierarchical model.
 """
 
-import json
 import os
 import sys
 import time
 from collections import defaultdict
-from pprint import pprint
 
 import pydot
 

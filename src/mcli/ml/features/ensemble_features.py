@@ -1,16 +1,13 @@
-"""Ensemble feature engineering and feature interaction systems"""
+"""Ensemble feature engineering and feature interaction systems."""
 
 import logging
-import warnings
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from itertools import combinations
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
 from sklearn.feature_selection import SelectKBest, f_regression, mutual_info_regression
 from sklearn.preprocessing import PolynomialFeatures
 
@@ -19,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class EnsembleFeatureConfig:
-    """Configuration for ensemble feature engineering"""
+    """Configuration for ensemble feature engineering."""
 
     # Feature interaction settings
     max_interaction_degree: int = 2
@@ -62,7 +59,7 @@ class EnsembleFeatureConfig:
 
 
 class EnsembleFeatureBuilder:
-    """Builds comprehensive feature sets for ensemble models"""
+    """Builds comprehensive feature sets for ensemble models."""
 
     def __init__(self, config: Optional[EnsembleFeatureConfig] = None):
         self.config = config or EnsembleFeatureConfig()
@@ -77,7 +74,7 @@ class EnsembleFeatureBuilder:
         include_clustering: bool = True,
         include_rolling: bool = True,
     ) -> pd.DataFrame:
-        """Build comprehensive feature set for ensemble models"""
+        """Build comprehensive feature set for ensemble models."""
 
         logger.info("Building ensemble features")
         df = base_features.copy()
@@ -114,7 +111,7 @@ class EnsembleFeatureBuilder:
         return df
 
     def _get_numerical_features(self, df: pd.DataFrame) -> List[str]:
-        """Get list of numerical feature columns"""
+        """Get list of numerical feature columns."""
         numerical_features = []
         for col in df.columns:
             if (
@@ -130,17 +127,15 @@ class EnsembleFeatureBuilder:
     def _add_rolling_features(
         self, df: pd.DataFrame, numerical_features: List[str]
     ) -> pd.DataFrame:
-        """Add rolling window aggregation features"""
+        """Add rolling window aggregation features."""
         logger.info("Adding rolling aggregation features")
 
         # Ensure we have date column for time-based rolling
         if "transaction_date_dt" not in df.columns:
             # Create synthetic time index if no date column
             df["synthetic_time_index"] = range(len(df))
-            time_col = "synthetic_time_index"
         else:
             df = df.sort_values("transaction_date_dt")
-            time_col = "transaction_date_dt"
 
         # Select top features for rolling (avoid too many features)
         features_for_rolling = numerical_features[:20]
@@ -182,7 +177,7 @@ class EnsembleFeatureBuilder:
     def _add_interaction_features(
         self, df: pd.DataFrame, numerical_features: List[str], target_column: Optional[str]
     ) -> pd.DataFrame:
-        """Add feature interaction terms"""
+        """Add feature interaction terms."""
         logger.info("Adding feature interaction terms")
 
         # Limit features to avoid combinatorial explosion
@@ -194,7 +189,7 @@ class EnsembleFeatureBuilder:
                     try:
                         corr = abs(df[feature].corr(df[target_column]))
                         feature_scores.append((feature, corr))
-                    except:
+                    except Exception:
                         feature_scores.append((feature, 0))
 
                 feature_scores.sort(key=lambda x: x[1], reverse=True)
@@ -208,7 +203,7 @@ class EnsembleFeatureBuilder:
                     try:
                         var = df[feature].var()
                         feature_vars.append((feature, var))
-                    except:
+                    except Exception:
                         feature_vars.append((feature, 0))
 
                 feature_vars.sort(key=lambda x: x[1], reverse=True)
@@ -259,7 +254,7 @@ class EnsembleFeatureBuilder:
     def _add_polynomial_features(
         self, df: pd.DataFrame, selected_features: List[str]
     ) -> pd.DataFrame:
-        """Add polynomial features for key variables"""
+        """Add polynomial features for key variables."""
         logger.info("Adding polynomial features")
 
         # Limit to top features to avoid memory issues
@@ -297,7 +292,7 @@ class EnsembleFeatureBuilder:
         return df
 
     def _add_clustering_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Add clustering-based features"""
+        """Add clustering-based features."""
         logger.info("Adding clustering features")
 
         # Select features for clustering
@@ -353,7 +348,7 @@ class EnsembleFeatureBuilder:
     def _add_statistical_features(
         self, df: pd.DataFrame, numerical_features: List[str]
     ) -> pd.DataFrame:
-        """Add statistical transformation features"""
+        """Add statistical transformation features."""
         logger.info("Adding statistical features")
 
         # Select subset of features for statistical transforms
@@ -392,7 +387,7 @@ class EnsembleFeatureBuilder:
         return df
 
     def _add_rank_features(self, df: pd.DataFrame, numerical_features: List[str]) -> pd.DataFrame:
-        """Add rank-based features"""
+        """Add rank-based features."""
         logger.info("Adding rank features")
 
         # Select subset for ranking
@@ -418,7 +413,7 @@ class EnsembleFeatureBuilder:
 
 
 class FeatureInteractionEngine:
-    """Advanced feature interaction discovery and generation"""
+    """Advanced feature interaction discovery and generation."""
 
     def __init__(self, config: Optional[EnsembleFeatureConfig] = None):
         self.config = config or EnsembleFeatureConfig()
@@ -426,7 +421,7 @@ class FeatureInteractionEngine:
     def discover_interactions(
         self, df: pd.DataFrame, target_column: str, max_interactions: int = 50
     ) -> List[Tuple[str, str, float]]:
-        """Discover important feature interactions based on target correlation"""
+        """Discover important feature interactions based on target correlation."""
 
         numerical_features = self._get_numerical_features(df)
         interactions = []
@@ -447,7 +442,7 @@ class FeatureInteractionEngine:
                 if not np.isnan(correlation) and correlation > 0.1:
                     interactions.append((feature1, feature2, correlation))
 
-            except Exception as e:
+            except Exception:
                 continue
 
         # Sort by correlation strength
@@ -457,7 +452,7 @@ class FeatureInteractionEngine:
         return interactions[:max_interactions]
 
     def _get_numerical_features(self, df: pd.DataFrame) -> List[str]:
-        """Get numerical features for interaction discovery"""
+        """Get numerical features for interaction discovery."""
         return [
             col
             for col in df.columns
@@ -469,7 +464,7 @@ class FeatureInteractionEngine:
     def generate_advanced_interactions(
         self, df: pd.DataFrame, feature_pairs: List[Tuple[str, str]]
     ) -> pd.DataFrame:
-        """Generate advanced interaction terms for discovered feature pairs"""
+        """Generate advanced interaction terms for discovered feature pairs."""
 
         df_enhanced = df.copy()
 
@@ -503,7 +498,7 @@ class FeatureInteractionEngine:
 
 
 class DynamicFeatureSelector:
-    """Dynamic feature selection based on multiple criteria"""
+    """Dynamic feature selection based on multiple criteria."""
 
     def __init__(self, config: Optional[EnsembleFeatureConfig] = None):
         self.config = config or EnsembleFeatureConfig()
@@ -514,7 +509,7 @@ class DynamicFeatureSelector:
         target_column: str,
         selection_methods: Optional[List[str]] = None,
     ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        """Select features using multiple criteria"""
+        """Select features using multiple criteria."""
 
         if selection_methods is None:
             selection_methods = ["variance", "correlation", "mutual_info"]
@@ -558,7 +553,7 @@ class DynamicFeatureSelector:
         return result_df, selection_info
 
     def _apply_selection_method(self, X: pd.DataFrame, y: pd.Series, method: str) -> List[str]:
-        """Apply specific feature selection method"""
+        """Apply specific feature selection method."""
 
         try:
             if method == "variance":

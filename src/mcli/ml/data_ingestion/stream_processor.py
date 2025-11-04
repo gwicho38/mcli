@@ -1,4 +1,4 @@
-"""Real-time stream processing for financial data"""
+"""Real-time stream processing for financial data."""
 
 import asyncio
 import json
@@ -7,21 +7,20 @@ import time
 from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, AsyncIterator, Callable, Dict, List, Optional
 
 import numpy as np
-import pandas as pd
 import websockets
-from kafka import KafkaConsumer, KafkaProducer
-from kafka.errors import KafkaError
+
+# KafkaConsumer from kafka library not needed - we have our own implementation below
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class StreamConfig:
-    """Stream processing configuration"""
+    """Stream processing configuration."""
 
     buffer_size: int = 1000
     batch_size: int = 100
@@ -33,7 +32,7 @@ class StreamConfig:
 
 
 class DataStream(ABC):
-    """Base class for data streams"""
+    """Base class for data streams."""
 
     def __init__(self, config: StreamConfig):
         self.config = config
@@ -44,20 +43,18 @@ class DataStream(ABC):
 
     @abstractmethod
     async def connect(self):
-        """Connect to data source"""
-        pass
+        """Connect to data source."""
 
     @abstractmethod
     async def consume(self) -> AsyncIterator[Dict[str, Any]]:
-        """Consume data from stream"""
-        pass
+        """Consume data from stream."""
 
     def add_handler(self, handler: Callable):
-        """Add data handler"""
+        """Add data handler."""
         self.handlers.append(handler)
 
     async def process_message(self, message: Dict[str, Any]):
-        """Process single message"""
+        """Process single message."""
         # Add to buffer
         self.buffer.append(message)
 
@@ -70,7 +67,7 @@ class DataStream(ABC):
             await self.flush_buffer()
 
     async def flush_buffer(self):
-        """Flush buffer and process batch"""
+        """Flush buffer and process batch."""
         if not self.buffer:
             return
 
@@ -89,7 +86,7 @@ class DataStream(ABC):
                 logger.error(f"Handler error: {e}")
 
     async def start(self):
-        """Start consuming stream"""
+        """Start consuming stream."""
         self.is_running = True
         await self.connect()
 
@@ -102,13 +99,13 @@ class DataStream(ABC):
             await self.flush_buffer()
 
     async def stop(self):
-        """Stop consuming stream"""
+        """Stop consuming stream."""
         self.is_running = False
         await self.flush_buffer()
 
 
 class KafkaStream(DataStream):
-    """Kafka stream consumer"""
+    """Kafka stream consumer."""
 
     def __init__(
         self,
@@ -124,7 +121,7 @@ class KafkaStream(DataStream):
         self.consumer = None
 
     async def connect(self):
-        """Connect to Kafka"""
+        """Connect to Kafka."""
         self.consumer = KafkaConsumer(
             self.topic,
             bootstrap_servers=self.bootstrap_servers,
@@ -136,20 +133,20 @@ class KafkaStream(DataStream):
         logger.info(f"Connected to Kafka topic: {self.topic}")
 
     async def consume(self) -> AsyncIterator[Dict[str, Any]]:
-        """Consume from Kafka"""
+        """Consume from Kafka."""
         loop = asyncio.get_event_loop()
 
         while self.is_running:
             # Poll messages
             messages = await loop.run_in_executor(None, self.consumer.poll, 1000)  # timeout ms
 
-            for topic_partition, records in messages.items():
+            for _topic_partition, records in messages.items():
                 for record in records:
                     yield record.value
 
 
 class WebSocketStream(DataStream):
-    """WebSocket stream consumer"""
+    """WebSocket stream consumer."""
 
     def __init__(self, config: StreamConfig, url: str):
         super().__init__(config)
@@ -157,12 +154,12 @@ class WebSocketStream(DataStream):
         self.websocket = None
 
     async def connect(self):
-        """Connect to WebSocket"""
+        """Connect to WebSocket."""
         self.websocket = await websockets.connect(self.url)
         logger.info(f"Connected to WebSocket: {self.url}")
 
     async def consume(self) -> AsyncIterator[Dict[str, Any]]:
-        """Consume from WebSocket"""
+        """Consume from WebSocket."""
         async for message in self.websocket:
             try:
                 data = json.loads(message)
@@ -172,7 +169,7 @@ class WebSocketStream(DataStream):
 
 
 class StreamProcessor:
-    """Process real-time data streams"""
+    """Process real-time data streams."""
 
     def __init__(self, config: StreamConfig):
         self.config = config
@@ -181,7 +178,7 @@ class StreamProcessor:
         self.metrics = StreamMetrics()
 
     def add_stream(self, name: str, stream: DataStream):
-        """Add data stream"""
+        """Add data stream."""
         self.streams[name] = stream
 
         # Add metrics handler
@@ -192,7 +189,7 @@ class StreamProcessor:
             stream.add_handler(processor)
 
     def add_processor(self, processor: Callable):
-        """Add data processor"""
+        """Add data processor."""
         self.processors.append(processor)
 
         # Add to existing streams
@@ -200,7 +197,7 @@ class StreamProcessor:
             stream.add_handler(processor)
 
     async def update_metrics(self, batch: List[Dict[str, Any]]):
-        """Update stream metrics"""
+        """Update stream metrics."""
         self.metrics.messages_processed += len(batch)
         self.metrics.last_update = datetime.now()
 
@@ -214,7 +211,7 @@ class StreamProcessor:
             self.metrics.throughput = self.metrics.messages_processed / elapsed
 
     async def start(self):
-        """Start all streams"""
+        """Start all streams."""
         tasks = []
         for name, stream in self.streams.items():
             logger.info(f"Starting stream: {name}")
@@ -224,13 +221,13 @@ class StreamProcessor:
         await asyncio.gather(*tasks)
 
     async def stop(self):
-        """Stop all streams"""
+        """Stop all streams."""
         for name, stream in self.streams.items():
             logger.info(f"Stopping stream: {name}")
             await stream.stop()
 
     def get_metrics(self) -> Dict[str, Any]:
-        """Get stream metrics"""
+        """Get stream metrics."""
         return {
             "messages_processed": self.metrics.messages_processed,
             "throughput": self.metrics.throughput,
@@ -244,7 +241,7 @@ class StreamProcessor:
 
 @dataclass
 class StreamMetrics:
-    """Stream processing metrics"""
+    """Stream processing metrics."""
 
     messages_processed: int = 0
     throughput: float = 0  # messages per second
@@ -254,7 +251,7 @@ class StreamMetrics:
 
 
 class DataAggregator:
-    """Aggregate data from multiple streams"""
+    """Aggregate data from multiple streams."""
 
     def __init__(self, window_size: int = 60):
         self.window_size = window_size
@@ -263,7 +260,7 @@ class DataAggregator:
         self.last_aggregation = time.time()
 
     async def process_batch(self, batch: List[Dict[str, Any]]):
-        """Process batch of messages"""
+        """Process batch of messages."""
         for message in batch:
             # Extract key fields
             symbol = message.get("symbol") or message.get("ticker")
@@ -280,7 +277,7 @@ class DataAggregator:
             await self.aggregate()
 
     async def aggregate(self):
-        """Aggregate buffered data"""
+        """Aggregate buffered data."""
         self.last_aggregation = time.time()
 
         for symbol, data_points in self.data_buffer.items():
@@ -318,21 +315,21 @@ class DataAggregator:
         logger.info(f"Aggregated data for {len(self.aggregated_data)} symbols")
 
     def get_aggregated_data(self, symbol: Optional[str] = None) -> Dict[str, Any]:
-        """Get aggregated data"""
+        """Get aggregated data."""
         if symbol:
             return self.aggregated_data.get(symbol, {})
         return self.aggregated_data
 
 
 class StreamEnricher:
-    """Enrich streaming data with additional context"""
+    """Enrich streaming data with additional context."""
 
     def __init__(self):
         self.enrichment_cache = {}
         self.cache_ttl = 300  # 5 minutes
 
     async def enrich_batch(self, batch: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Enrich batch of messages"""
+        """Enrich batch of messages."""
         enriched = []
 
         for message in batch:
@@ -342,7 +339,7 @@ class StreamEnricher:
         return enriched
 
     async def enrich_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Enrich single message"""
+        """Enrich single message."""
         enriched = message.copy()
 
         # Add processing metadata
@@ -359,7 +356,7 @@ class StreamEnricher:
         return enriched
 
     async def enrich_political_data(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Enrich political trading data"""
+        """Enrich political trading data."""
         politician = message.get("politician")
 
         if politician:
@@ -388,7 +385,7 @@ class StreamEnricher:
         return message
 
     async def enrich_market_data(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Enrich market data"""
+        """Enrich market data."""
         symbol = message.get("ticker") or message.get("symbol")
 
         if symbol:
@@ -418,7 +415,7 @@ class StreamEnricher:
 
 
 class KafkaConsumer:
-    """Kafka consumer for real-time data"""
+    """Kafka consumer for real-time data."""
 
     def __init__(self, bootstrap_servers: str, topics: List[str]):
         self.bootstrap_servers = bootstrap_servers
@@ -426,7 +423,7 @@ class KafkaConsumer:
         self.consumer = None
 
     async def connect(self):
-        """Connect to Kafka"""
+        """Connect to Kafka."""
         self.consumer = KafkaConsumer(
             *self.topics,
             bootstrap_servers=self.bootstrap_servers,
@@ -435,7 +432,7 @@ class KafkaConsumer:
         )
 
     async def consume(self, handler: Callable):
-        """Consume messages"""
+        """Consume messages."""
         for message in self.consumer:
             try:
                 await handler(message.value)
@@ -444,18 +441,18 @@ class KafkaConsumer:
 
 
 class WebSocketConsumer:
-    """WebSocket consumer for real-time data"""
+    """WebSocket consumer for real-time data."""
 
     def __init__(self, url: str):
         self.url = url
         self.websocket = None
 
     async def connect(self):
-        """Connect to WebSocket"""
+        """Connect to WebSocket."""
         self.websocket = await websockets.connect(self.url)
 
     async def consume(self, handler: Callable):
-        """Consume messages"""
+        """Consume messages."""
         async for message in self.websocket:
             try:
                 data = json.loads(message)

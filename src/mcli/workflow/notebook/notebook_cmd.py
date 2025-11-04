@@ -27,8 +27,7 @@ logger = get_logger()
 
 @click.group(name="notebook")
 def notebook():
-    """Workflow notebook management commands"""
-    pass
+    """Workflow notebook management commands."""
 
 
 @notebook.command(name="convert")
@@ -153,7 +152,7 @@ def migrate(directory: Optional[str], backup: bool, in_place: bool, dry_run: boo
     try:
         results = WorkflowConverter.migrate_directory(target_dir, backup=backup, in_place=in_place)
 
-        success(f"\nMigration complete:")
+        success("\nMigration complete:")
         info(f"  Total files: {results['total']}")
         success(f"  Converted: {results['converted']}")
         warning(f"  Skipped: {results['skipped']}")
@@ -203,7 +202,7 @@ def validate(notebook_file: str, schema: bool, syntax: bool, validate_all: bool)
         # Run all validations
         mcli workflow notebook validate notebook.json --all
     """
-    if validate_all:
+    if validate_all:  # noqa: SIM114
         schema = syntax = True
     elif not (schema or syntax):
         # Default to all if no specific validation requested
@@ -300,7 +299,7 @@ def notebook_info(notebook_file: str, output_json: bool):
                 info(f"Group: {notebook.metadata.mcli.group}")
             info(f"Version: {notebook.metadata.mcli.version}")
             info(f"Language: {notebook.metadata.mcli.language.value}")
-            info(f"\nCells:")
+            info("\nCells:")
             info(f"  Total: {len(notebook.cells)}")
             info(f"  Code: {len(notebook.code_cells)}")
             info(f"  Markdown: {len(notebook.markdown_cells)}")
@@ -368,7 +367,7 @@ def create(name: str, description: str, group: Optional[str], language: str, out
     # Add welcome markdown cell
     notebook.add_markdown_cell(
         f"# {name}\n\n{description}\n\n"
-        f"This is a workflow notebook. Add code cells below to define your workflow."
+        "This is a workflow notebook. Add code cells below to define your workflow."
     )
 
     # Add example code cell

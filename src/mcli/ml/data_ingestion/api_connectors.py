@@ -1,4 +1,4 @@
-"""API connectors for real-time data ingestion"""
+"""API connectors for real-time data ingestion."""
 
 import asyncio
 import json
@@ -12,7 +12,6 @@ from urllib.parse import urljoin
 
 import aiohttp
 import pandas as pd
-import requests
 import websockets
 import yfinance as yf
 
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class APIConfig:
-    """API configuration"""
+    """API configuration."""
 
     api_key: Optional[str] = None
     base_url: str = ""
@@ -32,7 +31,7 @@ class APIConfig:
 
 
 class BaseAPIConnector(ABC):
-    """Base class for API connectors"""
+    """Base class for API connectors."""
 
     def __init__(self, config: APIConfig):
         self.config = config
@@ -41,11 +40,10 @@ class BaseAPIConnector(ABC):
 
     @abstractmethod
     async def fetch_data(self, **kwargs) -> Dict[str, Any]:
-        """Fetch data from API"""
-        pass
+        """Fetch data from API."""
 
     async def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Dict[str, Any]:
-        """Make API request with rate limiting and retry logic"""
+        """Make API request with rate limiting and retry logic."""
         await self.rate_limiter.acquire()
 
         url = urljoin(self.config.base_url, endpoint)
@@ -74,13 +72,13 @@ class BaseAPIConnector(ABC):
                 await asyncio.sleep(self.config.retry_delay * retry_count)
 
     async def close(self):
-        """Close session"""
+        """Close session."""
         if self.session:
             await self.session.close()
 
 
 class RateLimiter:
-    """Rate limiter for API requests"""
+    """Rate limiter for API requests."""
 
     def __init__(self, rate_limit: int):
         self.rate_limit = rate_limit
@@ -89,7 +87,7 @@ class RateLimiter:
         self.lock = asyncio.Lock()
 
     async def acquire(self):
-        """Acquire rate limit token"""
+        """Acquire rate limit token."""
         async with self.lock:
             while self.tokens <= 0:
                 now = time.time()
@@ -105,7 +103,7 @@ class RateLimiter:
 
 
 class CongressionalDataAPI(BaseAPIConnector):
-    """Congressional trading data API connector"""
+    """Congressional trading data API connector."""
 
     def __init__(self, config: Optional[APIConfig] = None):
         if not config:
@@ -113,7 +111,7 @@ class CongressionalDataAPI(BaseAPIConnector):
         super().__init__(config)
 
     async def fetch_recent_trades(self, days: int = 30) -> List[Dict[str, Any]]:
-        """Fetch recent congressional trades"""
+        """Fetch recent congressional trades."""
         params = {
             "from_date": (datetime.now() - timedelta(days=days)).isoformat(),
             "to_date": datetime.now().isoformat(),
@@ -128,7 +126,7 @@ class CongressionalDataAPI(BaseAPIConnector):
             return self._generate_mock_trades()
 
     async def fetch_politician_info(self, politician_id: str) -> Dict[str, Any]:
-        """Fetch politician information"""
+        """Fetch politician information."""
         try:
             return await self._make_request(f"politicians/{politician_id}")
         except Exception as e:
@@ -136,7 +134,7 @@ class CongressionalDataAPI(BaseAPIConnector):
             return self._generate_mock_politician_info(politician_id)
 
     def _generate_mock_trades(self) -> List[Dict[str, Any]]:
-        """Generate mock trades for testing"""
+        """Generate mock trades for testing."""
         import random
 
         trades = []
@@ -160,7 +158,7 @@ class CongressionalDataAPI(BaseAPIConnector):
         return trades
 
     def _generate_mock_politician_info(self, politician_id: str) -> Dict[str, Any]:
-        """Generate mock politician info"""
+        """Generate mock politician info."""
         return {
             "id": politician_id,
             "name": "Mock Politician",
@@ -172,23 +170,20 @@ class CongressionalDataAPI(BaseAPIConnector):
 
 
 class StockMarketAPI(BaseAPIConnector):
-    """Base class for stock market APIs"""
+    """Base class for stock market APIs."""
 
     async def fetch_quote(self, symbol: str) -> Dict[str, Any]:
-        """Fetch current stock quote"""
-        pass
+        """Fetch current stock quote."""
 
     async def fetch_historical(self, symbol: str, period: str = "1mo") -> pd.DataFrame:
-        """Fetch historical stock data"""
-        pass
+        """Fetch historical stock data."""
 
     async def stream_quotes(self, symbols: List[str]) -> AsyncIterator[Dict[str, Any]]:
-        """Stream real-time quotes"""
-        pass
+        """Stream real-time quotes."""
 
 
 class AlphaVantageConnector(StockMarketAPI):
-    """Alpha Vantage API connector"""
+    """Alpha Vantage API connector."""
 
     def __init__(self, api_key: str):
         config = APIConfig(
@@ -199,14 +194,14 @@ class AlphaVantageConnector(StockMarketAPI):
         super().__init__(config)
 
     async def fetch_quote(self, symbol: str) -> Dict[str, Any]:
-        """Fetch current quote from Alpha Vantage"""
+        """Fetch current quote from Alpha Vantage."""
         params = {"function": "GLOBAL_QUOTE", "symbol": symbol, "apikey": self.config.api_key}
 
         data = await self._make_request("", params)
         return self._parse_quote(data.get("Global Quote", {}))
 
     async def fetch_historical(self, symbol: str, period: str = "1mo") -> pd.DataFrame:
-        """Fetch historical data from Alpha Vantage"""
+        """Fetch historical data from Alpha Vantage."""
         params = {
             "function": "TIME_SERIES_DAILY",
             "symbol": symbol,
@@ -226,7 +221,7 @@ class AlphaVantageConnector(StockMarketAPI):
         return df.sort_index()
 
     def _parse_quote(self, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Parse Alpha Vantage quote"""
+        """Parse Alpha Vantage quote."""
         return {
             "symbol": quote_data.get("01. symbol", ""),
             "price": float(quote_data.get("05. price", 0)),
@@ -238,14 +233,14 @@ class AlphaVantageConnector(StockMarketAPI):
 
 
 class YahooFinanceConnector(StockMarketAPI):
-    """Yahoo Finance connector using yfinance"""
+    """Yahoo Finance connector using yfinance."""
 
     def __init__(self):
         config = APIConfig(rate_limit=2000)  # Yahoo Finance is generous
         super().__init__(config)
 
     async def fetch_quote(self, symbol: str) -> Dict[str, Any]:
-        """Fetch current quote from Yahoo Finance"""
+        """Fetch current quote from Yahoo Finance."""
         try:
             ticker = yf.Ticker(symbol)
             info = ticker.info
@@ -263,7 +258,7 @@ class YahooFinanceConnector(StockMarketAPI):
             return {}
 
     async def fetch_historical(self, symbol: str, period: str = "1mo") -> pd.DataFrame:
-        """Fetch historical data from Yahoo Finance"""
+        """Fetch historical data from Yahoo Finance."""
         try:
             ticker = yf.Ticker(symbol)
             df = ticker.history(period=period)
@@ -274,14 +269,14 @@ class YahooFinanceConnector(StockMarketAPI):
 
 
 class PolygonIOConnector(StockMarketAPI):
-    """Polygon.io API connector"""
+    """Polygon.io API connector."""
 
     def __init__(self, api_key: str):
         config = APIConfig(api_key=api_key, base_url="https://api.polygon.io/", rate_limit=100)
         super().__init__(config)
 
     async def fetch_quote(self, symbol: str) -> Dict[str, Any]:
-        """Fetch current quote from Polygon.io"""
+        """Fetch current quote from Polygon.io."""
         endpoint = f"v2/last/nbbo/{symbol}"
         params = {"apiKey": self.config.api_key}
 
@@ -291,7 +286,7 @@ class PolygonIOConnector(StockMarketAPI):
     async def fetch_aggregates(
         self, symbol: str, from_date: str, to_date: str, timespan: str = "day"
     ) -> pd.DataFrame:
-        """Fetch aggregate bars from Polygon.io"""
+        """Fetch aggregate bars from Polygon.io."""
         endpoint = f"v2/aggs/ticker/{symbol}/range/1/{timespan}/{from_date}/{to_date}"
         params = {"apiKey": self.config.api_key, "adjusted": "true", "sort": "asc"}
 
@@ -308,7 +303,7 @@ class PolygonIOConnector(StockMarketAPI):
         return df.set_index("timestamp")
 
     def _parse_polygon_quote(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Parse Polygon.io quote"""
+        """Parse Polygon.io quote."""
         results = data.get("results", {})
         return {
             "symbol": results.get("T", ""),
@@ -319,7 +314,7 @@ class PolygonIOConnector(StockMarketAPI):
 
 
 class QuiverQuantConnector(BaseAPIConnector):
-    """QuiverQuant API for congressional trading data"""
+    """QuiverQuant API for congressional trading data."""
 
     def __init__(self, api_key: str):
         config = APIConfig(
@@ -328,7 +323,7 @@ class QuiverQuantConnector(BaseAPIConnector):
         super().__init__(config)
 
     async def fetch_congress_trades(self) -> List[Dict[str, Any]]:
-        """Fetch congressional trading data"""
+        """Fetch congressional trading data."""
         headers = {"Authorization": f"Bearer {self.config.api_key}", "Accept": "application/json"}
 
         try:
@@ -346,7 +341,7 @@ class QuiverQuantConnector(BaseAPIConnector):
             return []
 
     async def fetch_lobbying(self, ticker: str) -> List[Dict[str, Any]]:
-        """Fetch lobbying data for a ticker"""
+        """Fetch lobbying data for a ticker."""
         headers = {"Authorization": f"Bearer {self.config.api_key}", "Accept": "application/json"}
 
         try:
@@ -365,7 +360,7 @@ class QuiverQuantConnector(BaseAPIConnector):
 
 
 class WebSocketDataStream:
-    """WebSocket stream for real-time data"""
+    """WebSocket stream for real-time data."""
 
     def __init__(self, url: str, api_key: Optional[str] = None):
         self.url = url
@@ -374,11 +369,11 @@ class WebSocketDataStream:
         self.handlers = []
 
     def add_handler(self, handler: Callable):
-        """Add message handler"""
+        """Add message handler."""
         self.handlers.append(handler)
 
     async def connect(self):
-        """Connect to WebSocket"""
+        """Connect to WebSocket."""
         headers = {}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
@@ -387,7 +382,7 @@ class WebSocketDataStream:
         logger.info(f"Connected to WebSocket: {self.url}")
 
     async def subscribe(self, symbols: List[str]):
-        """Subscribe to symbols"""
+        """Subscribe to symbols."""
         if not self.websocket:
             await self.connect()
 
@@ -395,7 +390,7 @@ class WebSocketDataStream:
         await self.websocket.send(json.dumps(message))
 
     async def stream(self):
-        """Stream messages"""
+        """Stream messages."""
         if not self.websocket:
             await self.connect()
 
@@ -413,13 +408,13 @@ class WebSocketDataStream:
                     logger.error(f"Handler error: {e}")
 
     async def close(self):
-        """Close WebSocket connection"""
+        """Close WebSocket connection."""
         if self.websocket:
             await self.websocket.close()
 
 
 class DataAggregator:
-    """Aggregate data from multiple sources"""
+    """Aggregate data from multiple sources."""
 
     def __init__(self):
         self.sources = {}
@@ -427,12 +422,12 @@ class DataAggregator:
         self.cache_ttl = 300  # 5 minutes
 
     def add_source(self, name: str, connector: BaseAPIConnector):
-        """Add data source"""
+        """Add data source."""
         self.sources[name] = connector
         logger.info(f"Added data source: {name}")
 
     async def fetch_all(self, symbol: str) -> Dict[str, Any]:
-        """Fetch data from all sources"""
+        """Fetch data from all sources."""
         results = {}
 
         # Check cache
@@ -466,6 +461,6 @@ class DataAggregator:
         return results
 
     async def _fetch_with_name(self, name: str, coro):
-        """Helper to fetch with source name"""
+        """Helper to fetch with source name."""
         result = await coro
         return name, result

@@ -1,10 +1,5 @@
 import base64
-import json
-import time
-from pathlib import Path
 from urllib.request import urlopen
-
-import click
 
 from mcli.lib.logger.logger import get_logger
 
@@ -20,24 +15,24 @@ class MCLIManager:
         self.env_url = env_url
 
     def create_mcli_basic_auth_token(self):
-        """Create a basic auth token for MCLI authentication"""
+        """Create a basic auth token for MCLI authentication."""
         basic_content_bytes = "BA:BA".encode("ASCII")
         basic_token_b64 = base64.b64encode(basic_content_bytes).decode("ASCII")
         return basic_token_b64
 
     def create_mcli_basic_auth_header(self, token: str):
-        """Create a basic auth header for MCLI authentication"""
+        """Create a basic auth header for MCLI authentication."""
         return "Basic " + token
 
     def mcli_as_dev_user(self, url, authHeader):
-        """Connect to MCLI as a dev user"""
+        """Connect to MCLI as a dev user."""
         src = urlopen(url + "/remote/mcli.py").read()
         exec_scope = {}
         exec(src, exec_scope)
         return exec_scope["get_mcli"](url=url, authz=authHeader)
 
     def mcli_as_basic_user(self):
-        """Connect to MCLI as a BA user"""
+        """Connect to MCLI as a BA user."""
         url = self.env_url
         token = self.create_mcli_basic_auth_token()
         basicAuthHeader = self.create_mcli_basic_auth_header(token)
@@ -46,7 +41,7 @@ class MCLIManager:
 
 
 class MCLIConnectionParams:
-    """A picklable class to store MCLI connection parameters"""
+    """A picklable class to store MCLI connection parameters."""
 
     def __init__(self, url, auth_token):
         self.url = url
@@ -60,7 +55,7 @@ class MCLIInstance:
         self._mcli = self._initialize_mcli()
 
     def _normalize_url(self, url):
-        """Normalize URL to ensure it's properly formatted"""
+        """Normalize URL to ensure it's properly formatted."""
         if not url:
             raise ValueError("URL cannot be empty")
 
@@ -71,7 +66,7 @@ class MCLIInstance:
         return url.rstrip("/")
 
     def _initialize_mcli(self):
-        """Initialize the MCLI connection"""
+        """Initialize the MCLI connection."""
         mcli_url = f"{self.url}/remote/mcli.py"
 
         try:

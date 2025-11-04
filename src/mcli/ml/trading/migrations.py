@@ -1,4 +1,4 @@
-"""Database migrations for trading functionality"""
+"""Database migrations for trading functionality."""
 
 import logging
 
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_trading_tables():
-    """Create trading-related tables in the database"""
+    """Create trading-related tables in the database."""
     try:
         # Get database URL from settings
         settings = get_settings()
@@ -30,7 +30,7 @@ def create_trading_tables():
 
 
 def drop_trading_tables():
-    """Drop trading-related tables from the database"""
+    """Drop trading-related tables from the database."""
     try:
         # Get database URL from settings
         settings = get_settings()
@@ -48,7 +48,7 @@ def drop_trading_tables():
 
 
 def migrate_trading_data():
-    """Migrate existing data to new trading schema"""
+    """Migrate existing data to new trading schema."""
     try:
         # Get database URL from settings
         settings = get_settings()
@@ -69,7 +69,7 @@ def migrate_trading_data():
 
 
 def verify_trading_schema():
-    """Verify that trading schema is properly set up"""
+    """Verify that trading schema is properly set up."""
     try:
         # Get database URL from settings
         settings = get_settings()

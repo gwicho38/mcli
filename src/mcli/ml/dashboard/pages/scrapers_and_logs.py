@@ -10,7 +10,6 @@ This page provides:
 
 import logging
 import os
-import sys
 from datetime import datetime, timedelta
 from io import StringIO
 from pathlib import Path
@@ -19,7 +18,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
 
 # Configure logging
 logging.basicConfig(
@@ -30,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 def show_scrapers_and_logs():
-    """Main function for scrapers and logs page"""
+    """Main function for scrapers and logs page."""
     st.header("🔍 Data Scrapers & System Logs")
 
     # Add a simple test to ensure the page is rendering
@@ -63,7 +61,7 @@ def show_scrapers_and_logs():
 
 
 def show_manual_scraping():
-    """Manual scraping interface"""
+    """Manual scraping interface."""
     st.subheader("🚀 Manual Data Scraping")
 
     st.markdown(
@@ -103,7 +101,7 @@ def show_manual_scraping():
 
 
 def show_uk_companies_house_scraper():
-    """UK Companies House scraper interface"""
+    """UK Companies House scraper interface."""
     st.markdown("### UK Companies House Configuration")
 
     # Check API key
@@ -156,7 +154,7 @@ def show_uk_companies_house_scraper():
 def run_uk_companies_house_scraper(
     query: str, max_results: int, fetch_officers: bool, fetch_psc: bool, save_to_db: bool
 ):
-    """Execute UK Companies House scraper"""
+    """Execute UK Companies House scraper."""
     try:
         from mcli.workflow.politician_trading.scrapers_corporate_registry import (
             UKCompaniesHouseScraper,
@@ -294,7 +292,7 @@ def run_uk_companies_house_scraper(
 
 
 def show_info_financiere_scraper():
-    """Info-Financière scraper interface"""
+    """Info-Financière scraper interface."""
     st.markdown("### Info-Financière (France) Configuration")
 
     st.success("✅ No API key required (FREE)")
@@ -324,7 +322,7 @@ def show_info_financiere_scraper():
 
 
 def run_info_financiere_scraper(query: str, days_back: int, max_results: int, save_to_db: bool):
-    """Execute Info-Financière scraper"""
+    """Execute Info-Financière scraper."""
     try:
         from mcli.workflow.politician_trading.scrapers_corporate_registry import (
             InfoFinanciereAPIScraper,
@@ -355,7 +353,7 @@ def run_info_financiere_scraper(query: str, days_back: int, max_results: int, sa
             st.markdown("### 📊 Scraping Results")
 
             if not publications:
-                st.warning(f"⚠️ No publications found for the given criteria")
+                st.warning("⚠️ No publications found for the given criteria")
                 return
 
             st.metric("Publications Found", len(publications))
@@ -388,7 +386,7 @@ def run_info_financiere_scraper(query: str, days_back: int, max_results: int, sa
 
 
 def show_opencorporates_scraper():
-    """OpenCorporates scraper interface"""
+    """OpenCorporates scraper interface."""
     st.markdown("### OpenCorporates Configuration")
 
     api_key = os.getenv("OPENCORPORATES_API_KEY") or st.secrets.get("OPENCORPORATES_API_KEY", "")
@@ -421,7 +419,7 @@ def show_opencorporates_scraper():
 
 
 def run_opencorporates_scraper(query: str, jurisdiction: str, max_results: int, save_to_db: bool):
-    """Execute OpenCorporates scraper"""
+    """Execute OpenCorporates scraper."""
     try:
         from mcli.workflow.politician_trading.scrapers_corporate_registry import (
             OpenCorporatesScraper,
@@ -479,7 +477,7 @@ def run_opencorporates_scraper(query: str, jurisdiction: str, max_results: int, 
 
 
 def show_xbrl_filings_scraper():
-    """XBRL Filings scraper interface"""
+    """XBRL Filings scraper interface."""
     st.markdown("### XBRL Filings (EU/UK) Configuration")
 
     st.success("✅ No API key required (FREE)")
@@ -505,7 +503,7 @@ def show_xbrl_filings_scraper():
 
 
 def run_xbrl_filings_scraper(country: str, days_back: int, max_results: int, save_to_db: bool):
-    """Execute XBRL Filings scraper"""
+    """Execute XBRL Filings scraper."""
     try:
         from mcli.workflow.politician_trading.scrapers_corporate_registry import XBRLFilingsScraper
 
@@ -531,7 +529,7 @@ def run_xbrl_filings_scraper(country: str, days_back: int, max_results: int, sav
             st.markdown("### 📊 Scraping Results")
 
             if not filings:
-                st.warning(f"⚠️ No filings found for the given criteria")
+                st.warning("⚠️ No filings found for the given criteria")
                 return
 
             st.metric("Filings Found", len(filings))
@@ -562,7 +560,7 @@ def run_xbrl_filings_scraper(country: str, days_back: int, max_results: int, sav
 
 
 def show_xbrl_us_scraper():
-    """XBRL US scraper interface"""
+    """XBRL US scraper interface."""
     st.markdown("### XBRL US Configuration")
 
     api_key = os.getenv("XBRL_US_API_KEY") or st.secrets.get("XBRL_US_API_KEY", "")
@@ -600,7 +598,7 @@ def show_xbrl_us_scraper():
 
 
 def run_xbrl_us_scraper(query: str, max_results: int, save_to_db: bool):
-    """Execute XBRL US scraper"""
+    """Execute XBRL US scraper."""
     try:
         from mcli.workflow.politician_trading.scrapers_corporate_registry import XBRLUSScraper
 
@@ -653,7 +651,7 @@ def run_xbrl_us_scraper(query: str, max_results: int, save_to_db: bool):
 
 
 def show_senate_watcher_scraper():
-    """Senate Stock Watcher scraper interface"""
+    """Senate Stock Watcher scraper interface."""
     st.markdown("### Senate Stock Watcher (GitHub) Configuration")
 
     st.success("✅ No API key required (FREE)")
@@ -676,7 +674,7 @@ def show_senate_watcher_scraper():
 
 
 def run_senate_watcher_scraper(recent_only: bool, days_back: int, save_to_db: bool):
-    """Execute Senate Stock Watcher scraper"""
+    """Execute Senate Stock Watcher scraper."""
     try:
         from mcli.workflow.politician_trading.scrapers_free_sources import FreeDataFetcher
 
@@ -744,25 +742,25 @@ def run_senate_watcher_scraper(recent_only: bool, days_back: int, save_to_db: bo
 
 
 def save_corporate_data_to_db(companies, officers, psc, source):
-    """Save corporate data to Supabase"""
+    """Save corporate data to Supabase."""
     st.info("⚠️ Database saving not yet implemented. Data displayed above.")
     # TODO: Implement Supabase upsert logic
 
 
 def save_financial_publications_to_db(publications, source):
-    """Save financial publications to Supabase"""
+    """Save financial publications to Supabase."""
     st.info("⚠️ Database saving not yet implemented. Data displayed above.")
     # TODO: Implement Supabase upsert logic
 
 
 def save_politician_trading_to_db(politicians, disclosures):
-    """Save politician trading data to Supabase"""
+    """Save politician trading data to Supabase."""
     st.info("⚠️ Using existing seed_database.py logic for this source")
     # TODO: Call seed_database.py functions
 
 
 def show_scraper_logs():
-    """Display scraper logs"""
+    """Display scraper logs."""
     st.subheader("📊 Scraper Logs")
 
     st.markdown(
@@ -861,7 +859,7 @@ def show_scraper_logs():
 
 
 def show_system_logs():
-    """Display system logs"""
+    """Display system logs."""
     st.subheader("📝 System Logs")
 
     st.markdown(
@@ -942,7 +940,7 @@ def show_system_logs():
 
 
 def show_job_history():
-    """Display job history and statistics"""
+    """Display job history and statistics."""
     st.subheader("📈 Job History & Statistics")
 
     st.markdown(

@@ -2,7 +2,6 @@
 REPL (Read-Eval-Print Loop) for LSH secrets management.
 """
 
-import os
 from pathlib import Path
 from typing import List
 
@@ -13,12 +12,12 @@ from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 
 from mcli.lib.logger.logger import get_logger
-
-logger = get_logger(__name__)
 from mcli.lib.ui.styling import console, error, info, success, warning
 
 from .manager import SecretsManager
 from .store import SecretsStore
+
+logger = get_logger(__name__)
 
 
 class SecretsREPL:

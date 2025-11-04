@@ -1,4 +1,4 @@
-"""Reusable metric display components"""
+"""Reusable metric display components."""
 
 from typing import Optional, Union
 
@@ -13,7 +13,7 @@ def display_metric_card(
     help_text: Optional[str] = None,
     icon: Optional[str] = None,
 ):
-    """Display a metric card with optional delta and icon"""
+    """Display a metric card with optional delta and icon."""
 
     if icon:
         label = f"{icon} {label}"
@@ -22,7 +22,7 @@ def display_metric_card(
 
 
 def display_status_badge(status: str, size: str = "medium") -> str:
-    """Return a colored status badge"""
+    """Return a colored status badge."""
 
     status_colors = {
         "completed": "🟢",
@@ -48,7 +48,7 @@ def display_status_badge(status: str, size: str = "medium") -> str:
 
 
 def display_kpi_row(metrics: dict, columns: Optional[int] = None):
-    """Display a row of KPIs in columns"""
+    """Display a row of KPIs in columns."""
 
     if columns is None:
         columns = len(metrics)
@@ -71,7 +71,7 @@ def display_kpi_row(metrics: dict, columns: Optional[int] = None):
 
 
 def display_progress_bar(label: str, progress: float, show_percentage: bool = True):
-    """Display a progress bar with label"""
+    """Display a progress bar with label."""
 
     st.text(label)
     st.progress(min(1.0, max(0.0, progress)))
@@ -81,7 +81,7 @@ def display_progress_bar(label: str, progress: float, show_percentage: bool = Tr
 
 
 def display_health_indicator(component: str, is_healthy: bool, details: Optional[str] = None):
-    """Display a health status indicator"""
+    """Display a health status indicator."""
 
     if is_healthy:
         st.success(f"✅ {component}: Healthy" + (f" ({details})" if details else ""))
@@ -90,7 +90,7 @@ def display_health_indicator(component: str, is_healthy: bool, details: Optional
 
 
 def display_alert(message: str, alert_type: str = "info", icon: Optional[str] = None):
-    """Display an alert message"""
+    """Display an alert message."""
 
     if icon:
         message = f"{icon} {message}"

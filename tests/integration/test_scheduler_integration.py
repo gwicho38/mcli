@@ -3,13 +3,9 @@ Integration tests for mcli.workflow.scheduler.scheduler module
 """
 
 import tempfile
-import threading
 import time
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import MagicMock, call, patch
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 
 class TestJobExecutor:

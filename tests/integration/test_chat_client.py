@@ -2,9 +2,7 @@
 Unit tests for mcli.chat.chat module - ChatClient functionality
 """
 
-import json
-from unittest import TestCase
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -75,7 +73,7 @@ class TestChatClient:
         }
 
         with patch("mcli.chat.chat.console") as mock_console:
-            result = self.client.generate_llm_response("test query")
+            self.client.generate_llm_response("test query")
 
             # Verify ollama was called correctly
             mock_ollama_generate.assert_called_once()

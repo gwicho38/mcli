@@ -5,14 +5,12 @@ Provides integration with LSH daemon API server for data pipeline processing
 
 import asyncio
 import json
-import logging
 import os
 import time
 from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urljoin
 
 import aiohttp
-import aiomqtt
 from aiohttp_sse_client import client as sse_client
 
 from mcli.lib.logger.logger import get_logger
@@ -21,7 +19,7 @@ logger = get_logger(__name__)
 
 
 class LSHClient:
-    """Client for connecting to LSH daemon API server"""
+    """Client for connecting to LSH daemon API server."""
 
     def __init__(
         self,
@@ -39,30 +37,30 @@ class LSHClient:
             logger.warning("LSH_API_KEY not set - authentication may fail")
 
     async def __aenter__(self):
-        """Async context manager entry"""
+        """Async context manager entry."""
         await self.connect()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit"""
+        """Async context manager exit."""
         await self.disconnect()
 
     async def connect(self):
-        """Initialize aiohttp session"""
+        """Initialize aiohttp session."""
         if not self.session:
             connector = aiohttp.TCPConnector(limit=10)
             self.session = aiohttp.ClientSession(connector=connector, timeout=self.timeout)
             logger.info(f"Connected to LSH API at {self.base_url}")
 
     async def disconnect(self):
-        """Close aiohttp session"""
+        """Close aiohttp session."""
         if self.session:
             await self.session.close()
             self.session = None
             logger.info("Disconnected from LSH API")
 
     def _get_headers(self) -> Dict[str, str]:
-        """Get HTTP headers with authentication"""
+        """Get HTTP headers with authentication."""
         headers = {"Content-Type": "application/json"}
         if self.api_key:
             headers["X-API-Key"] = self.api_key
@@ -71,7 +69,7 @@ class LSHClient:
     async def _request(
         self, method: str, endpoint: str, data: Optional[Dict] = None
     ) -> Dict[str, Any]:
-        """Make HTTP request to LSH API"""
+        """Make HTTP request to LSH API."""
         if not self.session:
             await self.connect()
 
@@ -92,11 +90,11 @@ class LSHClient:
 
     # Job Management
     async def get_status(self) -> Dict[str, Any]:
-        """Get LSH daemon status"""
+        """Get LSH daemon status."""
         return await self._request("GET", "/api/status")
 
     async def list_jobs(self, filter_params: Optional[Dict] = None) -> List[Dict]:
-        """List all jobs from LSH daemon"""
+        """List all jobs from LSH daemon."""
         endpoint = "/api/jobs"
         if filter_params:
             # Convert filter to query params
@@ -104,60 +102,60 @@ class LSHClient:
         return await self._request("GET", endpoint)
 
     async def get_job(self, job_id: str) -> Dict[str, Any]:
-        """Get specific job details"""
+        """Get specific job details."""
         return await self._request("GET", f"/api/jobs/{job_id}")
 
     async def create_job(self, job_spec: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new job in LSH daemon"""
+        """Create a new job in LSH daemon."""
         return await self._request("POST", "/api/jobs", job_spec)
 
     async def trigger_job(self, job_id: str) -> Dict[str, Any]:
-        """Trigger job execution"""
+        """Trigger job execution."""
         return await self._request("POST", f"/api/jobs/{job_id}/trigger")
 
     async def start_job(self, job_id: str) -> Dict[str, Any]:
-        """Start a job"""
+        """Start a job."""
         return await self._request("POST", f"/api/jobs/{job_id}/start")
 
     async def stop_job(self, job_id: str, signal: str = "SIGTERM") -> Dict[str, Any]:
-        """Stop a job"""
+        """Stop a job."""
         return await self._request("POST", f"/api/jobs/{job_id}/stop", {"signal": signal})
 
     async def remove_job(self, job_id: str, force: bool = False) -> None:
-        """Remove a job"""
+        """Remove a job."""
         params = {"force": str(force).lower()}
         endpoint = f"/api/jobs/{job_id}?" + "&".join(f"{k}={v}" for k, v in params.items())
         await self._request("DELETE", endpoint)
 
     async def bulk_create_jobs(self, jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Create multiple jobs"""
+        """Create multiple jobs."""
         return await self._request("POST", "/api/jobs/bulk", {"jobs": jobs})
 
     # Data Export
     async def export_jobs(self, format: str = "json") -> str:
-        """Export job data"""
+        """Export job data."""
         endpoint = f"/api/export/jobs?format={format}"
         return await self._request("GET", endpoint)
 
     # Webhook Management
     async def list_webhooks(self) -> Dict[str, Any]:
-        """List configured webhooks"""
+        """List configured webhooks."""
         return await self._request("GET", "/api/webhooks")
 
     async def add_webhook(self, endpoint_url: str) -> Dict[str, Any]:
-        """Add webhook endpoint"""
+        """Add webhook endpoint."""
         return await self._request("POST", "/api/webhooks", {"endpoint": endpoint_url})
 
     # Event Handling
     def on(self, event_type: str, handler: Callable):
-        """Register event handler"""
+        """Register event handler."""
         if event_type not in self._event_handlers:
             self._event_handlers[event_type] = []
         self._event_handlers[event_type].append(handler)
         logger.info(f"Registered handler for event: {event_type}")
 
     async def _emit_event(self, event_type: str, data: Any):
-        """Emit event to registered handlers"""
+        """Emit event to registered handlers."""
         if event_type in self._event_handlers:
             for handler in self._event_handlers[event_type]:
                 try:
@@ -169,7 +167,7 @@ class LSHClient:
                     logger.error(f"Error in event handler for {event_type}: {e}")
 
     async def stream_events(self):
-        """Stream events from LSH API using Server-Sent Events"""
+        """Stream events from LSH API using Server-Sent Events."""
         if not self.session:
             await self.connect()
 
@@ -207,13 +205,13 @@ class LSHClient:
     async def trigger_supabase_sync(
         self, table: str, operation: str, data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Trigger Supabase data sync notification"""
+        """Trigger Supabase data sync notification."""
         payload = {"table": table, "operation": operation, "data": data}
         return await self._request("POST", "/api/supabase/sync", payload)
 
     # Health Check
     async def health_check(self) -> bool:
-        """Check if LSH API is healthy"""
+        """Check if LSH API is healthy."""
         try:
             if not self.session:
                 await self.connect()
@@ -227,7 +225,7 @@ class LSHClient:
 
 
 class LSHEventProcessor:
-    """Process events from LSH daemon for data pipeline integration"""
+    """Process events from LSH daemon for data pipeline integration."""
 
     def __init__(self, lsh_client: LSHClient):
         self.client = lsh_client
@@ -235,7 +233,7 @@ class LSHEventProcessor:
         self._setup_event_handlers()
 
     def _setup_event_handlers(self):
-        """Setup default event handlers"""
+        """Setup default event handlers."""
         self.client.on("job:completed", self._handle_job_completed)
         self.client.on("job:failed", self._handle_job_failed)
         self.client.on("job:started", self._handle_job_started)
@@ -243,11 +241,11 @@ class LSHEventProcessor:
         self.client.on("connected", self._handle_connected)
 
     async def _handle_connected(self, data: Dict[str, Any]):
-        """Handle connection established event"""
+        """Handle connection established event."""
         self.logger.info("Connected to LSH event stream")
 
     async def _handle_job_started(self, data: Dict[str, Any]):
-        """Handle job started event"""
+        """Handle job started event."""
         job_data = data.get("data", {})
         job_id = job_data.get("id", "unknown")
         job_name = job_data.get("name", "unknown")
@@ -266,7 +264,7 @@ class LSHEventProcessor:
         )
 
     async def _handle_job_completed(self, data: Dict[str, Any]):
-        """Handle job completion event"""
+        """Handle job completion event."""
         job_data = data.get("data", {})
         job_id = job_data.get("id", "unknown")
         job_name = job_data.get("name", "unknown")
@@ -299,7 +297,7 @@ class LSHEventProcessor:
         )
 
     async def _handle_job_failed(self, data: Dict[str, Any]):
-        """Handle job failure event"""
+        """Handle job failure event."""
         job_data = data.get("data", {})
         job_id = job_data.get("id", "unknown")
         job_name = job_data.get("name", "unknown")
@@ -320,7 +318,7 @@ class LSHEventProcessor:
         )
 
     async def _handle_supabase_sync(self, data: Dict[str, Any]):
-        """Handle Supabase data sync event"""
+        """Handle Supabase data sync event."""
         table = data.get("table", "unknown")
         operation = data.get("operation", "unknown")
         sync_data = data.get("data", {})
@@ -343,7 +341,7 @@ class LSHEventProcessor:
         )
 
     async def _process_trading_data(self, job_data: Dict, stdout: str):
-        """Process politician trading data from job output"""
+        """Process politician trading data from job output."""
         try:
             # Parse trading data from stdout
             if stdout.strip():
@@ -374,7 +372,7 @@ class LSHEventProcessor:
             self.logger.error(f"Error processing trading data: {e}")
 
     async def _process_supabase_job(self, job_data: Dict):
-        """Process Supabase synchronization job"""
+        """Process Supabase synchronization job."""
         try:
             # Check for database sync metadata
             sync_info = job_data.get("databaseSync", {})
@@ -391,7 +389,7 @@ class LSHEventProcessor:
             self.logger.error(f"Error processing Supabase job: {e}")
 
     async def _process_politician_data(self, table: str, operation: str, data: Dict):
-        """Process politician-related data changes"""
+        """Process politician-related data changes."""
         try:
             self.logger.info(f"Processing politician data: {operation} on {table}")
 
@@ -414,7 +412,7 @@ class LSHEventProcessor:
             self.logger.error(f"Error processing politician data: {e}")
 
     async def _transform_politician_data(self, table: str, operation: str, data: Dict) -> Dict:
-        """Transform politician data based on business rules"""
+        """Transform politician data based on business rules."""
         # Apply transformations here
         transformed = data.copy()
 
@@ -431,7 +429,7 @@ class LSHEventProcessor:
         return transformed
 
     def _categorize_amount(self, amount: float) -> str:
-        """Categorize transaction amounts"""
+        """Categorize transaction amounts."""
         if amount < 1000:
             return "small"
         elif amount < 50000:
@@ -442,11 +440,11 @@ class LSHEventProcessor:
             return "very_large"
 
     async def _emit_mcli_event(self, event_type: str, data: Dict[str, Any]):
-        """Emit mcli-specific events (can be extended to use message queue)"""
+        """Emit mcli-specific events (can be extended to use message queue)."""
         self.logger.debug(f"Emitting mcli event: {event_type}")
         # For now, just log - can be extended to use Redis, RabbitMQ, etc.
 
     async def start_processing(self):
-        """Start processing LSH events"""
+        """Start processing LSH events."""
         self.logger.info("Starting LSH event processing...")
         await self.client.stream_events()

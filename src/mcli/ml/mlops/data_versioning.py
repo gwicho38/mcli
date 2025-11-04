@@ -1,9 +1,8 @@
-"""DVC integration for data versioning and pipeline management"""
+"""DVC integration for data versioning and pipeline management."""
 
 import hashlib
 import json
 import logging
-import os
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class DVCConfig:
-    """DVC configuration"""
+    """DVC configuration."""
 
     project_root: Path = Path(".")
     remote_storage: str = "s3://my-bucket/dvc-storage"  # or local path
@@ -28,7 +27,7 @@ class DVCConfig:
 
 
 class DataVersionControl:
-    """DVC wrapper for data versioning"""
+    """DVC wrapper for data versioning."""
 
     def __init__(self, config: DVCConfig):
         self.config = config
@@ -36,7 +35,7 @@ class DataVersionControl:
         self._ensure_dvc_initialized()
 
     def _ensure_dvc_initialized(self):
-        """Ensure DVC is initialized in project"""
+        """Ensure DVC is initialized in project."""
         dvc_dir = self.project_root / ".dvc"
 
         if not dvc_dir.exists():
@@ -48,7 +47,7 @@ class DataVersionControl:
                 self._run_command(f"dvc remote add -d storage {self.config.remote_storage}")
 
     def _run_command(self, command: str) -> str:
-        """Run DVC command"""
+        """Run DVC command."""
         try:
             result = subprocess.run(
                 command.split(), capture_output=True, text=True, cwd=self.project_root
@@ -67,7 +66,7 @@ class DataVersionControl:
             raise
 
     def add_data(self, data_path: Union[str, Path], description: Optional[str] = None) -> str:
-        """Add data file or directory to DVC tracking"""
+        """Add data file or directory to DVC tracking."""
         data_path = Path(data_path)
 
         if not data_path.exists():
@@ -91,17 +90,17 @@ class DataVersionControl:
         return str(data_path) + ".dvc"
 
     def push_data(self):
-        """Push data to remote storage"""
+        """Push data to remote storage."""
         logger.info("Pushing data to remote...")
         self._run_command("dvc push")
 
     def pull_data(self):
-        """Pull data from remote storage"""
+        """Pull data from remote storage."""
         logger.info("Pulling data from remote...")
         self._run_command("dvc pull")
 
     def checkout(self, version: Optional[str] = None):
-        """Checkout specific data version"""
+        """Checkout specific data version."""
         if version:
             self._run_command(f"git checkout {version}")
 
@@ -109,7 +108,7 @@ class DataVersionControl:
         logger.info(f"Checked out data version: {version or 'latest'}")
 
     def get_data_status(self) -> Dict[str, Any]:
-        """Get status of tracked data"""
+        """Get status of tracked data."""
         status_output = self._run_command("dvc status")
 
         # Parse status
@@ -128,7 +127,7 @@ class DataVersionControl:
     def _generate_metadata(
         self, data_path: Path, description: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Generate metadata for data file"""
+        """Generate metadata for data file."""
         stat = data_path.stat()
 
         metadata = {
@@ -152,13 +151,13 @@ class DataVersionControl:
                 metadata["rows"] = len(df)
                 metadata["columns"] = len(df.columns)
                 metadata["column_names"] = df.columns.tolist()
-            except:
+            except Exception:
                 pass
 
         return metadata
 
     def _calculate_hash(self, file_path: Path) -> str:
-        """Calculate file hash"""
+        """Calculate file hash."""
         if file_path.is_dir():
             return "directory"
 
@@ -169,13 +168,13 @@ class DataVersionControl:
         return hash_md5.hexdigest()
 
     def _commit_changes(self, message: str):
-        """Commit changes to git"""
+        """Commit changes to git."""
         subprocess.run(["git", "add", "-A"], cwd=self.project_root)
         subprocess.run(["git", "commit", "-m", message], cwd=self.project_root)
 
 
 class DVCPipeline:
-    """DVC pipeline management"""
+    """DVC pipeline management."""
 
     def __init__(self, config: DVCConfig):
         self.config = config
@@ -184,7 +183,7 @@ class DVCPipeline:
         self.params_file = config.project_root / "params.yaml"
 
     def create_pipeline(self, stages: List[Dict[str, Any]]):
-        """Create DVC pipeline"""
+        """Create DVC pipeline."""
         pipeline = {"stages": {}}
 
         for stage in stages:
@@ -213,7 +212,7 @@ class DVCPipeline:
         outs: Optional[List[str]] = None,
         metrics: Optional[List[str]] = None,
     ):
-        """Add stage to pipeline"""
+        """Add stage to pipeline."""
         stage_config = {
             "cmd": cmd,
             "deps": deps or [],
@@ -239,7 +238,7 @@ class DVCPipeline:
         logger.info(f"Added stage '{name}' to pipeline")
 
     def run_pipeline(self, stage: Optional[str] = None):
-        """Run DVC pipeline"""
+        """Run DVC pipeline."""
         if stage:
             cmd = f"dvc repro {stage}"
         else:
@@ -249,7 +248,7 @@ class DVCPipeline:
         self.dvc._run_command(cmd)
 
     def get_metrics(self) -> Dict[str, Any]:
-        """Get pipeline metrics"""
+        """Get pipeline metrics."""
         metrics_output = self.dvc._run_command("dvc metrics show")
 
         # Parse metrics (simplified)
@@ -259,13 +258,13 @@ class DVCPipeline:
                 key, value = line.split(":", 1)
                 try:
                     metrics[key.strip()] = float(value.strip())
-                except:
+                except Exception:
                     metrics[key.strip()] = value.strip()
 
         return metrics
 
     def create_ml_pipeline(self):
-        """Create standard ML pipeline"""
+        """Create standard ML pipeline."""
         stages = [
             {
                 "name": "data_preparation",
@@ -314,26 +313,26 @@ class DVCPipeline:
 
 
 class DataRegistry:
-    """Central registry for versioned datasets"""
+    """Central registry for versioned datasets."""
 
     def __init__(self, registry_path: Path = Path("data_registry.json")):
         self.registry_path = registry_path
         self.registry = self._load_registry()
 
     def _load_registry(self) -> Dict[str, Any]:
-        """Load data registry"""
+        """Load data registry."""
         if self.registry_path.exists():
             with open(self.registry_path, "r") as f:
                 return json.load(f)
         return {"datasets": {}}
 
     def _save_registry(self):
-        """Save data registry"""
+        """Save data registry."""
         with open(self.registry_path, "w") as f:
             json.dump(self.registry, f, indent=2)
 
     def register_dataset(self, name: str, path: str, version: str, metadata: Dict[str, Any]):
-        """Register new dataset version"""
+        """Register new dataset version."""
         if name not in self.registry["datasets"]:
             self.registry["datasets"][name] = {"versions": {}}
 
@@ -349,7 +348,7 @@ class DataRegistry:
         logger.info(f"Registered dataset '{name}' version '{version}'")
 
     def get_dataset(self, name: str, version: Optional[str] = None) -> Dict[str, Any]:
-        """Get dataset information"""
+        """Get dataset information."""
         if name not in self.registry["datasets"]:
             raise ValueError(f"Dataset '{name}' not found")
 
@@ -362,11 +361,11 @@ class DataRegistry:
         return dataset["versions"][version]
 
     def list_datasets(self) -> List[str]:
-        """List all registered datasets"""
+        """List all registered datasets."""
         return list(self.registry["datasets"].keys())
 
     def list_versions(self, name: str) -> List[str]:
-        """List all versions of a dataset"""
+        """List all versions of a dataset."""
         if name not in self.registry["datasets"]:
             raise ValueError(f"Dataset '{name}' not found")
 
@@ -374,7 +373,7 @@ class DataRegistry:
 
 
 def create_dvc_config():
-    """Create DVC configuration files"""
+    """Create DVC configuration files."""
 
     # Create .dvc/.gitignore
     dvc_gitignore = """

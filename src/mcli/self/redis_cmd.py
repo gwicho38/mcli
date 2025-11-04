@@ -14,13 +14,12 @@ logger = get_logger(__name__)
 
 @click.group(name="redis")
 def redis_group():
-    """Manage Redis cache service"""
-    pass
+    """Manage Redis cache service."""
 
 
 @redis_group.command(name="start")
 def start_redis():
-    """Start Redis server"""
+    """Start Redis server."""
 
     async def _start():
         service = await get_redis_service()
@@ -51,7 +50,7 @@ def start_redis():
 
 @redis_group.command(name="stop")
 def stop_redis():
-    """Stop Redis server"""
+    """Stop Redis server."""
 
     async def _stop():
         service = await get_redis_service()
@@ -73,7 +72,7 @@ def stop_redis():
 
 @redis_group.command(name="restart")
 def restart_redis():
-    """Restart Redis server"""
+    """Restart Redis server."""
 
     async def _restart():
         service = await get_redis_service()
@@ -83,7 +82,7 @@ def restart_redis():
 
         if success:
             click.echo("✅ Redis server restarted successfully")
-            status = await service.get_status()
+            await service.get_status()
             click.echo(f"   Connection URL: {await service.get_connection_url()}")
         else:
             click.echo("❌ Failed to restart Redis server")
@@ -93,7 +92,7 @@ def restart_redis():
 
 @redis_group.command(name="status")
 def redis_status():
-    """Show Redis server status"""
+    """Show Redis server status."""
 
     async def _status():
         service = await get_redis_service()
@@ -133,7 +132,7 @@ def redis_status():
 
 @redis_group.command(name="test")
 def test_redis():
-    """Test Redis connection and performance"""
+    """Test Redis connection and performance."""
 
     async def _test():
         service = await get_redis_service()
@@ -162,7 +161,7 @@ def test_redis():
 
 @redis_group.command(name="info")
 def redis_info():
-    """Show detailed Redis server information"""
+    """Show detailed Redis server information."""
 
     async def _info():
         service = await get_redis_service()
@@ -235,7 +234,7 @@ def redis_info():
 @redis_group.command(name="logs")
 @click.option("--lines", "-n", default=20, help="Number of log lines to show")
 def redis_logs(lines):
-    """Show Redis server logs"""
+    """Show Redis server logs."""
 
     async def _logs():
         service = await get_redis_service()
@@ -265,5 +264,5 @@ def redis_logs(lines):
 
 # Register with main CLI
 def register_redis_commands(cli):
-    """Register Redis commands with the main CLI"""
+    """Register Redis commands with the main CLI."""
     cli.add_command(redis_group)

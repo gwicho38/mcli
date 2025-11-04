@@ -1,12 +1,12 @@
-"""ML Data Pipeline Integration"""
+"""ML Data Pipeline Integration."""
 
 import asyncio
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class MLDataPipelineConfig:
-    """Configuration for ML data pipeline"""
+    """Configuration for ML data pipeline."""
 
     # Data ingestion
     batch_size: int = 50
@@ -53,7 +53,7 @@ class MLDataPipelineConfig:
 
 
 class MLDataPipeline:
-    """ML-focused data pipeline for politician trading data"""
+    """ML-focused data pipeline for politician trading data."""
 
     def __init__(self, lsh_client: LSHClient, config: Optional[MLDataPipelineConfig] = None):
         self.lsh_client = lsh_client
@@ -77,13 +77,13 @@ class MLDataPipeline:
         self._setup_ml_handlers()
 
     def _setup_ml_handlers(self):
-        """Setup ML-specific event handlers"""
+        """Setup ML-specific event handlers."""
         self.lsh_client.on("trading.data.received", self._handle_trading_data_for_ml)
         self.lsh_client.on("politician.data.updated", self._handle_politician_update)
         self.lsh_client.on("market.data.sync", self._handle_market_data)
 
     async def start(self):
-        """Start the ML data pipeline"""
+        """Start the ML data pipeline."""
         if self._is_running:
             logger.warning("ML pipeline already running")
             return
@@ -109,7 +109,7 @@ class MLDataPipeline:
         asyncio.create_task(self._periodic_processing())
 
     async def stop(self):
-        """Stop the ML data pipeline"""
+        """Stop the ML data pipeline."""
         if not self._is_running:
             return
 
@@ -127,7 +127,7 @@ class MLDataPipeline:
             self.mlops_manager.end_run()
 
     async def _handle_trading_data_for_ml(self, event_data: Dict[str, Any]):
-        """Handle trading data for ML processing"""
+        """Handle trading data for ML processing."""
         records = event_data.get("records", [])
 
         if not records:
@@ -146,7 +146,7 @@ class MLDataPipeline:
             await self._process_accumulated_data()
 
     async def _handle_politician_update(self, event_data: Dict[str, Any]):
-        """Handle politician metadata updates"""
+        """Handle politician metadata updates."""
         politician_data = event_data.get("politician", {})
         logger.info(f"Received politician update: {politician_data.get('name', 'unknown')}")
 
@@ -154,15 +154,15 @@ class MLDataPipeline:
         # For now, just log the update
 
     async def _handle_market_data(self, event_data: Dict[str, Any]):
-        """Handle market data updates"""
-        market_data = event_data.get("market", {})
-        logger.info(f"Received market data update")
+        """Handle market data updates."""
+        event_data.get("market", {})
+        logger.info("Received market data update")
 
         # This could be used to enrich existing records
         # For now, just log the update
 
     async def _periodic_processing(self):
-        """Periodic processing of accumulated data"""
+        """Periodic processing of accumulated data."""
         while self._is_running:
             try:
                 # Wait for timeout period
@@ -180,7 +180,7 @@ class MLDataPipeline:
                 logger.error(f"Error in periodic processing: {e}")
 
     async def _process_accumulated_data(self):
-        """Process accumulated raw data through ML preprocessing"""
+        """Process accumulated raw data through ML preprocessing."""
         if not self.raw_data_buffer:
             return
 
@@ -216,7 +216,7 @@ class MLDataPipeline:
     async def _run_preprocessing(
         self, records: List[Dict[str, Any]]
     ) -> Optional[PreprocessingResults]:
-        """Run the preprocessing pipeline"""
+        """Run the preprocessing pipeline."""
         if not records:
             return None
 
@@ -238,7 +238,7 @@ class MLDataPipeline:
             return None
 
     async def _save_processed_data(self, results: PreprocessingResults):
-        """Save processed data to files"""
+        """Save processed data to files."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Save train/val/test splits
@@ -275,7 +275,7 @@ class MLDataPipeline:
         logger.info(f"Saved processed data to {processed_path}")
 
     async def _log_preprocessing_metrics(self, results: PreprocessingResults):
-        """Log preprocessing metrics to MLOps"""
+        """Log preprocessing metrics to MLOps."""
         try:
             # Log parameters
             params = {
@@ -307,7 +307,7 @@ class MLDataPipeline:
             logger.error(f"Failed to log preprocessing metrics: {e}")
 
     def _should_trigger_retraining(self) -> bool:
-        """Check if we should trigger model retraining"""
+        """Check if we should trigger model retraining."""
         if self._total_records_processed >= self.config.auto_retrain_threshold:
             # Reset counter
             self._total_records_processed = 0
@@ -315,7 +315,7 @@ class MLDataPipeline:
         return False
 
     async def _trigger_model_retraining(self):
-        """Trigger model retraining"""
+        """Trigger model retraining."""
         logger.info("Triggering model retraining due to data threshold")
 
         # This would integrate with the model training pipeline
@@ -330,7 +330,7 @@ class MLDataPipeline:
         )
 
     async def get_processing_stats(self) -> Dict[str, Any]:
-        """Get pipeline processing statistics"""
+        """Get pipeline processing statistics."""
         return {
             "is_running": self._is_running,
             "raw_buffer_size": len(self.raw_data_buffer),
@@ -347,7 +347,7 @@ class MLDataPipeline:
         }
 
     async def force_preprocessing(self) -> bool:
-        """Force preprocessing of current buffer"""
+        """Force preprocessing of current buffer."""
         if not self.raw_data_buffer:
             logger.warning("No data in buffer to process")
             return False
@@ -356,7 +356,7 @@ class MLDataPipeline:
         return True
 
     async def load_historical_data(self, data_path: Path) -> bool:
-        """Load and process historical data"""
+        """Load and process historical data."""
         try:
             if data_path.suffix == ".parquet":
                 df = pd.read_parquet(data_path)

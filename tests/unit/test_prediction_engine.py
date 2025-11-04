@@ -8,7 +8,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 import logging
 from datetime import datetime, timedelta
 
-import numpy as np
 import pandas as pd
 import pytest
 

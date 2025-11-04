@@ -4,7 +4,6 @@ Unit tests for mcli.lib.toml module
 
 import os
 import tempfile
-from pathlib import Path
 
 import pytest
 

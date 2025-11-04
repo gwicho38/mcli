@@ -2,9 +2,7 @@
 Unit tests for PDF compression functionality
 """
 
-import os
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -172,7 +170,6 @@ class TestPDFCompression:
         # Test that appropriate error message is returned
         # when PyMuPDF is not available
         # This is tested through the actual workflow command
-        pass
 
     def test_compress_with_color_pages(self):
         """Test compression preserves specified color pages"""
@@ -244,22 +241,18 @@ class TestPDFCompressionIntegration:
     def test_compress_command_available(self):
         """Test that compress command is available in PDF workflow"""
         # This would test the actual CLI command
-        pass
 
     def test_compress_with_real_pdf(self, tmp_path):
         """Test compression with a real PDF file"""
         # This would require a test PDF file
-        pass
 
     def test_selective_color_preservation(self, tmp_path):
         """Test that specified pages remain in color"""
         # This would verify color preservation in output
-        pass
 
     def test_target_size_iteration(self, tmp_path):
         """Test that target size triggers aggressive compression"""
         # This would test the retry logic
-        pass
 
 
 if __name__ == "__main__":

@@ -2,12 +2,8 @@
 RAG-based Command Search and Self-Referential System for MCLI Chatbot
 """
 
-import asyncio
-import json
-import os
 import re
 import subprocess
-import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple

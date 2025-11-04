@@ -1,27 +1,24 @@
-"""Trading service for managing portfolios and executing trades"""
+"""Trading service for managing portfolios and executing trades."""
 
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional
 from uuid import UUID
 
 import pandas as pd
-from sqlalchemy import and_, desc, func
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from mcli.ml.trading.alpaca_client import AlpacaTradingClient, create_trading_client
 from mcli.ml.trading.models import (
     OrderCreate,
     OrderResponse,
-    OrderSide,
     OrderStatus,
     OrderType,
     Portfolio,
     PortfolioCreate,
     PortfolioPerformanceSnapshot,
-    PortfolioResponse,
-    PortfolioType,
     Position,
     PositionResponse,
     PositionSide,
@@ -36,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class TradingService:
-    """Service for managing trading operations"""
+    """Service for managing trading operations."""
 
     def __init__(self, db_session: Session):
         self.db = db_session
@@ -44,7 +41,7 @@ class TradingService:
     def create_trading_account(
         self, user_id: UUID, account_data: TradingAccountCreate
     ) -> TradingAccount:
-        """Create a new trading account"""
+        """Create a new trading account."""
         try:
             account = TradingAccount(
                 user_id=user_id,
@@ -71,15 +68,15 @@ class TradingService:
             raise
 
     def get_trading_account(self, account_id: UUID) -> Optional[TradingAccount]:
-        """Get trading account by ID"""
+        """Get trading account by ID."""
         return (
             self.db.query(TradingAccount)
-            .filter(TradingAccount.id == account_id, TradingAccount.is_active == True)
+            .filter(TradingAccount.id == account_id, TradingAccount.is_active is True)
             .first()
         )
 
     def create_portfolio(self, account_id: UUID, portfolio_data: PortfolioCreate) -> Portfolio:
-        """Create a new portfolio"""
+        """Create a new portfolio."""
         try:
             portfolio = Portfolio(
                 trading_account_id=account_id,
@@ -103,24 +100,24 @@ class TradingService:
             raise
 
     def get_portfolio(self, portfolio_id: UUID) -> Optional[Portfolio]:
-        """Get portfolio by ID"""
+        """Get portfolio by ID."""
         return (
             self.db.query(Portfolio)
-            .filter(Portfolio.id == portfolio_id, Portfolio.is_active == True)
+            .filter(Portfolio.id == portfolio_id, Portfolio.is_active is True)
             .first()
         )
 
     def get_user_portfolios(self, user_id: UUID) -> List[Portfolio]:
-        """Get all portfolios for a user"""
+        """Get all portfolios for a user."""
         return (
             self.db.query(Portfolio)
             .join(TradingAccount)
-            .filter(TradingAccount.user_id == user_id, Portfolio.is_active == True)
+            .filter(TradingAccount.user_id == user_id, Portfolio.is_active is True)
             .all()
         )
 
     def create_alpaca_client(self, account: TradingAccount) -> AlpacaTradingClient:
-        """Create Alpaca client for trading account"""
+        """Create Alpaca client for trading account."""
         if not account.alpaca_api_key or not account.alpaca_secret_key:
             raise ValueError("Alpaca credentials not configured for this account")
 
@@ -131,7 +128,7 @@ class TradingService:
         )
 
     def sync_portfolio_with_alpaca(self, portfolio: Portfolio) -> bool:
-        """Sync portfolio data with Alpaca"""
+        """Sync portfolio data with Alpaca."""
         try:
             account = self.get_trading_account(portfolio.trading_account_id)
             if not account:
@@ -168,7 +165,7 @@ class TradingService:
             return False
 
     def _sync_positions(self, portfolio: Portfolio, alpaca_positions: List):
-        """Sync positions with Alpaca data"""
+        """Sync positions with Alpaca data."""
         # Clear existing positions
         self.db.query(Position).filter(Position.portfolio_id == portfolio.id).delete()
 
@@ -191,7 +188,7 @@ class TradingService:
             self.db.add(position)
 
     def _create_performance_snapshot(self, portfolio: Portfolio):
-        """Create daily performance snapshot"""
+        """Create daily performance snapshot."""
         snapshot = PortfolioPerformanceSnapshot(
             portfolio_id=portfolio.id,
             snapshot_date=datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0),
@@ -209,7 +206,7 @@ class TradingService:
         self.db.add(snapshot)
 
     def _get_positions_data(self, portfolio_id: UUID) -> Dict:
-        """Get positions data for snapshot"""
+        """Get positions data for snapshot."""
         positions = self.db.query(Position).filter(Position.portfolio_id == portfolio_id).all()
         return {
             pos.symbol: {
@@ -227,7 +224,7 @@ class TradingService:
     def place_order(
         self, portfolio_id: UUID, order_data: OrderCreate, check_risk: bool = True
     ) -> TradingOrder:
-        """Place a trading order"""
+        """Place a trading order."""
         try:
             portfolio = self.get_portfolio(portfolio_id)
             if not portfolio:
@@ -311,7 +308,7 @@ class TradingService:
             raise
 
     def get_portfolio_positions(self, portfolio_id: UUID) -> List[PositionResponse]:
-        """Get all positions for a portfolio"""
+        """Get all positions for a portfolio."""
         positions = self.db.query(Position).filter(Position.portfolio_id == portfolio_id).all()
         return [
             PositionResponse(
@@ -337,7 +334,7 @@ class TradingService:
     def get_portfolio_orders(
         self, portfolio_id: UUID, status: Optional[OrderStatus] = None
     ) -> List[OrderResponse]:
-        """Get orders for a portfolio"""
+        """Get orders for a portfolio."""
         query = self.db.query(TradingOrder).filter(TradingOrder.portfolio_id == portfolio_id)
         if status:
             query = query.filter(TradingOrder.status == status)
@@ -370,7 +367,7 @@ class TradingService:
         ]
 
     def get_portfolio_performance(self, portfolio_id: UUID, days: int = 30) -> pd.DataFrame:
-        """Get portfolio performance history"""
+        """Get portfolio performance history."""
         end_date = datetime.utcnow()
         start_date = end_date - timedelta(days=days)
 
@@ -417,7 +414,7 @@ class TradingService:
         position_size: Optional[float] = None,
         expires_hours: int = 24,
     ) -> TradingSignal:
-        """Create a trading signal"""
+        """Create a trading signal."""
         try:
             expires_at = (
                 datetime.utcnow() + timedelta(hours=expires_hours) if expires_hours > 0 else None
@@ -450,12 +447,12 @@ class TradingService:
             raise
 
     def get_active_signals(self, portfolio_id: UUID) -> List[TradingSignalResponse]:
-        """Get active trading signals for a portfolio"""
+        """Get active trading signals for a portfolio."""
         signals = (
             self.db.query(TradingSignal)
             .filter(
                 TradingSignal.portfolio_id == portfolio_id,
-                TradingSignal.is_active == True,
+                TradingSignal.is_active is True,
                 TradingSignal.expires_at > datetime.utcnow(),
             )
             .order_by(desc(TradingSignal.created_at))
@@ -483,7 +480,7 @@ class TradingService:
         ]
 
     def calculate_portfolio_metrics(self, portfolio_id: UUID) -> Dict:
-        """Calculate portfolio performance metrics"""
+        """Calculate portfolio performance metrics."""
         portfolio = self.get_portfolio(portfolio_id)
         if not portfolio:
             return {}

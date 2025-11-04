@@ -25,7 +25,6 @@ def import_public_module(module_name: str):
 @click.group(name="lib", help="Library utilities and secrets management")
 def lib():
     """Library utilities and management commands."""
-    pass
 
 
 # Add secrets as a subcommand

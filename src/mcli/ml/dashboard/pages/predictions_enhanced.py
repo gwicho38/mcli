@@ -1,35 +1,27 @@
-"""Enhanced Predictions Dashboard with Interactive Features - REAL DATA"""
+"""Enhanced Predictions Dashboard with Interactive Features - REAL DATA."""
 
-import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from plotly.subplots import make_subplots
 
 # Import components
 try:
-    from ..components.charts import create_timeline_chart, render_chart
-    from ..components.metrics import display_kpi_row, display_status_badge
-    from ..components.tables import display_filterable_dataframe, export_dataframe
+    from ..components.charts import render_chart
+    from ..components.metrics import display_kpi_row
+    from ..components.tables import export_dataframe
 except ImportError:
     # Fallback for when imported outside package context
-    from components.charts import create_timeline_chart, render_chart
-    from components.metrics import display_kpi_row, display_status_badge
-    from components.tables import display_filterable_dataframe, export_dataframe
+    from components.charts import render_chart
+    from components.metrics import display_kpi_row
+    from components.tables import export_dataframe
 
 # Import real data functions from utils
 try:
-    from ..utils import (
-        get_disclosures_data,
-        get_politician_names,
-        get_politician_trading_history,
-        get_supabase_client,
-    )
+    from ..utils import get_disclosures_data, get_politician_names, get_politician_trading_history
 
     HAS_REAL_DATA = True
 except ImportError:
@@ -39,17 +31,17 @@ except ImportError:
 
 # Fallback functions for missing imports
 def run_ml_pipeline(df_disclosures):
-    """Fallback ML pipeline function"""
+    """Fallback ML pipeline function."""
     return df_disclosures
 
 
 def engineer_features(df):
-    """Fallback feature engineering function"""
+    """Fallback feature engineering function."""
     return df
 
 
 def generate_production_prediction(df, features, trading_history):
-    """Fallback prediction function"""
+    """Fallback prediction function."""
     import random
 
     return {
@@ -60,7 +52,7 @@ def generate_production_prediction(df, features, trading_history):
 
 
 def generate_mock_predictions(num_predictions: int = 50) -> pd.DataFrame:
-    """Generate mock prediction data for demonstration"""
+    """Generate mock prediction data for demonstration."""
     import random
 
     tickers = [
@@ -98,7 +90,7 @@ def generate_mock_predictions(num_predictions: int = 50) -> pd.DataFrame:
     sectors = ["Technology", "Finance", "Healthcare", "Energy", "Consumer", "Industrial"]
 
     predictions = []
-    for i in range(num_predictions):
+    for _i in range(num_predictions):
         ticker = random.choice(tickers)
         predicted_return = random.uniform(-0.15, 0.35)
         confidence = random.uniform(0.5, 0.95)
@@ -136,7 +128,7 @@ def generate_mock_predictions(num_predictions: int = 50) -> pd.DataFrame:
 
 
 def generate_mock_historical_performance() -> pd.DataFrame:
-    """Generate mock historical prediction performance"""
+    """Generate mock historical prediction performance."""
     dates = pd.date_range(end=datetime.now(), periods=90, freq="D")
 
     performance = []
@@ -158,7 +150,7 @@ def generate_mock_historical_performance() -> pd.DataFrame:
 
 
 def get_real_predictions() -> pd.DataFrame:
-    """Get real predictions from ML pipeline - REQUIRES SUPABASE CONNECTION"""
+    """Get real predictions from ML pipeline - REQUIRES SUPABASE CONNECTION."""
     if not HAS_REAL_DATA:
         st.error("❌ **CONFIGURATION ERROR**: Real data functions not available!")
         st.error(
@@ -238,7 +230,7 @@ SUPABASE_SERVICE_ROLE_KEY = "your_service_role_key"
 
 
 def show_predictions_enhanced():
-    """Enhanced predictions dashboard - USING REAL DATA"""
+    """Enhanced predictions dashboard - USING REAL DATA."""
 
     st.title("🔮 Live Predictions & Recommendations")
     st.markdown("AI-powered stock predictions based on politician trading patterns")
@@ -282,7 +274,7 @@ def show_predictions_enhanced():
 
 
 def show_active_predictions(predictions_df: pd.DataFrame):
-    """Show active predictions with filtering"""
+    """Show active predictions with filtering."""
 
     st.subheader("📊 Current Predictions")
 
@@ -454,7 +446,7 @@ def show_active_predictions(predictions_df: pd.DataFrame):
 
 
 def show_prediction_generator():
-    """Interactive prediction generator - USES REAL DATA"""
+    """Interactive prediction generator - USES REAL DATA."""
 
     st.subheader("🎯 Generate Custom Prediction")
     st.markdown("Get AI-powered predictions for specific stock/politician combinations")
@@ -462,9 +454,9 @@ def show_prediction_generator():
     # Get REAL politician names from database
     politician_list = ["Nancy Pelosi", "Paul Pelosi", "Dan Crenshaw"]  # Fallback
     if HAS_REAL_DATA:
-        try:
+        try:  # noqa: SIM105
             politician_list = get_politician_names()
-        except:
+        except Exception:
             pass
 
     col1, col2 = st.columns(2)
@@ -493,7 +485,7 @@ def show_prediction_generator():
             "Risk Tolerance", options=["Low", "Medium", "High"], value="Medium"
         )
     with col3:
-        use_historical = st.checkbox("Use Historical Patterns", value=True)
+        _use_historical = st.checkbox("Use Historical Patterns", value=True)  # noqa: F841
 
     if st.button("🔮 Generate Prediction", type="primary", width="stretch"):
         with st.spinner("Analyzing trading patterns and generating prediction..."):
@@ -688,7 +680,7 @@ def show_prediction_generator():
 
 
 def show_performance_tracker():
-    """Show prediction performance over time - REQUIRES REAL ML PREDICTION HISTORY"""
+    """Show prediction performance over time - REQUIRES REAL ML PREDICTION HISTORY."""
 
     st.subheader("📈 Prediction Performance Tracker")
     st.markdown("Track the accuracy and ROI of our ML predictions over time")
@@ -815,7 +807,7 @@ def show_performance_tracker():
 
 
 def show_politician_analysis(predictions_df: pd.DataFrame):
-    """Analyze predictions by politician"""
+    """Analyze predictions by politician."""
 
     st.subheader("👥 Politician Trading Analysis")
     st.markdown("Analyze prediction patterns by politician trading activity")
@@ -921,7 +913,7 @@ def show_politician_analysis(predictions_df: pd.DataFrame):
 
 
 def show_portfolio_builder(predictions_df: pd.DataFrame):
-    """Build recommended portfolios"""
+    """Build recommended portfolios."""
 
     st.subheader("💼 AI-Powered Portfolio Builder")
     st.markdown("Generate optimized portfolios based on ML predictions")

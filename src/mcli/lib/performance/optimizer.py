@@ -2,21 +2,19 @@
 Main performance optimizer that applies all available optimizations
 """
 
-import asyncio
-import importlib.util
 import os
 import sys
 from typing import Any, Dict, Optional
 
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.performance.rust_bridge import check_rust_extensions, print_performance_summary
+from mcli.lib.performance.rust_bridge import check_rust_extensions
 from mcli.lib.performance.uvloop_config import get_event_loop_info, install_uvloop
 
 logger = get_logger(__name__)
 
 
 class PerformanceOptimizer:
-    """Centralized performance optimizer for MCLI"""
+    """Centralized performance optimizer for MCLI."""
 
     def __init__(self):
         self.optimizations_applied = {}
@@ -25,8 +23,8 @@ class PerformanceOptimizer:
         self.uvloop_installed = False
 
     def apply_all_optimizations(self) -> Dict[str, Any]:
-        """Apply all available performance optimizations"""
-        results = {}
+        """Apply all available performance optimizations."""
+        results = {}  # noqa: SIM904
 
         # 1. Install UVLoop for better async performance
         results["uvloop"] = self._optimize_event_loop()
@@ -47,7 +45,7 @@ class PerformanceOptimizer:
         return results
 
     def _optimize_event_loop(self) -> Dict[str, Any]:
-        """Optimize asyncio event loop with UVLoop"""
+        """Optimize asyncio event loop with UVLoop."""
         try:
             self.uvloop_installed = install_uvloop()
 
@@ -64,7 +62,7 @@ class PerformanceOptimizer:
             return {"success": False, "error": str(e)}
 
     def _initialize_rust_extensions(self) -> Dict[str, Any]:
-        """Initialize Rust extensions for maximum performance"""
+        """Initialize Rust extensions for maximum performance."""
         try:
             self.rust_status = check_rust_extensions()
 
@@ -90,7 +88,7 @@ class PerformanceOptimizer:
                         import mcli_rust
 
                         # Test file watcher
-                        watcher = mcli_rust.FileWatcher()
+                        mcli_rust.FileWatcher()
                         extensions_loaded["file_watcher"] = True
                     except Exception as e:
                         logger.warning(f"File watcher extension test failed: {e}")
@@ -101,7 +99,7 @@ class PerformanceOptimizer:
                         import mcli_rust
 
                         # Test command matcher
-                        matcher = mcli_rust.CommandMatcher()
+                        mcli_rust.CommandMatcher()
                         extensions_loaded["command_matcher"] = True
                     except Exception as e:
                         logger.warning(f"Command matcher extension test failed: {e}")
@@ -112,7 +110,7 @@ class PerformanceOptimizer:
                         import mcli_rust
 
                         # Test process manager
-                        manager = mcli_rust.ProcessManager()
+                        mcli_rust.ProcessManager()
                         extensions_loaded["process_manager"] = True
                     except Exception as e:
                         logger.warning(f"Process manager extension test failed: {e}")
@@ -135,7 +133,7 @@ class PerformanceOptimizer:
             return {"success": False, "error": str(e)}
 
     def _check_redis_availability(self) -> Dict[str, Any]:
-        """Check Redis availability for caching"""
+        """Check Redis availability for caching."""
         try:
             import redis
 
@@ -164,7 +162,7 @@ class PerformanceOptimizer:
             }
 
     def _optimize_python_settings(self) -> Dict[str, Any]:
-        """Apply Python-specific optimizations"""
+        """Apply Python-specific optimizations."""
         optimizations = {}
 
         # 1. Disable garbage collection during critical operations
@@ -174,7 +172,7 @@ class PerformanceOptimizer:
         optimizations["gc_tuned"] = True
 
         # 2. Optimize import system
-        if hasattr(sys, "dont_write_bytecode"):
+        if hasattr(sys, "dont_write_bytecode"):  # noqa: SIM102
             # In production, enable bytecode for faster imports
             if not os.environ.get("MCLI_DEBUG"):
                 sys.dont_write_bytecode = False
@@ -190,7 +188,7 @@ class PerformanceOptimizer:
         try:
             import multiprocessing as mp
 
-            if hasattr(mp, "set_start_method"):
+            if hasattr(mp, "set_start_method"):  # noqa: SIM102
                 if sys.platform != "win32":
                     mp.set_start_method("fork", force=True)
                     optimizations["multiprocessing_optimized"] = True
@@ -205,7 +203,7 @@ class PerformanceOptimizer:
         }
 
     def _apply_environment_optimizations(self) -> Dict[str, Any]:
-        """Apply environment-specific optimizations"""
+        """Apply environment-specific optimizations."""
         optimizations = {}
 
         # 1. Production vs Development optimizations
@@ -258,7 +256,7 @@ class PerformanceOptimizer:
                 # Enable aggressive caching
                 os.environ["MCLI_AGGRESSIVE_CACHE"] = "1"
                 optimizations["aggressive_caching"] = True
-        except:
+        except Exception:
             pass
 
         return {
@@ -268,7 +266,7 @@ class PerformanceOptimizer:
         }
 
     def get_optimization_summary(self) -> Dict[str, Any]:
-        """Get a summary of all applied optimizations"""
+        """Get a summary of all applied optimizations."""
         if not self.optimizations_applied:
             self.apply_all_optimizations()
 
@@ -284,7 +282,7 @@ class PerformanceOptimizer:
         return summary
 
     def _estimate_performance_gain(self) -> str:
-        """Estimate overall performance gain"""
+        """Estimate overall performance gain."""
         gains = []
 
         if self.optimizations_applied.get("uvloop", {}).get("success"):
@@ -304,7 +302,7 @@ class PerformanceOptimizer:
             return "Baseline performance with Python optimizations"
 
     def benchmark_performance(self, test_size: str = "small") -> Dict[str, Any]:
-        """Run performance benchmarks"""
+        """Run performance benchmarks."""
         from mcli.lib.performance.rust_bridge import PerformanceMonitor
 
         monitor = PerformanceMonitor()
@@ -333,19 +331,19 @@ class PerformanceOptimizer:
         }
 
     def print_performance_report(self):
-        """Print a detailed performance report"""
+        """Print a detailed performance report."""
         summary = self.get_optimization_summary()
 
         print("\n" + "=" * 60)
         print("🚀 MCLI PERFORMANCE OPTIMIZATION REPORT")
         print("=" * 60)
 
-        print(f"\n📊 Optimization Summary:")
+        print("\n📊 Optimization Summary:")
         print(f"   • Total optimizations attempted: {summary['total_optimizations']}")
         print(f"   • Successful optimizations: {summary['successful_optimizations']}")
         print(f"   • Estimated performance gain: {summary['estimated_performance_gain']}")
 
-        print(f"\n⚡ Applied Optimizations:")
+        print("\n⚡ Applied Optimizations:")
         for name, details in summary["details"].items():
             status = "✅" if details.get("success") else "❌"
             print(f"   {status} {name.replace('_', ' ').title()}")
@@ -354,7 +352,7 @@ class PerformanceOptimizer:
             if details.get("reason"):
                 print(f"      → {details['reason']}")
 
-        print(f"\n🔧 Recommendations:")
+        print("\n🔧 Recommendations:")
 
         # Rust extensions
         if not self.optimizations_applied.get("rust", {}).get("success"):
@@ -379,7 +377,7 @@ _global_optimizer: Optional[PerformanceOptimizer] = None
 
 
 def get_global_optimizer() -> PerformanceOptimizer:
-    """Get the global performance optimizer instance"""
+    """Get the global performance optimizer instance."""
     global _global_optimizer
 
     if _global_optimizer is None:
@@ -389,13 +387,13 @@ def get_global_optimizer() -> PerformanceOptimizer:
 
 
 def apply_optimizations() -> Dict[str, Any]:
-    """Apply all available optimizations"""
+    """Apply all available optimizations."""
     optimizer = get_global_optimizer()
     return optimizer.apply_all_optimizations()
 
 
 def print_optimization_report():
-    """Print the optimization report"""
+    """Print the optimization report."""
     optimizer = get_global_optimizer()
     optimizer.print_performance_report()
 

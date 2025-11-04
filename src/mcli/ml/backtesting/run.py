@@ -3,13 +3,12 @@
 
 import click
 
-from mcli.lib.ui.styling import error, info, success
+from mcli.lib.ui.styling import error, info
 
 
 @click.group(name="mcli-backtest", help="Backtesting CLI for MCLI trading strategies")
 def cli():
     """Main CLI group for backtesting."""
-    pass
 
 
 @cli.command(name="run", help="Run a backtest on historical data")

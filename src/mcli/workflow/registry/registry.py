@@ -7,6 +7,10 @@ import requests
 warnings.filterwarnings("ignore", message="Using slow pure-python SequenceMatcher")
 from fuzzywuzzy import process
 
+from mcli.lib.logger.logger import get_logger
+
+logger = get_logger(__name__)
+
 """_summary_
     ssh -o GatewayPorts=yes -o ServerAliveInterval=60 -o ProxyCommand="ssh -W %h:%p myuser@my-proxy-server" -L80::80 -L443::443 myuser@localhost
 Returns:
@@ -56,7 +60,6 @@ class DockerClient:
                     logger.info(f"{repo}: {matching_tuples}")
             except Exception as e:
                 logger.info(e)
-                pass
         return response
 
     def count_images(self, repository):

@@ -1,4 +1,4 @@
-"""Alembic environment configuration"""
+"""Alembic environment configuration."""
 
 import os
 import sys
@@ -27,7 +27,7 @@ target_metadata = Base.metadata
 
 # Override database URL from settings
 def get_url():
-    """Get database URL from settings or environment"""
+    """Get database URL from settings or environment."""
     # First try environment variable
     url = os.getenv("DATABASE_URL")
     if url:

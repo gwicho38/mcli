@@ -10,12 +10,10 @@ import pytest
 # Skip all tests in this module - requires external service dependencies
 pytestmark = pytest.mark.skip(reason="requires external services (Supabase, LSH daemon)")
 
-import asyncio
 import json
 import os
 import sys
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
 import pandas as pd
 import requests

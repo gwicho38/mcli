@@ -6,7 +6,7 @@ from .token_manager import TokenManager
 
 
 def configure():
-    """Configure authentication token"""
+    """Configure authentication token."""
     token_manager = TokenManager()
 
     # Prompt for token, hiding input
@@ -25,7 +25,7 @@ def configure():
 
 
 def show_token():
-    """Display the current authentication token"""
+    """Display the current authentication token."""
     token_manager = TokenManager()
     token = token_manager.get_token()
 
@@ -36,7 +36,7 @@ def show_token():
 
 
 def clear_token():
-    """Clear the stored authentication token"""
+    """Clear the stored authentication token."""
     token_manager = TokenManager()
 
     if click.confirm("Are you sure you want to clear the stored token?"):
@@ -77,8 +77,7 @@ def get_mcli_basic_auth() -> Optional[str]:
 
 @click.group(name="auth")
 def auth():
-    """Authentication commands"""
-    pass
+    """Authentication commands."""
 
 
 if __name__ == "__main__":

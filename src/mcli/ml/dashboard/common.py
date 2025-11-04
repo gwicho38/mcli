@@ -7,7 +7,6 @@ This module provides shared functionality across all dashboard variants to avoid
 import os
 import warnings
 from pathlib import Path
-from typing import Optional
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -95,7 +94,7 @@ def get_supabase_client():
         if client:
             data = client.table('politicians').select('*').execute()
     """
-    from supabase import Client, create_client
+    from supabase import create_client
 
     # Try Streamlit secrets first (for Streamlit Cloud)
     url = ""
@@ -131,7 +130,7 @@ def get_supabase_client():
         client = create_client(url, key)
 
         # Test connection with a simple query
-        try:
+        try:  # noqa: SIM105
             # Try politicians table first (most common)
             client.table("politicians").select("id").limit(1).execute()
         except Exception:

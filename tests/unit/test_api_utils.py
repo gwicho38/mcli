@@ -3,10 +3,7 @@ Unit tests for mcli.lib.api utility functions
 """
 
 import os
-import socket
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 class TestApiUtils:

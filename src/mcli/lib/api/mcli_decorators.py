@@ -6,17 +6,13 @@ adding API endpoints and background processing capabilities while maintaining
 the familiar Click interface. Users only need to import mcli and get everything.
 """
 
-import functools
-import inspect
 import os
 import time
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import click
 
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.toml.toml import read_from_toml
 
 from .api import api_endpoint as _api_endpoint
 from .api import get_api_app, start_api_server, stop_api_server
@@ -590,7 +586,7 @@ def get_network_credentials():
 
 # Re-export Click types and classes
 def _get_click_types():
-    """Get Click types for re-export"""
+    """Get Click types for re-export."""
     import click
 
     return {
@@ -950,14 +946,14 @@ def status_check():
 
 
 class ChatCommandGroup(click.Group):
-    """Special command group that provides chat-based interaction"""
+    """Special command group that provides chat-based interaction."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.chat_client = None
 
     def get_help(self, ctx):
-        """Start interactive chat session instead of showing normal help"""
+        """Start interactive chat session instead of showing normal help."""
         from mcli.chat.chat import ChatClient
 
         self.chat_client = ChatClient()
@@ -969,7 +965,7 @@ from typing import Any, Callable
 
 
 def chat(**kwargs) -> Callable[[Callable[..., Any]], click.Group]:
-    """Create a chat command group that provides an interactive LLM-powered interface"""
+    """Create a chat command group that provides an interactive LLM-powered interface."""
     kwargs.setdefault("invoke_without_command", True)
     kwargs.setdefault("no_args_is_help", False)
     return click.group(cls=ChatCommandGroup, **kwargs)

@@ -3,25 +3,18 @@ Enhanced MCLI Chat Assistant with Self-Referential Capabilities and RAG-based Co
 """
 
 import asyncio
-import json
 import os
 import re
-import readline
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-import requests
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 
-from mcli.chat.command_rag import get_command_rag_system
-from mcli.chat.system_integration import handle_system_request
 from mcli.lib.api.daemon_client import get_daemon_client
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
-from mcli.lib.ui.styling import console
 
 logger = get_logger(__name__)
 
@@ -81,7 +74,7 @@ I can execute system commands and searches to provide real-time information and 
 
 
 class EnhancedChatClient:
-    """Enhanced chat client with RAG-based command search and self-referential capabilities"""
+    """Enhanced chat client with RAG-based command search and self-referential capabilities."""
 
     def __init__(self, use_remote: bool = False, model_override: str = None):
         self.daemon = get_daemon_client()
@@ -125,7 +118,7 @@ class EnhancedChatClient:
             self.commands_list = []
 
     async def _initialize_rag_system(self):
-        """Initialize the RAG system for command search"""
+        """Initialize the RAG system for command search."""
         try:
             # Use a simplified command discovery for now to avoid hanging
             from mcli.lib.discovery.command_discovery import ClickCommandDiscovery
@@ -152,9 +145,7 @@ class EnhancedChatClient:
             self.simple_command_lookup = {}
 
     def _configure_model_settings(self):
-        """Configure model settings with enhanced system prompt"""
-        global config
-
+        """Configure model settings with enhanced system prompt."""
         if not self.use_remote:
             config.update(
                 {
@@ -175,7 +166,7 @@ class EnhancedChatClient:
                 self._configure_model_settings()
 
     def _ensure_daemon_running(self):
-        """Ensure the daemon is running for system integration"""
+        """Ensure the daemon is running for system integration."""
         try:
             if not self.daemon.health_check():
                 self.daemon.start_daemon()
@@ -183,7 +174,7 @@ class EnhancedChatClient:
             logger.debug(f"Daemon check failed: {e}")
 
     async def _enrich_message_with_context(self, user_message: str) -> str:
-        """Enrich user message with relevant command context and system information"""
+        """Enrich user message with relevant command context and system information."""
         enriched_parts = [user_message]
 
         # Initialize RAG system if not already done
@@ -195,7 +186,7 @@ class EnhancedChatClient:
             # Add system status only
             system_status = await self._get_system_status()
             if system_status:
-                enriched_parts.append(f"\n--- SYSTEM STATUS ---")
+                enriched_parts.append("\n--- SYSTEM STATUS ---")
                 enriched_parts.append(system_status)
 
         except Exception as e:
@@ -204,7 +195,7 @@ class EnhancedChatClient:
         return "\n".join(enriched_parts)
 
     async def _get_system_status(self) -> str:
-        """Get current system status for context"""
+        """Get current system status for context."""
         status_parts = []
 
         try:
@@ -221,7 +212,7 @@ class EnhancedChatClient:
                 status_parts.append("Redis cache: Active")
             else:
                 status_parts.append("Redis cache: Inactive")
-        except:
+        except Exception:
             pass
 
         try:
@@ -235,13 +226,13 @@ class EnhancedChatClient:
                 )
             else:
                 status_parts.append("Rust extensions: Inactive")
-        except:
+        except Exception:
             pass
 
         return " | ".join(status_parts) if status_parts else "System status unavailable"
 
     def start_interactive_session(self):
-        """Start enhanced interactive chat session"""
+        """Start enhanced interactive chat session."""
         self.console.print("\n🤖 MCLI Enhanced Chat Assistant", style="bold cyan")
         self.console.print(
             "I can help you discover and use MCLI commands through intelligent search!",
@@ -287,7 +278,7 @@ class EnhancedChatClient:
                 self.console.print(f"❌ Error: {e}", style="red")
 
     async def _process_enhanced_message(self, user_message: str):
-        """Process message with RAG enhancement"""
+        """Process message with RAG enhancement."""
         try:
             # Enrich message with command context
             enriched_message = await self._enrich_message_with_context(user_message)
@@ -317,7 +308,7 @@ class EnhancedChatClient:
             self.console.print(f"❌ Error processing message: {e}", style="red")
 
     async def _get_ai_response(self, message: str) -> Optional[str]:
-        """Get AI response using configured provider"""
+        """Get AI response using configured provider."""
         try:
             if self.use_remote and config.get("openai_api_key"):
                 return await self._get_openai_response(message)
@@ -330,7 +321,7 @@ class EnhancedChatClient:
             return None
 
     async def _get_openai_response(self, message: str) -> str:
-        """Get response from OpenAI"""
+        """Get response from OpenAI."""
         try:
             import openai
 
@@ -355,7 +346,7 @@ class EnhancedChatClient:
             return None
 
     async def _get_anthropic_response(self, message: str) -> str:
-        """Get response from Anthropic"""
+        """Get response from Anthropic."""
         try:
             import anthropic
 
@@ -375,7 +366,7 @@ class EnhancedChatClient:
             return None
 
     async def _get_local_response(self, message: str) -> str:
-        """Get response from local lightweight model"""
+        """Get response from local lightweight model."""
         try:
             # Use improved command matching for local responses
             if hasattr(self, "commands_list") and self.commands_list:
@@ -392,7 +383,7 @@ class EnhancedChatClient:
                     cmd_name_clean = cmd.full_name.lower().replace(".", " ")
                     if user_lower in cmd_name_clean:
                         score += 10
-                        matched_reasons.append(f"exact phrase match")
+                        matched_reasons.append("exact phrase match")
 
                     # High priority: Check if user input matches command structure
                     user_parts = user_lower.split()
@@ -404,7 +395,7 @@ class EnhancedChatClient:
                         for user_word in user_parts
                     ):
                         score += 8
-                        matched_reasons.append(f"matches command structure")
+                        matched_reasons.append("matches command structure")
 
                     # Medium priority: Individual word matches in name
                     for word in user_words:
@@ -422,7 +413,7 @@ class EnhancedChatClient:
                     keyword_map = {
                         "video": ["video", "mp4", "avi", "mov", "ffmpeg", "frames"],
                         "redis": ["redis", "cache"],
-                        "file": ["file", "convert", "pdf", "oxps"],
+                        "file": ["file", "convert", "pd", "oxps"],
                         "daemon": ["daemon", "service", "api"],
                         "workflow": ["workflow", "automation"],
                         "system": ["system", "status", "monitor"],
@@ -468,9 +459,9 @@ class EnhancedChatClient:
                     # Suggest broader search
                     return (
                         f"I didn't find specific commands for '{message}', but I can help you explore!\n\n"
-                        f"Try these approaches:\n"
-                        f"• Use 'commands' to browse all available commands\n"
-                        f"• Ask about specific topics like 'video processing', 'file conversion', 'system monitoring'\n"
+                        "Try these approaches:\n"
+                        "• Use 'commands' to browse all available commands\n"
+                        "• Ask about specific topics like 'video processing', 'file conversion', 'system monitoring'\n"
                         f"• I have {len(self.commands_list)} commands available across categories like workflow, redis, files, and more!"
                     )
 
@@ -478,10 +469,10 @@ class EnhancedChatClient:
 
         except Exception as e:
             logger.error(f"Local response failed: {e}")
-            return f"I'm here to help with MCLI commands. Try asking about specific tasks like 'video processing' or 'file conversion'."
+            return "I'm here to help with MCLI commands. Try asking about specific tasks like 'video processing' or 'file conversion'."
 
     def _display_response(self, response: str):
-        """Display AI response with enhanced formatting"""
+        """Display AI response with enhanced formatting."""
         # Create a panel for the response
         panel = Panel(
             response,
@@ -493,7 +484,7 @@ class EnhancedChatClient:
         self.console.print(panel)
 
     async def _highlight_mcli_commands(self, response: str):
-        """Extract and highlight MCLI commands from response"""
+        """Extract and highlight MCLI commands from response."""
         # Look for command patterns in the response
         command_pattern = r"`mcli\s+([^`]+)`|mcli\s+([\w\s\-\.]+)"
         matches = re.findall(command_pattern, response, re.IGNORECASE)
@@ -506,7 +497,7 @@ class EnhancedChatClient:
                     self.console.print(f"   • `mcli {command.strip()}`", style="green")
 
     async def _handle_command_search(self, query: str):
-        """Handle command search queries"""
+        """Handle command search queries."""
         search_term = query[8:].strip() if len(query) > 8 else ""  # Remove "commands"
 
         if not self.rag_system:
@@ -524,7 +515,7 @@ class EnhancedChatClient:
             await self._search_and_display_commands(search_term)
 
     def _show_command_categories(self, capabilities: Dict[str, Any]):
-        """Show command categories"""
+        """Show command categories."""
         table = Table(title="📋 MCLI Command Categories")
         table.add_column("Category", style="cyan")
         table.add_column("Commands", justify="right", style="magenta")
@@ -543,7 +534,7 @@ class EnhancedChatClient:
         )
 
     async def _search_and_display_commands(self, search_term: str):
-        """Search and display matching commands"""
+        """Search and display matching commands."""
         try:
             results = await self.rag_system.search_commands(search_term, limit=8)
 
@@ -569,7 +560,7 @@ class EnhancedChatClient:
             self.console.print(f"❌ Search failed: {e}", style="red")
 
     async def _show_system_status(self):
-        """Show comprehensive system status"""
+        """Show comprehensive system status."""
         try:
             status_info = await self._get_system_status()
 
@@ -590,7 +581,7 @@ class EnhancedChatClient:
             self.console.print(f"❌ Status check failed: {e}", style="red")
 
     def _show_help(self):
-        """Show enhanced help information"""
+        """Show enhanced help information."""
         help_text = """
 🤖 **MCLI Enhanced Chat Assistant Help**
 
@@ -629,7 +620,7 @@ class EnhancedChatClient:
         self.console.print(help_panel)
 
     def _handle_quit(self):
-        """Handle quit command"""
+        """Handle quit command."""
         self.session_active = False
         self.console.print("\n🎯 **Session Summary:**")
         if self.conversation_context:
@@ -648,5 +639,5 @@ class EnhancedChatClient:
 def create_enhanced_chat_client(
     use_remote: bool = False, model_override: str = None
 ) -> EnhancedChatClient:
-    """Create enhanced chat client instance"""
+    """Create enhanced chat client instance."""
     return EnhancedChatClient(use_remote=use_remote, model_override=model_override)

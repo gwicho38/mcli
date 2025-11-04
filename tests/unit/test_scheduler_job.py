@@ -4,9 +4,6 @@ Unit tests for mcli.workflow.scheduler.job module
 
 import json
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 class TestJobStatus:
@@ -399,7 +396,7 @@ class TestScheduledJob:
 
     def test_str_representation(self):
         """Test string representation of job"""
-        from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
+        from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
             name="test_job",

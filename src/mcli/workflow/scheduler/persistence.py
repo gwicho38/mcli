@@ -5,11 +5,10 @@ Handles saving/loading jobs to/from disk, ensuring persistence across power cycl
 """
 
 import json
-import os
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from mcli.lib.logger.logger import get_logger
 
@@ -19,7 +18,7 @@ logger = get_logger(__name__)
 
 
 class JobStorage:
-    """Handles persistent storage of scheduled jobs"""
+    """Handles persistent storage of scheduled jobs."""
 
     def __init__(self, storage_dir: Optional[str] = None):
         self.storage_dir = Path(storage_dir) if storage_dir else self._get_default_storage_dir()
@@ -34,13 +33,13 @@ class JobStorage:
         self._initialize_storage()
 
     def _get_default_storage_dir(self) -> Path:
-        """Get default storage directory"""
+        """Get default storage directory."""
         home = Path.home()
         storage_dir = home / ".mcli" / "scheduler"
         return storage_dir
 
     def _initialize_storage(self):
-        """Initialize storage files if they don't exist"""
+        """Initialize storage files if they don't exist."""
         if not self.jobs_file.exists():
             self._write_json_file(self.jobs_file, {"jobs": [], "version": "1.0"})
 
@@ -48,7 +47,7 @@ class JobStorage:
             self._write_json_file(self.history_file, {"history": [], "version": "1.0"})
 
     def _read_json_file(self, file_path: Path) -> dict:
-        """Safely read JSON file with error handling"""
+        """Safely read JSON file with error handling."""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -63,7 +62,7 @@ class JobStorage:
             return {}
 
     def _write_json_file(self, file_path: Path, data: dict):
-        """Safely write JSON file with atomic operation"""
+        """Safely write JSON file with atomic operation."""
         temp_file = file_path.with_suffix(".tmp")
         try:
             with open(temp_file, "w", encoding="utf-8") as f:
@@ -78,7 +77,7 @@ class JobStorage:
                 temp_file.unlink()
 
     def save_jobs(self, jobs: List[ScheduledJob]) -> bool:
-        """Save list of jobs to persistent storage"""
+        """Save list of jobs to persistent storage."""
         with self.lock:
             try:
                 jobs_data = {
@@ -97,7 +96,7 @@ class JobStorage:
                 return False
 
     def load_jobs(self) -> List[ScheduledJob]:
-        """Load jobs from persistent storage"""
+        """Load jobs from persistent storage."""
         with self.lock:
             try:
                 data = self._read_json_file(self.jobs_file)
@@ -119,7 +118,7 @@ class JobStorage:
                 return []
 
     def save_job(self, job: ScheduledJob) -> bool:
-        """Save a single job (update existing or add new)"""
+        """Save a single job (update existing or add new)."""
         jobs = self.load_jobs()
 
         # Find existing job or add new one
@@ -136,7 +135,7 @@ class JobStorage:
         return self.save_jobs(jobs)
 
     def delete_job(self, job_id: str) -> bool:
-        """Delete a job from storage"""
+        """Delete a job from storage."""
         jobs = self.load_jobs()
         original_count = len(jobs)
 
@@ -147,7 +146,7 @@ class JobStorage:
         return False
 
     def get_job(self, job_id: str) -> Optional[ScheduledJob]:
-        """Get a specific job by ID"""
+        """Get a specific job by ID."""
         jobs = self.load_jobs()
         for job in jobs:
             if job.id == job_id:
@@ -155,7 +154,7 @@ class JobStorage:
         return None
 
     def record_job_execution(self, job: ScheduledJob, execution_data: dict):
-        """Record job execution in history"""
+        """Record job execution in history."""
         with self.lock:
             try:
                 history_data = self._read_json_file(self.history_file)
@@ -192,7 +191,7 @@ class JobStorage:
                 logger.error(f"Failed to record job execution: {e}")
 
     def get_job_history(self, job_id: Optional[str] = None, limit: int = 100) -> List[dict]:
-        """Get job execution history"""
+        """Get job execution history."""
         try:
             history_data = self._read_json_file(self.history_file)
             history = history_data.get("history", [])
@@ -210,7 +209,7 @@ class JobStorage:
             return []
 
     def cleanup_old_history(self, days: int = 30):
-        """Remove job history older than specified days"""
+        """Remove job history older than specified days."""
         with self.lock:
             try:
                 cutoff_date = datetime.now() - timedelta(days=days)
@@ -240,7 +239,7 @@ class JobStorage:
                 logger.error(f"Failed to cleanup old history: {e}")
 
     def export_jobs(self, export_path: str) -> bool:
-        """Export all jobs to a file"""
+        """Export all jobs to a file."""
         try:
             jobs = self.load_jobs()
             export_data = {
@@ -261,7 +260,7 @@ class JobStorage:
             return False
 
     def import_jobs(self, import_path: str, replace: bool = False) -> int:
-        """Import jobs from a file"""
+        """Import jobs from a file."""
         try:
             with open(import_path, "r", encoding="utf-8") as f:
                 import_data = json.load(f)
@@ -296,7 +295,7 @@ class JobStorage:
             return 0
 
     def get_storage_info(self) -> dict:
-        """Get information about storage usage"""
+        """Get information about storage usage."""
         try:
             jobs_size = self.jobs_file.stat().st_size if self.jobs_file.exists() else 0
             history_size = self.history_file.stat().st_size if self.history_file.exists() else 0

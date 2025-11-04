@@ -9,7 +9,7 @@ import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from mcli.lib.logger.logger import get_logger
 
@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 
 
 class SystemController:
-    """Handles real-time system control for MCLI chat"""
+    """Handles real-time system control for MCLI chat."""
 
     def __init__(self):
         self.system = platform.system()
@@ -25,7 +25,7 @@ class SystemController:
         self.current_directory = os.getcwd()  # Track current working directory
 
     def execute_command(self, command: str, description: str = "") -> Dict[str, Any]:
-        """Execute a system command and return results"""
+        """Execute a system command and return results."""
         try:
             logger.info(f"Executing: {description or command}")
 
@@ -57,7 +57,7 @@ class SystemController:
             }
 
     def open_textedit_and_write(self, text: str, filename: str = None) -> Dict[str, Any]:
-        """Open TextEdit, write text, and optionally save to file"""
+        """Open TextEdit, write text, and optionally save to file."""
         if self.system != "Darwin":
             return {
                 "success": False,
@@ -93,7 +93,7 @@ class SystemController:
         )
 
     def control_application(self, app_name: str, action: str, **kwargs) -> Dict[str, Any]:
-        """Control various applications with different actions"""
+        """Control various applications with different actions."""
 
         if self.system == "Darwin":  # macOS
             return self._control_macos_app(app_name, action, **kwargs)
@@ -103,7 +103,7 @@ class SystemController:
             return self._control_linux_app(app_name, action, **kwargs)
 
     def _control_macos_app(self, app_name: str, action: str, **kwargs) -> Dict[str, Any]:
-        """Control macOS applications using AppleScript"""
+        """Control macOS applications using AppleScript."""
 
         if action == "open":
             applescript = f'tell application "{app_name}" to activate'
@@ -149,7 +149,7 @@ class SystemController:
         return self.execute_command(f"osascript -e '{applescript}'", f"{action} {app_name}")
 
     def _control_windows_app(self, app_name: str, action: str, **kwargs) -> Dict[str, Any]:
-        """Control Windows applications using PowerShell"""
+        """Control Windows applications using PowerShell."""
 
         if action == "open":
             # Try to start the application
@@ -173,7 +173,7 @@ class SystemController:
         return self.execute_command(command, f"{action} {app_name}")
 
     def _control_linux_app(self, app_name: str, action: str, **kwargs) -> Dict[str, Any]:
-        """Control Linux applications using various tools"""
+        """Control Linux applications using various tools."""
 
         if action == "open":
             # Try different methods to open applications
@@ -212,7 +212,7 @@ class SystemController:
         return self.execute_command(command, f"{action} {app_name}")
 
     def get_system_info(self) -> Dict[str, Any]:
-        """Get comprehensive system information"""
+        """Get comprehensive system information."""
         try:
             import platform
             from datetime import datetime
@@ -261,7 +261,7 @@ class SystemController:
 
             # Disk information
             disk_info = []
-            try:
+            try:  # noqa: SIM105
                 for partition in psutil.disk_partitions():
                     try:
                         partition_usage = psutil.disk_usage(partition.mountpoint)
@@ -278,7 +278,7 @@ class SystemController:
                                 ),
                             }
                         )
-                    except (PermissionError, OSError):
+                    except OSError:
                         # Skip partitions we can't access
                         continue
             except Exception:
@@ -291,12 +291,12 @@ class SystemController:
                 "connections": 0,
             }
 
-            try:
+            try:  # noqa: SIM105
                 network_info["connections"] = len(psutil.net_connections())
             except Exception:
                 pass
 
-            try:
+            try:  # noqa: SIM105
                 for interface, addresses in psutil.net_if_addrs().items():
                     network_info["interfaces"][interface] = []
                     for addr in addresses:
@@ -365,7 +365,7 @@ class SystemController:
             return {"success": False, "error": str(e), "description": "Get system information"}
 
     def get_system_time(self) -> Dict[str, Any]:
-        """Get current system time and timezone information"""
+        """Get current system time and timezone information."""
         try:
             import time
             from datetime import datetime
@@ -388,7 +388,7 @@ class SystemController:
             return {"success": False, "error": str(e), "description": "Get system time"}
 
     def get_memory_usage(self) -> Dict[str, Any]:
-        """Get detailed memory usage information"""
+        """Get detailed memory usage information."""
         try:
             import psutil
 
@@ -443,7 +443,7 @@ class SystemController:
             return {"success": False, "error": str(e), "description": "Get memory usage"}
 
     def get_disk_usage(self) -> Dict[str, Any]:
-        """Get detailed disk usage information"""
+        """Get detailed disk usage information."""
         try:
             import psutil
 
@@ -503,7 +503,7 @@ class SystemController:
             return {"success": False, "error": str(e), "description": "Get disk usage"}
 
     def clear_system_caches(self) -> Dict[str, Any]:
-        """Clear system caches and temporary files"""
+        """Clear system caches and temporary files."""
         try:
             cleared_items = []
             total_freed_mb = 0
@@ -598,22 +598,22 @@ class SystemController:
             return {"success": False, "error": str(e), "description": "Clear system caches"}
 
     def _get_directory_size(self, path: str) -> int:
-        """Get total size of directory in bytes"""
+        """Get total size of directory in bytes."""
         total_size = 0
-        try:
+        try:  # noqa: SIM105
             for dirpath, dirnames, filenames in os.walk(path):
                 for filename in filenames:
                     file_path = os.path.join(dirpath, filename)
                     try:
                         total_size += os.path.getsize(file_path)
-                    except (OSError, FileNotFoundError):
+                    except OSError:
                         continue
         except Exception:
             pass
         return total_size
 
     def get_running_applications(self) -> List[str]:
-        """Get list of currently running applications"""
+        """Get list of currently running applications."""
         try:
             if self.system == "Darwin":
                 result = subprocess.run(
@@ -664,7 +664,7 @@ class SystemController:
         return []
 
     def take_screenshot(self, filename: str = None) -> Dict[str, Any]:
-        """Take a screenshot and save it"""
+        """Take a screenshot and save it."""
         if not filename:
             timestamp = time.strftime("%Y%m%d_%H%M%S")
             filename = f"mcli_screenshot_{timestamp}.png"
@@ -694,7 +694,7 @@ class SystemController:
             }
 
     def open_file_or_url(self, path_or_url: str) -> Dict[str, Any]:
-        """Open a file or URL using the system default application"""
+        """Open a file or URL using the system default application."""
         try:
             if self.system == "Darwin":
                 command = f"open '{path_or_url}'"
@@ -709,7 +709,7 @@ class SystemController:
             return {"success": False, "error": str(e), "description": f"Open: {path_or_url}"}
 
     def change_directory(self, path: str) -> Dict[str, Any]:
-        """Navigate to a directory and update current working directory"""
+        """Navigate to a directory and update current working directory."""
         try:
             # Expand user path and resolve relative paths
             expanded_path = os.path.expanduser(path)
@@ -751,7 +751,7 @@ class SystemController:
     def list_directory(
         self, path: str = None, show_hidden: bool = False, detailed: bool = False
     ) -> Dict[str, Any]:
-        """List contents of a directory"""
+        """List contents of a directory."""
         try:
             target_path = path if path else self.current_directory
             expanded_path = os.path.expanduser(target_path)
@@ -826,7 +826,7 @@ class SystemController:
             }
 
     def clean_simulator_data(self) -> Dict[str, Any]:
-        """Clean iOS/watchOS simulator data specifically"""
+        """Clean iOS/watchOS simulator data specifically."""
         try:
             if self.system != "Darwin":
                 return {
@@ -910,7 +910,7 @@ class SystemController:
             return {"success": False, "error": str(e), "description": "Clean simulator data"}
 
     def execute_shell_command(self, command: str, working_directory: str = None) -> Dict[str, Any]:
-        """Execute a shell command in a specific directory"""
+        """Execute a shell command in a specific directory."""
         try:
             # Use working directory if specified, otherwise use current directory
             cwd = working_directory if working_directory else self.current_directory
@@ -959,52 +959,52 @@ system_controller = SystemController()
 
 # Helper functions for easy use in chat
 def open_textedit_and_write(text: str, filename: str = None) -> Dict[str, Any]:
-    """Helper function to open TextEdit and write text"""
+    """Helper function to open TextEdit and write text."""
     return system_controller.open_textedit_and_write(text, filename)
 
 
 def control_app(app_name: str, action: str, **kwargs) -> Dict[str, Any]:
-    """Helper function to control applications"""
+    """Helper function to control applications."""
     return system_controller.control_application(app_name, action, **kwargs)
 
 
 def execute_system_command(command: str, description: str = "") -> Dict[str, Any]:
-    """Helper function to execute system commands"""
+    """Helper function to execute system commands."""
     return system_controller.execute_command(command, description)
 
 
 def take_screenshot(filename: str = None) -> Dict[str, Any]:
-    """Helper function to take screenshots"""
+    """Helper function to take screenshots."""
     return system_controller.take_screenshot(filename)
 
 
 def open_file_or_url(path_or_url: str) -> Dict[str, Any]:
-    """Helper function to open files or URLs"""
+    """Helper function to open files or URLs."""
     return system_controller.open_file_or_url(path_or_url)
 
 
 def change_directory(path: str) -> Dict[str, Any]:
-    """Helper function to navigate to a directory"""
+    """Helper function to navigate to a directory."""
     return system_controller.change_directory(path)
 
 
 def list_directory(
     path: str = None, show_hidden: bool = False, detailed: bool = False
 ) -> Dict[str, Any]:
-    """Helper function to list directory contents"""
+    """Helper function to list directory contents."""
     return system_controller.list_directory(path, show_hidden, detailed)
 
 
 def clean_simulator_data() -> Dict[str, Any]:
-    """Helper function to clean iOS/watchOS simulator data"""
+    """Helper function to clean iOS/watchOS simulator data."""
     return system_controller.clean_simulator_data()
 
 
 def execute_shell_command(command: str, working_directory: str = None) -> Dict[str, Any]:
-    """Helper function to execute shell commands"""
+    """Helper function to execute shell commands."""
     return system_controller.execute_shell_command(command, working_directory)
 
 
 def get_current_directory() -> str:
-    """Helper function to get current working directory"""
+    """Helper function to get current working directory."""
     return system_controller.current_directory

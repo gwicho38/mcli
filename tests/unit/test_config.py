@@ -2,12 +2,7 @@
 Unit tests for mcli.lib.config module
 """
 
-import os
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 class TestConfig:
@@ -100,6 +95,6 @@ class TestConfig:
         from mcli.lib.config.config import get_mcli_rc
 
         # Should not raise an error
-        result = get_mcli_rc()
+        get_mcli_rc()
 
         # Function currently has no return, just logs

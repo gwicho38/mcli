@@ -1,26 +1,16 @@
-"""Complete data ingestion pipeline with validation and transformation"""
+"""Complete data ingestion pipeline with validation and transformation."""
 
 import asyncio
 import json
 import logging
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
-import numpy as np
 import pandas as pd
 
-from .api_connectors import (
-    AlphaVantageConnector,
-    CongressionalDataAPI,
-    DataAggregator,
-    PolygonIOConnector,
-    QuiverQuantConnector,
-    YahooFinanceConnector,
-)
-from .stream_processor import DataAggregator as StreamAggregator
+from .api_connectors import CongressionalDataAPI, YahooFinanceConnector
 from .stream_processor import StreamConfig, StreamProcessor
 
 logger = logging.getLogger(__name__)
@@ -28,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PipelineConfig:
-    """Data pipeline configuration"""
+    """Data pipeline configuration."""
 
     data_dir: Path = Path("data")
     batch_size: int = 1000
@@ -42,7 +32,7 @@ class PipelineConfig:
 
 
 class DataValidator:
-    """Validate incoming data"""
+    """Validate incoming data."""
 
     def __init__(self):
         self.validation_rules = {
@@ -53,7 +43,7 @@ class DataValidator:
         self.validation_stats = {"total": 0, "valid": 0, "invalid": 0, "errors": []}
 
     def validate(self, data: Dict[str, Any], data_type: str) -> bool:
-        """Validate data based on type"""
+        """Validate data based on type."""
         self.validation_stats["total"] += 1
 
         if data_type not in self.validation_rules:
@@ -74,7 +64,7 @@ class DataValidator:
             return False
 
     def _validate_politician_trade(self, data: Dict[str, Any]) -> bool:
-        """Validate politician trading data"""
+        """Validate politician trading data."""
         required_fields = ["politician", "ticker", "transaction_type", "amount", "transaction_date"]
 
         # Check required fields
@@ -97,14 +87,14 @@ class DataValidator:
         try:
             if isinstance(data["transaction_date"], str):
                 datetime.fromisoformat(data["transaction_date"])
-        except:
+        except Exception:
             logger.warning(f"Invalid date format: {data['transaction_date']}")
             return False
 
         return True
 
     def _validate_stock_quote(self, data: Dict[str, Any]) -> bool:
-        """Validate stock quote data"""
+        """Validate stock quote data."""
         required_fields = ["symbol", "price", "timestamp"]
 
         for field in required_fields:
@@ -118,7 +108,7 @@ class DataValidator:
         return True
 
     def _validate_market_data(self, data: Dict[str, Any]) -> bool:
-        """Validate market data"""
+        """Validate market data."""
         required_fields = ["symbol", "close", "volume", "date"]
 
         for field in required_fields:
@@ -127,7 +117,7 @@ class DataValidator:
 
         # Validate prices
         for price_field in ["close", "open", "high", "low"]:
-            if price_field in data:
+            if price_field in data:  # noqa: SIM102
                 if not isinstance(data[price_field], (int, float)) or data[price_field] <= 0:
                     return False
 
@@ -138,12 +128,12 @@ class DataValidator:
         return True
 
     def get_stats(self) -> Dict[str, Any]:
-        """Get validation statistics"""
+        """Get validation statistics."""
         return self.validation_stats.copy()
 
 
 class DataTransformer:
-    """Transform and normalize data"""
+    """Transform and normalize data."""
 
     def __init__(self):
         self.transformers = {
@@ -155,7 +145,7 @@ class DataTransformer:
     def transform(
         self, data: Union[Dict[str, Any], List[Dict[str, Any]]], data_type: str
     ) -> Union[Dict[str, Any], pd.DataFrame]:
-        """Transform data based on type"""
+        """Transform data based on type."""
         if data_type not in self.transformers:
             return data
 
@@ -166,7 +156,7 @@ class DataTransformer:
             return self.transformers[data_type](data)
 
     def _transform_politician_trade(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Transform politician trading data"""
+        """Transform politician trading data."""
         transformed = data.copy()
 
         # Standardize politician name
@@ -198,7 +188,7 @@ class DataTransformer:
         return transformed
 
     def _transform_stock_quote(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Transform stock quote data"""
+        """Transform stock quote data."""
         transformed = data.copy()
 
         # Normalize symbol
@@ -219,7 +209,7 @@ class DataTransformer:
         return transformed
 
     def _transform_market_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Transform market data"""
+        """Transform market data."""
         transformed = data.copy()
 
         # Normalize symbol
@@ -242,7 +232,7 @@ class DataTransformer:
         return transformed
 
     def _normalize_name(self, name: str) -> str:
-        """Normalize politician name"""
+        """Normalize politician name."""
         # Remove titles
         titles = ["Sen.", "Senator", "Rep.", "Representative", "Hon.", "Dr.", "Mr.", "Mrs.", "Ms."]
         normalized = name
@@ -256,7 +246,7 @@ class DataTransformer:
         return normalized
 
     def _categorize_amount(self, amount: float) -> str:
-        """Categorize transaction amount"""
+        """Categorize transaction amount."""
         if amount < 1000:
             return "micro"
         elif amount < 15000:
@@ -272,7 +262,7 @@ class DataTransformer:
 
 
 class DataLoader:
-    """Load data to storage"""
+    """Load data to storage."""
 
     def __init__(self, data_dir: Path):
         self.data_dir = data_dir
@@ -281,7 +271,7 @@ class DataLoader:
     async def save_batch(
         self, data: pd.DataFrame, data_type: str, timestamp: Optional[datetime] = None
     ):
-        """Save batch of data"""
+        """Save batch of data."""
         if timestamp is None:
             timestamp = datetime.now()
 
@@ -302,7 +292,7 @@ class DataLoader:
     async def save_json(
         self, data: Union[Dict, List], data_type: str, timestamp: Optional[datetime] = None
     ):
-        """Save data as JSON"""
+        """Save data as JSON."""
         if timestamp is None:
             timestamp = datetime.now()
 
@@ -322,7 +312,7 @@ class DataLoader:
         return filepath
 
     def load_latest(self, data_type: str, n_files: int = 1) -> pd.DataFrame:
-        """Load latest data files"""
+        """Load latest data files."""
         type_dir = self.data_dir / data_type
 
         if not type_dir.exists():
@@ -344,7 +334,7 @@ class DataLoader:
 
 
 class IngestionPipeline:
-    """Complete data ingestion pipeline"""
+    """Complete data ingestion pipeline."""
 
     def __init__(self, config: PipelineConfig):
         self.config = config
@@ -368,12 +358,12 @@ class IngestionPipeline:
         }
 
     def add_source(self, name: str, connector):
-        """Add data source"""
+        """Add data source."""
         self.sources[name] = connector
         logger.info(f"Added data source: {name}")
 
     async def initialize_sources(self):
-        """Initialize all data sources"""
+        """Initialize all data sources."""
         # Congressional data
         congress_api = CongressionalDataAPI()
         self.add_source("congress", congress_api)
@@ -386,7 +376,7 @@ class IngestionPipeline:
         logger.info(f"Initialized {len(self.sources)} data sources")
 
     async def process_batch(self, data: List[Dict[str, Any]], data_type: str) -> pd.DataFrame:
-        """Process batch of data through pipeline"""
+        """Process batch of data through pipeline."""
         processed_data = []
 
         for record in data:
@@ -418,7 +408,7 @@ class IngestionPipeline:
         return pd.DataFrame()
 
     async def fetch_politician_trades(self, days: int = 30) -> pd.DataFrame:
-        """Fetch recent politician trades"""
+        """Fetch recent politician trades."""
         congress_api = self.sources.get("congress")
         if not congress_api:
             logger.error("Congressional data source not available")
@@ -436,7 +426,7 @@ class IngestionPipeline:
     async def fetch_stock_data(
         self, tickers: List[str], period: str = "1mo"
     ) -> Dict[str, pd.DataFrame]:
-        """Fetch stock data for multiple tickers"""
+        """Fetch stock data for multiple tickers."""
         stock_data = {}
 
         for ticker in tickers:
@@ -459,7 +449,7 @@ class IngestionPipeline:
         return stock_data
 
     async def start_streaming(self):
-        """Start real-time streaming"""
+        """Start real-time streaming."""
         if not self.config.enable_streaming:
             logger.info("Streaming disabled")
             return
@@ -481,12 +471,12 @@ class IngestionPipeline:
         await self.stream_processor.start()
 
     async def stop_streaming(self):
-        """Stop streaming"""
+        """Stop streaming."""
         if self.stream_processor:
             await self.stream_processor.stop()
 
     async def run(self, mode: str = "batch"):
-        """Run ingestion pipeline"""
+        """Run ingestion pipeline."""
         self.metrics["start_time"] = datetime.now()
 
         try:
@@ -513,7 +503,7 @@ class IngestionPipeline:
             self.metrics["last_update"] = datetime.now()
 
     async def run_batch(self):
-        """Run batch processing"""
+        """Run batch processing."""
         logger.info("Starting batch processing...")
 
         # Fetch politician trades
@@ -529,7 +519,7 @@ class IngestionPipeline:
             logger.info(f"Processed {len(trades_df)} trades and {len(stock_data)} stocks")
 
     def get_metrics(self) -> Dict[str, Any]:
-        """Get pipeline metrics"""
+        """Get pipeline metrics."""
         metrics = self.metrics.copy()
 
         # Calculate throughput

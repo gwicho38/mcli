@@ -1,11 +1,11 @@
 """
 Top-level initialization and teardown commands for MCLI.
 """
+
 import json
 import shutil
 import subprocess
 from datetime import datetime
-from pathlib import Path
 
 import click
 from rich.prompt import Prompt
@@ -56,12 +56,12 @@ def init(is_global, git, force):
     lockfile_path = workflows_dir / "commands.lock.json"
 
     # Check if already initialized
-    if workflows_dir.exists() and not force:
+    if workflows_dir.exists() and not force:  # noqa: SIM102
         if lockfile_path.exists():
             console.print(
                 f"[yellow]Workflows directory already initialized at:[/yellow] {workflows_dir}"
             )
-            console.print(f"[dim]Use --force to reinitialize[/dim]")
+            console.print("[dim]Use --force to reinitialize[/dim]")
 
             should_continue = Prompt.ask("Continue anyway?", choices=["y", "n"], default="n")
             if should_continue.lower() != "y":
@@ -74,7 +74,7 @@ def init(is_global, git, force):
     # Create README.md
     readme_path = workflows_dir / "README.md"
     if not readme_path.exists() or force:
-        scope = "local" if in_git_repo else "global"
+        "local" if in_git_repo else "global"
         scope_desc = f"for repository: {git_root.name}" if in_git_repo else "globally"
 
         readme_content = f"""# MCLI Custom Workflows
@@ -203,13 +203,13 @@ Thumbs.db
 .idea/
 """
         gitignore_path.write_text(gitignore_content)
-        console.print(f"[green]✓[/green] Created .gitignore")
+        console.print("[green]✓[/green] Created .gitignore")
 
     # Initialize git if requested
     if git and not (workflows_dir / ".git").exists():
         try:
             subprocess.run(["git", "init"], cwd=workflows_dir, check=True, capture_output=True)
-            console.print(f"[green]✓[/green] Initialized git repository in workflows directory")
+            console.print("[green]✓[/green] Initialized git repository in workflows directory")
 
             # Create initial commit
             subprocess.run(["git", "add", "."], cwd=workflows_dir, check=True, capture_output=True)
@@ -219,12 +219,12 @@ Thumbs.db
                 check=True,
                 capture_output=True,
             )
-            console.print(f"[green]✓[/green] Created initial commit")
+            console.print("[green]✓[/green] Created initial commit")
 
         except subprocess.CalledProcessError as e:
             console.print(f"[yellow]⚠[/yellow] Git initialization failed: {e}")
         except FileNotFoundError:
-            console.print(f"[yellow]⚠[/yellow] Git not found. Skipping git initialization.")
+            console.print("[yellow]⚠[/yellow] Git not found. Skipping git initialization.")
 
     # Summary
     from rich.table import Table
@@ -258,11 +258,11 @@ Thumbs.db
 
     if in_git_repo:
         console.print(
-            f"[dim]Tip: Workflows are local to this repository. Use --global for user-wide workflows.[/dim]"
+            "[dim]Tip: Workflows are local to this repository. Use --global for user-wide workflows.[/dim]"
         )
     else:
         console.print(
-            f"[dim]Tip: Use workflows in any git repository, or create local ones with 'mcli init' inside repos.[/dim]"
+            "[dim]Tip: Use workflows in any git repository, or create local ones with 'mcli init' inside repos.[/dim]"
         )
 
     return 0

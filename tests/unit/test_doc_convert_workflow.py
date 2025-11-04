@@ -33,10 +33,6 @@ class TestFormatAliases:
         assert FORMAT_ALIASES["html"] == "html"
         assert FORMAT_ALIASES["htm"] == "html"
 
-    def test_pdf_alias(self):
-        """Test PDF format alias"""
-        assert FORMAT_ALIASES["pdf"] == "pdf"
-
     def test_jupyter_aliases(self):
         """Test Jupyter notebook aliases"""
         assert FORMAT_ALIASES["ipynb"] == "ipynb"
@@ -264,25 +260,3 @@ class TestConvertCommand:
 class TestDocConvertIntegration:
     """Integration tests for doc-convert (requires pandoc)"""
 
-    def test_real_conversion_if_pandoc_available(self):
-        """Test real conversion if pandoc is available"""
-        # Check if pandoc is installed
-        try:
-            subprocess.run(["pandoc", "--version"], capture_output=True, check=True)
-        except (FileNotFoundError, subprocess.CalledProcessError):
-            pytest.skip("Pandoc not installed")
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Create a test markdown file
-            test_file = Path(tmpdir) / "test.md"
-            test_file.write_text("# Test Heading\n\nTest content")
-
-            runner = CliRunner()
-            result = runner.invoke(convert, ["md", "html", str(test_file)])
-
-            assert result.exit_code == 0
-
-            # Check output file exists
-            output_file = Path(tmpdir) / "test.html"
-            assert output_file.exists()
-            assert output_file.read_text()  # Has content

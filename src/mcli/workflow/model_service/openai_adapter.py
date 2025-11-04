@@ -10,9 +10,9 @@ import uuid
 from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from mcli.lib.logger.logger import get_logger
 
@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 
 
 class Message(BaseModel):
-    """OpenAI message format"""
+    """OpenAI message format."""
 
     role: str
     content: str
@@ -28,7 +28,7 @@ class Message(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    """OpenAI chat completion request"""
+    """OpenAI chat completion request."""
 
     model: str
     messages: List[Message]
@@ -44,7 +44,7 @@ class ChatCompletionRequest(BaseModel):
 
 
 class ChatCompletionChoice(BaseModel):
-    """Chat completion choice"""
+    """Chat completion choice."""
 
     index: int
     message: Message
@@ -52,7 +52,7 @@ class ChatCompletionChoice(BaseModel):
 
 
 class Usage(BaseModel):
-    """Token usage information"""
+    """Token usage information."""
 
     prompt_tokens: int
     completion_tokens: int
@@ -60,7 +60,7 @@ class Usage(BaseModel):
 
 
 class ChatCompletionResponse(BaseModel):
-    """OpenAI chat completion response"""
+    """OpenAI chat completion response."""
 
     id: str
     object: str = "chat.completion"
@@ -71,7 +71,7 @@ class ChatCompletionResponse(BaseModel):
 
 
 class ModelInfo(BaseModel):
-    """Model information"""
+    """Model information."""
 
     id: str
     object: str = "model"
@@ -80,20 +80,20 @@ class ModelInfo(BaseModel):
 
 
 class ModelListResponse(BaseModel):
-    """Model list response"""
+    """Model list response."""
 
     object: str = "list"
     data: List[ModelInfo]
 
 
 class APIKeyManager:
-    """Manages API key authentication"""
+    """Manages API key authentication."""
 
     def __init__(self):
         self.valid_keys: Dict[str, Dict[str, Any]] = {}
 
     def add_key(self, key: str, name: str = "default", metadata: Optional[Dict] = None):
-        """Add a valid API key"""
+        """Add a valid API key."""
         self.valid_keys[key] = {
             "name": name,
             "created_at": datetime.now().isoformat(),
@@ -102,19 +102,19 @@ class APIKeyManager:
         }
 
     def validate_key(self, key: str) -> bool:
-        """Validate an API key"""
+        """Validate an API key."""
         if key in self.valid_keys:
             self.valid_keys[key]["usage_count"] += 1
             return True
         return False
 
     def remove_key(self, key: str):
-        """Remove an API key"""
+        """Remove an API key."""
         if key in self.valid_keys:
             del self.valid_keys[key]
 
     def list_keys(self) -> List[Dict[str, Any]]:
-        """List all API keys (without showing the actual key)"""
+        """List all API keys (without showing the actual key)."""
         return [
             {
                 "name": info["name"],
@@ -126,7 +126,7 @@ class APIKeyManager:
 
 
 class OpenAIAdapter:
-    """Adapter to make MCLI model service OpenAI-compatible"""
+    """Adapter to make MCLI model service OpenAI-compatible."""
 
     def __init__(self, model_manager, require_auth: bool = True):
         self.model_manager = model_manager
@@ -138,11 +138,11 @@ class OpenAIAdapter:
         self._setup_routes()
 
     def _setup_routes(self):
-        """Setup OpenAI-compatible routes"""
+        """Setup OpenAI-compatible routes."""
 
         @self.router.get("/models", response_model=ModelListResponse)
         async def list_models(api_key: str = Depends(self.verify_api_key)):
-            """List available models (OpenAI compatible)"""
+            """List available models (OpenAI compatible)."""
             models = []
 
             # Get loaded models from model manager
@@ -177,7 +177,7 @@ class OpenAIAdapter:
         async def create_chat_completion(
             request: ChatCompletionRequest, api_key: str = Depends(self.verify_api_key)
         ):
-            """Create a chat completion (OpenAI compatible)"""
+            """Create a chat completion (OpenAI compatible)."""
             try:
                 # Extract the conversation history
                 messages = request.messages
@@ -219,7 +219,7 @@ class OpenAIAdapter:
                 raise HTTPException(status_code=500, detail=str(e))
 
     def _messages_to_prompt(self, messages: List[Message]) -> str:
-        """Convert OpenAI messages format to a simple prompt"""
+        """Convert OpenAI messages format to a simple prompt."""
         prompt_parts = []
 
         for message in messages:
@@ -236,7 +236,7 @@ class OpenAIAdapter:
         return "\n\n".join(prompt_parts)
 
     async def _generate_response(self, request: ChatCompletionRequest, prompt: str) -> str:
-        """Generate a response from the model"""
+        """Generate a response from the model."""
         try:
             # Use the lightweight model server if available
             if hasattr(self.model_manager, "loaded_models"):
@@ -275,7 +275,7 @@ class OpenAIAdapter:
     async def _generate_stream(
         self, request: ChatCompletionRequest, prompt: str
     ) -> AsyncGenerator[str, None]:
-        """Generate a streaming response"""
+        """Generate a streaming response."""
         completion_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
 
         # Generate response
@@ -304,7 +304,7 @@ class OpenAIAdapter:
         yield "data: [DONE]\n\n"
 
     async def verify_api_key(self, authorization: Optional[str] = Header(None)) -> str:
-        """Verify API key from Authorization header"""
+        """Verify API key from Authorization header."""
         if not self.require_auth:
             return "no-auth-required"
 
@@ -343,5 +343,5 @@ class OpenAIAdapter:
 
 
 def create_openai_adapter(model_manager, require_auth: bool = True) -> OpenAIAdapter:
-    """Create an OpenAI adapter instance"""
+    """Create an OpenAI adapter instance."""
     return OpenAIAdapter(model_manager, require_auth)

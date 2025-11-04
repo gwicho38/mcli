@@ -1,19 +1,18 @@
-"""Advanced portfolio optimization for stock recommendations"""
+"""Advanced portfolio optimization for stock recommendations."""
 
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 # Optimization libraries
 import cvxpy as cp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from scipy.optimize import minimize
 from scipy.stats import norm
 
@@ -21,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class OptimizationObjective(Enum):
-    """Portfolio optimization objectives"""
+    """Portfolio optimization objectives."""
 
     MEAN_VARIANCE = "mean_variance"
     RISK_PARITY = "risk_parity"
@@ -35,7 +34,7 @@ class OptimizationObjective(Enum):
 
 @dataclass
 class OptimizationConstraints:
-    """Portfolio optimization constraints"""
+    """Portfolio optimization constraints."""
 
     # Weight constraints
     min_weight: float = 0.0
@@ -66,7 +65,7 @@ class OptimizationConstraints:
 
 @dataclass
 class PortfolioAllocation:
-    """Portfolio allocation result"""
+    """Portfolio allocation result."""
 
     weights: Dict[str, float]
     expected_return: float
@@ -93,7 +92,7 @@ class PortfolioAllocation:
 
 
 class BaseOptimizer(ABC):
-    """Base class for portfolio optimizers"""
+    """Base class for portfolio optimizers."""
 
     def __init__(self, constraints: OptimizationConstraints):
         self.constraints = constraints
@@ -102,8 +101,7 @@ class BaseOptimizer(ABC):
     def optimize(
         self, expected_returns: pd.Series, covariance_matrix: pd.DataFrame, **kwargs
     ) -> PortfolioAllocation:
-        """Optimize portfolio allocation"""
-        pass
+        """Optimize portfolio allocation."""
 
     def _calculate_portfolio_metrics(
         self,
@@ -112,7 +110,7 @@ class BaseOptimizer(ABC):
         covariance_matrix: pd.DataFrame,
         risk_free_rate: float = 0.02,
     ) -> Tuple[float, float, float]:
-        """Calculate portfolio return, volatility, and Sharpe ratio"""
+        """Calculate portfolio return, volatility, and Sharpe ratio."""
         portfolio_return = np.dot(weights, expected_returns)
         portfolio_variance = np.dot(weights.T, np.dot(covariance_matrix, weights))
         portfolio_volatility = np.sqrt(portfolio_variance)
@@ -132,7 +130,7 @@ class BaseOptimizer(ABC):
         covariance_matrix: pd.DataFrame,
         confidence_level: float = 0.95,
     ) -> Tuple[float, float]:
-        """Calculate Value at Risk and Conditional Value at Risk"""
+        """Calculate Value at Risk and Conditional Value at Risk."""
         portfolio_return = np.dot(weights, expected_returns)
         portfolio_volatility = np.sqrt(np.dot(weights.T, np.dot(covariance_matrix, weights)))
 
@@ -147,7 +145,7 @@ class BaseOptimizer(ABC):
 
 
 class MeanVarianceOptimizer(BaseOptimizer):
-    """Modern Portfolio Theory mean-variance optimizer"""
+    """Modern Portfolio Theory mean-variance optimizer."""
 
     def optimize(
         self,
@@ -156,7 +154,7 @@ class MeanVarianceOptimizer(BaseOptimizer):
         risk_aversion: float = 1.0,
         **kwargs,
     ) -> PortfolioAllocation:
-        """Optimize using mean-variance framework"""
+        """Optimize using mean-variance framework."""
         n_assets = len(expected_returns)
 
         # Decision variable: portfolio weights
@@ -213,15 +211,15 @@ class MeanVarianceOptimizer(BaseOptimizer):
 
 
 class RiskParityOptimizer(BaseOptimizer):
-    """Risk parity portfolio optimizer"""
+    """Risk parity portfolio optimizer."""
 
     def optimize(
         self, expected_returns: pd.Series, covariance_matrix: pd.DataFrame, **kwargs
     ) -> PortfolioAllocation:
-        """Optimize using risk parity approach"""
+        """Optimize using risk parity approach."""
 
         def risk_parity_objective(weights, cov_matrix):
-            """Risk parity objective function"""
+            """Risk parity objective function."""
             portfolio_vol = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights)))
             marginal_contrib = np.dot(cov_matrix, weights) / portfolio_vol
             contrib = weights * marginal_contrib
@@ -282,7 +280,7 @@ class RiskParityOptimizer(BaseOptimizer):
 
 
 class BlackLittermanOptimizer(BaseOptimizer):
-    """Black-Litterman portfolio optimizer"""
+    """Black-Litterman portfolio optimizer."""
 
     def optimize(
         self,
@@ -295,7 +293,7 @@ class BlackLittermanOptimizer(BaseOptimizer):
         risk_aversion: float = 3.0,
         **kwargs,
     ) -> PortfolioAllocation:
-        """Optimize using Black-Litterman model"""
+        """Optimize using Black-Litterman model."""
 
         # Market capitalization weights (if not provided, use equal weights)
         if market_caps is None:
@@ -354,7 +352,7 @@ class BlackLittermanOptimizer(BaseOptimizer):
 
 
 class CVaROptimizer(BaseOptimizer):
-    """Conditional Value at Risk optimizer"""
+    """Conditional Value at Risk optimizer."""
 
     def optimize(
         self,
@@ -364,7 +362,7 @@ class CVaROptimizer(BaseOptimizer):
         confidence_level: float = 0.95,
         **kwargs,
     ) -> PortfolioAllocation:
-        """Optimize portfolio to minimize CVaR"""
+        """Optimize portfolio to minimize CVaR."""
 
         if scenarios is None:
             # Generate scenarios from normal distribution
@@ -434,12 +432,12 @@ class CVaROptimizer(BaseOptimizer):
 
 
 class KellyCriterionOptimizer(BaseOptimizer):
-    """Kelly Criterion optimizer for growth-optimal portfolios"""
+    """Kelly Criterion optimizer for growth-optimal portfolios."""
 
     def optimize(
         self, expected_returns: pd.Series, covariance_matrix: pd.DataFrame, **kwargs
     ) -> PortfolioAllocation:
-        """Optimize using Kelly Criterion"""
+        """Optimize using Kelly Criterion."""
 
         # Kelly optimal weights: w* = Σ^(-1) * μ
         # where μ is expected excess returns and Σ is covariance matrix
@@ -510,7 +508,7 @@ class KellyCriterionOptimizer(BaseOptimizer):
 
 
 class AdvancedPortfolioOptimizer:
-    """Advanced portfolio optimization system"""
+    """Advanced portfolio optimization system."""
 
     def __init__(self, constraints: Optional[OptimizationConstraints] = None):
         self.constraints = constraints or OptimizationConstraints()
@@ -533,7 +531,7 @@ class AdvancedPortfolioOptimizer:
         objective: OptimizationObjective = OptimizationObjective.MEAN_VARIANCE,
         **optimizer_kwargs,
     ) -> PortfolioAllocation:
-        """Optimize portfolio using specified objective"""
+        """Optimize portfolio using specified objective."""
 
         if objective not in self.optimizers:
             raise ValueError(f"Unsupported optimization objective: {objective}")
@@ -558,7 +556,7 @@ class AdvancedPortfolioOptimizer:
         objectives: List[OptimizationObjective],
         weights: Optional[List[float]] = None,
     ) -> PortfolioAllocation:
-        """Combine multiple optimization objectives"""
+        """Combine multiple optimization objectives."""
 
         if weights is None:
             weights = [1.0 / len(objectives)] * len(objectives)
@@ -608,7 +606,7 @@ class AdvancedPortfolioOptimizer:
     def efficient_frontier(
         self, expected_returns: pd.Series, covariance_matrix: pd.DataFrame, n_points: int = 20
     ) -> pd.DataFrame:
-        """Generate efficient frontier"""
+        """Generate efficient frontier."""
 
         min_vol_allocation = self.optimize_portfolio(
             expected_returns,
@@ -676,7 +674,7 @@ class AdvancedPortfolioOptimizer:
         target_allocation: PortfolioAllocation,
         rebalance_threshold: float = 0.05,
     ) -> Dict[str, Any]:
-        """Calculate rebalancing trades"""
+        """Calculate rebalancing trades."""
 
         trades = {}
         total_deviation = 0
@@ -709,9 +707,9 @@ class AdvancedPortfolioOptimizer:
         expected_returns: pd.Series,
         covariance_matrix: pd.DataFrame,
     ) -> PortfolioAllocation:
-        """Add additional metrics to allocation"""
+        """Add additional metrics to allocation."""
 
-        weights_array = np.array(
+        _weights_array = np.array(  # noqa: F841
             [allocation.weights.get(asset, 0) for asset in expected_returns.index]
         )
 
@@ -727,7 +725,7 @@ class AdvancedPortfolioOptimizer:
     def plot_allocation(
         self, allocation: PortfolioAllocation, save_path: Optional[Path] = None
     ) -> None:
-        """Plot portfolio allocation"""
+        """Plot portfolio allocation."""
 
         # Filter out zero weights
         non_zero_weights = {k: v for k, v in allocation.weights.items() if abs(v) > 0.001}
@@ -854,7 +852,7 @@ if __name__ == "__main__":
             weights=[0.7, 0.3],
         )
 
-        print(f"\nMULTI-OBJECTIVE Optimization:")
+        print("\nMULTI-OBJECTIVE Optimization:")
         print(f"Expected Return: {multi_obj_allocation.expected_return:.3f}")
         print(f"Volatility: {multi_obj_allocation.expected_volatility:.3f}")
         print(f"Sharpe Ratio: {multi_obj_allocation.sharpe_ratio:.3f}")

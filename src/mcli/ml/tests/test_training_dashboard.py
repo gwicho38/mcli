@@ -1,7 +1,7 @@
-"""Unit tests for training dashboard functionality"""
+"""Unit tests for training dashboard functionality."""
 
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, Mock
 
 import numpy as np
 import pandas as pd
@@ -12,17 +12,17 @@ from mcli.ml.database.models import Experiment, Model, ModelStatus
 
 
 class TestTrainingDashboard:
-    """Test suite for training dashboard functions"""
+    """Test suite for training dashboard functions."""
 
     @pytest.fixture
     def mock_db_session(self):
-        """Create mock database session"""
+        """Create mock database session."""
         session = MagicMock(spec=Session)
         return session
 
     @pytest.fixture
     def sample_models(self):
-        """Create sample model data"""
+        """Create sample model data."""
         models = []
 
         # Bitcoin-style model comparison data
@@ -120,7 +120,7 @@ class TestTrainingDashboard:
 
     @pytest.fixture
     def sample_experiments(self):
-        """Create sample experiment data"""
+        """Create sample experiment data."""
         experiments = []
 
         for i in range(10):
@@ -147,7 +147,7 @@ class TestTrainingDashboard:
         return experiments
 
     def test_model_comparison_metrics(self, sample_models):
-        """Test model comparison metrics calculation"""
+        """Test model comparison metrics calculation."""
         # Convert to DataFrame as the dashboard would
         df = pd.DataFrame(
             [
@@ -176,7 +176,7 @@ class TestTrainingDashboard:
         assert sorted_by_mae.iloc[0]["test_mae"] < 125
 
     def test_model_performance_aggregation(self, sample_models):
-        """Test aggregation of model performance"""
+        """Test aggregation of model performance."""
         metrics = {
             "total_models": len(sample_models),
             "deployed_models": sum(1 for m in sample_models if m.status == ModelStatus.DEPLOYED),
@@ -190,7 +190,7 @@ class TestTrainingDashboard:
         assert 0.75 < metrics["avg_r2"] < 0.85
 
     def test_feature_importance_calculation(self, sample_models):
-        """Test feature importance extraction and ranking"""
+        """Test feature importance extraction and ranking."""
         model = sample_models[0]
 
         # Simulate feature importance
@@ -208,7 +208,7 @@ class TestTrainingDashboard:
         assert all(top_5["importance"] > 0)
 
     def test_residuals_analysis(self):
-        """Test residual analysis calculations"""
+        """Test residual analysis calculations."""
         # Generate sample predictions and actuals
         np.random.seed(42)
         n = 500
@@ -234,7 +234,7 @@ class TestTrainingDashboard:
         assert 0 <= p_value <= 1
 
     def test_cross_validation_metrics(self):
-        """Test cross-validation metrics calculation"""
+        """Test cross-validation metrics calculation."""
         # Simulate CV scores
         cv_scores = [0.80, 0.82, 0.78, 0.85, 0.79]
 
@@ -248,7 +248,7 @@ class TestTrainingDashboard:
         assert cv_std / cv_mean < 0.1  # Coefficient of variation < 10%
 
     def test_training_duration_analysis(self, sample_experiments):
-        """Test training duration analysis"""
+        """Test training duration analysis."""
         completed = [exp for exp in sample_experiments if exp.status == "completed"]
 
         durations = [exp.duration_seconds for exp in completed]
@@ -260,7 +260,7 @@ class TestTrainingDashboard:
         assert min_duration <= avg_duration <= max_duration
 
     def test_model_comparison_ranking(self, sample_models):
-        """Test ranking models by multiple metrics"""
+        """Test ranking models by multiple metrics."""
         df = pd.DataFrame(
             [
                 {
@@ -289,7 +289,7 @@ class TestTrainingDashboard:
         assert best_overall["test_rmse"] < 160
 
     def test_feature_categorization(self):
-        """Test feature categorization (lag, MA, volatility, etc.)"""
+        """Test feature categorization (lag, MA, volatility, etc.)."""
         features = [
             "lag_1",
             "lag_7",
@@ -329,7 +329,7 @@ class TestTrainingDashboard:
         assert len(categories["Technical"]) == 3
 
     def test_mape_calculation(self):
-        """Test Mean Absolute Percentage Error calculation"""
+        """Test Mean Absolute Percentage Error calculation."""
         actual = np.array([100, 200, 150, 300, 250])
         predicted = np.array([105, 195, 160, 295, 245])
 
@@ -339,7 +339,7 @@ class TestTrainingDashboard:
         assert mape < 10  # Should be reasonably low for good predictions
 
     def test_error_metrics_comparison(self):
-        """Test that RMSE >= MAE for any predictions"""
+        """Test that RMSE >= MAE for any predictions."""
         # This is a mathematical property: RMSE is always >= MAE
 
         errors = np.array([5, 3, 8, 2, 10])
@@ -350,7 +350,7 @@ class TestTrainingDashboard:
         assert rmse >= mae
 
     def test_r2_score_properties(self):
-        """Test R² score properties"""
+        """Test R² score properties."""
         # Perfect predictions
         y_true = np.array([1, 2, 3, 4, 5])
         y_pred = np.array([1, 2, 3, 4, 5])
@@ -369,7 +369,7 @@ class TestTrainingDashboard:
         assert r2_random < 1.0
 
     def test_experiment_status_distribution(self, sample_experiments):
-        """Test experiment status distribution"""
+        """Test experiment status distribution."""
         status_counts = {}
         for exp in sample_experiments:
             status_counts[exp.status] = status_counts.get(exp.status, 0) + 1
@@ -381,10 +381,10 @@ class TestTrainingDashboard:
 
 
 class TestModelVersioning:
-    """Test model versioning functionality"""
+    """Test model versioning functionality."""
 
     def test_version_comparison(self):
-        """Test semantic version comparison"""
+        """Test semantic version comparison."""
         versions = ["1.0.0", "1.1.0", "1.0.1", "2.0.0", "1.2.0"]
 
         # Parse and sort versions
@@ -395,7 +395,7 @@ class TestModelVersioning:
         assert sorted_versions[-1] == (2, 0, 0)
 
     def test_model_deployment_tracking(self):
-        """Test tracking which models are deployed"""
+        """Test tracking which models are deployed."""
         models = [
             {"name": "model-a", "version": "1.0.0", "deployed": True},
             {"name": "model-a", "version": "1.1.0", "deployed": False},

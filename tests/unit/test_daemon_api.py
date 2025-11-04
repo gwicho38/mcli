@@ -9,7 +9,7 @@ import pytest
 
 # Check if watchdog is available
 try:
-    import watchdog
+    pass
 
     HAS_WATCHDOG = True
 except ImportError:

@@ -1,7 +1,6 @@
-"""FastAPI application factory and configuration"""
+"""FastAPI application factory and configuration."""
 
 from contextlib import asynccontextmanager
-from typing import Any, Dict
 
 import uvicorn
 from fastapi import FastAPI, Request, Response
@@ -35,7 +34,7 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager"""
+    """Application lifespan manager."""
     # Startup
     logger.info("Starting ML API server...")
 
@@ -70,7 +69,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    """Create FastAPI application with all configurations"""
+    """Create FastAPI application with all configurations."""
 
     # Setup logging
     setup_logging()
@@ -126,13 +125,13 @@ def create_app() -> FastAPI:
     # Health check endpoint
     @app.get("/health", tags=["Health"])
     async def health_check():
-        """Health check endpoint"""
+        """Health check endpoint."""
         return {"status": "healthy", "environment": settings.environment, "version": "1.0.0"}
 
     # Ready check endpoint
     @app.get("/ready", tags=["Health"])
     async def ready_check():
-        """Readiness check endpoint"""
+        """Readiness check endpoint."""
         from mcli.ml.cache import check_cache_health
         from mcli.ml.database.session import check_database_health
 
@@ -154,7 +153,7 @@ def create_app() -> FastAPI:
     # Metrics endpoint (Prometheus format)
     @app.get("/metrics", tags=["Monitoring"])
     async def metrics():
-        """Prometheus metrics endpoint"""
+        """Prometheus metrics endpoint."""
         from mcli.ml.monitoring.metrics import get_metrics
 
         return Response(content=get_metrics(), media_type="text/plain")
@@ -162,7 +161,7 @@ def create_app() -> FastAPI:
     # Root endpoint
     @app.get("/")
     async def root():
-        """Root endpoint"""
+        """Root endpoint."""
         return {
             "message": "MCLI ML System API",
             "version": "1.0.0",
@@ -183,7 +182,7 @@ def create_app() -> FastAPI:
 
 
 def get_application() -> FastAPI:
-    """Get configured FastAPI application"""
+    """Get configured FastAPI application."""
     return create_app()
 
 

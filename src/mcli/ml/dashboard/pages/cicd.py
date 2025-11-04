@@ -1,35 +1,32 @@
-"""CI/CD Pipeline Monitoring Dashboard"""
+"""CI/CD Pipeline Monitoring Dashboard."""
 
 import os
-from datetime import datetime, timedelta
-from typing import Optional
 
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import requests
 import streamlit as st
 
 # Import components
 try:
-    from ..components.charts import create_status_pie_chart, create_timeline_chart, render_chart
-    from ..components.metrics import display_health_indicator, display_kpi_row, display_status_badge
+    from ..components.charts import create_status_pie_chart, render_chart
+    from ..components.metrics import display_kpi_row, display_status_badge
     from ..components.tables import display_filterable_dataframe, export_dataframe
 except ImportError:
     # Fallback for when imported outside package context
-    from components.charts import create_status_pie_chart, create_timeline_chart, render_chart
-    from components.metrics import display_health_indicator, display_kpi_row, display_status_badge
+    from components.charts import create_status_pie_chart, render_chart
+    from components.metrics import display_kpi_row, display_status_badge
     from components.tables import display_filterable_dataframe, export_dataframe
 
 
 def get_cicd_api_url() -> str:
-    """Get CI/CD API URL from environment"""
+    """Get CI/CD API URL from environment."""
     lsh_url = os.getenv("LSH_API_URL", "http://localhost:3034")
     return f"{lsh_url}/api/cicd"
 
 
 def fetch_cicd_builds(limit: int = 100) -> pd.DataFrame:
-    """Fetch CI/CD build data from API"""
+    """Fetch CI/CD build data from API."""
     try:
         api_url = get_cicd_api_url()
         response = requests.get(f"{api_url}/builds", params={"limit": limit}, timeout=5)
@@ -56,7 +53,7 @@ def fetch_cicd_builds(limit: int = 100) -> pd.DataFrame:
 
 
 def create_mock_cicd_data() -> pd.DataFrame:
-    """Create mock CI/CD data for demonstration"""
+    """Create mock CI/CD data for demonstration."""
     import random
     from datetime import datetime, timedelta
 
@@ -92,7 +89,7 @@ def create_mock_cicd_data() -> pd.DataFrame:
 
 
 def fetch_webhooks() -> list:
-    """Fetch configured webhooks"""
+    """Fetch configured webhooks."""
     try:
         api_url = get_cicd_api_url()
         response = requests.get(f"{api_url}/webhooks", timeout=5)
@@ -129,7 +126,7 @@ def fetch_webhooks() -> list:
 
 
 def show_cicd_dashboard():
-    """Main CI/CD dashboard page"""
+    """Main CI/CD dashboard page."""
 
     st.title("🔧 CI/CD Pipeline Dashboard")
     st.markdown("Monitor build pipelines, deployments, and CI/CD metrics")
@@ -212,7 +209,7 @@ def show_cicd_dashboard():
 
 
 def show_cicd_overview(builds_df: pd.DataFrame):
-    """Show CI/CD overview charts"""
+    """Show CI/CD overview charts."""
 
     col1, col2 = st.columns(2)
 
@@ -280,7 +277,7 @@ def show_cicd_overview(builds_df: pd.DataFrame):
 
 
 def show_build_history(builds_df: pd.DataFrame):
-    """Show detailed build history"""
+    """Show detailed build history."""
 
     st.markdown("### Build History")
 
@@ -326,7 +323,7 @@ def show_build_history(builds_df: pd.DataFrame):
                         )
 
                 # Mock logs
-                if st.button(f"View Logs", key=f"logs_{build.get('id')}"):
+                if st.button("View Logs", key=f"logs_{build.get('id')}"):
                     st.code(
                         f"""
 [INFO] Starting build for {build.get('pipeline_name')}
@@ -340,7 +337,7 @@ def show_build_history(builds_df: pd.DataFrame):
 
 
 def show_webhooks_config():
-    """Show webhook configuration"""
+    """Show webhook configuration."""
 
     st.markdown("### 🔔 Configured Webhooks")
 
@@ -385,7 +382,7 @@ def show_webhooks_config():
 
 
 def show_cicd_configuration():
-    """Show CI/CD configuration options"""
+    """Show CI/CD configuration options."""
 
     st.markdown("### ⚙️ CI/CD Configuration")
 

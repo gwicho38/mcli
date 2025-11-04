@@ -1,9 +1,9 @@
-"""Workflow Management Dashboard"""
+"""Workflow Management Dashboard."""
 
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Optional
 
 import pandas as pd
 import plotly.express as px
@@ -12,34 +12,24 @@ import streamlit as st
 
 # Import components
 try:
-    from ..components.charts import (
-        create_gantt_chart,
-        create_status_pie_chart,
-        create_timeline_chart,
-        render_chart,
-    )
-    from ..components.metrics import display_health_indicator, display_kpi_row, display_status_badge
+    from ..components.charts import create_status_pie_chart, render_chart
+    from ..components.metrics import display_kpi_row, display_status_badge
     from ..components.tables import display_filterable_dataframe, export_dataframe
 except ImportError:
     # Fallback for when imported outside package context
-    from components.charts import (
-        create_gantt_chart,
-        create_status_pie_chart,
-        create_timeline_chart,
-        render_chart,
-    )
-    from components.metrics import display_health_indicator, display_kpi_row, display_status_badge
+    from components.charts import create_status_pie_chart, render_chart
+    from components.metrics import display_kpi_row, display_status_badge
     from components.tables import display_filterable_dataframe, export_dataframe
 
 
 def get_workflow_api_url() -> str:
-    """Get Workflow API URL from environment"""
+    """Get Workflow API URL from environment."""
     lsh_url = os.getenv("LSH_API_URL", "http://localhost:3034")
     return f"{lsh_url}/api/workflows"
 
 
 def fetch_workflows() -> pd.DataFrame:
-    """Fetch workflow definitions from API"""
+    """Fetch workflow definitions from API."""
     try:
         api_url = get_workflow_api_url()
         response = requests.get(api_url, timeout=5)
@@ -66,7 +56,7 @@ def fetch_workflows() -> pd.DataFrame:
 
 
 def create_mock_workflow_data() -> pd.DataFrame:
-    """Create mock workflow data for demonstration"""
+    """Create mock workflow data for demonstration."""
     workflows = [
         {
             "id": "wf-1",
@@ -122,7 +112,7 @@ def create_mock_workflow_data() -> pd.DataFrame:
 
 
 def fetch_workflow_executions(workflow_id: Optional[str] = None) -> pd.DataFrame:
-    """Fetch workflow execution history"""
+    """Fetch workflow execution history."""
     try:
         api_url = get_workflow_api_url()
         url = f"{api_url}/{workflow_id}/executions" if workflow_id else f"{api_url}/executions"
@@ -149,7 +139,7 @@ def fetch_workflow_executions(workflow_id: Optional[str] = None) -> pd.DataFrame
 
 
 def create_mock_execution_data(workflow_id: Optional[str] = None) -> pd.DataFrame:
-    """Create mock execution data"""
+    """Create mock execution data."""
     import random
 
     executions = []
@@ -190,7 +180,7 @@ def create_mock_execution_data(workflow_id: Optional[str] = None) -> pd.DataFram
 
 
 def show_workflows_dashboard():
-    """Main workflow management dashboard"""
+    """Main workflow management dashboard."""
 
     st.title("⚙️ Workflow Management")
     st.markdown("Create, schedule, and monitor data pipeline workflows")
@@ -256,7 +246,7 @@ def show_workflows_dashboard():
 
 
 def show_workflow_list(workflows_df: pd.DataFrame):
-    """Display list of workflows"""
+    """Display list of workflows."""
 
     st.markdown("### Active Workflows")
 
@@ -327,7 +317,7 @@ def show_workflow_list(workflows_df: pd.DataFrame):
 
 
 def show_workflow_executions():
-    """Show workflow execution history"""
+    """Show workflow execution history."""
 
     st.markdown("### Workflow Execution History")
 
@@ -456,7 +446,7 @@ def show_workflow_executions():
 
 
 def show_workflow_builder():
-    """Workflow builder interface"""
+    """Workflow builder interface."""
 
     st.markdown("### ➕ Create New Workflow")
 
@@ -496,15 +486,15 @@ def show_workflow_builder():
         for i in range(num_steps):
             with st.expander(f"Step {i+1}"):
                 step_name = st.text_input(
-                    f"Step Name", key=f"step_name_{i}", placeholder=f"Step {i+1}"
+                    "Step Name", key=f"step_name_{i}", placeholder=f"Step {i+1}"
                 )
                 step_type = st.selectbox(
-                    f"Step Type",
+                    "Step Type",
                     ["API Call", "Python Script", "Database Query", "Data Transform", "Validation"],
                     key=f"step_type_{i}",
                 )
                 step_config = st.text_area(
-                    f"Configuration (JSON)",
+                    "Configuration (JSON)",
                     key=f"step_config_{i}",
                     placeholder='{"param": "value"}',
                 )
@@ -532,7 +522,7 @@ def show_workflow_builder():
 
 
 def show_workflow_templates():
-    """Show workflow templates"""
+    """Show workflow templates."""
 
     st.markdown("### 📚 Workflow Templates")
 
@@ -569,7 +559,7 @@ def show_workflow_templates():
             st.markdown(f"**Steps:** {template['steps']}")
             st.markdown(f"**Category:** {template['category']}")
 
-            if st.button(f"Use Template", key=f"use_{template['name']}"):
+            if st.button("Use Template", key=f"use_{template['name']}"):
                 st.info(f"Loading template: {template['name']}")
                 # Would populate the workflow builder form
 

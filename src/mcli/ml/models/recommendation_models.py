@@ -1,25 +1,24 @@
-"""Stock recommendation models"""
+"""Stock recommendation models."""
 
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from mcli.ml.models.base_models import BaseStockModel, ModelMetrics, ValidationResult
-from mcli.ml.models.ensemble_models import DeepEnsembleModel, EnsembleConfig, ModelConfig
+from mcli.ml.models.ensemble_models import DeepEnsembleModel, EnsembleConfig
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class RecommendationConfig:
-    """Configuration for recommendation model"""
+    """Configuration for recommendation model."""
 
     ensemble_config: EnsembleConfig
     risk_adjustment: bool = True
@@ -32,7 +31,7 @@ class RecommendationConfig:
 
 @dataclass
 class PortfolioRecommendation:
-    """Portfolio recommendation result"""
+    """Portfolio recommendation result."""
 
     ticker: str
     recommendation_score: float
@@ -59,7 +58,7 @@ class PortfolioRecommendation:
 
 
 class StockRecommendationModel(BaseStockModel):
-    """Main stock recommendation model combining ensemble prediction with portfolio optimization"""
+    """Main stock recommendation model combining ensemble prediction with portfolio optimization."""
 
     def __init__(self, input_dim: int, config: RecommendationConfig):
         super().__init__(input_dim, config.__dict__)
@@ -104,7 +103,7 @@ class StockRecommendationModel(BaseStockModel):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x: torch.Tensor) -> Dict[str, torch.Tensor]:
-        """Forward pass returning multiple outputs"""
+        """Forward pass returning multiple outputs."""
         # Main prediction
         main_prediction = self.ensemble_model(x)
 
@@ -132,7 +131,7 @@ class StockRecommendationModel(BaseStockModel):
         }
 
     def predict_proba(self, X: Union[torch.Tensor, np.ndarray, pd.DataFrame]) -> np.ndarray:
-        """Predict class probabilities"""
+        """Predict class probabilities."""
         self.eval()
         with torch.no_grad():
             X_tensor = self.preprocess_input(X)
@@ -146,7 +145,7 @@ class StockRecommendationModel(BaseStockModel):
         tickers: List[str],
         market_data: Optional[pd.DataFrame] = None,
     ) -> List[PortfolioRecommendation]:
-        """Generate portfolio recommendations"""
+        """Generate portfolio recommendations."""
         self.eval()
         recommendations = []
 
@@ -187,7 +186,7 @@ class StockRecommendationModel(BaseStockModel):
         features: np.ndarray,
         market_data: Optional[pd.DataFrame],
     ) -> PortfolioRecommendation:
-        """Create individual stock recommendation"""
+        """Create individual stock recommendation."""
 
         # Basic recommendation score (probability of positive outcome)
         recommendation_score = main_prob[1]  # Assuming class 1 is positive
@@ -253,7 +252,7 @@ class StockRecommendationModel(BaseStockModel):
     def _generate_recommendation_reason(
         self, score: float, risk: str, confidence: float, expected_return: float
     ) -> str:
-        """Generate human-readable recommendation reason"""
+        """Generate human-readable recommendation reason."""
         if score > 0.7:
             strength = "Strong"
         elif score > 0.6:
@@ -267,12 +266,12 @@ class StockRecommendationModel(BaseStockModel):
         )
 
     def _extract_key_features(self, features: np.ndarray) -> List[str]:
-        """Extract key features driving the recommendation"""
+        """Extract key features driving the recommendation."""
         # Simplified implementation - would use feature importance in practice
         return ["technical_indicators", "political_influence", "market_regime"]
 
     def _generate_warnings(self, risk_level: str, confidence: float, score: float) -> List[str]:
-        """Generate warnings for the recommendation"""
+        """Generate warnings for the recommendation."""
         warnings = []
 
         if confidence < 0.5:
@@ -289,7 +288,7 @@ class StockRecommendationModel(BaseStockModel):
     def _optimize_portfolio(
         self, recommendations: List[PortfolioRecommendation]
     ) -> List[PortfolioRecommendation]:
-        """Apply portfolio-level optimization"""
+        """Apply portfolio-level optimization."""
         # Sort by risk-adjusted score
         recommendations.sort(key=lambda x: x.risk_adjusted_score, reverse=True)
 
@@ -319,7 +318,7 @@ class StockRecommendationModel(BaseStockModel):
 
 
 class RecommendationTrainer:
-    """Trainer for recommendation model"""
+    """Trainer for recommendation model."""
 
     def __init__(self, model: StockRecommendationModel, config: RecommendationConfig):
         self.model = model
@@ -340,7 +339,7 @@ class RecommendationTrainer:
         epochs: int = 100,
         batch_size: int = 64,
     ) -> ValidationResult:
-        """Train the recommendation model"""
+        """Train the recommendation model."""
 
         from torch.utils.data import DataLoader, TensorDataset
 
@@ -442,7 +441,7 @@ class RecommendationTrainer:
         returns_val: np.ndarray,
         risk_labels_val: np.ndarray,
     ) -> float:
-        """Validate model during training"""
+        """Validate model during training."""
         self.model.eval()
 
         with torch.no_grad():
@@ -466,7 +465,7 @@ class RecommendationTrainer:
             return total_loss.item()
 
     def _evaluate(self, X: np.ndarray, y: np.ndarray) -> ModelMetrics:
-        """Evaluate model performance"""
+        """Evaluate model performance."""
         if X is None or y is None:
             return ModelMetrics(0, 0, 0, 0, 0)
 

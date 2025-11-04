@@ -1,14 +1,10 @@
-"""Backtesting engine for trading strategies"""
+"""Backtesting engine for trading strategies."""
 
-import json
 import logging
-import os
-import sys
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -19,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class OrderType(Enum):
-    """Order types"""
+    """Order types."""
 
     MARKET = "market"
     LIMIT = "limit"
@@ -28,7 +24,7 @@ class OrderType(Enum):
 
 
 class OrderSide(Enum):
-    """Order side"""
+    """Order side."""
 
     BUY = "buy"
     SELL = "sell"
@@ -36,7 +32,7 @@ class OrderSide(Enum):
 
 @dataclass
 class BacktestConfig:
-    """Backtesting configuration"""
+    """Backtesting configuration."""
 
     initial_capital: float = 100000.0
     start_date: Optional[datetime] = None
@@ -55,7 +51,7 @@ class BacktestConfig:
 
 @dataclass
 class BacktestResult:
-    """Backtesting results"""
+    """Backtesting results."""
 
     portfolio_value: pd.Series
     returns: pd.Series
@@ -67,7 +63,7 @@ class BacktestResult:
 
 
 class TradingStrategy:
-    """Base trading strategy class"""
+    """Base trading strategy class."""
 
     def __init__(self, model: Optional[StockRecommendationModel] = None):
         self.model = model
@@ -77,7 +73,7 @@ class TradingStrategy:
     def generate_signals(
         self, data: pd.DataFrame, current_date: datetime, portfolio_value: float
     ) -> List[Dict[str, Any]]:
-        """Generate trading signals"""
+        """Generate trading signals."""
         signals = []
 
         if self.model:
@@ -104,7 +100,7 @@ class TradingStrategy:
     def _get_model_recommendations(
         self, data: pd.DataFrame, current_date: datetime
     ) -> List[PortfolioRecommendation]:
-        """Get recommendations from ML model"""
+        """Get recommendations from ML model."""
         # Filter data up to current date
         historical_data = data[data["date"] <= current_date]
 
@@ -125,7 +121,7 @@ class TradingStrategy:
     def _momentum_strategy(
         self, data: pd.DataFrame, current_date: datetime
     ) -> List[Dict[str, Any]]:
-        """Simple momentum strategy"""
+        """Simple momentum strategy."""
         signals = []
 
         # Get recent data
@@ -163,7 +159,7 @@ class TradingStrategy:
 
 
 class PositionManager:
-    """Manage portfolio positions"""
+    """Manage portfolio positions."""
 
     def __init__(self, config: BacktestConfig):
         self.config = config
@@ -174,7 +170,7 @@ class PositionManager:
     def open_position(
         self, ticker: str, quantity: int, price: float, date: datetime, signal: Dict[str, Any]
     ):
-        """Open a new position"""
+        """Open a new position."""
         cost = quantity * price * (1 + self.config.commission + self.config.slippage)
 
         if cost > self.cash:
@@ -197,7 +193,7 @@ class PositionManager:
         return True
 
     def close_position(self, ticker: str, price: float, date: datetime) -> float:
-        """Close a position"""
+        """Close a position."""
         if ticker not in self.positions:
             return 0
 
@@ -218,7 +214,7 @@ class PositionManager:
         return realized_pnl
 
     def update_positions(self, price_data: Dict[str, float]):
-        """Update position prices and calculate unrealized PnL"""
+        """Update position prices and calculate unrealized PnL."""
         for ticker, position in self.positions.items():
             if ticker in price_data:
                 current_price = price_data[ticker]
@@ -242,7 +238,7 @@ class PositionManager:
         return None, None
 
     def get_portfolio_value(self, price_data: Dict[str, float]) -> float:
-        """Calculate total portfolio value"""
+        """Calculate total portfolio value."""
         positions_value = sum(
             pos["quantity"] * price_data.get(ticker, pos["current_price"])
             for ticker, pos in self.positions.items()
@@ -250,7 +246,7 @@ class PositionManager:
         return self.cash + positions_value
 
     def get_position_weights(self, price_data: Dict[str, float]) -> Dict[str, float]:
-        """Get position weights"""
+        """Get position weights."""
         portfolio_value = self.get_portfolio_value(price_data)
         weights = {}
 
@@ -263,7 +259,7 @@ class PositionManager:
 
 
 class BacktestEngine:
-    """Main backtesting engine"""
+    """Main backtesting engine."""
 
     def __init__(self, config: BacktestConfig):
         self.config = config
@@ -273,13 +269,13 @@ class BacktestEngine:
         self.strategy = None
 
     def set_strategy(self, strategy: TradingStrategy):
-        """Set trading strategy"""
+        """Set trading strategy."""
         self.strategy = strategy
 
     def run(
         self, price_data: pd.DataFrame, trading_data: Optional[pd.DataFrame] = None
     ) -> BacktestResult:
-        """Run backtest"""
+        """Run backtest."""
         logger.info("Starting backtest...")
 
         # Prepare data
@@ -367,12 +363,12 @@ class BacktestEngine:
     def _get_current_prices(
         self, price_data: pd.DataFrame, current_date: datetime
     ) -> Dict[str, float]:
-        """Get current prices for all tickers"""
+        """Get current prices for all tickers."""
         current_data = price_data[price_data["date"] == current_date]
         return dict(zip(current_data["symbol"], current_data["close"]))
 
     def _should_rebalance(self, day_index: int, current_date: datetime) -> bool:
-        """Check if should rebalance portfolio"""
+        """Check if should rebalance portfolio."""
         if self.config.rebalance_frequency == "daily":
             return True
         elif self.config.rebalance_frequency == "weekly":
@@ -387,7 +383,7 @@ class BacktestEngine:
         current_prices: Dict[str, float],
         current_date: datetime,
     ):
-        """Execute trading signals"""
+        """Execute trading signals."""
         for signal in signals:
             ticker = signal["ticker"]
 
@@ -402,9 +398,9 @@ class BacktestEngine:
                 position_value = portfolio_value * signal.get("position_size", 0.05)
                 quantity = int(position_value / price)
 
-                if quantity > 0:
+                if quantity > 0:  # noqa: SIM102
                     # Check if already have position
-                    if ticker not in self.position_manager.positions:
+                    if ticker not in self.position_manager.positions:  # noqa: SIM102
                         # Check max positions
                         if len(self.position_manager.positions) < self.config.max_positions:
                             success = self.position_manager.open_position(
@@ -423,7 +419,7 @@ class BacktestEngine:
                                     }
                                 )
 
-            elif signal["action"] == "sell":
+            elif signal["action"] == "sell":  # noqa: SIM102
                 if ticker in self.position_manager.positions:
                     pnl = self.position_manager.close_position(ticker, price, current_date)
 
@@ -441,7 +437,7 @@ class BacktestEngine:
                     )
 
     def _execute_exit(self, ticker: str, price: float, current_date: datetime, exit_type: str):
-        """Execute position exit"""
+        """Execute position exit."""
         if ticker in self.position_manager.positions:
             position = self.position_manager.positions[ticker]
             pnl = self.position_manager.close_position(ticker, price, current_date)
@@ -460,7 +456,7 @@ class BacktestEngine:
     def _get_position_snapshot(
         self, date: datetime, current_prices: Dict[str, float]
     ) -> Dict[str, Any]:
-        """Get current position snapshot"""
+        """Get current position snapshot."""
         snapshot = {
             "date": date,
             "num_positions": len(self.position_manager.positions),
@@ -476,7 +472,7 @@ class BacktestEngine:
         return snapshot
 
     def _calculate_metrics(self, portfolio_df: pd.DataFrame) -> Dict[str, float]:
-        """Calculate performance metrics"""
+        """Calculate performance metrics."""
         returns = portfolio_df["returns"]
 
         # Basic metrics
@@ -515,7 +511,7 @@ class BacktestEngine:
     def _get_benchmark_returns(
         self, price_data: pd.DataFrame, dates: np.ndarray
     ) -> Optional[pd.Series]:
-        """Get benchmark returns"""
+        """Get benchmark returns."""
         if self.config.benchmark not in price_data["symbol"].unique():
             return None
 

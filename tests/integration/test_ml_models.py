@@ -4,8 +4,7 @@ NOTE: ML model tests require torch and model modules.
 Tests are conditional on torch installation.
 """
 
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -21,7 +20,7 @@ except ImportError:
 # Check for model modules
 try:
     if HAS_TORCH:
-        from mcli.ml.models.base_models import BaseStockModel, MLPBaseModel, ResNetModel
+        from mcli.ml.models.base_models import MLPBaseModel, ResNetModel
         from mcli.ml.models.ensemble_models import (
             AttentionStockPredictor,
             DeepEnsembleModel,

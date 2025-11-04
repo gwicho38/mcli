@@ -11,7 +11,7 @@ NO_CHANGE_TO_FILE = -1
 
 
 def encode_content(path):
-    """Encode file content and track changes using MD5 fingerprints"""
+    """Encode file content and track changes using MD5 fingerprints."""
     logger.debug(f"encode_content: {path}")
 
     try:

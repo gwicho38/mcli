@@ -6,10 +6,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import click
-import pytest
+from unittest.mock import patch
 
 from mcli.lib.custom_commands import CustomCommandManager, get_command_manager
 

@@ -10,14 +10,14 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 import logging
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 
 # Check for streamlit and dashboard modules
 try:
-    import streamlit as st
+    pass
 
     HAS_STREAMLIT = True
 except ImportError:
@@ -25,7 +25,7 @@ except ImportError:
 
 try:
     if HAS_STREAMLIT:
-        from mcli.ml.dashboard.components import charts, metrics, tables
+        pass
     HAS_DASHBOARD = HAS_STREAMLIT
 except ImportError:
     HAS_DASHBOARD = False
@@ -419,7 +419,6 @@ class TestComponentIntegration:
         logger.info("Testing component error handling...")
 
         try:
-            from mcli.ml.dashboard.components.charts import create_timeline_chart
             from mcli.ml.dashboard.components.tables import display_dataframe_with_search
         except ImportError:
             pytest.skip("Dashboard components not available")

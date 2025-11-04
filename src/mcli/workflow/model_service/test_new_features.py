@@ -5,18 +5,17 @@ Test script for the new model service features:
 2. Add model from URL functionality
 """
 
-import os
 import sys
 from pathlib import Path
 
 # Add the parent directory to the path so we can import the model service
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from mcli.workflow.model_service.model_service import ModelManager, ModelService
+from mcli.workflow.model_service.model_service import ModelService
 
 
 def test_list_models():
-    """Test the list models functionality"""
+    """Test the list models functionality."""
     print("🧪 Testing list models functionality...")
 
     try:
@@ -35,7 +34,7 @@ def test_list_models():
 
         # Test summary
         summary = service.model_manager.get_models_summary()
-        print(f"\n📊 Summary:")
+        print("\n📊 Summary:")
         print(f"  Total models: {summary['total_models']}")
         print(f"  Loaded models: {summary['loaded_models']}")
         print(f"  Total memory: {summary['total_memory_mb']:.1f} MB")
@@ -50,7 +49,7 @@ def test_list_models():
 
 
 def test_add_model_from_url():
-    """Test the add model from URL functionality"""
+    """Test the add model from URL functionality."""
     print("\n🧪 Testing add model from URL functionality...")
 
     try:
@@ -60,7 +59,7 @@ def test_add_model_from_url():
         test_model_url = (
             "https://huggingface.co/microsoft/DialoGPT-small/resolve/main/pytorch_model.bin"
         )
-        test_tokenizer_url = (
+        _test_tokenizer_url = (  # noqa: F841
             "https://huggingface.co/microsoft/DialoGPT-small/resolve/main/tokenizer.json"
         )
 
@@ -92,7 +91,7 @@ def test_add_model_from_url():
 
 
 def test_api_endpoints():
-    """Test that the new API endpoints are properly defined"""
+    """Test that the new API endpoints are properly defined."""
     print("\n🧪 Testing API endpoints...")
 
     try:
@@ -120,7 +119,7 @@ def test_api_endpoints():
 
 
 def main():
-    """Run all tests"""
+    """Run all tests."""
     print("🚀 Testing new model service features...")
     print("=" * 50)
 

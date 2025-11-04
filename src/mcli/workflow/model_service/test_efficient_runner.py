@@ -3,20 +3,22 @@
 Test script for the efficient model runner functionality.
 """
 
-import os
 import sys
 from pathlib import Path
+
+import psutil
 
 # Add the parent directory to the path so we can import the modules
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
+from mcli.workflow.model_service.model_service import ModelService
+
 
 def test_imports():
-    """Test that all required modules can be imported"""
+    """Test that all required modules can be imported."""
     print("🧪 Testing imports...")
 
     try:
-        import requests
 
         print("✅ requests imported")
     except ImportError as e:
@@ -24,7 +26,6 @@ def test_imports():
         return False
 
     try:
-        import click
 
         print("✅ click imported")
     except ImportError as e:
@@ -32,7 +33,6 @@ def test_imports():
         return False
 
     try:
-        import psutil
 
         print("✅ psutil imported")
     except ImportError as e:
@@ -40,7 +40,6 @@ def test_imports():
         return False
 
     try:
-        from mcli.workflow.model_service.model_service import ModelService
 
         print("✅ ModelService imported")
     except ImportError as e:
@@ -51,11 +50,10 @@ def test_imports():
 
 
 def test_system_analysis():
-    """Test system analysis functionality"""
+    """Test system analysis functionality."""
     print("\n🧪 Testing system analysis...")
 
     try:
-        import psutil
 
         # Get basic system info
         cpu_count = psutil.cpu_count()
@@ -84,7 +82,7 @@ def test_system_analysis():
 
 
 def test_model_selection():
-    """Test model selection logic"""
+    """Test model selection logic."""
     print("\n🧪 Testing model selection...")
 
     try:
@@ -102,7 +100,7 @@ def test_model_selection():
 
         # Test system info
         system_info = get_system_info()
-        print(f"✅ System info collected")
+        print("✅ System info collected")
 
         # Test model recommendation
         recommended = recommend_model(system_info)
@@ -116,7 +114,7 @@ def test_model_selection():
 
 
 def test_ollama_check():
-    """Test Ollama installation check"""
+    """Test Ollama installation check."""
     print("\n🧪 Testing Ollama check...")
 
     try:
@@ -138,11 +136,10 @@ def test_ollama_check():
 
 
 def test_mcli_service():
-    """Test MCLI model service functionality"""
+    """Test MCLI model service functionality."""
     print("\n🧪 Testing MCLI model service...")
 
     try:
-        from mcli.workflow.model_service.model_service import ModelService
 
         # Create service instance
         service = ModelService()
@@ -164,11 +161,10 @@ def test_mcli_service():
 
 
 def test_api_endpoints():
-    """Test API endpoint definitions"""
+    """Test API endpoint definitions."""
     print("\n🧪 Testing API endpoints...")
 
     try:
-        from mcli.workflow.model_service.model_service import ModelService
 
         service = ModelService()
 
@@ -191,7 +187,7 @@ def test_api_endpoints():
 
 
 def main():
-    """Run all tests"""
+    """Run all tests."""
     print("🚀 Testing Efficient Model Runner")
     print("=" * 50)
 

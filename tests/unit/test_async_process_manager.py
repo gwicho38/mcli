@@ -95,6 +95,7 @@ class TestProcessInfo:
         assert proc_info.environment == env
 
 
+@pytest.mark.asyncio
 class TestAsyncProcessContainer:
     """Test AsyncProcessContainer"""
 

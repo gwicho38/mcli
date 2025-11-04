@@ -6,9 +6,7 @@ import json
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
-
-import pytest
+from unittest.mock import patch
 
 
 class TestJobStorage:
@@ -386,7 +384,6 @@ class TestJobStorage:
 
     def test_cleanup_old_history(self):
         """Test cleaning up old history records"""
-        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -447,7 +444,6 @@ class TestJobStorage:
 
     def test_import_jobs(self):
         """Test importing jobs from file"""
-        from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:

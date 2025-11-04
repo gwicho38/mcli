@@ -1,11 +1,8 @@
-"""Stock-specific feature engineering for recommendation models"""
+"""Stock-specific feature engineering for recommendation models."""
 
 import logging
-import warnings
-from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -15,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class StockFeatureConfig:
-    """Configuration for stock feature extraction"""
+    """Configuration for stock feature extraction."""
 
     # Technical indicator periods
     sma_periods: List[int] = None
@@ -50,13 +47,13 @@ class StockFeatureConfig:
 
 
 class StockRecommendationFeatures:
-    """Core stock recommendation feature extractor"""
+    """Core stock recommendation feature extractor."""
 
     def __init__(self, config: Optional[StockFeatureConfig] = None):
         self.config = config or StockFeatureConfig()
 
     def extract_features(self, stock_data: pd.DataFrame) -> pd.DataFrame:
-        """Extract stock recommendation features"""
+        """Extract stock recommendation features."""
         logger.info("Extracting stock recommendation features")
 
         df = stock_data.copy()
@@ -89,7 +86,7 @@ class StockRecommendationFeatures:
         return df
 
     def _extract_price_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract price-based features"""
+        """Extract price-based features."""
         # Basic price relationships
         df["hl_ratio"] = (df["high"] - df["low"]) / df["close"]
         df["oc_ratio"] = (df["open"] - df["close"]) / df["close"]
@@ -125,7 +122,7 @@ class StockRecommendationFeatures:
         return df
 
     def _extract_volume_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract volume-based features"""
+        """Extract volume-based features."""
         # Volume moving averages
         for period in self.config.volume_ma_periods:
             df[f"volume_ma_{period}"] = df["volume"].rolling(window=period).mean()
@@ -158,7 +155,7 @@ class StockRecommendationFeatures:
         return df
 
     def _extract_volatility_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract volatility-based features"""
+        """Extract volatility-based features."""
         # Calculate returns
         df["returns"] = df["close"].pct_change()
         df["log_returns"] = np.log(df["close"] / df["close"].shift(1))
@@ -197,7 +194,7 @@ class StockRecommendationFeatures:
         return df
 
     def _extract_momentum_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract momentum-based features"""
+        """Extract momentum-based features."""
         # RSI (Relative Strength Index)
         delta = df["close"].diff()
         gain = delta.where(delta > 0, 0).rolling(window=self.config.rsi_period).mean()
@@ -234,7 +231,7 @@ class StockRecommendationFeatures:
         return df
 
     def _extract_trend_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract trend-based features"""
+        """Extract trend-based features."""
         # Trend strength
         for window in [10, 20, 50]:
             # Linear regression slope
@@ -255,7 +252,7 @@ class StockRecommendationFeatures:
                     ss_res = np.sum((prices - predicted) ** 2)
                     ss_tot = np.sum((prices - np.mean(prices)) ** 2)
                     return 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
-                except:
+                except Exception:
                     return 0
 
             df[f"trend_strength_{window}"] = (
@@ -283,13 +280,13 @@ class StockRecommendationFeatures:
 
 
 class TechnicalIndicatorFeatures:
-    """Advanced technical indicator features"""
+    """Advanced technical indicator features."""
 
     def __init__(self, config: Optional[StockFeatureConfig] = None):
         self.config = config or StockFeatureConfig()
 
     def extract_advanced_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract advanced technical indicators"""
+        """Extract advanced technical indicators."""
         df = df.copy()
 
         # Williams %R
@@ -315,13 +312,13 @@ class TechnicalIndicatorFeatures:
         return df
 
     def _williams_r(self, df: pd.DataFrame, period: int = 14) -> pd.Series:
-        """Williams %R oscillator"""
+        """Williams %R oscillator."""
         highest_high = df["high"].rolling(window=period).max()
         lowest_low = df["low"].rolling(window=period).min()
         return -100 * (highest_high - df["close"]) / (highest_high - lowest_low)
 
     def _commodity_channel_index(self, df: pd.DataFrame, period: int = 20) -> pd.Series:
-        """Commodity Channel Index"""
+        """Commodity Channel Index."""
         typical_price = (df["high"] + df["low"] + df["close"]) / 3
         sma_tp = typical_price.rolling(window=period).mean()
         mad = typical_price.rolling(window=period).apply(
@@ -330,7 +327,7 @@ class TechnicalIndicatorFeatures:
         return (typical_price - sma_tp) / (0.015 * mad)
 
     def _money_flow_index(self, df: pd.DataFrame, period: int = 14) -> pd.Series:
-        """Money Flow Index"""
+        """Money Flow Index."""
         typical_price = (df["high"] + df["low"] + df["close"]) / 3
         money_flow = typical_price * df["volume"]
 
@@ -344,7 +341,7 @@ class TechnicalIndicatorFeatures:
         return mfi
 
     def _aroon_indicator(self, df: pd.DataFrame, period: int = 25) -> Tuple[pd.Series, pd.Series]:
-        """Aroon Up and Aroon Down indicators"""
+        """Aroon Up and Aroon Down indicators."""
         aroon_up = (
             100 * (period - df["high"].rolling(window=period).apply(np.argmax, raw=False)) / period
         )
@@ -354,9 +351,9 @@ class TechnicalIndicatorFeatures:
         return aroon_up, aroon_down
 
     def _parabolic_sar(self, df: pd.DataFrame) -> pd.Series:
-        """Parabolic SAR indicator (simplified version)"""
+        """Parabolic SAR indicator (simplified version)."""
         # Simplified PSAR implementation
-        high = df["high"].values
+        df["high"].values
         low = df["low"].values
         close = df["close"].values
 
@@ -371,7 +368,7 @@ class TechnicalIndicatorFeatures:
         return pd.Series(psar, index=df.index)
 
     def _ichimoku_cloud(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Ichimoku Cloud components"""
+        """Ichimoku Cloud components."""
         # Tenkan-sen (Conversion Line)
         tenkan_high = df["high"].rolling(window=9).max()
         tenkan_low = df["low"].rolling(window=9).min()
@@ -408,13 +405,13 @@ class TechnicalIndicatorFeatures:
 
 
 class MarketRegimeFeatures:
-    """Market regime detection features"""
+    """Market regime detection features."""
 
     def __init__(self, config: Optional[StockFeatureConfig] = None):
         self.config = config or StockFeatureConfig()
 
     def extract_regime_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Extract market regime features"""
+        """Extract market regime features."""
         df = df.copy()
 
         # Volatility regime
@@ -432,7 +429,7 @@ class MarketRegimeFeatures:
         return df
 
     def _volatility_regime(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Identify volatility regimes"""
+        """Identify volatility regimes."""
         returns = df["close"].pct_change()
         vol_20 = returns.rolling(window=20).std() * np.sqrt(252)
 
@@ -451,7 +448,7 @@ class MarketRegimeFeatures:
         return df
 
     def _trend_regime(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Identify trend regimes"""
+        """Identify trend regimes."""
         # Multiple timeframe trend analysis
         for window in [20, 50, 200]:
             sma = df["close"].rolling(window=window).mean()
@@ -475,7 +472,7 @@ class MarketRegimeFeatures:
         return df
 
     def _volume_regime(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Identify volume regimes"""
+        """Identify volume regimes."""
         volume_ma = df["volume"].rolling(window=20).mean()
         volume_ratio = df["volume"] / volume_ma
 
@@ -497,7 +494,7 @@ class MarketRegimeFeatures:
         return df
 
     def _market_stress_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Market stress and fear indicators"""
+        """Market stress and fear indicators."""
         returns = df["close"].pct_change()
 
         # Maximum drawdown
@@ -524,7 +521,7 @@ class MarketRegimeFeatures:
 
 
 class CrossAssetFeatures:
-    """Cross-asset and correlation features"""
+    """Cross-asset and correlation features."""
 
     def __init__(self):
         pass
@@ -532,7 +529,7 @@ class CrossAssetFeatures:
     def extract_cross_asset_features(
         self, primary_df: pd.DataFrame, market_data: Dict[str, pd.DataFrame]
     ) -> pd.DataFrame:
-        """Extract features based on relationships with other assets"""
+        """Extract features based on relationships with other assets."""
         df = primary_df.copy()
 
         # Correlation with market indices
@@ -554,7 +551,7 @@ class CrossAssetFeatures:
                         covariance = np.cov(stock_ret, market_ret)[0][1]
                         market_variance = np.var(market_ret)
                         return covariance / market_variance if market_variance != 0 else 1.0
-                    except:
+                    except Exception:
                         return 1.0
 
                 rolling_beta = pd.Series(index=df.index, dtype=float)

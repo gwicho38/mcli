@@ -3,9 +3,7 @@
 Test script for lightweight model server integration with MCLI model service
 """
 
-import json
 import sys
-import time
 from pathlib import Path
 
 import requests
@@ -17,7 +15,7 @@ from mcli.workflow.model_service.model_service import LIGHTWEIGHT_MODELS, ModelS
 
 
 def test_lightweight_integration():
-    """Test the lightweight server integration"""
+    """Test the lightweight server integration."""
     print("🧪 Testing Lightweight Model Server Integration")
     print("=" * 60)
 
@@ -86,7 +84,7 @@ def test_lightweight_integration():
 
 
 def test_cli_commands():
-    """Test CLI commands"""
+    """Test CLI commands."""
     print("\n🧪 Testing CLI Commands")
     print("=" * 40)
 
@@ -100,7 +98,7 @@ def test_cli_commands():
 
 
 def main():
-    """Main test function"""
+    """Main test function."""
     print("🚀 MCLI Lightweight Model Server Integration Test")
     print("=" * 70)
 

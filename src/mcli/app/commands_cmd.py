@@ -4,7 +4,6 @@ import inspect
 import json
 import os
 import re
-import shutil
 import subprocess
 import tempfile
 from datetime import datetime
@@ -12,16 +11,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import click
-import tomli
-from rich.console import Console
 from rich.prompt import Prompt
-from rich.table import Table
 
 from mcli.lib.api.daemon_client import get_daemon_client
 from mcli.lib.custom_commands import get_command_manager
 from mcli.lib.discovery.command_discovery import get_command_discovery
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.ui.styling import console, error, info, success, warning
+from mcli.lib.ui.styling import console
 
 logger = get_logger(__name__)
 
@@ -78,7 +74,7 @@ def collect_commands() -> List[Dict[str, Any]]:
                             streamlit_logger.setLevel(original_level)
 
                     # Extract command and group objects
-                    for name, obj in inspect.getmembers(module):
+                    for _name, obj in inspect.getmembers(module):
                         # Handle Click commands and groups
                         if isinstance(obj, click.Command):
                             if isinstance(obj, click.Group):
@@ -118,7 +114,7 @@ def collect_commands() -> List[Dict[str, Any]]:
 
 
 def get_current_command_state():
-    """Collect all command metadata (names, groups, etc.)"""
+    """Collect all command metadata (names, groups, etc.)."""
     return collect_commands()
 
 
@@ -175,7 +171,6 @@ def restore_command_state(hash_value):
 @click.group(name="workflow")
 def workflow():
     """Manage workflows - create, edit, import, export workflow commands."""
-    pass
 
 
 # For backward compatibility, keep commands as an alias
@@ -397,7 +392,7 @@ def search_commands(query: str, daemon_only: bool, as_json: bool, is_global: boo
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @click.option("--timeout", type=int, help="Execution timeout in seconds")
 def execute_command(command_name: str, args: tuple, as_json: bool, timeout: Optional[int]):
-    """Execute a command by name"""
+    """Execute a command by name."""
     try:
         client = get_daemon_client()
         result = client.execute_command(command_name=command_name, args=list(args), timeout=timeout)
@@ -425,7 +420,7 @@ def execute_command(command_name: str, args: tuple, as_json: bool, timeout: Opti
 @click.argument("command_name")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 def command_info(command_name: str, as_json: bool):
-    """Show detailed information about a command"""
+    """Show detailed information about a command."""
     try:
         client = get_daemon_client()
         result = client.list_commands(all=True)
@@ -466,7 +461,7 @@ def command_info(command_name: str, as_json: bool):
             console.print(f"Last Executed: {command['last_executed']}")
 
         if command.get("code"):
-            console.print(f"\n[bold]Code:[/bold]")
+            console.print("\n[bold]Code:[/bold]")
             console.print(f"```{command['language']}")
             console.print(command["code"])
             console.print("```")
@@ -703,7 +698,7 @@ logger = get_logger()
         return None
     finally:
         # Clean up temporary file
-        try:
+        try:  # noqa: SIM105
             os.unlink(temp_file_path)
         except OSError:
             pass
@@ -807,7 +802,7 @@ def add_command(command_name, group, description, template, language, shell, is_
     language = language.lower()
 
     # Determine shell type for shell commands
-    if language == "shell":
+    if language == "shell":  # noqa: SIM102
         if not shell:
             # Default to $SHELL environment variable or bash
             shell_env = os.environ.get("SHELL", "/bin/bash")
@@ -890,7 +885,7 @@ def add_command(command_name, group, description, template, language, shell, is_
         )
     else:
         console.print(
-            f"[dim]This command is local to this git repository. Use --global/-g to create global commands.[/dim]"
+            "[dim]This command is local to this git repository. Use --global/-g to create global commands.[/dim]"
         )
 
     return 0
@@ -988,7 +983,7 @@ def export_commands(target, script, standalone, output, is_global):
             return 1
 
         # Add standalone wrapper if requested
-        if standalone:
+        if standalone:  # noqa: SIM102
             # Check if already has if __name__ == '__main__'
             if "if __name__" not in code:
                 code += "\n\nif __name__ == '__main__':\n    app()\n"
@@ -1153,7 +1148,7 @@ def import_commands(source, script, overwrite, name, group, description, interac
             try:
                 tree = ast.parse(code)
                 description = ast.get_docstring(tree) or f"Imported from {source_path.name}"
-            except:
+            except Exception:
                 description = f"Imported from {source_path.name}"
 
         # Save as JSON command
@@ -1199,9 +1194,9 @@ def import_commands(source, script, overwrite, name, group, description, interac
                 f"[yellow]Skipped {failed_count} command(s) (already exist, use --overwrite to replace)[/yellow]"
             )
             console.print("Skipped commands:")
-            for name, success in results.items():
-                if not success:
-                    console.print(f"  - {name}")
+            for cmd_name, cmd_success in results.items():
+                if not cmd_success:
+                    console.print(f"  - {cmd_name}")
 
         return 0
 
@@ -1357,9 +1352,6 @@ def extract_workflow_commands(output):
                     }
 
                     # Create a template based on command type
-                    # Replace hyphens with underscores for valid Python function names
-                    safe_name = cmd_name.replace("-", "_")
-
                     if isinstance(cmd_obj, click.Group):
                         # For groups, create a template
                         command_info[

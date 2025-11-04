@@ -2,9 +2,6 @@
 Integration tests that import and exercise major modules to increase coverage
 """
 
-import sys
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 

@@ -12,7 +12,7 @@ import ast
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from mcli.lib.logger.logger import get_logger
 
@@ -105,7 +105,11 @@ class NotebookValidator:
                 if not self._validate_python_syntax(code, i):
                     all_valid = False
 
-            elif language in (CellLanguage.SHELL, CellLanguage.BASH, CellLanguage.ZSH):
+            elif language in (
+                CellLanguage.SHELL,
+                CellLanguage.BASH,
+                CellLanguage.ZSH,
+            ):  # noqa: SIM102
                 if not self._validate_shell_syntax(code, i):
                     all_valid = False
 
@@ -281,7 +285,7 @@ class CodeLinter:
             try:
                 # Try to use shellcheck
                 result = subprocess.run(
-                    ["shellcheck", "-f", "json", temp_path],
+                    ["shellcheck", "-", "json", temp_path],
                     capture_output=True,
                     text=True,
                     timeout=10,

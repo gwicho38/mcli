@@ -16,9 +16,8 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -335,7 +334,7 @@ for i in range(3):
 
             # Create and trigger test job
             await self.create_test_job()
-            job_result = await self.trigger_test_job()
+            await self.trigger_test_job()
 
             # Wait for events to be processed
             print("⏳ Waiting for event processing...")

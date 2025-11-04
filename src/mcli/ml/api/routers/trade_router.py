@@ -1,4 +1,4 @@
-"""Trading API routes"""
+"""Trading API routes."""
 
 from fastapi import APIRouter, Depends
 
@@ -12,5 +12,5 @@ router = APIRouter()
 async def get_politician_trades(
     politician_id: str, current_user: User = Depends(get_current_active_user)
 ):
-    """Get politician trades"""
+    """Get politician trades."""
     return {"politician_id": politician_id, "trades": []}

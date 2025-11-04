@@ -3,7 +3,6 @@ Command Store Management - Sync ~/.mcli/commands/ to git
 Similar to lsh secrets but for workflow commands
 """
 
-import os
 import shutil
 import subprocess
 from datetime import datetime
@@ -23,15 +22,14 @@ COMMANDS_PATH = Path.home() / ".mcli" / "commands"
 
 @click.group(name="store")
 def store():
-    """Manage command store - sync ~/.mcli/commands/ to git"""
-    pass
+    """Manage command store - sync ~/.mcli/commands/ to git."""
 
 
 @store.command(name="init")
 @click.option("--path", "-p", type=click.Path(), help=f"Store path (default: {DEFAULT_STORE_PATH})")
 @click.option("--remote", "-r", help="Git remote URL (optional)")
 def init_store(path, remote):
-    """Initialize command store with git"""
+    """Initialize command store with git."""
     store_path = Path(path) if path else DEFAULT_STORE_PATH
 
     try:
@@ -109,7 +107,7 @@ Last updated: {datetime.now().isoformat()}
 @click.option("--message", "-m", help="Commit message")
 @click.option("--all", "-a", is_flag=True, help="Push all files (including backups)")
 def push_commands(message, all):
-    """Push commands from ~/.mcli/commands/ to git store"""
+    """Push commands from ~/.mcli/commands/ to git store."""
     try:
         store_path = _get_store_path()
 
@@ -164,7 +162,7 @@ def push_commands(message, all):
 @store.command(name="pull")
 @click.option("--force", "-f", is_flag=True, help="Overwrite local commands without backup")
 def pull_commands(force):
-    """Pull commands from git store to ~/.mcli/commands/"""
+    """Pull commands from git store to ~/.mcli/commands/."""
     try:
         store_path = _get_store_path()
 
@@ -212,7 +210,7 @@ def pull_commands(force):
 @store.command(name="sync")
 @click.option("--message", "-m", help="Commit message if pushing")
 def sync_commands(message):
-    """Sync commands bidirectionally (pull then push if changes)"""
+    """Sync commands bidirectionally (pull then push if changes)."""
     try:
         store_path = _get_store_path()
 
@@ -265,7 +263,7 @@ def sync_commands(message):
 @store.command(name="list")
 @click.option("--store", "-s", is_flag=True, help="List store instead of local")
 def list_commands(store):
-    """List all commands"""
+    """List all commands."""
     try:
         if store:
             store_path = _get_store_path()
@@ -307,7 +305,7 @@ def list_commands(store):
 
 @store.command(name="status")
 def store_status():
-    """Show git status of command store"""
+    """Show git status of command store."""
     try:
         store_path = _get_store_path()
 
@@ -343,7 +341,7 @@ def store_status():
 @click.argument("command_name")
 @click.option("--store", "-s", is_flag=True, help="Show from store instead of local")
 def show_command(command_name, store):
-    """Show command file contents"""
+    """Show command file contents."""
     try:
         if store:
             store_path = _get_store_path()
@@ -374,7 +372,7 @@ def show_command(command_name, store):
 @click.option("--remote", "-r", help="Set git remote URL")
 @click.option("--path", "-p", type=click.Path(), help="Change store path")
 def configure_store(remote, path):
-    """Configure store settings"""
+    """Configure store settings."""
     try:
         store_path = _get_store_path()
 
@@ -408,7 +406,7 @@ def configure_store(remote, path):
 
 
 def _get_store_path() -> Path:
-    """Get store path from config or default"""
+    """Get store path from config or default."""
     config_file = Path.home() / ".mcli" / "store.conf"
 
     if config_file.exists():

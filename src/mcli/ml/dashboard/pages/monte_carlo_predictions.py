@@ -6,11 +6,7 @@ Inspired by best practices from:
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Optional
 
-import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 
 logger = logging.getLogger(__name__)
@@ -18,10 +14,7 @@ logger = logging.getLogger(__name__)
 # Try to import Monte Carlo simulator
 HAS_MONTE_CARLO = True
 try:
-    from mcli.ml.predictions.monte_carlo import (
-        MonteCarloTradingSimulator,
-        simulate_politician_trade_impact,
-    )
+    from mcli.ml.predictions.monte_carlo import MonteCarloTradingSimulator
 except ImportError:
     HAS_MONTE_CARLO = False
     MonteCarloTradingSimulator = None
@@ -43,7 +36,7 @@ except ImportError:
 
 
 def show_monte_carlo_predictions():
-    """Main Monte Carlo predictions page"""
+    """Main Monte Carlo predictions page."""
 
     # Page header with custom styling
     st.markdown(
@@ -185,7 +178,7 @@ def show_quick_simulation(
     show_percentiles: bool,
     confidence_level: float,
 ):
-    """Quick simulation interface"""
+    """Quick simulation interface."""
 
     section_header(
         "🚀 Quick Start Simulation",
@@ -283,7 +276,7 @@ def run_simulation(
     show_percentiles: bool,
     confidence_level: float,
 ):
-    """Execute Monte Carlo simulation and display results"""
+    """Execute Monte Carlo simulation and display results."""
 
     with st.spinner(f"Running {num_simulations:,} simulations..."):
         # Initialize simulator
@@ -401,7 +394,7 @@ def run_simulation(
 
 
 def show_advanced_analysis(num_simulations: int, days_forward: int, confidence_level: float):
-    """Advanced analysis with historical data integration"""
+    """Advanced analysis with historical data integration."""
 
     section_header(
         "🔬 Advanced Analysis",
@@ -421,7 +414,7 @@ def show_advanced_analysis(num_simulations: int, days_forward: int, confidence_l
 
 
 def show_educational_content():
-    """Educational content about Monte Carlo methods"""
+    """Educational content about Monte Carlo methods."""
 
     section_header(
         "📚 Understanding Monte Carlo Simulation",
@@ -478,7 +471,7 @@ def show_educational_content():
 
 
 def show_custom_parameters(num_simulations: int, days_forward: int):
-    """Custom parameter configuration"""
+    """Custom parameter configuration."""
 
     section_header("⚙️ Custom Parameters", "Advanced configuration for power users", divider="gray")
 
@@ -514,7 +507,7 @@ def show_custom_parameters(num_simulations: int, days_forward: int):
             )
 
         with col2:
-            random_seed = st.number_input(
+            _random_seed = st.number_input(  # noqa: F841
                 "Random Seed",
                 min_value=0,
                 max_value=999999,
@@ -522,14 +515,14 @@ def show_custom_parameters(num_simulations: int, days_forward: int):
                 help="For reproducible results",
             )
 
-            use_seed = st.checkbox("Use Random Seed", value=False)
+            _use_seed = st.checkbox("Use Random Seed", value=False)  # noqa: F841
 
         st.markdown("### Time Parameters")
 
         col3, col4 = st.columns(2)
 
         with col3:
-            trading_days_per_year = st.number_input(
+            _trading_days_per_year = st.number_input(  # noqa: F841
                 "Trading Days/Year",
                 min_value=200,
                 max_value=365,
@@ -538,7 +531,7 @@ def show_custom_parameters(num_simulations: int, days_forward: int):
             )
 
         with col4:
-            time_step = st.selectbox(
+            _time_step = st.selectbox(  # noqa: F841
                 "Time Step",
                 ["Daily", "Weekly", "Monthly"],
                 help="Granularity of simulation",

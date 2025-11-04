@@ -69,7 +69,7 @@ def execute(action, args):
 
     elif action == "PROVISION_THIRDPARTY":
         ensure_directory_exists(DEV_SECRETS_ROOT + "thirdParty")
-        mcli = mcli_as_basic_user()
+        mcli = mcli_as_basic_user()  # noqa: F841
 
     else:
         help(action, args)
@@ -759,7 +759,7 @@ def get_current_version(file_path=VERSION_FILE_PATH):
         logger.info(f"Error reading file {file_path}: {e}")
         return None
 
-    if version == None:
+    if version is None:
         raise ValueError(f"File '{file_path}' does not contain version.")
     elif is_major_minor_patch(version):
         return version
@@ -866,7 +866,7 @@ def align_version(
                     for key in platform_pkgs:
                         if key in data[K_DEPS]:
                             val = data[K_DEPS][key]
-                            if val == None or val != maj_min:
+                            if val is None or val != maj_min:
                                 data[K_DEPS][key] = maj_min
                                 modified = True
 
@@ -875,7 +875,7 @@ def align_version(
                     # update version to major.minor.patch
                     if (
                         K_VERSION not in data
-                        or data[K_VERSION] == None
+                        or data[K_VERSION] is None
                         or data[K_VERSION] != version
                     ):
                         data[K_VERSION] = version
@@ -891,7 +891,7 @@ def align_version(
                     # update compatibleToVersion to previous major.minor
                     if (
                         K_COMPAT not in data
-                        or data[K_COMPAT] == None
+                        or data[K_COMPAT] is None
                         or data[K_COMPAT] != compat_version
                     ):
                         data[K_COMPAT] = compat_version
