@@ -25,7 +25,11 @@ def load_lockfile():
     """Load the command state lockfile."""
     if LOCKFILE_PATH.exists():
         with open(LOCKFILE_PATH, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            # Handle both old format (array) and new format (object with "states" key)
+            if isinstance(data, dict) and "states" in data:
+                return data["states"]
+            return data if isinstance(data, list) else []
     return []
 
 
