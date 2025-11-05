@@ -347,14 +347,7 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load lock group: {e}")
 
-    # Top-level store group
-    try:
-        from mcli.app.store_cmd import store
-
-        app.add_command(store, name="store")
-        logger.debug("Added store group")
-    except ImportError as e:
-        logger.debug(f"Could not load store group: {e}")
+    # Store commands moved to workflow group
 
     # Workflow management - load immediately for fast access (renamed from 'commands')
     try:
