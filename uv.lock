@@ -4382,7 +4382,7 @@ wheels = [
 
 [[package]]
 name = "mcli-framework"
-version = "7.12.4"
+version = "7.13.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
