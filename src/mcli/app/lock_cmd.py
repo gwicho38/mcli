@@ -48,11 +48,19 @@ def append_lockfile(new_state):
 
 
 def find_state_by_hash(hash_value):
-    """Find a state by its hash value."""
+    """Find a state by its hash value (supports partial hash matching)."""
     states = load_lockfile()
+    matches = []
     for state in states:
-        if state["hash"] == hash_value:
-            return state
+        # Support both full hash and partial hash (prefix) matching
+        if state["hash"] == hash_value or state["hash"].startswith(hash_value):
+            matches.append(state)
+
+    if len(matches) == 1:
+        return matches[0]
+    elif len(matches) > 1:
+        # Ambiguous - multiple matches
+        return None
     return None
 
 
