@@ -254,8 +254,9 @@ class HardcodedStringVisitor(ast.NodeVisitor):
         for value in node.values:
             if isinstance(value, (ast.Constant, ast.Str)):
                 # These are the literal parts of the f-string
-                # They're usually fine, but check anyway
-                pass
+                # Check for hardcoded strings
+                string_value = value.s if isinstance(value, ast.Str) else value.value
+                self._check_string(string_value, getattr(value, "lineno", node.lineno), getattr(value, "col_offset", node.col_offset))
         self.generic_visit(node)
 
 
