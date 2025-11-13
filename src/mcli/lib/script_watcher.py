@@ -21,7 +21,6 @@ Example:
     >>> observer.stop()
 """
 
-import time
 from pathlib import Path
 from threading import Timer
 from typing import Dict, Optional
