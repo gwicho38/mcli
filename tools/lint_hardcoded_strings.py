@@ -28,17 +28,17 @@ from typing import Dict, List, Tuple
 from linter_config import (
     ALLOWED_PATTERNS,
     COMMON_ACCEPTABLE_STRINGS,
-    CONSTANT_LIKE_PATTERN,
+    CONSTANT_LIKE_PATTERN as CONSTANT_PATTERN_STR,
     EXCLUDED_DIRS,
     EXCLUDED_FILE_PATTERNS,
-    IDENTIFIER_PATTERN,
+    IDENTIFIER_PATTERN as IDENTIFIER_PATTERN_STR,
     MAX_STRING_LENGTH,
     MIN_STRING_LENGTH,
 )
 
 # Compile regex patterns
-CONSTANT_LIKE_PATTERN = re.compile(CONSTANT_LIKE_PATTERN)
-IDENTIFIER_PATTERN = re.compile(IDENTIFIER_PATTERN)
+CONSTANT_LIKE_PATTERN = re.compile(CONSTANT_PATTERN_STR)
+IDENTIFIER_PATTERN = re.compile(IDENTIFIER_PATTERN_STR)
 
 
 Much of the nesting and repeated logic can be collapsed into data-driven helpers. For example:
