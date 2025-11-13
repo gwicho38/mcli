@@ -86,6 +86,7 @@ help: ## Show this help message
 	@echo ""
 	@echo "$(CYAN)Code Quality:$(RESET)"
 	@echo "  $(GREEN)lint$(RESET)                  Run all linting tools (black, isort, flake8, mypy)"
+	@echo "  $(GREEN)lint-hardcoded-strings$(RESET) Check for hardcoded strings that should be in constants"
 	@echo "  $(GREEN)format$(RESET)                Auto-format code (black, isort)"
 	@echo "  $(GREEN)type-check$(RESET)            Run mypy type checking"
 	@echo "  $(GREEN)security-check$(RESET)        Run security checks (bandit, safety)"
@@ -397,6 +398,12 @@ lint: setup ## Run all linting tools
 	$(UV) run flake8 src/ tests/
 	$(UV) run mypy src/
 	@echo "$(GREEN)Linting completed ✅$(RESET)"
+
+.PHONY: lint-hardcoded-strings
+lint-hardcoded-strings: ## Check for hardcoded strings that should be in constants
+	@echo "$(CYAN)Checking for hardcoded strings...$(RESET)"
+	$(PYTHON) tools/lint_hardcoded_strings.py --check-all
+	@echo "$(GREEN)Hardcoded string check completed ✅$(RESET)"
 
 .PHONY: lint-pylint
 lint-pylint: setup ## Run pylint on source code

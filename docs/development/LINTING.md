@@ -12,6 +12,7 @@ MCLI uses multiple linting tools to maintain code quality:
 - **MyPy** - Static type checking
 - **Pylint** - Code analysis (optional)
 - **Bandit** - Security linting
+- **Hardcoded Strings Linter** - Custom linter to enforce constants usage
 - **Pre-commit** - Git hooks for automated checks
 
 ## Quick Start
@@ -21,6 +22,9 @@ MCLI uses multiple linting tools to maintain code quality:
 ```bash
 # Run all linting tools
 make lint
+
+# Check for hardcoded strings
+make lint-hardcoded-strings
 
 # Auto-format code
 make format
@@ -182,6 +186,151 @@ safety check
 
 # Or use make target
 make security-check
+```
+
+### Hardcoded Strings Linter (Custom)
+
+**Purpose:** Enforce the use of constants instead of hardcoded strings throughout the codebase.
+
+**Configuration:** `tools/lint_hardcoded_strings.py`
+
+This custom linter detects hardcoded strings that should be defined in the centralized constants module (`src/mcli/lib/constants/`). It helps maintain consistency, reduce typos, and make the codebase easier to maintain.
+
+#### What It Checks
+
+The linter flags hardcoded strings that should be constants:
+- Environment variable names (e.g., `"OPENAI_API_KEY"`)
+- File and directory names (e.g., `"config.toml"`, `".mcli"`)
+- UI messages (errors, warnings, success messages)
+- URLs and API endpoints
+- Configuration keys
+
+#### What It Ignores
+
+- Very short strings (< 3 characters)
+- Whitespace and punctuation
+- Format strings and f-strings
+- Docstrings and comments
+- Constants defined in ALL_CAPS variables
+- Test files and directories
+- The constants module itself
+
+#### Running the Linter
+
+```bash
+# Check all Python files in src/mcli
+make lint-hardcoded-strings
+
+# Or run directly
+python tools/lint_hardcoded_strings.py --check-all
+
+# Check specific files or directories
+python tools/lint_hardcoded_strings.py src/mcli/app/main.py
+python tools/lint_hardcoded_strings.py src/mcli/workflow/
+```
+
+#### Fixing Violations
+
+When the linter finds violations, follow these steps:
+
+1. **Identify the appropriate constants module:**
+   - Environment variables → `src/mcli/lib/constants/env.py` (EnvVars)
+   - File/directory paths → `src/mcli/lib/constants/paths.py` (DirNames, FileNames)
+   - UI messages → `src/mcli/lib/constants/messages.py` (ErrorMessages, SuccessMessages, etc.)
+   - Default values → `src/mcli/lib/constants/defaults.py` (URLs, Editors, Shells, etc.)
+   - Command metadata → `src/mcli/lib/constants/commands.py` (CommandKeys, CommandGroups)
+
+2. **Add the constant if it doesn't exist:**
+
+```python
+# In src/mcli/lib/constants/env.py
+class EnvVars:
+    OPENAI_API_KEY = "OPENAI_API_KEY"
+    # ... other constants
+```
+
+3. **Replace the hardcoded string:**
+
+```python
+# Before
+api_key = os.getenv("OPENAI_API_KEY")
+
+# After
+from mcli.lib.constants import EnvVars
+
+api_key = os.getenv(EnvVars.OPENAI_API_KEY)
+```
+
+#### Constants Module Structure
+
+The constants module is organized by category:
+
+```
+src/mcli/lib/constants/
+├── __init__.py         # Main exports
+├── env.py             # Environment variable names (EnvVars)
+├── paths.py           # File and directory names (DirNames, FileNames, PathPatterns)
+├── messages.py        # UI messages (ErrorMessages, SuccessMessages, etc.)
+├── defaults.py        # Default values (URLs, Editors, Shells, etc.)
+└── commands.py        # Command metadata (CommandKeys, CommandGroups, etc.)
+```
+
+#### Examples
+
+**Environment Variables:**
+```python
+from mcli.lib.constants import EnvVars
+
+# ✅ Good
+api_key = os.getenv(EnvVars.OPENAI_API_KEY)
+trace_level = os.getenv(EnvVars.MCLI_TRACE_LEVEL)
+
+# ❌ Bad
+api_key = os.getenv("OPENAI_API_KEY")
+trace_level = os.getenv("MCLI_TRACE_LEVEL")
+```
+
+**File Paths:**
+```python
+from mcli.lib.constants import DirNames, FileNames
+from pathlib import Path
+
+# ✅ Good
+config_path = Path.home() / DirNames.CONFIG_DIR / DirNames.MCLI / FileNames.CONFIG_TOML
+
+# ❌ Bad
+config_path = Path.home() / ".config" / "mcli" / "config.toml"
+```
+
+**UI Messages:**
+```python
+from mcli.lib.constants import ErrorMessages, SuccessMessages
+
+# ✅ Good
+if not found:
+    click.echo(ErrorMessages.COMMAND_NOT_FOUND.format(name=cmd_name))
+else:
+    click.echo(SuccessMessages.COMMAND_COMPLETED)
+
+# ❌ Bad
+if not found:
+    click.echo(f"Command {cmd_name} not found")
+else:
+    click.echo("Command completed successfully")
+```
+
+#### Pre-commit Integration
+
+The hardcoded strings linter runs automatically as a pre-commit hook on all Python files except:
+- Test files (`tests/`)
+- Documentation (`docs/`)
+- Scripts (`scripts/`)
+- Tools (`tools/`)
+- The constants module itself (`src/mcli/lib/constants/`)
+
+To skip the check for a single commit:
+```bash
+git commit --no-verify
 ```
 
 ## Pre-commit Hooks
