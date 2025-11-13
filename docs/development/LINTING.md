@@ -192,9 +192,11 @@ make security-check
 
 **Purpose:** Enforce the use of constants instead of hardcoded strings throughout the codebase.
 
-**Configuration:** `tools/lint_hardcoded_strings.py`
+**Configuration Files:**
+- `tools/lint_hardcoded_strings.py` - Main linter logic
+- `tools/linter_config.py` - Configuration (patterns, exclusions, rules)
 
-This custom linter detects hardcoded strings that should be defined in the centralized constants module (`src/mcli/lib/constants/`). It helps maintain consistency, reduce typos, and make the codebase easier to maintain.
+This custom linter detects hardcoded strings that should be defined in the centralized constants module (`src/mcli/lib/constants/`). It helps maintain consistency, reduce typos, and make the codebase easier to maintain. The configuration is separated into a dedicated file for easy customization without modifying the linter logic.
 
 #### What It Checks
 
@@ -336,9 +338,32 @@ To skip the check for a single commit:
 git commit --no-verify
 ```
 
+#### Customizing the Linter
+
+To customize the linter behavior, edit `tools/linter_config.py`:
+
+```python
+# Add more acceptable strings
+COMMON_ACCEPTABLE_STRINGS.add("my-custom-string")
+
+# Exclude additional file patterns
+EXCLUDED_FILE_PATTERNS.append("**/my_special_files/**")
+
+# Add custom allowed patterns
+ALLOWED_PATTERNS.append(r"^MY_PREFIX_.*$")
+```
+
+After modifying the config, the linter will automatically use the new settings without code changes.
+
 #### CI/CD Integration
 
-The linter supports JSON output for easy integration with CI/CD pipelines:
+The linter is **automatically integrated** into CI/CD pipelines:
+
+- **GitHub Actions CI** (`.github/workflows/ci.yml`) - Runs on lint-and-format job
+- **GitHub Actions Test** (`.github/workflows/test.yml`) - Runs on code-quality job
+- **Pre-commit hooks** (`.pre-commit-config.yaml`) - Runs on every commit
+
+Manual CI/CD integration example:
 
 ```yaml
 # Example GitHub Actions workflow
