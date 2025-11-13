@@ -104,7 +104,7 @@ dependencies = [
   "pyarrow>=14.0.0",
   "yfinance>=0.2.18",
   "alpha-vantage>=2.3.1",
-  "alpaca-py==0.42.2",
+  "alpaca-py==0.43.2",
   "cvxpy>=1.4.0",
   "python-jose[cryptography]>=3.3.0",
   "passlib[bcrypt]>=1.7.4",
