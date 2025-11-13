@@ -113,7 +113,12 @@ jobs:
     - name: Check CLI functionality
       run: |
         .venv/bin/mcli --help
-        
+
+    - name: Check for hardcoded strings
+      run: |
+        .venv/bin/python tools/lint_hardcoded_strings.py --check-all --json
+      continue-on-error: true  # Non-blocking for initial rollout
+
     - name: Validate dependencies
       run: |
         uv pip check

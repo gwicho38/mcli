@@ -36,7 +36,11 @@ jobs:
       
     - name: Check import sorting with isort
       run: isort --check-only --diff src/
-      
+
+    - name: Check for hardcoded strings
+      run: python tools/lint_hardcoded_strings.py --check-all --json
+      continue-on-error: true  # Non-blocking for initial rollout
+
     - name: Type checking with mypy
       run: mypy src/ --ignore-missing-imports || true
 

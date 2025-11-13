@@ -110,6 +110,18 @@ repos:
         args: ['--baseline', '.secrets.baseline']
         exclude: package.lock.json
 
+  # Local hooks
+  - repo: local
+    hooks:
+      - id: lint-hardcoded-strings
+        name: Lint hardcoded strings
+        description: Check for hardcoded strings that should be in constants module
+        entry: python tools/lint_hardcoded_strings.py
+        language: system
+        types: [python]
+        pass_filenames: true
+        exclude: ^(tests/|docs/|scripts/|tools/|src/mcli/lib/constants/)
+
 # Configuration for specific hooks
 ci:
   autofix_commit_msg: |
