@@ -436,6 +436,30 @@ def _add_lazy_commands(app: click.Group):
         app.add_command(lazy_cmd)
         logger.debug(f"Added lazy command: {cmd_name}")
 
+    # Sync scripts → JSON before loading custom commands
+    try:
+        from mcli.lib.paths import get_custom_commands_dir
+        from mcli.lib.script_sync import ScriptSyncManager
+        from mcli.lib.script_watcher import start_watcher
+
+        # Sync scripts in both local and global directories
+        for global_mode in [False, True]:
+            commands_dir = get_custom_commands_dir(global_mode=global_mode)
+            if commands_dir.exists():
+                sync_manager = ScriptSyncManager(commands_dir)
+                synced = sync_manager.sync_all()
+                if synced:
+                    scope = "global" if global_mode else "local"
+                    logger.info(f"Synced {len(synced)} {scope} script(s) to JSON")
+
+                # Optional: Start file watcher for development mode
+                if os.getenv("MCLI_WATCH_SCRIPTS", "false").lower() == "true":
+                    observer = start_watcher(commands_dir, sync_manager)
+                    if observer:
+                        logger.info(f"Started file watcher for {commands_dir}")
+    except Exception as e:
+        logger.debug(f"Could not sync scripts: {e}")
+
     # Load custom user commands from ~/.mcli/commands/ AFTER all groups are added
     try:
         from mcli.lib.custom_commands import load_custom_commands
