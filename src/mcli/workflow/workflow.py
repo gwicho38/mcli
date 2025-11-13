@@ -161,7 +161,6 @@ try:
     workflows.add_command(sync_group)
 except ImportError as e:
     # Sync commands not available
-    import sys
 
     from mcli.lib.logger.logger import get_logger
 
