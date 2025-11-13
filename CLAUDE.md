@@ -47,6 +47,7 @@ tox -e py39,py310,py311,py312  # Run on specific versions
 ### Code Quality
 ```bash
 make lint                  # Run all linting (black, isort, flake8, mypy)
+make lint-hardcoded-strings # Check for hardcoded strings that should be constants
 make lint-pylint           # Run pylint (optional, non-blocking)
 make format                # Auto-format code (black + isort)
 make type-check            # Run mypy type checking
@@ -60,6 +61,8 @@ tox -e security            # Security checks
 ```
 
 See [Linting Guide](docs/development/LINTING.md) for detailed configuration and usage
+
+**Constants Module**: Always use constants from `src/mcli/lib/constants/` instead of hardcoded strings. The hardcoded strings linter runs automatically in pre-commit hooks to enforce this.
 
 ### Dashboard
 ```bash
@@ -136,6 +139,33 @@ src/mcli/
 2. Use Click decorators: `@click.command()` or `@click.group()`
 3. Import UI helpers: `from mcli.lib.ui.styling import success, error, info, warning`
 4. Heavy imports should use lazy loading pattern (see `main.py:_add_lazy_commands()`)
+5. **Always use constants**: Import from `mcli.lib.constants` instead of hardcoding strings
+
+### Using Constants (Required)
+**IMPORTANT**: All code must use the centralized constants module instead of hardcoded strings. This is enforced by a pre-commit hook.
+
+```python
+# ✅ Good - Using constants
+from mcli.lib.constants import EnvVars, DirNames, FileNames, ErrorMessages
+
+api_key = os.getenv(EnvVars.OPENAI_API_KEY)
+config_path = Path.home() / DirNames.MCLI / FileNames.CONFIG_TOML
+click.echo(ErrorMessages.COMMAND_NOT_FOUND.format(name=cmd_name))
+
+# ❌ Bad - Hardcoded strings (will be rejected by linter)
+api_key = os.getenv("OPENAI_API_KEY")
+config_path = Path.home() / ".mcli" / "config.toml"
+click.echo(f"Command {cmd_name} not found")
+```
+
+**Constants Module Structure**:
+- `EnvVars` - Environment variable names
+- `DirNames`, `FileNames` - Paths and filenames
+- `ErrorMessages`, `SuccessMessages`, `WarningMessages`, `InfoMessages` - UI messages
+- `URLs`, `Editors`, `Shells`, `Languages`, `LogLevels` - Default values
+- `CommandKeys`, `CommandGroups`, `ConfigKeys` - Command metadata
+
+See [Constants README](src/mcli/lib/constants/README.md) for detailed usage examples.
 
 ### Command Structure (Updated in 7.11.0)
 - **`mcli workflow`** - Workflow management (formerly `mcli commands`)
@@ -222,6 +252,8 @@ Key variables from `.env`:
 8. **Test Environment**: Set `MCLI_INCLUDE_TEST_COMMANDS=1` when testing custom command loading
 9. **Environment Setup**: Always copy `.env.example` to `.env` before development
 10. **Multi-Environment Testing**: Use `tox` to test across Python 3.9-3.12
+11. **Constants Usage**: Always import constants from `mcli.lib.constants` - hardcoded strings are blocked by pre-commit hooks
+12. **Linter Bypass**: If you must commit with hardcoded strings (e.g., in tests), use `git commit --no-verify`
 
 ## Python Version Support
 
