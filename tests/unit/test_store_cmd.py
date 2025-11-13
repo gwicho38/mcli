@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 import pytest
 from click.testing import CliRunner
 
-from mcli.app.store_cmd import _get_store_path, store
+from mcli.self.store_cmd import _get_store_path, store
 
 
 @pytest.fixture
