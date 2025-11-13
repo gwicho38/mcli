@@ -56,6 +56,38 @@ pip install mcli-framework
 uv pip install mcli-framework
 ```
 
+### Drop & Run: Simplest Way to Add Commands
+
+MCLI automatically converts any script into a workflow command:
+
+```bash
+# 1. Create a script with metadata comments
+cat > ~/.mcli/commands/backup.sh <<'EOF'
+#!/usr/bin/env bash
+# @description: Backup files to S3
+# @version: 1.0.0
+# @requires: aws-cli
+
+aws s3 sync /data/ s3://my-bucket/backup/
+EOF
+
+# 2. Sync scripts to JSON (auto-runs on startup)
+mcli workflows sync all
+
+# 3. Run it!
+mcli workflows backup
+```
+
+**Supported Languages**: Python, Bash, JavaScript, TypeScript, Ruby, Perl, Lua
+
+**Key Features**:
+- ✅ Auto-detect language from shebang or extension
+- ✅ Extract metadata from `@-prefixed` comments
+- ✅ Keep scripts as source of truth (JSON is auto-generated)
+- ✅ File watcher for real-time sync (`MCLI_WATCH_SCRIPTS=true`)
+
+See [Script Sync Documentation](docs/SCRIPT_SYNC_SYSTEM.md) for details.
+
 ### Initialize Workflows Directory
 
 ```bash

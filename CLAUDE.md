@@ -94,6 +94,51 @@ make clean-build           # Clean build artifacts (keep venv)
 - **Completion-Aware**: Special wrapper `create_completion_aware_lazy_group` for shell completion support
 - **Config-Driven**: `config.toml` controls which directories are scanned (default: app, self, workflow, public)
 
+### Script → JSON Sync System
+
+MCLI automatically converts raw script files to JSON workflow definitions, enabling a drag-and-drop UX where any script becomes a command:
+
+**Features**:
+- **Auto-detect language**: Python, Bash, JavaScript, TypeScript, Ruby, Perl, Lua
+- **Extract metadata**: Reads `@-prefixed` comments (`@description`, `@version`, `@requires`, `@tags`)
+- **Hash-based sync**: Uses SHA256 to detect when scripts change
+- **File watching**: Optional real-time sync when `MCLI_WATCH_SCRIPTS=true`
+- **Orphan cleanup**: Removes JSON files when source scripts are deleted
+
+**Usage**:
+```bash
+# Drop a script into the commands directory
+cp backup.sh ~/.mcli/commands/utils/backup.sh
+
+# JSON is auto-generated on next mcli run
+mcli workflows sync all
+
+# Script is now available as a command
+mcli utils backup
+```
+
+**Script metadata format**:
+```bash
+#!/usr/bin/env bash
+# @description: Backup files to S3
+# @version: 1.0.0
+# @requires: aws-cli
+# @tags: backup, aws
+
+# Your script code here...
+```
+
+**Sync commands**:
+```bash
+mcli workflows sync all          # Sync all scripts to JSON
+mcli workflows sync one <path>   # Sync single script
+mcli workflows sync status       # Show sync status
+mcli workflows sync cleanup      # Remove orphaned JSONs
+mcli workflows sync watch        # Watch mode (auto-sync)
+```
+
+See [Script Sync System Documentation](docs/SCRIPT_SYNC_SYSTEM.md) for complete details.
+
 ### Module Structure
 ```
 src/mcli/

@@ -154,6 +154,20 @@ except ImportError as e:
     logger = get_logger()
     logger.debug(f"Notebook commands not available: {e}")
 
+# Add sync subcommand
+try:
+    from mcli.workflow.sync_cmd import sync_group
+
+    workflows.add_command(sync_group)
+except ImportError as e:
+    # Sync commands not available
+    import sys
+
+    from mcli.lib.logger.logger import get_logger
+
+    logger = get_logger()
+    logger.debug(f"Sync commands not available: {e}")
+
 
 # For backward compatibility, keep workflow as an alias
 workflow = workflows
