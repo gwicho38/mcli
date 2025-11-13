@@ -41,7 +41,23 @@ CONSTANT_LIKE_PATTERN = re.compile(CONSTANT_LIKE_PATTERN)
 IDENTIFIER_PATTERN = re.compile(IDENTIFIER_PATTERN)
 
 
-class HardcodedStringVisitor(ast.NodeVisitor):
+Much of the nesting and repeated logic can be collapsed into data-driven helpers. For example:
+
+1. **Combine docstring-skipping**  
+   Replace the three `visit_Module`/`visit_ClassDef`/`visit_FunctionDef` overrides with a single `generic_visit` that skips any leading `Expr(Str|Constant)` in nodes with a `body`:
+
+   ```python
+   class HardcodedStringVisitor(ast.NodeVisitor):
+       def generic_visit(self, node):
+           # Skip leading docstring in modules, classes, functions
+           body = getattr(node, "body", None)
+           if isinstance(body, list) and body:
+               first = body[0]
+               if isinstance(first, ast.Expr) and isinstance(first.value, (ast.Str, ast.Constant)):
+                   for child in body[1:]:
+                       self.visit(child)
+                   return
+           super().generic_visit(node)
     """AST visitor to find hardcoded strings."""
 
     def __init__(self, filename: str):
