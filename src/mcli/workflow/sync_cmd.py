@@ -191,7 +191,7 @@ def sync_cleanup_command(global_mode: bool, yes: bool):
                 json_data = json.load(f)
                 if not json_data.get("metadata", {}).get("auto_generated"):
                     continue
-        except:
+        except Exception:
             continue
 
         # Check if source exists
