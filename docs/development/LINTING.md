@@ -227,6 +227,9 @@ python tools/lint_hardcoded_strings.py --check-all
 # Check specific files or directories
 python tools/lint_hardcoded_strings.py src/mcli/app/main.py
 python tools/lint_hardcoded_strings.py src/mcli/workflow/
+
+# Output in JSON format for CI/CD integration
+python tools/lint_hardcoded_strings.py --check-all --json
 ```
 
 #### Fixing Violations
@@ -332,6 +335,43 @@ To skip the check for a single commit:
 ```bash
 git commit --no-verify
 ```
+
+#### CI/CD Integration
+
+The linter supports JSON output for easy integration with CI/CD pipelines:
+
+```yaml
+# Example GitHub Actions workflow
+- name: Check for hardcoded strings
+  run: |
+    python tools/lint_hardcoded_strings.py --check-all --json > violations.json
+    # Parse JSON output for custom reporting or gating
+
+# Exit code 0 = no violations, 1 = violations found, 2 = errors
+```
+
+**JSON Output Format:**
+```json
+{
+  "total_violations": 5,
+  "total_files": 2,
+  "files": {
+    "src/mcli/app/main.py": [
+      {
+        "line": 27,
+        "column": 20,
+        "string": "config.toml",
+        "message": "Hardcoded string should be in constants module"
+      }
+    ]
+  }
+}
+```
+
+**Exit Codes:**
+- `0`: No violations found
+- `1`: Violations found (should fail CI)
+- `2`: Error occurred (syntax errors, file not found)
 
 ## Pre-commit Hooks
 
