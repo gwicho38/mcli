@@ -449,7 +449,7 @@ class ScriptSyncManager:
                     json_data = json.load(f)
                     if not json_data.get("metadata", {}).get("auto_generated"):
                         continue  # Manual JSON, don't delete
-            except:
+            except Exception:
                 continue
 
             # Check if source script exists

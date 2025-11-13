@@ -175,6 +175,8 @@ class FeatureMigrator:
             "dry_run": dry_run,
         }
 
+        # Initialize backup_dir to None
+        backup_dir = None
         if backup and not dry_run:
             backup_dir = self.core_root / ".migration_backup"
             backup_dir.mkdir(exist_ok=True)
@@ -193,7 +195,7 @@ class FeatureMigrator:
                         results["removed"].append(str(feature_path))
                     else:
                         # Backup first
-                        if backup:
+                        if backup and backup_dir is not None:
                             backup_path = backup_dir / feature_path.relative_to(self.core_root)
                             backup_path.parent.mkdir(parents=True, exist_ok=True)
                             shutil.copytree(feature_path, backup_path)
