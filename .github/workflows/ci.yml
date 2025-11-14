@@ -1,11 +1,10 @@
 name: CI/CD Pipeline
 
 on:
-  # Temporarily disabled automatic runs - enable via workflow_dispatch only
-  # push:
-  #   branches: [ main, develop ]
-  # pull_request:
-  #   branches: [ main ]
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 env:
