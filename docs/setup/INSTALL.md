@@ -1,17 +1,17 @@
 # MCLI Installation Guide
 
-Version 7.10.2 is now available through multiple installation methods!
+Version 7.14.2 is now available through multiple installation methods!
 
-## 🎉 What's New in 7.10.2
+## 🎉 What's New in 7.14.2
 
 Major improvements in this release:
-- **100% test pass rate** - 834 passing tests with comprehensive test suite
-- **Enhanced security** - Bandit, Safety, Trivy, and CodeQL scanning
-- **Multi-environment testing** - tox configuration for Python 3.9-3.12
-- **Better documentation** - Testing guide, linting guide, and Code of Conduct
-- **Improved coverage** - Test coverage tracking with Codecov integration
+- **Documentation updates** - All README and docs updated with correct command syntax
+- **Workflow migration** - 30 zsh functions migrated to MCLI global workflows
+- **Bug fixes** - Fixed test import paths and improved test suite
+- **Command structure** - Clarified `mcli commands` vs `mcli run` vs `mcli lock` usage
+- **Release notes** - Comprehensive release notes for 7.14.2
 
-For detailed release notes, see [7.10.2 Release Notes](../releases/7.10.2.md)
+For detailed release notes, see [7.14.2 Release Notes](../releases/7.14.2.md)
 
 ## Installation Methods
 
