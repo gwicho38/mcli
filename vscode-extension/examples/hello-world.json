@@ -1,0 +1,66 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 5,
+  "metadata": {
+    "mcli": {
+      "name": "hello-world",
+      "description": "A simple hello world workflow to get started with MCLI notebooks",
+      "version": "1.0.0",
+      "language": "python",
+      "group": "examples"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Hello World Workflow\n",
+        "\n",
+        "This is a simple example workflow that demonstrates the basics of MCLI notebooks.\n",
+        "\n",
+        "## What You'll Learn\n",
+        "\n",
+        "- How to write code cells\n",
+        "- How to add documentation with markdown cells\n",
+        "- How to run cells and see output\n"
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# This is a Python code cell\n",
+        "print(\"Hello, MCLI Workflows!\")\n"
+      ],
+      "metadata": {
+        "language": "python"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# You can do calculations\n",
+        "result = 42 * 2\n",
+        "print(f\"The answer is: {result}\")\n"
+      ],
+      "metadata": {
+        "language": "python"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## Next Steps\n",
+        "\n",
+        "Try editing the cells above, or add new cells using the buttons in the toolbar.\n",
+        "\n",
+        "Press `Shift+Enter` to run a cell, or click the ▶️ Run button.\n"
+      ],
+      "metadata": {}
+    }
+  ]
+}
