@@ -1,16 +1,16 @@
 # MCLI Installation Guide
 
-Version 7.14.4 is now available through multiple installation methods!
+Version 7.14.5 is now available through multiple installation methods!
 
-## 🎉 What's New in 7.14.4
+## 🎉 What's New in 7.14.5
 
-Major improvements in this release:
-- **New `mcli run` alias** - Convenient shorthand for `mcli workflows` command
-- **Improved developer experience** - Shorter syntax for running workflows
-- **Documentation alignment** - Implementation now matches README examples
-- **Full backward compatibility** - Both `mcli workflows` and `mcli run` work identically
+Critical bugfix in this release:
+- **Fixed `-g/--global` flag** - Global workflows now load correctly with `mcli workflows -g` and `mcli run -g`
+- **Resolved group name filter bug** - Both "workflow" and "workflows" group names now supported
+- **Improved workflow discovery** - All 24 global workflows now accessible when using `-g` flag
+- **Full backward compatibility** - All existing workflows continue to work
 
-For detailed release notes, see [7.14.4 Release Notes](../releases/7.14.4.md)
+For detailed release notes, see [7.14.5 Release Notes](../releases/7.14.5.md)
 
 ## Installation Methods
 

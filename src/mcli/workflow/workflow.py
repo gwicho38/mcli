@@ -27,10 +27,11 @@ class ScopedWorkflowsGroup(click.Group):
         manager = get_command_manager(global_mode=is_global)
         commands = manager.load_all_commands()
 
-        # Filter to only workflow group commands AND validate they can be loaded
+        # Filter to only workflow/workflows group commands AND validate they can be loaded
         workflow_commands = []
         for cmd_data in commands:
-            if cmd_data.get("group") != "workflow":
+            # Accept both "workflow" and "workflows" for backward compatibility
+            if cmd_data.get("group") not in ["workflow", "workflows"]:
                 continue
 
             cmd_name = cmd_data.get("name")
@@ -82,7 +83,11 @@ class ScopedWorkflowsGroup(click.Group):
 
         # Find the workflow command
         for command_data in commands:
-            if command_data.get("name") == cmd_name and command_data.get("group") == "workflow":
+            # Accept both "workflow" and "workflows" for backward compatibility
+            if command_data.get("name") == cmd_name and command_data.get("group") in [
+                "workflow",
+                "workflows",
+            ]:
                 # Create a temporary group to register the command
                 temp_group = click.Group()
                 language = command_data.get("language", "python")
