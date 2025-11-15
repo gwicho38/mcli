@@ -25,7 +25,8 @@ jobs:
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
         with:
-          fail-on-severity: moderate
+          fail-on-severity: high
+          config-file: './.github/dependency-review-config.yml'
 
   bandit:
     name: Bandit Security Scan
