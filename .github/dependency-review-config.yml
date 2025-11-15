@@ -13,9 +13,5 @@ allow-licenses:
   - ISC
   - 0BSD
 
-# Ignore deprecated packages (non-security issues)
-allow-dependencies-licenses:
-  - MIT
-
 # Comment on PRs with dependency changes
 comment-summary-in-pr: on-failure
