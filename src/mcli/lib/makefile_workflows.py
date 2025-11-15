@@ -110,14 +110,14 @@ def parse_makefile_targets(makefile_path: Path) -> Dict[str, str]:
 
             # Match target lines: "target:" or "target: dependencies"
             # Also capture inline comments with ##
-            target_match = re.match(r'^([a-zA-Z0-9_-]+)\s*:\s*([^#]*)(##\s*(.+))?$', stripped)
+            target_match = re.match(r"^([a-zA-Z0-9_-]+)\s*:\s*([^#]*)(##\s*(.+))?$", stripped)
 
             if target_match:
                 target_name = target_match.group(1)
                 inline_comment = target_match.group(4)
 
                 # Skip special targets
-                if target_name in ['.PHONY', '.SILENT', '.DEFAULT', '.PRECIOUS', '.INTERMEDIATE']:
+                if target_name in [".PHONY", ".SILENT", ".DEFAULT", ".PRECIOUS", ".INTERMEDIATE"]:
                     previous_comment = None
                     continue
 
@@ -154,10 +154,9 @@ def create_make_command(target_name: str, description: str, makefile_path: Path)
     Returns:
         Click Command object
     """
+
     @click.command(
-        name=target_name,
-        help=description,
-        context_settings={"ignore_unknown_options": True}
+        name=target_name, help=description, context_settings={"ignore_unknown_options": True}
     )
     @click.argument("args", nargs=-1, type=click.UNPROCESSED)
     @click.pass_context

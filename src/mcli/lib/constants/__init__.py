@@ -32,13 +32,7 @@ from .defaults import (
     URLs,
 )
 from .env import EnvVars
-from .messages import (
-    ErrorMessages,
-    InfoMessages,
-    PromptMessages,
-    SuccessMessages,
-    WarningMessages,
-)
+from .messages import ErrorMessages, InfoMessages, PromptMessages, SuccessMessages, WarningMessages
 from .paths import DirNames, FileNames, GitIgnorePatterns, PathPatterns
 
 __version__ = "1.0.0"

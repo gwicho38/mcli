@@ -376,6 +376,10 @@ def _add_lazy_commands(app: click.Group):
 
         app.add_command(workflows_group, name="workflows")
         logger.debug("Added workflows group with -g/--global support")
+
+        # Add 'run' as an alias for workflows
+        app.add_command(workflows_group, name="run")
+        logger.debug("Added 'run' alias for workflows group")
     except ImportError as e:
         logger.error(f"Could not load workflows group: {e}")
         # Fallback to lazy loading if import fails
@@ -388,7 +392,8 @@ def _add_lazy_commands(app: click.Group):
                 "Runnable workflows for automation, video processing, and daemon management",
             )
             app.add_command(workflows_group, name="workflows")
-            logger.debug("Added completion-aware workflows group (fallback)")
+            app.add_command(workflows_group, name="run")  # Add run alias
+            logger.debug("Added completion-aware workflows group with 'run' alias (fallback)")
         except ImportError:
             workflows_group = LazyGroup(
                 "workflows",
@@ -396,7 +401,8 @@ def _add_lazy_commands(app: click.Group):
                 help="Runnable workflows for automation, video processing, and daemon management",
             )
             app.add_command(workflows_group, name="workflows")
-            logger.debug("Added lazy workflows group (fallback)")
+            app.add_command(workflows_group, name="run")  # Add run alias
+            logger.debug("Added lazy workflows group with 'run' alias (fallback)")
 
     # Lazy load other heavy commands that are used less frequently
     # NOTE: chat and model commands have been removed

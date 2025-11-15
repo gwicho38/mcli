@@ -113,6 +113,8 @@ def workflows(ctx, is_global):
         mcli workflows my-workflow              # Execute local workflow (if in git repo)
         mcli workflows -g my-workflow           # Execute global workflow
         mcli workflows --global another-workflow # Execute global workflow
+
+    Alias: You can also use 'mcli run' as a shorthand for 'mcli workflows'
     """
     # Store the is_global flag in the context for subcommands to access
     ctx.ensure_object(dict)
@@ -170,6 +172,9 @@ except ImportError as e:
 
 # For backward compatibility, keep workflow as an alias
 workflow = workflows
+
+# Add 'run' as a convenient alias for workflows
+run = workflows
 
 if __name__ == "__main__":
     workflows()

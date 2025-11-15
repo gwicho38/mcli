@@ -1,16 +1,16 @@
 # MCLI Installation Guide
 
-Version 7.14.3 is now available through multiple installation methods!
+Version 7.14.4 is now available through multiple installation methods!
 
-## 🎉 What's New in 7.14.3
+## 🎉 What's New in 7.14.4
 
 Major improvements in this release:
-- **Documentation improvements** - All public-facing docs now consistent with command structure
-- **CI/CD enhancements** - Re-enabled all automated workflows for continuous integration
-- **Azure deployment fix** - Pinned Python 3.13 to resolve streamlit-extras compatibility
-- **Infrastructure stability** - All 9 GitHub Actions workflows now passing
+- **New `mcli run` alias** - Convenient shorthand for `mcli workflows` command
+- **Improved developer experience** - Shorter syntax for running workflows
+- **Documentation alignment** - Implementation now matches README examples
+- **Full backward compatibility** - Both `mcli workflows` and `mcli run` work identically
 
-For detailed release notes, see [7.14.3 Release Notes](../releases/7.14.3.md)
+For detailed release notes, see [7.14.4 Release Notes](../releases/7.14.4.md)
 
 ## Installation Methods
 

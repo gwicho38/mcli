@@ -76,6 +76,7 @@ mcli commands sync -g
 
 # 3. Run it!
 mcli run -g backup
+# Note: 'mcli run' is an alias for 'mcli workflows'
 ```
 
 **Supported Languages**: Python, Bash, JavaScript, TypeScript, Ruby, Perl, Lua
@@ -360,7 +361,10 @@ MCLI comes with powerful built-in workflows:
 
 ```bash
 mcli run --help
+# or use the full command: mcli workflows --help
 ```
+
+**Note**: `mcli run` is a convenient alias for `mcli workflows`
 
 Available workflows:
 - **pdf** - Intelligent PDF processing (extract, compress, split, merge)

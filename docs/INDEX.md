@@ -2,8 +2,8 @@
 
 Welcome to the MCLI Framework documentation! This index helps you find the documentation you need quickly.
 
-**Current Version**: 7.14.3
-**Last Updated**: 2025-11-14
+**Current Version**: 7.14.4
+**Last Updated**: 2025-11-15
 
 ---
 
@@ -151,6 +151,7 @@ Welcome to the MCLI Framework documentation! This index helps you find the docum
 ### Latest Releases
 | Version | Date | Highlights |
 |---------|------|------------|
+| [7.14.4](releases/7.14.4.md) | 2025-11-15 | Added `mcli run` alias for `mcli workflows` command |
 | [7.14.3](releases/7.14.3.md) | 2025-11-14 | Documentation improvements, CI/CD enhancements, Azure deployment fix |
 | [7.14.2](releases/7.14.2.md) | 2025-11-14 | Documentation updates, workflow migration, bug fixes |
 | [7.14.0](releases/7.14.0.md) | 2025-11-06 | Command naming simplification |

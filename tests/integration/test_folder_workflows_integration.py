@@ -167,10 +167,7 @@ class TestWorkflowScanning:
 
     def test_scan_discovers_all_workflows(self, temp_workflows_dir):
         """Test that scanning discovers all workflow types."""
-        from mcli.lib.folder_workflows import (
-            scan_folder_workflows,
-            scan_standalone_workflows,
-        )
+        from mcli.lib.folder_workflows import scan_folder_workflows, scan_standalone_workflows
 
         # Test standalone discovery
         standalone = scan_standalone_workflows(temp_workflows_dir)
@@ -281,9 +278,7 @@ exit 42
         )
         script.chmod(0o755)
 
-        result = subprocess.run(
-            ["bash", str(script)], capture_output=True, text=True, timeout=10
-        )
+        result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=10)
 
         assert result.returncode == 42
         assert "Error workflow" in result.stdout

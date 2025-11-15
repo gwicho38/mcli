@@ -4,8 +4,9 @@ Script synchronization commands for mcli.
 Commands to manage the script → JSON synchronization system.
 """
 
-import click
 from pathlib import Path
+
+import click
 
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.paths import get_custom_commands_dir

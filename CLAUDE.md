@@ -216,9 +216,10 @@ See [Constants README](src/mcli/lib/constants/README.md) for detailed usage exam
 - **`mcli workflow`** - Workflow management (formerly `mcli commands`)
   - Located in `src/mcli/app/commands_cmd.py`
   - Commands: add, edit, import, export, list, search, remove, info, verify, update-lockfile, store
-- **`mcli workflows`** - Running workflows (formerly `mcli workflow`)
+- **`mcli workflows`** or **`mcli run`** - Running workflows (formerly `mcli workflow`)
   - Located in `src/mcli/workflow/workflow.py`
   - Contains runnable workflows: secrets, pdf, clean, scheduler, daemon, etc.
+  - **Alias**: `mcli run` is a convenient shorthand for `mcli workflows`
 - **Secrets** - Moved from `mcli lib secrets` to `mcli workflows secrets`
   - Located in `src/mcli/workflow/secrets/secrets_cmd.py`
 - **lib group removed** - No longer a top-level command group

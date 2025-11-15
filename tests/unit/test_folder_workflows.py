@@ -281,6 +281,7 @@ class TestCommandCreation:
 
         # Use Click's testing runner
         from click.testing import CliRunner
+
         runner = CliRunner()
         result = runner.invoke(cmd, [])
 
@@ -304,6 +305,7 @@ class TestCommandCreation:
 
         # Use Click's testing runner
         from click.testing import CliRunner
+
         runner = CliRunner()
         result = runner.invoke(cmd, [])
 

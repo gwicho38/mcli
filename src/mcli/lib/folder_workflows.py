@@ -251,6 +251,7 @@ def create_python_script_command(cmd_name: str, script_path: Path, help_text: st
     Returns:
         Click Command object
     """
+
     @click.command(name=cmd_name, help=help_text, context_settings={"ignore_unknown_options": True})
     @click.argument("args", nargs=-1, type=click.UNPROCESSED)
     @click.pass_context
@@ -299,6 +300,7 @@ def create_shell_script_command(
     Returns:
         Click Command object
     """
+
     @click.command(name=cmd_name, help=help_text, context_settings={"ignore_unknown_options": True})
     @click.argument("args", nargs=-1, type=click.UNPROCESSED)
     @click.pass_context
@@ -366,7 +368,7 @@ def scan_standalone_workflows(workflows_dir: Path) -> Dict[str, Dict[str, Any]]:
                 continue
 
             # Skip JSON files (handled by JSON command system)
-            if item.suffix.lower() == '.json':
+            if item.suffix.lower() == ".json":
                 continue
 
             # Detect language
@@ -482,7 +484,9 @@ def scan_folder_workflows(workflows_dir: Path) -> Dict[str, Dict[str, Any]]:
             # Only add group if it has commands
             if group_commands:
                 folder_groups[group_name] = {"commands": group_commands}
-                logger.info(f"Loaded folder group '{group_name}' with {len(group_commands)} commands")
+                logger.info(
+                    f"Loaded folder group '{group_name}' with {len(group_commands)} commands"
+                )
 
     except OSError as e:
         logger.error(f"Error scanning folder workflows in {workflows_dir}: {e}")

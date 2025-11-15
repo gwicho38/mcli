@@ -259,4 +259,3 @@ class TestConvertCommand:
 @pytest.mark.integration
 class TestDocConvertIntegration:
     """Integration tests for doc-convert (requires pandoc)"""
-
