@@ -63,7 +63,27 @@ class ScopedWorkflowsGroup(click.Group):
         # Also include built-in subcommands
         builtin_commands = list(super().list_commands(ctx))
 
-        return sorted(set(workflow_commands + builtin_commands))
+        # Auto-detect project-level workflows (Makefile, package.json)
+        auto_detected_commands = []
+
+        # Only auto-detect for local (non-global) workflows
+        if not is_global:
+            from pathlib import Path
+
+            from mcli.lib.makefile_workflows import find_makefile
+            from mcli.lib.packagejson_workflows import find_package_json
+
+            # Check for Makefile
+            if find_makefile(Path.cwd()):
+                auto_detected_commands.append("make")
+                logger.debug("Auto-detected Makefile in current directory")
+
+            # Check for package.json
+            if find_package_json(Path.cwd()):
+                auto_detected_commands.append("npm")
+                logger.debug("Auto-detected package.json in current directory")
+
+        return sorted(set(workflow_commands + builtin_commands + auto_detected_commands))
 
     def get_command(self, ctx, cmd_name):
         """Get a command by name, loading from appropriate scope."""
@@ -74,6 +94,26 @@ class ScopedWorkflowsGroup(click.Group):
 
         # Get scope from context
         is_global = ctx.params.get("is_global", False)
+
+        # Check for auto-detected project workflows (only for local mode)
+        if not is_global:
+            from pathlib import Path
+
+            # Check for Makefile workflows
+            if cmd_name == "make":
+                from mcli.lib.makefile_workflows import load_makefile_workflow
+
+                make_group = load_makefile_workflow(Path.cwd())
+                if make_group:
+                    return make_group
+
+            # Check for package.json workflows
+            if cmd_name == "npm":
+                from mcli.lib.packagejson_workflows import load_package_json_workflow
+
+                npm_group = load_package_json_workflow(Path.cwd())
+                if npm_group:
+                    return npm_group
 
         # Load the workflow command from appropriate directory
         from mcli.lib.custom_commands import get_command_manager
