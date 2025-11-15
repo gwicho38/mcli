@@ -5,8 +5,17 @@
 import * as vscode from 'vscode';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 
 const execAsync = promisify(exec);
+
+// Common execution options
+const COMMON_EXEC_OPTS = {
+    maxBuffer: 1024 * 1024 * 10, // 10MB
+    timeout: 30000, // 30 seconds
+};
 
 export class WorkflowNotebookController {
     private readonly controller: vscode.NotebookController;
@@ -103,26 +112,37 @@ export class WorkflowNotebookController {
         }
     }
 
-    private async executePython(code: string): Promise<{ stdout: string; stderr: string }> {
-        const fs = require('fs');
-        const os = require('os');
-        const path = require('path');
-
-        // Create temporary file for secure execution
-        const tmpDir = os.tmpdir();
-        const tmpFile = path.join(tmpDir, `mcli-cell-${Date.now()}-${Math.random().toString(36).substring(7)}.py`);
+    /**
+     * Execute code in a temporary file to prevent command injection
+     * @param code The code to execute
+     * @param extension File extension for the temporary file
+     * @param prepare Optional function to prepare the file (e.g., set permissions)
+     * @param executor Function to execute the file
+     * @returns stdout and stderr from execution
+     */
+    private async execWithTempFile(
+        code: string,
+        extension: string,
+        prepare?: (file: string) => void,
+        executor?: (file: string) => Promise<{ stdout: string; stderr: string }>
+    ): Promise<{ stdout: string; stderr: string }> {
+        const tmpFile = path.join(
+            os.tmpdir(),
+            `mcli-cell-${Date.now()}-${Math.random().toString(36).substring(7)}${extension}`
+        );
 
         try {
             // Write code to temporary file
             fs.writeFileSync(tmpFile, code, 'utf8');
 
-            // Execute via file (prevents command injection)
-            const { stdout, stderr } = await execAsync(`python3 "${tmpFile}"`, {
-                maxBuffer: 1024 * 1024 * 10, // 10MB
-                timeout: 30000, // 30 seconds
-            });
+            // Optional preparation (e.g., chmod for shell scripts)
+            if (prepare) {
+                prepare(tmpFile);
+            }
 
-            return { stdout, stderr };
+            // Execute with provided executor or default
+            const defaultExecutor = async (file: string) => execAsync(file, COMMON_EXEC_OPTS);
+            return await (executor || defaultExecutor)(tmpFile);
         } catch (error: any) {
             return {
                 stdout: error.stdout || '',
@@ -134,56 +154,35 @@ export class WorkflowNotebookController {
                 if (fs.existsSync(tmpFile)) {
                     fs.unlinkSync(tmpFile);
                 }
-            } catch (cleanupError) {
-                // Ignore cleanup errors
+            } catch (cleanupError: any) {
+                // Log cleanup errors at debug level for diagnostics
+                console.debug(`Temporary file cleanup failed for ${tmpFile}:`, cleanupError);
             }
         }
+    }
+
+    private async executePython(code: string): Promise<{ stdout: string; stderr: string }> {
+        return this.execWithTempFile(
+            code,
+            '.py',
+            undefined,
+            (file) => execAsync(`python3 "${file}"`, COMMON_EXEC_OPTS)
+        );
     }
 
     private async executeShell(
         code: string,
         shell: string
     ): Promise<{ stdout: string; stderr: string }> {
-        const fs = require('fs');
-        const os = require('os');
-        const path = require('path');
-
         const shellBin = shell === 'shell' ? 'bash' : shell;
+        const extension = ['bash', 'zsh', 'fish'].includes(shellBin) ? '.sh' : '';
 
-        // Create temporary file for secure execution
-        const tmpDir = os.tmpdir();
-        const extension = shellBin === 'bash' || shellBin === 'zsh' || shellBin === 'fish' ? '.sh' : '';
-        const tmpFile = path.join(tmpDir, `mcli-cell-${Date.now()}-${Math.random().toString(36).substring(7)}${extension}`);
-
-        try {
-            // Write code to temporary file
-            fs.writeFileSync(tmpFile, code, 'utf8');
-
-            // Make file executable
-            fs.chmodSync(tmpFile, '755');
-
-            // Execute via file (prevents command injection)
-            const { stdout, stderr } = await execAsync(`${shellBin} "${tmpFile}"`, {
-                maxBuffer: 1024 * 1024 * 10,
-                timeout: 30000,
-            });
-
-            return { stdout, stderr };
-        } catch (error: any) {
-            return {
-                stdout: error.stdout || '',
-                stderr: error.stderr || error.message,
-            };
-        } finally {
-            // Clean up temporary file
-            try {
-                if (fs.existsSync(tmpFile)) {
-                    fs.unlinkSync(tmpFile);
-                }
-            } catch (cleanupError) {
-                // Ignore cleanup errors
-            }
-        }
+        return this.execWithTempFile(
+            code,
+            extension,
+            (file) => fs.chmodSync(file, 0o755),
+            (file) => execAsync(`${shellBin} "${file}"`, COMMON_EXEC_OPTS)
+        );
     }
 
     dispose(): void {
