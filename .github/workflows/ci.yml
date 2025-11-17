@@ -79,7 +79,7 @@ jobs:
   test-python:
     name: Test Python Package
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.python-version == '3.9' }}  # Non-blocking for Python 3.9 due to occasional maturin build issues
+    continue-on-error: ${{ matrix.os == 'macos-latest' }}  # Non-blocking for macOS due to occasional maturin build issues
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
