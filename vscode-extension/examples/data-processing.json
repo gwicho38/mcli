@@ -1,0 +1,83 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 5,
+  "metadata": {
+    "mcli": {
+      "name": "data-processing",
+      "description": "Example workflow showing data processing with Python",
+      "version": "1.0.0",
+      "language": "python",
+      "group": "examples"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Data Processing Workflow\n",
+        "\n",
+        "This workflow demonstrates how to process data using Python in MCLI notebooks.\n"
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Import standard libraries\n",
+        "import json\n",
+        "from datetime import datetime\n",
+        "\n",
+        "print(\"Libraries imported successfully!\")\n"
+      ],
+      "metadata": {
+        "language": "python"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Create sample data\n",
+        "data = {\n",
+        "    \"name\": \"Sample Dataset\",\n",
+        "    \"timestamp\": datetime.now().isoformat(),\n",
+        "    \"values\": [1, 2, 3, 4, 5]\n",
+        "}\n",
+        "\n",
+        "print(\"Data created:\")\n",
+        "print(json.dumps(data, indent=2, default=str))\n"
+      ],
+      "metadata": {
+        "language": "python"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Process the data\n",
+        "total = sum(data['values'])\n",
+        "average = total / len(data['values'])\n",
+        "\n",
+        "print(f\"Total: {total}\")\n",
+        "print(f\"Average: {average}\")\n"
+      ],
+      "metadata": {
+        "language": "python"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## Results\n",
+        "\n",
+        "The data has been processed successfully. You can extend this workflow with your own data processing logic.\n"
+      ],
+      "metadata": {}
+    }
+  ]
+}

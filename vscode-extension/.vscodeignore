@@ -1,8 +1,11 @@
 .vscode/**
 .vscode-test/**
 src/**
+test/**
 node_modules/**
+out/**
 .gitignore
+.gitattributes
 .yarnrc
 webpack.config.js
 **/tsconfig.json
@@ -10,3 +13,10 @@ webpack.config.js
 **/*.map
 **/*.ts
 !dist/extension.js
+*.vsix
+*.log
+*.bak
+*-new.*
+*-extracted.*
+**/.DS_Store
+TUTORIAL_VIDEO_OUTLINE.md

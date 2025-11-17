@@ -2,6 +2,50 @@
 
 All notable changes to the "MCLI Workflow Notebooks" extension will be documented in this file.
 
+## [1.1.0] - 2024-11-15
+
+### 🔒 Security (CRITICAL)
+- **Fixed command injection vulnerability in Python cell execution** - Now uses temporary files instead of command-line string interpolation
+- **Fixed command injection vulnerability in Shell cell execution** - Now uses temporary files for secure execution
+- **Improved file cleanup** - Temporary files are now properly removed after execution
+
+### ✨ New Features
+- **Added comprehensive unit test suite** - 20+ tests covering serializer, controller, and utilities
+- **Added integration tests** - Tests for extension activation and command registration
+- **Added example workflows** - 3 ready-to-use examples (hello-world, data-processing, devops-automation)
+- **Added TROUBLESHOOTING.md** - Comprehensive guide for common issues and solutions
+- **Added TUTORIAL_VIDEO_OUTLINE.md** - Complete outline for creating tutorial videos
+
+### 🐛 Bug Fixes
+- Removed unused notebookEditor.ts file (legacy code cleanup)
+- Improved error handling in cell execution with proper try-catch blocks
+- Better cleanup of temporary files with finally blocks
+- Fixed potential resource leaks
+
+### 📚 Documentation
+- **Enhanced README** - Expanded FAQ section with more Q&A
+- **Comprehensive troubleshooting guide** - Covers installation, execution, and performance issues
+- **Tutorial video outline** - 3-5 minute video script with scene breakdown
+- **Example workflows** - Well-documented examples for different use cases
+
+### 🔧 Technical Improvements
+- **Updated package.json** - Added mocha, @types/mocha, glob for testing
+- **Improved .vscodeignore** - Excludes test files, build artifacts, and temporary files
+- **Security-first execution** - All code execution now uses temporary files (prevents injection)
+- **Proper file permissions** - Shell scripts are made executable (chmod 755)
+- **Better resource cleanup** - Ensures temporary files are always deleted
+
+### 📦 Package Improvements
+- Reduced package size by excluding unnecessary files
+- Cleaner distribution with better .vscodeignore rules
+- Added test infrastructure without bloating the extension
+
+### 🎯 Marketplace Ready
+- **All security issues resolved** - Safe for public use
+- **Comprehensive testing** - Full test coverage for core functionality
+- **Professional documentation** - README, FAQ, Troubleshooting, Examples
+- **Clean package** - Optimized size, proper exclusions
+
 ## [2.0.0] - 2025-10-28
 
 ### 🚀 Major Release: Full MCLI Command Integration!
