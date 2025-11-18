@@ -1,9 +1,9 @@
 # MCLI - Portable Workflow Framework
 
 [![codecov](https://codecov.io/gh/gwicho38/mcli/branch/main/graph/badge.svg)](https://codecov.io/gh/gwicho38/mcli)
-[![Tests](https://github.com/gwicho38/mcli/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/gwicho38/mcli/actions)
+[![Tests](https://github.com/gwicho38/mcli/actions/workflows/ci.yml/badge.svg)](https://github.com/gwicho38/mcli/actions)
 [![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/gwicho38/mcli/blob/main/LICENSE)
 
 **Transform any script into a versioned, portable, schedulable workflow command.**
 
@@ -19,8 +19,8 @@ No coupling to the engine. No vendor lock-in. Just portable workflows that work.
 
 Edit your workflow JSON files like Jupyter notebooks with our VSCode extension!
 
-[![VSCode Extension](https://img.shields.io/badge/VSCode-Extension-blue?logo=visualstudiocode)](vscode-extension/)
-[![Visual Editing](https://img.shields.io/badge/workflows-visual%20editing-brightgreen)](vscode-extension/)
+[![VSCode Extension](https://img.shields.io/badge/VSCode-Extension-blue?logo=visualstudiocode)](https://marketplace.visualstudio.com/items?itemName=gwicho38.mcli-framework)
+[![Visual Editing](https://img.shields.io/badge/workflows-visual%20editing-brightgreen)](https://github.com/gwicho38/mcli/tree/main/vscode-extension)
 
 **Features:**
 - 📝 Cell-based editing (Jupyter-like interface)
@@ -39,10 +39,10 @@ code --install-extension vscode-extension/mcli-framework-2.0.0.vsix
 ```
 
 **Learn More:**
-- [Extension README](vscode-extension/README.md) - Features and usage
-- [Visual Editing Guide](README-VISUAL-EDITING.md) - Quick start
-- [Installation Guide](vscode-extension/INSTALL.md) - Detailed setup
-- [Workflow Notebooks Docs](docs/workflow-notebooks.md) - Complete guide
+- [Extension README](https://github.com/gwicho38/mcli/blob/main/vscode-extension/README.md) - Features and usage
+- [Visual Editing Guide](https://github.com/gwicho38/mcli/blob/main/README-VISUAL-EDITING.md) - Quick start
+- [Installation Guide](https://github.com/gwicho38/mcli/blob/main/vscode-extension/INSTALL.md) - Detailed setup
+- [Workflow Notebooks Docs](https://github.com/gwicho38/mcli/blob/main/docs/workflow-notebooks.md) - Complete guide
 
 ## ⚡ Quick Start
 
@@ -87,7 +87,7 @@ mcli run -g backup
 - ✅ Keep scripts as source of truth (JSON is auto-generated)
 - ✅ File watcher for real-time sync (`MCLI_WATCH_SCRIPTS=true`)
 
-See [Script Sync Documentation](docs/SCRIPT_SYNC_SYSTEM.md) for details.
+See [Script Sync Documentation](https://github.com/gwicho38/mcli/blob/main/docs/SCRIPT_SYNC_SYSTEM.md) for details.
 
 ### Initialize Workflows Directory
 
@@ -454,13 +454,13 @@ make wheel
 
 ## 📖 Documentation
 
-- **📚 Documentation Index**: [Complete Documentation Index](docs/INDEX.md) - All docs organized by category
-- **Installation**: See [Installation Guide](docs/setup/INSTALL.md)
+- **📚 Documentation Index**: [Complete Documentation Index](https://github.com/gwicho38/mcli/blob/main/docs/INDEX.md) - All docs organized by category
+- **Installation**: See [Installation Guide](https://github.com/gwicho38/mcli/blob/main/docs/setup/INSTALL.md)
 - **Workflows**: Full workflow documentation (this README)
-- **Shell Completion**: See [Shell Completion Guide](docs/features/SHELL_COMPLETION.md)
-- **Testing**: See [Testing Guide](docs/development/TESTING.md)
-- **Contributing**: See [Contributing Guide](CONTRIBUTING.md)
-- **Release Notes**: See [Latest Release (7.14.2)](docs/releases/7.14.2.md)
+- **Shell Completion**: See [Shell Completion Guide](https://github.com/gwicho38/mcli/blob/main/docs/features/SHELL_COMPLETION.md)
+- **Testing**: See [Testing Guide](https://github.com/gwicho38/mcli/blob/main/docs/development/TESTING.md)
+- **Contributing**: See [Contributing Guide](https://github.com/gwicho38/mcli/blob/main/CONTRIBUTING.md)
+- **Release Notes**: See [Latest Release (7.14.2)](https://github.com/gwicho38/mcli/blob/main/docs/releases/7.14.2.md)
 
 ## 🎯 Common Use Cases
 
