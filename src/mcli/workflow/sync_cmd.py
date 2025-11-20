@@ -5,6 +5,7 @@ Commands to manage the script → JSON synchronization system.
 """
 
 from pathlib import Path
+from typing import Optional
 
 import click
 
@@ -188,7 +189,7 @@ def sync_cleanup_command(global_mode: bool, yes: bool):
         try:
             import json
 
-            with open(json_path, "r") as f:
+            with open(json_path) as f:
                 json_data = json.load(f)
                 if not json_data.get("metadata", {}).get("auto_generated"):
                     continue
@@ -272,3 +273,174 @@ def sync_watch_command(global_mode: bool):
         info("Stopping watcher...")
         stop_watcher(observer)
         success("✓ Stopped")
+
+
+@sync_group.command(name="push")
+@click.option("--global", "-g", "global_mode", is_flag=True, help="Push global commands")
+@click.option("--description", "-d", help="Description for this sync")
+def sync_push_command(global_mode: bool, description: str):
+    """
+    Push command state to IPFS (immutable cloud storage).
+
+    Uploads your current command lockfile to IPFS and returns an immutable
+    CID (Content Identifier) that anyone can use to retrieve the exact same
+    command state.
+
+    Features:
+    - Zero configuration (no accounts or API keys)
+    - Immutable (CID proves authenticity)
+    - Decentralized (no single point of failure)
+    - Free forever
+
+    Examples:
+        mcli workflows sync push
+        mcli workflows sync push -d "Production commands v1.0"
+        mcli workflows sync push --global
+    """
+    from mcli.lib.ipfs_sync import IPFSSync
+    from mcli.lib.paths import get_workflows_dir
+
+    workflows_dir = get_workflows_dir(global_mode=global_mode)
+    lockfile_path = workflows_dir / "commands.lock.json"
+
+    if not lockfile_path.exists():
+        error(f"Lockfile not found: {lockfile_path}")
+        info("Run 'mcli workflow update-lockfile' first")
+        return
+
+    info("Uploading command state to IPFS...")
+
+    ipfs = IPFSSync()
+    cid = ipfs.push(lockfile_path, description=description or "")
+
+    if cid:
+        success(f"✓ Pushed to IPFS!")
+        console.print(f"\n[bold]CID:[/bold] {cid}")
+        console.print(f"\n[dim]Anyone can retrieve with:[/dim]")
+        console.print(f"  mcli workflows sync pull {cid}")
+        console.print(f"\n[dim]Or view in browser:[/dim]")
+        console.print(f"  https://ipfs.io/ipfs/{cid}")
+    else:
+        error("✗ Failed to push to IPFS")
+
+
+@sync_group.command(name="pull")
+@click.argument("cid")
+@click.option("--output", "-o", type=click.Path(path_type=Path), help="Output file path")
+@click.option("--no-verify", is_flag=True, help="Skip hash verification")
+def sync_pull_command(cid: str, output: Optional[Path], no_verify: bool):
+    """
+    Pull command state from IPFS by CID.
+
+    Retrieves a command lockfile from IPFS using its Content Identifier (CID).
+    The CID guarantees you get the exact same content that was uploaded.
+
+    CID: The IPFS content identifier (e.g., QmXyZ123...)
+
+    Examples:
+        mcli workflows sync pull QmXyZ123...
+        mcli workflows sync pull QmXyZ123... -o my-commands.json
+        mcli workflows sync pull QmXyZ123... --no-verify
+    """
+    from mcli.lib.ipfs_sync import IPFSSync
+
+    info(f"Retrieving from IPFS: {cid}")
+
+    ipfs = IPFSSync()
+    data = ipfs.pull(cid, verify=not no_verify)
+
+    if data:
+        success(f"✓ Retrieved from IPFS")
+
+        # Determine output path
+        if output:
+            output_path = output
+        else:
+            output_path = Path(f"commands_{cid[:8]}.json")
+
+        # Write to file
+        import json
+
+        with open(output_path, "w") as f:
+            json.dump(data, f, indent=2)
+
+        success(f"✓ Saved to: {output_path}")
+
+        # Show summary
+        command_count = len(data.get("commands", {}))
+        console.print(f"\n[bold]Commands:[/bold] {command_count}")
+
+        if "version" in data:
+            console.print(f"[bold]Version:[/bold] {data['version']}")
+
+        if "synced_at" in data:
+            console.print(f"[bold]Synced:[/bold] {data['synced_at']}")
+
+        if "description" in data and data["description"]:
+            console.print(f"[bold]Description:[/bold] {data['description']}")
+
+    else:
+        error(f"✗ Failed to retrieve from IPFS")
+        info("CID may be invalid or not yet propagated to gateways")
+
+
+@sync_group.command(name="history")
+@click.option("--limit", "-n", default=10, help="Number of entries to show")
+def sync_history_command(limit: int):
+    """
+    Show IPFS sync history.
+
+    Displays your local history of IPFS syncs, including CIDs,
+    timestamps, and descriptions.
+
+    Examples:
+        mcli workflows sync history
+        mcli workflows sync history --limit 20
+    """
+    from mcli.lib.ipfs_sync import IPFSSync
+
+    ipfs = IPFSSync()
+    history = ipfs.get_history(limit=limit)
+
+    if not history:
+        info("No sync history found")
+        console.print("\nRun 'mcli workflows sync push' to create your first sync")
+        return
+
+    console.print(f"\n[bold]IPFS Sync History[/bold] (last {len(history)} entries)\n")
+
+    for entry in reversed(history):
+        console.print(f"[bold cyan]{entry['cid']}[/bold cyan]")
+        console.print(f"  Time: {entry['timestamp']}")
+        console.print(f"  Commands: {entry.get('command_count', 0)}")
+
+        if entry.get("description"):
+            console.print(f"  Description: {entry['description']}")
+
+        console.print()
+
+
+@sync_group.command(name="verify")
+@click.argument("cid")
+def sync_verify_command(cid: str):
+    """
+    Verify that a CID is accessible on IPFS.
+
+    Checks if the given CID can be retrieved from IPFS gateways.
+
+    CID: The IPFS content identifier to verify
+
+    Examples:
+        mcli workflows sync verify QmXyZ123...
+    """
+    from mcli.lib.ipfs_sync import IPFSSync
+
+    info(f"Verifying CID: {cid}")
+
+    ipfs = IPFSSync()
+
+    if ipfs.verify_cid(cid):
+        success(f"✓ CID is accessible on IPFS")
+    else:
+        error(f"✗ CID is not accessible")
+        info("It may take a few minutes for new uploads to propagate")

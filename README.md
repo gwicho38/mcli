@@ -240,7 +240,41 @@ git pull
 mcli lock verify  # Ensures consistency
 ```
 
-### 5. **Run as Daemon or Scheduled Task**
+### 5. **IPFS Cloud Sync (Immutable & Free)**
+
+Share workflows globally using IPFS - zero configuration, immutable storage:
+
+```bash
+# Push your workflows to IPFS
+mcli workflows sync push -g -d "Production workflows v1.0"
+# → Returns: QmXyZ123... (immutable CID)
+
+# Anyone can pull your exact workflow state
+mcli workflows sync pull QmXyZ123...
+
+# View sync history
+mcli workflows sync history
+
+# Verify a CID is accessible
+mcli workflows sync verify QmXyZ123...
+```
+
+**Features:**
+- ✅ **Zero config**: No accounts or API keys needed
+- ✅ **Immutable**: CID guarantees content authenticity
+- ✅ **Decentralized**: No single point of failure
+- ✅ **Free forever**: Community-hosted IPFS gateways
+- ✅ **Shareable**: Anyone can retrieve via CID
+
+**Use Cases:**
+- Share command sets with team members
+- Distribute workflows to community
+- Create immutable workflow snapshots
+- Backup workflows to decentralized storage
+
+**Note:** The current implementation uses public IPFS gateways which may have rate limits. For production use, consider running your own IPFS node or using a pinning service like Pinata or web3.storage.
+
+### 6. **Run as Daemon or Scheduled Task**
 
 Workflows aren't coupled to the engine - run them however you want:
 
