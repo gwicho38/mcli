@@ -259,13 +259,26 @@ def migrate_commands_to_workflows(
     default="all",
     help="Migration scope: all (default), global (~/.mcli), or local (.mcli in current repo)",
 )
-def migrate_command(dry_run: bool, force: bool, status: bool, scope: str):
+@click.option(
+    "--to-ipfs",
+    is_flag=True,
+    help="Push workflows to IPFS after migration for decentralized backup",
+)
+@click.option(
+    "--description",
+    "-d",
+    help="Description for IPFS sync (when using --to-ipfs)",
+)
+def migrate_command(
+    dry_run: bool, force: bool, status: bool, scope: str, to_ipfs: bool, description: str
+):
     """
     Migrate mcli configuration and data to new structure.
 
     Currently handles:
     - Moving ~/.mcli/commands to ~/.mcli/workflows (global)
     - Moving .mcli/commands to .mcli/workflows (local, in git repos)
+    - Optionally pushing to IPFS for decentralized backup
 
     Examples:
         mcli self migrate --status        # Check migration status
@@ -274,6 +287,7 @@ def migrate_command(dry_run: bool, force: bool, status: bool, scope: str):
         mcli self migrate --scope global  # Migrate only global
         mcli self migrate --scope local   # Migrate only local (current repo)
         mcli self migrate --force         # Force migration (overwrite existing)
+        mcli self migrate --to-ipfs -d "Migrated workflows v1.0"  # Push to IPFS after
     """
 
     # Get current status
@@ -384,6 +398,63 @@ def migrate_command(dry_run: bool, force: bool, status: bool, scope: str):
             console.print(
                 "\n[dim]You can now use 'mcli workflow' to manage and 'mcli workflows' to run them[/dim]"
             )
+
+            # Push to IPFS if requested
+            if to_ipfs:
+                console.print("\n[bold cyan]Pushing to IPFS...[/bold cyan]")
+
+                try:
+                    from mcli.lib.ipfs_sync import IPFSSync
+                    from mcli.lib.paths import get_lockfile_path
+
+                    ipfs = IPFSSync()
+
+                    # Determine which lockfiles to push
+                    lockfiles_to_push = []
+
+                    if scope in ["global", "all"]:
+                        global_lockfile = get_lockfile_path(global_mode=True)
+                        if global_lockfile.exists():
+                            lockfiles_to_push.append(("Global", global_lockfile))
+
+                    if scope in ["local", "all"]:
+                        local_lockfile = get_lockfile_path(global_mode=False)
+                        if local_lockfile and local_lockfile.exists():
+                            lockfiles_to_push.append(("Local", local_lockfile))
+
+                    # Push each lockfile to IPFS
+                    for location, lockfile_path in lockfiles_to_push:
+                        desc = description or f"{location} workflows after migration"
+                        cid = ipfs.push(lockfile_path, description=desc)
+
+                        if cid:
+                            console.print(f"\n[green]✓ {location} workflows pushed to IPFS[/green]")
+                            console.print(f"  CID: [bold cyan]{cid}[/bold cyan]")
+                            console.print(
+                                f"  [dim]Retrieve with: mcli workflows sync pull {cid}[/dim]"
+                            )
+                        else:
+                            console.print(
+                                f"\n[yellow]⚠ Failed to push {location} workflows to IPFS[/yellow]"
+                            )
+                            console.print(
+                                "  [dim]Note: Public IPFS gateways require authentication.[/dim]"
+                            )
+                            console.print(
+                                "  [dim]Consider using 'mcli workflows sync push' with your own IPFS node.[/dim]"
+                            )
+
+                    if not lockfiles_to_push:
+                        console.print("[yellow]⚠ No lockfiles found to push to IPFS[/yellow]")
+                        console.print(
+                            "  [dim]Run 'mcli workflow update-lockfile' first[/dim]"
+                        )
+
+                except ImportError as e:
+                    console.print(f"[red]✗ Failed to import IPFS sync module: {e}[/red]")
+                except Exception as e:
+                    console.print(f"[red]✗ IPFS push failed: {e}[/red]")
+
     else:
         error(message)
         if not force and "already exists" in message:

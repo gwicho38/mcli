@@ -274,6 +274,19 @@ mcli workflows sync verify QmXyZ123...
 
 **Note:** The current implementation uses public IPFS gateways which may have rate limits. For production use, consider running your own IPFS node or using a pinning service like Pinata or web3.storage.
 
+**Migration Helper:**
+
+Migrate your workflows to IPFS in one command:
+
+```bash
+# Migrate directory structure AND push to IPFS
+mcli self migrate --to-ipfs -d "Production migration"
+# → Moves commands/ to workflows/ AND pushes to IPFS
+
+# Just push existing workflows to IPFS
+mcli workflows sync push -g -d "Production v1.0"
+```
+
 ### 6. **Run as Daemon or Scheduled Task**
 
 Workflows aren't coupled to the engine - run them however you want:
