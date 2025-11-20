@@ -7,11 +7,7 @@ from pathlib import Path
 # Add scripts directory to path to import helpers
 sys.path.insert(0, str(Path(__file__).parent))
 
-from utils.supabase_helper import (
-    create_supabase_client,
-    print_table_info,
-    verify_tables,
-)
+from utils.supabase_helper import create_supabase_client, print_table_info, verify_tables
 
 print("=" * 60)
 print("SUPABASE CONNECTION TEST")
@@ -29,11 +25,7 @@ if not client:
 print("   ✅ Client created successfully")
 
 # Test tables
-tables_to_check = [
-    "politicians",
-    "trading_disclosures",
-    "lsh_jobs"
-]
+tables_to_check = ["politicians", "trading_disclosures", "lsh_jobs"]
 
 print(f"\n2. Checking tables...")
 # Use helper function to verify all tables at once
@@ -61,13 +53,17 @@ disclosures_sample = get_table_sample(client, "trading_disclosures", limit=3)
 if disclosures_sample:
     print(f"   ✅ Trading disclosures sample: {len(disclosures_sample)} records")
     for d in disclosures_sample:
-        politician = d.get('politician_name', 'N/A')
-        ticker = d.get('ticker_symbol', 'N/A')
-        amount = d.get('amount', 0)
-        print(f"      - {politician}: {ticker} ${amount:,.0f}" if isinstance(amount, (int, float)) else f"      - {politician}: {ticker}")
+        politician = d.get("politician_name", "N/A")
+        ticker = d.get("ticker_symbol", "N/A")
+        amount = d.get("amount", 0)
+        print(
+            f"      - {politician}: {ticker} ${amount:,.0f}"
+            if isinstance(amount, (int, float))
+            else f"      - {politician}: {ticker}"
+        )
 else:
     print(f"   ⚠️  Trading disclosures table is empty or inaccessible")
 
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("CONNECTION TEST COMPLETE")
-print("="*60)
+print("=" * 60)

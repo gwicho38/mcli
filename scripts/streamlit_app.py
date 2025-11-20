@@ -5,6 +5,7 @@ Entry point for Streamlit Cloud deployment
 
 import sys
 from pathlib import Path
+
 import streamlit as st
 
 # Configure page BEFORE any other Streamlit commands
@@ -14,10 +15,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        'Get Help': 'https://github.com/yourusername/mcli',
-        'Report a bug': 'https://github.com/yourusername/mcli/issues',
-        'About': "# Politician Trading Tracker\nTrack, analyze, and replicate Congressional trading patterns."
-    }
+        "Get Help": "https://github.com/yourusername/mcli",
+        "Report a bug": "https://github.com/yourusername/mcli/issues",
+        "About": "# Politician Trading Tracker\nTrack, analyze, and replicate Congressional trading patterns.",
+    },
 )
 
 # Add src to path

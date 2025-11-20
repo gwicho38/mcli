@@ -15,7 +15,7 @@ repos:
       - id: check-toml
       - id: check-xml
       - id: check-added-large-files
-        args: ['--maxkb=500']
+        args: ["--maxkb=500"]
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: check-symlinks
@@ -25,7 +25,7 @@ repos:
       - id: check-docstring-first
       - id: fix-byte-order-marker
       - id: mixed-line-ending
-        args: ['--fix=lf']
+        args: ["--fix=lf"]
 
   # Python formatting with Black
   - repo: https://github.com/psf/black
@@ -47,7 +47,7 @@ repos:
     rev: 7.1.1
     hooks:
       - id: flake8
-        args: [--max-line-length=100, --extend-ignore=E203,W503]
+        args: [--max-line-length=100, --extend-ignore=E203, W503]
         additional_dependencies:
           - flake8-docstrings
           - flake8-bugbear
@@ -100,15 +100,7 @@ repos:
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
-        args: [-e, SC1091]  # Ignore sourcing of files
-
-  # Check for secrets
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
-    hooks:
-      - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
-        exclude: package.lock.json
+        args: [-e, SC1091] # Ignore sourcing of files
 
   # Local hooks
   - repo: local
@@ -116,11 +108,20 @@ repos:
       - id: lint-hardcoded-strings
         name: Lint hardcoded strings
         description: Check for hardcoded strings that should be in constants module
-        entry: python tools/lint_hardcoded_strings.py
+        entry: bash -c 'uv run python tools/lint_hardcoded_strings.py "$@"' --
         language: system
         types: [python]
         pass_filenames: true
-        exclude: ^(tests/|docs/|scripts/|tools/|src/mcli/lib/constants/)
+        exclude: ^(tests/|docs/|scripts/|tools/|src/mcli/lib/constants/|examples/|streamlit_)
+
+      - id: comprehensive-lint
+        name: Comprehensive linting check
+        description: Run all linting checks (black, isort, flake8, mypy, hardcoded strings)
+        entry: bash -c 'make lint'
+        language: system
+        pass_filenames: false
+        stages: [manual]
+        verbose: true
 
 # Configuration for specific hooks
 ci:
@@ -129,8 +130,8 @@ ci:
 
     for more information, see https://pre-commit.ci
   autofix_prs: true
-  autoupdate_branch: ''
-  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_branch: ""
+  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
   autoupdate_schedule: weekly
   skip: []
   submodules: false

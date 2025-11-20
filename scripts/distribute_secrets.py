@@ -11,12 +11,12 @@ Usage:
 """
 
 import argparse
+import json
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional
-import json
 
 
 class SecretsDistributor:
@@ -24,7 +24,7 @@ class SecretsDistributor:
 
     def __init__(self, env_file: str = ".env.production"):
         self.env_file = Path(env_file)
-        self.secrets: Dict[str, str] = {}
+        self.secrets: dict[str, str] = {}
 
         if not self.env_file.exists():
             raise FileNotFoundError(f"Environment file not found: {env_file}")
@@ -33,30 +33,30 @@ class SecretsDistributor:
 
     def _load_secrets(self):
         """Load environment variables from .env file"""
-        with open(self.env_file, 'r') as f:
+        with open(self.env_file) as f:
             for line in f:
                 line = line.strip()
                 # Skip comments and empty lines
-                if not line or line.startswith('#'):
+                if not line or line.startswith("#"):
                     continue
 
                 # Parse KEY=VALUE
-                if '=' in line:
-                    key, value = line.split('=', 1)
+                if "=" in line:
+                    key, value = line.split("=", 1)
                     self.secrets[key.strip()] = value.strip()
 
         print(f"✓ Loaded {len(self.secrets)} environment variables")
 
-    def get_critical_secrets(self) -> List[str]:
+    def get_critical_secrets(self) -> list[str]:
         """Return list of critical secret keys that must not be exposed"""
         return [
-            'SUPABASE_SERVICE_ROLE_KEY',
-            'DATABASE_URL',
-            'LSH_API_KEY',
-            'ALPACA_SECRET_KEY',
-            'API_SECRET_KEY',
-            'SECURITY_ADMIN_PASSWORD',
-            'UK_COMPANIES_HOUSE_API_KEY',
+            "SUPABASE_SERVICE_ROLE_KEY",
+            "DATABASE_URL",
+            "LSH_API_KEY",
+            "ALPACA_SECRET_KEY",
+            "API_SECRET_KEY",
+            "SECURITY_ADMIN_PASSWORD",
+            "UK_COMPANIES_HOUSE_API_KEY",
         ]
 
     def verify_secrets(self):
@@ -71,7 +71,9 @@ class SecretsDistributor:
             if key not in self.secrets:
                 missing.append(key)
                 print(f"✗ {key}: MISSING")
-            elif any(x in self.secrets[key].lower() for x in ['your_', 'change', 'placeholder', 'here']):
+            elif any(
+                x in self.secrets[key].lower() for x in ["your_", "change", "placeholder", "here"]
+            ):
                 placeholder.append(key)
                 print(f"⚠ {key}: PLACEHOLDER VALUE")
             else:
@@ -96,15 +98,15 @@ class SecretsDistributor:
 
         output_path = Path(output_file)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write("# MCLI Streamlit Cloud Secrets\n")
             f.write("# Copy these values to Streamlit Cloud > App Settings > Secrets\n")
             f.write("# https://share.streamlit.io/\n\n")
 
             for key, value in sorted(self.secrets.items()):
                 # Handle JSON arrays/objects
-                if value.startswith('[') or value.startswith('{'):
-                    f.write(f'{key} = \'\'\'{value}\'\'\'\n')
+                if value.startswith("[") or value.startswith("{"):
+                    f.write(f"{key} = '''{value}'''\n")
                 else:
                     f.write(f'{key} = "{value}"\n')
 
@@ -124,7 +126,7 @@ class SecretsDistributor:
 
         output_path = Path(output_file)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write("#!/bin/bash\n")
             f.write(f"# MCLI fly.io Secrets Setup\n")
             f.write(f"# Run this script to set secrets for app: {app_name}\n\n")
@@ -135,14 +137,14 @@ class SecretsDistributor:
             keys = list(self.secrets.keys())
 
             for i in range(0, len(keys), batch_size):
-                batch = keys[i:i+batch_size]
+                batch = keys[i : i + batch_size]
                 f.write(f"# Batch {i//batch_size + 1}\n")
                 f.write(f"fly secrets set \\\n")
 
                 for j, key in enumerate(batch):
                     value = self.secrets[key]
                     # Escape special characters
-                    value = value.replace('"', '\\"').replace('$', '\\$')
+                    value = value.replace('"', '\\"').replace("$", "\\$")
 
                     if j < len(batch) - 1:
                         f.write(f'  {key}="{value}" \\\n')
@@ -168,14 +170,14 @@ class SecretsDistributor:
 
         output_path = Path(output_file)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write("# MCLI Docker Environment Configuration\n")
             f.write("# Use with: docker run --env-file .env.docker\n\n")
 
             for key, value in sorted(self.secrets.items()):
                 # Docker env files don't support multi-line values well
                 # So keep them on one line
-                f.write(f'{key}={value}\n')
+                f.write(f"{key}={value}\n")
 
         # Secure permissions
         os.chmod(output_path, 0o600)
@@ -202,21 +204,18 @@ class SecretsDistributor:
                 ["scp", str(self.env_file), f"{host}:{remote_env}"],
                 check=True,
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             # Set secure permissions
             print(f"Setting secure permissions (600)")
             subprocess.run(
-                ["ssh", host, f"chmod 600 {remote_env}"],
-                check=True,
-                capture_output=True,
-                text=True
+                ["ssh", host, f"chmod 600 {remote_env}"], check=True, capture_output=True, text=True
             )
 
             print(f"✓ Successfully deployed to {host}:{remote_env}")
             print(f"\nTo verify:")
-            print(f"  ssh {host} 'cat {remote_env} | grep -v \"^#\" | grep -v \"^$\" | wc -l'")
+            print(f'  ssh {host} \'cat {remote_env} | grep -v "^#" | grep -v "^$" | wc -l\'')
 
         except subprocess.CalledProcessError as e:
             print(f"✗ Deployment failed: {e}")
@@ -224,8 +223,12 @@ class SecretsDistributor:
                 print(f"Error: {e.stderr}")
             sys.exit(1)
 
-    def generate_kubernetes_secret(self, namespace: str = "default", secret_name: str = "mcli-secrets",
-                                   output_file: str = "k8s_secret.yaml"):
+    def generate_kubernetes_secret(
+        self,
+        namespace: str = "default",
+        secret_name: str = "mcli-secrets",
+        output_file: str = "k8s_secret.yaml",
+    ):
         """Generate Kubernetes Secret manifest"""
         print(f"\n=== Generating Kubernetes Secret ===\n")
 
@@ -233,7 +236,7 @@ class SecretsDistributor:
 
         output_path = Path(output_file)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write("apiVersion: v1\n")
             f.write("kind: Secret\n")
             f.write("metadata:\n")
@@ -262,18 +265,17 @@ class SecretsDistributor:
         print("\n=== Secrets Summary ===\n")
 
         categories = {
-            'Database': ['SUPABASE', 'DATABASE_URL'],
-            'LSH Daemon': ['LSH_'],
-            'Trading': ['ALPACA_', 'UK_COMPANIES'],
-            'API': ['API_'],
-            'ML': ['MODEL_', 'MLFLOW_', 'PYTORCH_', 'OMP_', 'MKL_'],
-            'Security': ['SECURITY_'],
-            'Monitoring': ['MONITORING_'],
+            "Database": ["SUPABASE", "DATABASE_URL"],
+            "LSH Daemon": ["LSH_"],
+            "Trading": ["ALPACA_", "UK_COMPANIES"],
+            "API": ["API_"],
+            "ML": ["MODEL_", "MLFLOW_", "PYTORCH_", "OMP_", "MKL_"],
+            "Security": ["SECURITY_"],
+            "Monitoring": ["MONITORING_"],
         }
 
         for category, prefixes in categories.items():
-            matches = [k for k in self.secrets.keys()
-                      if any(k.startswith(p) for p in prefixes)]
+            matches = [k for k in self.secrets.keys() if any(k.startswith(p) for p in prefixes)]
             if matches:
                 print(f"{category}: {len(matches)} vars")
                 for key in matches:
@@ -305,53 +307,40 @@ Examples:
 
   # Generate Kubernetes secret
   python distribute_secrets.py --target k8s --namespace production
-        """
+        """,
     )
 
     parser.add_argument(
-        '--target',
+        "--target",
         required=True,
-        choices=['verify', 'streamlit', 'flyio', 'vm', 'docker', 'k8s', 'summary'],
-        help='Deployment target'
+        choices=["verify", "streamlit", "flyio", "vm", "docker", "k8s", "summary"],
+        help="Deployment target",
     )
 
     parser.add_argument(
-        '--env-file',
-        default='.env.production',
-        help='Environment file to read (default: .env.production)'
+        "--env-file",
+        default=".env.production",
+        help="Environment file to read (default: .env.production)",
+    )
+
+    parser.add_argument("--output", help="Output file path")
+
+    parser.add_argument("--app", help="fly.io app name")
+
+    parser.add_argument("--host", help="VM hostname (user@host)")
+
+    parser.add_argument(
+        "--path", default="/opt/mcli", help="Remote path on VM (default: /opt/mcli)"
     )
 
     parser.add_argument(
-        '--output',
-        help='Output file path'
+        "--namespace", default="default", help="Kubernetes namespace (default: default)"
     )
 
     parser.add_argument(
-        '--app',
-        help='fly.io app name'
-    )
-
-    parser.add_argument(
-        '--host',
-        help='VM hostname (user@host)'
-    )
-
-    parser.add_argument(
-        '--path',
-        default='/opt/mcli',
-        help='Remote path on VM (default: /opt/mcli)'
-    )
-
-    parser.add_argument(
-        '--namespace',
-        default='default',
-        help='Kubernetes namespace (default: default)'
-    )
-
-    parser.add_argument(
-        '--secret-name',
-        default='mcli-secrets',
-        help='Kubernetes secret name (default: mcli-secrets)'
+        "--secret-name",
+        default="mcli-secrets",
+        help="Kubernetes secret name (default: mcli-secrets)",
     )
 
     args = parser.parse_args()
@@ -359,45 +348,41 @@ Examples:
     try:
         distributor = SecretsDistributor(args.env_file)
 
-        if args.target == 'verify':
+        if args.target == "verify":
             distributor.verify_secrets()
 
-        elif args.target == 'summary':
+        elif args.target == "summary":
             distributor.print_summary()
 
-        elif args.target == 'streamlit':
-            output = args.output or 'streamlit_secrets.toml'
+        elif args.target == "streamlit":
+            output = args.output or "streamlit_secrets.toml"
             distributor.generate_streamlit_toml(output)
 
-        elif args.target == 'flyio':
+        elif args.target == "flyio":
             if not args.app:
                 print("Error: --app is required for fly.io target")
                 sys.exit(1)
-            output = args.output or 'flyio_secrets.sh'
+            output = args.output or "flyio_secrets.sh"
             distributor.generate_flyio_commands(args.app, output)
 
-        elif args.target == 'docker':
-            output = args.output or '.env.docker'
+        elif args.target == "docker":
+            output = args.output or ".env.docker"
             distributor.generate_docker_env(output)
 
-        elif args.target == 'vm':
+        elif args.target == "vm":
             if not args.host:
                 print("Error: --host is required for VM target")
                 sys.exit(1)
             distributor.deploy_to_vm(args.host, args.path)
 
-        elif args.target == 'k8s':
-            output = args.output or 'k8s_secret.yaml'
-            distributor.generate_kubernetes_secret(
-                args.namespace,
-                args.secret_name,
-                output
-            )
+        elif args.target == "k8s":
+            output = args.output or "k8s_secret.yaml"
+            distributor.generate_kubernetes_secret(args.namespace, args.secret_name, output)
 
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

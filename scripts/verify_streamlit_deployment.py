@@ -26,11 +26,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from utils.supabase_helper import create_supabase_client
 
+
 def verify_environment():
     """Verify environment variables and secrets are configured"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("STEP 1: Verifying Environment Configuration")
-    print("="*80)
+    print("=" * 80)
 
     # Check for secrets.toml
     secrets_file = Path(".streamlit/secrets.toml")
@@ -40,7 +41,8 @@ def verify_environment():
         # Try to load secrets
         try:
             import tomli
-            with open(secrets_file, 'rb') as f:
+
+            with open(secrets_file, "rb") as f:
                 secrets = tomli.load(f)
                 print(f"✅ Secrets loaded successfully")
 
@@ -81,9 +83,9 @@ def verify_environment():
 
 def verify_supabase_connection():
     """Verify connection to Supabase"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("STEP 2: Verifying Supabase Connection")
-    print("="*80)
+    print("=" * 80)
 
     try:
         # Create Supabase client using helper
@@ -101,7 +103,9 @@ def verify_supabase_connection():
 
         # Test disclosures table
         print("Testing trading_disclosures table...")
-        disclosures = client.table("trading_disclosures").select("*", count="exact").limit(10).execute()
+        disclosures = (
+            client.table("trading_disclosures").select("*", count="exact").limit(10).execute()
+        )
         print(f"✅ Disclosures table accessible: {disclosures.count} total records")
 
         if disclosures.data:
@@ -113,7 +117,13 @@ def verify_supabase_connection():
 
         # Check data pull jobs
         print("Testing data_pull_jobs table...")
-        jobs = client.table("data_pull_jobs").select("*").order("created_at", desc=True).limit(1).execute()
+        jobs = (
+            client.table("data_pull_jobs")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
         if jobs.data:
             print(f"✅ Data pull jobs accessible: {len(jobs.data)} records")
             latest_job = jobs.data[0]
@@ -128,24 +138,27 @@ def verify_supabase_connection():
     except Exception as e:
         print(f"❌ Supabase connection failed: {e}")
         import traceback
+
         print(traceback.format_exc())
         return False
 
 
 def verify_dashboard_imports():
     """Verify dashboard can be imported"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("STEP 3: Verifying Dashboard Imports")
-    print("="*80)
+    print("=" * 80)
 
     try:
         # Test streamlit import
         import streamlit as st
+
         print("✅ Streamlit imported successfully")
         print(f"   Version: {st.__version__}")
 
         # Test dashboard imports
         from mcli.ml.dashboard import app_integrated
+
         print("✅ Dashboard module imported")
 
         # Test Supabase client function
@@ -163,20 +176,23 @@ def verify_dashboard_imports():
 
 def verify_ml_pipeline():
     """Verify ML pipeline components are available"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("STEP 4: Verifying ML Pipeline Components")
-    print("="*80)
+    print("=" * 80)
 
     try:
         # Test ML imports
         from mcli.ml.preprocessing import MLDataPipeline, PoliticianTradingPreprocessor
+
         print("✅ Preprocessing modules imported")
 
         from mcli.ml.models import get_model_by_id
+
         print("✅ Model modules imported")
 
         try:
             from mcli.ml.predictions import PoliticianTradingPredictor
+
             print("✅ Prediction engine imported")
         except ImportError:
             print("⚠️  Prediction engine not available (optional)")
@@ -191,9 +207,9 @@ def verify_ml_pipeline():
 
 def verify_data_flow():
     """Verify end-to-end data flow"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("STEP 5: Verifying End-to-End Data Flow")
-    print("="*80)
+    print("=" * 80)
 
     try:
         import pandas as pd
@@ -212,10 +228,10 @@ def verify_data_flow():
 
         # Test datetime parsing
         print("Testing datetime parsing...")
-        date_columns = ['transaction_date', 'disclosure_date', 'created_at', 'updated_at']
+        date_columns = ["transaction_date", "disclosure_date", "created_at", "updated_at"]
         for col in date_columns:
             if col in df.columns:
-                df[col] = pd.to_datetime(df[col], format='ISO8601', errors='coerce')
+                df[col] = pd.to_datetime(df[col], format="ISO8601", errors="coerce")
                 print(f"   ✅ {col}: {df[col].dtype}")
 
         print("✅ Data flow verification complete")
@@ -225,25 +241,28 @@ def verify_data_flow():
             print("\nSample data preview:")
             print(f"   Columns: {list(df.columns[:5])}...")
             print(f"   First row asset: {df.iloc[0].get('asset_name', 'N/A')[:50]}")
-            print(f"   Date range: {df['transaction_date'].min()} to {df['transaction_date'].max()}")
+            print(
+                f"   Date range: {df['transaction_date'].min()} to {df['transaction_date'].max()}"
+            )
 
         return True
 
     except Exception as e:
         print(f"❌ Data flow verification failed: {e}")
         import traceback
+
         print(traceback.format_exc())
         return False
 
 
 def main():
     """Run all verification checks"""
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("STREAMLIT CLOUD DEPLOYMENT VERIFICATION")
-    print("="*80)
+    print("=" * 80)
     print("\nThis script verifies that your local environment is correctly")
     print("configured to deploy the MCLI ML Dashboard to Streamlit Cloud.")
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
 
     results = {
         "Environment Configuration": verify_environment(),
@@ -254,15 +273,15 @@ def main():
     }
 
     # Summary
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("VERIFICATION SUMMARY")
-    print("="*80)
+    print("=" * 80)
 
     for check, passed in results.items():
         status = "✅ PASS" if passed else "❌ FAIL"
         print(f"{status}: {check}")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
 
     if all(results.values()):
         print("🎉 All checks passed! Ready for Streamlit Cloud deployment.")

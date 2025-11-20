@@ -10,11 +10,19 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 print("Testing dashboard page imports...\n")
 
 pages_to_test = [
-    ("Predictions Enhanced", "mcli.ml.dashboard.pages.predictions_enhanced", "show_predictions_enhanced"),
+    (
+        "Predictions Enhanced",
+        "mcli.ml.dashboard.pages.predictions_enhanced",
+        "show_predictions_enhanced",
+    ),
     ("Scrapers & Logs", "mcli.ml.dashboard.pages.scrapers_and_logs", "show_scrapers_and_logs"),
     ("Trading Dashboard", "mcli.ml.dashboard.pages.trading", "show_trading_dashboard"),
     ("Test Portfolio", "mcli.ml.dashboard.pages.test_portfolio", "show_test_portfolio"),
-    ("Monte Carlo Predictions", "mcli.ml.dashboard.pages.monte_carlo_predictions", "show_monte_carlo_predictions"),
+    (
+        "Monte Carlo Predictions",
+        "mcli.ml.dashboard.pages.monte_carlo_predictions",
+        "show_monte_carlo_predictions",
+    ),
     ("CI/CD Pipelines", "mcli.ml.dashboard.pages.cicd", "show_cicd_dashboard"),
     ("Workflows", "mcli.ml.dashboard.pages.workflows", "show_workflows_dashboard"),
 ]

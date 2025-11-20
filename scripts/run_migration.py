@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from utils.supabase_helper import create_supabase_client
 
+
 def run_migration(migration_file: str):
     """Run a SQL migration file on Supabase"""
 
@@ -38,17 +39,17 @@ def run_migration(migration_file: str):
     # We'll use the REST API to execute the migration
     try:
         # Split by statement and execute
-        statements = [s.strip() for s in sql_content.split(';') if s.strip()]
+        statements = [s.strip() for s in sql_content.split(";") if s.strip()]
 
         print(f"Executing {len(statements)} SQL statements...")
 
         for i, statement in enumerate(statements, 1):
-            if not statement or statement.startswith('--'):
+            if not statement or statement.startswith("--"):
                 continue
 
             try:
                 # Use rpc to execute SQL
-                result = supabase.rpc('exec_sql', {'sql': statement}).execute()
+                result = supabase.rpc("exec_sql", {"sql": statement}).execute()
                 print(f"  [{i}/{len(statements)}] ✓")
             except Exception as e:
                 # If exec_sql doesn't exist, we need to use psycopg2
@@ -72,7 +73,7 @@ def run_migration(migration_file: str):
 
             # Construct direct connection to Supabase Postgres
             # Format: postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
-            project_ref = url.split('//')[1].split('.')[0]
+            project_ref = url.split("//")[1].split(".")[0]
 
             # Extract password from service role key (it's a JWT, we need the actual postgres password)
             # For Supabase, we need to use the connection string from dashboard
@@ -82,7 +83,7 @@ def run_migration(migration_file: str):
             print(f"Connecting to database at aws-0-us-west-1.pooler.supabase.com...")
             print(f"Project: {project_ref}")
 
-            conn = psycopg2.connect(db_url, sslmode='require')
+            conn = psycopg2.connect(db_url, sslmode="require")
             cursor = conn.cursor()
 
             # Execute the full SQL
@@ -104,6 +105,7 @@ def run_migration(migration_file: str):
             print("\nPlease run the migration manually using the Supabase SQL editor:")
             print(f"  File: {migration_path}")
             sys.exit(1)
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

@@ -55,7 +55,7 @@ def create_supabase_client() -> Optional[Client]:
         return None
 
 
-def verify_table(client: Client, table_name: str) -> Dict[str, any]:
+def verify_table(client: Client, table_name: str) -> dict[str, any]:
     """
     Verify that a table exists and return basic statistics.
 
@@ -81,19 +81,15 @@ def verify_table(client: Client, table_name: str) -> Dict[str, any]:
         result = client.table(table_name).select("*", count="exact").limit(1).execute()
 
         return {
-            'exists': True,
-            'count': result.count if hasattr(result, 'count') else len(result.data),
-            'error': None
+            "exists": True,
+            "count": result.count if hasattr(result, "count") else len(result.data),
+            "error": None,
         }
     except Exception as e:
-        return {
-            'exists': False,
-            'count': 0,
-            'error': str(e)
-        }
+        return {"exists": False, "count": 0, "error": str(e)}
 
 
-def print_table_info(table_name: str, stats: Dict[str, any]):
+def print_table_info(table_name: str, stats: dict[str, any]):
     """
     Pretty print table information.
 
@@ -105,13 +101,13 @@ def print_table_info(table_name: str, stats: Dict[str, any]):
         stats = verify_table(client, 'politicians')
         print_table_info('politicians', stats)
     """
-    if stats['exists']:
+    if stats["exists"]:
         print(f"   ✅ {table_name:30s} - {stats['count']:,} rows")
     else:
         print(f"   ❌ {table_name:30s} - Error: {stats['error']}")
 
 
-def verify_tables(client: Client, table_names: List[str]) -> Dict[str, Dict]:
+def verify_tables(client: Client, table_names: list[str]) -> dict[str, dict]:
     """
     Verify multiple tables and return statistics for all.
 
@@ -137,7 +133,7 @@ def verify_tables(client: Client, table_names: List[str]) -> Dict[str, Dict]:
     return results
 
 
-def get_table_sample(client: Client, table_name: str, limit: int = 5) -> Optional[List[Dict]]:
+def get_table_sample(client: Client, table_name: str, limit: int = 5) -> Optional[list[dict]]:
     """
     Get a sample of rows from a table.
 

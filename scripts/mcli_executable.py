@@ -14,7 +14,7 @@ def main():
     try:
         # Import and run the main MCLI application
         from mcli.app.main import main as mcli_main
-        
+
         # Run the main application
         mcli_main()
     except ImportError as e:

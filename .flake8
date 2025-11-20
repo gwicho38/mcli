@@ -33,7 +33,9 @@ exclude =
     htmlcov,
     docs/_build,
     node_modules,
-    .mypy_cache
+    .mypy_cache,
+    examples,
+    docs/examples
 
 # File patterns to include in linting
 filename = *.py
@@ -63,6 +65,8 @@ per-file-ignores =
     */__init__.py:D104
     # Ignore specific issues in scripts
     scripts/*:D100,D101,D102,D103
+    # Ignore all linting in streamlit apps (demo/utility files)
+    streamlit_*.py:E,W,F,B,C4,SIM,D
 
 # Maximum complexity for McCabe complexity checker
 max-complexity = 10

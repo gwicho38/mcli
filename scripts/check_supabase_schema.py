@@ -45,20 +45,23 @@ else:
 # Try to get disclosures with politician name via JOIN
 print("\n3. Testing JOIN query (disclosures with politician info):")
 try:
-    result = client.table("trading_disclosures").select(
-        "*, politicians(first_name, last_name)"
-    ).limit(3).execute()
+    result = (
+        client.table("trading_disclosures")
+        .select("*, politicians(first_name, last_name)")
+        .limit(3)
+        .execute()
+    )
 
     if result.data:
         print(f"   ✅ JOIN successful: {len(result.data)} records")
         for record in result.data:
-            pol = record.get('politicians', {})
+            pol = record.get("politicians", {})
             if pol:
                 name = f"{pol.get('first_name', '')} {pol.get('last_name', '')}"
             else:
                 name = "No politician linked"
-            ticker = record.get('ticker_symbol', 'N/A')
-            amount = record.get('amount', 0)
+            ticker = record.get("ticker_symbol", "N/A")
+            amount = record.get("amount", 0)
             print(f"      - {name}: {ticker} ${amount:,.0f}")
     else:
         print("   ⚠️  No data returned")

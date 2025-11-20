@@ -25,16 +25,11 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 # Import configuration from separate config file for better maintainability
-from linter_config import (
-    ALLOWED_PATTERNS,
-    COMMON_ACCEPTABLE_STRINGS,
-    CONSTANT_LIKE_PATTERN as CONSTANT_PATTERN_STR,
-    EXCLUDED_DIRS,
-    EXCLUDED_FILE_PATTERNS,
-    IDENTIFIER_PATTERN as IDENTIFIER_PATTERN_STR,
-    MAX_STRING_LENGTH,
-    MIN_STRING_LENGTH,
-)
+from linter_config import ALLOWED_PATTERNS, COMMON_ACCEPTABLE_STRINGS
+from linter_config import CONSTANT_LIKE_PATTERN as CONSTANT_PATTERN_STR
+from linter_config import EXCLUDED_DIRS, EXCLUDED_FILE_PATTERNS
+from linter_config import IDENTIFIER_PATTERN as IDENTIFIER_PATTERN_STR
+from linter_config import MAX_STRING_LENGTH, MIN_STRING_LENGTH
 
 # Compile regex patterns
 CONSTANT_LIKE_PATTERN = re.compile(CONSTANT_PATTERN_STR)
@@ -46,7 +41,7 @@ class HardcodedStringVisitor(ast.NodeVisitor):
 
     def __init__(self, filename: str):
         self.filename = filename
-        self.violations: List[Tuple[int, int, str, str]] = []
+        self.violations: list[tuple[int, int, str, str]] = []
         self.in_docstring = False
         self.in_constant_assignment = False
 
@@ -106,10 +101,7 @@ class HardcodedStringVisitor(ast.NodeVisitor):
         # Use any() to check if assigning to an ALL_CAPS variable (likely a constant)
         is_constant = any(
             (isinstance(target, ast.Name) and CONSTANT_LIKE_PATTERN.match(target.id))
-            or (
-                isinstance(target, ast.Attribute)
-                and CONSTANT_LIKE_PATTERN.match(target.attr)
-            )
+            or (isinstance(target, ast.Attribute) and CONSTANT_LIKE_PATTERN.match(target.attr))
             for target in node.targets
         )
 
@@ -123,11 +115,9 @@ class HardcodedStringVisitor(ast.NodeVisitor):
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         """Visit annotated assignment (similar to visit_Assign)."""
         is_constant = (
-            isinstance(node.target, ast.Name)
-            and CONSTANT_LIKE_PATTERN.match(node.target.id)
+            isinstance(node.target, ast.Name) and CONSTANT_LIKE_PATTERN.match(node.target.id)
         ) or (
-            isinstance(node.target, ast.Attribute)
-            and CONSTANT_LIKE_PATTERN.match(node.target.attr)
+            isinstance(node.target, ast.Attribute) and CONSTANT_LIKE_PATTERN.match(node.target.attr)
         )
 
         if is_constant:
@@ -240,14 +230,14 @@ def should_check_file(file_path: Path) -> bool:
     return True
 
 
-def lint_file(file_path: Path) -> Tuple[List[Tuple[int, int, str, str]], bool]:
+def lint_file(file_path: Path) -> tuple[list[tuple[int, int, str, str]], bool]:
     """Lint a single Python file for hardcoded strings.
 
     Returns:
         Tuple of (violations list, had_error boolean)
     """
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
         tree = ast.parse(content, filename=str(file_path))
@@ -263,7 +253,7 @@ def lint_file(file_path: Path) -> Tuple[List[Tuple[int, int, str, str]], bool]:
         return [], True
 
 
-def lint_directory(directory: Path) -> Tuple[Dict[Path, List], bool]:
+def lint_directory(directory: Path) -> tuple[dict[Path, list], bool]:
     """Lint all Python files in a directory.
 
     Returns:
@@ -283,7 +273,7 @@ def lint_directory(directory: Path) -> Tuple[Dict[Path, List], bool]:
     return results, had_errors
 
 
-def output_text(all_violations: Dict[Path, List]) -> None:
+def output_text(all_violations: dict[Path, list]) -> None:
     """Output violations in human-readable text format."""
     print("Found hardcoded strings that should be in constants module:\n")
     for file_path, violations in sorted(all_violations.items()):
@@ -296,18 +286,14 @@ def output_text(all_violations: Dict[Path, List]) -> None:
     total_violations = sum(len(v) for v in all_violations.values())
     print(f"Total: {total_violations} violation(s) in {len(all_violations)} file(s)")
     print("\nTo fix these violations:")
-    print(
-        "1. Add the string to the appropriate constants file in src/mcli/lib/constants/"
-    )
+    print("1. Add the string to the appropriate constants file in src/mcli/lib/constants/")
     print("2. Import and use the constant instead of the hardcoded string")
     print("3. Example:")
     print("   from mcli.lib.constants import EnvVars")
-    print(
-        '   api_key = os.getenv(EnvVars.OPENAI_API_KEY)  # Instead of "OPENAI_API_KEY"'
-    )
+    print('   api_key = os.getenv(EnvVars.OPENAI_API_KEY)  # Instead of "OPENAI_API_KEY"')
 
 
-def output_json(all_violations: Dict[Path, List]) -> None:
+def output_json(all_violations: dict[Path, list]) -> None:
     """Output violations in JSON format for CI/CD integration."""
     result = {
         "total_violations": sum(len(v) for v in all_violations.values()),
@@ -331,9 +317,7 @@ def output_json(all_violations: Dict[Path, List]) -> None:
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Lint Python files for hardcoded strings"
-    )
+    parser = argparse.ArgumentParser(description="Lint Python files for hardcoded strings")
     parser.add_argument(
         "paths",
         nargs="*",

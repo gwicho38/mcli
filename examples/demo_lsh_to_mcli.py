@@ -6,10 +6,12 @@ Shows a complete data flow from LSH job execution to mcli processing
 
 import asyncio
 import json
-import aiohttp
 import sys
 import time
 from pathlib import Path
+
+import aiohttp
+
 
 async def create_test_job():
     """Create a test job in LSH that outputs politician trading data"""
@@ -49,13 +51,12 @@ for record in records:
         """,
         "type": "shell",
         "description": "Demo job for LSH->mcli integration test",
-        "tags": ["demo", "mcli", "integration"]
+        "tags": ["demo", "mcli", "integration"],
     }
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post("http://localhost:3030/api/jobs",
-                                   json=job_data) as response:
+            async with session.post("http://localhost:3030/api/jobs", json=job_data) as response:
                 if response.status == 401:
                     print("⚠️  LSH API requires authentication for job creation")
                     print("   Using no-auth test mode...")
@@ -74,6 +75,7 @@ for record in records:
         print(f"❌ Job creation failed: {e}")
         return None
 
+
 async def process_politician_data(data_lines):
     """Process politician trading data through mcli pipeline"""
     print(f"🏭 Processing {len(data_lines)} data records through mcli...")
@@ -88,27 +90,27 @@ async def process_politician_data(data_lines):
             record = json.loads(line)
 
             # Data validation
-            required_fields = ['politician_name', 'transaction_amount', 'asset_name']
+            required_fields = ["politician_name", "transaction_amount", "asset_name"]
             if not all(field in record for field in required_fields):
                 print(f"⚠️  Skipping invalid record: missing required fields")
                 continue
 
             # Data enrichment
-            amount = record.get('transaction_amount', 0)
+            amount = record.get("transaction_amount", 0)
             if amount > 50000:
-                record['amount_category'] = 'large'
-                record['risk_level'] = 'high'
+                record["amount_category"] = "large"
+                record["risk_level"] = "high"
             elif amount > 15000:
-                record['amount_category'] = 'medium'
-                record['risk_level'] = 'medium'
+                record["amount_category"] = "medium"
+                record["risk_level"] = "medium"
             else:
-                record['amount_category'] = 'small'
-                record['risk_level'] = 'low'
+                record["amount_category"] = "small"
+                record["risk_level"] = "low"
 
             # Add mcli processing metadata
-            record['mcli_processed_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ')
-            record['mcli_processing_version'] = '1.0.0'
-            record['mcli_enrichment_applied'] = True
+            record["mcli_processed_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            record["mcli_processing_version"] = "1.0.0"
+            record["mcli_enrichment_applied"] = True
 
             processed_records.append(record)
 
@@ -122,9 +124,9 @@ async def process_politician_data(data_lines):
     output_dir.mkdir(exist_ok=True)
 
     output_file = output_dir / f"politician_trading_{int(time.time())}.jsonl"
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         for record in processed_records:
-            f.write(json.dumps(record) + '\n')
+            f.write(json.dumps(record) + "\n")
 
     print(f"💾 Saved processed data to: {output_file}")
 
@@ -133,10 +135,11 @@ async def process_politician_data(data_lines):
         print("\n📊 Sample processed record:")
         sample = processed_records[0]
         for key, value in sample.items():
-            if key.startswith(('amount_', 'risk_', 'mcli_')):
+            if key.startswith(("amount_", "risk_", "mcli_")):
                 print(f"   {key}: {value}")
 
     return processed_records
+
 
 async def simulate_lsh_to_mcli_flow():
     """Simulate the complete LSH->mcli data flow"""
@@ -147,16 +150,16 @@ async def simulate_lsh_to_mcli_flow():
     print("📝 Simulating LSH job execution output...")
 
     # Mock job output (what would come from LSH job)
-    mock_job_output = '''{"politician_name": "Nancy Pelosi", "transaction_date": "2024-01-15T10:30:00Z", "transaction_type": "buy", "asset_name": "NVDA", "transaction_amount": 45000, "asset_type": "stock", "disclosure_source": "senate_disclosures"}
+    mock_job_output = """{"politician_name": "Nancy Pelosi", "transaction_date": "2024-01-15T10:30:00Z", "transaction_type": "buy", "asset_name": "NVDA", "transaction_amount": 45000, "asset_type": "stock", "disclosure_source": "senate_disclosures"}
 {"politician_name": "Mitch McConnell", "transaction_date": "2024-01-15T14:20:00Z", "transaction_type": "sell", "asset_name": "TSLA", "transaction_amount": 120000, "asset_type": "stock", "disclosure_source": "senate_disclosures"}
-{"politician_name": "Chuck Schumer", "transaction_date": "2024-01-15T16:45:00Z", "transaction_type": "buy", "asset_name": "AAPL", "transaction_amount": 8500, "asset_type": "stock", "disclosure_source": "house_disclosures"}'''
+{"politician_name": "Chuck Schumer", "transaction_date": "2024-01-15T16:45:00Z", "transaction_type": "buy", "asset_name": "AAPL", "transaction_amount": 8500, "asset_type": "stock", "disclosure_source": "house_disclosures"}"""
 
     print("✅ Received job output from LSH")
     print(f"   Output size: {len(mock_job_output)} characters")
     print(f"   Lines: {len(mock_job_output.split(chr(10)))}")
 
     # Process through mcli pipeline
-    data_lines = mock_job_output.split('\n')
+    data_lines = mock_job_output.split("\n")
     processed_records = await process_politician_data(data_lines)
 
     print(f"\n🎯 Integration Summary:")
@@ -166,6 +169,7 @@ async def simulate_lsh_to_mcli_flow():
     print(f"   ✅ Processed data saved to disk")
 
     return len(processed_records) > 0
+
 
 async def main():
     """Run the LSH->mcli integration demonstration"""
@@ -201,6 +205,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Demo failed with error: {e}")
         return 1
+
 
 if __name__ == "__main__":
     try:

@@ -10,17 +10,21 @@ Comprehensive Mac cleanup tool that:
 - Manages emulators/simulators (keeps at least one of each)
 - Provides detailed space freed reporting
 """
-import click
-from mcli.lib.logger.logger import get_logger
+
+import json
 import os
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 from datetime import datetime
-import json
+from pathlib import Path
+
+import click
+
+from mcli.lib.logger.logger import get_logger
 
 logger = get_logger()
+
 
 # Create a Click command group
 @click.group(name="clean")
@@ -28,29 +32,34 @@ def clean():
     """Enhanced Mac Cleaner Script (CleanMyMac Mirror + Flutter/Emulator Management)"""
     pass
 
+
 @clean.command(name="start")
-@click.option('--full', is_flag=True, help='Run complete scan/cleanup')
-@click.option('--flutter', is_flag=True, help='Include Flutter cleanup (keeps latest builds)')
-@click.option('--emulators', is_flag=True, help='Clean old emulators/simulators (keeps at least one)')
-@click.option('--aggressive', is_flag=True, help='Run all cleanup tasks aggressively')
+@click.option("--full", is_flag=True, help="Run complete scan/cleanup")
+@click.option("--flutter", is_flag=True, help="Include Flutter cleanup (keeps latest builds)")
+@click.option(
+    "--emulators", is_flag=True, help="Clean old emulators/simulators (keeps at least one)"
+)
+@click.option("--aggressive", is_flag=True, help="Run all cleanup tasks aggressively")
 def start(full, flutter, emulators, aggressive):
     """Start the enhanced Mac cleaner script"""
     _start(full, flutter, emulators, aggressive)
 
+
 # Configurable settings
 CACHE_DIRS = [
-    '~/Library/Caches',
-    '/Library/Caches',
-    '~/Library/Logs',
-    '/private/var/log',
-    '~/Library/Developer/Xcode/DerivedData',
-    '~/Library/Developer/Xcode/iOS DeviceSupport',
-    '~/Library/Developer/Xcode/watchOS DeviceSupport',
-    '~/Library/Caches/com.apple.dt.Xcode'
+    "~/Library/Caches",
+    "/Library/Caches",
+    "~/Library/Logs",
+    "/private/var/log",
+    "~/Library/Developer/Xcode/DerivedData",
+    "~/Library/Developer/Xcode/iOS DeviceSupport",
+    "~/Library/Developer/Xcode/watchOS DeviceSupport",
+    "~/Library/Caches/com.apple.dt.Xcode",
 ]
 
 LARGE_FILE_THRESHOLD_MB = 500  # Files larger than this
-TRASH_PATH = Path.home() / '.Trash'
+TRASH_PATH = Path.home() / ".Trash"
+
 
 def run_command(cmd, capture_output=True):
     """Run shell command and return output"""
@@ -61,10 +70,12 @@ def run_command(cmd, capture_output=True):
         logger.error(f"Command failed: {cmd} - {e}")
         return ""
 
+
 def get_disk_space():
     """Get current disk space in KB"""
     result = run_command("df / | tail -1 | awk '{print $4}'")
     return int(result) if result else 0
+
 
 def format_size(kb):
     """Format KB to human readable size"""
@@ -75,6 +86,7 @@ def format_size(kb):
     if mb > 1:
         return f"{mb:.2f} MB"
     return f"{kb:.2f} KB"
+
 
 def cleanup_caches():
     """Enhanced cache cleaning"""
@@ -100,6 +112,7 @@ def cleanup_caches():
     actual_freed = current_space - initial_space
     logger.info(f"✅ Cache cleanup complete - freed {format_size(actual_freed)}")
     return actual_freed
+
 
 def cleanup_flutter_builds():
     """Clean Flutter builds but keep latest Android and iOS builds"""
@@ -131,7 +144,9 @@ def cleanup_flutter_builds():
         if android_apk:
             android_apk.sort(key=lambda x: x.stat().st_mtime, reverse=True)
             keep_android = android_apk[0] if android_apk else None
-            logger.info(f"    📱 Keeping latest Android APK: {keep_android.name if keep_android else 'none'}")
+            logger.info(
+                f"    📱 Keeping latest Android APK: {keep_android.name if keep_android else 'none'}"
+            )
 
         if ios_builds:
             ios_builds.sort(key=lambda x: x.stat().st_mtime, reverse=True)
@@ -152,6 +167,7 @@ def cleanup_flutter_builds():
     logger.info(f"✅ Flutter build cleanup complete - freed {format_size(actual_freed)}")
     return actual_freed
 
+
 def cleanup_emulators():
     """Clean old Android emulators and iOS simulators (keeps at least one of each)"""
     logger.info("🎮 Cleaning emulators/simulators (keeping at least one of each)...")
@@ -162,11 +178,11 @@ def cleanup_emulators():
     logger.info("  📱 Android Emulators:")
     emulator_list = run_command("$HOME/android-sdk/emulator/emulator -list-avds 2>/dev/null")
     if emulator_list:
-        emulators = emulator_list.split('\n')
+        emulators = emulator_list.split("\n")
         logger.info(f"    Found {len(emulators)} emulator(s)")
 
         # Keep Pixel_6_API_34_ARM and one other
-        keep_emulators = ['Pixel_6_API_34_ARM']
+        keep_emulators = ["Pixel_6_API_34_ARM"]
         if len(emulators) > 1:
             keep_emulators.append([e for e in emulators if e not in keep_emulators][0])
 
@@ -192,6 +208,7 @@ def cleanup_emulators():
     actual_freed = current_space - initial_space
     logger.info(f"✅ Emulator cleanup complete - freed {format_size(actual_freed)}")
     return actual_freed
+
 
 def cleanup_development_tools():
     """Clean development tool caches"""
@@ -219,6 +236,7 @@ def cleanup_development_tools():
     logger.info(f"✅ Development tools cleanup complete - freed {format_size(actual_freed)}")
     return actual_freed
 
+
 def cleanup_lsh_daemon():
     """Clean LSH daemon processes and files"""
     logger.info("🔧 Cleaning LSH daemon...")
@@ -233,22 +251,24 @@ def cleanup_lsh_daemon():
 
     logger.info("  ✅ LSH daemon cleaned")
 
+
 def empty_trash():
     """Empty macOS Trash"""
     logger.info("🗑️  Emptying Trash...")
     initial_space = get_disk_space()
 
-    script = '''
+    script = """
     tell application "Finder"
         empty the trash
     end tell
-    '''
+    """
     run_command(f"osascript -e '{script}'")
 
     current_space = get_disk_space()
     actual_freed = current_space - initial_space
     logger.info(f"✅ Trash emptied - freed {format_size(actual_freed)}")
     return actual_freed
+
 
 def find_large_files(root_path=str(Path.home()), max_depth=3):
     """Scan for large files"""
@@ -259,16 +279,18 @@ def find_large_files(root_path=str(Path.home()), max_depth=3):
 
     if result:
         logger.info("  📊 Top 10 large files:")
-        for line in result.split('\n'):
+        for line in result.split("\n"):
             logger.info(f"    {line}")
     else:
         logger.info("  ✅ No large files found")
+
 
 def space_report():
     """Quick disk space summary"""
     logger.info("💾 Disk Space Report:")
     result = run_command("df -h / | tail -1")
     logger.info(f"  {result}")
+
 
 def git_cleanup():
     """Run git garbage collection on common repos"""
@@ -287,6 +309,7 @@ def git_cleanup():
                 logger.info(f"  ✅ Cleaned {repo.name}")
             except Exception as e:
                 logger.warning(f"  ⚠️  Failed to clean {repo.name}")
+
 
 def _start(full=False, flutter=False, emulators=False, aggressive=False):
     logger.info("=" * 60)

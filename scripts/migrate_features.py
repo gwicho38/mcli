@@ -72,7 +72,7 @@ class FeatureMigrator:
             },
         }
 
-    def analyze(self) -> Dict:
+    def analyze(self) -> dict:
         """Analyze features to be migrated."""
         report = {
             "analysis_time": datetime.utcnow().isoformat() + "Z",
@@ -126,7 +126,7 @@ class FeatureMigrator:
         report["total_size_human"] = self._format_size(report["total_size"])
         return report
 
-    def extract(self, dry_run: bool = False) -> Dict:
+    def extract(self, dry_run: bool = False) -> dict:
         """Extract features to mcli-commands repo."""
         results = {
             "extracted": [],
@@ -143,7 +143,9 @@ class FeatureMigrator:
         for category, features in self.features.items():
             for feature_name, feature_info in features.items():
                 try:
-                    workflow_path = self.commands_root / feature_info["group"] / f"{feature_name}.json"
+                    workflow_path = (
+                        self.commands_root / feature_info["group"] / f"{feature_name}.json"
+                    )
 
                     if workflow_path.exists():
                         print(f"  ✓ Already exists: {workflow_path}")
@@ -159,14 +161,16 @@ class FeatureMigrator:
 
                 except Exception as e:
                     print(f"  ✗ Failed to extract {feature_name}: {e}")
-                    results["failed"].append({
-                        "feature": feature_name,
-                        "error": str(e),
-                    })
+                    results["failed"].append(
+                        {
+                            "feature": feature_name,
+                            "error": str(e),
+                        }
+                    )
 
         return results
 
-    def cleanup(self, dry_run: bool = False, backup: bool = True) -> Dict:
+    def cleanup(self, dry_run: bool = False, backup: bool = True) -> dict:
         """Remove migrated features from core (DANGEROUS - use with caution)."""
         results = {
             "removed": [],
@@ -208,10 +212,12 @@ class FeatureMigrator:
 
                 except Exception as e:
                     print(f"  ✗ Failed to remove {feature_name}: {e}")
-                    results["failed"].append({
-                        "feature": feature_name,
-                        "error": str(e),
-                    })
+                    results["failed"].append(
+                        {
+                            "feature": feature_name,
+                            "error": str(e),
+                        }
+                    )
 
         return results
 
@@ -268,7 +274,9 @@ def main():
             print(f"  Files: {data['files']}")
             print("  Features:")
             for feature in data["features"]:
-                print(f"    - {feature['name']}: {feature['size_human']} ({feature['file_count']} files)")
+                print(
+                    f"    - {feature['name']}: {feature['size_human']} ({feature['file_count']} files)"
+                )
 
         if args.output:
             with open(args.output, "w") as f:
