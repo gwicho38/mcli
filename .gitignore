@@ -102,6 +102,7 @@ node_modules/
 
 # Coverage reports
 coverage.json
+coverage.xml
 .coverage
 htmlcov/
 
@@ -116,3 +117,10 @@ ENV.md
 .env.production
 .env.backup.*
 .mcli/
+
+# Database files
+*.db
+ml_system.db
+
+# Aider artifacts
+.aider.*

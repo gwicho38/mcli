@@ -459,8 +459,10 @@ make wheel
 - **Workflows**: Full workflow documentation (this README)
 - **Shell Completion**: See [Shell Completion Guide](https://github.com/gwicho38/mcli/blob/main/docs/features/SHELL_COMPLETION.md)
 - **Testing**: See [Testing Guide](https://github.com/gwicho38/mcli/blob/main/docs/development/TESTING.md)
-- **Contributing**: See [Contributing Guide](https://github.com/gwicho38/mcli/blob/main/CONTRIBUTING.md)
+- **Contributing**: See [Contributing Guide](https://github.com/gwicho38/mcli/blob/main/docs/CONTRIBUTING.md)
 - **Release Notes**: See [Latest Release (7.14.2)](https://github.com/gwicho38/mcli/blob/main/docs/releases/7.14.2.md)
+- **Code of Conduct**: See [Code of Conduct](https://github.com/gwicho38/mcli/blob/main/docs/CODE_OF_CONDUCT.md)
+- **Changelog**: See [Changelog](https://github.com/gwicho38/mcli/blob/main/docs/CHANGELOG.md)
 
 ## 🎯 Common Use Cases
 

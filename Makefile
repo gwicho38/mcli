@@ -48,7 +48,7 @@ BINARY_CACHE := $(CACHE_DIR)/binary_$(VERSION)_$(PLATFORM_SUFFIX).stamp
 # Python executable configurations
 PYTHON_EXEC_CACHE := $(CACHE_DIR)/python_exec_$(VERSION)_$(PLATFORM_SUFFIX).stamp
 EXECUTABLE_NAME := mcli
-PYTHON_EXEC := mcli_executable.py
+PYTHON_EXEC := scripts/mcli_executable.py
 
 # File check variables
 SRC_FILES := $(shell find src -type f -name "*.py" 2>/dev/null)
@@ -198,7 +198,7 @@ clean-build: ## Clean only build artifacts (keep venv)
 	-rm -f setup_cython.py  # Remove Cython setup file
 	-rm -f cython_main.pyx  # Remove Cython main file
 	-rm -f mcli_main*.so  # Remove compiled Cython extensions
-	# Keep mcli_executable.py - it's our main executable
+	# Keep scripts/mcli_executable.py - it's our main executable
 	@echo "$(GREEN)Clean completed ✅$(RESET)"
 
 .PHONY: uninstall
