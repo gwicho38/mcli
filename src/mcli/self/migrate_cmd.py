@@ -446,9 +446,7 @@ def migrate_command(
 
                     if not lockfiles_to_push:
                         console.print("[yellow]⚠ No lockfiles found to push to IPFS[/yellow]")
-                        console.print(
-                            "  [dim]Run 'mcli workflow update-lockfile' first[/dim]"
-                        )
+                        console.print("  [dim]Run 'mcli workflow update-lockfile' first[/dim]")
 
                 except ImportError as e:
                     console.print(f"[red]✗ Failed to import IPFS sync module: {e}[/red]")
