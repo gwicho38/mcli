@@ -40,7 +40,6 @@ code --install-extension vscode-extension/mcli-framework-2.0.0.vsix
 
 **Learn More:**
 - [Extension README](https://github.com/gwicho38/mcli/blob/main/vscode-extension/README.md) - Features and usage
-- [Visual Editing Guide](https://github.com/gwicho38/mcli/blob/main/README-VISUAL-EDITING.md) - Quick start
 - [Installation Guide](https://github.com/gwicho38/mcli/blob/main/vscode-extension/INSTALL.md) - Detailed setup
 - [Workflow Notebooks Docs](https://github.com/gwicho38/mcli/blob/main/docs/workflow-notebooks.md) - Complete guide
 
@@ -507,7 +506,7 @@ make wheel
 - **Shell Completion**: See [Shell Completion Guide](https://github.com/gwicho38/mcli/blob/main/docs/features/SHELL_COMPLETION.md)
 - **Testing**: See [Testing Guide](https://github.com/gwicho38/mcli/blob/main/docs/development/TESTING.md)
 - **Contributing**: See [Contributing Guide](https://github.com/gwicho38/mcli/blob/main/docs/CONTRIBUTING.md)
-- **Release Notes**: See [Latest Release (7.14.2)](https://github.com/gwicho38/mcli/blob/main/docs/releases/7.14.2.md)
+- **Release Notes**: See [Latest Release (7.16.0)](https://github.com/gwicho38/mcli/blob/main/docs/releases/7.16.0.md)
 - **Code of Conduct**: See [Code of Conduct](https://github.com/gwicho38/mcli/blob/main/docs/CODE_OF_CONDUCT.md)
 - **Changelog**: See [Changelog](https://github.com/gwicho38/mcli/blob/main/docs/CHANGELOG.md)
 
