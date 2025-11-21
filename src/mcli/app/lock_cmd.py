@@ -206,7 +206,17 @@ def restore_state(hash_value):
 
 @lock.command("write")
 @click.argument("json_file", required=False, type=click.Path(exists=False))
-def write_state(json_file):
+@click.option(
+    "--to-ipfs",
+    is_flag=True,
+    help="Push lockfile to IPFS after writing for immutable backup",
+)
+@click.option(
+    "--description",
+    "-d",
+    help="Description for IPFS sync (when using --to-ipfs)",
+)
+def write_state(json_file, to_ipfs, description):
     """Write a new command state to the lockfile from a JSON file or the current app state."""
     import traceback
 
@@ -231,6 +241,34 @@ def write_state(json_file):
         append_lockfile(new_state)
         print(f"[DEBUG] Wrote new command state {state_hash[:8]} to lockfile at {LOCKFILE_PATH}")
         click.echo(f"Wrote new command state {state_hash[:8]} to lockfile.")
+
+        # Push to IPFS if requested
+        if to_ipfs:
+            console.print("\n[bold cyan]Pushing to IPFS...[/bold cyan]")
+
+            try:
+                from mcli.lib.ipfs_sync import IPFSSync
+
+                ipfs = IPFSSync()
+                desc = description or f"Command lock state {state_hash[:8]}"
+                cid = ipfs.push(LOCKFILE_PATH, description=desc)
+
+                if cid:
+                    console.print(f"\n[green]✓ Lockfile pushed to IPFS[/green]")
+                    console.print(f"  CID: [bold cyan]{cid}[/bold cyan]")
+                    console.print(f"  [dim]Retrieve with: mcli workflows sync pull {cid}[/dim]")
+                else:
+                    console.print("\n[yellow]⚠ Failed to push lockfile to IPFS[/yellow]")
+                    console.print("  [dim]Note: Public IPFS gateways require authentication.[/dim]")
+                    console.print(
+                        "  [dim]Consider using 'mcli workflows sync push' with your own IPFS node.[/dim]"
+                    )
+
+            except ImportError as e:
+                console.print(f"[red]✗ Failed to import IPFS sync module: {e}[/red]")
+            except Exception as e:
+                console.print(f"[red]✗ IPFS push failed: {e}[/red]")
+
     except Exception as e:
         print(f"[ERROR] Exception in write_state: {e}")
         print(traceback.format_exc())
@@ -335,7 +373,17 @@ def verify_commands(is_global, code):
 @click.option(
     "--global", "-g", "is_global", is_flag=True, help="Update global lockfile instead of local"
 )
-def update_lockfile(is_global):
+@click.option(
+    "--to-ipfs",
+    is_flag=True,
+    help="Push lockfile to IPFS after updating for immutable backup",
+)
+@click.option(
+    "--description",
+    "-d",
+    help="Description for IPFS sync (when using --to-ipfs)",
+)
+def update_lockfile(is_global, to_ipfs, description):
     """
     Update the commands lockfile with current state.
 
@@ -345,6 +393,35 @@ def update_lockfile(is_global):
 
     if manager.update_lockfile():
         console.print(f"[green]Updated lockfile: {manager.lockfile_path}[/green]")
+
+        # Push to IPFS if requested
+        if to_ipfs:
+            console.print("\n[bold cyan]Pushing to IPFS...[/bold cyan]")
+
+            try:
+                from mcli.lib.ipfs_sync import IPFSSync
+
+                ipfs = IPFSSync()
+                scope = "Global" if is_global else "Local"
+                desc = description or f"{scope} lockfile update"
+                cid = ipfs.push(manager.lockfile_path, description=desc)
+
+                if cid:
+                    console.print(f"\n[green]✓ Lockfile pushed to IPFS[/green]")
+                    console.print(f"  CID: [bold cyan]{cid}[/bold cyan]")
+                    console.print(f"  [dim]Retrieve with: mcli workflows sync pull {cid}[/dim]")
+                else:
+                    console.print("\n[yellow]⚠ Failed to push lockfile to IPFS[/yellow]")
+                    console.print("  [dim]Note: Public IPFS gateways require authentication.[/dim]")
+                    console.print(
+                        "  [dim]Consider using 'mcli workflows sync push' with your own IPFS node.[/dim]"
+                    )
+
+            except ImportError as e:
+                console.print(f"[red]✗ Failed to import IPFS sync module: {e}[/red]")
+            except Exception as e:
+                console.print(f"[red]✗ IPFS push failed: {e}[/red]")
+
         return 0
     else:
         console.print("[red]Failed to update lockfile.[/red]")
