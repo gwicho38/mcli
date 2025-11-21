@@ -44,7 +44,7 @@ class CellOutput:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to Jupyter output format."""
-        result = {"output_type": self.output_type}
+        result: Dict[str, Any] = {"output_type": self.output_type}
 
         if self.data is not None:
             result["data"] = self.data
@@ -114,7 +114,7 @@ class NotebookCell:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to Jupyter notebook cell format."""
-        result = {
+        result: Dict[str, Any] = {
             "cell_type": self.cell_type.value,
             "metadata": self.metadata,
             "source": self.source if isinstance(self.source, list) else [self.source],
@@ -264,9 +264,19 @@ class NotebookMetadata:
 
         return cls(
             mcli=MCLIMetadata.from_dict(mcli_data),
-            kernelspec=kernelspec or cls.__dataclass_fields__["kernelspec"].default_factory(),
+            kernelspec=kernelspec
+            or {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3",
+            },
             language_info=language_info
-            or cls.__dataclass_fields__["language_info"].default_factory(),
+            or {
+                "name": "python",
+                "version": "3.11.0",
+                "mimetype": "text/x-python",
+                "file_extension": ".py",
+            },
             extra=extra,
         )
 
