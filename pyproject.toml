@@ -109,6 +109,7 @@ dependencies = [
   "python-jose[cryptography]>=3.3.0",
   "passlib[bcrypt]>=1.7.4",
   "pydantic-settings>=2.1.0",
+  "email-validator>=2.0.0",
   "dynaconf>=3.2.0",
   "pandera>=0.17.0",
   "pendulum>=2.1.2",

@@ -47,7 +47,7 @@ jobs:
   test-rust:
     name: Test Rust Extensions
     runs-on: ${{ matrix.os }}
-    continue-on-error: true  # Non-blocking due to platform-specific issues
+    continue-on-error: true  # Non-blocking: macOS has LLVM version mismatch, tests pass on Ubuntu
     strategy:
       fail-fast: false
       matrix:
@@ -81,7 +81,7 @@ jobs:
   test-python:
     name: Test Python Package
     runs-on: ${{ matrix.os }}
-    continue-on-error: true  # Non-blocking until pytest suite is fixed (tracked in separate issue)
+    continue-on-error: true  # Non-blocking: Some tests have import errors (email-validator) - fixing in progress
     strategy:
       fail-fast: false
       matrix:
@@ -146,7 +146,7 @@ jobs:
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
-    continue-on-error: true  # Non-blocking until integration tests are fixed
+    continue-on-error: true  # Non-blocking: Rust-Python integration has known issues on CI
     if: always()  # Run even if test-python or test-rust fail
     needs: [test-python, test-rust]
 
