@@ -92,7 +92,7 @@ def get_migration_status() -> dict:
 
 def migrate_directory(
     old_dir: Path, new_dir: Path, dry_run: bool = False, force: bool = False
-) -> Tuple[bool, str, List[str], List[str]]:
+) -> tuple[bool, str, list[str], list[str]]:
     """
     Migrate a commands directory to workflows directory.
 
@@ -188,7 +188,7 @@ def migrate_directory(
 
 def migrate_commands_to_workflows(
     dry_run: bool = False, force: bool = False, scope: str = "all"
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     """
     Migrate commands to workflows directories.
 
@@ -354,6 +354,7 @@ def migrate_command(
         return
 
     # Check if migration is needed
+    global_status = migration_status["global"]
     needs_any_migration = global_status["needs_migration"]
     if migration_status["local"]:
         needs_any_migration = needs_any_migration or migration_status["local"]["needs_migration"]
