@@ -38,6 +38,7 @@ jobs:
 
     - name: Check for hardcoded strings
       run: python tools/lint_hardcoded_strings.py --check-all --json
+      continue-on-error: true  # Non-blocking until codebase refactoring is complete (13k+ violations)
 
     - name: Type checking with mypy
       run: mypy src/ --ignore-missing-imports

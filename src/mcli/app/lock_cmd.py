@@ -24,7 +24,7 @@ LOCKFILE_PATH = Path.home() / ".local" / "mcli" / "command_lock.json"
 def load_lockfile():
     """Load the command state lockfile."""
     if LOCKFILE_PATH.exists():
-        with open(LOCKFILE_PATH, "r") as f:
+        with open(LOCKFILE_PATH) as f:
             data = json.load(f)
             # Handle both old format (array) and new format (object with "states" key)
             if isinstance(data, dict) and "states" in data:
@@ -225,7 +225,7 @@ def write_state(json_file, to_ipfs, description):
     try:
         if json_file:
             print(f"[DEBUG] Loading command state from file: {json_file}")
-            with open(json_file, "r") as f:
+            with open(json_file) as f:
                 commands = json.load(f)
             click.echo(f"Loaded command state from {json_file}.")
         else:
