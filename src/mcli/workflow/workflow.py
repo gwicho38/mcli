@@ -83,7 +83,24 @@ class ScopedWorkflowsGroup(click.Group):
                 auto_detected_commands.append("npm")
                 logger.debug("Auto-detected package.json in current directory")
 
-        return sorted(set(workflow_commands + builtin_commands + auto_detected_commands))
+        # Discover notebook files (.ipynb) and add as command groups
+        notebook_commands = []
+        commands_dir = manager.commands_dir
+        if commands_dir.exists():
+            for notebook_file in commands_dir.rglob("*.ipynb"):
+                # Skip hidden files/directories (but not parent directories like .mcli)
+                relative_parts = notebook_file.relative_to(commands_dir).parts
+                if any(part.startswith(".") for part in relative_parts):
+                    continue
+
+                # Get command name from file stem
+                cmd_name = notebook_file.stem
+                notebook_commands.append(cmd_name)
+                logger.debug(f"Discovered notebook: {cmd_name} from {notebook_file}")
+
+        return sorted(
+            set(workflow_commands + builtin_commands + auto_detected_commands + notebook_commands)
+        )
 
     def get_command(self, ctx, cmd_name):
         """Get a command by name, loading from appropriate scope."""
@@ -117,8 +134,28 @@ class ScopedWorkflowsGroup(click.Group):
 
         # Load the workflow command from appropriate directory
         from mcli.lib.custom_commands import get_command_manager
+        from mcli.lib.logger.logger import get_logger
 
+        logger = get_logger()
         manager = get_command_manager(global_mode=is_global)
+
+        # First, check if there's a notebook file with this name
+        commands_dir = manager.commands_dir
+        if commands_dir.exists():
+            for notebook_file in commands_dir.rglob("*.ipynb"):
+                # Skip hidden files/directories (but not parent directories like .mcli)
+                relative_parts = notebook_file.relative_to(commands_dir).parts
+                if any(part.startswith(".") for part in relative_parts):
+                    continue
+
+                if notebook_file.stem == cmd_name:
+                    # Found matching notebook - load it as a command group
+                    logger.debug(f"Loading notebook commands from {notebook_file}")
+                    temp_group = click.Group()
+                    if manager.register_notebook_command_with_click(notebook_file, temp_group):
+                        return temp_group.commands.get(cmd_name)
+
+        # Then check regular JSON workflow commands
         commands = manager.load_all_commands()
 
         # Find the workflow command

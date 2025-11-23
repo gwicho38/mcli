@@ -443,6 +443,52 @@ class CustomCommandManager:
             logger.error(f"Failed to register shell command {name}: {e}")
             return False
 
+    def register_notebook_command_with_click(
+        self, notebook_file: Path, target_group: click.Group
+    ) -> bool:
+        """
+        Dynamically register a notebook file as a Click group with subcommands.
+
+        This loads a Jupyter notebook (.ipynb) file and extracts all Click commands
+        defined in its cells, creating a command group.
+
+        Args:
+            notebook_file: Path to the notebook file
+            target_group: Click group to register the notebook commands with
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            from mcli.workflow.notebook.command_loader import NotebookCommandLoader
+
+            # Get group name from notebook file stem (filename without extension)
+            group_name = notebook_file.stem
+
+            logger.info(f"Loading notebook commands from {notebook_file}")
+
+            # Load the notebook and create a command group
+            notebook_group = NotebookCommandLoader.load_group_from_file(
+                notebook_file, group_name=group_name
+            )
+
+            if not notebook_group:
+                logger.warning(f"No commands found in notebook: {notebook_file}")
+                return False
+
+            # Register the group with the target
+            target_group.add_command(notebook_group, name=group_name)
+            self.loaded_commands[group_name] = notebook_group
+            logger.info(f"Registered notebook command group: {group_name}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to register notebook {notebook_file.name}: {e}")
+            import traceback
+
+            logger.debug(traceback.format_exc())
+            return False
+
     def export_commands(self, export_path: Path) -> bool:
         """
         Export all custom commands to a single JSON file.
