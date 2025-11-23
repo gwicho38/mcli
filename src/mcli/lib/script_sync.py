@@ -35,6 +35,7 @@ logger = get_logger(__name__)
 # Supported script extensions and their language mappings
 LANGUAGE_MAP = {
     ".py": "python",
+    ".ipynb": "python",  # Jupyter notebooks
     ".sh": "shell",
     ".bash": "shell",
     ".zsh": "shell",
@@ -92,13 +93,13 @@ class ScriptSyncManager:
         self.sync_cache_path = self.commands_dir / ".sync_cache.json"
         self.sync_cache = self._load_sync_cache()
 
-    def _load_sync_cache(self) -> Dict:
+    def _load_sync_cache(self) -> dict:
         """Load the sync cache from disk."""
         if not self.sync_cache_path.exists():
             return {}
 
         try:
-            with open(self.sync_cache_path, "r") as f:
+            with open(self.sync_cache_path) as f:
                 return json.load(f)
         except Exception as e:
             logger.warning(f"Failed to load sync cache: {e}")
@@ -129,7 +130,7 @@ class ScriptSyncManager:
         """
         try:
             # Check shebang first (more reliable)
-            with open(script_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(script_path, encoding="utf-8", errors="ignore") as f:
                 first_line = f.readline().strip()
                 if first_line.startswith("#!"):
                     for lang, pattern in SHEBANG_PATTERNS.items():
@@ -148,7 +149,7 @@ class ScriptSyncManager:
 
         return language
 
-    def extract_metadata(self, script_path: Path, language: str) -> Dict:
+    def extract_metadata(self, script_path: Path, language: str) -> dict:
         """
         Extract metadata from script comments.
 
@@ -179,7 +180,7 @@ class ScriptSyncManager:
         metadata_pattern = re.compile(rf"^{re.escape(comment_prefix)}\s*@(\w+):\s*(.+)$")
 
         try:
-            with open(script_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(script_path, encoding="utf-8", errors="ignore") as f:
                 for line in f:
                     line = line.strip()
                     match = metadata_pattern.match(line)
@@ -255,7 +256,7 @@ class ScriptSyncManager:
             return True
 
         try:
-            with open(json_path, "r") as f:
+            with open(json_path) as f:
                 json_data = json.load(f)
                 cached_hash = json_data.get("metadata", {}).get("source_hash", "")
                 if script_hash != cached_hash:
@@ -280,6 +281,10 @@ class ScriptSyncManager:
         - Language and execution info
         - Source hash for change detection
 
+        Special handling for .ipynb files:
+        - .ipynb files are already in notebook JSON format, so they're used directly
+        - The file itself serves as the JSON workflow representation
+
         Args:
             script_path: Path to the script file
             group: Optional command group (auto-detected from path if None)
@@ -288,6 +293,22 @@ class ScriptSyncManager:
         Returns:
             Path to the generated JSON file, or None if generation failed
         """
+        # Special handling for .ipynb files - they're already JSON notebooks
+        if script_path.suffix == ".ipynb":
+            logger.debug(f"Notebook file {script_path} is already in JSON format")
+            # Validate it's a proper notebook and return the path itself
+            try:
+                with open(script_path) as f:
+                    data = json.load(f)
+                    # Check if it has nbformat field (standard Jupyter format)
+                    if "nbformat" in data:
+                        return script_path
+                    # Otherwise, we need to convert it to proper notebook format
+                    logger.warning(f"{script_path} is not a valid Jupyter notebook")
+            except Exception as e:
+                logger.error(f"Failed to validate notebook {script_path}: {e}")
+            return None
+
         json_path = script_path.with_suffix(".json")
 
         # Skip if already up-to-date
@@ -311,7 +332,7 @@ class ScriptSyncManager:
 
         # Read script code
         try:
-            with open(script_path, "r", encoding="utf-8") as f:
+            with open(script_path, encoding="utf-8") as f:
                 code = f.read()
         except Exception as e:
             logger.error(f"Failed to read script {script_path}: {e}")
@@ -372,7 +393,7 @@ class ScriptSyncManager:
             logger.error(f"Failed to save JSON for {script_path}: {e}")
             return None
 
-    def sync_all(self, force: bool = False) -> List[Path]:
+    def sync_all(self, force: bool = False) -> list[Path]:
         """
         Sync all scripts in commands directory to JSON.
 
@@ -425,7 +446,7 @@ class ScriptSyncManager:
 
         return synced
 
-    def cleanup_orphaned_json(self) -> List[Path]:
+    def cleanup_orphaned_json(self) -> list[Path]:
         """
         Remove JSON files that no longer have corresponding scripts.
 
@@ -445,7 +466,7 @@ class ScriptSyncManager:
 
             # Check if auto-generated
             try:
-                with open(json_path, "r") as f:
+                with open(json_path) as f:
                     json_data = json.load(f)
                     if not json_data.get("metadata", {}).get("auto_generated"):
                         continue  # Manual JSON, don't delete

@@ -138,7 +138,7 @@ def migrate(directory: Optional[str], backup: bool, in_place: bool, dry_run: boo
             if json_file.name == "commands.lock.json":
                 continue
             try:
-                with open(json_file, "r") as f:
+                with open(json_file) as f:
                     data = json.load(f)
                 if "nbformat" not in data:
                     count += 1
@@ -404,6 +404,88 @@ echo "Hello from workflow!"
     # Save notebook
     WorkflowConverter.save_notebook_json(notebook, output_path)
     success(f"Created notebook: {output_path}")
+
+
+@notebook.command(name="run")
+@click.argument("notebook_file", type=click.Path(exists=True))
+@click.option(
+    "--stop-on-error",
+    is_flag=True,
+    help="Stop execution if a cell fails",
+)
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    help="Print output as cells execute",
+)
+@click.option(
+    "--json",
+    "output_json",
+    is_flag=True,
+    help="Output results as JSON",
+)
+def run(notebook_file: str, stop_on_error: bool, verbose: bool, output_json: bool):
+    """
+    Execute a notebook file cell by cell.
+
+    This runs all code cells in the notebook in order, capturing outputs
+    and maintaining execution state across cells.
+
+    Examples:
+
+        # Run a notebook
+        mcli workflow notebook run my-workflow.json
+
+        # Run with verbose output
+        mcli workflow notebook run my-workflow.json -v
+
+        # Stop on first error
+        mcli workflow notebook run my-workflow.json --stop-on-error
+
+        # Get JSON output
+        mcli workflow notebook run my-workflow.json --json
+    """
+    from .executor import NotebookExecutor
+
+    notebook_path = Path(notebook_file)
+
+    try:
+        # Execute the notebook
+        results = NotebookExecutor.execute_file(
+            notebook_path,
+            stop_on_error=stop_on_error,
+            verbose=verbose,
+        )
+
+        if output_json:
+            # Output as JSON
+            click.echo(json.dumps(results, indent=2))
+        else:
+            # Pretty print results
+            if results["failed_cells"] == 0:
+                success(f"\nNotebook executed successfully: {results['notebook_name']}")
+            else:
+                warning(f"\nNotebook completed with errors: {results['notebook_name']}")
+
+            info(f"Total cells: {results['total_cells']}")
+            info(f"Code cells: {results['code_cells']}")
+            info(f"Executed: {results['executed_cells']}")
+            success(f"Successful: {results['successful_cells']}")
+
+            if results["failed_cells"] > 0:
+                error(f"Failed: {results['failed_cells']}")
+
+                # Show failed cell details
+                for cell_result in results["cell_results"]:
+                    if not cell_result["success"]:
+                        error(f"\nCell {cell_result['cell_index']} failed:")
+                        if cell_result["stderr"]:
+                            error(cell_result["stderr"])
+
+    except Exception as e:
+        error(f"Failed to execute notebook: {e}")
+        raise click.Abort()
 
 
 @notebook.command(name="edit")
