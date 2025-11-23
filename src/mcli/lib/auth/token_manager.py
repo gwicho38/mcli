@@ -1,6 +1,6 @@
 from typing import Optional
 
-from mcli.lib.logger import get_logger
+from mcli.lib.logger.logger import get_logger
 
 from .credential_manager import CredentialManager
 
