@@ -266,16 +266,43 @@ class AuthManager:
         return role_checker
 
 
-# Global auth manager instance
-auth_manager = AuthManager()
+# Global auth manager instance (lazy initialization to avoid import-time errors)
+_auth_manager = None
 
-# Convenience functions
-hash_password = auth_manager.hash_password
-verify_password = auth_manager.verify_password
-create_access_token = auth_manager.create_access_token
-verify_access_token = auth_manager.verify_token
-get_current_user = auth_manager.get_current_user
-require_role = auth_manager.require_role
+
+def get_auth_manager() -> AuthManager:
+    """Get the global auth manager instance (lazy initialization)."""
+    global _auth_manager
+    if _auth_manager is None:
+        _auth_manager = AuthManager()
+    return _auth_manager
+
+
+# Convenience functions (lazy)
+def hash_password(password: str) -> str:
+    return get_auth_manager().hash_password(password)
+
+
+def verify_password(password: str, hashed: str) -> bool:
+    return get_auth_manager().verify_password(password, hashed)
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    return get_auth_manager().create_access_token(data, expires_delta)
+
+
+def verify_access_token(token: str) -> TokenData:
+    return get_auth_manager().verify_token(token)
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)
+) -> User:
+    return get_auth_manager().get_current_user(credentials, db)
+
+
+def require_role(*allowed_roles: UserRole):
+    return get_auth_manager().require_role(*allowed_roles)
 
 
 async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
@@ -343,15 +370,23 @@ class RateLimiter:
                     del self.clients[client_id]
 
 
-# Global rate limiter
-rate_limiter = RateLimiter(requests=settings.api.rate_limit, window=60)
+# Global rate limiter (lazy initialization)
+_rate_limiter = None
+
+
+def get_rate_limiter() -> RateLimiter:
+    """Get the global rate limiter instance (lazy initialization)."""
+    global _rate_limiter
+    if _rate_limiter is None:
+        _rate_limiter = RateLimiter(requests=settings.api.rate_limit, window=60)
+    return _rate_limiter
 
 
 async def check_rate_limit(request: Request):
     """FastAPI dependency to check rate limit."""
     client_ip = request.client.host
 
-    if not await rate_limiter.check_rate_limit(client_ip):
+    if not await get_rate_limiter().check_rate_limit(client_ip):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Rate limit exceeded"
         )
