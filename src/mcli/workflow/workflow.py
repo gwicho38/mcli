@@ -102,12 +102,123 @@ class ScopedWorkflowsGroup(click.Group):
             set(workflow_commands + builtin_commands + auto_detected_commands + notebook_commands)
         )
 
+    def _create_file_command(self, file_path, ctx):
+        """
+        Create a Click command to execute a file directly.
+
+        Supports:
+        - Python scripts (.py)
+        - Shell scripts (.sh, .bash, .zsh)
+        - Jupyter notebooks (.ipynb)
+        - Any executable file
+
+        Args:
+            file_path: Path to the file to execute
+            ctx: Click context
+
+        Returns:
+            Click Command or Group
+        """
+        from pathlib import Path
+
+        from mcli.lib.logger.logger import get_logger
+
+        logger = get_logger()
+        file_path = Path(file_path).resolve()
+        extension = file_path.suffix.lower()
+
+        logger.debug(f"Creating command for file: {file_path}")
+
+        # Handle Jupyter notebooks
+        if extension == ".ipynb":
+            from mcli.lib.custom_commands import get_command_manager
+
+            is_global = ctx.params.get("is_global", False)
+            manager = get_command_manager(global_mode=is_global)
+
+            logger.info(f"Loading notebook from file: {file_path}")
+            temp_group = click.Group()
+            if manager.register_notebook_command_with_click(file_path, temp_group):
+                # Return the notebook group
+                return temp_group.commands.get(file_path.stem)
+
+            logger.warning(f"Failed to load notebook: {file_path}")
+            return None
+
+        # Handle Python scripts
+        if extension == ".py":
+
+            @click.command(name=file_path.stem)
+            @click.argument("args", nargs=-1, type=click.UNPROCESSED)
+            def python_command(args):
+                """Execute Python script"""
+                import subprocess
+
+                cmd = ["python", str(file_path)] + list(args)
+                logger.info(f"Executing: {' '.join(cmd)}")
+                result = subprocess.run(cmd, capture_output=False)
+                if result.returncode != 0:
+                    raise SystemExit(result.returncode)
+
+            return python_command
+
+        # Handle shell scripts
+        if extension in [".sh", ".bash", ".zsh", ""]:
+            # Check if file is executable
+            if not file_path.stat().st_mode & 0o111:
+                logger.warning(f"File is not executable: {file_path}")
+                # Make it executable
+                file_path.chmod(file_path.stat().st_mode | 0o111)
+
+            @click.command(name=file_path.stem)
+            @click.argument("args", nargs=-1, type=click.UNPROCESSED)
+            def shell_command(args):
+                """Execute shell script"""
+                import subprocess
+
+                cmd = [str(file_path)] + list(args)
+                logger.info(f"Executing: {' '.join(cmd)}")
+                result = subprocess.run(cmd, capture_output=False)
+                if result.returncode != 0:
+                    raise SystemExit(result.returncode)
+
+            return shell_command
+
+        # Generic executable fallback
+        if file_path.stat().st_mode & 0o111:
+
+            @click.command(name=file_path.stem)
+            @click.argument("args", nargs=-1, type=click.UNPROCESSED)
+            def generic_command(args):
+                """Execute file"""
+                import subprocess
+
+                cmd = [str(file_path)] + list(args)
+                logger.info(f"Executing: {' '.join(cmd)}")
+                result = subprocess.run(cmd, capture_output=False)
+                if result.returncode != 0:
+                    raise SystemExit(result.returncode)
+
+            return generic_command
+
+        # Unsupported file type
+        logger.error(f"Unsupported file type: {extension}")
+        return None
+
     def get_command(self, ctx, cmd_name):
         """Get a command by name, loading from appropriate scope."""
         # First check if it's a built-in command
         builtin_cmd = super().get_command(ctx, cmd_name)
         if builtin_cmd:
             return builtin_cmd
+
+        # Check if cmd_name is a file path that exists
+        from pathlib import Path
+
+        potential_file = Path(cmd_name)
+        if potential_file.exists() and potential_file.is_file():
+            # File exists - execute it directly
+            return self._create_file_command(potential_file, ctx)
 
         # Get scope from context
         is_global = ctx.params.get("is_global", False)
