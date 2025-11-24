@@ -1,8 +1,22 @@
 # Notebook Discovery Investigation Status
 
 **Date:** 2025-11-24
-**Version:** 7.19.0 (published to PyPI)
-**Issue:** Jupyter notebooks in `.mcli/workflows/` are discovered by sync but not appearing in `mcli run --help`
+**Version:** 7.19.1 (fix completed)
+**Status:** ✅ RESOLVED
+
+## Resolution Summary
+
+**Root Cause:** `MCLIMetadata.from_dict()` in `schema.py` was using `data["name"]` which raised KeyError for notebooks without MCLI-specific metadata.
+
+**Fix:** Changed to `data.get("name", "unnamed")` to gracefully handle notebooks created outside of MCLI (commit: f0616a6).
+
+**Result:** Notebooks can now be dropped into `.mcli/workflows/` and are automatically discovered and loaded.
+
+---
+
+# Original Investigation (for reference)
+
+**Issue:** Jupyter notebooks in `.mcli/workflows/` were discovered by sync but not appearing in `mcli run --help`
 
 ## What's Been Done
 

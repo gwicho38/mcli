@@ -34,17 +34,17 @@ class CellOutput:
     """Output from a cell execution."""
 
     output_type: str  # stream, execute_result, error, display_data
-    data: Optional[Dict[str, Any]] = None
-    text: Optional[List[str]] = None
+    data: Optional[dict[str, Any]] = None
+    text: Optional[list[str]] = None
     name: Optional[str] = None  # stdout, stderr
     execution_count: Optional[int] = None
     ename: Optional[str] = None  # error name
     evalue: Optional[str] = None  # error value
-    traceback: Optional[List[str]] = None
+    traceback: Optional[list[str]] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to Jupyter output format."""
-        result: Dict[str, Any] = {"output_type": self.output_type}
+        result: dict[str, Any] = {"output_type": self.output_type}
 
         if self.data is not None:
             result["data"] = self.data
@@ -64,7 +64,7 @@ class CellOutput:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CellOutput":
+    def from_dict(cls, data: dict[str, Any]) -> "CellOutput":
         """Create from Jupyter output format."""
         return cls(
             output_type=data["output_type"],
@@ -83,9 +83,9 @@ class NotebookCell:
     """A cell in a workflow notebook."""
 
     cell_type: CellType
-    source: Union[str, List[str]]
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    outputs: List[CellOutput] = field(default_factory=list)
+    source: Union[str, list[str]]
+    metadata: dict[str, Any] = field(default_factory=dict)
+    outputs: list[CellOutput] = field(default_factory=list)
     execution_count: Optional[int] = None
     id: Optional[str] = None
 
@@ -112,9 +112,9 @@ class NotebookCell:
                 return CellLanguage.PYTHON
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to Jupyter notebook cell format."""
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "cell_type": self.cell_type.value,
             "metadata": self.metadata,
             "source": self.source if isinstance(self.source, list) else [self.source],
@@ -130,7 +130,7 @@ class NotebookCell:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "NotebookCell":
+    def from_dict(cls, data: dict[str, Any]) -> "NotebookCell":
         """Create from Jupyter notebook cell format."""
         cell_type = CellType(data["cell_type"])
         outputs = []
@@ -159,9 +159,9 @@ class MCLIMetadata:
     language: CellLanguage = CellLanguage.PYTHON
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-    extra: Dict[str, Any] = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format."""
         result = {
             "name": self.name,
@@ -182,7 +182,7 @@ class MCLIMetadata:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MCLIMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "MCLIMetadata":
         """Create from dictionary format."""
         # Extract known fields
         known_fields = {
@@ -213,14 +213,14 @@ class NotebookMetadata:
     """Metadata for a workflow notebook."""
 
     mcli: MCLIMetadata
-    kernelspec: Dict[str, str] = field(
+    kernelspec: dict[str, str] = field(
         default_factory=lambda: {
             "display_name": "Python 3",
             "language": "python",
             "name": "python3",
         }
     )
-    language_info: Dict[str, Any] = field(
+    language_info: dict[str, Any] = field(
         default_factory=lambda: {
             "name": "python",
             "version": "3.11.0",
@@ -228,9 +228,9 @@ class NotebookMetadata:
             "file_extension": ".py",
         }
     )
-    extra: Dict[str, Any] = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to Jupyter metadata format."""
         result = {
             "mcli": self.mcli.to_dict(),
@@ -241,7 +241,7 @@ class NotebookMetadata:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "NotebookMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "NotebookMetadata":
         """Create from Jupyter metadata format."""
         # Extract known fields
         mcli_data = data.get("mcli", {})
@@ -290,9 +290,9 @@ class WorkflowNotebook:
     metadata: NotebookMetadata = field(
         default_factory=lambda: NotebookMetadata(mcli=MCLIMetadata(name="untitled"))
     )
-    cells: List[NotebookCell] = field(default_factory=list)
+    cells: list[NotebookCell] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to Jupyter notebook JSON format."""
         return {
             "nbformat": self.nbformat,
@@ -302,7 +302,7 @@ class WorkflowNotebook:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "WorkflowNotebook":
+    def from_dict(cls, data: dict[str, Any]) -> "WorkflowNotebook":
         """Create from Jupyter notebook JSON format."""
         return cls(
             nbformat=data.get("nbformat", 4),
@@ -315,7 +315,7 @@ class WorkflowNotebook:
         self,
         source: str,
         language: Optional[CellLanguage] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> NotebookCell:
         """Add a code cell to the notebook."""
         cell_metadata = metadata or {}
@@ -331,7 +331,7 @@ class WorkflowNotebook:
         return cell
 
     def add_markdown_cell(
-        self, source: str, metadata: Optional[Dict[str, Any]] = None
+        self, source: str, metadata: Optional[dict[str, Any]] = None
     ) -> NotebookCell:
         """Add a markdown cell to the notebook."""
         cell = NotebookCell(
@@ -343,12 +343,12 @@ class WorkflowNotebook:
         return cell
 
     @property
-    def code_cells(self) -> List[NotebookCell]:
+    def code_cells(self) -> list[NotebookCell]:
         """Get all code cells."""
         return [cell for cell in self.cells if cell.cell_type == CellType.CODE]
 
     @property
-    def markdown_cells(self) -> List[NotebookCell]:
+    def markdown_cells(self) -> list[NotebookCell]:
         """Get all markdown cells."""
         return [cell for cell in self.cells if cell.cell_type == CellType.MARKDOWN]
 
