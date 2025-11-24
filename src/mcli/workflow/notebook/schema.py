@@ -197,7 +197,7 @@ class MCLIMetadata:
         extra = {k: v for k, v in data.items() if k not in known_fields}
 
         return cls(
-            name=data["name"],
+            name=data.get("name", "unnamed"),
             description=data.get("description", ""),
             group=data.get("group"),
             version=data.get("version", "1.0"),
