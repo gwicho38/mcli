@@ -1,8 +1,8 @@
 """
-Model command stub - redirects to workflow command in ~/.mcli/commands/model.json
+Model command stub - redirects to workflow command in ~/.mcli/workflows/model.json
 
 This stub exists for backwards compatibility with tests and imports.
-The actual model command implementation is now in ~/.mcli/commands/model.json
+The actual model command implementation is now in ~/.mcli/workflows/model.json
 """
 
 import sys
@@ -10,8 +10,11 @@ from pathlib import Path
 
 # Try to load the model command from the workflow system
 try:
-    # Load model command from ~/.mcli/commands/model.json
-    model_json_path = Path.home() / ".mcli" / "commands" / "model.json"
+    # Load model command from ~/.mcli/workflows/model.json (new path)
+    # Fallback to ~/.mcli/commands/model.json (old path) for backwards compatibility
+    model_json_path = Path.home() / ".mcli" / "workflows" / "model.json"
+    if not model_json_path.exists():
+        model_json_path = Path.home() / ".mcli" / "commands" / "model.json"
 
     if model_json_path.exists():
         # Load the command from the JSON file
