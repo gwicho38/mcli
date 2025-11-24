@@ -347,6 +347,32 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load lock group: {e}")
 
+    # Top-level workflow creation commands
+    try:
+        from mcli.app.new_cmd import new
+
+        app.add_command(new, name="new")
+        logger.debug("Added new command")
+    except ImportError as e:
+        logger.debug(f"Could not load new command: {e}")
+
+    try:
+        from mcli.app.edit_cmd import edit
+
+        app.add_command(edit, name="edit")
+        logger.debug("Added edit command")
+    except ImportError as e:
+        logger.debug(f"Could not load edit command: {e}")
+
+    try:
+        from mcli.app.remove_cmd import remove, delete
+
+        app.add_command(remove, name="remove")
+        app.add_command(delete, name="delete")
+        logger.debug("Added remove/delete commands")
+    except ImportError as e:
+        logger.debug(f"Could not load remove/delete commands: {e}")
+
     # Store commands moved to workflow group
 
     # Workflow management - load immediately for fast access (renamed from 'commands')
