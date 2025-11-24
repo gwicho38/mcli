@@ -373,6 +373,15 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load remove/delete commands: {e}")
 
+    # Top-level sync command
+    try:
+        from mcli.app.sync_cmd import sync
+
+        app.add_command(sync, name="sync")
+        logger.debug("Added sync command")
+    except ImportError as e:
+        logger.debug(f"Could not load sync command: {e}")
+
     # Store commands moved to workflow group
 
     # Workflow management - load immediately for fast access (renamed from 'commands')
