@@ -129,7 +129,7 @@ dependencies = [
   "kafka-python>=2.0.2",
   # Dashboard
   "streamlit>=1.50.0",
-  "altair>=4.2.1,<5.0.0",
+  "altair>=4.2.1,<7.0.0",
   "streamlit-autorefresh>=1.0.1",
   "typer>=0.9.0",
   # Web framework
@@ -165,7 +165,7 @@ ml-plugin = [
   "optuna>=3.4.0",
   # Dashboard dependencies
   "streamlit>=1.50.0",
-  "altair>=4.2.1,<5.0.0",
+  "altair>=4.2.1,<7.0.0",
   "streamlit-autorefresh>=1.0.1",
   # Data science
   "pandas>=2.3.1",
