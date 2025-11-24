@@ -73,9 +73,7 @@ def sync(is_global, force):
     commands = manager.load_all_commands()
 
     # Count workflow commands
-    workflow_count = sum(
-        1 for cmd in commands if cmd.get("group") in ["workflow", "workflows"]
-    )
+    workflow_count = sum(1 for cmd in commands if cmd.get("group") in ["workflow", "workflows"])
 
     success(f"✓ Loaded {workflow_count} workflow command(s)")
     console.print(f"\n[dim]Scope: {scope}[/dim]")
