@@ -428,8 +428,14 @@ class ScriptSyncManager:
             if script_path.suffix == ".json":
                 continue
 
-            # Skip hidden files and directories
-            if any(part.startswith(".") for part in script_path.parts):
+            # Skip hidden files and directories (but not the commands_dir itself)
+            # Get the relative path from commands_dir to check for hidden parts
+            try:
+                relative_parts = script_path.relative_to(self.commands_dir).parts
+                if any(part.startswith(".") for part in relative_parts):
+                    continue
+            except ValueError:
+                # Not relative to commands_dir, skip
                 continue
 
             # Generate/update JSON

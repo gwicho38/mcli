@@ -42,7 +42,7 @@ class CustomCommandManager:
         """
         self.global_mode = global_mode
         self.commands_dir = get_custom_commands_dir(global_mode=global_mode)
-        self.loaded_commands: Dict[str, Any] = {}
+        self.loaded_commands: dict[str, Any] = {}
         self.lockfile_path = get_lockfile_path(global_mode=global_mode)
 
         # Store context information for display
@@ -55,7 +55,7 @@ class CustomCommandManager:
         code: str,
         description: str = "",
         group: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
         language: str = "python",
         shell: Optional[str] = None,
     ) -> Path:
@@ -102,30 +102,48 @@ class CustomCommandManager:
 
         return command_file
 
-    def load_command(self, command_file: Path) -> Optional[Dict[str, Any]]:
+    def load_command(self, command_file: Path) -> Optional[dict[str, Any]]:
         """
-        Load a command from a JSON file.
+        Load a command from a JSON or notebook file.
 
         Args:
-            command_file: Path to the command JSON file
+            command_file: Path to the command JSON file or .ipynb notebook
 
         Returns:
             Command data dictionary or None if loading failed
         """
         try:
-            with open(command_file, "r") as f:
+            with open(command_file) as f:
                 command_data = json.load(f)
+
+            # If it's a notebook file (.ipynb), convert it to command metadata
+            if command_file.suffix == ".ipynb":
+                # Notebooks are handled specially - create minimal metadata
+                return {
+                    "name": command_file.stem,
+                    "description": f"Jupyter notebook: {command_file.stem}",
+                    "type": "notebook",
+                    "file": str(command_file),
+                    "group": "workflow",
+                    "metadata": {
+                        "notebook_format": True,
+                        "source_file": str(command_file),
+                    },
+                }
+
             return command_data
         except Exception as e:
             logger.error(f"Failed to load command from {command_file}: {e}")
             return None
 
-    def load_all_commands(self) -> List[Dict[str, Any]]:
+    def load_all_commands(self) -> list[dict[str, Any]]:
         """
         Load all custom commands from the commands directory.
 
         Automatically filters out test commands (starting with 'test_' or 'test-')
         unless MCLI_INCLUDE_TEST_COMMANDS=true is set.
+
+        Scans for both .json workflow definitions and .ipynb notebook files.
 
         Returns:
             List of command data dictionaries
@@ -133,6 +151,7 @@ class CustomCommandManager:
         commands = []
         include_test = os.environ.get("MCLI_INCLUDE_TEST_COMMANDS", "false").lower() == "true"
 
+        # Load .json workflow files
         for command_file in self.commands_dir.glob("*.json"):
             # Skip the lockfile
             if command_file.name == "commands.lock.json":
@@ -146,6 +165,19 @@ class CustomCommandManager:
             command_data = self.load_command(command_file)
             if command_data:
                 commands.append(command_data)
+
+        # Load .ipynb notebook files
+        for notebook_file in self.commands_dir.glob("*.ipynb"):
+            # Skip test notebooks unless explicitly included
+            if not include_test and notebook_file.stem.startswith(("test_", "test-")):
+                logger.debug(f"Skipping test notebook: {notebook_file.name}")
+                continue
+
+            # Load notebook as a command
+            command_data = self.load_command(notebook_file)
+            if command_data:
+                commands.append(command_data)
+
         return commands
 
     def delete_command(self, name: str) -> bool:
@@ -166,7 +198,7 @@ class CustomCommandManager:
             return True
         return False
 
-    def generate_lockfile(self) -> Dict[str, Any]:
+    def generate_lockfile(self) -> dict[str, Any]:
         """
         Generate a lockfile containing metadata about all custom commands.
 
@@ -211,7 +243,7 @@ class CustomCommandManager:
             logger.error(f"Failed to update lockfile: {e}")
             return False
 
-    def load_lockfile(self) -> Optional[Dict[str, Any]]:
+    def load_lockfile(self) -> Optional[dict[str, Any]]:
         """
         Load the lockfile.
 
@@ -222,13 +254,13 @@ class CustomCommandManager:
             return None
 
         try:
-            with open(self.lockfile_path, "r") as f:
+            with open(self.lockfile_path) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load lockfile: {e}")
             return None
 
-    def verify_lockfile(self) -> Dict[str, Any]:
+    def verify_lockfile(self) -> dict[str, Any]:
         """
         Verify that the current command state matches the lockfile.
 
@@ -278,7 +310,7 @@ class CustomCommandManager:
         return result
 
     def register_command_with_click(
-        self, command_data: Dict[str, Any], target_group: click.Group
+        self, command_data: dict[str, Any], target_group: click.Group
     ) -> bool:
         """
         Dynamically register a custom command with a Click group.
@@ -347,7 +379,7 @@ class CustomCommandManager:
             return False
 
     def register_shell_command_with_click(
-        self, command_data: Dict[str, Any], target_group: click.Group
+        self, command_data: dict[str, Any], target_group: click.Group
     ) -> bool:
         """
         Dynamically register a shell command with a Click group.
@@ -509,7 +541,7 @@ class CustomCommandManager:
             logger.error(f"Failed to export commands: {e}")
             return False
 
-    def import_commands(self, import_path: Path, overwrite: bool = False) -> Dict[str, bool]:
+    def import_commands(self, import_path: Path, overwrite: bool = False) -> dict[str, bool]:
         """
         Import commands from a JSON file.
 
@@ -522,7 +554,7 @@ class CustomCommandManager:
         """
         results = {}
         try:
-            with open(import_path, "r") as f:
+            with open(import_path) as f:
                 commands = json.load(f)
 
             for command_data in commands:
@@ -620,9 +652,14 @@ def load_custom_commands(target_group: click.Group) -> int:
                 target_group.add_command(group_cmd)
                 logger.info(f"Created command group: {group_name}")
 
-            # Register the command under the group based on language
+            # Register the command under the group based on type/language
             if isinstance(group_cmd, click.Group):
-                if language == "shell":
+                command_type = command_data.get("type", "")
+                if command_type == "notebook":
+                    # Handle notebook commands
+                    notebook_file = Path(command_data["file"])
+                    success = manager.register_notebook_command_with_click(notebook_file, group_cmd)
+                elif language == "shell":
                     success = manager.register_shell_command_with_click(command_data, group_cmd)
                 else:
                     success = manager.register_command_with_click(command_data, group_cmd)
@@ -630,8 +667,13 @@ def load_custom_commands(target_group: click.Group) -> int:
                 if success:
                     loaded_count += 1
         else:
-            # Register at top level based on language
-            if language == "shell":
+            # Register at top level based on type/language
+            command_type = command_data.get("type", "")
+            if command_type == "notebook":
+                # Handle notebook commands
+                notebook_file = Path(command_data["file"])
+                success = manager.register_notebook_command_with_click(notebook_file, target_group)
+            elif language == "shell":
                 success = manager.register_shell_command_with_click(command_data, target_group)
             else:
                 success = manager.register_command_with_click(command_data, target_group)
