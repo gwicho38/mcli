@@ -34,7 +34,7 @@ if trace_level:
 logger.debug("main")
 
 
-def discover_modules(base_path: Path, config_path: Optional[Path] = None) -> List[str]:
+def discover_modules(base_path: Path, config_path: Optional[Path] = None) -> list[str]:
     """
     Discovers Python modules in specified paths.
     Paths must omit trailing backslash.
@@ -320,7 +320,9 @@ class LazyGroup(click.Group):
 
 def _add_lazy_commands(app: click.Group):
     """Add command groups with lazy loading."""
-    # Top-level init command
+    # Order: init, new, edit, delete, self, sync, teardown, workflow, workflows
+
+    # 1. init command
     try:
         from mcli.app.init_cmd import init
 
@@ -329,25 +331,7 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load init command: {e}")
 
-    # Top-level teardown command
-    try:
-        from mcli.app.init_cmd import teardown
-
-        app.add_command(teardown, name="teardown")
-        logger.debug("Added teardown command")
-    except ImportError as e:
-        logger.debug(f"Could not load teardown command: {e}")
-
-    # Top-level lock group
-    try:
-        from mcli.app.lock_cmd import lock
-
-        app.add_command(lock, name="lock")
-        logger.debug("Added lock group")
-    except ImportError as e:
-        logger.debug(f"Could not load lock group: {e}")
-
-    # Top-level workflow creation commands
+    # 2. new command
     try:
         from mcli.app.new_cmd import new
 
@@ -356,6 +340,7 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load new command: {e}")
 
+    # 3. edit command
     try:
         from mcli.app.edit_cmd import edit
 
@@ -364,36 +349,17 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load edit command: {e}")
 
+    # 4. delete command (and remove alias)
     try:
-        from mcli.app.remove_cmd import remove, delete
+        from mcli.app.remove_cmd import delete, remove
 
-        app.add_command(remove, name="remove")
         app.add_command(delete, name="delete")
-        logger.debug("Added remove/delete commands")
+        app.add_command(remove, name="remove")
+        logger.debug("Added delete/remove commands")
     except ImportError as e:
-        logger.debug(f"Could not load remove/delete commands: {e}")
+        logger.debug(f"Could not load delete/remove commands: {e}")
 
-    # Top-level sync command
-    try:
-        from mcli.app.sync_cmd import sync
-
-        app.add_command(sync, name="sync")
-        logger.debug("Added sync command")
-    except ImportError as e:
-        logger.debug(f"Could not load sync command: {e}")
-
-    # Store commands moved to workflow group
-
-    # Workflow management - load immediately for fast access (renamed from 'commands')
-    try:
-        from mcli.app.commands_cmd import workflow
-
-        app.add_command(workflow, name="workflow")
-        logger.debug("Added workflow management group")
-    except ImportError as e:
-        logger.debug(f"Could not load workflow management group: {e}")
-
-    # Self management - load immediately as it's commonly used
+    # 5. self management - load immediately as it's commonly used
     try:
         from mcli.self.self_cmd import self_app
 
@@ -402,10 +368,37 @@ def _add_lazy_commands(app: click.Group):
     except Exception as e:
         logger.debug(f"Could not load self commands: {e}")
 
+    # 6. sync command
+    try:
+        from mcli.app.sync_cmd import sync
+
+        app.add_command(sync, name="sync")
+        logger.debug("Added sync command")
+    except ImportError as e:
+        logger.debug(f"Could not load sync command: {e}")
+
+    # 7. teardown command
+    try:
+        from mcli.app.init_cmd import teardown
+
+        app.add_command(teardown, name="teardown")
+        logger.debug("Added teardown command")
+    except ImportError as e:
+        logger.debug(f"Could not load teardown command: {e}")
+
+    # 8. workflow management group (renamed from 'commands')
+    try:
+        from mcli.app.commands_cmd import workflow
+
+        app.add_command(workflow, name="workflow")
+        logger.debug("Added workflow management group")
+    except ImportError as e:
+        logger.debug(f"Could not load workflow management group: {e}")
+
     # Note: lib group removed - secrets moved to workflows
     # Previous: mcli lib secrets -> Now: mcli workflows secrets
 
-    # Add workflows group directly (not lazy-loaded) to preserve -g/--global option
+    # 9. workflows group - Add workflows group directly (not lazy-loaded) to preserve -g/--global option
     try:
         from mcli.workflow.workflow import workflows as workflows_group
 
@@ -438,6 +431,15 @@ def _add_lazy_commands(app: click.Group):
             app.add_command(workflows_group, name="workflows")
             app.add_command(workflows_group, name="run")  # Add run alias
             logger.debug("Added lazy workflows group with 'run' alias (fallback)")
+
+    # 10. lock group (after workflows)
+    try:
+        from mcli.app.lock_cmd import lock
+
+        app.add_command(lock, name="lock")
+        logger.debug("Added lock group")
+    except ImportError as e:
+        logger.debug(f"Could not load lock group: {e}")
 
     # Lazy load other heavy commands that are used less frequently
     # NOTE: chat and model commands have been removed
@@ -512,12 +514,31 @@ def _add_lazy_commands(app: click.Group):
         logger.debug(f"Could not load custom commands: {e}")
 
 
+class OrderedGroup(click.Group):
+    """Click group that preserves command order instead of alphabetizing."""
+
+    def __init__(self, name=None, commands=None, **attrs):
+        super().__init__(name, commands, **attrs)
+        self.commands_order = []
+
+    def add_command(self, cmd, name=None):
+        """Add command and track order."""
+        super().add_command(cmd, name)
+        cmd_name = name or cmd.name
+        if cmd_name not in self.commands_order:
+            self.commands_order.append(cmd_name)
+
+    def list_commands(self, ctx):
+        """Return commands in the order they were added, not alphabetically."""
+        return self.commands_order
+
+
 def create_app() -> click.Group:
     """Create and configure the Click application with clean top-level commands."""
 
     logger.debug("create_app")
 
-    app = click.Group(name="mcli")
+    app = OrderedGroup(name="mcli")
 
     # Version command moved to self group (mcli self version)
     # Add lazy-loaded command groups
