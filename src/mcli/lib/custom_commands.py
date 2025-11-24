@@ -14,7 +14,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
 
@@ -118,6 +118,13 @@ class CustomCommandManager:
 
             # If it's a notebook file (.ipynb), convert it to command metadata
             if command_file.suffix == ".ipynb":
+                # Get file modification time for timestamps
+                from datetime import datetime
+
+                stat = command_file.stat()
+                updated_at = datetime.fromtimestamp(stat.st_mtime).isoformat() + "Z"
+                created_at = datetime.fromtimestamp(stat.st_ctime).isoformat() + "Z"
+
                 # Notebooks are handled specially - create minimal metadata
                 return {
                     "name": command_file.stem,
@@ -125,6 +132,9 @@ class CustomCommandManager:
                     "type": "notebook",
                     "file": str(command_file),
                     "group": "workflow",
+                    "version": "1.0",
+                    "created_at": created_at,
+                    "updated_at": updated_at,
                     "metadata": {
                         "notebook_format": True,
                         "source_file": str(command_file),
@@ -591,7 +601,8 @@ def get_command_manager(global_mode: bool = False) -> CustomCommandManager:
     Get the custom command manager instance.
 
     Args:
-        global_mode: If True, return global manager. If False, return local manager (if in git repo).
+        global_mode: If True, return global manager. If False, return local
+            manager (if in git repo).
 
     Returns:
         CustomCommandManager instance for the appropriate scope
