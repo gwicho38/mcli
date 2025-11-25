@@ -4411,7 +4411,7 @@ wheels = [
 
 [[package]]
 name = "mcli-framework"
-version = "7.19.3"
+version = "7.19.5"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -4477,6 +4477,7 @@ dependencies = [
     { name = "pymupdf" },
     { name = "pypdf2" },
     { name = "pyportfolioopt" },
+    { name = "pytest-asyncio" },
     { name = "python-dotenv" },
     { name = "python-jose", extra = ["cryptography"] },
     { name = "pytorch-lightning" },
@@ -4683,6 +4684,7 @@ requires-dist = [
     { name = "pyportfolioopt", specifier = ">=1.5.5" },
     { name = "pyportfolioopt", marker = "extra == 'trading-plugin'", specifier = ">=1.5.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
+    { name = "pytest-asyncio", specifier = ">=1.1.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.1.0" },
     { name = "pytest-benchmark", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0,<5.0.0" },

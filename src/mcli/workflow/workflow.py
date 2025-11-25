@@ -5,7 +5,10 @@ All workflow commands are now loaded from portable JSON files in ~/.mcli/workflo
 This provides a clean, maintainable way to manage workflow commands.
 """
 
+from pathlib import Path
+
 import click
+from click.shell_completion import CompletionItem
 
 
 class ScopedWorkflowsGroup(click.Group):
@@ -13,6 +16,97 @@ class ScopedWorkflowsGroup(click.Group):
     Custom Click Group that loads workflows from either local or global scope
     based on the -g/--global flag.
     """
+
+    def shell_complete(self, ctx, param, incomplete):
+        """
+        Provide shell completion for workflow commands and file paths.
+
+        Supports:
+        - Workflow command names (from JSON/notebook files)
+        - File paths (when incomplete starts with ./ or /)
+        - Built-in subcommands
+        """
+        from mcli.lib.logger.logger import get_logger
+
+        logger = get_logger()
+
+        # If incomplete looks like a file path, provide file completions
+        if incomplete.startswith("./") or incomplete.startswith("/") or incomplete.startswith("~"):
+            logger.debug(f"Providing file path completions for: {incomplete}")
+            completions = []
+
+            try:
+                # Expand user home directory
+                incomplete_path = incomplete
+                if incomplete_path.startswith("~"):
+                    incomplete_path = str(Path(incomplete_path).expanduser())
+
+                # Get the directory and partial filename
+                # Special case: if incomplete ends with "/", we're listing directory contents
+                if incomplete_path.endswith("/"):
+                    dir_path = Path(incomplete_path)
+                    partial_name = ""
+                elif "/" in incomplete_path:
+                    # Contains a path separator - split into directory and partial filename
+                    # Split on the last slash to get directory and partial filename
+                    last_slash = incomplete_path.rfind("/")
+                    dir_str = incomplete_path[: last_slash + 1] if last_slash >= 0 else "./"
+                    partial_name = (
+                        incomplete_path[last_slash + 1 :] if last_slash >= 0 else incomplete_path
+                    )
+                    dir_path = Path(dir_str)
+                else:
+                    # No slash - shouldn't happen for file path completion but handle it
+                    dir_path = Path.cwd()
+                    partial_name = incomplete_path
+
+                # Resolve the directory path
+                if not dir_path.is_absolute():
+                    dir_path = Path.cwd() / dir_path
+
+                # If directory doesn't exist yet, try parent
+                if not dir_path.exists():
+                    partial_name = dir_path.name
+                    dir_path = dir_path.parent
+
+                # List files/directories that match
+                if dir_path.exists() and dir_path.is_dir():
+                    for item in sorted(dir_path.iterdir()):
+                        # Skip hidden files unless explicitly requested
+                        if item.name.startswith(".") and not partial_name.startswith("."):
+                            continue
+
+                        # Check if item matches partial name
+                        if not partial_name or item.name.startswith(partial_name):
+                            # Use relative path if original was relative
+                            if incomplete.startswith("./"):
+                                try:
+                                    rel_path = item.relative_to(Path.cwd())
+                                    completion_path = f"./{rel_path}"
+                                except ValueError:
+                                    # If item is not relative to cwd, use absolute path
+                                    completion_path = str(item)
+                            else:
+                                completion_path = str(item)
+
+                            # Add trailing slash for directories
+                            if item.is_dir():
+                                completion_path += "/"
+
+                            completions.append(CompletionItem(completion_path))
+                            logger.debug(f"Added file completion: {completion_path}")
+
+            except Exception as e:
+                logger.debug(f"Error providing file completions: {e}")
+                import traceback
+
+                logger.debug(traceback.format_exc())
+
+            return completions
+
+        # Otherwise, provide workflow command completions
+        commands = self.list_commands(ctx)
+        return [CompletionItem(name) for name in commands if name.startswith(incomplete)]
 
     def list_commands(self, ctx):
         """List available commands based on scope."""
