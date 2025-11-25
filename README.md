@@ -1,19 +1,55 @@
-# MCLI - Portable Workflow Framework
+# MCLI - Universal Script Runner & Workflow Framework
 
 [![codecov](https://codecov.io/gh/gwicho38/mcli/branch/main/graph/badge.svg)](https://codecov.io/gh/gwicho38/mcli)
 [![Tests](https://github.com/gwicho38/mcli/actions/workflows/ci.yml/badge.svg)](https://github.com/gwicho38/mcli/actions)
 [![Python Version](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/gwicho38/mcli/blob/main/LICENSE)
 
-**Transform any script into a versioned, portable, schedulable workflow command.**
+**Run any script, anywhere, with intelligent tab completion. No registration required.**
 
-MCLI is a modular CLI framework that lets you write scripts once and run them anywhere - as interactive commands, scheduled jobs, or background daemons. Your workflows live in `~/.mcli/workflows/`, are versioned via lockfile, and completely decoupled from the engine source code.
+MCLI is a universal script runner and workflow framework. Execute any Python, Shell, or Jupyter notebook file directly with `mcli run ./script.py` - or register scripts as versioned workflows for scheduling, daemonization, and team sharing. Your workflows live in `~/.mcli/workflows/`, are versioned via lockfile, and completely decoupled from the engine source code.
 
 ## 🎯 Core Philosophy
 
-Write a script. Store it. Version it. Run it anywhere. Schedule it. Share it.
+**Run first. Register later.** Execute any script instantly with intelligent tab completion, then optionally register it as a versioned workflow for advanced features like scheduling and sharing.
 
 No coupling to the engine. No vendor lock-in. Just portable workflows that work.
+
+## 🚀 Run Any Script - Zero Configuration
+
+MCLI is now a **universal script runner** with intelligent file path completion:
+
+```bash
+# Run any script directly - no registration needed!
+mcli run ./backup.py --target /data
+mcli run ./deploy.sh production
+mcli run ./.mcli/workflows/analysis.ipynb
+
+# Intelligent tab completion shows all files and directories
+mcli run ./<TAB>
+# Shows: ./scripts/, ./.mcli/, ./backup.py, ./README.md
+
+# Navigate hidden directories like .mcli
+mcli run ./.mcli/<TAB>
+# Shows: ./.mcli/workflows/, ./.mcli/commands/
+
+# Execute notebooks directly
+mcli run ./notebooks/analysis.ipynb cell-1
+```
+
+**Supported file types:**
+- **Python scripts** (`.py`) - Executed with `python`
+- **Shell scripts** (`.sh`, `.bash`, `.zsh`) - Executed directly (auto-made executable)
+- **Jupyter notebooks** (`.ipynb`) - Loaded as command groups with cells as subcommands
+- **Any executable** - Runs if executable permission is set
+
+**Key features:**
+- ✅ **Zero registration** - Run any script immediately
+- ✅ **Tab completion** - Intelligent file path autocomplete with hidden directory support
+- ✅ **Direct execution** - No need to import or register first
+- ✅ **Still portable** - Optionally register scripts as workflows for advanced features
+
+See [File Path Completion Guide](docs/features/FILE_PATH_COMPLETION.md) for complete documentation.
 
 ## 🚀 Visual Workflow Editing
 
