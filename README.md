@@ -444,6 +444,40 @@ You write scripts. They work. Then:
 - ✅ **Flexible Execution**: Run interactively, scheduled, or as daemon
 - ✅ **Discoverable**: Tab completion, search, info commands
 
+## 📚 Using MCLI as a Library
+
+MCLI isn't just a CLI tool - it's a powerful Python library for building workflow automation systems!
+
+```python
+from mcli.lib.custom_commands import get_command_manager
+
+# Create commands programmatically
+manager = get_command_manager()
+manager.save_command(
+    name="backup",
+    code="import click\n@click.command()...",
+    description="Automated backup workflow"
+)
+
+# Discover and execute commands
+from mcli.lib.discovery.command_discovery import ClickCommandDiscovery
+commands = ClickCommandDiscovery().discover_all_commands()
+```
+
+**📖 Complete Documentation:**
+- **[SDK Documentation](docs/SDK.md)** - Comprehensive API reference and usage guide
+- **[Library Usage Example](examples/demo_library_usage.py)** - Complete working example
+- **[Custom Commands Guide](docs/custom-commands.md)** - Workflow management
+
+**Features for Library Users:**
+- ✅ Command creation and discovery APIs
+- ✅ Workflow scheduling and automation
+- ✅ Configuration and logging utilities
+- ✅ Script synchronization system
+- ✅ Performance optimization tools
+- ✅ Database and caching integrations
+- ✅ Internal utilities (file ops, auth, Redis, LSH client, etc.)
+
 ## 📚 Advanced Features
 
 ### Shell Completion
