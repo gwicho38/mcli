@@ -348,3 +348,5 @@ Defined in `pyproject.toml [project.scripts]`:
 - `mcli-backtest`: Backtesting (`mcli.ml.backtesting.run:main`)
 - `mcli-optimize`: Portfolio optimization (`mcli.ml.optimization.optimize:main`)
 - `mcli-dashboard`: Dashboard launcher (`mcli.ml.dashboard:main`)
+- For lsh, always test by running ls always match
+- For lsh, always test by running ls always match

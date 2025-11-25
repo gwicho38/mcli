@@ -1,0 +1,128 @@
+"""Storage-related constants for MCLI storage abstraction layer."""
+
+
+class StorageEnvVars:
+    """Environment variable names for storage configuration."""
+
+    # Backend selection
+    STORAGE_BACKEND = "STORAGE_BACKEND"  # ipfs, supabase, sqlite
+
+    # Encryption
+    ENCRYPTION_KEY = "MCLI_ENCRYPTION_KEY"  # Master encryption key
+
+    # IPFS/Storacha configuration
+    STORACHA_ENABLED = "MCLI_STORACHA_ENABLED"  # Enable network sync (default: true)
+    STORACHA_EMAIL = "STORACHA_EMAIL"  # User email
+    STORACHA_SPACE_DID = "STORACHA_SPACE_DID"  # Space DID
+    STORACHA_API_KEY = "STORACHA_API_KEY"  # API key (if required)
+
+    # Supabase (legacy)
+    SUPABASE_URL = "SUPABASE_URL"
+    SUPABASE_ANON_KEY = "SUPABASE_ANON_KEY"
+    SUPABASE_SERVICE_ROLE_KEY = "SUPABASE_SERVICE_ROLE_KEY"
+
+
+class StoragePaths:
+    """Storage-related path constants."""
+
+    # Cache directories
+    STORAGE_CACHE_DIR = ".mcli/storage-cache"  # Relative to home
+    STORACHA_CONFIG_FILE = ".mcli/storacha-config.json"  # Relative to home
+    STORAGE_METADATA_FILE = ".mcli/storage-metadata.json"  # Relative to home
+
+
+class StorageDefaults:
+    """Default values for storage configuration."""
+
+    # Backend defaults
+    DEFAULT_BACKEND = "ipfs"
+    STORACHA_ENABLED_DEFAULT = "true"
+
+    # IPFS/Storacha
+    STORACHA_API_BASE = "https://api.storacha.network"  # Placeholder
+    STORACHA_GATEWAY_BASE = "https://{cid}.ipfs.storacha.link"
+
+    # Cache settings
+    CACHE_MAX_AGE_DAYS = 30
+    CACHE_CLEANUP_INTERVAL_HOURS = 24
+
+    # Timeouts
+    DOWNLOAD_TIMEOUT_SECONDS = 30
+    UPLOAD_TIMEOUT_SECONDS = 60
+    HEALTH_CHECK_TIMEOUT_SECONDS = 5
+
+
+class StorageMessages:
+    """User-facing messages for storage operations."""
+
+    # Success messages
+    CONNECTED_STORACHA = "✅ Connected to Storacha"
+    CONNECTED_SUPABASE = "✅ Connected to Supabase"
+    UPLOADED_TO_STORACHA = "📤 Uploaded to Storacha: {cid}"
+    DOWNLOADED_FROM_STORACHA = "📥 Downloaded from Storacha: {cid}"
+    CACHED_LOCALLY = "📦 Cached locally: {cid}"
+    STORACHA_ENABLED = "✅ Storacha network sync enabled"
+    STORACHA_DISABLED = "⏸️  Storacha network sync disabled (using local cache only)"
+
+    # Info messages
+    CACHE_HIT = "Cache hit: {cid} ({size} bytes)"
+    CACHE_MISS = "Cache miss: {cid}"
+    USING_CACHE_ONLY = "Storacha disabled, using local cache only"
+    NOT_AUTHENTICATED = "Not authenticated, using local cache only"
+    GATEWAY_URL = "   Gateway: {url}"
+    REGISTRY_UPLOADED = "   📝 Registry uploaded for {repo}/{env}"
+
+    # Warning messages
+    STORACHA_UPLOAD_FAILED = "⚠️  Storacha upload failed: {error}"
+    DATA_CACHED_LOCALLY = "   Data is cached locally"
+    NOT_AUTHENTICATED_WARNING = (
+        "Not authenticated with Storacha. Run: mcli storage login <email>"
+    )
+    NO_ENCRYPTION_KEY = (
+        "No MCLI_ENCRYPTION_KEY found, generating random key.\n"
+        "💡 Set MCLI_ENCRYPTION_KEY to use the same key across sessions."
+    )
+    INVALID_BACKEND = "Invalid STORAGE_BACKEND: {backend}, defaulting to IPFS"
+
+    # Error messages
+    STORACHA_LOGIN_NOT_IMPLEMENTED = (
+        "Storacha login not yet implemented.\n\n"
+        "📝 TODO: Implement Storacha HTTP API client\n"
+        "   See: https://docs.storacha.network/how-to/http-bridge/\n\n"
+        "💡 Alternative: Use lsh-framework for now:\n"
+        "   1. cd ~/repos/lsh\n"
+        "   2. lsh storacha login {email}\n"
+        "   3. Copy credentials to MCLI config"
+    )
+    STORACHA_UPLOAD_NOT_IMPLEMENTED = (
+        "Storacha upload not yet implemented.\n\n"
+        "📝 TODO: Implement Storacha HTTP API upload\n"
+        "   See: https://docs.storacha.network/how-to/http-bridge/"
+    )
+    BACKEND_NOT_IMPLEMENTED = "{backend} backend not yet implemented"
+    ENCRYPTION_FAILED = "Encryption failed: {error}"
+    DECRYPTION_FAILED = "Decryption failed: {error}"
+    INVALID_ENCRYPTED_FORMAT = "Invalid encrypted data format: expected 'IV:data'"
+    CACHE_STORE_FAILED = "Failed to store in cache: {error}"
+    CACHE_RETRIEVE_FAILED = "Failed to retrieve from cache: {error}"
+    GATEWAY_DOWNLOAD_FAILED = "Gateway download failed for {cid}: {error}"
+    DATA_NOT_FOUND = "Data not in cache and Storacha unavailable: {cid}"
+
+
+class StorageContentTypes:
+    """Content types for stored data."""
+
+    # Data types
+    TRADING_DISCLOSURE = "trading_disclosure"
+    POLITICIAN_INFO = "politician_info"
+    ML_PREDICTION = "ml_prediction"
+    ML_MODEL = "ml_model"
+    PORTFOLIO_DATA = "portfolio_data"
+    DATA_PULL_JOB = "data_pull_job"
+
+    # Registry
+    REGISTRY = "registry"
+
+    # Generic
+    ENCRYPTED_BINARY = "encrypted_binary"
+    JSON_DATA = "json_data"
