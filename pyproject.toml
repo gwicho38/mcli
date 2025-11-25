@@ -118,6 +118,8 @@ dependencies = [
   "jupyter>=1.0.0",
   "jupyterlab>=4.0.0",
   "ipykernel>=6.27.0",
+  # Testing framework (core dependencies for async tests)
+  "pytest-asyncio>=1.1.0",
   # Production monitoring
   "prometheus-client>=0.19.0",
   "structlog>=23.2.0",
@@ -447,6 +449,7 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
