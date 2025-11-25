@@ -71,10 +71,16 @@ class ScopedWorkflowsGroup(click.Group):
 
                 # List files/directories that match
                 if dir_path.exists() and dir_path.is_dir():
+                    # Show hidden items if user explicitly started typing a dot in the partial name
+                    show_hidden = partial_name.startswith(".")
+
                     for item in sorted(dir_path.iterdir()):
-                        # Skip hidden files unless explicitly requested
-                        if item.name.startswith(".") and not partial_name.startswith("."):
-                            continue
+                        # For workflow navigation, show hidden directories (like .mcli)
+                        # but hide hidden files unless explicitly requested
+                        if item.name.startswith("."):
+                            if not show_hidden and not item.is_dir():
+                                # Hide hidden files, but always show hidden directories
+                                continue
 
                         # Check if item matches partial name
                         if not partial_name or item.name.startswith(partial_name):
