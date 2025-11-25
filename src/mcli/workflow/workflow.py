@@ -17,7 +17,7 @@ class ScopedWorkflowsGroup(click.Group):
     based on the -g/--global flag.
     """
 
-    def shell_complete(self, ctx, param, incomplete):
+    def shell_complete(self, ctx, incomplete):
         """
         Provide shell completion for workflow commands and file paths.
 

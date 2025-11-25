@@ -33,7 +33,7 @@ class TestFilePathCompletion:
         try:
             os.chdir(tmp_path)
 
-            completions = group.shell_complete(ctx, None, "./")
+            completions = group.shell_complete(ctx, "./")
             completion_values = [c.value for c in completions]
 
             # Should include all files and directories
@@ -65,7 +65,7 @@ class TestFilePathCompletion:
             os.chdir(tmp_path)
 
             # Test completion for ./test_
-            completions = group.shell_complete(ctx, None, "./test_")
+            completions = group.shell_complete(ctx, "./test_")
             completion_values = [c.value for c in completions]
 
             # Should only match test_* files
@@ -91,7 +91,7 @@ class TestFilePathCompletion:
         ctx = MockContext()
 
         # Test completion with absolute path
-        completions = group.shell_complete(ctx, None, str(tmp_path) + "/")
+        completions = group.shell_complete(ctx, str(tmp_path) + "/")
         completion_values = [c.value for c in completions]
 
         # Should find the test file
@@ -117,7 +117,7 @@ class TestFilePathCompletion:
             os.chdir(tmp_path)
 
             # Test completion without .
-            completions = group.shell_complete(ctx, None, "./")
+            completions = group.shell_complete(ctx, "./")
             completion_values = [c.value for c in completions]
 
             # Should only show visible file
@@ -125,7 +125,7 @@ class TestFilePathCompletion:
             assert not any(".hidden.py" in c for c in completion_values)
 
             # Test completion with . prefix (using .hid to be more specific)
-            completions = group.shell_complete(ctx, None, "./.hid")
+            completions = group.shell_complete(ctx, "./.hid")
             completion_values = [c.value for c in completions]
 
             # Should now show hidden file
@@ -144,7 +144,7 @@ class TestFilePathCompletion:
         ctx = MockContext()
 
         # Test completion for regular workflow names (not file paths)
-        completions = group.shell_complete(ctx, None, "sec")
+        completions = group.shell_complete(ctx, "sec")
 
         # Should return workflow commands, not file paths
         # (actual commands depend on what's installed, but should get some results)
@@ -169,7 +169,7 @@ class TestFilePathCompletion:
         try:
             os.chdir(tmp_path)
 
-            completions = group.shell_complete(ctx, None, "./")
+            completions = group.shell_complete(ctx, "./")
             completion_values = [c.value for c in completions]
 
             # Directory should have trailing slash
