@@ -35,6 +35,8 @@ from .env import EnvVars
 from .messages import ErrorMessages, InfoMessages, PromptMessages, SuccessMessages, WarningMessages
 from .paths import DirNames, FileNames, GitIgnorePatterns, PathPatterns
 from .storage import (
+    StorachaBridgeCapabilities,
+    StorachaHTTPHeaders,
     StorageContentTypes,
     StorageDefaults,
     StorageEnvVars,
@@ -82,4 +84,6 @@ __all__ = [
     "StorageDefaults",
     "StorageMessages",
     "StorageContentTypes",
+    "StorachaBridgeCapabilities",
+    "StorachaHTTPHeaders",
 ]

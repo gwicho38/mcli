@@ -127,7 +127,10 @@ class TestWorkflowCreationCommandsIntegration:
         assert "sync" in result.output
 
         # Verify descriptions are shown
-        assert "Create a new workflow command" in result.output or "workflow command" in result.output.lower()
+        assert (
+            "Create a new workflow command" in result.output
+            or "workflow command" in result.output.lower()
+        )
         assert "Edit a command" in result.output or "edit" in result.output.lower()
         assert "Remove a custom command" in result.output or "remove" in result.output.lower()
         assert "Sync workflows" in result.output or "sync" in result.output.lower()

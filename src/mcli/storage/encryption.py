@@ -5,7 +5,6 @@ Provides AES-256-CBC encryption/decryption matching lsh-framework implementation
 """
 
 import hashlib
-from typing import Tuple
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding

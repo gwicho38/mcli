@@ -462,6 +462,19 @@ except ImportError as e:
     logger = get_logger()
     logger.debug(f"Sync commands not available: {e}")
 
+# Add storage subcommand
+try:
+    from mcli.workflow.storage.storage_cmd import storage
+
+    workflows.add_command(storage)
+except ImportError as e:
+    # Storage commands not available
+
+    from mcli.lib.logger.logger import get_logger
+
+    logger = get_logger()
+    logger.debug(f"Storage commands not available: {e}")
+
 
 # For backward compatibility, keep workflow as an alias
 workflow = workflows

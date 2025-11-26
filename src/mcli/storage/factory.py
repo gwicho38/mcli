@@ -57,9 +57,7 @@ def get_storage_backend(
         try:
             backend_type = StorageBackendType(backend_str)
         except ValueError:
-            logger.warning(
-                f"Invalid STORAGE_BACKEND: {backend_str}, defaulting to IPFS"
-            )
+            logger.warning(f"Invalid STORAGE_BACKEND: {backend_str}, defaulting to IPFS")
             backend_type = StorageBackendType.IPFS
 
     # Get encryption key
@@ -92,8 +90,7 @@ def get_storage_backend(
     elif backend_type == StorageBackendType.SQLITE:
         # TODO: Implement SQLite backend (local fallback)
         raise NotImplementedError(
-            "SQLite backend not yet implemented.\n"
-            "📝 TODO: Create local SQLite storage backend"
+            "SQLite backend not yet implemented.\n" "📝 TODO: Create local SQLite storage backend"
         )
 
     else:

@@ -41,6 +41,7 @@ class StorageDefaults:
     # IPFS/Storacha
     STORACHA_API_BASE = "https://api.storacha.network"  # Placeholder
     STORACHA_GATEWAY_BASE = "https://{cid}.ipfs.storacha.link"
+    STORACHA_HTTP_BRIDGE_URL = "https://up.storacha.network/bridge"
 
     # Cache settings
     CACHE_MAX_AGE_DAYS = 30
@@ -50,6 +51,40 @@ class StorageDefaults:
     DOWNLOAD_TIMEOUT_SECONDS = 30
     UPLOAD_TIMEOUT_SECONDS = 60
     HEALTH_CHECK_TIMEOUT_SECONDS = 5
+
+
+class StorachaBridgeCapabilities:
+    """Storacha HTTP Bridge capabilities for UCAN delegation."""
+
+    STORE_ADD = "store/add"
+    STORE_LIST = "store/list"
+    STORE_REMOVE = "store/remove"
+    UPLOAD_ADD = "upload/add"
+    UPLOAD_LIST = "upload/list"
+    UPLOAD_REMOVE = "upload/remove"
+    SPACE_BLOB_ADD = "space/blob/add"
+    SPACE_INDEX_ADD = "space/index/add"
+    FILECOIN_OFFER = "filecoin/offer"
+
+    # Common capability sets
+    UPLOAD_CAPABILITIES = [
+        SPACE_BLOB_ADD,
+        SPACE_INDEX_ADD,
+        FILECOIN_OFFER,
+        UPLOAD_ADD,
+    ]
+    READ_CAPABILITIES = [UPLOAD_LIST, STORE_LIST]
+    ALL_CAPABILITIES = UPLOAD_CAPABILITIES + READ_CAPABILITIES + [UPLOAD_REMOVE, STORE_REMOVE]
+
+
+class StorachaHTTPHeaders:
+    """HTTP headers for Storacha bridge API."""
+
+    X_AUTH_SECRET = "X-Auth-Secret"
+    AUTHORIZATION = "Authorization"
+    CONTENT_TYPE = "Content-Type"
+    CONTENT_TYPE_DAG_JSON = "application/vnd.ipld.dag-json"
+    CONTENT_TYPE_DAG_CBOR = "application/vnd.ipld.dag-cbor"
 
 
 class StorageMessages:
@@ -75,24 +110,34 @@ class StorageMessages:
     # Warning messages
     STORACHA_UPLOAD_FAILED = "⚠️  Storacha upload failed: {error}"
     DATA_CACHED_LOCALLY = "   Data is cached locally"
-    NOT_AUTHENTICATED_WARNING = (
-        "Not authenticated with Storacha. Run: mcli storage login <email>"
-    )
+    NOT_AUTHENTICATED_WARNING = "Not authenticated with Storacha. Run: mcli storage login <email>"
     NO_ENCRYPTION_KEY = (
         "No MCLI_ENCRYPTION_KEY found, generating random key.\n"
         "💡 Set MCLI_ENCRYPTION_KEY to use the same key across sessions."
     )
     INVALID_BACKEND = "Invalid STORAGE_BACKEND: {backend}, defaulting to IPFS"
 
+    # Storacha CLI integration
+    STORACHA_CLI_NOT_FOUND = "Storacha CLI not found. Install with: npm install -g @storacha/cli"
+    STORACHA_SENDING_VERIFICATION = "📧 Sending verification email to {email}..."
+    STORACHA_CHECK_EMAIL = "   Check your inbox and click the verification link."
+    STORACHA_LOGIN_SUCCESS = "✅ Successfully logged in to Storacha"
+    STORACHA_LOGIN_FAILED = "❌ Login failed: {error}"
+    STORACHA_SPACE_CREATED = "✅ Created space: {space_did}"
+    STORACHA_SPACE_SELECTED = "✅ Selected space: {space_did}"
+    STORACHA_NO_SPACES = "No spaces found. Create one with: mcli storage space create"
+    STORACHA_TOKENS_GENERATED = "✅ Bridge tokens generated and saved"
+    STORACHA_TOKENS_EXPIRED = "⚠️  Bridge tokens expired, regenerating..."
+    STORACHA_AGENT_DID = "Agent DID: {did}"
+    STORACHA_SPACE_DID = "Space DID: {did}"
+
     # Error messages
     STORACHA_LOGIN_NOT_IMPLEMENTED = (
-        "Storacha login not yet implemented.\n\n"
-        "📝 TODO: Implement Storacha HTTP API client\n"
-        "   See: https://docs.storacha.network/how-to/http-bridge/\n\n"
-        "💡 Alternative: Use lsh-framework for now:\n"
-        "   1. cd ~/repos/lsh\n"
-        "   2. lsh storacha login {email}\n"
-        "   3. Copy credentials to MCLI config"
+        "Storacha login requires the storacha CLI.\n\n"
+        "📦 Install: npm install -g @storacha/cli\n"
+        "🔐 Login:   storacha login {email}\n"
+        "📁 Create:  storacha space create\n"
+        "🔗 Generate tokens: mcli storage setup"
     )
     STORACHA_UPLOAD_NOT_IMPLEMENTED = (
         "Storacha upload not yet implemented.\n\n"

@@ -45,7 +45,7 @@ class LocalCache:
         self.metadata_file = cache_dir / "metadata.json"
         self.metadata = self._load_metadata()
 
-    def _load_metadata(self) -> Dict[str, Dict[str, Any]]:
+    def _load_metadata(self) -> dict[str, dict[str, Any]]:
         """Load metadata index from disk."""
         if not self.metadata_file.exists():
             return {}
@@ -88,9 +88,7 @@ class LocalCache:
         cid = f"bafkrei{hash_hex[:52]}"
         return cid
 
-    async def store(
-        self, cid: str, data: bytes, metadata: Optional[Dict[str, Any]] = None
-    ) -> bool:
+    async def store(self, cid: str, data: bytes, metadata: Optional[dict[str, Any]] = None) -> bool:
         """
         Store data in local cache.
 
@@ -184,7 +182,7 @@ class LocalCache:
             logger.error(f"Failed to delete from cache: {e}")
             return False
 
-    async def get_metadata(self, cid: str) -> Optional[Dict[str, Any]]:
+    async def get_metadata(self, cid: str) -> Optional[dict[str, Any]]:
         """
         Get metadata for CID.
 
@@ -196,7 +194,7 @@ class LocalCache:
         """
         return self.metadata.get(cid)
 
-    async def update_metadata(self, cid: str, metadata: Dict[str, Any]) -> bool:
+    async def update_metadata(self, cid: str, metadata: dict[str, Any]) -> bool:
         """
         Update metadata for CID.
 
@@ -221,8 +219,8 @@ class LocalCache:
             return False
 
     async def query_metadata(
-        self, filters: Dict[str, Any], limit: int = 100, offset: int = 0
-    ) -> List[Dict[str, Any]]:
+        self, filters: dict[str, Any], limit: int = 100, offset: int = 0
+    ) -> list[dict[str, Any]]:
         """
         Query cached items by metadata filters.
 
@@ -243,7 +241,7 @@ class LocalCache:
         """
         results = []
 
-        for cid, metadata in self.metadata.items():
+        for _cid, metadata in self.metadata.items():
             # Check if metadata matches all filters
             match = True
             for key, value in filters.items():
@@ -257,7 +255,7 @@ class LocalCache:
         # Apply offset and limit
         return results[offset : offset + limit]
 
-    async def list_all(self, prefix: Optional[str] = None) -> List[str]:
+    async def list_all(self, prefix: Optional[str] = None) -> list[str]:
         """
         List all cached CIDs, optionally filtered by prefix.
 
@@ -308,7 +306,7 @@ class LocalCache:
 
         return deleted
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         Get cache statistics.
 

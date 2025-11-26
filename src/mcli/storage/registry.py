@@ -37,7 +37,11 @@ class RegistryManager:
         self.backend = backend
 
     async def upload_registry(
-        self, repo_name: str, environment: str, data_cid: str, metadata: Optional[Dict[str, Any]] = None
+        self,
+        repo_name: str,
+        environment: str,
+        data_cid: str,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> str:
         """
         Upload registry file for a repo/environment.
@@ -148,16 +152,12 @@ class RegistryManager:
 
             # Sort by timestamp (newest first)
             if registries:
-                registries.sort(
-                    key=lambda r: datetime.fromisoformat(r["timestamp"]), reverse=True
-                )
+                registries.sort(key=lambda r: datetime.fromisoformat(r["timestamp"]), reverse=True)
 
                 latest = registries[0]
                 data_cid = latest["data_cid"]
 
-                logger.debug(
-                    f"✅ Found latest CID for {repo_name}/{environment}: {data_cid}"
-                )
+                logger.debug(f"✅ Found latest CID for {repo_name}/{environment}: {data_cid}")
                 logger.debug(f"   Timestamp: {latest['timestamp']}")
 
                 return data_cid
@@ -184,7 +184,7 @@ class RegistryManager:
         latest_cid = await self.get_latest_cid(repo_name, environment)
         return latest_cid is not None
 
-    async def list_registries(self) -> Dict[str, Dict[str, str]]:
+    async def list_registries(self) -> dict[str, dict[str, str]]:
         """
         List all registries found in recent uploads.
 
@@ -201,7 +201,7 @@ class RegistryManager:
         try:
             recent_cids = await self.backend.list_recent_uploads(limit=50)
 
-            registries: Dict[str, Dict[str, Any]] = {}
+            registries: dict[str, dict[str, Any]] = {}
 
             for cid in recent_cids:
                 try:
@@ -212,7 +212,11 @@ class RegistryManager:
 
                     registry = json.loads(data.decode())
 
-                    if "repo_name" in registry and "environment" in registry and "data_cid" in registry:
+                    if (
+                        "repo_name" in registry
+                        and "environment" in registry
+                        and "data_cid" in registry
+                    ):
                         key = f"{registry['repo_name']}/{registry['environment']}"
                         timestamp = datetime.fromisoformat(registry["timestamp"])
 
