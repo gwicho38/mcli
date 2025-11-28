@@ -13,6 +13,7 @@ Welcome to the MCLI Framework documentation! This index helps you find the docum
 - [Setup & Installation](#setup--installation)
 - [User Guides](#user-guides)
 - [Development](#development)
+- [Architecture](#architecture)
 - [Features](#features)
 - [Configuration](#configuration)
 - [Deployment](#deployment)
@@ -93,6 +94,17 @@ Welcome to the MCLI Framework documentation! This index helps you find the docum
 |----------|-------------|
 | [CI Fix Recommendations](development/CI_FIX_RECOMMENDATIONS.md) | Fixing CI/CD issues |
 | [Checkpoint: Politician Names Fix](development/CHECKPOINT_politician_names_fix.md) | Example bug fix checkpoint |
+
+---
+
+## 🏗️ Architecture
+
+| Document | Description |
+|----------|-------------|
+| [Architecture Overview](architecture/ARCHITECTURE.md) | High-level system architecture and component overview |
+| [Storage Abstraction](architecture/STORAGE_ABSTRACTION.md) | IPFS/Storacha storage layer design |
+| [FastAPI Migration](architecture/FASTAPI_MIGRATION.md) | API migration planning |
+| [Script Sync System](SCRIPT_SYNC_SYSTEM.md) | Script-to-JSON synchronization design |
 
 ---
 
