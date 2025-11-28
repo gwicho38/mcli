@@ -87,10 +87,140 @@ class PromptMessages:
     CONTINUE = "Continue?"
 
 
+class ChatMessages:
+    """Chat module message constants."""
+
+    # System prompts
+    DEFAULT_SYSTEM_PROMPT = (
+        "You are the MCLI Chat Assistant, a helpful AI assistant for the MCLI tool."
+    )
+    FULL_SYSTEM_PROMPT = (
+        "You are the MCLI Personal Assistant, an intelligent agent that helps "
+        "manage your computer and tasks.\n\n"
+        "I am a true personal assistant with these capabilities:\n"
+        "- System monitoring and control (memory, disk, applications, cleanup)\n"
+        "- Job scheduling and automation (cron jobs, reminders, recurring tasks)\n"
+        "- Process management and command execution\n"
+        "- File organization and system maintenance\n"
+        "- Contextual awareness of ongoing tasks and system state\n\n"
+        "I maintain awareness of:\n"
+        "- Currently scheduled jobs and their status\n"
+        "- System health and resource usage\n"
+        "- Recent activities and completed tasks\n"
+        "- User preferences and routine patterns\n\n"
+        "I can proactively suggest optimizations, schedule maintenance, and "
+        "automate repetitive tasks.\n"
+        "I'm designed to be your digital assistant that keeps things running smoothly."
+    )
+
+    # Success messages
+    MODEL_SERVER_RUNNING = "[green]✅ Lightweight model server already running[/green]"
+    MODEL_LOADED = "[green]✅ Model {model} already loaded[/green]"
+    MODEL_SERVER_STARTED = "[green]✅ Lightweight model server started with {model}[/green]"
+    COMMAND_EXECUTED = "[green]✅ Command executed successfully[/green]"
+    EXECUTING_COMMAND = "[green]Executing command:[/green] {command}"
+    COMMAND_OUTPUT = "[green]Command Output:[/green]\n{output}"
+
+    # Warning messages
+    MODEL_NOT_LOADED = "[yellow]Model {model} not loaded, will auto-load on first use[/yellow]"
+    STARTING_MODEL_SERVER = "[yellow]Starting lightweight model server...[/yellow]"
+    SERVER_HEALTH_FAILED = "[yellow]⚠️ Server started but health check failed[/yellow]"
+    COULD_NOT_DOWNLOAD_MODEL = "[yellow]⚠️ Could not download/load model {model}[/yellow]"
+    COULD_NOT_START_SERVER = "[yellow]⚠️ Could not start lightweight model server: {error}[/yellow]"
+    FALLING_BACK_REMOTE = "Falling back to remote models..."
+    COMMAND_NO_CALLBACK = "[yellow]Command found but has no callback[/yellow]"
+    TRY_COMMANDS_LIST = "[yellow]Try 'commands' to see available commands[/yellow]"
+
+    # Error messages
+    SERVER_THREAD_ERROR = "[red]Server thread error: {error}[/red]"
+    CHAT_ERROR = "Chat error: {error}"
+    ERROR_DISPLAY = "[red]Error:[/red] {error}"
+    COMMAND_NOT_FOUND = "[red]Command '{name}' not found[/red]"
+    FAILED_EXECUTE_COMMAND = "[red]Failed to execute command:[/red] {error}"
+    ERROR_FINDING_COMMAND = "[red]Error finding command:[/red] {error}"
+    ERROR_EXECUTING_COMMAND = "[red]Error executing command:[/red] {error}"
+    NO_COMMAND_PROVIDED = "[red]No command provided after 'run'.[/red]"
+    USAGE_LOGS = "[red]Usage: logs <process_id>[/red]"
+    USAGE_INSPECT = "[red]Usage: inspect <process_id>[/red]"
+    USAGE_STOP = "[red]Usage: stop <process_id>[/red]"
+    USAGE_START = "[red]Usage: start <process_id>[/red]"
+
+    # Info messages
+    PERSONAL_ASSISTANT_HEADER = (
+        "[bold green]MCLI Personal Assistant[/bold green] (type 'exit' to quit)"
+    )
+    USING_LIGHTWEIGHT_LOCAL = "[dim]Using lightweight local model: {model} (offline mode)[/dim]"
+    USING_LOCAL_OLLAMA = "[dim]Using local model: {model} via Ollama[/dim]"
+    USING_OPENAI = "[dim]Using OpenAI model: {model}[/dim]"
+    USING_ANTHROPIC = "[dim]Using Anthropic model: {model}[/dim]"
+    HOW_CAN_HELP = "How can I help you with your tasks today?"
+    AVAILABLE_COMMANDS_HEADER = "\n[bold cyan]Available Commands:[/bold cyan]"
+    EXIT_HINT = "\nUse 'exit' to quit the chat session"
+    DAEMON_UNAVAILABLE = "Daemon unavailable, running in LLM-only mode. Details: {error}"
+    COULD_NOT_FETCH_COMMANDS = (
+        "Could not fetch commands from daemon: {error}. Falling back to LLM-only mode."
+    )
+
+    # Command help text
+    HELP_COMMANDS = "• [yellow]commands[/yellow] - List available functions"
+    HELP_RUN = "• [yellow]run <command> [args][/yellow] - Execute command in container"
+    HELP_PS = "• [yellow]ps[/yellow] - List running processes (Docker-style)"
+    HELP_LOGS = "• [yellow]logs <id>[/yellow] - View process logs"
+    HELP_INSPECT = "• [yellow]inspect <id>[/yellow] - Detailed process info"
+    HELP_START_STOP = "• [yellow]start/stop <id>[/yellow] - Control process lifecycle"
+    HELP_SYSTEM_CONTROL = (
+        "• [yellow]System Control[/yellow] - "
+        "Control applications (e.g., 'open TextEdit', 'take screenshot')"
+    )
+    HELP_JOB_SCHEDULING = (
+        "• [yellow]Job Scheduling[/yellow] - "
+        "Schedule tasks (e.g., 'schedule cleanup daily', 'what's my status?')"
+    )
+    HELP_ASK_QUESTIONS = "• Ask questions about functions and codebase\n"
+
+    # Execution keywords (for pattern matching)
+    KEYWORD_CALL_THE = "call the"
+    KEYWORD_EXECUTE_THE = "execute the"
+    KEYWORD_RUN_THE = "run the"
+    KEYWORD_EXECUTE_COMMAND = "execute command"
+    KEYWORD_HELLO_WORLD = "hello world"
+    KEYWORD_HELLO_WORLD_DASH = "hello-world"
+
+    # Pattern matching strings
+    PATTERN_COMMAND = " command"
+    PATTERN_THE = "the "
+    PATTERN_RUN = "run "
+    PATTERN_SELF_PREFIX = "self."
+    PATTERN_DOCKER_PS = "docker ps"
+    PATTERN_LOGS = "logs "
+    PATTERN_INSPECT = "inspect "
+    PATTERN_STOP = "stop "
+    PATTERN_START = "start "
+
+    # Query patterns
+    QUERY_LIST_COMMAND = "list command"
+    QUERY_SHOW_COMMAND = "show command"
+    QUERY_AVAILABLE_COMMAND = "available command"
+    QUERY_WHAT_CAN_I_DO = "what can i do"
+
+    # Command list display
+    ERROR_DISCOVERING_COMMANDS = "[red]Error discovering commands: {error}[/red]"
+    ERROR_SEARCHING_COMMANDS = "[red]Error searching commands: {error}[/red]"
+    NO_COMMANDS_FOUND = "No commands found"
+    NO_COMMANDS_MATCHING = "No commands found matching '[yellow]{query}[/yellow]'"
+    AVAILABLE_COMMANDS_COUNT = "[bold]Available Commands ({count}):[/bold]"
+    COMMAND_BULLET = "• [green]{name}[/green]"
+    COMMAND_INACTIVE = "[INACTIVE] "
+    COMMAND_MODULE = "  Module: {module}"
+    COMMAND_TAGS = "  Tags: {tags}"
+    AND_MORE = "[dim]... and {count} more[/dim]"
+
+
 __all__ = [
     "ErrorMessages",
     "SuccessMessages",
     "WarningMessages",
     "InfoMessages",
     "PromptMessages",
+    "ChatMessages",
 ]

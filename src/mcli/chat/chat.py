@@ -15,6 +15,7 @@ except ImportError:
 
 from mcli.chat.system_integration import handle_system_request
 from mcli.lib.api.daemon_client import get_daemon_client
+from mcli.lib.constants import ChatMessages
 from mcli.lib.discovery.command_discovery import get_command_discovery
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
@@ -35,7 +36,7 @@ if not config:
         "provider": "local",
         "model": "prajjwal1/bert-tiny",
         "temperature": 0.7,
-        "system_prompt": "You are the MCLI Chat Assistant, a helpful AI assistant for the MCLI tool.",
+        "system_prompt": ChatMessages.DEFAULT_SYSTEM_PROMPT,
         "ollama_base_url": "http://localhost:8080",  # Use lightweight model server
     }
 elif not config.get("openai_api_key") and config.get("provider", "openai") == "openai":
@@ -58,23 +59,7 @@ OLLAMA_BASE_URL = config.get(
 TEMPERATURE = float(config.get("temperature", 0.7))
 SYSTEM_PROMPT = config.get(
     "system_prompt",
-    """You are the MCLI Personal Assistant, an intelligent agent that helps manage your computer and tasks.
-
-I am a true personal assistant with these capabilities:
-- System monitoring and control (memory, disk, applications, cleanup)
-- Job scheduling and automation (cron jobs, reminders, recurring tasks)
-- Process management and command execution
-- File organization and system maintenance
-- Contextual awareness of ongoing tasks and system state
-
-I maintain awareness of:
-- Currently scheduled jobs and their status
-- System health and resource usage
-- Recent activities and completed tasks
-- User preferences and routine patterns
-
-I can proactively suggest optimizations, schedule maintenance, and automate repetitive tasks.
-I'm designed to be your digital assistant that keeps things running smoothly.""",
+    ChatMessages.FULL_SYSTEM_PROMPT,
 )
 
 
@@ -124,7 +109,7 @@ class ChatClient:
             # Check if server is already running
             response = requests.get(f"{OLLAMA_BASE_URL}/health", timeout=2)
             if response.status_code == 200:
-                console.print("[green]✅ Lightweight model server already running[/green]")
+                console.print(ChatMessages.MODEL_SERVER_RUNNING)
                 # Server is running, but check if our model is loaded
                 try:
                     models_response = requests.get(f"{OLLAMA_BASE_URL}/api/tags", timeout=2)
@@ -132,12 +117,10 @@ class ChatClient:
                         models_data = models_response.json()
                         loaded_models = [m.get("name", "") for m in models_data.get("models", [])]
                         if MODEL_NAME in loaded_models:
-                            console.print(f"[green]✅ Model {MODEL_NAME} already loaded[/green]")
+                            console.print(ChatMessages.MODEL_LOADED.format(model=MODEL_NAME))
                             return  # Server is running and model is loaded
                         else:
-                            console.print(
-                                f"[yellow]Model {MODEL_NAME} not loaded, will auto-load on first use[/yellow]"
-                            )
+                            console.print(ChatMessages.MODEL_NOT_LOADED.format(model=MODEL_NAME))
                             return  # Server will auto-load model when needed
                 except Exception:
                     # If we can't check models, assume server will handle it
@@ -146,7 +129,7 @@ class ChatClient:
             pass
 
         # Try to start the server automatically
-        console.print("[yellow]Starting lightweight model server...[/yellow]")
+        console.print(ChatMessages.STARTING_MODEL_SERVER)
 
         try:
             import threading
@@ -166,7 +149,7 @@ class ChatClient:
                     try:
                         server.start_server()
                     except Exception as e:
-                        console.print(f"[red]Server thread error: {e}[/red]")
+                        console.print(ChatMessages.SERVER_THREAD_ERROR.format(error=e))
 
                 server_thread = threading.Thread(target=start_server_thread, daemon=True)
                 server_thread.start()
@@ -179,57 +162,53 @@ class ChatClient:
                         response = requests.get(f"{OLLAMA_BASE_URL}/health", timeout=1)
                         if response.status_code == 200:
                             console.print(
-                                f"[green]✅ Lightweight model server started with {model_name}[/green]"
+                                ChatMessages.MODEL_SERVER_STARTED.format(model=model_name)
                             )
                             return
                     except Exception:
                         pass
 
-                console.print("[yellow]⚠️ Server started but health check failed[/yellow]")
-                console.print("Falling back to remote models...")
+                console.print(ChatMessages.SERVER_HEALTH_FAILED)
+                console.print(ChatMessages.FALLING_BACK_REMOTE)
                 self.use_remote = True
             else:
-                console.print(f"[yellow]⚠️ Could not download/load model {model_name}[/yellow]")
-                console.print("Falling back to remote models...")
+                console.print(ChatMessages.COULD_NOT_DOWNLOAD_MODEL.format(model=model_name))
+                console.print(ChatMessages.FALLING_BACK_REMOTE)
                 self.use_remote = True
 
         except Exception as e:
-            console.print(f"[yellow]⚠️ Could not start lightweight model server: {e}[/yellow]")
-            console.print("Falling back to remote models...")
+            console.print(ChatMessages.COULD_NOT_START_SERVER.format(error=e))
+            console.print(ChatMessages.FALLING_BACK_REMOTE)
             self.use_remote = True
 
     def start_interactive_session(self):
         """Start the chat interface."""
-        console.print("[bold green]MCLI Personal Assistant[/bold green] (type 'exit' to quit)")
+        console.print(ChatMessages.PERSONAL_ASSISTANT_HEADER)
 
         # Show current configuration
         if not self.use_remote:
-            console.print(f"[dim]Using lightweight local model: {MODEL_NAME} (offline mode)[/dim]")
+            console.print(ChatMessages.USING_LIGHTWEIGHT_LOCAL.format(model=MODEL_NAME))
         elif LLM_PROVIDER == "local":
-            console.print(f"[dim]Using local model: {MODEL_NAME} via Ollama[/dim]")
+            console.print(ChatMessages.USING_LOCAL_OLLAMA.format(model=MODEL_NAME))
         elif LLM_PROVIDER == "openai":
-            console.print(f"[dim]Using OpenAI model: {MODEL_NAME}[/dim]")
+            console.print(ChatMessages.USING_OPENAI.format(model=MODEL_NAME))
         elif LLM_PROVIDER == "anthropic":
-            console.print(f"[dim]Using Anthropic model: {MODEL_NAME}[/dim]")
+            console.print(ChatMessages.USING_ANTHROPIC.format(model=MODEL_NAME))
 
         # Show proactive status update
         self._show_startup_status()
 
-        console.print("How can I help you with your tasks today?")
-        console.print("\n[bold cyan]Available Commands:[/bold cyan]")
-        console.print("• [yellow]commands[/yellow] - List available functions")
-        console.print("• [yellow]run <command> [args][/yellow] - Execute command in container")
-        console.print("• [yellow]ps[/yellow] - List running processes (Docker-style)")
-        console.print("• [yellow]logs <id>[/yellow] - View process logs")
-        console.print("• [yellow]inspect <id>[/yellow] - Detailed process info")
-        console.print("• [yellow]start/stop <id>[/yellow] - Control process lifecycle")
-        console.print(
-            "• [yellow]System Control[/yellow] - Control applications (e.g., 'open TextEdit', 'take screenshot')"
-        )
-        console.print(
-            "• [yellow]Job Scheduling[/yellow] - Schedule tasks (e.g., 'schedule cleanup daily', 'what's my status?')"
-        )
-        console.print("• Ask questions about functions and codebase\n")
+        console.print(ChatMessages.HOW_CAN_HELP)
+        console.print(ChatMessages.AVAILABLE_COMMANDS_HEADER)
+        console.print(ChatMessages.HELP_COMMANDS)
+        console.print(ChatMessages.HELP_RUN)
+        console.print(ChatMessages.HELP_PS)
+        console.print(ChatMessages.HELP_LOGS)
+        console.print(ChatMessages.HELP_INSPECT)
+        console.print(ChatMessages.HELP_START_STOP)
+        console.print(ChatMessages.HELP_SYSTEM_CONTROL)
+        console.print(ChatMessages.HELP_JOB_SCHEDULING)
+        console.print(ChatMessages.HELP_ASK_QUESTIONS)
 
         while self.session_active:
             try:
@@ -244,10 +223,10 @@ class ChatClient:
                 self.process_input(user_input)
 
             except KeyboardInterrupt:
-                console.print("\nUse 'exit' to quit the chat session")
+                console.print(ChatMessages.EXIT_HINT)
             except Exception as e:
-                logger.error(f"Chat error: {e}")
-                console.print(f"[red]Error:[/red] {str(e)}")
+                logger.error(ChatMessages.CHAT_ERROR.format(error=e))
+                console.print(ChatMessages.ERROR_DISPLAY.format(error=str(e)))
 
     def process_input(self, user_input: str):
         """Process user input and generate response."""
@@ -259,36 +238,38 @@ class ChatClient:
             return
 
         # Check for process management commands
-        if user_input.lower().startswith("ps") or user_input.lower().startswith("docker ps"):
+        if user_input.lower().startswith("ps") or user_input.lower().startswith(
+            ChatMessages.PATTERN_DOCKER_PS
+        ):
             self.handle_process_list()
             return
-        elif user_input.lower().startswith("logs "):
+        elif user_input.lower().startswith(ChatMessages.PATTERN_LOGS):
             process_id = user_input.split()[1] if len(user_input.split()) > 1 else None
             if process_id:
                 self.handle_process_logs(process_id)
             else:
-                console.print("[red]Usage: logs <process_id>[/red]")
+                console.print(ChatMessages.USAGE_LOGS)
             return
-        elif user_input.lower().startswith("inspect "):
+        elif user_input.lower().startswith(ChatMessages.PATTERN_INSPECT):
             process_id = user_input.split()[1] if len(user_input.split()) > 1 else None
             if process_id:
                 self.handle_process_inspect(process_id)
             else:
-                console.print("[red]Usage: inspect <process_id>[/red]")
+                console.print(ChatMessages.USAGE_INSPECT)
             return
-        elif user_input.lower().startswith("stop "):
+        elif user_input.lower().startswith(ChatMessages.PATTERN_STOP):
             process_id = user_input.split()[1] if len(user_input.split()) > 1 else None
             if process_id:
                 self.handle_process_stop(process_id)
             else:
-                console.print("[red]Usage: stop <process_id>[/red]")
+                console.print(ChatMessages.USAGE_STOP)
             return
-        elif user_input.lower().startswith("start "):
+        elif user_input.lower().startswith(ChatMessages.PATTERN_START):
             process_id = user_input.split()[1] if len(user_input.split()) > 1 else None
             if process_id:
                 self.handle_process_start(process_id)
             else:
-                console.print("[red]Usage: start <process_id>[/red]")
+                console.print(ChatMessages.USAGE_START)
             return
 
         # Check for command creation requests
@@ -308,14 +289,17 @@ class ChatClient:
             return
 
         # Check for 'run <command> [args...]' pattern (containerized execution)
-        if user_input.lower().startswith("run "):
+        if user_input.lower().startswith(ChatMessages.PATTERN_RUN):
             command_part = user_input[4:].strip()
 
             # Handle natural language patterns like "run the hello world command"
-            if " command" in command_part.lower():
+            if ChatMessages.PATTERN_COMMAND in command_part.lower():
                 # Extract the actual command name from natural language
                 command_part = (
-                    command_part.lower().replace(" command", "").replace("the ", "").strip()
+                    command_part.lower()
+                    .replace(ChatMessages.PATTERN_COMMAND, "")
+                    .replace(ChatMessages.PATTERN_THE, "")
+                    .strip()
                 )
 
             parts = command_part.split()
@@ -324,7 +308,7 @@ class ChatClient:
                 args = parts[1:] if len(parts) > 1 else []
                 self.handle_containerized_run(command, args)
             else:
-                console.print("[red]No command provided after 'run'.[/red]")
+                console.print(ChatMessages.NO_COMMAND_PROVIDED)
             return
 
         # Check for natural language command execution requests
@@ -340,7 +324,7 @@ class ChatClient:
             _ = self.daemon.list_commands()
         except Exception as e:
             daemon_available = False
-            logger.debug(f"Daemon unavailable, running in LLM-only mode. Details: {e}")
+            logger.debug(ChatMessages.DAEMON_UNAVAILABLE.format(error=e))
 
         if daemon_available and any(
             keyword in user_input.lower()
@@ -355,20 +339,20 @@ class ChatClient:
         try:
             result = self.daemon.execute_command(command_name=command_name, args=args or [])
             output = result.get("output") or result.get("result") or str(result)
-            console.print(f"[green]Command Output:[/green]\n{output}")
+            console.print(ChatMessages.COMMAND_OUTPUT.format(output=output))
         except Exception as e:
-            console.print(f"[red]Failed to execute command:[/red] {e}")
+            console.print(ChatMessages.FAILED_EXECUTE_COMMAND.format(error=e))
 
     def is_command_execution_request(self, user_input: str) -> bool:
         """Check if user input is requesting to execute a command."""
         lower_input = user_input.lower()
         execution_keywords = [
-            "call the",
-            "execute the",
-            "run the",
-            "execute command",
-            "hello world",
-            "hello-world",
+            ChatMessages.KEYWORD_CALL_THE,
+            ChatMessages.KEYWORD_EXECUTE_THE,
+            ChatMessages.KEYWORD_RUN_THE,
+            ChatMessages.KEYWORD_EXECUTE_COMMAND,
+            ChatMessages.KEYWORD_HELLO_WORLD,
+            ChatMessages.KEYWORD_HELLO_WORLD_DASH,
             "helloworld",
         ]
         # Be more specific - avoid matching on single words like "execute" or "call"
@@ -405,28 +389,30 @@ class ChatClient:
             command = discovery.get_command_by_name(command_name)
 
             if command:
-                console.print(f"[green]Executing command:[/green] {command.full_name}")
+                console.print(ChatMessages.EXECUTING_COMMAND.format(command=command.full_name))
                 try:
                     # Execute the command callback directly
                     if command.callback:
                         # For the hello command, we need to call it appropriately
-                        if command.name == "hello" and command.full_name.startswith("self."):
+                        if command.name == "hello" and command.full_name.startswith(
+                            ChatMessages.PATTERN_SELF_PREFIX
+                        ):
                             # This is the hello command from self module - call with default argument
                             command.callback("World")
-                            console.print("[green]✅ Command executed successfully[/green]")
+                            console.print(ChatMessages.COMMAND_EXECUTED)
                         else:
                             command.callback()
-                            console.print("[green]✅ Command executed successfully[/green]")
+                            console.print(ChatMessages.COMMAND_EXECUTED)
                     else:
-                        console.print("[yellow]Command found but has no callback[/yellow]")
+                        console.print(ChatMessages.COMMAND_NO_CALLBACK)
                 except Exception as e:
-                    console.print(f"[red]Error executing command:[/red] {e}")
+                    console.print(ChatMessages.ERROR_EXECUTING_COMMAND.format(error=e))
             else:
-                console.print(f"[red]Command '{command_name}' not found[/red]")
-                console.print("[yellow]Try 'commands' to see available commands[/yellow]")
+                console.print(ChatMessages.COMMAND_NOT_FOUND.format(name=command_name))
+                console.print(ChatMessages.TRY_COMMANDS_LIST)
 
         except Exception as e:
-            console.print(f"[red]Error finding command:[/red] {e}")
+            console.print(ChatMessages.ERROR_FINDING_COMMAND.format(error=e))
 
     def handle_command_queries(self, query: str):
         """Handle command-related queries using existing command registry."""
@@ -440,18 +426,16 @@ class ChatClient:
             else:
                 pass
         except Exception as e:
-            logger.debug(
-                f"Could not fetch commands from daemon: {e}. Falling back to LLM-only mode."
-            )
+            logger.debug(ChatMessages.COULD_NOT_FETCH_COMMANDS.format(error=e))
             return self.generate_llm_response(query)
 
         # Simple keyword matching for initial implementation
         lowered = query.lower()
         if (
-            "list command" in lowered
-            or "show command" in lowered
-            or "available command" in lowered
-            or "what can i do" in lowered
+            ChatMessages.QUERY_LIST_COMMAND in lowered
+            or ChatMessages.QUERY_SHOW_COMMAND in lowered
+            or ChatMessages.QUERY_AVAILABLE_COMMAND in lowered
+            or ChatMessages.QUERY_WHAT_CAN_I_DO in lowered
             or "commands" in lowered
         ):
             self.list_commands()  # Always use discovery system, ignore daemon commands
@@ -472,35 +456,36 @@ class ChatClient:
                 discovery = get_command_discovery()
                 commands = discovery.get_commands(include_groups=False)
             except Exception as e:
-                console.print(f"[red]Error discovering commands: {e}[/red]")
+                console.print(ChatMessages.ERROR_DISCOVERING_COMMANDS.format(error=e))
                 return
 
         if not commands:
-            console.print("No commands found")
+            console.print(ChatMessages.NO_COMMANDS_FOUND)
             return
 
-        console.print(f"[bold]Available Commands ({len(commands)}):[/bold]")
+        console.print(ChatMessages.AVAILABLE_COMMANDS_COUNT.format(count=len(commands)))
         for cmd in commands[:20]:  # Show first 20 to avoid overwhelming
             if "full_name" in cmd:
                 # New discovery format
-                console.print(f"• [green]{cmd['full_name']}[/green]")
+                console.print(ChatMessages.COMMAND_BULLET.format(name=cmd["full_name"]))
             else:
                 # Old daemon format
-                status = "[INACTIVE] " if not cmd.get("is_active", True) else ""
+                status = ChatMessages.COMMAND_INACTIVE if not cmd.get("is_active", True) else ""
                 console.print(
-                    f"{status}• [green]{cmd['name']}[/green] ({cmd.get('language', 'python')})"
+                    f"{status}{ChatMessages.COMMAND_BULLET.format(name=cmd['name'])} "
+                    f"({cmd.get('language', 'python')})"
                 )
 
             if cmd.get("description"):
                 console.print(f"  {cmd['description']}")
             if cmd.get("module"):
-                console.print(f"  Module: {cmd['module']}")
+                console.print(ChatMessages.COMMAND_MODULE.format(module=cmd["module"]))
             elif cmd.get("tags"):
-                console.print(f"  Tags: {', '.join(cmd['tags'])}")
+                console.print(ChatMessages.COMMAND_TAGS.format(tags=", ".join(cmd["tags"])))
             console.print()
 
         if len(commands) > 20:
-            console.print(f"[dim]... and {len(commands) - 20} more commands[/dim]")
+            console.print(ChatMessages.AND_MORE.format(count=len(commands) - 20))
             console.print("[dim]Use 'mcli commands list' to see all commands[/dim]")
 
     def search_commands(self, query: str, commands: List[Dict] = None):
@@ -513,7 +498,7 @@ class ChatClient:
                 discovery = get_command_discovery()
                 results = discovery.search_commands(search_term)
             except Exception as e:
-                console.print(f"[red]Error searching commands: {e}[/red]")
+                console.print(ChatMessages.ERROR_SEARCHING_COMMANDS.format(error=e))
                 return
         else:
             # Use provided commands (legacy mode)
@@ -528,7 +513,7 @@ class ChatClient:
             ]
 
         if not results:
-            console.print(f"No commands found matching '[yellow]{search_term}[/yellow]'")
+            console.print(ChatMessages.NO_COMMANDS_MATCHING.format(query=search_term))
             return
 
         console.print(f"[bold]Matching Commands for '{search_term}' ({len(results)}):[/bold]")

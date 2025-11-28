@@ -23,6 +23,13 @@ ALLOWED_PATTERNS = [
     r"^{}$",  # Empty format string
     r"^\{[a-z_]+\}$",  # Single format variable like {name}
     r"^[rgbfu]?['\"]",  # String prefixes (handled separately)
+    # Rich markup patterns (console styling)
+    r"^\[/?[a-z]+\]$",  # Simple tags like [green], [/green], [bold], [dim]
+    r"^\[/?[a-z]+ [a-z]+\]$",  # Tags with modifiers like [bold green]
+    r"^\[/?[a-z_]+\]$",  # Tags with underscores
+    r"^•\s*$",  # Bullet points
+    r"^\s+$",  # Indentation only
+    r"^\[bold cyan\]>>> \[/bold cyan\]$",  # Input prompt pattern
 ]
 
 # File patterns to exclude from checking (glob patterns)
@@ -70,6 +77,9 @@ COMMON_ACCEPTABLE_STRINGS = {
     "\r\n",
     "\t",
     " ",
+    "  ",  # Two spaces indentation
+    "• ",
+    "...",
     # Common characters
     "yes",
     "no",
@@ -77,6 +87,8 @@ COMMON_ACCEPTABLE_STRINGS = {
     "false",
     "null",
     "none",
+    "on",
+    "off",
     # File modes
     "r",
     "w",
@@ -104,6 +116,40 @@ COMMON_ACCEPTABLE_STRINGS = {
     "kind",
     "format",
     "version",
+    "error",
+    "message",
+    "output",
+    "input",
+    "path",
+    "file",
+    "url",
+    "method",
+    "content",
+    # CLI keywords (lookup strings for startswith checks)
+    "ps",
+    "run",
+    "exit",
+    "quit",
+    "help",
+    "search",
+    "find",
+    "list",
+    "show",
+    "commands",
+    "hello",
+    # LLM providers
+    "local",
+    "openai",
+    "anthropic",
+    "ollama",
+    # Common languages
+    "python",
+    "bash",
+    "shell",
+    "javascript",
+    "json",
+    "yaml",
+    "toml",
 }
 
 # Regex pattern for constant-like names (ALL_CAPS)
