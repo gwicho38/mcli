@@ -377,3 +377,109 @@ class TestEdgeCases:
         commands = loader.extract_commands()
 
         assert len(commands) == 0
+
+
+class TestCompletionModeStdoutSuppression:
+    """Test that stdout is suppressed during shell completion mode.
+
+    When tab completion is running, any stdout output from executed cells
+    (like print statements) corrupts the completion response. This tests
+    that stdout is properly suppressed during completion mode.
+    """
+
+    @pytest.fixture
+    def notebook_with_print_statements(self):
+        """Create a notebook with cells that print to stdout."""
+        cells = [
+            NotebookCell(
+                cell_type=CellType.CODE,
+                source=["import click\n"],
+            ),
+            NotebookCell(
+                cell_type=CellType.CODE,
+                source=[
+                    "# Setup cell with print statement\n",
+                    "for i in range(5):\n",
+                    "    print(i)\n",
+                ],
+            ),
+            NotebookCell(
+                cell_type=CellType.CODE,
+                source=[
+                    "print('hello from setup')\n",
+                ],
+            ),
+            NotebookCell(
+                cell_type=CellType.CODE,
+                source=[
+                    "@click.command()\n",
+                    "def my_command():\n",
+                    '    """Test command"""\n',
+                    "    click.echo('command executed')\n",
+                ],
+            ),
+        ]
+
+        metadata = NotebookMetadata(
+            mcli=MCLIMetadata(
+                name="print_test",
+                description="Notebook with print statements",
+                version="1.0.0",
+                language="python",
+            )
+        )
+
+        return WorkflowNotebook(cells=cells, metadata=metadata)
+
+    def test_stdout_suppressed_during_completion(self, notebook_with_print_statements, capsys):
+        """Test that print statements in setup cells don't pollute stdout during completion."""
+        import os
+
+        from mcli.lib.constants import EnvVars
+
+        # Set completion mode environment variable
+        os.environ[EnvVars.COMPLETE] = "zsh_complete"
+
+        try:
+            loader = NotebookCommandLoader(notebook_with_print_statements)
+            commands = loader.extract_commands()
+
+            # Capture what was printed
+            captured = capsys.readouterr()
+
+            # During completion mode, stdout should be empty (no print pollution)
+            assert (
+                captured.out == ""
+            ), f"Expected no stdout during completion mode, but got: {captured.out!r}"
+
+            # Commands should still be extracted successfully
+            assert len(commands) == 1
+            assert commands[0][0] == "my_command"
+        finally:
+            # Clean up environment
+            del os.environ[EnvVars.COMPLETE]
+
+    def test_stdout_not_suppressed_outside_completion(self, notebook_with_print_statements, capsys):
+        """Test that print statements work normally outside completion mode."""
+        import os
+
+        from mcli.lib.constants import EnvVars
+
+        # Ensure completion mode is NOT set
+        if EnvVars.COMPLETE in os.environ:
+            del os.environ[EnvVars.COMPLETE]
+
+        loader = NotebookCommandLoader(notebook_with_print_statements)
+        commands = loader.extract_commands()
+
+        # Capture what was printed
+        captured = capsys.readouterr()
+
+        # Outside completion mode, print statements should appear
+        assert "0" in captured.out
+        assert "1" in captured.out
+        assert "hello from setup" in captured.out
+
+        # Commands should still be extracted successfully
+        assert len(commands) == 1
+        assert commands[0][0] == "my_command"

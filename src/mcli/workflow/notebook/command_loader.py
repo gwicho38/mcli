@@ -6,18 +6,47 @@ a Click group with all the commands as subcommands.
 """
 
 import ast
+import io
+import os
 import re
 import sys
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Generator, List, Optional, Tuple
 
 import click
 
+from mcli.lib.constants import EnvVars
 from mcli.lib.logger.logger import get_logger
 from mcli.workflow.notebook.converter import WorkflowConverter
 from mcli.workflow.notebook.schema import CellType, WorkflowNotebook
 
 logger = get_logger(__name__)
+
+
+def _is_completion_mode() -> bool:
+    """Check if we're running in shell completion mode."""
+    return os.environ.get(EnvVars.COMPLETE) is not None
+
+
+@contextmanager
+def _suppress_stdout_if_completing() -> Generator[None, None, None]:
+    """
+    Context manager to suppress stdout during shell completion.
+
+    When tab completion is running, any stdout output from executed cells
+    (like print statements) corrupts the completion response. This suppresses
+    stdout only during completion mode.
+    """
+    if _is_completion_mode():
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        try:
+            yield
+        finally:
+            sys.stdout = old_stdout
+    else:
+        yield
 
 
 def _find_project_venv(notebook_path: Path) -> Optional[Path]:
@@ -209,9 +238,10 @@ class NotebookCommandLoader:
             if self._is_command_cell(source):
                 continue
 
-            # Execute setup code
+            # Execute setup code (suppress stdout during completion to avoid corrupting output)
             try:
-                exec(source, self.globals_dict)
+                with _suppress_stdout_if_completing():
+                    exec(source, self.globals_dict)
                 logger.debug("Executed setup cell successfully")
             except Exception as e:
                 logger.warning(f"Failed to execute setup cell: {e}")
@@ -239,7 +269,8 @@ class NotebookCommandLoader:
             try:
                 # Compile and execute each statement individually
                 code = compile(ast.Module(body=[node], type_ignores=[]), "<string>", "exec")
-                exec(code, self.globals_dict)
+                with _suppress_stdout_if_completing():
+                    exec(code, self.globals_dict)
             except Exception as stmt_e:
                 # Log but continue - we want to execute as much as possible
                 stmt_source = ast.get_source_segment(source, node) or "<unknown>"
@@ -262,8 +293,9 @@ class NotebookCommandLoader:
             if "click" not in self.globals_dict:
                 self.globals_dict["click"] = click
 
-            # Execute the cell to define the command
-            exec(source, self.globals_dict)
+            # Execute the cell to define the command (suppress stdout during completion)
+            with _suppress_stdout_if_completing():
+                exec(source, self.globals_dict)
 
             # Extract function name
             func_name = self._extract_function_name(source)
