@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import click
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.discovery.command_discovery import ClickCommandDiscovery, DiscoveredCommand
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.search.cached_vectorizer import SmartVectorizerManager
@@ -23,12 +24,12 @@ class CommandContext:
 
     command: DiscoveredCommand
     help_text: str
-    parameters: List[Dict[str, Any]]
-    examples: List[str]
-    related_commands: List[str]
-    usage_patterns: List[str]
+    parameters: list[dict[str, Any]]
+    examples: list[str]
+    related_commands: list[str]
+    usage_patterns: list[str]
     category: str
-    tags: List[str]
+    tags: list[str]
 
 
 class CommandRAGSystem:
@@ -38,12 +39,12 @@ class CommandRAGSystem:
     """
 
     def __init__(self, cache_dir: Optional[Path] = None):
-        self.cache_dir = cache_dir or Path.home() / ".mcli" / "command_cache"
+        self.cache_dir = cache_dir or Path.home() / DirNames.MCLI / "command_cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         self.discovery = ClickCommandDiscovery()
         self.vectorizer_manager = None
-        self.command_contexts: Dict[str, CommandContext] = {}
+        self.command_contexts: dict[str, CommandContext] = {}
         self.command_embeddings = None
         self._initialized = False
 
@@ -130,7 +131,7 @@ class CommandRAGSystem:
             logger.debug(f"Failed to get help for {cmd.full_name}: {e}")
             return cmd.description or f"Command: {cmd.full_name}"
 
-    def _extract_parameters(self, cmd: DiscoveredCommand) -> List[Dict[str, Any]]:
+    def _extract_parameters(self, cmd: DiscoveredCommand) -> list[dict[str, Any]]:
         """Extract parameter information from a Click command"""
         parameters = []
 
@@ -157,8 +158,8 @@ class CommandRAGSystem:
         return parameters
 
     def _generate_examples(
-        self, cmd: DiscoveredCommand, parameters: List[Dict[str, Any]]
-    ) -> List[str]:
+        self, cmd: DiscoveredCommand, parameters: list[dict[str, Any]]
+    ) -> list[str]:
         """Generate usage examples for a command"""
         examples = []
         base_cmd = f"mcli {cmd.full_name.replace('.', ' ')}"
@@ -183,7 +184,7 @@ class CommandRAGSystem:
 
         return examples
 
-    def _find_related_commands(self, cmd: DiscoveredCommand) -> List[str]:
+    def _find_related_commands(self, cmd: DiscoveredCommand) -> list[str]:
         """Find commands related to the given command"""
         related = []
 
@@ -202,7 +203,7 @@ class CommandRAGSystem:
 
         return related[:5]  # Limit to 5 related commands
 
-    def _extract_usage_patterns(self, help_text: str, cmd: DiscoveredCommand) -> List[str]:
+    def _extract_usage_patterns(self, help_text: str, cmd: DiscoveredCommand) -> list[str]:
         """Extract common usage patterns from help text"""
         patterns = []
 
@@ -256,7 +257,7 @@ class CommandRAGSystem:
         else:
             return "General Commands"
 
-    def _generate_tags(self, cmd: DiscoveredCommand, help_text: str, category: str) -> List[str]:
+    def _generate_tags(self, cmd: DiscoveredCommand, help_text: str, category: str) -> list[str]:
         """Generate tags for better searchability"""
         tags = []
 
@@ -340,7 +341,7 @@ class CommandRAGSystem:
 
     async def search_commands(
         self, query: str, limit: int = 10, category_filter: Optional[str] = None
-    ) -> List[Tuple[CommandContext, float]]:
+    ) -> list[tuple[CommandContext, float]]:
         """Search for commands using semantic similarity"""
         if not self._initialized:
             await self.initialize()
@@ -378,8 +379,8 @@ class CommandRAGSystem:
             return []
 
     async def get_command_suggestions(
-        self, user_input: str, context_history: List[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, user_input: str, context_history: list[str] = None
+    ) -> list[dict[str, Any]]:
         """Get intelligent command suggestions based on user input and context"""
 
         # Search for relevant commands
@@ -404,7 +405,7 @@ class CommandRAGSystem:
 
         return suggestions
 
-    async def get_command_details(self, command_name: str) -> Optional[Dict[str, Any]]:
+    async def get_command_details(self, command_name: str) -> Optional[dict[str, Any]]:
         """Get detailed information about a specific command"""
         context = self.command_contexts.get(command_name)
         if not context:
@@ -421,7 +422,7 @@ class CommandRAGSystem:
             "tags": context.tags,
         }
 
-    async def analyze_user_intent(self, user_message: str) -> Dict[str, Any]:
+    async def analyze_user_intent(self, user_message: str) -> dict[str, Any]:
         """Analyze user intent and suggest appropriate actions"""
         intent_analysis = {
             "intent_type": "unknown",
@@ -473,7 +474,7 @@ class CommandRAGSystem:
 
         return intent_analysis
 
-    def get_system_capabilities(self) -> Dict[str, Any]:
+    def get_system_capabilities(self) -> dict[str, Any]:
         """Get information about system capabilities for self-reference"""
         categories = {}
         for context in self.command_contexts.values():

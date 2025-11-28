@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from mcli.lib.api import mcli_decorators as mcli
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.services.data_pipeline import DataPipelineConfig, LSHDataPipeline
 from mcli.lib.services.lsh_client import LSHClient
@@ -226,7 +227,7 @@ async def lsh_listen(url: Optional[str], api_key: Optional[str], filter: Optiona
 
         lsh_client = LSHClient(base_url=url, api_key=api_key)
 
-        def print_event(event_data: Dict[str, Any]):
+        def print_event(event_data: dict[str, Any]):
             event_type = event_data.get("type", "unknown")
             timestamp = event_data.get("timestamp", "")
 
@@ -288,7 +289,7 @@ async def lsh_webhook(
 @mcli.option("--show", is_flag=True, help="Show current configuration")
 def lsh_config(set_url: Optional[str], set_api_key: Optional[str], show: bool):
     """Configure LSH integration settings."""
-    env_file = Path.home() / ".mcli" / "lsh.env"
+    env_file = Path.home() / DirNames.MCLI / "lsh.env"
     env_file.parent.mkdir(exist_ok=True)
 
     if show:
@@ -302,7 +303,7 @@ def lsh_config(set_url: Optional[str], set_api_key: Optional[str], show: bool):
         # Update env file
         config = {}
         if env_file.exists():
-            with open(env_file, "r") as f:
+            with open(env_file) as f:
                 for line in f:
                     if "=" in line:
                         key, value = line.strip().split("=", 1)
@@ -320,7 +321,7 @@ def lsh_config(set_url: Optional[str], set_api_key: Optional[str], show: bool):
         # Update env file
         config = {}
         if env_file.exists():
-            with open(env_file, "r") as f:
+            with open(env_file) as f:
                 for line in f:
                     if "=" in line:
                         key, value = line.strip().split("=", 1)

@@ -27,6 +27,7 @@ from typing import Dict, Optional
 
 import click
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 
 logger = get_logger(__name__)
@@ -50,7 +51,7 @@ def find_package_json(start_dir: Optional[Path] = None) -> Optional[Path]:
         start_dir = Path.cwd()
 
     # Check .mcli/package.json first
-    mcli_package_json = start_dir / ".mcli" / "package.json"
+    mcli_package_json = start_dir / DirNames.MCLI / "package.json"
     if mcli_package_json.exists() and mcli_package_json.is_file():
         logger.debug(f"Found package.json at: {mcli_package_json}")
         return mcli_package_json
@@ -65,7 +66,7 @@ def find_package_json(start_dir: Optional[Path] = None) -> Optional[Path]:
     return None
 
 
-def parse_package_json_scripts(package_json_path: Path) -> Dict[str, str]:
+def parse_package_json_scripts(package_json_path: Path) -> dict[str, str]:
     """
     Parse package.json and extract scripts.
 
@@ -79,7 +80,7 @@ def parse_package_json_scripts(package_json_path: Path) -> Dict[str, str]:
     scripts = {}
 
     try:
-        with open(package_json_path, "r", encoding="utf-8") as f:
+        with open(package_json_path, encoding="utf-8") as f:
             data = json.load(f)
 
         # Extract scripts section

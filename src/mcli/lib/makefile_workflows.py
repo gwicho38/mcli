@@ -23,6 +23,7 @@ from typing import Dict, List, Optional, Tuple
 
 import click
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 
 logger = get_logger(__name__)
@@ -47,7 +48,7 @@ def find_makefile(start_dir: Optional[Path] = None) -> Optional[Path]:
         start_dir = Path.cwd()
 
     # Check .mcli/Makefile first
-    mcli_makefile = start_dir / ".mcli" / "Makefile"
+    mcli_makefile = start_dir / DirNames.MCLI / "Makefile"
     if mcli_makefile.exists() and mcli_makefile.is_file():
         logger.debug(f"Found Makefile at: {mcli_makefile}")
         return mcli_makefile
@@ -68,7 +69,7 @@ def find_makefile(start_dir: Optional[Path] = None) -> Optional[Path]:
     return None
 
 
-def parse_makefile_targets(makefile_path: Path) -> Dict[str, str]:
+def parse_makefile_targets(makefile_path: Path) -> dict[str, str]:
     """
     Parse Makefile and extract targets with their descriptions.
 
@@ -87,7 +88,7 @@ def parse_makefile_targets(makefile_path: Path) -> Dict[str, str]:
     targets = {}
 
     try:
-        with open(makefile_path, "r", encoding="utf-8") as f:
+        with open(makefile_path, encoding="utf-8") as f:
             lines = f.readlines()
 
         previous_comment = None

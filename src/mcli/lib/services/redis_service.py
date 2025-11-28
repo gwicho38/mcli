@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 import psutil
 import redis.asyncio as redis
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 from mcli.workflow.daemon.async_process_manager import AsyncProcessManager, ProcessStatus
 
@@ -34,7 +35,7 @@ class RedisService:
     ):
         self.port = port
         self.host = host
-        self.data_dir = data_dir or Path.home() / ".mcli" / "redis-data"
+        self.data_dir = data_dir or Path.home() / DirNames.MCLI / "redis-data"
         self.config_file = None
         self.process_manager = process_manager or AsyncProcessManager()
         self.process_id = None
@@ -137,7 +138,7 @@ class RedisService:
             logger.debug(f"Redis connection check failed: {e}")
             return False
 
-    async def get_status(self) -> Dict[str, Any]:
+    async def get_status(self) -> dict[str, Any]:
         """Get detailed Redis server status"""
         status = {
             "running": False,
@@ -188,7 +189,7 @@ class RedisService:
         """Get Redis connection URL"""
         return f"redis://{self.host}:{self.port}"
 
-    async def test_connection(self) -> Dict[str, Any]:
+    async def test_connection(self) -> dict[str, Any]:
         """Test Redis connection and performance"""
         if not await self.is_running():
             return {"status": "failed", "error": "Redis not running"}
@@ -263,7 +264,7 @@ rdbcompression yes
 rdbchecksum yes
 dbfilename mcli-redis.rdb
 
-# Memory settings  
+# Memory settings
 maxmemory-policy allkeys-lru
 maxmemory 256mb
 

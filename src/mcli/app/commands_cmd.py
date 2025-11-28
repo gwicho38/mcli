@@ -15,6 +15,7 @@ import click
 from rich.prompt import Prompt
 
 from mcli.lib.api.daemon_client import get_daemon_client
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.custom_commands import get_command_manager
 from mcli.lib.discovery.command_discovery import get_command_discovery
 from mcli.lib.logger.logger import get_logger
@@ -27,13 +28,13 @@ LOCKFILE_PATH = Path.home() / ".local" / "mcli" / "command_lock.json"
 
 # Command store configuration
 DEFAULT_STORE_PATH = Path.home() / "repos" / "mcli-commands"
-COMMANDS_PATH = Path.home() / ".mcli" / "commands"
+COMMANDS_PATH = Path.home() / DirNames.MCLI / "commands"
 
 
 # Helper functions for command state management
 
 
-def collect_commands() -> List[Dict[str, Any]]:
+def collect_commands() -> list[dict[str, Any]]:
     """Collect all commands from the mcli application."""
     commands = []
 
@@ -130,7 +131,7 @@ def hash_command_state(commands):
 def load_lockfile():
     """Load the command state lockfile."""
     if LOCKFILE_PATH.exists():
-        with open(LOCKFILE_PATH, "r") as f:
+        with open(LOCKFILE_PATH) as f:
             data = json.load(f)
             # Handle both old format (array) and new format (object with "states" key)
             if isinstance(data, dict) and "states" in data:
@@ -193,7 +194,7 @@ commands = workflow
 # Helper function for store commands
 def _get_store_path() -> Path:
     """Get store path from config or default."""
-    config_file = Path.home() / ".mcli" / "store.conf"
+    config_file = Path.home() / DirNames.MCLI / "store.conf"
 
     if config_file.exists():
         store_path = Path(config_file.read_text().strip())
@@ -270,7 +271,7 @@ Last updated: {datetime.now().isoformat()}
             info(f"Git repository already exists at {store_path}")
 
         # Save store path to config
-        config_file = Path.home() / ".mcli" / "store.conf"
+        config_file = Path.home() / DirNames.MCLI / "store.conf"
         config_file.parent.mkdir(parents=True, exist_ok=True)
         config_file.write_text(str(store_path))
 
@@ -516,7 +517,7 @@ def configure_store(remote, path):
 
         if path:
             new_path = Path(path).expanduser().resolve()
-            config_file = Path.home() / ".mcli" / "store.conf"
+            config_file = Path.home() / DirNames.MCLI / "store.conf"
             config_file.write_text(str(new_path))
             success(f"Store path updated to: {new_path}")
             return
@@ -1054,7 +1055,7 @@ logger = get_logger()
             return None
 
         # Read the edited content
-        with open(temp_file_path, "r") as f:
+        with open(temp_file_path) as f:
             edited_code = f.read()
 
         # Check if the file was actually edited (not just the template)
@@ -1236,7 +1237,7 @@ def add_command(command_name, group, description, template, language, shell, is_
                     click.echo("Editor exited with error. Command creation cancelled.")
                     return 1
 
-                with open(tmp_path, "r") as f:
+                with open(tmp_path) as f:
                     code = f.read()
 
                 if not code.strip():
@@ -1366,7 +1367,7 @@ def export_commands(target, script, standalone, output, is_global):
             return 1
 
         try:
-            with open(command_file, "r") as f:
+            with open(command_file) as f:
                 command_data = json.load(f)
         except Exception as e:
             console.print(f"[red]Failed to load command: {e}[/red]")
@@ -1466,7 +1467,7 @@ def import_commands(source, script, overwrite, name, group, description, interac
 
         # Read the script content
         try:
-            with open(source_path, "r") as f:
+            with open(source_path) as f:
                 code = f.read()
         except Exception as e:
             console.print(f"[red]Failed to read script: {e}[/red]")
@@ -1532,7 +1533,7 @@ def import_commands(source, script, overwrite, name, group, description, interac
                 subprocess.run([editor, tmp_path], check=True)
 
                 # Read edited content
-                with open(tmp_path, "r") as f:
+                with open(tmp_path) as f:
                     code = f.read()
             finally:
                 Path(tmp_path).unlink(missing_ok=True)
@@ -1630,7 +1631,7 @@ def edit_command(command_name, editor, is_global):
         return 1
 
     try:
-        with open(command_file, "r") as f:
+        with open(command_file) as f:
             command_data = json.load(f)
     except Exception as e:
         console.print(f"[red]Failed to load command: {e}[/red]")
@@ -1663,7 +1664,7 @@ def edit_command(command_name, editor, is_global):
             console.print(f"[yellow]Editor exited with code {result.returncode}[/yellow]")
 
         # Read edited content
-        with open(tmp_path, "r") as f:
+        with open(tmp_path) as f:
             new_code = f.read()
 
         # Check if code changed

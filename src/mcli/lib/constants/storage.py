@@ -1,5 +1,7 @@
 """Storage-related constants for MCLI storage abstraction layer."""
 
+from mcli.lib.constants.paths import DirNames
+
 
 class StorageEnvVars:
     """Environment variable names for storage configuration."""
@@ -25,10 +27,10 @@ class StorageEnvVars:
 class StoragePaths:
     """Storage-related path constants."""
 
-    # Cache directories
-    STORAGE_CACHE_DIR = ".mcli/storage-cache"  # Relative to home
-    STORACHA_CONFIG_FILE = ".mcli/storacha-config.json"  # Relative to home
-    STORAGE_METADATA_FILE = ".mcli/storage-metadata.json"  # Relative to home
+    # Cache directories (relative to home)
+    STORAGE_CACHE_DIR = f"{DirNames.MCLI}/storage-cache"
+    STORACHA_CONFIG_FILE = f"{DirNames.MCLI}/storacha-config.json"
+    STORAGE_METADATA_FILE = f"{DirNames.MCLI}/storage-metadata.json"
 
 
 class StorageDefaults:

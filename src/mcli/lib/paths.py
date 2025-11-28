@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 from typing import Optional
 
+from mcli.lib.constants.paths import DirNames
+
 
 def get_mcli_home() -> Path:
     """
@@ -27,7 +29,7 @@ def get_mcli_home() -> Path:
         if xdg_data_home:
             path = Path(xdg_data_home) / "mcli"
         else:
-            path = Path.home() / ".mcli"
+            path = Path.home() / DirNames.MCLI
 
     # Create directory if it doesn't exist
     path.mkdir(parents=True, exist_ok=True)
@@ -135,7 +137,7 @@ def get_local_mcli_dir() -> Optional[Path]:
     """
     git_root = get_git_root()
     if git_root:
-        local_mcli = git_root / ".mcli"
+        local_mcli = git_root / DirNames.MCLI
         return local_mcli
     return None
 

@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional
 
 from git import GitCommandError, Repo
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.ui.styling import error, info, success, warning
 
@@ -25,7 +26,7 @@ class SecretsStore:
             store_path: Path to git repository for secrets. Defaults to ~/repos/mcli-secrets
         """
         self.store_path = store_path or Path.home() / "repos" / "mcli-secrets"
-        self.config_file = Path.home() / ".mcli" / "secrets-store.conf"
+        self.config_file = Path.home() / DirNames.MCLI / "secrets-store.conf"
         self.load_config()
 
     def load_config(self) -> None:
@@ -194,7 +195,7 @@ class SecretsStore:
         # Then push
         self.push(secrets_dir, message)
 
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get status of the secrets store.
 
         Returns:

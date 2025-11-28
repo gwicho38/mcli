@@ -10,6 +10,7 @@ from pathlib import Path
 
 import click
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.ui.styling import error, info, success, warning
 
@@ -17,7 +18,7 @@ logger = get_logger()
 
 # Default store location
 DEFAULT_STORE_PATH = Path.home() / "repos" / "mcli-commands"
-COMMANDS_PATH = Path.home() / ".mcli" / "commands"
+COMMANDS_PATH = Path.home() / DirNames.MCLI / "commands"
 
 
 @click.group(name="store")
@@ -88,7 +89,7 @@ Last updated: {datetime.now().isoformat()}
             info(f"Git repository already exists at {store_path}")
 
         # Save store path to config
-        config_file = Path.home() / ".mcli" / "store.conf"
+        config_file = Path.home() / DirNames.MCLI / "store.conf"
         config_file.parent.mkdir(parents=True, exist_ok=True)
         config_file.write_text(str(store_path))
 
@@ -378,7 +379,7 @@ def configure_store(remote, path):
 
         if path:
             new_path = Path(path).expanduser().resolve()
-            config_file = Path.home() / ".mcli" / "store.conf"
+            config_file = Path.home() / DirNames.MCLI / "store.conf"
             config_file.write_text(str(new_path))
             success(f"Store path updated to: {new_path}")
             return
@@ -407,7 +408,7 @@ def configure_store(remote, path):
 
 def _get_store_path() -> Path:
     """Get store path from config or default."""
-    config_file = Path.home() / ".mcli" / "store.conf"
+    config_file = Path.home() / DirNames.MCLI / "store.conf"
 
     if config_file.exists():
         store_path = Path(config_file.read_text().strip())

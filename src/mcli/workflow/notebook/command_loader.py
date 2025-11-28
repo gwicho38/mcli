@@ -7,6 +7,7 @@ a Click group with all the commands as subcommands.
 
 import ast
 import re
+import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -19,18 +20,123 @@ from mcli.workflow.notebook.schema import CellType, WorkflowNotebook
 logger = get_logger(__name__)
 
 
+def _find_project_venv(notebook_path: Path) -> Optional[Path]:
+    """
+    Find the project's virtual environment for a notebook.
+
+    Searches upward from the notebook's directory for common venv locations.
+
+    Args:
+        notebook_path: Path to the notebook file
+
+    Returns:
+        Path to the venv's site-packages, or None if not found
+    """
+    search_dir = notebook_path.parent.resolve()
+
+    # Search upward to find the project root
+    for _ in range(10):  # Limit search depth
+        # Check common venv locations
+        venv_candidates = [
+            search_dir / ".venv",
+            search_dir / "venv",
+            search_dir / ".env",
+            search_dir / "env",
+        ]
+
+        for venv_path in venv_candidates:
+            if venv_path.is_dir():
+                # Find site-packages
+                # macOS/Linux: lib/pythonX.Y/site-packages
+                # Windows: Lib/site-packages
+                for lib_dir in venv_path.glob("lib/python*/site-packages"):
+                    if lib_dir.is_dir():
+                        return lib_dir
+                # Windows fallback
+                win_site = venv_path / "Lib" / "site-packages"
+                if win_site.is_dir():
+                    return win_site
+
+        # Move up one directory
+        parent = search_dir.parent
+        if parent == search_dir:
+            break
+        search_dir = parent
+
+    return None
+
+
+def _setup_project_imports(notebook_path: Path) -> list[str]:
+    """
+    Set up sys.path to include the project's virtual environment.
+
+    This allows notebooks to import packages installed in the project's venv.
+
+    Args:
+        notebook_path: Path to the notebook file
+
+    Returns:
+        List of paths added to sys.path (for cleanup later)
+    """
+    added_paths = []
+
+    # Find and add project venv
+    venv_site_packages = _find_project_venv(notebook_path)
+    if venv_site_packages:
+        site_str = str(venv_site_packages)
+        if site_str not in sys.path:
+            sys.path.insert(0, site_str)
+            added_paths.append(site_str)
+            logger.info(f"Added project venv to import path: {venv_site_packages}")
+
+    # Also add the project root (for local package imports like 'politician_trading')
+    project_root = notebook_path.parent.resolve()
+    for _ in range(10):
+        # Look for common project markers
+        markers = ["pyproject.toml", "setup.py", "setup.cfg", ".git"]
+        if any((project_root / m).exists() for m in markers):
+            root_str = str(project_root)
+            if root_str not in sys.path:
+                sys.path.insert(0, root_str)
+                added_paths.append(root_str)
+                logger.info(f"Added project root to import path: {project_root}")
+
+            # Also add src/ if it exists (common pattern)
+            src_dir = project_root / "src"
+            if src_dir.is_dir():
+                src_str = str(src_dir)
+                if src_str not in sys.path:
+                    sys.path.insert(0, src_str)
+                    added_paths.append(src_str)
+            break
+
+        parent = project_root.parent
+        if parent == project_root:
+            break
+        project_root = parent
+
+    return added_paths
+
+
 class NotebookCommandLoader:
     """Load Click commands from notebook cells."""
 
-    def __init__(self, notebook: WorkflowNotebook):
+    def __init__(self, notebook: WorkflowNotebook, notebook_path: Optional[Path] = None):
         """
         Initialize the command loader.
 
         Args:
             notebook: WorkflowNotebook instance
+            notebook_path: Optional path to the notebook file (for resolving project imports)
         """
         self.notebook = notebook
-        self.globals_dict: Dict[str, Any] = {}
+        self.notebook_path = notebook_path
+        self.globals_dict: dict[str, Any] = {}
+        self._added_paths: list[str] = []
+
+        # Set up project imports if we have a path
+        if notebook_path:
+            self._added_paths = _setup_project_imports(notebook_path)
 
     def _is_command_cell(self, source: str) -> bool:
         """
@@ -40,14 +146,16 @@ class NotebookCommandLoader:
             source: Cell source code
 
         Returns:
-            True if cell contains @click.command or @command decorator
+            True if cell contains @click.command, @group.command, or similar decorator
         """
-        # Look for @click.command(), @command(), or similar decorators
+        # Look for @click.command(), @command(), @<group>.command(), or similar decorators
         patterns = [
             r"@click\.command\(",
             r"@click\.group\(",
             r"@command\(",
             r"@group\(",
+            r"@\w+\.command\(",  # Matches @ingest.command(), @mygroup.command(), etc.
+            r"@\w+\.group\(",  # Matches @parent.group(), etc.
         ]
 
         for pattern in patterns:
@@ -86,6 +194,10 @@ class NotebookCommandLoader:
 
         This ensures that when we execute command cells, all necessary imports
         and helper functions are available.
+
+        Note: If a cell fails (e.g., missing module), we try to execute it
+        line-by-line to salvage what we can. This handles cases where imports
+        and definitions are mixed in the same cell.
         """
         for cell in self.notebook.cells:
             if cell.cell_type != CellType.CODE:
@@ -100,9 +212,40 @@ class NotebookCommandLoader:
             # Execute setup code
             try:
                 exec(source, self.globals_dict)
-                logger.debug(f"Executed setup cell")
+                logger.debug("Executed setup cell successfully")
             except Exception as e:
                 logger.warning(f"Failed to execute setup cell: {e}")
+                # Try line-by-line execution to salvage what we can
+                self._execute_cell_line_by_line(source)
+
+    def _execute_cell_line_by_line(self, source: str) -> None:
+        """
+        Execute a cell line-by-line to handle partial failures.
+
+        This is a fallback when a cell fails - we try to execute each
+        statement individually to salvage imports and definitions that work.
+
+        Args:
+            source: Cell source code
+        """
+        import ast
+
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            return
+
+        for node in tree.body:
+            try:
+                # Compile and execute each statement individually
+                code = compile(ast.Module(body=[node], type_ignores=[]), "<string>", "exec")
+                exec(code, self.globals_dict)
+            except Exception as stmt_e:
+                # Log but continue - we want to execute as much as possible
+                stmt_source = ast.get_source_segment(source, node) or "<unknown>"
+                if len(stmt_source) > 100:
+                    stmt_source = stmt_source[:100] + "..."
+                logger.debug(f"Skipped statement due to error: {stmt_e}")
 
     def _load_command_from_cell(self, source: str) -> Optional[click.Command]:
         """
@@ -146,14 +289,19 @@ class NotebookCommandLoader:
             logger.error(f"Failed to load command from cell: {e}")
             return None
 
-    def extract_commands(self) -> List[Tuple[str, click.Command]]:
+    def extract_commands(self) -> list[tuple[str, click.Command]]:
         """
         Extract all Click commands from the notebook.
+
+        This handles two patterns:
+        1. Standalone @click.command() decorators
+        2. Group subcommands like @group.command() where commands are registered to a group
 
         Returns:
             List of (command_name, command) tuples
         """
         commands = []
+        found_groups = {}  # Track groups defined in the notebook
 
         # First, execute setup cells (imports, helper functions, etc.)
         self._execute_setup_cells()
@@ -174,13 +322,30 @@ class NotebookCommandLoader:
             if cmd:
                 func_name = self._extract_function_name(source)
                 if func_name:
+                    # Track groups for later extraction of subcommands
+                    if isinstance(cmd, click.Group):
+                        found_groups[func_name] = cmd
                     commands.append((func_name, cmd))
+
+        # If we found groups, extract their subcommands
+        # This handles @group.command() pattern where commands are registered during execution
+        for group_name, group in found_groups.items():
+            if hasattr(group, "commands") and group.commands:
+                for cmd_name, cmd in group.commands.items():
+                    # Add subcommands if not already in the list
+                    if not any(name == cmd_name for name, _ in commands):
+                        commands.append((cmd_name, cmd))
+                        logger.debug(f"Extracted subcommand {cmd_name} from group {group_name}")
 
         return commands
 
     def create_group(self, group_name: Optional[str] = None) -> Optional[click.Group]:
         """
         Create a Click group containing all commands from the notebook.
+
+        If the notebook defines its own group (via @click.group), that group
+        is returned directly with all its subcommands already attached.
+        Otherwise, a new group is created to wrap standalone commands.
 
         Args:
             group_name: Name for the group (defaults to notebook name)
@@ -198,7 +363,20 @@ class NotebookCommandLoader:
             logger.warning(f"No commands found in notebook {group_name}")
             return None
 
-        # Create a Click group
+        # Check if the notebook defines its own group that matches the expected name
+        # If so, return that group directly (it already has subcommands attached)
+        for cmd_name, cmd in commands:
+            if isinstance(cmd, click.Group):
+                # If notebook defines a group, use it directly
+                # The subcommands are already attached via @group.command()
+                if cmd.commands:
+                    logger.info(
+                        f"Using notebook-defined group '{cmd_name}' with "
+                        f"{len(cmd.commands)} subcommand(s)"
+                    )
+                    return cmd
+
+        # No user-defined group found, create a wrapper group
         @click.group(name=group_name)
         def notebook_group():
             """Commands from notebook."""
@@ -221,6 +399,9 @@ class NotebookCommandLoader:
         """
         Create a command loader from a notebook file.
 
+        This also sets up the import path to include the project's virtual
+        environment, so notebooks can import project-specific packages.
+
         Args:
             notebook_path: Path to the notebook JSON file
 
@@ -228,7 +409,7 @@ class NotebookCommandLoader:
             NotebookCommandLoader instance
         """
         notebook = WorkflowConverter.load_notebook_json(notebook_path)
-        return cls(notebook)
+        return cls(notebook, notebook_path=notebook_path.resolve())
 
     @classmethod
     def load_group_from_file(

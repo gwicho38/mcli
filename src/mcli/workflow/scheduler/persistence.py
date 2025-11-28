@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 
 from .job import ScheduledJob
@@ -35,7 +36,7 @@ class JobStorage:
     def _get_default_storage_dir(self) -> Path:
         """Get default storage directory."""
         home = Path.home()
-        storage_dir = home / ".mcli" / "scheduler"
+        storage_dir = home / DirNames.MCLI / "scheduler"
         return storage_dir
 
     def _initialize_storage(self):
@@ -49,7 +50,7 @@ class JobStorage:
     def _read_json_file(self, file_path: Path) -> dict:
         """Safely read JSON file with error handling."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError:
             logger.warning(f"File not found: {file_path}")
@@ -76,7 +77,7 @@ class JobStorage:
             if temp_file.exists():
                 temp_file.unlink()
 
-    def save_jobs(self, jobs: List[ScheduledJob]) -> bool:
+    def save_jobs(self, jobs: list[ScheduledJob]) -> bool:
         """Save list of jobs to persistent storage."""
         with self.lock:
             try:
@@ -95,7 +96,7 @@ class JobStorage:
                 logger.error(f"Failed to save jobs: {e}")
                 return False
 
-    def load_jobs(self) -> List[ScheduledJob]:
+    def load_jobs(self) -> list[ScheduledJob]:
         """Load jobs from persistent storage."""
         with self.lock:
             try:
@@ -190,7 +191,7 @@ class JobStorage:
             except Exception as e:
                 logger.error(f"Failed to record job execution: {e}")
 
-    def get_job_history(self, job_id: Optional[str] = None, limit: int = 100) -> List[dict]:
+    def get_job_history(self, job_id: Optional[str] = None, limit: int = 100) -> list[dict]:
         """Get job execution history."""
         try:
             history_data = self._read_json_file(self.history_file)
@@ -262,7 +263,7 @@ class JobStorage:
     def import_jobs(self, import_path: str, replace: bool = False) -> int:
         """Import jobs from a file."""
         try:
-            with open(import_path, "r", encoding="utf-8") as f:
+            with open(import_path, encoding="utf-8") as f:
                 import_data = json.load(f)
 
             imported_jobs_data = import_data.get("jobs", [])

@@ -16,6 +16,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.ui.styling import error, info, success
 
@@ -32,7 +33,7 @@ def get_migration_status() -> dict:
     """
     from mcli.lib.paths import get_git_root, is_git_repository
 
-    mcli_home = Path.home() / ".mcli"
+    mcli_home = Path.home() / DirNames.MCLI
     old_commands_dir = mcli_home / "commands"
     new_workflows_dir = mcli_home / "workflows"
 
@@ -65,8 +66,8 @@ def get_migration_status() -> dict:
     # Check local migration (if in git repo)
     if is_git_repository():
         git_root = get_git_root()
-        local_old = git_root / ".mcli" / "commands"
-        local_new = git_root / ".mcli" / "workflows"
+        local_old = git_root / DirNames.MCLI / "commands"
+        local_new = git_root / DirNames.MCLI / "workflows"
 
         status["local"] = {
             "git_root": str(git_root),
@@ -207,7 +208,7 @@ def migrate_commands_to_workflows(
 
     # Migrate global
     if scope in ["global", "all"]:
-        mcli_home = Path.home() / ".mcli"
+        mcli_home = Path.home() / DirNames.MCLI
         old_dir = mcli_home / "commands"
         new_dir = mcli_home / "workflows"
 
@@ -221,8 +222,8 @@ def migrate_commands_to_workflows(
     # Migrate local (if in git repo)
     if scope in ["local", "all"] and is_git_repository():
         git_root = get_git_root()
-        old_dir = git_root / ".mcli" / "commands"
-        new_dir = git_root / ".mcli" / "workflows"
+        old_dir = git_root / DirNames.MCLI / "commands"
+        new_dir = git_root / DirNames.MCLI / "workflows"
 
         success, message, migrated, skipped = migrate_directory(old_dir, new_dir, dry_run, force)
 

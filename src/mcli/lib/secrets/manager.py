@@ -12,6 +12,7 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 
 logger = get_logger(__name__)
@@ -26,7 +27,7 @@ class SecretsManager:
         Args:
             secrets_dir: Directory to store secrets. Defaults to ~/.mcli/secrets/
         """
-        self.secrets_dir = secrets_dir or Path.home() / ".mcli" / "secrets"
+        self.secrets_dir = secrets_dir or Path.home() / DirNames.MCLI / "secrets"
         self.secrets_dir.mkdir(parents=True, exist_ok=True)
         self._cipher_suite = self._get_cipher_suite()
 
@@ -111,7 +112,7 @@ class SecretsManager:
             logger.error(f"Failed to decrypt secret '{key}': {e}")
             return None
 
-    def list(self, namespace: Optional[str] = None) -> List[str]:
+    def list(self, namespace: Optional[str] = None) -> list[str]:
         """List all secret keys.
 
         Args:
@@ -157,7 +158,7 @@ class SecretsManager:
 
         return False
 
-    def export_env(self, namespace: Optional[str] = None) -> Dict[str, str]:
+    def export_env(self, namespace: Optional[str] = None) -> dict[str, str]:
         """Export secrets as environment variables.
 
         Args:

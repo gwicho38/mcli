@@ -8,19 +8,21 @@ The actual model command implementation is now in ~/.mcli/workflows/model.json
 import sys
 from pathlib import Path
 
+from mcli.lib.constants.paths import DirNames
+
 # Try to load the model command from the workflow system
 try:
     # Load model command from ~/.mcli/workflows/model.json (new path)
     # Fallback to ~/.mcli/commands/model.json (old path) for backwards compatibility
-    model_json_path = Path.home() / ".mcli" / "workflows" / "model.json"
+    model_json_path = Path.home() / DirNames.MCLI / "workflows" / "model.json"
     if not model_json_path.exists():
-        model_json_path = Path.home() / ".mcli" / "commands" / "model.json"
+        model_json_path = Path.home() / DirNames.MCLI / "commands" / "model.json"
 
     if model_json_path.exists():
         # Load the command from the JSON file
         import json
 
-        with open(model_json_path, "r") as f:
+        with open(model_json_path) as f:
             command_data = json.load(f)
 
         # Execute the code to get the app (model command group)

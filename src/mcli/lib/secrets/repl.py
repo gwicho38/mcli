@@ -11,6 +11,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import WordCompleter
 from prompt_toolkit.history import FileHistory
 
+from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.ui.styling import console, error, info, success, warning
 
@@ -29,7 +30,7 @@ class SecretsREPL:
         self.store = SecretsStore()
         self.running = False
         self.namespace = "default"
-        self.history_file = Path.home() / ".mcli" / "secrets_repl_history"
+        self.history_file = Path.home() / DirNames.MCLI / "secrets_repl_history"
 
         # Commands
         self.commands = {
@@ -103,7 +104,7 @@ class SecretsREPL:
                 error(f"Error: {e}")
                 logger.exception("REPL error")
 
-    def cmd_set(self, args: List[str]):
+    def cmd_set(self, args: list[str]):
         """Set a secret value."""
         if len(args) < 2:
             error("Usage: set <key> <value>")
@@ -118,7 +119,7 @@ class SecretsREPL:
         except Exception as e:
             error(f"Failed to set secret: {e}")
 
-    def cmd_get(self, args: List[str]):
+    def cmd_get(self, args: list[str]):
         """Get a secret value."""
         if len(args) != 1:
             error("Usage: get <key>")
@@ -141,7 +142,7 @@ class SecretsREPL:
         else:
             warning(f"Secret '{key}' not found in namespace '{self.namespace}'")
 
-    def cmd_list(self, args: List[str]):
+    def cmd_list(self, args: list[str]):
         """List all secrets."""
         secrets = self.manager.list(self.namespace if args != ["all"] else None)
 
@@ -152,7 +153,7 @@ class SecretsREPL:
         else:
             info("No secrets found")
 
-    def cmd_delete(self, args: List[str]):
+    def cmd_delete(self, args: list[str]):
         """Delete a secret."""
         if len(args) != 1:
             error("Usage: delete <key>")
@@ -166,7 +167,7 @@ class SecretsREPL:
             else:
                 warning(f"Secret '{key}' not found")
 
-    def cmd_namespace(self, args: List[str]):
+    def cmd_namespace(self, args: list[str]):
         """Switch namespace."""
         if len(args) == 0:
             # List namespaces
@@ -187,7 +188,7 @@ class SecretsREPL:
         else:
             error("Usage: namespace [<name>]")
 
-    def cmd_export(self, args: List[str]):
+    def cmd_export(self, args: list[str]):
         """Export secrets as environment variables."""
         env_vars = self.manager.export_env(self.namespace)
 
@@ -208,7 +209,7 @@ class SecretsREPL:
         else:
             info("No secrets to export")
 
-    def cmd_import(self, args: List[str]):
+    def cmd_import(self, args: list[str]):
         """Import secrets from environment file."""
         if len(args) != 1:
             error("Usage: import <env-file>")
@@ -222,21 +223,21 @@ class SecretsREPL:
         count = self.manager.import_env(env_file, self.namespace)
         success(f"Imported {count} secrets from {env_file}")
 
-    def cmd_push(self, args: List[str]):
+    def cmd_push(self, args: list[str]):
         """Push secrets to git store."""
         message = " ".join(args) if args else None
         self.store.push(self.manager.secrets_dir, message)
 
-    def cmd_pull(self, args: List[str]):
+    def cmd_pull(self, args: list[str]):
         """Pull secrets from git store."""
         self.store.pull(self.manager.secrets_dir)
 
-    def cmd_sync(self, args: List[str]):
+    def cmd_sync(self, args: list[str]):
         """Sync secrets with git store."""
         message = " ".join(args) if args else None
         self.store.sync(self.manager.secrets_dir, message)
 
-    def cmd_status(self, args: List[str]):
+    def cmd_status(self, args: list[str]):
         """Show store status."""
         status = self.store.status()
 
@@ -254,7 +255,7 @@ class SecretsREPL:
             else:
                 console.print("  Remote: [dim]Not configured[/dim]")
 
-    def cmd_help(self, args: List[str]):
+    def cmd_help(self, args: list[str]):
         """Show help information."""
         console.print("[bold]Available Commands:[/bold]\n")
 
@@ -284,7 +285,7 @@ class SecretsREPL:
         console.print("  export file production.env")
         console.print("  import .env.local")
 
-    def cmd_exit(self, args: List[str]):
+    def cmd_exit(self, args: list[str]):
         """Exit the REPL."""
         self.running = False
         console.print("\nGoodbye!")
