@@ -1,0 +1,48 @@
+name: Validate Documentation Links
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'tools/validate_doc_links.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'tools/validate_doc_links.py'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  validate-links:
+    name: Validate Documentation Links
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+
+    - name: Validate internal links
+      run: python tools/validate_doc_links.py README.md docs/
+      continue-on-error: true  # Non-blocking until broken links are fixed
+
+    - name: Validate external links (optional)
+      run: python tools/validate_doc_links.py --external --timeout 15 README.md docs/
+      continue-on-error: true  # External links may timeout or be temporarily unavailable

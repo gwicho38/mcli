@@ -284,7 +284,7 @@ portable: $(WHEEL_CACHE) $(PYTHON_EXEC) ## Build Python executable from wheel
 	@echo "$(CYAN)Building Python executable from wheel...$(RESET)"
 	@mkdir -p $(BINARY_DIR)
 	@mkdir -p $(BUILD_DIR)
-	
+
 	# Copy the Python executable to binary directory
 	@if [ -f "$(PYTHON_EXEC)" ]; then \
 		cp "$(PYTHON_EXEC)" "$(BINARY_DIR)/$(EXECUTABLE_NAME)"; \
@@ -301,10 +301,10 @@ binary: $(WHEEL_CACHE) $(PYTHON_EXEC) ## Build Python binary executable (directo
 	@echo "$(CYAN)Building Python binary executable from wheel...$(RESET)"
 	@mkdir -p $(BINARY_DIR)
 	@mkdir -p $(BUILD_DIR)
-	
+
 	# Create binary directory structure
 	@mkdir -p "$(BINARY_DIR)/$(EXECUTABLE_NAME)"
-	
+
 	# Copy the Python executable to binary directory
 	@if [ -f "$(PYTHON_EXEC)" ]; then \
 		cp "$(PYTHON_EXEC)" "$(BINARY_DIR)/$(EXECUTABLE_NAME)/$(EXECUTABLE_NAME)"; \
@@ -404,6 +404,18 @@ lint-hardcoded-strings: ## Check for hardcoded strings that should be in constan
 	@echo "$(CYAN)Checking for hardcoded strings...$(RESET)"
 	$(PYTHON) tools/lint_hardcoded_strings.py --check-all
 	@echo "$(GREEN)Hardcoded string check completed ✅$(RESET)"
+
+.PHONY: validate-doc-links
+validate-doc-links: ## Validate documentation links (internal only)
+	@echo "$(CYAN)Validating documentation links...$(RESET)"
+	$(PYTHON) tools/validate_doc_links.py README.md docs/
+	@echo "$(GREEN)Documentation link validation completed ✅$(RESET)"
+
+.PHONY: validate-doc-links-external
+validate-doc-links-external: ## Validate all documentation links (including external)
+	@echo "$(CYAN)Validating all documentation links (including external)...$(RESET)"
+	$(PYTHON) tools/validate_doc_links.py --external --timeout 15 README.md docs/
+	@echo "$(GREEN)Documentation link validation completed ✅$(RESET)"
 
 .PHONY: lint-pylint
 lint-pylint: setup ## Run pylint on source code
