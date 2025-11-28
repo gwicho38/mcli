@@ -1,6 +1,6 @@
 [project]
 name = "mcli-framework"
-version = "7.19.10"
+version = "7.19.11"
 description = "Universal script runner with intelligent tab completion. Run any Python/Shell/Jupyter script directly with mcli run ./script.py, or register as versioned workflows for scheduling and sharing."
 readme = "README.md"
 requires-python = ">=3.9"
