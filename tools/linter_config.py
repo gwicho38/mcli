@@ -106,6 +106,10 @@ ALLOWED_PATTERNS = [
     r"# Your command implementation",  # Template comments
     r"# Example",  # Example comments in templates
     r"^\.\n\"\"\"",  # Template starting with docstring
+    # Regex patterns used in validation code
+    r"^\^",  # Starts with ^ (regex anchor)
+    r"\$$",  # Ends with $ (regex anchor)
+    r"\[[a-z]+-[a-z]+\]",  # Character classes like [a-z0-9]
 ]
 
 # File patterns to exclude from checking (glob patterns)
@@ -345,6 +349,33 @@ COMMON_ACCEPTABLE_STRINGS = {
     "Execution time: ",
     "Container ",
     "  RAM: ",
+    # HTTP headers
+    "WWW-Authenticate",
+    "Content-Length",
+    "Content-Type",
+    "Authorization",
+    "Accept",
+    "User-Agent",
+    # Database columns and table names
+    "portfolios.id",
+    "transaction_type_cleaned",
+    # Model names
+    "phi3-mini",
+    "llama3",
+    "gemma",
+    # Command status messages
+    "🎯 Using specified model: ",
+    " script(s) to JSON",
+    "  CID: [bold cyan]",
+    "  [dim]Retrieve with: mcli workflows sync pull ",
+    "[red]✗ Failed to import IPFS sync module: ",
+    "[red]✗ IPFS push failed: ",
+    "Delete command '",
+    "[green]Deleted custom command: ",
+    "[red]Failed to delete command: ",
+    "[red]Command not found: ",
+    "[red]Failed to load command: ",
+    "[red]Command has no code: ",
 }
 
 # Regex pattern for constant-like names (ALL_CAPS)
