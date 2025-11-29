@@ -1514,6 +1514,89 @@ ALLOWED_PATTERNS = [
     r"^Generated JSON:",
     # GB free
     r"^GB free\\\\n$",
+    # Command template docstrings (more patterns for boilerplate code)
+    r'^command\\.\n    """\n    logger',
+    r'^command group\\."""\n    pass',
+    r'^# Your command implementation goes here',
+    r'^command for mcli\\.\n"""\nimport click',
+    r'^command with name:',
+    # Settings/Config labels
+    r"^Settings:\n",
+    r"^MLflow URI:",
+    r"^Database URL:",
+    r"^Configuration file created at ",
+    r"^Configured (DVC remote|settings|options)[ :]",
+    # Daemon patterns
+    r"^daemon\\.pid$",
+    r"^Daemon (metrics|list|is|execution|execute|already)[ -]",
+    # Data patterns
+    r"^data:$",
+    r"^Data (path|not|fetched|loaded|saved|exported)[ :]",
+    r"^Daily report generated:",
+    # Database patterns
+    r"^Database (health|authentication|connection|query|error)[ :]",
+    # DID patterns
+    r"^(DID|did):",
+    # Directory patterns
+    r"^Directory[ :]",
+    r"^Discovering (interactions|commands|functions|modules)[ ]",
+    # Decryption patterns
+    r"^Decryption failed",
+    r"^Decrypted[ :]",
+    # Debug patterns
+    r"^Debug output may help",
+    # Drift patterns
+    r"^Drift (detected|check)[ :]",
+    r"^DRIFT ALERT:",
+    # Downloaded patterns
+    r"^Downloaded[ ]",
+    # disk patterns (lowercase)
+    r"^disk (usage|space)",
+    # Clean/Cache patterns (comprehensive)
+    r"^Clean(ed|ing)?[ ]",
+    r"^Cleanup (task|of)[ :]",
+    r"^clean (watchos|simulator|ios|cache)$",
+    r"^clear (cache|system cache)$",
+    r"^Clear system caches$",
+    r"^Cache (set|get|delete|operation)[ ]",
+    r"^Cached[ :]",
+    # Cell patterns
+    r"^Cell (index|number|output)[ :]",
+    # Command patterns (more specific)
+    r"^Command (store|search|matcher|lock|index|from|failed|execution)[ :]",
+    r"^Commands (in|from)[ ]",
+    r"^commands\\.db$",
+    # CLI patterns
+    r"^CLI (stderr|stdout|output):",
+    # Could not patterns (comprehensive)
+    r"^Could not (sync|make|log|import|check|calculate|find|get|set|connect|load|save|read|write|delete|update|create|parse|validate|execute|run|start|stop)",
+    # CPU patterns
+    r"^CPU( Usage)?:",
+    # Creating patterns
+    r"^Creating (video|command|tunnel|file|directory|table)[ :]",
+    # Connect patterns
+    r"^Connect(ing|ed)?[ ]",
+    r"^Consume messages",
+    # ControlNet
+    r"^ControlNet Models$",
+    # Copied
+    r"^Copied[ :]",
+    # current patterns
+    r"^current (time|path|directory|value)$",
+    # CVaR patterns
+    r"^CVaR (optimization|calculation)[ ]",
+    # Backtest patterns
+    r"^Backtest (Results|completed|started|running)[ -]",
+    # Cannot patterns
+    r"^Cannot (forcibly|find|read|write|create|delete|connect|start|stop|kill)",
+    # Calculated patterns
+    r"^Calculated (statistics|metrics|returns)[ ]",
+    # chat patterns
+    r"^chat\\.(completion|message|response)$",
+    # change/cd patterns
+    r"^(change|cd) to$",
+    # Checked out
+    r"^Checked out (data|version|branch)[ :]",
 ]
 
 # File patterns to exclude from checking (glob patterns)
