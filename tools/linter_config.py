@@ -400,6 +400,27 @@ COMMON_ACCEPTABLE_STRINGS = {
     " is not available",
     ") [",
     "\n# ",
+    # Process/system info patterns
+    "PID: ",
+    "Processing ",
+    "Control ",
+    "Directory does not exist: ",
+    "Execute: ",
+    "Memory: ",
+    "Uptime: ",
+    "   Type: ",
+    "   Memory: ",
+    "   Process ID: ",
+    "Task ",
+    " stocks",
+    "tell application \"",
+    # Version/CLI patterns
+    "--version",
+    # Migration/completion messages
+    "Failed to create space: ",
+    "Failed to select space: ",
+    "✅ Completion installed to ",
+    "Migration failed: ",
 }
 
 # Regex pattern for constant-like names (ALL_CAPS)
