@@ -924,6 +924,247 @@ ALLOWED_PATTERNS = [
     r"^Step $",
     # stdout/stderr format patterns
     r"^(stdout|stderr)> %s$",
+    # API error patterns
+    r"^(Ollama|OpenAI|Anthropic|LLM) (API )?[Ee]rror:",
+    r"^AI (code generation|response) error:",
+    # Code generation patterns
+    r"^(just code|code only)$",
+    # GB/MB patterns with context
+    r"^GB (free|used)\)$",
+    r"^GB\)$",
+    # CPU patterns
+    r"^CPU (usage is|is) (high|low)",
+    # Command test patterns
+    r"^Command test failed:",
+    # Rich markup patterns with numbers
+    r"^[0-9]+\. \[cyan\]",
+    # Percent used pattern
+    r"% used$",
+    # Status/Tags with newline
+    r"^\\n(Tags|Status|Description):",
+    # Rich error patterns
+    r"^\\n\[red\]",
+    # Dim more patterns
+    r"^\\n\[dim\]\.\.\. and ",
+    # Yellow patterns
+    r"^\[yellow\](Found|💡) ",
+    # Screenshot patterns
+    r"^\[cyan\]📸 Screenshot saved to:",
+    # No context available
+    r"^\(No (command|context|data) (context )?available\)$",
+    # Numbered cyan patterns
+    r"^\. \[cyan\]",
+    # Phone/notification patterns
+    r"^📱 You have ",
+    # Test patterns with mcli
+    r"^📋 Test: \[yellow\]mcli ",
+    # Scheduled jobs patterns
+    r" (scheduled jobs|job failures|active jobs)( running)?$",
+    # Memory label
+    r"^💾 Memory:",
+    # Hours suffix
+    r" hours\.$",
+    # Kubernetes/kubectl patterns
+    r"^kubectl (config|--context|apply|get|delete|patch)",
+    r"^helm (install|uninstall|upgrade|list) ",
+    r"^az (acr|aks|login) ",
+    # Namespace patterns
+    r"^Namespace is not set in ",
+    r"^Creating namespace:",
+    # K8s patterns
+    r"^K8s (context|cluster|namespace) ",
+    r"^Cannot (determine|connect) ",
+    # Moving/Retrieving patterns
+    r"^(Moving|Retrieving) (credentials|token|secret) ",
+    # Setting pattern
+    r"^Setting $",
+    # Only dev context pattern
+    r'^Only "dev" context is supported',
+    # No context exists pattern
+    r'^No context exists with the name:',
+    # kubernetes package missing
+    r"^kubernetes package is missing",
+    # Failed to uninstall/install
+    r"^Failed to (uninstall|install) helm",
+    r"^Failed to retrieve token",
+    # YAML template patterns
+    r"^\\n(kind|apiVersion|metadata):",
+    r"^\\ncat <<EOF",
+    r'^{"imagePullSecrets":',
+    # Run command suggestion
+    r"; run `[a-z]+ (setup|init)`",
+    # Suffix patterns
+    r"-(secret|admin|config)$",
+    r" (start|stop|restart)$",
+    r" (patch|apply|delete) serviceaccount",
+    r" helm chart$",
+    # Proceed pattern
+    r"\) and proceed forward\?$",
+    # Context/namespace patterns
+    r"\) & namespace to \(",
+    # Simulator patterns
+    r"^Simulator cleanup (error|completed)",
+    # Shell command patterns
+    r"^(show files in|navigate to|move to|list |go to|cd to|change to|run ) ",
+    r"^Shell command (to execute|error)",
+    r"^shell $",
+    # GB available/usage patterns
+    r"^GB (available|\()$",
+    r"% usage$",
+    # Error handling patterns
+    r"^Error (taking screenshot|handling TextEdit|handling app|clearing caches|directory)",
+    r"^(Current directory|Directory listing) error:",
+    # Security block pattern
+    r"^Command blocked for security",
+    # First N of pattern
+    r"^\\n\(showing first [0-9]+ of ",
+    # Contains/Recommendations patterns
+    r"^\\n📁 Contains:",
+    r"^📋 Recommendations:",
+    # Space freed patterns
+    r"^💾 (Total space|RAM):",
+    r"^🧹 Simulator cleanup completed",
+    # MB/items suffix
+    r" MB of storage$",
+    r" items\)$",
+    # osascript pattern
+    r'^osascript -e \'',
+    # Windows start pattern
+    r'^start "" "',
+    # save front document
+    r"^save front document",
+    # psutil pattern
+    r"^psutil library not available$",
+    # PowerShell patterns
+    r'^powershell -Command "',
+    # pkill pattern
+    r"^pkill -f ",
+    # Permission denied
+    r"^Permission denied accessing:",
+    # gtk-launch pattern
+    r"^gtk-launch ",
+    # Get system info patterns
+    r"^Get (system information|memory usage|disk usage)$",
+    # Flush DNS
+    r"^Flush DNS cache$",
+    # Disk patterns
+    r"^(Critical: )?Disk ",
+    # Could not patterns
+    r"^Could not (open|clear|clean) ",
+    # Clear patterns
+    r"^Clear (old temp files|)$",
+    r"^Cleaned ",
+    # Changed directory
+    r"^Changed to directory:",
+    # Cleanup recommended
+    r"% full - cleanup recommended$",
+    # AppleScript tell patterns
+    r'^\\n\s+tell application "',
+    r"^\\n\s+end tell",
+    r"^\(path to desktop as string\)",
+    # String: osascript nested pattern (more specific)
+    r'^\s+String: "osascript',
+    # Environment validation
+    r"^Environment must be one of ",
+    r"^Ensured directory exists:",
+    # Validation patterns
+    r"^\\nValidation (working|failed):",
+    # Configuration labels
+    r" Configuration:$",
+    r"^\s+(Redis|Model|Database|API|Server|Socket) (URL|Dir|Port|Host):",
+    # Config help text patterns
+    r"^(SSL|Token|Webhook|Redis|Pool|Model|Prometheus|Worker) [a-z]+",
+    r"^(Number of|Requests per) ",
+    r"^[A-Z][a-z]+ (API key|directory|path|timeout|port|host|password)$",
+    # Secret placeholder
+    r"^your-secret-key$",
+    # Command discovery patterns
+    r"^(Simple )?[Cc]ommand (discovery|initialization) ",
+    r"^Rust extensions: ",
+    # Request failed patterns
+    r"^(OpenAI|Anthropic|Local|AI) (request|response) failed:",
+    r"^Message processing failed:",
+    # Matches pattern
+    r"^matches $",
+    # Initialized with
+    r"^Initialized with ",
+    # Failed to initialize
+    r"^Failed to initialize ",
+    # Daemon/Discovery check
+    r"^(Daemon|Command) (check|discovery) failed:",
+    # Command Knowledge patterns
+    r"^\\n🧠 Command Knowledge:",
+    # mcli command patterns
+    r"^\. \*\*mcli ",
+    # Count suffixes
+    r", \.\.\. \(\+$",
+    r" more\)$",
+    r" (messages|commands|items|files) (with command context|indexed|available)$",
+    r" (category|categories)$",
+    # Relevance/Category/Example/Score labels
+    r"^\s+(Relevance|Example|Category|Score):",
+    r"^\s+\(Score:",
+    # Name/didn't find patterns
+    r'^\s+String: "(name|I didn\'t find)',
+    r'^\\n🔍 \*\*Commands matching',
+    # Help suggestion pattern
+    r"^You can get more help with:",
+    # Show status pattern
+    r"^Show (comprehensive|system|full) status",
+    # State pattern
+    r"^State $",
+    # Started patterns
+    r"^Started (process|command|async|file watcher) ",
+    # SSE connection
+    r"^SSE connection error:",
+    # Slow task
+    r"^Slow task step:",
+    # Slack alert
+    r"^SLACK ALERT:",
+    # Skipping patterns
+    r"^Skipping (test|markdown|duplicate|disabled|invalid) ",
+    # Simulator patterns
+    r"^simulator data$",
+    r"^Simulated (market|trade|order) ",
+    # Simple hash
+    r"^Simple hash embedding failed:",
+    # Show files
+    r"^show files$",
+    # Shell linting
+    r"^Shell (linting|command) ",
+    # SHA patterns
+    r"^sha[0-9]+:",
+    r"^SHA[0-9]+-[0-9]+\(stdin\)=",
+    # setup.py
+    r"^setup\.py$",
+    # Settings patterns
+    r"^Settings:\\n",
+    # set-url pattern
+    r"^set-url$",
+    # Session patterns
+    r"^Session $",
+    # Serving on
+    r"^Serving on ",
+    # Sentence transformers
+    r"^Sentence transformers embedding failed:",
+    # Sent stop signal
+    r"^Sent stop signal to ",
+    # Selecting from
+    r"^Selecting from ",
+    # Secrets Store patterns
+    r"^Secrets (Store|store|pulled) ",
+    # Screen capture
+    r"^screen capture$",
+    # Save anyway
+    r"^Save anyway\?$",
+    # Status suffixes
+    r"^s\.\.\.$",
+    r"^s, Status: $",
+    # Rust patterns
+    r"^Rust (TF-IDF|file watcher|extensions|command matcher) ",
+    r"^Rust extensions (not available|loaded successfully)",
+    # Runtime tracing
+    r"^Runtime tracing enabled",
 ]
 
 # File patterns to exclude from checking (glob patterns)
