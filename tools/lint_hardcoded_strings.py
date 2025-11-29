@@ -50,7 +50,7 @@ class HardcodedStringVisitor(ast.NodeVisitor):
         if (
             node.body
             and isinstance(node.body[0], ast.Expr)
-            and isinstance(node.body[0].value, (ast.Str, ast.Constant))
+            and isinstance(node.body[0].value, ast.Constant)
         ):
             # Skip module docstring
             self.in_docstring = True
@@ -67,7 +67,7 @@ class HardcodedStringVisitor(ast.NodeVisitor):
         if (
             node.body
             and isinstance(node.body[0], ast.Expr)
-            and isinstance(node.body[0].value, (ast.Str, ast.Constant))
+            and isinstance(node.body[0].value, ast.Constant)
         ):
             # Skip function docstring
             self.in_docstring = True
@@ -84,7 +84,7 @@ class HardcodedStringVisitor(ast.NodeVisitor):
         if (
             node.body
             and isinstance(node.body[0], ast.Expr)
-            and isinstance(node.body[0].value, (ast.Str, ast.Constant))
+            and isinstance(node.body[0].value, ast.Constant)
         ):
             # Skip class docstring
             self.in_docstring = True
@@ -131,11 +131,6 @@ class HardcodedStringVisitor(ast.NodeVisitor):
         """Visit constant node (Python 3.8+)."""
         if isinstance(node.value, str):
             self._check_string(node.value, node.lineno, node.col_offset)
-        self.generic_visit(node)
-
-    def visit_Str(self, node: ast.Str) -> None:
-        """Visit string node (Python 3.7 and earlier)."""
-        self._check_string(node.s, node.lineno, node.col_offset)
         self.generic_visit(node)
 
     def _check_string(self, string: str, lineno: int, col_offset: int) -> None:
@@ -190,12 +185,9 @@ class HardcodedStringVisitor(ast.NodeVisitor):
         Check the literal parts of f-strings for hardcoded strings.
         """
         for value in node.values:
-            # Check literal parts of f-strings
+            # Check literal parts of f-strings (Python 3.8+ uses ast.Constant)
             if isinstance(value, ast.Constant) and isinstance(value.value, str):
                 self._check_string(value.value, value.lineno, value.col_offset)
-            elif isinstance(value, ast.Str):
-                # Python 3.7 compatibility
-                self._check_string(value.s, value.lineno, value.col_offset)
 
         self.generic_visit(node)
 
