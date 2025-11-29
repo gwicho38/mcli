@@ -1165,6 +1165,63 @@ ALLOWED_PATTERNS = [
     r"^Rust extensions (not available|loaded successfully)",
     # Runtime tracing
     r"^Runtime tracing enabled",
+    # Running patterns
+    r"^Running (experiment|DVC|batch|backtest|test|pipeline) ",
+    r"^Runnable workflows for ",
+    r"^Run make ",
+    r"^run $",
+    # Risk patterns
+    r"^Risk(-free rate| parity| check) ",
+    # Retrieving patterns
+    r"^Retrieving from ",
+    r"^Retrieved from ",
+    # Resuming/Results patterns
+    r"^Resuming (training|job|task) from:",
+    r"^Results saved to:",
+    r"^Restored to state ",
+    # Response/Request patterns
+    r"^Response $",
+    r"^Request $",
+    # Resource not found
+    r"^Resource not found$",
+    # Report patterns
+    r"^Report (saved|generation) ",
+    # Removing patterns
+    r"^Removing (orphaned|model|old|cached) ",
+    r"^remove $",
+    # Registry patterns
+    r"^Registry (upload|download) failed:",
+    # Registering/Registered patterns
+    r"^Registering (single|API|command) ",
+    r"^Registered (shell|npm|notebook|model|make|handler|custom|command|API) ",
+    r"^Registered $",
+    r"^register_command_as_api called",
+    r"^Register a new user\.$",
+    # Refresh patterns
+    r"^Refresh (access token|session|cache)",
+    # Reducing patterns
+    r"^Reducing (flicker|memory|cpu)",
+    # Redis URL
+    r"^Redis URL: $",
+    # Recursively patterns
+    r"^Recursively (processing|scanning) ",
+    # Recreating patterns
+    r"^Recreating (video|audio|image) ",
+    # Config/model files
+    r"^recommendation_config\.joblib$",
+    r"^pytorch_model\.bin$",
+    # rc format pattern
+    r"^rc\s+> %s$",
+    # Rate limit
+    r"^Rate limit exceeded for ",
+    # ram usage
+    r"^ram usage$",
+    # RAG system
+    r"^RAG system initialized",
+    # Query required
+    r"^Query is required$",
+    # PyTorch pattern
+    r"^PyTorch not available$",
 ]
 
 # File patterns to exclude from checking (glob patterns)
