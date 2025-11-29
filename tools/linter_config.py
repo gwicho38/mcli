@@ -116,6 +116,73 @@ ALLOWED_PATTERNS = [
     r"^\[green\][✅❌⚠️]",  # Rich markup with emoji
     r"^\[yellow\][✅❌⚠️]",  # Rich markup with emoji
     r"^\[cyan\][✅❌⚠️📦🔍ℹ️]",  # Rich markup with emoji
+    # Rich markup with common UI words (process, started, downloading, etc.)
+    r"^\[green\]Process ",
+    r"^\[green\]Started ",
+    r"^\[green\]Stopped ",
+    r"^\[green\]Running ",
+    r"^\[green\]Loaded ",
+    r"^\[green\]Saved ",
+    r"^\[green\]Created ",
+    r"^\[green\]Connected ",
+    r"^\[yellow\]Downloading ",
+    r"^\[yellow\]Loading ",
+    r"^\[yellow\]Starting ",
+    r"^\[yellow\]Stopping ",
+    r"^\[yellow\]Warning",
+    r"^\[red\]Failed ",
+    r"^\[red\]Stopped ",
+    r"^\[red\]Error ",
+    r"^\[cyan\]Info",
+    r"^\[cyan\]Current",
+    r"^\[cyan\]Checking",
+    # Label patterns (ending with colon and space)
+    r"^[A-Z][a-z]+ ?[A-Z]?[a-z]*: $",  # e.g., "Working Dir: ", "CPU: ", "Status: "
+    r"^\\n[A-Z][a-z]+: $",  # e.g., "\nDescription: ", "\nTags: "
+    r"^  [A-Z][a-z]+: $",  # Indented labels
+    # Install/setup command patterns
+    r"^  (pip|brew|npm|apt|yum|dnf) install ",
+    r"^  (uv|cargo|go) (install|add|get) ",
+    # Natural language command patterns (for chat/AI)
+    r"^(create|new|make|add|build|generate) (a |the )?(command|task|job|process)",
+    r"^(delete|remove|update|edit|run|execute|start|stop) (a |the )?(command|task|job|process)",
+    # Common prefix patterns for UI
+    r"^(cmd|shell|task|job|process|container)-",
+    # Italic/formatting prefixes
+    r"^  \[italic\]",
+    r"^\[italic\]",
+    # Cloud provider patterns
+    r"^(Azure|Aws|Gcp|AWS|GCP) secrets have been",
+    r"^Successfully revoked provisioned (Azure|Aws|Gcp|AWS|GCP)",
+    r"^Deleted locally persisted secrets",
+    r"secrets have been persisted into:",
+    # Common auth patterns
+    r"^Basic ",
+    r"^Bearer ",
+    r"^mcli_key ",
+    # Common file extensions and paths
+    r"^(aws|azure|gcp|config|credentials|settings)\.(json|yaml|toml)$",
+    # Logger/debug patterns
+    r"^logger\.(info|debug|warning|error|critical)",
+    # Common action patterns
+    r"^(File|Directory|Path|Key|Secret|Token) does not exist",
+    r"^(File|Directory|Path|Key|Secret|Token) already exists",
+    r"^Private key does not exist",
+    # Allowed/available patterns
+    r"^Allowed (actions|options|values) are:",
+    r"^Available (commands|options|methods) are:",
+    # Logging/tracing patterns
+    r"tracing (enabled|disabled)",
+    r"^(Python interpreter|System process) tracing",
+    r"^(Registered|Unregistered) process ID",
+    r"for monitoring$",
+    r"^mcli\.(out|log|err)$",
+    # Connection/service patterns
+    r"^(Connected|Disconnected|Connecting) (to|from)",
+    r"^(Service|Server|Client|Daemon) (started|stopped|running|failed)",
+    # Use/Usage patterns
+    r"^Use ['\"](logs|ps|stop|start|inspect|kill)",
+    r"to (view|see|show|check) (output|status|logs|info)",
 ]
 
 # File patterns to exclude from checking (glob patterns)
