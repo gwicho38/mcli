@@ -5,6 +5,7 @@ Provides system control capabilities directly within chat conversations
 
 from typing import Any, Dict
 
+from mcli.lib.constants import SystemIntegrationMessages as SysMsg
 from mcli.lib.logger.logger import get_logger
 
 from .system_controller import (
@@ -35,147 +36,112 @@ class ChatSystemIntegration:
         self.system_functions = {
             "open_textedit_and_write": {
                 "function": open_textedit_and_write,
-                "description": "Open TextEdit and write specified text",
+                "description": SysMsg.DESC_TEXTEDIT,
                 "parameters": {
-                    "text": "Text to write in TextEdit",
-                    "filename": "Optional filename to save (will save to Desktop)",
+                    "text": SysMsg.PARAM_TEXT,
+                    "filename": SysMsg.PARAM_FILENAME,
                 },
-                "examples": [
-                    "Open TextEdit and write 'Hello, World!'",
-                    "Write 'My notes' in TextEdit and save as 'notes.txt'",
-                ],
+                "examples": SysMsg.EXAMPLES_TEXTEDIT,
             },
             "control_application": {
                 "function": control_app,
-                "description": "Control system applications (open, close, interact)",
+                "description": SysMsg.DESC_CONTROL_APP,
                 "parameters": {
-                    "app_name": "Name of the application (e.g., 'TextEdit', 'Calculator')",
-                    "action": "Action to perform (open, close, new_document, write_text)",
-                    "**kwargs": "Additional parameters like text, filename",
+                    "app_name": SysMsg.PARAM_APP_NAME,
+                    "action": SysMsg.PARAM_ACTION,
+                    "**kwargs": SysMsg.PARAM_KWARGS,
                 },
-                "examples": ["Open Calculator", "Close TextEdit", "Open new document in TextEdit"],
+                "examples": SysMsg.EXAMPLES_CONTROL_APP,
             },
             "execute_command": {
                 "function": execute_system_command,
-                "description": "Execute shell/terminal commands",
+                "description": SysMsg.DESC_EXECUTE_COMMAND,
                 "parameters": {
-                    "command": "Shell command to execute",
-                    "description": "Optional description of what the command does",
+                    "command": SysMsg.PARAM_COMMAND,
+                    "description": SysMsg.PARAM_COMMAND_DESC,
                 },
-                "examples": [
-                    "List files in current directory",
-                    "Check system uptime",
-                    "Create a new folder",
-                ],
+                "examples": SysMsg.EXAMPLES_EXECUTE_COMMAND,
             },
             "take_screenshot": {
                 "function": take_screenshot,
-                "description": "Take a screenshot and save to Desktop",
+                "description": SysMsg.DESC_TAKE_SCREENSHOT,
                 "parameters": {
-                    "filename": "Optional filename (will auto-generate if not provided)"
+                    "filename": SysMsg.PARAM_SCREENSHOT_FN,
                 },
-                "examples": ["Take a screenshot", "Take screenshot and save as 'my_screen.png'"],
+                "examples": SysMsg.EXAMPLES_SCREENSHOT,
             },
             "open_file_or_url": {
                 "function": open_file_or_url,
-                "description": "Open files or URLs with default system application",
-                "parameters": {"path_or_url": "File path or URL to open"},
-                "examples": [
-                    "Open https://google.com",
-                    "Open ~/Documents/file.txt",
-                    "Open current directory in Finder",
-                ],
+                "description": SysMsg.DESC_OPEN_FILE_URL,
+                "parameters": {"path_or_url": SysMsg.PARAM_PATH_OR_URL},
+                "examples": SysMsg.EXAMPLES_OPEN_FILE_URL,
             },
             "get_system_info": {
                 "function": self.system_controller.get_system_info,
-                "description": "Get comprehensive system information (CPU, memory, disk, etc.)",
+                "description": SysMsg.DESC_SYSTEM_INFO,
                 "parameters": {},
-                "examples": [
-                    "What is my system information?",
-                    "Show system specs",
-                    "How much RAM do I have?",
-                ],
+                "examples": SysMsg.EXAMPLES_SYSTEM_INFO,
             },
             "get_system_time": {
                 "function": self.system_controller.get_system_time,
-                "description": "Get current system time and date",
+                "description": SysMsg.DESC_SYSTEM_TIME,
                 "parameters": {},
-                "examples": [
-                    "What time is it?",
-                    "What is the current time?",
-                    "Show me the date and time",
-                ],
+                "examples": SysMsg.EXAMPLES_SYSTEM_TIME,
             },
             "get_memory_usage": {
                 "function": self.system_controller.get_memory_usage,
-                "description": "Get detailed memory usage information",
+                "description": SysMsg.DESC_MEMORY_USAGE,
                 "parameters": {},
-                "examples": ["How much memory am I using?", "Show memory usage", "Check RAM usage"],
+                "examples": SysMsg.EXAMPLES_MEMORY_USAGE,
             },
             "get_disk_usage": {
                 "function": self.system_controller.get_disk_usage,
-                "description": "Get disk space and usage information",
+                "description": SysMsg.DESC_DISK_USAGE,
                 "parameters": {},
-                "examples": [
-                    "How much disk space do I have?",
-                    "Show disk usage",
-                    "Check storage space",
-                ],
+                "examples": SysMsg.EXAMPLES_DISK_USAGE,
             },
             "clear_system_caches": {
                 "function": self.system_controller.clear_system_caches,
-                "description": "Clear system caches and temporary files",
+                "description": SysMsg.DESC_CLEAR_CACHES,
                 "parameters": {},
-                "examples": ["Clear system caches", "Clean up temporary files", "Free up space"],
+                "examples": SysMsg.EXAMPLES_CLEAR_CACHES,
             },
             "change_directory": {
                 "function": change_directory,
-                "description": "Navigate to a directory",
-                "parameters": {"path": "Directory path to navigate to"},
-                "examples": [
-                    "Navigate to /System/Volumes/Data",
-                    "Go to ~/Documents",
-                    "Change to /tmp",
-                ],
+                "description": SysMsg.DESC_CHANGE_DIR,
+                "parameters": {"path": SysMsg.PARAM_DIR_PATH},
+                "examples": SysMsg.EXAMPLES_CHANGE_DIR,
             },
             "list_directory": {
                 "function": list_directory,
-                "description": "List contents of a directory",
+                "description": SysMsg.DESC_LIST_DIR,
                 "parameters": {
-                    "path": "Directory path to list (optional, defaults to current)",
-                    "show_hidden": "Show hidden files (optional)",
-                    "detailed": "Show detailed file information (optional)",
+                    "path": SysMsg.PARAM_LIST_PATH,
+                    "show_hidden": SysMsg.PARAM_SHOW_HIDDEN,
+                    "detailed": SysMsg.PARAM_DETAILED,
                 },
-                "examples": [
-                    "List current directory",
-                    "Show files in /System/Volumes/Data",
-                    "List all files including hidden ones",
-                ],
+                "examples": SysMsg.EXAMPLES_LIST_DIR,
             },
             "clean_simulator_data": {
                 "function": clean_simulator_data,
-                "description": "Clean iOS/watchOS simulator cache and temporary data",
+                "description": SysMsg.DESC_CLEAN_SIMULATOR,
                 "parameters": {},
-                "examples": [
-                    "Clean simulator data",
-                    "Remove iOS simulator caches",
-                    "Free up simulator storage",
-                ],
+                "examples": SysMsg.EXAMPLES_CLEAN_SIMULATOR,
             },
             "execute_shell_command": {
                 "function": execute_shell_command,
-                "description": "Execute shell commands with full terminal access",
+                "description": SysMsg.DESC_SHELL_COMMAND,
                 "parameters": {
-                    "command": "Shell command to execute",
-                    "working_directory": "Directory to run command in (optional)",
+                    "command": SysMsg.PARAM_COMMAND,
+                    "working_directory": SysMsg.PARAM_WORKING_DIR,
                 },
-                "examples": ["Run ls -la", "Execute find command", "Run custom shell scripts"],
+                "examples": SysMsg.EXAMPLES_SHELL_COMMAND,
             },
             "get_current_directory": {
                 "function": get_current_directory,
-                "description": "Get current working directory",
+                "description": SysMsg.DESC_CURRENT_DIR,
                 "parameters": {},
-                "examples": ["Where am I?", "Show current directory", "What's my current path?"],
+                "examples": SysMsg.EXAMPLES_CURRENT_DIR,
             },
         }
 
@@ -188,8 +154,8 @@ class ChatSystemIntegration:
         if not self.enabled:
             return {
                 "success": False,
-                "error": "System control is disabled",
-                "suggestion": "Enable system control to use this feature",
+                "error": SysMsg.SYSTEM_CONTROL_DISABLED,
+                "suggestion": SysMsg.ENABLE_SYSTEM_CONTROL,
             }
 
         # Parse the request and determine action
@@ -317,9 +283,9 @@ class ChatSystemIntegration:
         else:
             return {
                 "success": False,
-                "error": "Could not understand system request",
+                "error": SysMsg.COULD_NOT_UNDERSTAND_REQUEST,
                 "available_functions": list(self.system_functions.keys()),
-                "suggestion": "Try: 'Open TextEdit and write Hello World' or 'Take a screenshot'",
+                "suggestion": SysMsg.TRY_TEXTEDIT_EXAMPLE,
             }
 
     def _handle_textedit_request(self, request: str) -> Dict[str, Any]:
@@ -358,9 +324,9 @@ class ChatSystemIntegration:
             result = open_textedit_and_write(text, filename)
 
             if result["success"]:
-                message = f"✅ Opened TextEdit and wrote: '{text}'"
+                message = SysMsg.TEXTEDIT_SUCCESS.format(text=text)
                 if filename:
-                    message += f" (saved as {filename})"
+                    message += SysMsg.TEXTEDIT_SAVED.format(filename=filename)
                 result["message"] = message
 
             return result
@@ -368,7 +334,7 @@ class ChatSystemIntegration:
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Error handling TextEdit request: {e}",
+                "error": SysMsg.ERROR_TEXTEDIT.format(error=e),
                 "request": request,
             }
 
@@ -411,14 +377,16 @@ class ChatSystemIntegration:
             result = control_app(app_name, action)
 
             if result["success"]:
-                result["message"] = f"✅ {action.title()} {app_name}"
+                result["message"] = SysMsg.APP_CONTROL_SUCCESS.format(
+                    action=action.title(), app_name=app_name
+                )
 
             return result
 
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Error handling app control request: {e}",
+                "error": SysMsg.ERROR_APP_CONTROL.format(error=e),
                 "request": request,
             }
 
@@ -442,12 +410,16 @@ class ChatSystemIntegration:
 
             if result["success"]:
                 path = result.get("screenshot_path", "Desktop")
-                result["message"] = f"✅ Screenshot saved to: {path}"
+                result["message"] = SysMsg.SCREENSHOT_SUCCESS.format(path=path)
 
             return result
 
         except Exception as e:
-            return {"success": False, "error": f"Error taking screenshot: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_SCREENSHOT.format(error=e),
+                "request": request,
+            }
 
     def _handle_open_request(self, request: str) -> Dict[str, Any]:
         """Handle file/URL opening requests"""
@@ -470,19 +442,23 @@ class ChatSystemIntegration:
                 else:
                     return {
                         "success": False,
-                        "error": "Could not determine what to open",
-                        "suggestion": "Specify a URL (like https://google.com) or file path",
+                        "error": SysMsg.COULD_NOT_DETERMINE_OPEN,
+                        "suggestion": SysMsg.SPECIFY_URL_OR_PATH,
                     }
 
             result = open_file_or_url(path_or_url)
 
             if result["success"]:
-                result["message"] = f"✅ Opened: {path_or_url}"
+                result["message"] = SysMsg.OPENED_SUCCESS.format(path=path_or_url)
 
             return result
 
         except Exception as e:
-            return {"success": False, "error": f"Error opening file/URL: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_OPEN.format(error=e),
+                "request": request,
+            }
 
     def _handle_command_request(self, request: str) -> Dict[str, Any]:
         """Handle command execution requests"""
@@ -502,8 +478,8 @@ class ChatSystemIntegration:
             if not command:
                 return {
                     "success": False,
-                    "error": "Could not extract command to execute",
-                    "suggestion": "Try: 'Run ls' or 'Execute date'",
+                    "error": SysMsg.COULD_NOT_EXTRACT_COMMAND,
+                    "suggestion": SysMsg.TRY_RUN_EXAMPLE,
                 }
 
             # Basic security check (you'd want more comprehensive checks)
@@ -511,19 +487,23 @@ class ChatSystemIntegration:
             if any(dangerous in command.lower() for dangerous in dangerous_commands):
                 return {
                     "success": False,
-                    "error": "Command blocked for security reasons",
+                    "error": SysMsg.COMMAND_BLOCKED_SECURITY,
                     "command": command,
                 }
 
             result = execute_system_command(command, f"User requested: {command}")
 
             if result["success"]:
-                result["message"] = f"✅ Executed: {command}"
+                result["message"] = SysMsg.EXECUTED_SUCCESS.format(command=command)
 
             return result
 
         except Exception as e:
-            return {"success": False, "error": f"Error executing command: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_COMMAND.format(error=e),
+                "request": request,
+            }
 
     def _handle_system_time_request(self, request: str) -> Dict[str, Any]:
         """Handle system time requests"""
@@ -532,8 +512,8 @@ class ChatSystemIntegration:
 
             if result["success"]:
                 time_data = result["data"]
-                result["message"] = (
-                    f"⏰ Current time: {time_data['current_time']} ({time_data['timezone'][0]})"
+                result["message"] = SysMsg.SYSTEM_TIME_FMT.format(
+                    time=time_data["current_time"], timezone=time_data["timezone"][0]
                 )
 
             return result
@@ -541,7 +521,7 @@ class ChatSystemIntegration:
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Error getting system time: {e}",
+                "error": SysMsg.ERROR_SYSTEM_TIME.format(error=e),
                 "request": request,
             }
 
@@ -553,10 +533,19 @@ class ChatSystemIntegration:
             if result["success"]:
                 info_data = result["data"]
                 summary = [
-                    f"💻 System: {info_data['system']} {info_data['machine']}",
-                    f"🧠 CPU: {info_data['cpu']['logical_cores']} cores, {info_data['cpu']['cpu_usage_percent']}% usage",
-                    f"💾 RAM: {info_data['memory']['used_gb']:.1f}GB used / {info_data['memory']['total_gb']:.1f}GB total ({info_data['memory']['usage_percent']}%)",
-                    f"⏰ Uptime: {info_data['uptime_hours']:.1f} hours",
+                    SysMsg.SYSTEM_SUMMARY_SYSTEM.format(
+                        system=info_data["system"], machine=info_data["machine"]
+                    ),
+                    SysMsg.SYSTEM_SUMMARY_CPU.format(
+                        cores=info_data["cpu"]["logical_cores"],
+                        usage=info_data["cpu"]["cpu_usage_percent"],
+                    ),
+                    SysMsg.SYSTEM_SUMMARY_RAM.format(
+                        used=info_data["memory"]["used_gb"],
+                        total=info_data["memory"]["total_gb"],
+                        percent=info_data["memory"]["usage_percent"],
+                    ),
+                    SysMsg.SYSTEM_SUMMARY_UPTIME.format(hours=info_data["uptime_hours"]),
                 ]
                 result["message"] = "\n".join(summary)
 
@@ -565,7 +554,7 @@ class ChatSystemIntegration:
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Error getting system information: {e}",
+                "error": SysMsg.ERROR_SYSTEM_INFO.format(error=e),
                 "request": request,
             }
 
@@ -575,7 +564,7 @@ class ChatSystemIntegration:
             # Use shell command to get hardware information
             import subprocess
 
-            summary = ["🔌 Connected Hardware Devices:"]
+            summary = [SysMsg.HARDWARE_HEADER]
 
             try:
                 # Get USB devices
@@ -605,9 +594,9 @@ class ChatSystemIntegration:
                                     usb_devices.append(device_name)
 
                     if usb_devices:
-                        summary.append("💾 USB Devices:")
+                        summary.append(SysMsg.USB_DEVICES_HEADER)
                         for device in usb_devices[:8]:  # Limit to 8 devices
-                            summary.append(f"  • {device}")
+                            summary.append(SysMsg.DEVICE_ITEM.format(name=device))
 
             except Exception:
                 pass
@@ -627,9 +616,9 @@ class ChatSystemIntegration:
                                 interfaces.append(interface_name)
 
                     if interfaces:
-                        summary.append("🌐 Network Interfaces:")
+                        summary.append(SysMsg.NETWORK_INTERFACES_HEADER)
                         for interface in interfaces[:6]:  # Limit to 6 interfaces
-                            summary.append(f"  • {interface}")
+                            summary.append(SysMsg.DEVICE_ITEM.format(name=interface))
 
             except Exception:
                 pass
@@ -655,16 +644,16 @@ class ChatSystemIntegration:
                                 audio_devices.append(device_name)
 
                     if audio_devices:
-                        summary.append("🔊 Audio Devices:")
+                        summary.append(SysMsg.AUDIO_DEVICES_HEADER)
                         for device in audio_devices[:4]:  # Limit to 4 devices
-                            summary.append(f"  • {device}")
+                            summary.append(SysMsg.DEVICE_ITEM.format(name=device))
 
             except Exception:
                 pass
 
             if len(summary) == 1:  # Only has header
-                summary.append("ℹ️  No specific hardware devices detected via system profiler")
-                summary.append("💡 Try: 'system info' for general hardware information")
+                summary.append(SysMsg.NO_HARDWARE_DETECTED)
+                summary.append(SysMsg.HARDWARE_HINT)
 
             return {
                 "success": True,
@@ -675,8 +664,8 @@ class ChatSystemIntegration:
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Error getting hardware devices: {e}",
-                "suggestion": "Try 'system info' for general hardware information",
+                "error": SysMsg.ERROR_HARDWARE_DEVICES.format(error=e),
+                "suggestion": SysMsg.TRY_SYSTEM_INFO,
                 "request": request,
             }
 
@@ -691,17 +680,25 @@ class ChatSystemIntegration:
                 swap = memory_data["swap_memory"]
 
                 summary = [
-                    "💾 Memory Usage:",
-                    f"  RAM: {vm['used_gb']:.1f}GB used / {vm['total_gb']:.1f}GB total ({vm['usage_percent']}%)",
-                    f"  Available: {vm['available_gb']:.1f}GB",
-                    f"  Swap: {swap['used_gb']:.1f}GB used / {swap['total_gb']:.1f}GB total ({swap['usage_percent']}%)",
+                    SysMsg.MEMORY_HEADER,
+                    SysMsg.MEMORY_RAM_FMT.format(
+                        used=vm["used_gb"],
+                        total=vm["total_gb"],
+                        percent=vm["usage_percent"],
+                    ),
+                    SysMsg.MEMORY_AVAILABLE_FMT.format(available=vm["available_gb"]),
+                    SysMsg.MEMORY_SWAP_FMT.format(
+                        used=swap["used_gb"],
+                        total=swap["total_gb"],
+                        percent=swap["usage_percent"],
+                    ),
                 ]
 
                 # Add recommendations if any
                 if memory_data["recommendations"]:
-                    summary.append("📋 Recommendations:")
+                    summary.append(SysMsg.RECOMMENDATIONS_HEADER)
                     for rec in memory_data["recommendations"]:
-                        summary.append(f"  • {rec}")
+                        summary.append(SysMsg.RECOMMENDATION_ITEM.format(rec=rec))
 
                 result["message"] = "\n".join(summary)
 
@@ -710,7 +707,7 @@ class ChatSystemIntegration:
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Error getting memory usage: {e}",
+                "error": SysMsg.ERROR_MEMORY.format(error=e),
                 "request": request,
             }
 
@@ -722,37 +719,50 @@ class ChatSystemIntegration:
             if result["success"]:
                 disk_data = result["data"]
 
-                summary = ["💽 Disk Usage:"]
+                summary = [SysMsg.DISK_HEADER]
 
                 # Show main disk first
                 if disk_data["total_disk_gb"] > 0:
                     usage_pct = (disk_data["total_used_gb"] / disk_data["total_disk_gb"]) * 100
                     summary.append(
-                        f"  Main: {disk_data['total_used_gb']:.1f}GB used / {disk_data['total_disk_gb']:.1f}GB total ({usage_pct:.1f}%)"
+                        SysMsg.DISK_MAIN_FMT.format(
+                            used=disk_data["total_used_gb"],
+                            total=disk_data["total_disk_gb"],
+                            percent=usage_pct,
+                        )
                     )
-                    summary.append(f"  Free: {disk_data['total_free_gb']:.1f}GB available")
+                    summary.append(SysMsg.DISK_FREE_FMT.format(free=disk_data["total_free_gb"]))
 
                 # Show other partitions
                 if len(disk_data["partitions"]) > 1:
-                    summary.append("  Other partitions:")
+                    summary.append(SysMsg.DISK_OTHER_HEADER)
                     for partition in disk_data["partitions"]:
                         if partition["mountpoint"] not in ["/", "C:\\"]:
                             summary.append(
-                                f"    {partition['mountpoint']}: {partition['used_gb']:.1f}GB / {partition['total_gb']:.1f}GB ({partition['usage_percent']}%)"
+                                SysMsg.DISK_PARTITION_FMT.format(
+                                    mount=partition["mountpoint"],
+                                    used=partition["used_gb"],
+                                    total=partition["total_gb"],
+                                    percent=partition["usage_percent"],
+                                )
                             )
 
                 # Add recommendations if any
                 if disk_data["recommendations"]:
-                    summary.append("📋 Recommendations:")
+                    summary.append(SysMsg.RECOMMENDATIONS_HEADER)
                     for rec in disk_data["recommendations"]:
-                        summary.append(f"  • {rec}")
+                        summary.append(SysMsg.RECOMMENDATION_ITEM.format(rec=rec))
 
                 result["message"] = "\n".join(summary)
 
             return result
 
         except Exception as e:
-            return {"success": False, "error": f"Error getting disk usage: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_DISK.format(error=e),
+                "request": request,
+            }
 
     def _handle_cache_clear_request(self, request: str) -> Dict[str, Any]:
         """Handle cache clearing requests"""
@@ -762,23 +772,27 @@ class ChatSystemIntegration:
             if result["success"]:
                 cache_data = result["data"]
 
-                summary = ["🧹 Cache Cleanup Results:"]
+                summary = [SysMsg.CACHE_CLEANUP_HEADER]
 
                 if cache_data["cleared_items"]:
                     for item in cache_data["cleared_items"]:
-                        summary.append(f"  ✅ {item}")
+                        summary.append(SysMsg.CACHE_ITEM_SUCCESS.format(item=item))
                 else:
-                    summary.append("  ℹ️ No cache items found to clear")
+                    summary.append(SysMsg.NO_CACHE_ITEMS)
 
                 if cache_data["total_freed_mb"] > 0:
-                    summary.append(f"💾 Total space freed: {cache_data['total_freed_mb']:.1f} MB")
+                    summary.append(SysMsg.TOTAL_SPACE_FREED.format(mb=cache_data["total_freed_mb"]))
 
                 result["message"] = "\n".join(summary)
 
             return result
 
         except Exception as e:
-            return {"success": False, "error": f"Error clearing caches: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_CACHE.format(error=e),
+                "request": request,
+            }
 
     def _handle_navigation_request(self, request: str) -> Dict[str, Any]:
         """Handle directory navigation requests"""
@@ -802,8 +816,8 @@ class ChatSystemIntegration:
             if not path:
                 return {
                     "success": False,
-                    "error": "Could not extract directory path from request",
-                    "suggestion": "Try: 'navigate to /path/to/directory' or 'cd to ~/Documents'",
+                    "error": SysMsg.COULD_NOT_EXTRACT_PATH,
+                    "suggestion": SysMsg.TRY_NAVIGATE_EXAMPLE,
                 }
 
             # Clean up path (remove quotes, extra text)
@@ -829,14 +843,18 @@ class ChatSystemIntegration:
                         entry_summary.append(f"{len(files)} files")
 
                     result["message"] = (
-                        f"✅ {result['message']}\n📁 Contains: {', '.join(entry_summary)}"
+                        f"✅ {result['message']}\n{SysMsg.NAVIGATION_SUCCESS.format(summary=', '.join(entry_summary))}"
                     )
                     result["directory_contents"] = entries[:10]  # Show first 10 items
 
             return result
 
         except Exception as e:
-            return {"success": False, "error": f"Navigation error: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_NAVIGATION.format(error=e),
+                "request": request,
+            }
 
     def _handle_directory_listing_request(self, request: str) -> Dict[str, Any]:
         """Handle directory listing requests"""
@@ -877,17 +895,19 @@ class ChatSystemIntegration:
 
                 summary = []
                 if dirs:
-                    summary.append(f"📁 {len(dirs)} directories")
+                    summary.append(SysMsg.DIR_SUMMARY_DIRS.format(count=len(dirs)))
                 if files:
-                    summary.append(f"📄 {len(files)} files")
+                    summary.append(SysMsg.DIR_SUMMARY_FILES.format(count=len(files)))
 
-                result["message"] = f"📂 {result['path']}\n{', '.join(summary)}"
+                result["message"] = (
+                    f"{SysMsg.DIR_LISTING_HEADER.format(path=result['path'])}\n{', '.join(summary)}"
+                )
 
                 # Format entries for display
                 display_entries = []
                 for entry in entries[:20]:  # Show first 20
                     if entry["type"] == "directory":
-                        display_entries.append(f"📁 {entry['name']}/")
+                        display_entries.append(SysMsg.DIR_ENTRY.format(name=entry["name"]))
                     else:
                         size_str = ""
                         if entry.get("size") is not None:
@@ -896,17 +916,25 @@ class ChatSystemIntegration:
                                 size_str = f" ({size_kb:.1f} KB)"
                             else:
                                 size_str = f" ({size_kb/1024:.1f} MB)"
-                        display_entries.append(f"📄 {entry['name']}{size_str}")
+                        display_entries.append(
+                            SysMsg.FILE_ENTRY.format(name=entry["name"], size=size_str)
+                        )
 
                 if display_entries:
                     result["display_entries"] = display_entries
                     if len(entries) > 20:
-                        result["message"] += f"\n(showing first 20 of {len(entries)} items)"
+                        result[
+                            "message"
+                        ] += f"\n{SysMsg.SHOWING_FIRST_N.format(shown=20, total=len(entries))}"
 
             return result
 
         except Exception as e:
-            return {"success": False, "error": f"Directory listing error: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_DIR_LISTING.format(error=e),
+                "request": request,
+            }
 
     def _handle_simulator_cleanup_request(self, request: str) -> Dict[str, Any]:
         """Handle iOS/watchOS simulator cleanup requests"""
@@ -915,8 +943,8 @@ class ChatSystemIntegration:
 
             if result["success"]:
                 data = result["data"]
-                result["message"] = (
-                    f"🧹 Simulator cleanup completed!\n💾 Freed {data['total_freed_mb']} MB of storage"
+                result["message"] = SysMsg.SIMULATOR_CLEANUP_SUCCESS.format(
+                    mb=data["total_freed_mb"]
                 )
 
                 if data["cleaned_items"]:
@@ -925,7 +953,11 @@ class ChatSystemIntegration:
             return result
 
         except Exception as e:
-            return {"success": False, "error": f"Simulator cleanup error: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_SIMULATOR_CLEANUP.format(error=e),
+                "request": request,
+            }
 
     def _handle_shell_command_request(self, request: str) -> Dict[str, Any]:
         """Handle shell command execution requests"""
@@ -946,8 +978,8 @@ class ChatSystemIntegration:
             if not command:
                 return {
                     "success": False,
-                    "error": "Could not extract command from request",
-                    "suggestion": "Try: 'run command ls -la' or 'execute find /path -name pattern'",
+                    "error": SysMsg.COULD_NOT_EXTRACT_COMMAND,
+                    "suggestion": SysMsg.TRY_SHELL_EXAMPLE,
                 }
 
             # Basic security check
@@ -955,14 +987,14 @@ class ChatSystemIntegration:
             if any(dangerous in command.lower() for dangerous in dangerous_commands):
                 return {
                     "success": False,
-                    "error": "Command blocked for security reasons",
+                    "error": SysMsg.COMMAND_BLOCKED_SECURITY,
                     "command": command,
                 }
 
             result = execute_shell_command(command)
 
             if result["success"]:
-                result["message"] = f"✅ Executed: {command}"
+                result["message"] = SysMsg.EXECUTED_SUCCESS.format(command=command)
                 if result.get("output"):
                     # Truncate long output
                     output = result["output"]
@@ -972,7 +1004,11 @@ class ChatSystemIntegration:
             return result
 
         except Exception as e:
-            return {"success": False, "error": f"Shell command error: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_SHELL_COMMAND.format(error=e),
+                "request": request,
+            }
 
     def _handle_current_directory_request(self, request: str) -> Dict[str, Any]:
         """Handle current directory requests"""
@@ -982,12 +1018,16 @@ class ChatSystemIntegration:
             return {
                 "success": True,
                 "current_directory": current_dir,
-                "message": f"📍 Current directory: {current_dir}",
-                "description": "Get current directory",
+                "message": SysMsg.CURRENT_DIR_SUCCESS.format(path=current_dir),
+                "description": SysMsg.DESC_CURRENT_DIR,
             }
 
         except Exception as e:
-            return {"success": False, "error": f"Current directory error: {e}", "request": request}
+            return {
+                "success": False,
+                "error": SysMsg.ERROR_CURRENT_DIR.format(error=e),
+                "request": request,
+            }
 
     def get_capabilities(self) -> Dict[str, Any]:
         """Get information about available system capabilities"""

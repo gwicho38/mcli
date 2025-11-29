@@ -215,6 +215,210 @@ class ChatMessages:
     COMMAND_TAGS = "  Tags: {tags}"
     AND_MORE = "[dim]... and {count} more[/dim]"
 
+    # Config setup instructions
+    CONFIG_PROVIDER_EXAMPLE = '  provider = "openai"'
+    CONFIG_API_KEY_EXAMPLE = '  openai_api_key = "your-key-here"'
+    CHECK_LLM_CONFIG = "Please check your LLM configuration in .env file"
+    CREATE_MCLI_COMMAND = "I'll create a complete working MCLI command for you."
+    COMMAND_NOT_EXIST_MARKER = "**[Command Does Not Exist]** "
+    COPY_GENERATED_CODE = "1. Copy the generated code to a new Python file"
+    SAVE_IN_MCLI_MODULE = "2. Save it in the appropriate MCLI module directory"
+    TEST_COMMAND_STEP = "3. Test the command with: [yellow]mcli <your-command>[/yellow]"
+    VERIFY_COMMAND_STEP = "4. Use [yellow]mcli commands list[/yellow] to verify it's available"
+    AUTO_DISCOVERY_TIP = "[dim]Tip: Commands are automatically discovered when placed in the correct directories[/dim]"
+
+    # Automated command creation messages
+    NEXT_STEPS_HEADER = "[bold cyan]💡 Next Steps:[/bold cyan]"
+    STARTING_AUTO_CREATION = "[bold blue]🤖 Starting automated command creation...[/bold blue]"
+    GENERATING_CODE_STEP = "1. [cyan]Generating command code...[/cyan]"
+    CREATING_FILE_STEP = "2. [cyan]Creating command file: {filename}[/cyan]"
+    TESTING_COMMAND_STEP = "3. [cyan]Testing command: {name}[/cyan]"
+    FAILED_GENERATE_CODE = "[red]❌ Failed to generate code. Falling back to code-only mode.[/red]"
+    FAILED_PARSE_COMMAND = (
+        "[red]❌ Could not parse command information. Showing generated code:[/red]"
+    )
+    FAILED_CREATE_FILE = "[red]❌ Failed to create command file.[/red]"
+    COMMAND_CREATED_SUCCESS = "[bold green]✅ Command created successfully![/bold green]"
+    COMMAND_FILE_PATH_GREEN = "📁 File: [green]{file_path}[/green]"
+    COMMAND_USAGE_HINT = "🚀 Usage: [yellow]mcli {name} --help[/yellow]"
+    COMMAND_TEST_HINT = "📋 Test: [yellow]mcli {name}[/yellow]"
+    COMMAND_NEEDS_DEBUG = "[yellow]⚠️  Command created but may need debugging[/yellow]"
+    COMMAND_FILE_PATH_YELLOW = "📁 File: [yellow]{file_path}[/yellow]"
+    CHECK_FILE_HINT = "💡 Check the file and test manually"
+    COMMAND_AVAILABLE = "[dim]Command is now available in MCLI![/dim]"
+    COMMAND_WARNING_NOTE = "\n\n⚠️  **Note**: The command mentioned above does not exist in MCLI. To create this functionality, you would need to implement a new command. Would you like me to help you create it?"
+    MCLI_COMMAND_NOT_EXIST = "\n\n⚠️  **Note**: 'mcli {cmd}' does not exist. Available commands can be listed with the 'commands' chat command."
+
+    # Rich formatted file markers
+    FILE_MARKER_GREEN = "[green]"
+    FILE_MARKER_YELLOW = "[yellow]"
+
+    # Additional keyword patterns
+    KEYWORD_HELLOWORLD = "helloworld"
+
+    # Process management messages
+    USE_MCLI_COMMANDS_LIST = "[dim]Use 'mcli commands list' to see all commands[/dim]"
+    MATCHING_COMMANDS_HEADER = "[bold]Matching Commands for '{search_term}' ({count}):[/bold]"
+    COMMAND_FORMAT_GREEN = "• [green]{name}[/green]"
+    COMMAND_FORMAT_WITH_LANG = "• [green]{name}[/green] ({language})"
+    COMMAND_DESCRIPTION_ITALIC = "[italic]{description}[/italic]"
+    MORE_RESULTS = "[dim]... and {count} more results[/dim]"
+
+    # Daemon command listing
+    NO_COMMANDS_DAEMON = "[yellow]No commands available through daemon[/yellow]"
+    AVAILABLE_COMMANDS_HEADER = "[bold green]Available Commands ({count}):[/bold green]"
+    COMMAND_FORMAT_CYAN = "• [cyan]{name}[/cyan]"
+    MORE_COMMANDS_DAEMON = "[dim]... and {count} more commands[/dim]"
+    USE_NATURAL_LANGUAGE = "[dim]Use natural language to ask about specific commands[/dim]"
+    COMMAND_LIST_UNAVAILABLE = (
+        "[yellow]Command listing not available - daemon may not be running[/yellow]"
+    )
+    TRY_START_DAEMON = "Try starting the daemon with: [cyan]mcli workflow daemon start[/cyan]"
+    COULD_NOT_RETRIEVE_COMMANDS = "[yellow]Could not retrieve commands list[/yellow]"
+    AVAILABLE_BUILTIN_COMMANDS = "Available built-in chat commands:"
+    BUILTIN_COMMANDS = "• [cyan]commands[/cyan] - This command"
+    BUILTIN_PS = "• [cyan]ps[/cyan] - List running processes"
+    BUILTIN_RUN = "• [cyan]run <command>[/cyan] - Execute a command"
+    BUILTIN_LOGS = "• [cyan]logs <id>[/cyan] - View process logs"
+    BUILTIN_INSPECT = "• [cyan]inspect <id>[/cyan] - Detailed process info"
+    BUILTIN_STARTSTOP = "• [cyan]start/stop <id>[/cyan] - Control process lifecycle"
+
+    # Process list display
+    NO_PROCESSES_RUNNING = "No processes running"
+    PROCESS_LIST_HEADER = "[bold]CONTAINER ID   NAME           COMMAND                  STATUS    UPTIME     CPU      MEMORY[/bold]"
+    PROCESS_LIST_ERROR = "[red]Error: Failed to get process list (HTTP {status_code})[/red]"
+    DAEMON_CONNECTION_ERROR = "[red]Error connecting to daemon: {error}[/red]"
+
+    # Process logs
+    LOGS_HEADER = "[bold]Logs for {process_id}:[/bold]"
+    STDOUT_LABEL = "[green]STDOUT:[/green]"
+    STDERR_LABEL = "[red]STDERR:[/red]"
+    NO_LOGS_AVAILABLE = "No logs available"
+    PROCESS_NOT_FOUND = "[red]Process {process_id} not found[/red]"
+    LOGS_FETCH_ERROR = "[red]Error: Failed to get logs (HTTP {status_code})[/red]"
+
+    # Process inspect
+    PROCESS_DETAILS_HEADER = "[bold]Process {process_id} Details:[/bold]"
+    INSPECT_ERROR = "[red]Error: Failed to inspect process (HTTP {status_code})[/red]"
+
+    # Process lifecycle
+    PROCESS_STOPPED = "[green]Process {process_id} stopped[/green]"
+    STOP_PROCESS_ERROR = "[red]Error: Failed to stop process (HTTP {status_code})[/red]"
+    PROCESS_STARTED = "[green]Process {process_id} started[/green]"
+    START_PROCESS_ERROR = "[red]Error: Failed to start process (HTTP {status_code})[/red]"
+
+    # Containerized run
+    CONTAINERIZED_COMMAND_STARTED = (
+        "[green]Started containerized command '{name}' with ID {id}[/green]"
+    )
+    CONTAINERIZED_PROCESS_STARTED = "[green]Started containerized process with ID {id}[/green]"
+    USE_LOGS_HINT = "Use 'logs <id>' to view output or 'ps' to see status"
+    FAILED_START_COMMAND = "[red]Failed to start containerized command[/red]"
+    FAILED_START_PROCESS = "[red]Failed to start containerized process[/red]"
+
+    # Daemon startup
+    STARTING_DAEMON = "[yellow]Starting MCLI daemon...[/yellow]"
+    DAEMON_STARTED_SUCCESS = "[green]✅ MCLI daemon started successfully on {url}[/green]"
+    DAEMON_WAITING = "[dim]Waiting for daemon to start... ({i}/10)[/dim]"
+    DAEMON_FAILED_START = "[red]❌ Daemon failed to start within 10 seconds[/red]"
+    TRY_MANUAL_DAEMON_START = (
+        "[yellow]Try starting manually: mcli workflow api-daemon start[/yellow]"
+    )
+    COULD_NOT_START_DAEMON = "[red]❌ Could not start daemon: {error}[/red]"
+
+    # Model pulling
+    DOWNLOADING_MODEL = (
+        "[yellow]Downloading model '{model_name}'. This may take a few minutes...[/yellow]"
+    )
+    MODEL_DOWNLOADED = "[green]✅ Model '{model_name}' downloaded successfully[/green]"
+    MODEL_DOWNLOAD_FAILED = "[red]❌ Failed to download model '{model_name}': {error}[/red]"
+    MODEL_DOWNLOAD_TIMEOUT = "[red]❌ Download of model '{model_name}' timed out[/red]"
+    OLLAMA_NOT_FOUND = "[red]❌ Ollama command not found. Please install Ollama first:[/red]"
+    BREW_INSTALL_OLLAMA = "  brew install ollama"
+    MODEL_DOWNLOAD_ERROR = "[red]❌ Error downloading model '{model_name}': {error}[/red]"
+
+    # LLM provider setup errors
+    OLLAMA_NOT_INSTALLED = "[red]Error: ollama is not installed.[/red]"
+    INSTALL_OLLAMA_LOCAL = "[yellow]For local model support, install ollama:[/yellow]"
+    PIP_INSTALL_OLLAMA = "  pip install ollama"
+    SWITCH_TO_OPENAI = "[yellow]Or switch to OpenAI by configuring:[/yellow]"
+
+    # Model not found / lightweight server
+    MODEL_NOT_FOUND_LIGHTWEIGHT = (
+        "[yellow]Model '{model_name}' not found on lightweight server.[/yellow]"
+    )
+    ENSURING_LIGHTWEIGHT_SERVER = "[yellow]Ensuring lightweight model server is running...[/yellow]"
+    MODEL_NOT_FOUND_PULLING = (
+        "[yellow]Model '{model_name}' not found. Attempting to pull it...[/yellow]"
+    )
+    FAILED_AFTER_RESTART = "Failed to generate response after restarting lightweight server"
+    FAILED_AFTER_PULL = "Failed to generate response after pulling model"
+    OLLAMA_API_ERROR = "Ollama API error: {error}"
+
+    # Connection / timeout errors
+    OLLAMA_CONNECTION_ERROR = (
+        "[red]Could not connect to Ollama. Please ensure Ollama is running:[/red]"
+    )
+    OLLAMA_SERVE_CMD = "  ollama serve"
+    VISIT_URL = "  Visit: {url}"
+    REQUEST_TIMEOUT = (
+        "[yellow]Request timed out. The model might be processing a complex query.[/yellow]"
+    )
+    OPENAI_NOT_CONFIGURED = "[red]OpenAI API key not configured. Please set it in config.toml[/red]"
+    UNSUPPORTED_LLM_PROVIDER = "Unsupported LLM provider: {provider}"
+
+    # LLM error response
+    LLM_ERROR_HEADER = "[red]Error:[/red] Could not generate LLM response"
+
+    # Command creation mode UI
+    COMMAND_CREATION_MODE_HEADER = (
+        "[bold green]\U0001f6e0\ufe0f  Command Creation Mode[/bold green]"
+    )
+    CODE_ONLY_SELECTED = "[yellow]Code-only mode selected[/yellow]"
+    CHOOSE_APPROACH = "[bold cyan]Choose your approach:[/bold cyan]"
+    FULL_AUTOMATION_OPTION = (
+        "1. [green]Full automation[/green] - I'll create, save, and test the command"
+    )
+    CODE_ONLY_OPTION = (
+        "2. [yellow]Code only[/yellow] - I'll just generate code for you to implement"
+    )
+    CODE_ONLY_TIP = "[dim]Tip: You can also say 'code only' in your original request[/dim]"
+    ENTER_CHOICE_PROMPT = "[bold cyan]Enter choice (1 or 2, default=1): [/bold cyan]"
+    DEFAULTING_AUTOMATION = "Defaulting to full automation..."
+
+    # Disk space suggestions
+    DISK_FULL_WARNING = "Your disk is getting full! I can help you clear system caches."
+    DISK_FULL_HINT = "Try: 'clear system caches' to free up space"
+    DISK_HIGH_USAGE = "You're using quite a bit of disk space. Consider cleaning up."
+    DISK_CLEANUP_HINT = "I can help with: 'clear system caches'"
+    SIMULATOR_SPACE_WARNING = "You have {size:.1f}GB in iOS/watchOS simulators."
+    SIMULATOR_CLEANUP_HINT = "Consider cleaning old simulator data if you don't need it."
+
+    # Memory suggestions
+    MEMORY_HIGH_WARNING = "Your memory usage is quite high!"
+    MEMORY_CLOSE_APPS = "Consider closing unused applications to free up RAM."
+    SWAP_HIGH_WARNING = "High swap usage detected - your system is using disk as memory."
+    SWAP_SLOWDOWN_HINT = "This can slow things down. Try closing memory-intensive apps."
+    MEMORY_MONITOR_HINT = "Want to monitor your system? Try: 'show system specs'"
+    MEMORY_HIGH_SIMPLE = "Memory usage is high. Consider closing unused applications."
+    RESTART_HINT = "Consider restarting to refresh system performance."
+    CAN_HELP_WITH = "I can help you with:"
+    CHECK_MEMORY_HINT = "- 'how much RAM do I have?' - Check memory usage"
+    CHECK_STORAGE_HINT = "- 'how much disk space do I have?' - Check storage"
+    CLEAR_CACHES_HINT = "- 'clear system caches' - Free up space"
+
+    # Time-based suggestions
+    LATE_NIGHT_MSG = "It's quite late! Consider taking a break."
+    WORK_TIME_MSG = "It's work time! Stay productive."
+    EVENING_MSG = "Good evening! Wrapping up for the day?"
+    SCHEDULE_HINT = "I can also help you schedule tasks with the workflow system!"
+
+    # Section headers
+    SUGGESTIONS_HEADER = "\n[cyan]Suggestions:[/cyan]"
+    MEMORY_TIPS_HEADER = "\n[cyan]Memory Tips:[/cyan]"
+    SYSTEM_INSIGHTS_HEADER = "\n[cyan]System Insights:[/cyan]"
+    TIME_TIPS_HEADER = "\n[cyan]Time Tips:[/cyan]"
+
 
 class ModelServiceMessages:
     """Model service message constants."""
@@ -289,6 +493,286 @@ class CommandMessages:
     STORE_NOT_INITIALIZED = "Command store not initialized. Run 'mcli workflow store init' first."
 
 
+class SystemIntegrationMessages:
+    """System integration message constants for chat system control."""
+
+    # Error messages
+    SYSTEM_CONTROL_DISABLED = "System control is disabled"
+    ENABLE_SYSTEM_CONTROL = "Enable system control to use this feature"
+    COULD_NOT_UNDERSTAND_REQUEST = "Could not understand system request"
+    COULD_NOT_EXTRACT_COMMAND = "Could not extract command to execute"
+    COULD_NOT_EXTRACT_PATH = "Could not extract directory path from request"
+    COULD_NOT_DETERMINE_OPEN = "Could not determine what to open"
+    COMMAND_BLOCKED_SECURITY = "Command blocked for security reasons"
+
+    # Suggestion messages
+    TRY_TEXTEDIT_EXAMPLE = "Try: 'Open TextEdit and write Hello World' or 'Take a screenshot'"
+    TRY_RUN_EXAMPLE = "Try: 'Run ls' or 'Execute date'"
+    TRY_NAVIGATE_EXAMPLE = "Try: 'navigate to /path/to/directory' or 'cd to ~/Documents'"
+    TRY_SHELL_EXAMPLE = "Try: 'run command ls -la' or 'execute find /path -name pattern'"
+    SPECIFY_URL_OR_PATH = "Specify a URL (like https://google.com) or file path"
+    TRY_SYSTEM_INFO = "Try 'system info' for general hardware information"
+
+    # Success message templates
+    TEXTEDIT_SUCCESS = "✅ Opened TextEdit and wrote: '{text}'"
+    TEXTEDIT_SAVED = " (saved as {filename})"
+    APP_CONTROL_SUCCESS = "✅ {action} {app_name}"
+    SCREENSHOT_SUCCESS = "✅ Screenshot saved to: {path}"
+    OPENED_SUCCESS = "✅ Opened: {path}"
+    EXECUTED_SUCCESS = "✅ Executed: {command}"
+    CURRENT_DIR_SUCCESS = "📍 Current directory: {path}"
+    NAVIGATION_SUCCESS = "📁 Contains: {summary}"
+    SIMULATOR_CLEANUP_SUCCESS = "🧹 Simulator cleanup completed!\n💾 Freed {mb} MB of storage"
+    CACHE_CLEANUP_HEADER = "🧹 Cache Cleanup Results:"
+    CACHE_ITEM_SUCCESS = "  ✅ {item}"
+    NO_CACHE_ITEMS = "  ℹ️ No cache items found to clear"
+    TOTAL_SPACE_FREED = "💾 Total space freed: {mb:.1f} MB"
+
+    # System info format
+    SYSTEM_TIME_FMT = "⏰ Current time: {time} ({timezone})"
+    SYSTEM_SUMMARY_SYSTEM = "💻 System: {system} {machine}"
+    SYSTEM_SUMMARY_CPU = "🧠 CPU: {cores} cores, {usage}% usage"
+    SYSTEM_SUMMARY_RAM = "💾 RAM: {used:.1f}GB used / {total:.1f}GB total ({percent}%)"
+    SYSTEM_SUMMARY_UPTIME = "⏰ Uptime: {hours:.1f} hours"
+
+    # Memory display
+    MEMORY_HEADER = "💾 Memory Usage:"
+    MEMORY_RAM_FMT = "  RAM: {used:.1f}GB used / {total:.1f}GB total ({percent}%)"
+    MEMORY_AVAILABLE_FMT = "  Available: {available:.1f}GB"
+    MEMORY_SWAP_FMT = "  Swap: {used:.1f}GB used / {total:.1f}GB total ({percent}%)"
+    RECOMMENDATIONS_HEADER = "📋 Recommendations:"
+    RECOMMENDATION_ITEM = "  • {rec}"
+
+    # Disk display
+    DISK_HEADER = "💽 Disk Usage:"
+    DISK_MAIN_FMT = "  Main: {used:.1f}GB used / {total:.1f}GB total ({percent:.1f}%)"
+    DISK_FREE_FMT = "  Free: {free:.1f}GB available"
+    DISK_OTHER_HEADER = "  Other partitions:"
+    DISK_PARTITION_FMT = "    {mount}: {used:.1f}GB / {total:.1f}GB ({percent}%)"
+
+    # Hardware devices
+    HARDWARE_HEADER = "🔌 Connected Hardware Devices:"
+    USB_DEVICES_HEADER = "💾 USB Devices:"
+    NETWORK_INTERFACES_HEADER = "🌐 Network Interfaces:"
+    AUDIO_DEVICES_HEADER = "🔊 Audio Devices:"
+    DEVICE_ITEM = "  • {name}"
+    NO_HARDWARE_DETECTED = "ℹ️  No specific hardware devices detected via system profiler"
+    HARDWARE_HINT = "💡 Try: 'system info' for general hardware information"
+
+    # Directory listing
+    DIR_SUMMARY_DIRS = "📁 {count} directories"
+    DIR_SUMMARY_FILES = "📄 {count} files"
+    DIR_LISTING_HEADER = "📂 {path}"
+    SHOWING_FIRST_N = "(showing first {shown} of {total} items)"
+    DIR_ENTRY = "📁 {name}/"
+    FILE_ENTRY = "📄 {name}{size}"
+
+    # Error format templates
+    ERROR_TEXTEDIT = "Error handling TextEdit request: {error}"
+    ERROR_APP_CONTROL = "Error handling app control request: {error}"
+    ERROR_SCREENSHOT = "Error taking screenshot: {error}"
+    ERROR_OPEN = "Error opening file/URL: {error}"
+    ERROR_COMMAND = "Error executing command: {error}"
+    ERROR_SYSTEM_TIME = "Error getting system time: {error}"
+    ERROR_SYSTEM_INFO = "Error getting system information: {error}"
+    ERROR_HARDWARE_DEVICES = "Error getting hardware devices: {error}"
+    ERROR_MEMORY = "Error getting memory usage: {error}"
+    ERROR_DISK = "Error getting disk usage: {error}"
+    ERROR_CACHE = "Error clearing caches: {error}"
+    ERROR_NAVIGATION = "Navigation error: {error}"
+    ERROR_DIR_LISTING = "Directory listing error: {error}"
+    ERROR_SIMULATOR_CLEANUP = "Simulator cleanup error: {error}"
+    ERROR_SHELL_COMMAND = "Shell command error: {error}"
+    ERROR_CURRENT_DIR = "Current directory error: {error}"
+
+    # Function descriptions (for system_functions dict)
+    DESC_TEXTEDIT = "Open TextEdit and write specified text"
+    DESC_CONTROL_APP = "Control system applications (open, close, interact)"
+    DESC_EXECUTE_COMMAND = "Execute shell/terminal commands"
+    DESC_TAKE_SCREENSHOT = "Take a screenshot and save to Desktop"
+    DESC_OPEN_FILE_URL = "Open files or URLs with default system application"
+    DESC_SYSTEM_INFO = "Get comprehensive system information (CPU, memory, disk, etc.)"
+    DESC_SYSTEM_TIME = "Get current system time and date"
+    DESC_MEMORY_USAGE = "Get detailed memory usage information"
+    DESC_DISK_USAGE = "Get disk space and usage information"
+    DESC_CLEAR_CACHES = "Clear system caches and temporary files"
+    DESC_CHANGE_DIR = "Navigate to a directory"
+    DESC_LIST_DIR = "List contents of a directory"
+    DESC_CLEAN_SIMULATOR = "Clean iOS/watchOS simulator cache and temporary data"
+    DESC_SHELL_COMMAND = "Execute shell commands with full terminal access"
+    DESC_CURRENT_DIR = "Get current working directory"
+
+    # Parameter descriptions
+    PARAM_TEXT = "Text to write in TextEdit"
+    PARAM_FILENAME = "Optional filename to save (will save to Desktop)"
+    PARAM_APP_NAME = "Name of the application (e.g., 'TextEdit', 'Calculator')"
+    PARAM_ACTION = "Action to perform (open, close, new_document, write_text)"
+    PARAM_KWARGS = "Additional parameters like text, filename"
+    PARAM_COMMAND = "Shell command to execute"
+    PARAM_COMMAND_DESC = "Optional description of what the command does"
+    PARAM_SCREENSHOT_FN = "Optional filename (will auto-generate if not provided)"
+    PARAM_PATH_OR_URL = "File path or URL to open"
+    PARAM_DIR_PATH = "Directory path to navigate to"
+    PARAM_LIST_PATH = "Directory path to list (optional, defaults to current)"
+    PARAM_SHOW_HIDDEN = "Show hidden files (optional)"
+    PARAM_DETAILED = "Show detailed file information (optional)"
+    PARAM_WORKING_DIR = "Directory to run command in (optional)"
+
+    # Default values
+    DEFAULT_TEXT = "Hello, World!"
+    DEFAULT_APP = "TextEdit"
+    DEFAULT_FILENAME_EXT = ".txt"
+    DEFAULT_SCREENSHOT_EXT = ".png"
+
+    # Examples for system functions (user-facing help text)
+    EXAMPLES_TEXTEDIT = [
+        "Open TextEdit and write 'Hello, World!'",
+        "Write 'My notes' in TextEdit and save as 'notes.txt'",
+    ]
+    EXAMPLES_CONTROL_APP = [
+        "Open Calculator",
+        "Close TextEdit",
+        "Open new document in TextEdit",
+    ]
+    EXAMPLES_EXECUTE_COMMAND = [
+        "List files in current directory",
+        "Check system uptime",
+        "Create a new folder",
+    ]
+    EXAMPLES_SCREENSHOT = [
+        "Take a screenshot",
+        "Take screenshot and save as 'my_screen.png'",
+    ]
+    EXAMPLES_OPEN_FILE_URL = [
+        "Open https://google.com",
+        "Open ~/Documents/file.txt",
+        "Open current directory in Finder",
+    ]
+    EXAMPLES_SYSTEM_INFO = [
+        "What is my system information?",
+        "Show system specs",
+        "How much RAM do I have?",
+    ]
+    EXAMPLES_SYSTEM_TIME = [
+        "What time is it?",
+        "What is the current time?",
+        "Show me the date and time",
+    ]
+    EXAMPLES_MEMORY_USAGE = [
+        "How much memory am I using?",
+        "Show memory usage",
+        "Check RAM usage",
+    ]
+    EXAMPLES_DISK_USAGE = [
+        "How much disk space do I have?",
+        "Show disk usage",
+        "Check storage space",
+    ]
+    EXAMPLES_CLEAR_CACHES = [
+        "Clear system caches",
+        "Clean up temporary files",
+        "Free up space",
+    ]
+    EXAMPLES_CHANGE_DIR = [
+        "Navigate to /System/Volumes/Data",
+        "Go to ~/Documents",
+        "Change to /tmp",
+    ]
+    EXAMPLES_LIST_DIR = [
+        "List current directory",
+        "Show files in /System/Volumes/Data",
+        "List all files including hidden ones",
+    ]
+    EXAMPLES_CLEAN_SIMULATOR = [
+        "Clean simulator data",
+        "Remove iOS simulator caches",
+        "Free up simulator storage",
+    ]
+    EXAMPLES_SHELL_COMMAND = [
+        "Run ls -la",
+        "Execute find command",
+        "Run custom shell scripts",
+    ]
+    EXAMPLES_CURRENT_DIR = [
+        "Where am I?",
+        "Show current directory",
+        "What's my current path?",
+    ]
+
+
+class SyncMessages:
+    """Script synchronization command messages."""
+
+    # Status messages
+    SYNCING_SCRIPTS = "Syncing scripts in {path}..."
+    SYNCED_SCRIPTS = "Synced {count} script(s) to JSON"
+    NO_SCRIPTS_NEEDED_SYNCING = "No scripts needed syncing"
+    SYNCING_SCRIPT = "Syncing {path}..."
+    GENERATED_JSON = "Generated JSON: {path}"
+    FAILED_TO_GENERATE_JSON = "Failed to generate JSON for {path}"
+
+    # Status display
+    SCRIPT_SYNC_STATUS_HEADER = "\n[bold]Script Synchronization Status[/bold]"
+    LOCATION = "Location: {path}\n"
+    IN_SYNC_COUNT = "In sync: {count} script(s)"
+    NEEDS_SYNC_COUNT = "Needs sync: {count} script(s)"
+    NO_JSON_COUNT = "No JSON: {count} script(s)"
+    TOTAL_SCRIPTS = "Total scripts: {count}"
+    RUN_SYNC_ALL_HINT = "\nRun [bold]mcli workflows sync all[/bold] to sync all scripts"
+
+    # Cleanup messages
+    SCANNING_ORPHANED = "Scanning for orphaned JSON files..."
+    NO_ORPHANED_FOUND = "No orphaned JSON files found"
+    FOUND_ORPHANED = "Found {count} orphaned JSON file(s):"
+    REMOVE_FILES_PROMPT = "\nRemove these files?"
+    CANCELLED = "Cancelled"
+    REMOVED_ORPHANED = "Removed {count} orphaned JSON file(s)"
+    NO_FILES_REMOVED = "No files were removed"
+
+    # Watch mode
+    STARTING_WATCHER = "Starting file watcher for {path}"
+    PRESS_CTRL_C = "Press Ctrl+C to stop\n"
+    FAILED_START_WATCHER = "Failed to start file watcher"
+    WATCHING_FOR_CHANGES = "Watching for changes..."
+    STOPPING_WATCHER = "Stopping watcher..."
+    STOPPED = "Stopped"
+
+    # IPFS sync
+    UPLOADING_TO_IPFS = "Uploading command state to IPFS..."
+    PUSHED_TO_IPFS = "Pushed to IPFS!"
+    FAILED_PUSH_IPFS = "Failed to push to IPFS"
+    RETRIEVING_FROM_IPFS = "Retrieving from IPFS: {cid}"
+    RETRIEVED_FROM_IPFS = "Retrieved from IPFS"
+    SAVED_TO = "Saved to: {path}"
+    FAILED_RETRIEVE_IPFS = "Failed to retrieve from IPFS"
+    CID_INVALID_OR_NOT_PROPAGATED = "CID may be invalid or not yet propagated to gateways"
+    NO_SYNC_HISTORY = "No sync history found"
+    RUN_PUSH_FIRST = "\nRun 'mcli workflows sync push' to create your first sync"
+    IPFS_SYNC_HISTORY_HEADER = "\n[bold]IPFS Sync History[/bold] (last {count} entries)\n"
+    VERIFYING_CID = "Verifying CID: {cid}"
+    CID_ACCESSIBLE = "CID is accessible on IPFS"
+    CID_NOT_ACCESSIBLE = "CID is not accessible"
+    PROPAGATION_DELAY_NOTE = "It may take a few minutes for new uploads to propagate"
+
+    # Lockfile messages
+    LOCKFILE_NOT_FOUND = "Lockfile not found: {path}"
+    RUN_UPDATE_LOCKFILE = "Run 'mcli workflow update-lockfile' first"
+
+    # Display formatting
+    CID_LABEL = "\n[bold]CID:[/bold] {cid}"
+    RETRIEVE_HINT = "\n[dim]Anyone can retrieve with:[/dim]"
+    RETRIEVE_COMMAND = "  mcli workflows sync pull {cid}"
+    VIEW_BROWSER_HINT = "\n[dim]Or view in browser:[/dim]"
+    IPFS_GATEWAY_URL = "  https://ipfs.io/ipfs/{cid}"
+    COMMANDS_COUNT = "\n[bold]Commands:[/bold] {count}"
+    VERSION_LABEL = "[bold]Version:[/bold] {version}"
+    SYNCED_AT_LABEL = "[bold]Synced:[/bold] {timestamp}"
+    DESCRIPTION_LABEL = "[bold]Description:[/bold] {description}"
+
+    # Directory errors
+    DIR_NOT_EXIST = "Commands directory does not exist: {path}"
+
+
 __all__ = [
     "ErrorMessages",
     "SuccessMessages",
@@ -298,4 +782,6 @@ __all__ = [
     "ChatMessages",
     "ModelServiceMessages",
     "CommandMessages",
+    "SystemIntegrationMessages",
+    "SyncMessages",
 ]

@@ -140,6 +140,9 @@ ALLOWED_PATTERNS = [
     r"^[A-Z][a-z]+ ?[A-Z]?[a-z]*: $",  # e.g., "Working Dir: ", "CPU: ", "Status: "
     r"^\\n[A-Z][a-z]+: $",  # e.g., "\nDescription: ", "\nTags: "
     r"^  [A-Z][a-z]+: $",  # Indented labels
+    r"^\n[A-Z][a-z]+: $",  # Actual newline labels: "\nTags: ", "\nStatus: "
+    r"^\n- ",  # List items starting with newline
+    r"^\n\[",  # Rich markup after newline
     # Install/setup command patterns
     r"^  (pip|brew|npm|apt|yum|dnf) install ",
     r"^  (uv|cargo|go) (install|add|get) ",
@@ -2017,6 +2020,30 @@ COMMON_ACCEPTABLE_STRINGS = {
     "Copying ",
     " FPS...",
     " frames.",
+    # Chat/AI assistant patterns
+    "show code",
+    "text edit",
+    "take screenshot",
+    "system cache",
+    "what's in",
+    "not found",
+    "Auto-generated command",
+    "Defaulting to full automation...",
+    # File operation patterns
+    "📁 File: ",
+    # Config example patterns
+    '  provider = "',
+    '  openai_api_key = "',
+    '  ollama serve',
+    # Common instruction patterns
+    "Copy the generated code",
+    "Save it in the appropriate",
+    "Please check your LLM configuration",
+    # UI detail patterns
+    "  [dim]... (",
+    "Your disk is getting full",
+    "clear system caches",
+    "I'll create a complete working",
     "GB total (",
     " to edit command logic...",
     # Chat UI patterns

@@ -353,7 +353,7 @@ class ChatClient:
             ChatMessages.KEYWORD_EXECUTE_COMMAND,
             ChatMessages.KEYWORD_HELLO_WORLD,
             ChatMessages.KEYWORD_HELLO_WORLD_DASH,
-            "helloworld",
+            ChatMessages.KEYWORD_HELLOWORLD,
         ]
         # Be more specific - avoid matching on single words like "execute" or "call"
         return any(keyword in lower_input for keyword in execution_keywords)
@@ -486,7 +486,7 @@ class ChatClient:
 
         if len(commands) > 20:
             console.print(ChatMessages.AND_MORE.format(count=len(commands) - 20))
-            console.print("[dim]Use 'mcli commands list' to see all commands[/dim]")
+            console.print(ChatMessages.USE_MCLI_COMMANDS_LIST)
 
     def search_commands(self, query: str, commands: List[Dict] = None):
         """Search commands based on query."""
@@ -516,20 +516,30 @@ class ChatClient:
             console.print(ChatMessages.NO_COMMANDS_MATCHING.format(query=search_term))
             return
 
-        console.print(f"[bold]Matching Commands for '{search_term}' ({len(results)}):[/bold]")
+        console.print(
+            ChatMessages.MATCHING_COMMANDS_HEADER.format(
+                search_term=search_term, count=len(results)
+            )
+        )
         for cmd in results[:10]:  # Show first 10 results
             if "full_name" in cmd:
                 # New discovery format
-                console.print(f"• [green]{cmd['full_name']}[/green]")
+                console.print(ChatMessages.COMMAND_FORMAT_GREEN.format(name=cmd["full_name"]))
             else:
                 # Old daemon format
-                console.print(f"• [green]{cmd['name']}[/green] ({cmd.get('language', 'python')})")
+                console.print(
+                    ChatMessages.COMMAND_FORMAT_WITH_LANG.format(
+                        name=cmd["name"], language=cmd.get("language", "python")
+                    )
+                )
 
-            console.print(f"  [italic]{cmd['description']}[/italic]")
+            console.print(
+                f"  {ChatMessages.COMMAND_DESCRIPTION_ITALIC.format(description=cmd['description'])}"
+            )
             console.print()
 
         if len(results) > 10:
-            console.print(f"[dim]... and {len(results) - 10} more results[/dim]")
+            console.print(ChatMessages.MORE_RESULTS.format(count=len(results) - 10))
 
     def handle_commands_list(self):
         """Handle 'commands' command to list available functions."""
@@ -539,10 +549,10 @@ class ChatClient:
                 commands = self.daemon.list_commands()
 
                 if not commands:
-                    console.print("[yellow]No commands available through daemon[/yellow]")
+                    console.print(ChatMessages.NO_COMMANDS_DAEMON)
                     return
 
-                console.print(f"[bold green]Available Commands ({len(commands)}):[/bold green]")
+                console.print(ChatMessages.AVAILABLE_COMMANDS_HEADER.format(count=len(commands)))
 
                 for _i, cmd in enumerate(commands[:20]):  # Show first 20 commands
                     name = cmd.get("name", "Unknown")
@@ -552,33 +562,31 @@ class ChatClient:
                     if len(description) > 80:
                         description = description[:77] + "..."
 
-                    console.print(f"• [cyan]{name}[/cyan]")
+                    console.print(ChatMessages.COMMAND_FORMAT_CYAN.format(name=name))
                     if description:
                         console.print(f"  {description}")
 
                 if len(commands) > 20:
-                    console.print(f"[dim]... and {len(commands) - 20} more commands[/dim]")
-                    console.print("[dim]Use natural language to ask about specific commands[/dim]")
+                    console.print(
+                        ChatMessages.MORE_COMMANDS_DAEMON.format(count=len(commands) - 20)
+                    )
+                    console.print(ChatMessages.USE_NATURAL_LANGUAGE)
 
             else:
                 # Fallback - try to get commands another way
-                console.print(
-                    "[yellow]Command listing not available - daemon may not be running[/yellow]"
-                )
-                console.print(
-                    "Try starting the daemon with: [cyan]mcli workflow daemon start[/cyan]"
-                )
+                console.print(ChatMessages.COMMAND_LIST_UNAVAILABLE)
+                console.print(ChatMessages.TRY_START_DAEMON)
 
         except Exception as e:
             logger.debug(f"Error listing commands: {e}")
-            console.print("[yellow]Could not retrieve commands list[/yellow]")
-            console.print("Available built-in chat commands:")
-            console.print("• [cyan]commands[/cyan] - This command")
-            console.print("• [cyan]ps[/cyan] - List running processes")
-            console.print("• [cyan]run <command>[/cyan] - Execute a command")
-            console.print("• [cyan]logs <id>[/cyan] - View process logs")
-            console.print("• [cyan]inspect <id>[/cyan] - Detailed process info")
-            console.print("• [cyan]start/stop <id>[/cyan] - Control process lifecycle")
+            console.print(ChatMessages.COULD_NOT_RETRIEVE_COMMANDS)
+            console.print(ChatMessages.AVAILABLE_BUILTIN_COMMANDS)
+            console.print(ChatMessages.BUILTIN_COMMANDS)
+            console.print(ChatMessages.BUILTIN_PS)
+            console.print(ChatMessages.BUILTIN_RUN)
+            console.print(ChatMessages.BUILTIN_LOGS)
+            console.print(ChatMessages.BUILTIN_INSPECT)
+            console.print(ChatMessages.BUILTIN_STARTSTOP)
 
     def handle_process_list(self):
         """Handle 'ps' command to list running processes."""
@@ -592,23 +600,21 @@ class ChatClient:
                 processes = data.get("processes", [])
 
                 if not processes:
-                    console.print("No processes running")
+                    console.print(ChatMessages.NO_PROCESSES_RUNNING)
                     return
 
                 # Format output like docker ps
-                console.print(
-                    "[bold]CONTAINER ID   NAME           COMMAND                  STATUS    UPTIME     CPU      MEMORY[/bold]"
-                )
+                console.print(ChatMessages.PROCESS_LIST_HEADER)
                 for proc in processes:
                     console.print(
                         f"{proc['id']:<13} {proc['name']:<14} {proc['command'][:24]:<24} {proc['status']:<9} {proc['uptime']:<10} {proc['cpu']:<8} {proc['memory']}"
                     )
             else:
                 console.print(
-                    f"[red]Error: Failed to get process list (HTTP {response.status_code})[/red]"
+                    ChatMessages.PROCESS_LIST_ERROR.format(status_code=response.status_code)
                 )
         except Exception as e:
-            console.print(f"[red]Error connecting to daemon: {e}[/red]")
+            console.print(ChatMessages.DAEMON_CONNECTION_ERROR.format(error=e))
 
     def handle_process_logs(self, process_id: str):
         """Handle 'logs' command to show process logs."""
@@ -618,21 +624,23 @@ class ChatClient:
             response = requests.get(f"{self.daemon.base_url}/processes/{process_id}/logs")
             if response.status_code == 200:
                 logs = response.json()
-                console.print(f"[bold]Logs for {process_id}:[/bold]")
+                console.print(ChatMessages.LOGS_HEADER.format(process_id=process_id))
                 if logs.get("stdout"):
-                    console.print("[green]STDOUT:[/green]")
+                    console.print(ChatMessages.STDOUT_LABEL)
                     console.print(logs["stdout"])
                 if logs.get("stderr"):
-                    console.print("[red]STDERR:[/red]")
+                    console.print(ChatMessages.STDERR_LABEL)
                     console.print(logs["stderr"])
                 if not logs.get("stdout") and not logs.get("stderr"):
-                    console.print("No logs available")
+                    console.print(ChatMessages.NO_LOGS_AVAILABLE)
             elif response.status_code == 404:
-                console.print(f"[red]Process {process_id} not found[/red]")
+                console.print(ChatMessages.PROCESS_NOT_FOUND.format(process_id=process_id))
             else:
-                console.print(f"[red]Error: Failed to get logs (HTTP {response.status_code})[/red]")
+                console.print(
+                    ChatMessages.LOGS_FETCH_ERROR.format(status_code=response.status_code)
+                )
         except Exception as e:
-            console.print(f"[red]Error connecting to daemon: {e}[/red]")
+            console.print(ChatMessages.DAEMON_CONNECTION_ERROR.format(error=e))
 
     def handle_process_inspect(self, process_id: str):
         """Handle 'inspect' command to show detailed process info."""
@@ -642,7 +650,7 @@ class ChatClient:
             response = requests.get(f"{self.daemon.base_url}/processes/{process_id}")
             if response.status_code == 200:
                 info = response.json()
-                console.print(f"[bold]Process {process_id} Details:[/bold]")
+                console.print(ChatMessages.PROCESS_DETAILS_HEADER.format(process_id=process_id))
                 console.print(f"ID: {info['id']}")
                 console.print(f"Name: {info['name']}")
                 console.print(f"Status: {info['status']}")
@@ -657,13 +665,11 @@ class ChatClient:
                     console.print(f"Memory: {stats.get('memory_mb', 0):.1f} MB")
                     console.print(f"Uptime: {stats.get('uptime_seconds', 0)} seconds")
             elif response.status_code == 404:
-                console.print(f"[red]Process {process_id} not found[/red]")
+                console.print(ChatMessages.PROCESS_NOT_FOUND.format(process_id=process_id))
             else:
-                console.print(
-                    f"[red]Error: Failed to inspect process (HTTP {response.status_code})[/red]"
-                )
+                console.print(ChatMessages.INSPECT_ERROR.format(status_code=response.status_code))
         except Exception as e:
-            console.print(f"[red]Error connecting to daemon: {e}[/red]")
+            console.print(ChatMessages.DAEMON_CONNECTION_ERROR.format(error=e))
 
     def handle_process_stop(self, process_id: str):
         """Handle 'stop' command to stop a process."""
@@ -672,15 +678,15 @@ class ChatClient:
 
             response = requests.post(f"{self.daemon.base_url}/processes/{process_id}/stop")
             if response.status_code == 200:
-                console.print(f"[green]Process {process_id} stopped[/green]")
+                console.print(ChatMessages.PROCESS_STOPPED.format(process_id=process_id))
             elif response.status_code == 404:
-                console.print(f"[red]Process {process_id} not found[/red]")
+                console.print(ChatMessages.PROCESS_NOT_FOUND.format(process_id=process_id))
             else:
                 console.print(
-                    f"[red]Error: Failed to stop process (HTTP {response.status_code})[/red]"
+                    ChatMessages.STOP_PROCESS_ERROR.format(status_code=response.status_code)
                 )
         except Exception as e:
-            console.print(f"[red]Error connecting to daemon: {e}[/red]")
+            console.print(ChatMessages.DAEMON_CONNECTION_ERROR.format(error=e))
 
     def handle_process_start(self, process_id: str):
         """Handle 'start' command to start a process."""
@@ -689,15 +695,15 @@ class ChatClient:
 
             response = requests.post(f"{self.daemon.base_url}/processes/{process_id}/start")
             if response.status_code == 200:
-                console.print(f"[green]Process {process_id} started[/green]")
+                console.print(ChatMessages.PROCESS_STARTED.format(process_id=process_id))
             elif response.status_code == 404:
-                console.print(f"[red]Process {process_id} not found[/red]")
+                console.print(ChatMessages.PROCESS_NOT_FOUND.format(process_id=process_id))
             else:
                 console.print(
-                    f"[red]Error: Failed to start process (HTTP {response.status_code})[/red]"
+                    ChatMessages.START_PROCESS_ERROR.format(status_code=response.status_code)
                 )
         except Exception as e:
-            console.print(f"[red]Error connecting to daemon: {e}[/red]")
+            console.print(ChatMessages.DAEMON_CONNECTION_ERROR.format(error=e))
 
     def handle_containerized_run(self, command: str, args: List[str]):
         """Handle 'run' command to execute in a containerized process."""
@@ -735,11 +741,13 @@ class ChatClient:
                     if response.status_code == 200:
                         result = response.json()
                         console.print(
-                            f"[green]Started containerized command '{matching_cmd['name']}' with ID {result['id'][:12]}[/green]"
+                            ChatMessages.CONTAINERIZED_COMMAND_STARTED.format(
+                                name=matching_cmd["name"], id=result["id"][:12]
+                            )
                         )
-                        console.print("Use 'logs <id>' to view output or 'ps' to see status")
+                        console.print(ChatMessages.USE_LOGS_HINT)
                     else:
-                        console.print("[red]Failed to start containerized command[/red]")
+                        console.print(ChatMessages.FAILED_START_COMMAND)
                     return
             except Exception:
                 pass  # Fall through to shell command execution
@@ -753,20 +761,20 @@ class ChatClient:
             if response.status_code == 200:
                 result = response.json()
                 console.print(
-                    f"[green]Started containerized process with ID {result['id'][:12]}[/green]"
+                    ChatMessages.CONTAINERIZED_PROCESS_STARTED.format(id=result["id"][:12])
                 )
-                console.print("Use 'logs <id>' to view output or 'ps' to see status")
+                console.print(ChatMessages.USE_LOGS_HINT)
             else:
-                console.print("[red]Failed to start containerized process[/red]")
+                console.print(ChatMessages.FAILED_START_PROCESS)
 
         except Exception as e:
-            console.print(f"[red]Error connecting to daemon: {e}[/red]")
+            console.print(ChatMessages.DAEMON_CONNECTION_ERROR.format(error=e))
 
     def _ensure_daemon_running(self):
         """Ensure the API daemon is running, start it if not."""
         try:
             if not self.daemon.is_running():
-                console.print("[yellow]Starting MCLI daemon...[/yellow]")
+                console.print(ChatMessages.STARTING_DAEMON)
                 import threading
                 import time
 
@@ -782,26 +790,22 @@ class ChatClient:
                     time.sleep(1)
                     if self.daemon.is_running():
                         console.print(
-                            f"[green]✅ MCLI daemon started successfully on {self.daemon.base_url}[/green]"
+                            ChatMessages.DAEMON_STARTED_SUCCESS.format(url=self.daemon.base_url)
                         )
                         return
                     if i % 2 == 0:  # Show progress every 2 seconds
-                        console.print(f"[dim]Waiting for daemon to start... ({i+1}/10)[/dim]")
+                        console.print(ChatMessages.DAEMON_WAITING.format(i=i + 1))
 
-                console.print("[red]❌ Daemon failed to start within 10 seconds[/red]")
-                console.print(
-                    "[yellow]Try starting manually: mcli workflow api-daemon start[/yellow]"
-                )
+                console.print(ChatMessages.DAEMON_FAILED_START)
+                console.print(ChatMessages.TRY_MANUAL_DAEMON_START)
         except Exception as e:
-            console.print(f"[red]❌ Could not start daemon: {e}[/red]")
-            console.print("[yellow]Try starting manually: mcli workflow api-daemon start[/yellow]")
+            console.print(ChatMessages.COULD_NOT_START_DAEMON.format(error=e))
+            console.print(ChatMessages.TRY_MANUAL_DAEMON_START)
 
     def _pull_model_if_needed(self, model_name: str):
         """Pull the model from Ollama if it doesn't exist locally."""
         try:
-            console.print(
-                f"[yellow]Downloading model '{model_name}'. This may take a few minutes...[/yellow]"
-            )
+            console.print(ChatMessages.DOWNLOADING_MODEL.format(model_name=model_name))
 
             import subprocess
 
@@ -813,19 +817,21 @@ class ChatClient:
             )
 
             if result.returncode == 0:
-                console.print(f"[green]✅ Model '{model_name}' downloaded successfully[/green]")
+                console.print(ChatMessages.MODEL_DOWNLOADED.format(model_name=model_name))
             else:
                 console.print(
-                    f"[red]❌ Failed to download model '{model_name}': {result.stderr}[/red]"
+                    ChatMessages.MODEL_DOWNLOAD_FAILED.format(
+                        model_name=model_name, error=result.stderr
+                    )
                 )
 
         except subprocess.TimeoutExpired:
-            console.print(f"[red]❌ Download of model '{model_name}' timed out[/red]")
+            console.print(ChatMessages.MODEL_DOWNLOAD_TIMEOUT.format(model_name=model_name))
         except FileNotFoundError:
-            console.print("[red]❌ Ollama command not found. Please install Ollama first:[/red]")
-            console.print("  brew install ollama")
+            console.print(ChatMessages.OLLAMA_NOT_FOUND)
+            console.print(ChatMessages.BREW_INSTALL_OLLAMA)
         except Exception as e:
-            console.print(f"[red]❌ Error downloading model '{model_name}': {e}[/red]")
+            console.print(ChatMessages.MODEL_DOWNLOAD_ERROR.format(model_name=model_name, error=e))
 
     def generate_llm_response(self, query: str):
         """Generate response using LLM integration."""
@@ -918,12 +924,12 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
             if LLM_PROVIDER == "local":
                 # Check if ollama is available
                 if not OLLAMA_AVAILABLE:
-                    console.print("[red]Error: ollama is not installed.[/red]")
-                    console.print("[yellow]For local model support, install ollama:[/yellow]")
-                    console.print("  pip install ollama")
-                    console.print("\n[yellow]Or switch to OpenAI by configuring:[/yellow]")
-                    console.print('  provider = "openai"')
-                    console.print('  openai_api_key = "your-key-here"')
+                    console.print(ChatMessages.OLLAMA_NOT_INSTALLED)
+                    console.print(ChatMessages.INSTALL_OLLAMA_LOCAL)
+                    console.print(ChatMessages.PIP_INSTALL_OLLAMA)
+                    console.print("\n" + ChatMessages.SWITCH_TO_OPENAI)
+                    console.print(ChatMessages.CONFIG_PROVIDER_EXAMPLE)
+                    console.print(ChatMessages.CONFIG_API_KEY_EXAMPLE)
                     return
 
                 # Use Ollama SDK for local model inference
@@ -961,11 +967,11 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                         if not self.use_remote:
                             # In lightweight mode, model not found means we need to ensure server is running
                             console.print(
-                                f"[yellow]Model '{MODEL_NAME}' not found on lightweight server.[/yellow]"
+                                ChatMessages.MODEL_NOT_FOUND_LIGHTWEIGHT.format(
+                                    model_name=MODEL_NAME
+                                )
                             )
-                            console.print(
-                                "[yellow]Ensuring lightweight model server is running...[/yellow]"
-                            )
+                            console.print(ChatMessages.ENSURING_LIGHTWEIGHT_SERVER)
                             self._ensure_lightweight_model_server()
                             # Retry the request
                             try:
@@ -997,13 +1003,11 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                                 )
                                 return console.print(corrected_response)
                             except Exception:
-                                raise Exception(
-                                    "Failed to generate response after restarting lightweight server"
-                                )
+                                raise Exception(ChatMessages.FAILED_AFTER_RESTART)
                         else:
                             # In remote mode, try to pull the model with Ollama
                             console.print(
-                                f"[yellow]Model '{MODEL_NAME}' not found. Attempting to pull it...[/yellow]"
+                                ChatMessages.MODEL_NOT_FOUND_PULLING.format(model_name=MODEL_NAME)
                             )
                             self._pull_model_if_needed(MODEL_NAME)
                             # Retry the request
@@ -1036,22 +1040,18 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                                 )
                                 return console.print(corrected_response)
                             except Exception:
-                                raise Exception("Failed to generate response after pulling model")
+                                raise Exception(ChatMessages.FAILED_AFTER_PULL)
                     else:
-                        raise Exception(f"Ollama API error: {e}")
+                        raise Exception(ChatMessages.OLLAMA_API_ERROR.format(error=e))
 
                 except (requests.exceptions.ConnectionError, ollama.RequestError if OLLAMA_AVAILABLE else Exception):  # type: ignore  # noqa: B030
-                    console.print(
-                        "[red]Could not connect to Ollama. Please ensure Ollama is running:[/red]"
-                    )
-                    console.print("  brew install ollama")
-                    console.print("  ollama serve")
-                    console.print(f"  Visit: {OLLAMA_BASE_URL}")
+                    console.print(ChatMessages.OLLAMA_CONNECTION_ERROR)
+                    console.print(ChatMessages.BREW_INSTALL_OLLAMA)
+                    console.print(ChatMessages.OLLAMA_SERVE_CMD)
+                    console.print(ChatMessages.VISIT_URL.format(url=OLLAMA_BASE_URL))
                     return
                 except requests.exceptions.Timeout:
-                    console.print(
-                        "[yellow]Request timed out. The model might be processing a complex query.[/yellow]"
-                    )
+                    console.print(ChatMessages.REQUEST_TIMEOUT)
                     return
                 except Exception:
                     raise
@@ -1060,9 +1060,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                 from openai import OpenAI
 
                 if not OPENAI_API_KEY:
-                    console.print(
-                        "[red]OpenAI API key not configured. Please set it in config.toml[/red]"
-                    )
+                    console.print(ChatMessages.OPENAI_NOT_CONFIGURED)
                     return
                 client = OpenAI(api_key=OPENAI_API_KEY)
                 try:
@@ -1111,14 +1109,16 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
                     raise
 
             else:
-                raise ValueError(f"Unsupported LLM provider: {LLM_PROVIDER}")
+                raise ValueError(
+                    ChatMessages.UNSUPPORTED_LLM_PROVIDER.format(provider=LLM_PROVIDER)
+                )
 
         except Exception as e:
             import traceback
 
             logger.error(f"LLM Error: {e}\n{traceback.format_exc()}")
-            console.print("[red]Error:[/red] Could not generate LLM response")
-            console.print("Please check your LLM configuration in .env file")
+            console.print(ChatMessages.LLM_ERROR_HEADER)
+            console.print(ChatMessages.CHECK_LLM_CONFIG)
 
     def is_command_creation_request(self, user_input: str) -> bool:
         """Check if user input is requesting to create a new command."""
@@ -1146,32 +1146,26 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
 
     def handle_command_creation(self, user_input: str):
         """Handle command creation requests with complete end-to-end implementation."""
-        console.print("[bold green]🛠️  Command Creation Mode[/bold green]")
-        console.print("I'll create a complete working MCLI command for you!")
+        console.print(ChatMessages.COMMAND_CREATION_MODE_HEADER)
+        console.print(ChatMessages.CREATE_MCLI_COMMAND)
         console.print()
 
         # Check if user already specified their preference in the input
         if any(phrase in user_input.lower() for phrase in ["code only", "just code", "show code"]):
-            console.print("[yellow]Code-only mode selected[/yellow]")
+            console.print(ChatMessages.CODE_ONLY_SELECTED)
             self._generate_code_only(user_input)
             return
 
         # Ask user if they want full automation or just guidance
         try:
-            console.print("[bold cyan]Choose your approach:[/bold cyan]")
-            console.print(
-                "1. [green]Full automation[/green] - I'll create, save, and test the command"
-            )
-            console.print(
-                "2. [yellow]Code only[/yellow] - I'll just generate code for you to implement"
-            )
+            console.print(ChatMessages.CHOOSE_APPROACH)
+            console.print(ChatMessages.FULL_AUTOMATION_OPTION)
+            console.print(ChatMessages.CODE_ONLY_OPTION)
             console.print()
-            console.print("[dim]Tip: You can also say 'code only' in your original request[/dim]")
+            console.print(ChatMessages.CODE_ONLY_TIP)
             console.print()
 
-            choice = console.input(
-                "[bold cyan]Enter choice (1 or 2, default=1): [/bold cyan]"
-            ).strip()
+            choice = console.input(ChatMessages.ENTER_CHOICE_PROMPT).strip()
             if choice == "2" or choice.lower() in ["code only", "code", "just code"]:
                 # Original behavior - just generate code
                 self._generate_code_only(user_input)
@@ -1181,7 +1175,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
 
         except (EOFError, KeyboardInterrupt):
             # Default to full automation if input fails
-            console.print("Defaulting to full automation...")
+            console.print(ChatMessages.DEFAULTING_AUTOMATION)
             self._create_complete_command(user_input)
 
     def validate_and_correct_response(self, response_text: str, available_commands: list) -> str:
@@ -1210,11 +1204,11 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
         for pattern in hallucinated_patterns:
             if re.search(pattern, corrected_response, re.IGNORECASE):
                 # Add warning about non-existent command
-                correction = "\n\n⚠️  **Note**: The command mentioned above does not exist in MCLI. To create this functionality, you would need to implement a new command. Would you like me to help you create it?"
+                correction = ChatMessages.COMMAND_WARNING_NOTE
                 corrected_response = (
                     re.sub(
                         pattern,
-                        "**[Command Does Not Exist]** " + pattern.replace("\\b", ""),
+                        ChatMessages.COMMAND_NOT_EXIST_MARKER + pattern.replace("\\b", ""),
                         corrected_response,
                         flags=re.IGNORECASE,
                     )
@@ -1227,7 +1221,7 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
         for cmd in mcli_commands:
             if cmd not in real_commands:
                 # This might be a hallucination
-                warning = f"\n\n⚠️  **Note**: 'mcli {cmd}' does not exist. Available commands can be listed with the 'commands' chat command."
+                warning = ChatMessages.MCLI_COMMAND_NOT_EXIST.format(cmd=cmd)
                 if warning not in corrected_response:
                     corrected_response += warning
                 break
@@ -1241,66 +1235,62 @@ Respond naturally and helpfully, considering both MCLI commands and system contr
 
         # Provide additional guidance
         console.print()
-        console.print("[bold cyan]💡 Next Steps:[/bold cyan]")
-        console.print("1. Copy the generated code to a new Python file")
-        console.print("2. Save it in the appropriate MCLI module directory")
-        console.print("3. Test the command with: [yellow]mcli <your-command>[/yellow]")
-        console.print("4. Use [yellow]mcli commands list[/yellow] to verify it's available")
+        console.print(ChatMessages.NEXT_STEPS_HEADER)
+        console.print(ChatMessages.COPY_GENERATED_CODE)
+        console.print(ChatMessages.SAVE_IN_MCLI_MODULE)
+        console.print(ChatMessages.TEST_COMMAND_STEP)
+        console.print(ChatMessages.VERIFY_COMMAND_STEP)
         console.print()
-        console.print(
-            "[dim]Tip: Commands are automatically discovered when placed in the correct directories[/dim]"
-        )
+        console.print(ChatMessages.AUTO_DISCOVERY_TIP)
 
     def _create_complete_command(self, user_input: str):
         """Create a complete working command with full automation."""
 
-        console.print("[bold blue]🤖 Starting automated command creation...[/bold blue]")
+        console.print(ChatMessages.STARTING_AUTO_CREATION)
         console.print()
 
         # Step 1: Generate code with AI
-        console.print("1. [cyan]Generating command code...[/cyan]")
+        console.print(ChatMessages.GENERATING_CODE_STEP)
         code_response = self._get_command_code_from_ai(user_input)
 
         if not code_response:
-            console.print("[red]❌ Failed to generate code. Falling back to code-only mode.[/red]")
+            console.print(ChatMessages.FAILED_GENERATE_CODE)
             self._generate_code_only(user_input)
             return
 
         # Step 2: Extract command info and code
         command_info = self._parse_command_response(code_response)
         if not command_info:
-            console.print(
-                "[red]❌ Could not parse command information. Showing generated code:[/red]"
-            )
+            console.print(ChatMessages.FAILED_PARSE_COMMAND)
             console.print(code_response)
             return
 
         # Step 3: Create the file
-        console.print(f"2. [cyan]Creating command file: {command_info['filename']}[/cyan]")
+        console.print(ChatMessages.CREATING_FILE_STEP.format(filename=command_info["filename"]))
         file_path = self._create_command_file(command_info)
 
         if not file_path:
-            console.print("[red]❌ Failed to create command file.[/red]")
+            console.print(ChatMessages.FAILED_CREATE_FILE)
             return
 
         # Step 4: Test the command
-        console.print(f"3. [cyan]Testing command: {command_info['name']}[/cyan]")
+        console.print(ChatMessages.TESTING_COMMAND_STEP.format(name=command_info["name"]))
         test_result = self._test_command(command_info["name"])
 
         # Step 5: Show results
         console.print()
         if test_result:
-            console.print("[bold green]✅ Command created successfully![/bold green]")
-            console.print(f"📁 File: [green]{file_path}[/green]")
-            console.print(f"🚀 Usage: [yellow]mcli {command_info['name']} --help[/yellow]")
-            console.print(f"📋 Test: [yellow]mcli {command_info['name']}[/yellow]")
+            console.print(ChatMessages.COMMAND_CREATED_SUCCESS)
+            console.print(ChatMessages.COMMAND_FILE_PATH_GREEN.format(file_path=file_path))
+            console.print(ChatMessages.COMMAND_USAGE_HINT.format(name=command_info["name"]))
+            console.print(ChatMessages.COMMAND_TEST_HINT.format(name=command_info["name"]))
         else:
-            console.print("[yellow]⚠️  Command created but may need debugging[/yellow]")
-            console.print(f"📁 File: [yellow]{file_path}[/yellow]")
-            console.print("💡 Check the file and test manually")
+            console.print(ChatMessages.COMMAND_NEEDS_DEBUG)
+            console.print(ChatMessages.COMMAND_FILE_PATH_YELLOW.format(file_path=file_path))
+            console.print(ChatMessages.CHECK_FILE_HINT)
 
         console.print()
-        console.print("[dim]Command is now available in MCLI![/dim]")
+        console.print(ChatMessages.COMMAND_AVAILABLE)
 
     def _get_command_code_from_ai(self, user_input: str) -> str:
         """Get command code from AI with specific formatting requirements."""
@@ -1616,11 +1606,11 @@ Generate a working command that implements the requested functionality. Use prop
             usage_pct = (disk_data.get("total_used_gb", 0) / disk_data["total_disk_gb"]) * 100
 
             if usage_pct > 85:
-                suggestions.append("Your disk is getting full! I can help you clear system caches.")
-                suggestions.append("Try: 'clear system caches' to free up space")
+                suggestions.append(ChatMessages.DISK_FULL_WARNING)
+                suggestions.append(ChatMessages.DISK_FULL_HINT)
             elif usage_pct > 70:
-                suggestions.append("You're using quite a bit of disk space. Consider cleaning up.")
-                suggestions.append("I can help with: 'clear system caches'")
+                suggestions.append(ChatMessages.DISK_HIGH_USAGE)
+                suggestions.append(ChatMessages.DISK_CLEANUP_HINT)
 
         # Check for large simulator volumes
         partitions = disk_data.get("partitions", [])
@@ -1632,7 +1622,7 @@ Generate a working command that implements the requested functionality. Use prop
                 suggestions.append(
                     f"📱 You have {total_sim_space:.1f}GB in iOS/watchOS simulators."
                 )
-                suggestions.append("Consider cleaning old simulator data if you don't need it.")
+                suggestions.append(ChatMessages.SIMULATOR_CLEANUP_HINT)
 
         # Show suggestions
         if suggestions:
@@ -1650,15 +1640,15 @@ Generate a working command that implements the requested functionality. Use prop
         swap = memory_data.get("swap_memory", {})
 
         if vm.get("usage_percent", 0) > 85:
-            suggestions.append("Your memory usage is quite high!")
-            suggestions.append("Consider closing unused applications to free up RAM.")
+            suggestions.append(ChatMessages.MEMORY_HIGH_WARNING)
+            suggestions.append(ChatMessages.MEMORY_CLOSE_APPS)
 
         if swap.get("usage_percent", 0) > 70:
-            suggestions.append("High swap usage detected - your system is using disk as memory.")
-            suggestions.append("This can slow things down. Try closing memory-intensive apps.")
+            suggestions.append(ChatMessages.SWAP_HIGH_WARNING)
+            suggestions.append(ChatMessages.SWAP_SLOWDOWN_HINT)
 
         # Suggest system monitoring
-        suggestions.append("Want to monitor your system? Try: 'show system specs'")
+        suggestions.append(ChatMessages.MEMORY_MONITOR_HINT)
 
         if suggestions:
             console.print("\n[cyan]💡 Memory Tips:[/cyan]")
@@ -1684,19 +1674,19 @@ Generate a working command that implements the requested functionality. Use prop
         # Memory suggestions
         memory_pct = memory.get("usage_percent", 0)
         if memory_pct > 80:
-            suggestions.append("Memory usage is high. Consider closing unused applications.")
+            suggestions.append(ChatMessages.MEMORY_HIGH_SIMPLE)
 
         # Uptime suggestions
         uptime_hours = system_data.get("uptime_hours", 0)
         if uptime_hours > 72:  # More than 3 days
             suggestions.append(f"Your system has been up for {uptime_hours:.1f} hours.")
-            suggestions.append("Consider restarting to refresh system performance.")
+            suggestions.append(ChatMessages.RESTART_HINT)
 
         # General suggestions
-        suggestions.append("I can help you with:")
-        suggestions.append("• 'how much RAM do I have?' - Check memory usage")
-        suggestions.append("• 'how much disk space do I have?' - Check storage")
-        suggestions.append("• 'clear system caches' - Free up space")
+        suggestions.append(ChatMessages.CAN_HELP_WITH)
+        suggestions.append(ChatMessages.CHECK_MEMORY_HINT)
+        suggestions.append(ChatMessages.CHECK_STORAGE_HINT)
+        suggestions.append(ChatMessages.CLEAR_CACHES_HINT)
 
         if suggestions:
             console.print("\n[cyan]💡 System Insights:[/cyan]")
@@ -1724,12 +1714,12 @@ Generate a working command that implements the requested functionality. Use prop
                 elif 9 <= hour <= 17:  # Work hours
                     suggestions.append("⏰ It's work time! Stay productive.")
                 elif 17 < hour < 22:  # Evening
-                    suggestions.append("🌆 Good evening! Wrapping up for the day?")
+                    suggestions.append("🌆 " + ChatMessages.EVENING_MSG)
 
             except Exception:
                 pass
 
-        suggestions.append("I can also help you schedule tasks with the workflow system!")
+        suggestions.append(ChatMessages.SCHEDULE_HINT)
 
         if suggestions:
             console.print("\n[cyan]💡 Time Tips:[/cyan]")

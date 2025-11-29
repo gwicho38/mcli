@@ -40,6 +40,8 @@ from .messages import (
     ModelServiceMessages,
     PromptMessages,
     SuccessMessages,
+    SyncMessages,
+    SystemIntegrationMessages,
     WarningMessages,
 )
 from .paths import DirNames, FileNames, GitIgnorePatterns, PathPatterns
@@ -72,6 +74,8 @@ __all__ = [
     "ChatMessages",
     "CommandMessages",
     "ModelServiceMessages",
+    "SystemIntegrationMessages",
+    "SyncMessages",
     # Defaults
     "Editors",
     "Shells",

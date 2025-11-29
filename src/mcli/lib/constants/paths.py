@@ -23,6 +23,8 @@ class DirNames:
     MCLI_COMMANDS = "mcli-commands"
     VENV = "venv"
     DOT_VENV = ".venv"
+    DOT_ENV = ".env"
+    ENV = "env"
     PYCACHE = "__pycache__"
     RESOURCES = "resources"
     MODELS = "models"
@@ -32,6 +34,9 @@ class DirNames:
     SELF = "self"
     WORKFLOW = "workflow"
     PUBLIC = "public"
+    SRC = "src"
+    LIB = "Lib"
+    SITE_PACKAGES = "site-packages"
 
 
 class FileNames:
@@ -46,6 +51,7 @@ class FileNames:
     ENV = ".env"
     ENV_EXAMPLE = ".env.example"
     SETUP_PY = "setup.py"
+    SETUP_CFG = "setup.cfg"
     INIT_PY = "__init__.py"
     DS_STORE = ".DS_Store"
     PYPROJECT_TOML = "pyproject.toml"

@@ -9,6 +9,7 @@ from typing import Optional
 
 import click
 
+from mcli.lib.constants import SyncMessages
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.paths import get_custom_commands_dir
 from mcli.lib.script_sync import ScriptSyncManager
@@ -41,20 +42,20 @@ def sync_all_command(global_mode: bool, force: bool):
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
 
     if not commands_dir.exists():
-        error(f"Commands directory does not exist: {commands_dir}")
+        error(SyncMessages.DIR_NOT_EXIST.format(path=commands_dir))
         return
 
-    info(f"Syncing scripts in {commands_dir}...")
+    info(SyncMessages.SYNCING_SCRIPTS.format(path=commands_dir))
 
     sync_manager = ScriptSyncManager(commands_dir)
     synced = sync_manager.sync_all(force=force)
 
     if synced:
-        success(f"✓ Synced {len(synced)} script(s) to JSON")
+        success(SyncMessages.SYNCED_SCRIPTS.format(count=len(synced)))
         for json_path in synced:
             console.print(f"  • {json_path.relative_to(commands_dir)}")
     else:
-        info("No scripts needed syncing")
+        info(SyncMessages.NO_SCRIPTS_NEEDED_SYNCING)
 
 
 @sync_group.command(name="one")
@@ -74,14 +75,14 @@ def sync_one_command(script_path: Path, global_mode: bool, force: bool):
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
     sync_manager = ScriptSyncManager(commands_dir)
 
-    info(f"Syncing {script_path}...")
+    info(SyncMessages.SYNCING_SCRIPT.format(path=script_path))
 
     json_path = sync_manager.generate_json(script_path, force=force)
 
     if json_path:
-        success(f"✓ Generated JSON: {json_path}")
+        success(SyncMessages.GENERATED_JSON.format(path=json_path))
     else:
-        error(f"✗ Failed to generate JSON for {script_path}")
+        error(SyncMessages.FAILED_TO_GENERATE_JSON.format(path=script_path))
 
 
 @sync_group.command(name="status")
@@ -95,7 +96,7 @@ def sync_status_command(global_mode: bool):
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
 
     if not commands_dir.exists():
-        error(f"Commands directory does not exist: {commands_dir}")
+        error(SyncMessages.DIR_NOT_EXIST.format(path=commands_dir))
         return
 
     sync_manager = ScriptSyncManager(commands_dir)
@@ -129,32 +130,32 @@ def sync_status_command(global_mode: bool):
             in_sync.append(script_path)
 
     # Display results
-    console.print(f"\n[bold]Script Synchronization Status[/bold]")
-    console.print(f"Location: {commands_dir}\n")
+    console.print(SyncMessages.SCRIPT_SYNC_STATUS_HEADER)
+    console.print(SyncMessages.LOCATION.format(path=commands_dir))
 
     if in_sync:
-        success(f"✓ In sync: {len(in_sync)} script(s)")
+        success(SyncMessages.IN_SYNC_COUNT.format(count=len(in_sync)))
         for path in in_sync:
             console.print(f"  • {path.relative_to(commands_dir)}")
         console.print()
 
     if needs_sync:
-        warning(f"⚠ Needs sync: {len(needs_sync)} script(s)")
+        warning(SyncMessages.NEEDS_SYNC_COUNT.format(count=len(needs_sync)))
         for path in needs_sync:
             console.print(f"  • {path.relative_to(commands_dir)}")
         console.print()
 
     if no_json:
-        info(f"○ No JSON: {len(no_json)} script(s)")
+        info(SyncMessages.NO_JSON_COUNT.format(count=len(no_json)))
         for path in no_json:
             console.print(f"  • {path.relative_to(commands_dir)}")
         console.print()
 
     total = len(in_sync) + len(needs_sync) + len(no_json)
-    console.print(f"Total scripts: {total}")
+    console.print(SyncMessages.TOTAL_SCRIPTS.format(count=total))
 
     if needs_sync or no_json:
-        console.print(f"\nRun [bold]mcli workflows sync all[/bold] to sync all scripts")
+        console.print(SyncMessages.RUN_SYNC_ALL_HINT)
 
 
 @sync_group.command(name="cleanup")
@@ -170,13 +171,13 @@ def sync_cleanup_command(global_mode: bool, yes: bool):
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
 
     if not commands_dir.exists():
-        error(f"Commands directory does not exist: {commands_dir}")
+        error(SyncMessages.DIR_NOT_EXIST.format(path=commands_dir))
         return
 
     sync_manager = ScriptSyncManager(commands_dir)
 
     # Find orphaned JSONs (dry run)
-    info("Scanning for orphaned JSON files...")
+    info(SyncMessages.SCANNING_ORPHANED)
 
     orphaned = []
     for json_path in commands_dir.rglob("*.json"):
@@ -210,25 +211,25 @@ def sync_cleanup_command(global_mode: bool, yes: bool):
             orphaned.append(json_path)
 
     if not orphaned:
-        success("✓ No orphaned JSON files found")
+        success(SyncMessages.NO_ORPHANED_FOUND)
         return
 
-    warning(f"Found {len(orphaned)} orphaned JSON file(s):")
+    warning(SyncMessages.FOUND_ORPHANED.format(count=len(orphaned)))
     for path in orphaned:
         console.print(f"  • {path.relative_to(commands_dir)}")
 
     if not yes:
-        if not click.confirm("\nRemove these files?"):
-            info("Cancelled")
+        if not click.confirm(SyncMessages.REMOVE_FILES_PROMPT):
+            info(SyncMessages.CANCELLED)
             return
 
     # Remove orphaned files
     removed = sync_manager.cleanup_orphaned_json()
 
     if removed:
-        success(f"✓ Removed {len(removed)} orphaned JSON file(s)")
+        success(SyncMessages.REMOVED_ORPHANED.format(count=len(removed)))
     else:
-        info("No files were removed")
+        info(SyncMessages.NO_FILES_REMOVED)
 
 
 @sync_group.command(name="watch")
@@ -245,24 +246,24 @@ def sync_watch_command(global_mode: bool):
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
 
     if not commands_dir.exists():
-        error(f"Commands directory does not exist: {commands_dir}")
+        error(SyncMessages.DIR_NOT_EXIST.format(path=commands_dir))
         return
 
     from mcli.lib.script_sync import ScriptSyncManager
     from mcli.lib.script_watcher import start_watcher, stop_watcher
 
-    info(f"Starting file watcher for {commands_dir}")
-    console.print("Press Ctrl+C to stop\n")
+    info(SyncMessages.STARTING_WATCHER.format(path=commands_dir))
+    console.print(SyncMessages.PRESS_CTRL_C)
 
     sync_manager = ScriptSyncManager(commands_dir)
     observer = start_watcher(commands_dir, sync_manager)
 
     if not observer:
-        error("Failed to start file watcher")
+        error(SyncMessages.FAILED_START_WATCHER)
         return
 
     try:
-        success("✓ Watching for changes...")
+        success(SyncMessages.WATCHING_FOR_CHANGES)
         # Keep running until interrupted
         while True:
             import time
@@ -270,9 +271,9 @@ def sync_watch_command(global_mode: bool):
             time.sleep(1)
     except KeyboardInterrupt:
         console.print("\n")
-        info("Stopping watcher...")
+        info(SyncMessages.STOPPING_WATCHER)
         stop_watcher(observer)
-        success("✓ Stopped")
+        success(SyncMessages.STOPPED)
 
 
 @sync_group.command(name="push")
@@ -304,24 +305,24 @@ def sync_push_command(global_mode: bool, description: str):
     lockfile_path = workflows_dir / "commands.lock.json"
 
     if not lockfile_path.exists():
-        error(f"Lockfile not found: {lockfile_path}")
-        info("Run 'mcli workflow update-lockfile' first")
+        error(SyncMessages.LOCKFILE_NOT_FOUND.format(path=lockfile_path))
+        info(SyncMessages.RUN_UPDATE_LOCKFILE)
         return
 
-    info("Uploading command state to IPFS...")
+    info(SyncMessages.UPLOADING_TO_IPFS)
 
     ipfs = IPFSSync()
     cid = ipfs.push(lockfile_path, description=description or "")
 
     if cid:
-        success(f"✓ Pushed to IPFS!")
-        console.print(f"\n[bold]CID:[/bold] {cid}")
-        console.print(f"\n[dim]Anyone can retrieve with:[/dim]")
-        console.print(f"  mcli workflows sync pull {cid}")
-        console.print(f"\n[dim]Or view in browser:[/dim]")
-        console.print(f"  https://ipfs.io/ipfs/{cid}")
+        success(SyncMessages.PUSHED_TO_IPFS)
+        console.print(SyncMessages.CID_LABEL.format(cid=cid))
+        console.print(SyncMessages.RETRIEVE_HINT)
+        console.print(SyncMessages.RETRIEVE_COMMAND.format(cid=cid))
+        console.print(SyncMessages.VIEW_BROWSER_HINT)
+        console.print(SyncMessages.IPFS_GATEWAY_URL.format(cid=cid))
     else:
-        error("✗ Failed to push to IPFS")
+        error(SyncMessages.FAILED_PUSH_IPFS)
 
 
 @sync_group.command(name="pull")
@@ -344,13 +345,13 @@ def sync_pull_command(cid: str, output: Optional[Path], no_verify: bool):
     """
     from mcli.lib.ipfs_sync import IPFSSync
 
-    info(f"Retrieving from IPFS: {cid}")
+    info(SyncMessages.RETRIEVING_FROM_IPFS.format(cid=cid))
 
     ipfs = IPFSSync()
     data = ipfs.pull(cid, verify=not no_verify)
 
     if data:
-        success(f"✓ Retrieved from IPFS")
+        success(SyncMessages.RETRIEVED_FROM_IPFS)
 
         # Determine output path
         if output:
@@ -364,24 +365,24 @@ def sync_pull_command(cid: str, output: Optional[Path], no_verify: bool):
         with open(output_path, "w") as f:
             json.dump(data, f, indent=2)
 
-        success(f"✓ Saved to: {output_path}")
+        success(SyncMessages.SAVED_TO.format(path=output_path))
 
         # Show summary
         command_count = len(data.get("commands", {}))
-        console.print(f"\n[bold]Commands:[/bold] {command_count}")
+        console.print(SyncMessages.COMMANDS_COUNT.format(count=command_count))
 
         if "version" in data:
-            console.print(f"[bold]Version:[/bold] {data['version']}")
+            console.print(SyncMessages.VERSION_LABEL.format(version=data["version"]))
 
         if "synced_at" in data:
-            console.print(f"[bold]Synced:[/bold] {data['synced_at']}")
+            console.print(SyncMessages.SYNCED_AT_LABEL.format(timestamp=data["synced_at"]))
 
         if "description" in data and data["description"]:
-            console.print(f"[bold]Description:[/bold] {data['description']}")
+            console.print(SyncMessages.DESCRIPTION_LABEL.format(description=data["description"]))
 
     else:
-        error(f"✗ Failed to retrieve from IPFS")
-        info("CID may be invalid or not yet propagated to gateways")
+        error(SyncMessages.FAILED_RETRIEVE_IPFS)
+        info(SyncMessages.CID_INVALID_OR_NOT_PROPAGATED)
 
 
 @sync_group.command(name="history")
@@ -403,11 +404,11 @@ def sync_history_command(limit: int):
     history = ipfs.get_history(limit=limit)
 
     if not history:
-        info("No sync history found")
-        console.print("\nRun 'mcli workflows sync push' to create your first sync")
+        info(SyncMessages.NO_SYNC_HISTORY)
+        console.print(SyncMessages.RUN_PUSH_FIRST)
         return
 
-    console.print(f"\n[bold]IPFS Sync History[/bold] (last {len(history)} entries)\n")
+    console.print(SyncMessages.IPFS_SYNC_HISTORY_HEADER.format(count=len(history)))
 
     for entry in reversed(history):
         console.print(f"[bold cyan]{entry['cid']}[/bold cyan]")
@@ -435,12 +436,12 @@ def sync_verify_command(cid: str):
     """
     from mcli.lib.ipfs_sync import IPFSSync
 
-    info(f"Verifying CID: {cid}")
+    info(SyncMessages.VERIFYING_CID.format(cid=cid))
 
     ipfs = IPFSSync()
 
     if ipfs.verify_cid(cid):
-        success(f"✓ CID is accessible on IPFS")
+        success(SyncMessages.CID_ACCESSIBLE)
     else:
-        error(f"✗ CID is not accessible")
-        info("It may take a few minutes for new uploads to propagate")
+        error(SyncMessages.CID_NOT_ACCESSIBLE)
+        info(SyncMessages.PROPAGATION_DELAY_NOTE)
