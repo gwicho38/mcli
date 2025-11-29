@@ -183,6 +183,43 @@ ALLOWED_PATTERNS = [
     # Use/Usage patterns
     r"^Use ['\"](logs|ps|stop|start|inspect|kill)",
     r"to (view|see|show|check) (output|status|logs|info)",
+    # Warning/Error retrieval patterns
+    r"^Warning: Error (retrieving|getting|fetching|loading)",
+    r"^Error (retrieving|getting|fetching|loading)",
+    # Failed action patterns
+    r"^Failed to (connect|load|save|set|get|create|delete|start|stop|find)",
+    r"^Could not (connect|load|save|set|get|create|delete|start|stop|find)",
+    r"^Unable to (connect|load|save|set|get|create|delete|start|stop|find)",
+    # Process/service not found patterns
+    r"^(Process|Service|Model|File|Command|Task) not found",
+    # Found/Saved/Added patterns (common log prefixes)
+    r"^(Found|Saved|Added|Removed|Updated|Loaded|Logged|Created|Deleted) ",
+    # SQL patterns
+    r"^PRAGMA ",
+    r"^SELECT ",
+    r"^INSERT ",
+    r"^UPDATE ",
+    r"^DELETE FROM",
+    r"^CREATE TABLE",
+    r"^ALTER TABLE",
+    r"^DROP TABLE",
+    # CLI flag patterns
+    r"^--[a-z]+-?[a-z]*$",  # e.g., "--url", "--api-key"
+    # Received signal pattern
+    r"^Received signal ",
+    # Caching disabled pattern
+    r"Caching disabled",
+    # MLflow patterns
+    r"^No active MLflow run",
+    # IP addresses
+    r"^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$",
+    # Indented checkmarks/status
+    r"^  [✅❌⚠️✓✗] ",
+    # Code template patterns (command generation)
+    r"_command\(name",
+    r"command group\.\"\"\"\n",
+    r"# Your command implementation",
+    r"@app\.command\(",
 ]
 
 # File patterns to exclude from checking (glob patterns)
