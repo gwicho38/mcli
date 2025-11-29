@@ -30,6 +30,20 @@ ALLOWED_PATTERNS = [
     r"^•\s*$",  # Bullet points
     r"^\s+$",  # Indentation only
     r"^\[bold cyan\]>>> \[/bold cyan\]$",  # Input prompt pattern
+    # Python format specifiers (f-strings and .format())
+    r"^[,+<>]?\.[0-9]+[fdeEgG%]$",  # Format specs: .1f, .2%, +.1f, etc.
+    r"^[0-9]+d$",  # Integer format: 05d, etc.
+    r"^<[0-9]+$",  # Left align: <10
+    r"^>[0-9]+$",  # Right align: >10
+    r"^\^[0-9]+$",  # Center align: ^10
+    # File extensions
+    r"^\.[a-z0-9]+$",  # File extensions: .json, .py, .png, etc.
+    # UI formatting
+    r"^\s+[•\-→]\s*$",  # Indented bullets/arrows: "  • ", "  - ", " → "
+    # Version strings
+    r"^[0-9]+\.[0-9]+(\.[0-9]+)?$",  # Versions: 1.0, 1.0.0
+    # Date/time format strings
+    r"^%[YymdHMSp]+[_\-:]*%?[YymdHMSp]*",  # Date formats: %Y%m%d, %H:%M:%S
 ]
 
 # File patterns to exclude from checking (glob patterns)
@@ -150,6 +164,29 @@ COMMON_ACCEPTABLE_STRINGS = {
     "json",
     "yaml",
     "toml",
+    # Common units
+    " MB",
+    " GB",
+    " KB",
+    " bytes",
+    " seconds",
+    " minutes",
+    " hours",
+    " days",
+    " ms",
+    # Common prefixes/suffixes (often used in console output)
+    " to ",
+    " of ",
+    " in ",
+    " for ",
+    " not found",
+    " commands",
+    " items",
+    # Database column names
+    "politician_name_cleaned",
+    "transaction_amount_cleaned",
+    # Config files
+    "config.toml",
 }
 
 # Regex pattern for constant-like names (ALL_CAPS)
