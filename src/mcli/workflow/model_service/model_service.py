@@ -28,6 +28,7 @@ from pydantic import BaseModel
 from transformers import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
 
 # Import existing utilities
+from mcli.lib.constants import ModelServiceMessages
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
 
@@ -85,7 +86,9 @@ class ModelDatabase:
 
     def __init__(self, db_path: Optional[str] = None):
         if db_path is None:
-            db_path = str(Path.home() / ".local" / "mcli" / "model_service" / "models.db")
+            db_path = str(
+                Path.home() / ".local" / "mcli" / "model_service" / ModelServiceMessages.DB_FILE
+            )
         else:
             db_path = str(db_path)
         self.db_path = db_path
@@ -147,7 +150,7 @@ class ModelDatabase:
         try:
             cursor.execute(
                 """
-                INSERT INTO models 
+                INSERT INTO models
                 (id, name, model_type, model_path, tokenizer_path, device,
                  max_length, temperature, top_p, top_k, created_at, is_loaded,
                  memory_usage_mb, parameters_count)
@@ -175,7 +178,7 @@ class ModelDatabase:
             return model_info.id
 
         except Exception as e:
-            logger.error(f"Error adding model: {e}")
+            logger.error(ModelServiceMessages.ERROR_ADDING_MODEL.format(error=e))
             conn.rollback()
             raise
         finally:
@@ -205,7 +208,7 @@ class ModelDatabase:
         finally:
             conn.close()
 
-    def get_all_models(self) -> List[ModelInfo]:
+    def get_all_models(self) -> list[ModelInfo]:
         """Get all models."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -233,7 +236,7 @@ class ModelDatabase:
         try:
             cursor.execute(
                 """
-                UPDATE models 
+                UPDATE models
                 SET name = ?, model_type = ?, model_path = ?, tokenizer_path = ?,
                     device = ?, max_length = ?, temperature = ?, top_p = ?, top_k = ?,
                     is_loaded = ?, memory_usage_mb = ?, parameters_count = ?
@@ -260,7 +263,7 @@ class ModelDatabase:
             return cursor.rowcount > 0
 
         except Exception as e:
-            logger.error(f"Error updating model: {e}")
+            logger.error(ModelServiceMessages.ERROR_UPDATING_MODEL.format(error=e))
             conn.rollback()
             return False
         finally:
@@ -272,12 +275,12 @@ class ModelDatabase:
         cursor = conn.cursor()
 
         try:
-            cursor.execute("DELETE FROM models WHERE id = ?", (model_id,))
+            cursor.execute(ModelServiceMessages.SQL_DELETE_MODEL, (model_id,))
             conn.commit()
             return cursor.rowcount > 0
 
         except Exception as e:
-            logger.error(f"Error deleting model: {e}")
+            logger.error(ModelServiceMessages.ERROR_DELETING_MODEL.format(error=e))
             conn.rollback()
             return False
         finally:
@@ -287,10 +290,10 @@ class ModelDatabase:
         self,
         model_id: str,
         request_type: str,
-        input_data: str = str(),
-        output_data: str = str(),
+        input_data: str = "",
+        output_data: str = "",
         execution_time_ms: int = int(),
-        error_message: str = str(),
+        error_message: str = "",
     ):
         """Record inference request."""
         conn = sqlite3.connect(self.db_path)
@@ -300,8 +303,8 @@ class ModelDatabase:
             inference_id = str(uuid.uuid4())
             cursor.execute(
                 """
-                INSERT INTO inferences 
-                (id, model_id, request_type, input_data, output_data, 
+                INSERT INTO inferences
+                (id, model_id, request_type, input_data, output_data,
                  execution_time_ms, error_message)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
@@ -319,7 +322,7 @@ class ModelDatabase:
             conn.commit()
 
         except Exception as e:
-            logger.error(f"Error recording inference: {e}")
+            logger.error(ModelServiceMessages.ERROR_RECORDING_INFERENCE.format(error=e))
             conn.rollback()
         finally:
             conn.close()
@@ -351,23 +354,25 @@ class ModelManager:
         self.models_dir = Path(models_dir)
         self.models_dir.mkdir(parents=True, exist_ok=True)
         self.max_cache_size = max_cache_size
-        self.loaded_models: Dict[str, Any] = {}
+        self.loaded_models: dict[str, Any] = {}
         self.model_lock = threading.Lock()
         self.db = ModelDatabase()
 
         # Device detection
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        logger.info(f"Using device: {self.device}")
+        logger.info(ModelServiceMessages.USING_DEVICE.format(device=self.device))
 
     def load_model(self, model_info: ModelInfo) -> bool:
         """Load a model into memory."""
         with self.model_lock:
             try:
-                logger.info(f"Loading model: {model_info.name}")
+                logger.info(ModelServiceMessages.LOADING_MODEL.format(model=model_info.name))
 
                 # Check if model is already loaded
                 if model_info.id in self.loaded_models:
-                    logger.info(f"Model {model_info.name} already loaded")
+                    logger.info(
+                        ModelServiceMessages.MODEL_ALREADY_LOADED.format(model=model_info.name)
+                    )
                     return True
 
                 # Manage cache size
@@ -375,16 +380,20 @@ class ModelManager:
                     self._evict_oldest_model()
 
                 # Load model based on type
-                if model_info.model_type == "text-generation":
+                if model_info.model_type == ModelServiceMessages.TYPE_TEXT_GENERATION:
                     model, tokenizer = self._load_text_generation_model(model_info)
-                elif model_info.model_type == "text-classification":
+                elif model_info.model_type == ModelServiceMessages.TYPE_TEXT_CLASSIFICATION:
                     model, tokenizer = self._load_text_classification_model(model_info)
                 elif model_info.model_type == "translation":
                     model, tokenizer = self._load_translation_model(model_info)
-                elif model_info.model_type == "image-generation":
+                elif model_info.model_type == ModelServiceMessages.TYPE_IMAGE_GENERATION:
                     model, tokenizer = self._load_image_generation_model(model_info)
                 else:
-                    raise ValueError(f"Unsupported model type: {model_info.model_type}")
+                    raise ValueError(
+                        ModelServiceMessages.UNSUPPORTED_MODEL_TYPE.format(
+                            type=model_info.model_type
+                        )
+                    )
 
                 # Store loaded model
                 self.loaded_models[model_info.id] = {
@@ -400,11 +409,13 @@ class ModelManager:
                 model_info.parameters_count = sum(p.numel() for p in model.parameters())
                 self.db.update_model(model_info)
 
-                logger.info(f"Successfully loaded model: {model_info.name}")
+                logger.info(ModelServiceMessages.MODEL_LOADED_SUCCESS.format(model=model_info.name))
                 return True
 
             except Exception as e:
-                logger.error(f"Error loading model {model_info.name}: {e}")
+                logger.error(
+                    ModelServiceMessages.ERROR_LOADING_MODEL.format(model=model_info.name, error=e)
+                )
                 return False
 
     def unload_model(self, model_id: str) -> bool:
@@ -420,7 +431,7 @@ class ModelManager:
                     model_info.memory_usage_mb = 0.0
                     self.db.update_model(model_info)
 
-                logger.info(f"Unloaded model: {model_id}")
+                logger.info(ModelServiceMessages.MODEL_UNLOADED.format(model=model_id))
                 return True
             return False
 
@@ -480,7 +491,7 @@ class ModelManager:
         """Load an image generation model (placeholder)."""
         # This would be implemented based on specific image generation frameworks
         # like Stable Diffusion, DALL-E, etc.
-        raise NotImplementedError("Image generation models not yet implemented")
+        raise NotImplementedError(ModelServiceMessages.IMAGE_GEN_NOT_IMPLEMENTED)
 
     def _evict_oldest_model(self):
         """Evict the oldest loaded model from cache."""
@@ -513,7 +524,7 @@ class ModelManager:
     ) -> str:
         """Generate text using a loaded model."""
         if model_id not in self.loaded_models:
-            raise ValueError(f"Model {model_id} not loaded")
+            raise ValueError(ModelServiceMessages.MODEL_NOT_LOADED.format(model=model_id))
 
         model_data = self.loaded_models[model_id]
         model = model_data["model"]
@@ -554,13 +565,13 @@ class ModelManager:
             return generated_text
 
         except Exception as e:
-            logger.error(f"Error generating text: {e}")
+            logger.error(ModelServiceMessages.ERROR_GENERATING_TEXT.format(error=e))
             raise
 
-    def classify_text(self, model_id: str, text: str) -> Dict[str, float]:
+    def classify_text(self, model_id: str, text: str) -> dict[str, float]:
         """Classify text using a loaded model."""
         if model_id not in self.loaded_models:
-            raise ValueError(f"Model {model_id} not loaded")
+            raise ValueError(ModelServiceMessages.MODEL_NOT_LOADED.format(model=model_id))
 
         model_data = self.loaded_models[model_id]
         model = model_data["model"]
@@ -583,7 +594,7 @@ class ModelManager:
             return {f"class_{i}": float(prob) for i, prob in enumerate(probs)}
 
         except Exception as e:
-            logger.error(f"Error classifying text: {e}")
+            logger.error(ModelServiceMessages.ERROR_CLASSIFYING_TEXT.format(error=e))
             raise
 
     def translate_text(
@@ -591,7 +602,7 @@ class ModelManager:
     ) -> str:
         """Translate text using a loaded model."""
         if model_id not in self.loaded_models:
-            raise ValueError(f"Model {model_id} not loaded")
+            raise ValueError(ModelServiceMessages.MODEL_NOT_LOADED.format(model=model_id))
 
         model_data = self.loaded_models[model_id]
         model = model_data["model"]
@@ -710,7 +721,7 @@ class ModelManager:
             logger.error(f"Error adding model from URL: {e}")
             raise
 
-    def get_models_summary(self) -> Dict[str, Any]:
+    def get_models_summary(self) -> dict[str, Any]:
         """Get a summary of all models with statistics."""
         models = self.db.get_all_models()
 
@@ -794,7 +805,7 @@ class TranslationRequest(BaseModel):
 class ModelService:
     """Main model service daemon."""
 
-    def __init__(self, config: Dict[str, Any] = dict[str(), object()]()):
+    def __init__(self, config: dict[str, Any] = dict["", object()]()):
         self.config = {**DEFAULT_CONFIG, **(config or {})}
         self.model_manager = ModelManager(
             models_dir=self.config["models_dir"], max_cache_size=self.config["model_cache_size"]
@@ -929,7 +940,7 @@ class ModelService:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.put("/models/{model_id}")
-        async def update_model(model_id: str, request: Dict[str, Any]):
+        async def update_model(model_id: str, request: dict[str, Any]):
             """Update model configuration."""
             try:
                 # Get current model info
@@ -1142,7 +1153,7 @@ class ModelService:
 
         # PDF processing endpoints
         @self.app.post("/pdf/extract-text")
-        async def extract_pdf_text(request: Dict[str, Any]):
+        async def extract_pdf_text(request: dict[str, Any]):
             """Extract text from PDF."""
             try:
                 pdf_path = request.get("pdf_path")
@@ -1155,7 +1166,7 @@ class ModelService:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.post("/pdf/process-with-ai")
-        async def process_pdf_with_ai(request: Dict[str, Any]):
+        async def process_pdf_with_ai(request: dict[str, Any]):
             """Process PDF with AI analysis."""
             try:
                 pdf_path = request.get("pdf_path")
@@ -1180,7 +1191,7 @@ class ModelService:
 
         # Embedding endpoints
         @self.app.post("/embed/text")
-        async def embed_text(request: Dict[str, Any]):
+        async def embed_text(request: dict[str, Any]):
             """Embed text using lightweight embedder."""
             try:
                 text = request.get("text")
@@ -1199,7 +1210,7 @@ class ModelService:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.post("/embed/document")
-        async def embed_document(request: Dict[str, Any]):
+        async def embed_document(request: dict[str, Any]):
             """Embed document using lightweight embedder."""
             try:
                 text = request.get("text")
@@ -1214,7 +1225,7 @@ class ModelService:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.post("/embed/search")
-        async def search_embeddings(request: Dict[str, Any]):
+        async def search_embeddings(request: dict[str, Any]):
             """Search similar documents using embeddings."""
             try:
                 query = request.get("query")
@@ -1243,7 +1254,7 @@ class ModelService:
         # Check if already running
         if self.pid_file.exists():
             try:
-                with open(self.pid_file, "r") as f:
+                with open(self.pid_file) as f:
                     pid = int(f.read().strip())
                 if psutil.pid_exists(pid):
                     logger.info(f"Model service already running with PID {pid}")
@@ -1301,14 +1312,14 @@ class ModelService:
         self.stop()
         sys.exit(0)
 
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get service status."""
         is_running = False
         pid = None
 
         if self.pid_file.exists():
             try:
-                with open(self.pid_file, "r") as f:
+                with open(self.pid_file) as f:
                     pid = int(f.read().strip())
                 is_running = psutil.pid_exists(pid)
             except Exception:
@@ -1368,7 +1379,7 @@ def stop():
         return
 
     try:
-        with open(pid_file, "r") as f:
+        with open(pid_file) as f:
             pid = int(f.read().strip())
 
         # Send SIGTERM
@@ -1468,7 +1479,7 @@ def list_models(summary: bool = False):
 @click.option("--tokenizer-path", help="Path to tokenizer (optional)")
 @click.option("--device", default="auto", help="Device to use (cpu, cuda, auto)")
 def add_model(
-    model_path: str, name: str, model_type: str, tokenizer_path: str = str(), device: str = "auto"
+    model_path: str, name: str, model_type: str, tokenizer_path: str = "", device: str = "auto"
 ):
     """Add a model to the service."""
     service = ModelService()
@@ -1516,7 +1527,7 @@ def add_model_from_url(
     model_url: str,
     name: str,
     model_type: str,
-    tokenizer_url: str = str(),
+    tokenizer_url: str = "",
     device: str = "auto",
     max_length: int = 512,
     temperature: float = 0.7,

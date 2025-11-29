@@ -216,6 +216,39 @@ class ChatMessages:
     AND_MORE = "[dim]... and {count} more[/dim]"
 
 
+class ModelServiceMessages:
+    """Model service message constants."""
+
+    # Model loading
+    USING_DEVICE = "Using device: {device}"
+    LOADING_MODEL = "Loading model: {model}"
+    MODEL_ALREADY_LOADED = "Model {model} already loaded"
+    MODEL_LOADED_SUCCESS = "Successfully loaded model: {model}"
+    MODEL_UNLOADED = "Unloaded model: {model}"
+    MODEL_NOT_LOADED = "Model {model} not loaded"
+
+    # Model types
+    TYPE_TEXT_GENERATION = "text-generation"
+    TYPE_TEXT_CLASSIFICATION = "text-classification"
+    TYPE_IMAGE_GENERATION = "image-generation"
+
+    # Errors
+    ERROR_ADDING_MODEL = "Error adding model: {error}"
+    ERROR_UPDATING_MODEL = "Error updating model: {error}"
+    ERROR_DELETING_MODEL = "Error deleting model: {error}"
+    ERROR_LOADING_MODEL = "Error loading model {model}: {error}"
+    ERROR_RECORDING_INFERENCE = "Error recording inference: {error}"
+    ERROR_GENERATING_TEXT = "Error generating text: {error}"
+    ERROR_CLASSIFYING_TEXT = "Error classifying text: {error}"
+    ERROR_GENERATING_IMAGE = "Error generating image: {error}"
+    UNSUPPORTED_MODEL_TYPE = "Unsupported model type: {type}"
+    IMAGE_GEN_NOT_IMPLEMENTED = "Image generation models not yet implemented"
+
+    # Database
+    DB_FILE = "models.db"
+    SQL_DELETE_MODEL = "DELETE FROM models WHERE id = ?"
+
+
 class CommandMessages:
     """Command store and workflow message constants."""
 
@@ -263,5 +296,6 @@ __all__ = [
     "InfoMessages",
     "PromptMessages",
     "ChatMessages",
+    "ModelServiceMessages",
     "CommandMessages",
 ]

@@ -37,6 +37,7 @@ from .messages import (
     CommandMessages,
     ErrorMessages,
     InfoMessages,
+    ModelServiceMessages,
     PromptMessages,
     SuccessMessages,
     WarningMessages,
@@ -70,6 +71,7 @@ __all__ = [
     "PromptMessages",
     "ChatMessages",
     "CommandMessages",
+    "ModelServiceMessages",
     # Defaults
     "Editors",
     "Shells",
