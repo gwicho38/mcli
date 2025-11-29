@@ -44,6 +44,50 @@ ALLOWED_PATTERNS = [
     r"^[0-9]+\.[0-9]+(\.[0-9]+)?$",  # Versions: 1.0, 1.0.0
     # Date/time format strings
     r"^%[YymdHMSp]+[_\-:]*%?[YymdHMSp]*",  # Date formats: %Y%m%d, %H:%M:%S
+    # Rich markup patterns with content
+    r"^\[dim\].*\[/dim\]$",  # Dim styled text
+    r"^\[bold\].*\[/bold\]$",  # Bold styled text
+    r"^\[red\].*\[/red\]$",  # Red styled text (often error prefixes)
+    r"^\[green\].*\[/green\]$",  # Green styled text
+    r"^\[yellow\].*\[/yellow\]$",  # Yellow styled text
+    r"^• \[[a-z]+\]",  # Bullet with styled content
+    # Partial format patterns used in f-strings
+    r"^Secret '",  # Secret prefix for messages
+    r"^Command '",  # Command prefix for messages
+    r"^✅ Model '",  # Model success message prefix
+    r"^❌ Model ",  # Model error message prefix
+    r"^Avg [A-Z][a-z]+",  # Average statistics
+    # Workflow/daemon patterns
+    r"^Error connecting to daemon: ",
+    r"^\[red\]Error connecting to daemon: ",
+    r"^Commands directory does not exist: ",
+    r"^Invalid command name: ",
+    r"^Invalid group name: ",
+    # Common log patterns
+    r"^Loading notebook commands from ",
+    r"^Secrets workflow not available: ",
+    r"^Notebook commands not available: ",
+    r"^Sync commands not available: ",
+    r"^Storage commands not available: ",
+    r"^\[dim\]Saved to: ",
+    r"^\[dim\]Git repository: ",
+    # Generic error patterns
+    r"^Error: HTTP ",
+    r"^Model not found",
+    # Docstring/help text patterns (often in command help)
+    r" command\.\"\)\n",
+    r"\. Use lowercase letters",
+    # Code templates (strings containing Python code)
+    r"import click",
+    r"@click\.",
+    r"def \w+\(",
+    r"\"\"\"\n\s+",  # Docstring markers in templates
+    r"^\[red\]Command '",  # Rich error prefix
+    r"^✅ Model ",
+    # HTML/GraphViz templates
+    r"^<TR><TD",
+    r"BGCOLOR=",
+    r"COLSPAN=",
 ]
 
 # File patterns to exclude from checking (glob patterns)
@@ -55,6 +99,9 @@ EXCLUDED_FILE_PATTERNS = [
     "**/setup.py",
     "**/__init__.py",
     "**/constants/**/*.py",
+    # Dashboard files have many Streamlit-specific UI strings
+    "**/dashboard/**/*.py",
+    "**/pages/**/*.py",
 ]
 
 # Directories to exclude from checking
@@ -70,6 +117,11 @@ EXCLUDED_DIRS = {
     "dist",
     "*.egg-info",
     "node_modules",
+    # Dashboard directories (Streamlit-specific UI strings are impractical to constantize)
+    "dashboard",
+    "pages",
+    # ERD module (GraphViz template strings)
+    "erd",
 }
 
 # Common strings that are acceptable to hardcode
@@ -182,11 +234,62 @@ COMMON_ACCEPTABLE_STRINGS = {
     " not found",
     " commands",
     " items",
-    # Database column names
+    " files",
+    " -> ",
+    ") - ",
+    # Common UI prefixes (partial strings for f-string formatting)
+    "Process ",
+    "Found ",
+    "Model ",
+    "Cell ",
+    "Command: ",
+    "Loaded ",
+    "Processed ",
+    "Skipping ",
+    "Extracted ",
+    "Description: ",
+    "Module: ",
+    "Tags: ",
+    "Bearer ",
+    "process:",
+    # Common status prefixes
+    "✅ ",
+    "❌ ",
+    "⚠️ ",
+    "ℹ️ ",
+    # Database column names (domain-specific)
     "politician_name_cleaned",
     "transaction_amount_cleaned",
+    "transaction_date_cleaned",
+    "gravity_anomaly_mgal",
     # Config files
     "config.toml",
+    # Test data that may appear in examples
+    "Nancy Pelosi",
+    # Common log prefixes
+    "Error: ",
+    "Warning: ",
+    "Info: ",
+    "Debug: ",
+    "Exported ",
+    "export ",
+    # UI label patterns
+    "   Connection URL: ",
+    "  Path: ",
+    " (ID: ",
+    "🎯 Recommended model: ",
+    "❌ Visual effects not available: ",
+    ".\n\nDescription: ",
+    # Command documentation patterns
+    " command for mcli.",
+    "command:",
+    # Common file names
+    "commands.lock.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    # API names
+    "MCLI API",
 }
 
 # Regex pattern for constant-like names (ALL_CAPS)
