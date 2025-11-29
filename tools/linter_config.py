@@ -88,6 +88,12 @@ ALLOWED_PATTERNS = [
     r"^<TR><TD",
     r"BGCOLOR=",
     r"COLSPAN=",
+    # Multi-line code templates (Python code in string literals)
+    r"\n\"\"\"\n",  # Docstrings in templates
+    r"pass\n\n@",  # Empty function followed by decorator
+    r"# Your command implementation",  # Template comments
+    r"# Example",  # Example comments in templates
+    r"^\.\n\"\"\"",  # Template starting with docstring
 ]
 
 # File patterns to exclude from checking (glob patterns)
@@ -290,6 +296,16 @@ COMMON_ACCEPTABLE_STRINGS = {
     "LICENSE",
     # API names
     "MCLI API",
+    # Common partial f-string patterns
+    "[red]Error: ",
+    "Created: ",
+    "Executing: ",
+    "Copying commands from ",
+    "Copying ",
+    " FPS...",
+    " frames.",
+    "GB total (",
+    " to edit command logic...",
 }
 
 # Regex pattern for constant-like names (ALL_CAPS)
