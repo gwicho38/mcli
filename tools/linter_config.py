@@ -1597,6 +1597,50 @@ ALLOWED_PATTERNS = [
     r"^(change|cd) to$",
     # Checked out
     r"^Checked out (data|version|branch)[ :]",
+    # A-B common patterns
+    r"^Added (remote|file|command|tag)[ :]",
+    r"^Analysis (complete|failed|started)[ :]",
+    r"^Analyzing (data|model|portfolio|results)[ ]",
+    r"^API (key|token|error|response|call)[ :]",
+    r"^Applying (transformation|filter|style)[ ]",
+    r"^Asset (allocation|data|file)[ :]",
+    r"^Attached (to|file|storage)[ ]",
+    r"^Attempting (to|retry|connection)[ ]",
+    r"^Authentication (failed|required|successful)[ :]",
+    r"^Auto-generated (from|by|at)[ ]",
+    r"^Available (commands|models|options)[ :]",
+    r"^Best (parameters|model|result)[ :]",
+    r"^Browser (opened|started|closed)[ ]",
+    r"^Building (index|model|cache)[ ]",
+    r"^Built (index|command|cache)[ ]",
+    # Common lowercase patterns
+    r"^bytes$",
+    r"^button$",
+    r"^bearer$",
+    # More B patterns
+    r"^Beginning (analysis|processing|training)[ ]",
+    r"^Binning (data|values|results)[ ]",
+    r"^Binding (to|port|address)[ ]",
+    # Common file extensions and types
+    r"^\\.(json|yaml|yml|toml|csv|txt|md|py|sh|sql)$",
+    r"^application/(json|xml|octet-stream)$",
+    r"^text/(plain|html|csv)$",
+    r"^image/(png|jpg|jpeg|gif|svg)$",
+    # UI element labels
+    r"^(Submit|Cancel|OK|Yes|No|Save|Close|Open|Delete|Edit|Add|Remove|Update|Clear|Reset|Confirm|Apply|Done|Next|Previous|Back|Forward)$",
+    # Time/Date related
+    r"^(today|yesterday|tomorrow|now|never|always)$",
+    r"^\\d{4}-\\d{2}-\\d{2}",  # Date format YYYY-MM-DD
+    # Common status values
+    r"^(success|error|warning|info|debug|trace|fatal|critical|pending|completed|failed|cancelled|running|stopped|paused)$",
+    # Common abbreviations
+    r"^(HTTP|HTTPS|SSH|SSL|TLS|TCP|UDP|DNS|FTP|SFTP|API|REST|SOAP|JSON|XML|CSV|SQL|HTML|CSS|JS|URL|URI)$",
+    # Version strings
+    r"^v?\\d+\\.\\d+",  # Version like v1.0, 1.0.0
+    # Platform names
+    r"^(windows|linux|macos|darwin|ubuntu|debian|centos|fedora)$",
+    # Python builtins as strings
+    r"^(str|int|float|bool|list|dict|tuple|set|None|True|False)$",
 ]
 
 # File patterns to exclude from checking (glob patterns)
