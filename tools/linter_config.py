@@ -1222,6 +1222,185 @@ ALLOWED_PATTERNS = [
     r"^Query is required$",
     # PyTorch pattern
     r"^PyTorch not available$",
+    # PyPDF/PyMuPDF patterns
+    r"^PyPDF2 extraction failed:",
+    r"^PyMuPDF extraction failed:",
+    # python patterns
+    r"^python $",
+    r"^Python [0-9]",
+    r"^Python (TF-IDF|execution) (benchmark |)failed:",
+    # public cache header
+    r"^public, max-age=",
+    # Pulled patterns
+    r"^Pulled (image|from remote) ",
+    r"^Pulled $",
+    # Providing patterns
+    r"^Providing (file|path|API) ",
+    # Processing patterns
+    r"^Processing (Supabase|politician|frame|failed|completed|Click|batch) ",
+    # Process patterns
+    r"^Process (manager|ID|not found)[ :]",
+    r"^processes\.db$",
+    r"^proc-$",
+    # Price patterns
+    r"^Price \(\$\)$",
+    # Preprocessed patterns
+    r"^Preprocessed ",
+    # Prepared patterns
+    r"^Prepared ",
+    # Prediction patterns
+    r"^Prediction not found$",
+    # Possible issue patterns
+    r"^Possible issue with the ",
+    # Position patterns
+    r"^Position size \(",
+    # Portfolio patterns
+    r"^Portfolio (Metrics|value|allocation)",
+    # politician patterns
+    r"^politician\.data\.updated$",
+    # Plugin patterns
+    r"^Plugin (directory|registered|loaded) ",
+    # Placed order
+    r"^Placed order ",
+    # PID patterns
+    r"^PID (file|found):?",
+    # Permission patterns
+    r"^Permission denied\. Required:",
+    # Performance patterns
+    r"^Performance (chart|report|test) ",
+    # PDF patterns
+    r"^PDF (processing service|file not found)[ :]",
+    # Pattern patterns
+    r"^Pattern (invalidation|matching|found) ",
+    # Password patterns
+    r"^Password must (contain|be) ",
+    # params.yaml
+    r"^params\.yaml$",
+    # Paper trade
+    r"^Paper trade executed:",
+    # Output saved
+    r"^Output saved to:",
+    # OS patterns
+    r"^OS: $",
+    # Order patterns
+    r"^Order (violates|placed|executed|cancelled|failed) ",
+    # Optimizing patterns
+    r"^Optimizing (portfolio|model|parameters) ",
+    # Optimization patterns
+    r"^Optimization (failed|completed|started) ",
+    # Operation patterns
+    r"^Operation (result|failed|completed|cancelled)",
+    # Opening patterns
+    r"^Opening in ",
+    # npm patterns
+    r"^npm scripts from ",
+    r"^npm (install|run|test) ",
+    # Nothing to patterns
+    r"^Nothing to (migrate|process|commit|sync)[ :]",
+    # Notebook patterns
+    r"^Notebook (file|saved|loaded|created) ",
+    # Note: DVC patterns
+    r"^Note: DVC (push|pull) failed ",
+    # not set
+    r"^not set$",
+    # Not found
+    r"^Not found$",
+    # No patterns
+    r"^No (targets|shebang|scripts|remote|prompt|help|frames|files|Click|changes) ",
+    # navigate/move patterns
+    r"^navigate to$",
+    r"^move to$",
+    # Multi-objective patterns
+    r"^Multi-objective (optimization|search) ",
+    # Motion analysis
+    r"^Motion analysis (complete|failed)",
+    # Monte Carlo
+    r"^Monte Carlo (Simulation|simulation|analysis)[ :]",
+    # model files
+    r"^model\.pkl$",
+    r"^model:$",
+    r"^model_service\.pid$",
+    # MLflow patterns
+    r"^MLflow (URI|tracking) ",
+    # ml-processor
+    r"^ml-processor$",
+    # ML system
+    r"^ML (system|model|pipeline) ",
+    # Politician names (used in scraper tests/examples)
+    r"^(Mitch McConnell|Kevin McCarthy|Nancy Pelosi|Chuck Schumer)$",
+    # Missing patterns
+    r"^Missing required (columns|fields|parameters)[ :]",
+    # Metadata patterns
+    r"^Metadata (saved|loaded|retrieved) ",
+    # Merged patterns
+    r"^Merged ",
+    # memory usage
+    r"^memory usage$",
+    # mcli patterns
+    r"^mcli\.(workflow|token|fish|self|app)",
+    r"^mcli-registry-$",
+    r"^mcli-$",
+    r"^MCLI (version|Model|ML) ",
+    r"^mcli version ",
+    # Max Sharpe
+    r"^Max Sharpe Ratio:",
+    # Make targets
+    r"^Make targets from ",
+    # Made patterns
+    r"^Made ",
+    # lsh patterns
+    r"^lsh\.(supabase|job)\.",
+    r"^LSH (job|API)[ :]",
+    # LoRA Models
+    r"^LoRA Models$",
+    # Lockfile patterns
+    r"^Lockfile not found:",
+    # Local patterns
+    r"^Local (commands|repository|models) ",
+    # Loading patterns
+    r"^Loading (notebook|lazy|existing|model|config) ",
+    # List all
+    r"^List all (available|models|commands)",
+    r"^list $",
+    # lightweight_client.py
+    r"^lightweight_client\.py$",
+    # Lazily loaded
+    r"^Lazily loaded (group|command):",
+    # Keeping manual JSON
+    r"^Keeping manual JSON:",
+    # jupyter-nbconvert
+    r"^jupyter-nbconvert$",
+    # JSON missing
+    r"^JSON missing for ",
+    # Job patterns
+    r"^Job\(id=$",
+    r"^Job (timed out|ID|execution|started|completed|failed) ",
+    # IPFS patterns
+    r"^IPFS (upload|download|storage) ",
+    # Invalid patterns
+    r"^Invalid (transaction|STORAGE_BACKEND|refresh|MCLI_TRACE|JSON|date|cron) ",
+    # Internal server
+    r"^Internal server error:",
+    # Insufficient patterns
+    r"^Insufficient (historical|cash|balance|data) ",
+    # Initialized patterns
+    r"^Initialized (git|DVC|mlflow|redis|database|model) ",
+    # Initialize patterns
+    r"^Initialize (SQLite|Redis|DVC|mlflow|database) ",
+    # Initial Capital
+    r"^Initial [Cc]apital:",
+    # Image info
+    r"^Image info for ",
+    # If the email exists
+    r"^If the email exists",
+    # Hunyuan patterns
+    r"^Hunyuan(Video|Image|Model)",
+    # HTTP error
+    r"^HTTP error ",
+    # HTML intermediate
+    r"^HTML intermediate failed:",
+    # how much patterns
+    r"^how much (space|ram|memory|cpu|disk)$",
 ]
 
 # File patterns to exclude from checking (glob patterns)
