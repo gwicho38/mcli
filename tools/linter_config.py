@@ -51,6 +51,18 @@ ALLOWED_PATTERNS = [
     r"^\[green\].*\[/green\]$",  # Green styled text
     r"^\[yellow\].*\[/yellow\]$",  # Yellow styled text
     r"^• \[[a-z]+\]",  # Bullet with styled content
+    # Rich markup prefixes (partial strings for f-string formatting)
+    r"^\[bold\]",  # Bold prefix
+    r"^\[dim\]",  # Dim prefix
+    r"^\[italic\]",  # Italic prefix
+    r"^\[bold green\]",  # Bold green prefix
+    r"^\[bold cyan\]",  # Bold cyan prefix
+    r"^\[red\]Process ",  # Process error prefix
+    r"^\[red\]Error:",  # Error prefix
+    r"^\[bold\]Process ",  # Process info prefix
+    r"^\[bold\]Logs for ",  # Logs header prefix
+    r"^\[bold\]Matching Commands",  # Command search prefix
+    r"^\[dim\]\.\.\. and ",  # Truncation indicator
     # Partial format patterns used in f-strings
     r"^Secret '",  # Secret prefix for messages
     r"^Command '",  # Command prefix for messages
@@ -306,6 +318,33 @@ COMMON_ACCEPTABLE_STRINGS = {
     " frames.",
     "GB total (",
     " to edit command logic...",
+    # Chat UI patterns
+    "No description",
+    "No processes running",
+    "No logs available",
+    "ID: ",
+    "Status: ",
+    "Name: ",
+    "Started: ",
+    "Error listing commands: ",
+    "Available built-in chat commands:",
+    " more",
+    " more commands",
+    # Common action/status prefixes
+    "❌ Error: ",
+    "✅ Command '",
+    "Cleaned up ",
+    "File not found: ",
+    "    Exists: ",
+    "Plugin '",
+    " failed: ",
+    "Experiment ",
+    " features",
+    " = ",
+    "Imported ",
+    "Execution time: ",
+    "Container ",
+    "  RAM: ",
 }
 
 # Regex pattern for constant-like names (ALL_CAPS)
