@@ -1450,6 +1450,44 @@ ALLOWED_PATTERNS = [
     r"^feature_importance\.joblib$",
     # Feature patterns
     r"^Feature (selection|engineering|extraction|importance) ",
+    # Extracting patterns
+    r"^Extracting (motion|frames|audio|video|text|data|features) ",
+    # Extracted patterns
+    r"^Extracted (subcommand|data|text|features) ",
+    # Expected Return
+    r"^Expected Return$",
+    # Existing patterns
+    r"^Existing (secrets|config|data|file) ",
+    # Execute patterns
+    r"^Execute $",
+    # EXCEPTION patterns
+    r"^EXCEPTION in ",
+    # Everything in sync
+    r"^Everything in sync!$",
+    # Estimated patterns
+    r"^Estimated (parameters|time|cost)[ :]",
+    # Error patterns (comprehensive)
+    r"^Error[: ]",
+    r"^Error (writing|updating|translating|transitioning|syncing|starting|setting|searching|scanning|saving|running|registering|pulling|providing|monitoring|in|handling|generating|extracting|encoding|embedding|downloading|discovering|creating|configuring|clearing|checking|calculating|analyzing)",
+    # Ensemble Model
+    r"^Ensemble Model$",
+    # Ended MLflow
+    r"^Ended MLflow run ",
+    # Encrypted
+    r"^Encrypted ",
+    # encode_content
+    r"^encode_content:",
+    # Emitting patterns
+    r"^Emitting (mcli|event|signal) ",
+    # EMAIL ALERT
+    r"^EMAIL ALERT:",
+    # Efficient frontier
+    r"^Efficient frontier (generation|calculation) ",
+    # DVC patterns
+    r"^dvc\.(yaml|lock)$",
+    r"^DVC[ :]",
+    r"^DVC (stage|remote|push|pull|project|init|repro) ",
+    r"^dvc (repro|remote|push|pull|init|stage) ",
 ]
 
 # File patterns to exclude from checking (glob patterns)
