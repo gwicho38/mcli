@@ -17,37 +17,27 @@ class TestCodeExtraction:
         final_code = edited_code
 
         # Remove the instruction docstring if present (triple-quoted string at the start)
+        # The docstring may contain nested """ (in examples), so we need to find the
+        # closing """ that is on its own line (the actual end of the docstring)
         if final_code.lstrip().startswith('"""'):
-            # Find the closing triple quotes
-            first_quote = final_code.find('"""')
-            if first_quote != -1:
-                second_quote = final_code.find('"""', first_quote + 3)
-                if second_quote != -1:
-                    # Check if this docstring contains instruction markers
-                    docstring_content = final_code[first_quote : second_quote + 3]
-                    if "Instructions:" in docstring_content or "Example Click command" in docstring_content:
-                        # Remove the instruction docstring
-                        final_code = final_code[second_quote + 3 :].lstrip("\n")
+            lines = final_code.split("\n")
+            docstring_end_line = None
 
-        # Also remove the "# Your command implementation goes here:" comment and below
-        # if the user didn't write anything there (keep user code above it)
-        marker = "# Your command implementation goes here:"
-        if marker in final_code:
-            marker_pos = final_code.find(marker)
-            code_before_marker = final_code[:marker_pos].rstrip()
-            code_after_marker = final_code[marker_pos + len(marker) :].strip()
+            for i, line in enumerate(lines):
+                if i == 0:
+                    continue
+                # Look for a line that is just """ (possibly with whitespace)
+                if line.strip() == '"""':
+                    docstring_end_line = i
+                    break
 
-            # Check if there's meaningful code after the marker (not just comments)
-            after_lines = [
-                l for l in code_after_marker.split("\n") if l.strip() and not l.strip().startswith("#")
-            ]
-
-            if after_lines:
-                # User wrote code after marker, keep everything
-                final_code = final_code.strip()
-            else:
-                # No meaningful code after marker, just use code before it
-                final_code = code_before_marker
+            if docstring_end_line is not None:
+                # Check if the docstring contains instruction markers
+                docstring_lines = lines[: docstring_end_line + 1]
+                docstring_content = "\n".join(docstring_lines)
+                if "Instructions:" in docstring_content or "Example Click command" in docstring_content:
+                    # Remove the instruction docstring
+                    final_code = "\n".join(lines[docstring_end_line + 1 :]).lstrip("\n")
 
         return final_code.strip()
 
@@ -71,50 +61,40 @@ def hello():
         assert "import click" in result
         assert 'print("hello")' in result
 
-    def test_keeps_user_code_before_marker(self):
-        """Test that user code written before the marker is preserved."""
-        code = '''import click
-from mcli.lib.logger.logger import get_logger
+    def test_preserves_user_code_with_function_docstrings(self):
+        """Test that user code with function docstrings is preserved."""
+        code = '''"""
+ollama command for mcli.workflows.
 
-logger = get_logger()
+Instructions:
+1. Write your Python command logic below
+
+Example Click command structure:
+@click.command()
+def my_command(name):
+    # Example comment
+    pass
+"""
+import click
 
 @click.group(name="ollama")
 def app():
+    """Description for ollama command group."""
     print("ollama")
 
-# Your command implementation goes here:
-# Example:
-# @click.command()
-# def my_command():
-#     pass
+@app.command("hello")
+def hello():
+    """Example subcommand."""
+    print("hello")
 '''
         result = self.extract_code(code)
         assert "import click" in result
         assert 'print("ollama")' in result
         assert "def app():" in result
-        # The marker and comments after it should be removed
-        assert "# Your command implementation goes here:" not in result
-        assert "# Example:" not in result
-
-    def test_keeps_all_code_when_user_writes_after_marker(self):
-        """Test that all code is kept when user writes meaningful code after marker."""
-        code = '''import click
-
-@click.group(name="test")
-def app():
-    pass
-
-# Your command implementation goes here:
-
-@app.command()
-def subcommand():
-    print("real code")
-'''
-        result = self.extract_code(code)
-        assert "import click" in result
-        assert "def app():" in result
-        assert "def subcommand():" in result
-        assert 'print("real code")' in result
+        assert '"""Description for ollama command group."""' in result
+        assert '"""Example subcommand."""' in result
+        # The instruction docstring should be removed
+        assert "Instructions:" not in result
 
     def test_preserves_normal_docstrings(self):
         """Test that normal docstrings (without instruction markers) are preserved."""
@@ -133,8 +113,8 @@ def hello():
         assert "My custom module docstring" in result
         assert "import click" in result
 
-    def test_handles_code_without_markers(self):
-        """Test extraction of code that has no instruction markers."""
+    def test_handles_code_without_docstrings(self):
+        """Test extraction of code that has no docstrings."""
         code = '''import click
 
 @click.command()
@@ -144,15 +124,38 @@ def simple():
         result = self.extract_code(code)
         assert result == code.strip()
 
+    def test_handles_nested_docstrings_in_instruction(self):
+        """Test that nested docstrings in the instruction docstring don't break extraction."""
+        code = '''"""
+Command description.
+
+Instructions:
+Example:
+@click.command()
+def example():
+    # This is a comment, not a docstring
+    pass
+"""
+import click
+
+@click.group(name="test")
+def app():
+    """Real function docstring."""
+    print("real code")
+'''
+        result = self.extract_code(code)
+        assert "import click" in result
+        assert 'print("real code")' in result
+        assert '"""Real function docstring."""' in result
+        assert "Instructions:" not in result
+
     def test_empty_code_after_extraction(self):
         """Test that empty results are handled."""
         code = '''"""
 Instructions:
 Just instructions, no code.
 """
-# Your command implementation goes here:
-# Only comments here
 '''
         result = self.extract_code(code)
-        # Should be empty or just whitespace
-        assert not result.strip() or result.strip().startswith("#")
+        # Should be empty
+        assert not result.strip()

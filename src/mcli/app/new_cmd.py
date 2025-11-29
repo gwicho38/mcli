@@ -137,6 +137,19 @@ def open_editor_for_command(
     # Create a temporary file with the template
     template = get_command_template(command_name, command_group)
 
+    # Extract the code portion from the template (skip the module docstring)
+    # We need to find the closing """ of the module docstring (on its own line)
+    template_code = template
+    if template.lstrip().startswith('"""'):
+        lines = template.split("\n")
+        for i, line in enumerate(lines):
+            if i == 0:
+                continue
+            if line.strip() == '"""':
+                # Found the end of module docstring, take everything after
+                template_code = "\n".join(lines[i + 1 :]).lstrip("\n")
+                break
+
     # Add helpful comments to the template
     enhanced_template = f'''"""
 {command_name} command for mcli.{command_group}.
@@ -153,29 +166,13 @@ Example Click command structure:
 @click.command()
 @click.argument('name', default='World')
 def my_command(name):
-    """My custom command."""
+    # My custom command.
     click.echo(f"Hello, {{name}}!")
 """
-import click
-from typing import Optional, List
-from pathlib import Path
-from mcli.lib.logger.logger import get_logger
+# Write your command logic below.
+# Delete the example code and replace with your implementation.
 
-logger = get_logger()
-
-# Write your command logic here:
-# Replace this template with your actual command implementation
-
-{template.split('"""')[2].split('"""')[0] if '"""' in template else ''}
-
-# Your command implementation goes here:
-# Example:
-# @click.command()
-# @click.argument('name', default='World')
-# def {command_name}_command(name):
-#     \"\"\"{description}\"\"\"
-#     logger.info(f"Executing {command_name} command with name: {{name}}")
-#     click.echo(f"Hello, {{name}}! This is the {command_name} command.")
+{template_code}
 '''
 
     # Create temporary file
@@ -217,37 +214,27 @@ logger = get_logger()
         final_code = edited_code
 
         # Remove the instruction docstring if present (triple-quoted string at the start)
+        # The docstring may contain nested """ (in examples), so we need to find the
+        # closing """ that is on its own line (the actual end of the docstring)
         if final_code.lstrip().startswith('"""'):
-            # Find the closing triple quotes
-            first_quote = final_code.find('"""')
-            if first_quote != -1:
-                second_quote = final_code.find('"""', first_quote + 3)
-                if second_quote != -1:
-                    # Check if this docstring contains instruction markers
-                    docstring_content = final_code[first_quote : second_quote + 3]
-                    if "Instructions:" in docstring_content or "Example Click command" in docstring_content:
-                        # Remove the instruction docstring
-                        final_code = final_code[second_quote + 3 :].lstrip("\n")
+            lines = final_code.split("\n")
+            docstring_end_line = None
 
-        # Also remove the "# Your command implementation goes here:" comment and below
-        # if the user didn't write anything there (keep user code above it)
-        marker = "# Your command implementation goes here:"
-        if marker in final_code:
-            marker_pos = final_code.find(marker)
-            code_before_marker = final_code[:marker_pos].rstrip()
-            code_after_marker = final_code[marker_pos + len(marker) :].strip()
+            for i, line in enumerate(lines):
+                if i == 0:
+                    continue
+                # Look for a line that is just """ (possibly with whitespace)
+                if line.strip() == '"""':
+                    docstring_end_line = i
+                    break
 
-            # Check if there's meaningful code after the marker (not just comments)
-            after_lines = [
-                l for l in code_after_marker.split("\n") if l.strip() and not l.strip().startswith("#")
-            ]
-
-            if after_lines:
-                # User wrote code after marker, keep everything
-                final_code = final_code.strip()
-            else:
-                # No meaningful code after marker, just use code before it
-                final_code = code_before_marker
+            if docstring_end_line is not None:
+                # Check if the docstring contains instruction markers
+                docstring_lines = lines[: docstring_end_line + 1]
+                docstring_content = "\n".join(docstring_lines)
+                if "Instructions:" in docstring_content or "Example Click command" in docstring_content:
+                    # Remove the instruction docstring
+                    final_code = "\n".join(lines[docstring_end_line + 1 :]).lstrip("\n")
 
         final_code = final_code.strip()
 
