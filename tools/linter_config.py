@@ -853,6 +853,77 @@ ALLOWED_PATTERNS = [
     r"^\nCommand creation cancelled",
     # Write/create file patterns
     r"^Writing to ",
+    # Using config patterns
+    r"^Using config from ",
+    # User patterns
+    r"^user:$",
+    r"^User account is ",
+    # Use flag patterns
+    r"^Use --[a-z]+ to ",
+    # URL/URI labels
+    r"^(URL|URI): $",
+    # Uploaded patterns
+    r"^Uploaded to ",
+    # Update patterns
+    r"^Update (secrets|commands|config) ",
+    # Unsupported patterns
+    r"^Unsupported (order type|optimization|LLM provider|HTTP method|file|backend|format)",
+    # Unloading patterns
+    r"^Unloading (model|resource) ",
+    # Unknown patterns
+    r"^Unknown (language|data type|backend|error|format) ",
+    # Unhandled exception
+    r"^Unhandled exception",
+    # Warmed patterns
+    r"^Warmed $",
+    # Video patterns
+    r"^Video (processed|generation) (successfully|complete)",
+    # Triggered patterns
+    r"^Triggered (retraining|update|sync) for ",
+    r"^(Take profit|Stop loss) triggered for ",
+    # Translating patterns
+    r"^Translating (text|document) ",
+    # Trading patterns
+    r"^trading\.(data|config)\.",
+    r"^Trade PnL$",
+    r"^Total position size ",
+    r"^Strategy based on ",
+    # Trace patterns
+    r"^(Trace|System trace) logging to:",
+    # Model name patterns
+    r"^(tinyllama|llama|phi|gemma|mistral)-[0-9a-z.-]+$",
+    r"^tokenizer_config\.json$",
+    # This is a patterns
+    r"^This is a (single command|response|Click group)",
+    # Thanks patterns
+    r"^Thanks for ",
+    # TF-IDF patterns
+    r"^TF-IDF (extension|embedding|Cache) ",
+    # Text classification/generation
+    r"^text-(generation|classification|embedding)$",
+    r"^Text \($",
+    # Test patterns
+    r"^test-",
+    r"^test content ",
+    r"^Test $",
+    # Terminal patterns
+    r"^terminal $",
+    # Target directory patterns
+    r"^Target directory ",
+    # System patterns
+    r"^system (time|specs|information|info|status)$",
+    r"^System (trace|status) ",
+    # Successfully patterns
+    r"^Successfully (processed|migrated|connected|added|loaded|updated) ",
+    # Store/Stock patterns
+    r"^Store path saved to ",
+    r"^storage space$",
+    r"^Stock data update failed:",
+    r"^stock_data\.(ticker|price)$",
+    # Step patterns
+    r"^Step $",
+    # stdout/stderr format patterns
+    r"^(stdout|stderr)> %s$",
 ]
 
 # File patterns to exclude from checking (glob patterns)
