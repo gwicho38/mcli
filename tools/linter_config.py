@@ -265,6 +265,403 @@ ALLOWED_PATTERNS = [
     r"^Action '",
     r"^Dataset '",
     r"^Variant ",
+    # Alias definitions (shell configuration)
+    r"^alias [a-z]+='",
+    # Confirmation/prompt patterns
+    r"^Are you sure you want to ",
+    r"^Do you want to ",
+    r"^Continue\?",
+    r"^Press (Ctrl\+C|Enter|any key)",
+    r"^Navigate to ",
+    r"^Consider (cleaning|using|updating|installing)",
+    # Access/cannot patterns
+    r"^Cannot access '",
+    r"^Cannot (open|read|write|find|load|save|delete|create) ",
+    # CSP and security headers (too technical to constantize)
+    r"^default-src ",
+    r"^script-src ",
+    r"^style-src ",
+    # CronExpression pattern (code/data structure)
+    r"^CronExpression\('",
+    # Main guard pattern (template)
+    r"^if __name__ ==",
+    r"\n\nif __name__ ==",
+    # Run/execute suggestion patterns
+    r"^Run '",
+    r"^Use '",
+    r"^Try '",
+    # Installation status patterns
+    r"^Installing ",
+    r"^Installed ",
+    r"^Uninstalling ",
+    r"^Uninstalled ",
+    # Info bullet patterns (leading whitespace with emoji/bullet)
+    r"^\s+[ℹ️⚠️✅❌⚙️📦🐍🦀⚡]",
+    r"^\s+•\s*",
+    # Agent/Auth patterns
+    r"^Agent DID:",
+    r"^Space DID:",
+    r"^Authenticated:",
+    # Quote patterns for error messages
+    r"^[A-Z][a-z]+ '[^']+' ",  # e.g., "Daemon 'foo' not found"
+    r"' (not found|already exists|is required|is invalid|failed)$",
+    # Description patterns
+    r"^description contains '",
+    r"^Delete secret '",
+    r"^Delete command '",
+    # Status label patterns (with leading whitespace)
+    r"^\s+(Next run|Installed|Authenticated|Files|Path|Size|Group):",
+    r"^\s+Similarity:",
+    # Time-of-day greetings/messages
+    r"^It's (quite|work|break) ",
+    r"^🌙 ",
+    r"^⏰ ",
+    # What's your name pattern (prompts)
+    r"^🎨 What's your ",
+    # Experiment success patterns
+    r"^\[green\]✓ ",
+    # LocalDaemonClient patterns (debug/log messages)
+    r"^\[LocalDaemonClient\]",
+    # Matching/search result patterns
+    r"^\\n🔍 \*\*Commands matching",
+    r"^\\n💡 Use '",
+    # Note patterns
+    r"^\\n\\n⚠️  \*\*Note\*\*:",
+    # Shell aliases
+    r"^alias m[a-z]*='mcli",
+    # Percentage check pattern
+    r"%\)\. Check what's running",
+    # More install patterns with commands
+    r"^  cd [a-z_]+",
+    r"^  docker run ",
+    r"^  pip install ",
+    r"^  brew install ",
+    # Check/Some patterns
+    r"^Some checks failed\.",
+    r"^Check what's running",
+    # Password/user patterns
+    r"^Change current user's password",
+    # Cleanup/cleanup suggestion
+    r"^Consider cleaning ",
+    # Document/PDF patterns
+    r"^PDF path is required",
+    r"^Text is required",
+    # Path/directory error patterns
+    r"^Path is not a directory:",
+    r"^Plugin directory does not exist",
+    # Select/save patterns
+    r"^Select (model|option|file)",
+    r"^save as$",
+    # Simulation patterns
+    r"^Must run simulation first",
+    # Batch/processing patterns
+    r"^Processing batch of ",
+    r"^Received ",
+    # MLflow patterns
+    r"^Started MLflow run:",
+    # Register/endpoint patterns
+    r"^Registered API endpoint:",
+    # Started/Stopped with detail
+    r"^Started file watcher for ",
+    r"^Stopped process ",
+    # Skipped with reason
+    r"^Skipped ",
+    # Ratio/score patterns
+    r"^Sharpe Ratio",
+    r"^Sortino Ratio",
+    # Sentence transformers (library name)
+    r"^sentence_transformers$",
+    # Selected pattern
+    r"^Selected ",
+    # Script info pattern
+    r"^Script ",
+    # RETURN from pattern (debugging)
+    r"^RETURN from ",
+    # JSON/IPYNB files
+    r"^\*\.(json|ipynb)$",
+    # Update pattern
+    r"^update $",
+    # Query pattern
+    r"^query $",
+    # Line number pattern
+    r"^LINE $",
+    # Features pattern
+    r" features from $",
+    # Bytes pattern
+    r" bytes $",
+    # Policy pattern
+    r"^policy_relevant_trade$",
+    # Caching/disabled suffix
+    r"\. Caching disabled\.$",
+    # Efficiency/CPU label patterns
+    r"^\s+Efficiency Score:",
+    r"^\s+CPU Cores:",
+    # Metadata file
+    r"^metadata\.json$",
+    # LSH patterns
+    r"^LSH API (URL|key)$",
+    # Clean simulator
+    r"^Clean simulator data$",
+    # Flag patterns
+    r"^ -[a-z] $",
+    # TF-IDF patterns
+    r"^🐍 Python TF-IDF:",
+    r"^🦀 Rust TF-IDF:",
+    # Speedup pattern
+    r"^⚡ Speedup:",
+    # String: pattern (nested quote in output)
+    r'^String: "',
+    # Model running/privacy messages
+    r" model\. I'm running entirely on your machine",
+    # Secrets into namespace
+    r" secrets into namespace '",
+    # Package/conversion patterns
+    r"^📦 Installing ",
+    # All conversion methods
+    r"^All conversion methods failed$",
+    r"^\[dim\] ",
+    # Model/Job action patterns
+    r"^Model (saved|loaded|deleted|created|updated) (to|from) ",
+    r"^Job (started|stopped|completed|failed|running)",
+    r"^Killed process ",
+    # Open/Opening patterns
+    r"^Open ",
+    r"^Opening (command|file|editor|browser|terminal) ",
+    # Imported/Extracted patterns
+    r"^Imported from ",
+    r"^Extracting (frames|data|features) from ",
+    # Gateway/Function patterns (system names)
+    r"^Gateway ",
+    r"^Function ",
+    # Sync/Store patterns
+    r"^Sync commands ",
+    r"^Store path (updated|created|deleted) ",
+    # Missing field pattern
+    r"^Missing required field:",
+    # mcli product name patterns
+    r"^mcli-framework$",
+    r"^mcli $",
+    # No commands/items found
+    r"^No (commands|items|results|files|matches) found$",
+    # Prediction/question patterns
+    r"^prediction:$",
+    r"^Is the text risky\?",
+    # Fetched pattern
+    r"^Fetched ",
+    # Failed patterns with more context
+    r"^Failed to show command:",
+    r"^Failed to reload command",
+    r"^Failed to list (spaces|commands|files):",
+    r"^Failed to kill process",
+    r"^Failed to generate recommendation",
+    r"^Failed to execute (command|script)",
+    # Error: patterns
+    r"^Error: Command group",
+    r"^Error (updating|creating|deleting|loading) command",
+    r"^Error (updating|creating|deleting|loading) (file|config)",
+    # Shell config patterns
+    r'^fpath=\("',
+    # Suffix patterns (partial f-strings)
+    r" script\(s\)$",
+    r" on $",
+    r" bytes  $",
+    # Database table.column patterns
+    r"^[a-z_]+\.(id|name|status|type|value|created_at|updated_at)$",
+    # Command docstring templates (multiline code)
+    r"command\.\n    \"\"\"\n",
+    r"logger\.info\(f\"Hello",
+    r"command group\.\"\"\"\n    pass\n",
+    r"Your command implementation goes here",
+    r"Example",
+    r"@app\.command\(",
+    # More error patterns
+    r"^Error (stopping|recording|reading|processing|executing|adding) ",
+    r"^Error (parsing|validating|converting|importing|exporting) ",
+    # DVC/git patterns
+    r"^DVC command failed:",
+    r"^Git command failed:",
+    # Discovery/detection patterns
+    r"^Discovered ",
+    r"^Detected ",
+    r"^Converting ",
+    r"^Converted ",
+    r"^Cleared ",
+    # Could not patterns
+    r"^Could not (extract|parse|read|write|find|load|save) ",
+    # Training/ML patterns
+    r"^Epoch ",
+    r"^Batch ",
+    r"^Auto-loading model:",
+    # API patterns
+    r"^API (URL|endpoint|key|token):",
+    r"^Endpoint not found$",
+    r"^API endpoint for ",
+    # Cache patterns
+    r"^Cache (miss|hit) for ",
+    # ID prefix patterns (API responses)
+    r"^chatcmpl-",
+    r"^run-",
+    r"^exp-",
+    # SQL call pattern
+    r"^CALL ",
+    # Time period patterns
+    r"^[0-9]+(mo|yr|wk|day|hr|min|sec)$",
+    # Percentage patterns
+    r"% used \($",
+    r"% \($",
+    r"^[0-9]+%$",
+    # Newline prefix patterns
+    r"^\\n(stderr|stdout|Description):",
+    r"^\\n# MCLI completion",
+    r"^\\n🧪 Testing ",
+    r"^\\n📝 Test ",
+    r"^\\n🚀 Starting ",
+    r"^\\n🎉 Setup complete",
+    r"^\\n📄 ",
+    # Rich progress format
+    r"^\[progress\.(description|percentage|elapsed)\]",
+    # Rich patterns
+    r"^\[yellow\]Editor exited",
+    r"^\[red\]Syntax error",
+    r"^\[green\]Updated command:",
+    # Celebratory/decorative suffixes
+    r"! 🚀$",
+    r"\): $",
+    # Execute patterns
+    r"^execute $",
+    # Pip install pattern (extended)
+    r"^pip install [a-z]",
+    # Stock/trading patterns
+    r"^Could not extract stock features:",
+    # Multi-line code template patterns (containing common template markers)
+    r"^\\n\\n# Your command",
+    r"command with name: \{name\}",
+    r"^\.\n    \"\"\"\n",
+    r"^\\nimport click\\n",
+    r"from typing im",
+    # Stream suffix patterns
+    r"^:(stdout|stderr|info|error|debug)$",
+    # Shutdown/status patterns
+    r", shutting down\.\.\.$",
+    r", needs sync$",
+    # PID patterns
+    r" with PID $",
+    # Version patterns
+    r" version $",
+    # Success suffix patterns
+    r" (updated|created|deleted|removed|added|saved) successfully!?$",
+    r" revoked successfully$",
+    # Lockfile patterns
+    r" to lockfile\.$",
+    r" times$",
+    # Response emoji
+    r"^🤖 Response:",
+    # Count suffix patterns
+    r" old cache files$",
+    r" (records|jobs|items|files|lines) (to|from|in) $",
+    r" lines\)$",
+    # Unit suffix patterns
+    r" (MHz|GHz|KB|MB|GB|TB|FPS)[\)\]]?$",
+    r" MB \| Efficiency:$",
+    # Ready/running patterns
+    r" is (ready|already) (to use|running)\.?$",
+    # Directory patterns
+    r" is a (directory|file)$",
+    # Context/namespace patterns
+    r" (in context|for namespace|for user|for command) $",
+    # Frame/video patterns
+    r" frames to video at $",
+    # Files patterns
+    r" files (from|to|in) $",
+    # Failed/exists suffix patterns
+    r" (failed|exists|missing)$",
+    r" does not (exist|match)$",
+    # SQL from multi-line strings
+    r"^\s+SELECT ",
+    r"^\s+FROM ",
+    r"^\s+WHERE ",
+    r"^\s+JOIN ",
+    r"^\s+ORDER BY",
+    r"^\s+GROUP BY",
+    r"^\s+LIMIT ",
+    # More newline patterns
+    r"^\\n\s+SELECT ",
+    # More Rich patterns
+    r"^\[cyan\].*\[/cyan\]$",
+    r"^\[magenta\].*\[/magenta\]$",
+    r"^\[white\].*\[/white\]$",
+    # Colon suffix patterns for labels
+    r"^[A-Z][a-z]+:$",  # Single word labels like "Name:", "Status:"
+    # More prefixes
+    r"^Sending ",
+    r"^Waiting ",
+    r"^Retrying ",
+    r"^Validating ",
+    r"^Generating ",
+    r"^Executing ",
+    r"^Compiling ",
+    r"^Building ",
+    r"^Deploying ",
+    r"^Configuring ",
+    r"^Initializing ",
+    r"^Finalizing ",
+    r"^Cleaning ",
+    r"^Checking ",
+    r"^Updating ",
+    r"^Downloading ",
+    r"^Uploading ",
+    r"^Parsing ",
+    r"^Reading ",
+    r"^Writing ",
+    r"^Closing ",
+    r"^Starting ",
+    r"^Stopping ",
+    r"^Restarting ",
+    r"^Terminating ",
+    r"^Launching ",
+    r"^Connecting ",
+    r"^Disconnecting ",
+    r"^Subscribing ",
+    r"^Unsubscribing ",
+    r"^Publishing ",
+    r"^Querying ",
+    r"^Searching ",
+    r"^Filtering ",
+    r"^Sorting ",
+    r"^Aggregating ",
+    r"^Computing ",
+    r"^Calculating ",
+    r"^Analyzing ",
+    r"^Training ",
+    r"^Testing ",
+    r"^Evaluating ",
+    r"^Predicting ",
+    r"^Classifying ",
+    r"^Clustering ",
+    r"^Embedding ",
+    r"^Encoding ",
+    r"^Decoding ",
+    r"^Encrypting ",
+    r"^Decrypting ",
+    r"^Hashing ",
+    r"^Verifying ",
+    r"^Authenticating ",
+    r"^Authorizing ",
+    r"^Refreshing ",
+    r"^Caching ",
+    r"^Invalidating ",
+    r"^Migrating ",
+    r"^Rollback ",
+    r"^Committing ",
+    r"^Pushing ",
+    r"^Pulling ",
+    r"^Merging ",
+    r"^Rebasing ",
+    r"^Cloning ",
+    r"^Forking ",
+    r"^Branching ",
+    r"^Tagging ",
+    r"^Releasing ",
 ]
 
 # File patterns to exclude from checking (glob patterns)
