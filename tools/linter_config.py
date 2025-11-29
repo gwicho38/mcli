@@ -746,6 +746,113 @@ ALLOWED_PATTERNS = [
     # Tokenizer/model files
     r"^tokenizer\.(json|model)$",
     r"^(config|model|vocab)\.(json|txt|bin)$",
+    # osascript nested pattern
+    r'^\s+String: "osascript',
+    # Package/Install messages
+    r"^Package not installed$",
+    r"^Not available$",
+    # Operation status patterns
+    r"^Operation (success|message|status)",
+    r"^Number of (Files|Items|Records)$",
+    # No secrets/items patterns
+    r"^No (secrets|items|commands|files|changes|code|command code) (to export|found|detected|provided)",
+    r"^No (secrets|items|commands|files|changes|code) (to export|found|detected)$",
+    # Log file patterns
+    r"^mcli\*\.(log|txt|json)$",
+    # Health check patterns
+    r"^Health check endpoint\.$",
+    # Token patterns
+    r"^(getting|refreshing|validating) token$",
+    # File Type label
+    r"^File Type$",
+    # Example prompts (for demos/tests)
+    r"^Explain .* in simple terms\.$",
+    # Editor terminal message
+    r"^Editor requires an interactive terminal",
+    # DID key patterns
+    r"^did:(key|web|ion|ethr):",
+    # Cancelled patterns
+    r"(cancelled|canceled)\.$",
+    r"^Deletion (cancelled|canceled)\.$",
+    # Current directory
+    r"^current directory$",
+    # WebSocket patterns
+    r"^Connect to WebSocket\.$",
+    # Command creation patterns
+    r"^Command (creation|code) (cancelled|captured|created)",
+    r"^Command already exists\. Override\?$",
+    # HTTP headers (CORS, Cache, Auth)
+    r"^Cache-Control$",
+    r"^Access-Control-Allow-(Origin|Headers|Methods)$",
+    r"^X-[A-Za-z-]+$",  # Custom headers
+    # Authentication patterns
+    r"^Authentication required$",
+    # API endpoint description
+    r"^API endpoints for ",
+    # SQLAlchemy relationship patterns
+    r"^(all|save-update|merge),? ?delete-orphan$",
+    # Code block markers
+    r"^<string>$",
+    r"^```+$",
+    r"^\*{2,}$",
+    # Glob patterns
+    r"^\*\.(py|js|ts|json|yaml|toml|md)$",
+    # Server stopped patterns
+    r"^\\n🛑 Server stopped$",
+    r"^\\nCommand creation cancelled",
+    # More glob patterns
+    r"^[a-z]+\*\.(log|txt|json)$",
+    # Shell detection patterns
+    r"^(ZSH|Bash|Fish|Sh) shell detected$",
+    # System uptime patterns
+    r"^Your system has been up for ",
+    # X window patterns
+    r'^xdotool (type|click|mousemove) "',
+    r"^xdg-open ",
+    # Performance comparison
+    r"x faster with ",
+    # Wrote/Write patterns
+    r"^Wrote (new|updated) ",
+    r"^Write a (Python|JavaScript|Bash|Shell) ",
+    r"^write $",
+    # Would you like patterns
+    r"^Would you like to ",
+    r"^Would (open|you) ",
+    # Workflows directory patterns
+    r"^Workflows directory does not exist:",
+    r"^Workflow command$",
+    # Natural language queries
+    r"^(where am i|what time|how are you|who are you)$",
+    # Example questions
+    r"^What are the (benefits|advantages) of ",
+    # Welcome patterns
+    r"^Welcome to ",
+    # Warning: patterns
+    r"^Warning: (Error|Could not|Config file) ",
+    # Cache warming patterns
+    r"^(Warming|Warmed) (cache|up) ",
+    # Video patterns
+    r"^Video(-to-Video| Generation|processed|generation)",
+    # Vectorized patterns
+    r"^Vectorized (search|query) (failed|succeeded):",
+    # Value pattern
+    r"^Value $",
+    # Validation patterns
+    r"^Validation failed for ",
+    # Model type labels
+    r"^(VAE|CLIP|BERT|GPT|LLM|CNN|RNN) Models$",
+    # Version patterns
+    r"^v[0-9]+\.",
+    # Using slow/fallback patterns
+    r"^Using (slow|fast|existing|default) ",
+    # More newline patterns
+    r"^\\nCommand creation cancelled",
+    r"^\\n🛑 Server",
+    # Server stopped (actual newline)
+    r"^\n🛑 Server stopped$",
+    r"^\nCommand creation cancelled",
+    # Write/create file patterns
+    r"^Writing to ",
 ]
 
 # File patterns to exclude from checking (glob patterns)
