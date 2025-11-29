@@ -15,6 +15,13 @@ import click
 from rich.prompt import Prompt
 
 from mcli.lib.api.daemon_client import get_daemon_client
+from mcli.lib.constants import (
+    CommandMessages,
+    ErrorMessages,
+    InfoMessages,
+    SuccessMessages,
+    WarningMessages,
+)
 from mcli.lib.constants.paths import DirNames
 from mcli.lib.custom_commands import get_command_manager
 from mcli.lib.discovery.command_discovery import get_command_discovery
@@ -223,7 +230,7 @@ def init_store(path, remote):
         git_dir = store_path / ".git"
         if not git_dir.exists():
             subprocess.run(["git", "init"], cwd=store_path, check=True, capture_output=True)
-            success(f"Initialized git repository at {store_path}")
+            success(SuccessMessages.INITIALIZED_GIT_REPO.format(path=store_path))
 
             # Create .gitignore
             gitignore = store_path / ".gitignore"
@@ -266,21 +273,21 @@ Last updated: {datetime.now().isoformat()}
                 subprocess.run(
                     ["git", "remote", "add", "origin", remote], cwd=store_path, check=True
                 )
-                success(f"Added remote: {remote}")
+                success(CommandMessages.ADDED_REMOTE.format(remote=remote))
         else:
-            info(f"Git repository already exists at {store_path}")
+            info(CommandMessages.GIT_REPO_EXISTS.format(path=store_path))
 
         # Save store path to config
         config_file = Path.home() / DirNames.MCLI / "store.conf"
         config_file.parent.mkdir(parents=True, exist_ok=True)
         config_file.write_text(str(store_path))
 
-        success(f"Command store initialized at {store_path}")
-        info(f"Store path saved to {config_file}")
+        success(SuccessMessages.COMMAND_STORE_INITIALIZED.format(path=store_path))
+        info(CommandMessages.STORE_PATH_SAVED.format(path=config_file))
 
     except subprocess.CalledProcessError as e:
-        error(f"Git command failed: {e}")
-        logger.error(f"Git init failed: {e}")
+        error(ErrorMessages.GIT_COMMAND_FAILED.format(error=e))
+        logger.error(CommandMessages.GIT_INIT_FAILED.format(error=e))
     except Exception as e:
         error(f"Failed to initialize store: {e}")
         logger.exception(e)
@@ -305,7 +312,7 @@ def push_commands(message, all, is_global):
         COMMANDS_PATH = get_custom_commands_dir(global_mode=is_global)
 
         # Copy commands to store
-        info(f"Copying commands from {COMMANDS_PATH} to {store_path}...")
+        info(InfoMessages.COPYING_COMMANDS.format(source=COMMANDS_PATH, dest=store_path))
 
         copied_count = 0
         for item in COMMANDS_PATH.glob("*"):
@@ -321,7 +328,7 @@ def push_commands(message, all, is_global):
                 shutil.copytree(item, dest, dirs_exist_ok=True)
                 copied_count += 1
 
-        success(f"Copied {copied_count} items to store")
+        success(CommandMessages.COPIED_ITEMS.format(count=copied_count))
 
         # Git add, commit, push
         subprocess.run(["git", "add", "."], cwd=store_path, check=True)
@@ -332,23 +339,24 @@ def push_commands(message, all, is_global):
         )
 
         if not result.stdout.strip():
-            info("No changes to commit")
+            info(WarningMessages.NO_CHANGES)
             return
 
         # Commit with message
-        commit_msg = message or f"Update commands {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        commit_msg = message or CommandMessages.UPDATE_COMMANDS.format(timestamp=timestamp)
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True)
-        success(f"Committed changes: {commit_msg}")
+        success(CommandMessages.COMMITTED_CHANGES.format(message=commit_msg))
 
         # Push to remote if configured
         try:
             subprocess.run(["git", "push"], cwd=store_path, check=True, capture_output=True)
-            success("Pushed to remote")
+            success(CommandMessages.PUSHED_TO_REMOTE)
         except subprocess.CalledProcessError:
-            warning("No remote configured or push failed. Commands committed locally.")
+            warning(WarningMessages.NO_REMOTE)
 
     except Exception as e:
-        error(f"Failed to push commands: {e}")
+        error(CommandMessages.FAILED_TO_PUSH.format(error=e))
         logger.exception(e)
 
 
@@ -372,9 +380,9 @@ def pull_commands(force, is_global):
         # Pull from remote
         try:
             subprocess.run(["git", "pull"], cwd=store_path, check=True)
-            success("Pulled latest changes from remote")
+            success(CommandMessages.PULLED_FROM_REMOTE)
         except subprocess.CalledProcessError:
-            warning("No remote configured or pull failed. Using local store.")
+            warning(CommandMessages.NO_REMOTE_PULL)
 
         # Backup existing commands if not force
         if not force and COMMANDS_PATH.exists():
@@ -382,10 +390,10 @@ def pull_commands(force, is_global):
                 COMMANDS_PATH.parent / f"commands_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             )
             shutil.copytree(COMMANDS_PATH, backup_dir)
-            info(f"Backed up existing commands to {backup_dir}")
+            info(CommandMessages.BACKED_UP_TO.format(path=backup_dir))
 
         # Copy from store to commands directory
-        info(f"Copying commands from {store_path} to {COMMANDS_PATH}...")
+        info(InfoMessages.COPYING_COMMANDS.format(source=store_path, dest=COMMANDS_PATH))
 
         COMMANDS_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -403,10 +411,10 @@ def pull_commands(force, is_global):
                 shutil.copytree(item, dest, dirs_exist_ok=True)
                 copied_count += 1
 
-        success(f"Pulled {copied_count} items from store")
+        success(CommandMessages.PULLED_ITEMS.format(count=copied_count))
 
     except Exception as e:
-        error(f"Failed to pull commands: {e}")
+        error(CommandMessages.FAILED_TO_PULL.format(error=e))
         logger.exception(e)
 
 

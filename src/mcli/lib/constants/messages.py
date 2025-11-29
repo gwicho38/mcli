@@ -216,6 +216,46 @@ class ChatMessages:
     AND_MORE = "[dim]... and {count} more[/dim]"
 
 
+class CommandMessages:
+    """Command store and workflow message constants."""
+
+    # Git operations
+    GIT_REPO_EXISTS = "Git repository already exists at {path}"
+    ADDED_REMOTE = "Added remote: {remote}"
+    STORE_PATH_SAVED = "Store path saved to {path}"
+    GIT_INIT_FAILED = "Git init failed: {error}"
+    COMMITTED_CHANGES = "Committed changes: {message}"
+    PUSHED_TO_REMOTE = "Pushed to remote"
+    PULLED_FROM_REMOTE = "Pulled latest changes from remote"
+    NO_REMOTE_PULL = "No remote configured or pull failed. Using local store."
+    FAILED_TO_PUSH = "Failed to push commands: {error}"
+    FAILED_TO_PULL = "Failed to pull commands: {error}"
+
+    # Store operations
+    COPIED_ITEMS = "Copied {count} items to store"
+    PULLED_ITEMS = "Pulled {count} items from store"
+    BACKED_UP_TO = "Backed up existing commands to {path}"
+    UPDATE_COMMANDS = "Update commands {timestamp}"
+
+    # Command operations
+    COMMAND_IMPORTED = "Imported command: {name}"
+    COMMAND_EXPORTED = "Exported command to: {path}"
+    COMMAND_REMOVED = "Removed command: {name}"
+    COMMAND_VERIFIED = "Command {name} verified successfully"
+    LOCKFILE_UPDATED = "Updated lockfile: {path}"
+
+    # Status messages
+    STORE_STATUS_HEADER = "[bold]Command Store Status[/bold]"
+    STORE_PATH = "  Store path: {path}"
+    TOTAL_COMMANDS = "  Total commands: {count}"
+    GIT_STATUS = "  Git status: {status}"
+
+    # Errors
+    INVALID_COMMAND_NAME = "Invalid command name: {name}"
+    INVALID_GROUP_NAME = "Invalid group name: {name}"
+    STORE_NOT_INITIALIZED = "Command store not initialized. Run 'mcli workflow store init' first."
+
+
 __all__ = [
     "ErrorMessages",
     "SuccessMessages",
@@ -223,4 +263,5 @@ __all__ = [
     "InfoMessages",
     "PromptMessages",
     "ChatMessages",
+    "CommandMessages",
 ]

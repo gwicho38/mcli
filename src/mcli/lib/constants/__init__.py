@@ -34,6 +34,7 @@ from .defaults import (
 from .env import EnvVars
 from .messages import (
     ChatMessages,
+    CommandMessages,
     ErrorMessages,
     InfoMessages,
     PromptMessages,
@@ -68,6 +69,7 @@ __all__ = [
     "InfoMessages",
     "PromptMessages",
     "ChatMessages",
+    "CommandMessages",
     # Defaults
     "Editors",
     "Shells",
