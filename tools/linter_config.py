@@ -1488,6 +1488,32 @@ ALLOWED_PATTERNS = [
     r"^DVC[ :]",
     r"^DVC (stage|remote|push|pull|project|init|repro) ",
     r"^dvc (repro|remote|push|pull|init|stage) ",
+    # More "Failed to" patterns
+    r"^Failed to (clean|cancel|cache|auto-load|assess|access|apply|attach|close|collect|confirm|connect|construct|copy|count|create|decode)",
+    # Command template docstrings (boilerplate code)
+    r'^\\n\\n# Your command implementation',
+    r"^\\s+command\\.\\\\n",
+    r'^\\s+command (group|with name)',
+    r'^\\s+command for mcli\\.',
+    r"^\\s+command\\.$",
+    # Unknown data type
+    r"^Unknown (data type|format|command|error|model|status)[ :]",
+    # Simulated
+    r"^Simulated ",
+    # Risk-free rate
+    r"^Risk-free rate:",
+    # Pulled from remote
+    r"^Pulled from remote$",
+    # Local (repository-specific)
+    r"^Local \(repository-specific\)$",
+    # Job ID
+    r"^Job ID:",
+    # Invalid specific patterns
+    r"^Invalid (STORAGE_BACKEND|MCLI_TRACE_LEVEL|API_KEY|TOKEN)[ :]",
+    # Generated JSON
+    r"^Generated JSON:",
+    # GB free
+    r"^GB free\\\\n$",
 ]
 
 # File patterns to exclude from checking (glob patterns)
