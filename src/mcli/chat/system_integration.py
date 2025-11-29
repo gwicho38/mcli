@@ -49,7 +49,7 @@ class ChatSystemIntegration:
                 "parameters": {
                     "app_name": SysMsg.PARAM_APP_NAME,
                     "action": SysMsg.PARAM_ACTION,
-                    "**kwargs": SysMsg.PARAM_KWARGS,
+                    SysMsg.PARAM_KWARGS_KEY: SysMsg.PARAM_KWARGS,
                 },
                 "examples": SysMsg.EXAMPLES_CONTROL_APP,
             },
@@ -162,122 +162,72 @@ class ChatSystemIntegration:
         request_lower = request.lower()
 
         # System information requests
-        if any(
-            phrase in request_lower
-            for phrase in ["what time", "current time", "system time", "what is the time"]
-        ):
+        if any(phrase in request_lower for phrase in SysMsg.PATTERNS_TIME):
             return self._handle_system_time_request(request)
 
-        elif any(
-            phrase in request_lower
-            for phrase in ["system info", "system information", "system specs", "hardware info"]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_SYSTEM_INFO):
             return self._handle_system_info_request(request)
 
         # Hardware devices requests
-        elif any(
-            phrase in request_lower
-            for phrase in [
-                "hardware devices",
-                "connected devices",
-                "list hardware",
-                "show devices",
-                "connected hardware",
-            ]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_HARDWARE):
             return self._handle_hardware_devices_request(request)
 
-        elif any(
-            phrase in request_lower
-            for phrase in [
-                "memory usage",
-                "ram usage",
-                "how much memory",
-                "how much ram",
-                "memory info",
-            ]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_MEMORY):
             return self._handle_memory_request(request)
 
-        elif any(
-            phrase in request_lower
-            for phrase in [
-                "disk usage",
-                "disk space",
-                "storage space",
-                "how much space",
-                "free space",
-            ]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_DISK):
             return self._handle_disk_request(request)
 
-        elif any(
-            phrase in request_lower
-            for phrase in [
-                "clear cache",
-                "clean cache",
-                "clear temp",
-                "free up space",
-                "clean system",
-                "clear system cache",
-            ]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_CACHE):
             return self._handle_cache_clear_request(request)
 
         # Navigation requests
-        elif any(
-            phrase in request_lower
-            for phrase in ["navigate to", "go to", "change to", "cd to", "move to"]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_NAVIGATION):
             return self._handle_navigation_request(request)
 
         # Directory listing requests (more specific to avoid false positives)
-        elif any(
-            phrase in request_lower
-            for phrase in ["list files", "list directory", "show files", "ls", "dir", "what's in"]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_DIR_LIST):
             return self._handle_directory_listing_request(request)
 
         # Simulator cleanup requests
-        elif any(
-            phrase in request_lower
-            for phrase in ["clean simulator", "simulator data", "clean ios", "clean watchos"]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_SIMULATOR):
             return self._handle_simulator_cleanup_request(request)
 
         # Shell command requests
-        elif any(
-            phrase in request_lower for phrase in ["run command", "execute", "shell", "terminal"]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_SHELL):
             return self._handle_shell_command_request(request)
 
         # Current directory requests
-        elif any(
-            phrase in request_lower
-            for phrase in ["where am i", "current directory", "pwd", "current path"]
-        ):
+        elif any(phrase in request_lower for phrase in SysMsg.PATTERNS_CURRENT_DIR):
             return self._handle_current_directory_request(request)
 
         # TextEdit operations
-        elif "textedit" in request_lower and ("write" in request_lower or "type" in request_lower):
+        elif SysMsg.PATTERN_TEXTEDIT in request_lower and (
+            SysMsg.PATTERN_WRITE in request_lower or SysMsg.PATTERN_TYPE in request_lower
+        ):
             return self._handle_textedit_request(request)
 
         # Application control
-        elif any(word in request_lower for word in ["open", "close", "launch", "quit"]):
+        elif any(word in request_lower for word in SysMsg.KEYWORDS_APP_CONTROL):
             return self._handle_app_control_request(request)
 
         # Screenshot
-        elif "screenshot" in request_lower or "screen capture" in request_lower:
+        elif (
+            SysMsg.PATTERN_SCREENSHOT in request_lower
+            or SysMsg.PATTERN_SCREEN_CAPTURE in request_lower
+        ):
             return self._handle_screenshot_request(request)
 
         # File/URL opening
-        elif "open" in request_lower and (
-            "file" in request_lower or "url" in request_lower or "http" in request_lower
+        elif SysMsg.PATTERN_OPEN in request_lower and (
+            SysMsg.PATTERN_FILE in request_lower
+            or SysMsg.PATTERN_URL in request_lower
+            or SysMsg.PATTERN_HTTP in request_lower
         ):
             return self._handle_open_request(request)
 
         # Command execution
-        elif any(word in request_lower for word in ["run", "execute", "command", "terminal"]):
+        elif any(word in request_lower for word in SysMsg.KEYWORDS_COMMAND_EXEC):
             return self._handle_command_request(request)
 
         else:
@@ -292,7 +242,7 @@ class ChatSystemIntegration:
         """Handle TextEdit-specific requests"""
         try:
             # Extract text to write
-            text = "Hello, World!"  # default
+            text = SysMsg.DEFAULT_TEXT  # default
             filename = None
 
             # Simple text extraction patterns
@@ -301,13 +251,13 @@ class ChatSystemIntegration:
                 parts = request.split('"')
                 if len(parts) >= 2:
                     text = parts[1]
-            elif "write " in request.lower():
+            elif SysMsg.PATTERN_WRITE + " " in request.lower():
                 # Extract text after "write"
-                parts = request.lower().split("write ")
+                parts = request.lower().split(SysMsg.PATTERN_WRITE + " ")
                 if len(parts) > 1:
                     text_part = parts[1]
                     # Remove common words
-                    for word in ["in textedit", "to textedit", "and save", "then save"]:
+                    for word in SysMsg.WORDS_TO_REMOVE_TEXTEDIT:
                         text_part = text_part.replace(word, "")
                     text = text_part.strip()
 
@@ -344,32 +294,19 @@ class ChatSystemIntegration:
             request_lower = request.lower()
 
             # Determine action
-            if "open" in request_lower or "launch" in request_lower:
+            if SysMsg.PATTERN_OPEN in request_lower or "launch" in request_lower:
                 action = "open"
             elif "close" in request_lower or "quit" in request_lower:
                 action = "close"
-            elif "new document" in request_lower:
+            elif SysMsg.PATTERN_NEW_DOCUMENT in request_lower:
                 action = "new_document"
             else:
                 action = "open"  # default
 
             # Extract app name
-            app_name = "TextEdit"  # default
+            app_name = SysMsg.DEFAULT_APP  # default
 
-            common_apps = {
-                "textedit": "TextEdit",
-                "calculator": "Calculator",
-                "finder": "Finder",
-                "safari": "Safari",
-                "chrome": "Google Chrome",
-                "firefox": "Firefox",
-                "terminal": "Terminal",
-                "preview": "Preview",
-                "notes": "Notes",
-                "mail": "Mail",
-            }
-
-            for app_key, app_value in common_apps.items():
+            for app_key, app_value in SysMsg.COMMON_APPS.items():
                 if app_key in request_lower:
                     app_name = app_value
                     break
@@ -429,15 +366,18 @@ class ChatSystemIntegration:
             path_or_url = None
 
             for word in words:
-                if word.startswith("http") or word.startswith("www.") or "/" in word:
+                if word.startswith("http") or word.startswith(SysMsg.URL_PREFIX_WWW) or "/" in word:
                     path_or_url = word
                     break
 
             if not path_or_url:
                 # Look for common patterns
-                if "google" in request.lower():
-                    path_or_url = "https://google.com"
-                elif "current directory" in request.lower() or "this folder" in request.lower():
+                if SysMsg.PATTERN_GOOGLE in request.lower():
+                    path_or_url = SysMsg.URL_GOOGLE
+                elif (
+                    SysMsg.PATTERN_CURRENT_DIR in request.lower()
+                    or SysMsg.PATTERN_THIS_FOLDER in request.lower()
+                ):
                     path_or_url = "."
                 else:
                     return {
@@ -466,12 +406,12 @@ class ChatSystemIntegration:
             # Extract command (this is simplified - in practice you'd want more security)
             command = None
 
-            if "run " in request.lower():
-                parts = request.lower().split("run ")
+            if SysMsg.PATTERN_RUN in request.lower():
+                parts = request.lower().split(SysMsg.PATTERN_RUN)
                 if len(parts) > 1:
                     command = parts[1].strip()
-            elif "execute " in request.lower():
-                parts = request.lower().split("execute ")
+            elif SysMsg.PATTERN_EXECUTE in request.lower():
+                parts = request.lower().split(SysMsg.PATTERN_EXECUTE)
                 if len(parts) > 1:
                     command = parts[1].strip()
 
@@ -483,8 +423,7 @@ class ChatSystemIntegration:
                 }
 
             # Basic security check (you'd want more comprehensive checks)
-            dangerous_commands = ["rm -rf", "sudo", "format", "del /", "> /dev"]
-            if any(dangerous in command.lower() for dangerous in dangerous_commands):
+            if any(dangerous in command.lower() for dangerous in SysMsg.DANGEROUS_COMMANDS):
                 return {
                     "success": False,
                     "error": SysMsg.COMMAND_BLOCKED_SECURITY,
@@ -579,15 +518,7 @@ class ChatSystemIntegration:
                         line = line.strip()
                         if ":" in line and not line.startswith("USB") and len(line) < 100:
                             if any(
-                                keyword in line.lower()
-                                for keyword in [
-                                    "mouse",
-                                    "keyboard",
-                                    "disk",
-                                    "camera",
-                                    "audio",
-                                    "hub",
-                                ]
+                                keyword in line.lower() for keyword in SysMsg.USB_DEVICE_KEYWORDS
                             ):
                                 device_name = line.split(":")[0].strip()
                                 if device_name and len(device_name) > 3:
@@ -636,9 +567,7 @@ class ChatSystemIntegration:
                     audio_devices = []
                     for line in result.stdout.split("\n"):
                         line = line.strip()
-                        if ":" in line and (
-                            "Built-in" in line or "USB" in line or "Bluetooth" in line
-                        ):
+                        if ":" in line and any(kw in line for kw in SysMsg.AUDIO_DEVICE_KEYWORDS):
                             device_name = line.split(":")[0].strip()
                             if device_name and len(device_name) > 3:
                                 audio_devices.append(device_name)
@@ -658,7 +587,7 @@ class ChatSystemIntegration:
             return {
                 "success": True,
                 "message": "\n".join(summary),
-                "description": "List connected hardware devices",
+                "description": SysMsg.DESCRIPTION_HARDWARE_DEVICES,
             }
 
         except Exception as e:
@@ -842,9 +771,8 @@ class ChatSystemIntegration:
                     if files:
                         entry_summary.append(f"{len(files)} files")
 
-                    result["message"] = (
-                        f"✅ {result['message']}\n{SysMsg.NAVIGATION_SUCCESS.format(summary=', '.join(entry_summary))}"
-                    )
+                    nav_msg = SysMsg.NAVIGATION_SUCCESS.format(summary=", ".join(entry_summary))
+                    result["message"] = f"✅ {result['message']}\n{nav_msg}"
                     result["directory_contents"] = entries[:10]  # Show first 10 items
 
             return result
@@ -872,10 +800,12 @@ class ChatSystemIntegration:
                     path = after_list
             elif "show files in " in request_lower:
                 path = request[request_lower.find("show files in ") + 14 :].strip()
-            elif "what's in " in request_lower:
-                path = request[request_lower.find("what's in ") + 10 :].strip()
+            elif SysMsg.PATTERN_WHATS_IN in request_lower:
+                path = request[
+                    request_lower.find(SysMsg.PATTERN_WHATS_IN) + len(SysMsg.PATTERN_WHATS_IN) :
+                ].strip()
 
-            if "hidden" in request_lower or "all files" in request_lower:
+            if "hidden" in request_lower or SysMsg.PATTERN_ALL_FILES in request_lower:
                 show_hidden = True
             if "detailed" in request_lower or "details" in request_lower:
                 detailed = True
@@ -983,8 +913,7 @@ class ChatSystemIntegration:
                 }
 
             # Basic security check
-            dangerous_commands = ["rm -rf /", "sudo rm", "format", "mkfs", "> /dev/null"]
-            if any(dangerous in command.lower() for dangerous in dangerous_commands):
+            if any(dangerous in command.lower() for dangerous in SysMsg.SHELL_DANGEROUS_COMMANDS):
                 return {
                     "success": False,
                     "error": SysMsg.COMMAND_BLOCKED_SECURITY,
@@ -999,7 +928,7 @@ class ChatSystemIntegration:
                     # Truncate long output
                     output = result["output"]
                     if len(output) > 2000:
-                        result["output"] = output[:2000] + "\n... (output truncated)"
+                        result["output"] = output[:2000] + SysMsg.OUTPUT_TRUNCATED
 
             return result
 

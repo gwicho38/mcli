@@ -608,6 +608,7 @@ class SystemIntegrationMessages:
     PARAM_APP_NAME = "Name of the application (e.g., 'TextEdit', 'Calculator')"
     PARAM_ACTION = "Action to perform (open, close, new_document, write_text)"
     PARAM_KWARGS = "Additional parameters like text, filename"
+    PARAM_KWARGS_KEY = "**kwargs"  # Dictionary key for kwargs parameter
     PARAM_COMMAND = "Shell command to execute"
     PARAM_COMMAND_DESC = "Optional description of what the command does"
     PARAM_SCREENSHOT_FN = "Optional filename (will auto-generate if not provided)"
@@ -623,6 +624,126 @@ class SystemIntegrationMessages:
     DEFAULT_APP = "TextEdit"
     DEFAULT_FILENAME_EXT = ".txt"
     DEFAULT_SCREENSHOT_EXT = ".png"
+
+    # Request pattern keywords (for matching user requests)
+    # Time-related patterns
+    PATTERNS_TIME = ["what time", "current time", "system time", "what is the time"]
+    # System info patterns
+    PATTERNS_SYSTEM_INFO = ["system info", "system information", "system specs", "hardware info"]
+    # Hardware device patterns
+    PATTERNS_HARDWARE = [
+        "hardware devices",
+        "connected devices",
+        "list hardware",
+        "show devices",
+        "connected hardware",
+    ]
+    # Memory patterns
+    PATTERNS_MEMORY = [
+        "memory usage",
+        "ram usage",
+        "how much memory",
+        "how much ram",
+        "memory info",
+    ]
+    # Disk patterns
+    PATTERNS_DISK = [
+        "disk usage",
+        "disk space",
+        "storage space",
+        "how much space",
+        "free space",
+    ]
+    # Cache clear patterns
+    PATTERNS_CACHE = [
+        "clear cache",
+        "clean cache",
+        "clear temp",
+        "free up space",
+        "clean system",
+        "clear system cache",
+    ]
+    # Navigation patterns
+    PATTERNS_NAVIGATION = ["navigate to", "go to", "change to", "cd to", "move to"]
+    # Directory listing patterns
+    PATTERNS_DIR_LIST = ["list files", "list directory", "show files", "ls", "dir", "what's in"]
+    # Simulator patterns
+    PATTERNS_SIMULATOR = ["clean simulator", "simulator data", "clean ios", "clean watchos"]
+    # Shell command patterns
+    PATTERNS_SHELL = ["run command", "execute", "shell", "terminal"]
+    # Current directory patterns
+    PATTERNS_CURRENT_DIR = ["where am i", "current directory", "pwd", "current path"]
+    # App control keywords (single words)
+    KEYWORDS_APP_CONTROL = ["open", "close", "launch", "quit"]
+    # Command execution keywords
+    KEYWORDS_COMMAND_EXEC = ["run", "execute", "command", "terminal"]
+    # Screenshot patterns
+    PATTERN_SCREENSHOT = "screenshot"
+    PATTERN_SCREEN_CAPTURE = "screen capture"
+    # TextEdit patterns
+    PATTERN_TEXTEDIT = "textedit"
+    PATTERN_WRITE = "write"
+    PATTERN_TYPE = "type"
+    # File/URL patterns
+    PATTERN_FILE = "file"
+    PATTERN_URL = "url"
+    PATTERN_HTTP = "http"
+    # Open pattern
+    PATTERN_OPEN = "open"
+    # Common URL defaults
+    URL_GOOGLE = "https://google.com"
+    PATTERN_GOOGLE = "google"
+    PATTERN_CURRENT_DIR = "current directory"
+    PATTERN_THIS_FOLDER = "this folder"
+
+    # Text extraction word patterns
+    WORDS_TO_REMOVE_TEXTEDIT = ["in textedit", "to textedit", "and save", "then save"]
+
+    # Common apps mapping (lowercase key -> proper name)
+    COMMON_APPS = {
+        "textedit": "TextEdit",
+        "calculator": "Calculator",
+        "finder": "Finder",
+        "safari": "Safari",
+        "chrome": "Google Chrome",
+        "firefox": "Firefox",
+        "terminal": "Terminal",
+        "preview": "Preview",
+        "notes": "Notes",
+        "mail": "Mail",
+    }
+
+    # Dangerous commands for security blocking
+    DANGEROUS_COMMANDS = ["rm -rf", "sudo", "format", "del /", "> /dev"]
+
+    # USB device keywords for filtering
+    USB_DEVICE_KEYWORDS = ["mouse", "keyboard", "disk", "camera", "audio", "hub"]
+
+    # Audio device keywords for filtering
+    AUDIO_DEVICE_KEYWORDS = ["Built-in", "USB", "Bluetooth"]
+
+    # Command extraction patterns
+    PATTERN_RUN = "run "
+    PATTERN_EXECUTE = "execute "
+
+    # App control patterns
+    PATTERN_NEW_DOCUMENT = "new document"
+
+    # URL patterns
+    URL_PREFIX_WWW = "www."
+
+    # Directory listing patterns
+    PATTERN_WHATS_IN = "what's in "
+    PATTERN_ALL_FILES = "all files"
+
+    # Description strings
+    DESCRIPTION_HARDWARE_DEVICES = "List connected hardware devices"
+
+    # Shell command safety patterns
+    SHELL_DANGEROUS_COMMANDS = ["rm -rf /", "sudo rm", "format", "mkfs", "> /dev/null"]
+
+    # Output messages
+    OUTPUT_TRUNCATED = "\n... (output truncated)"
 
     # Examples for system functions (user-facing help text)
     EXAMPLES_TEXTEDIT = [
