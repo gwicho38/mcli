@@ -212,23 +212,44 @@ logger = get_logger()
             click.echo("No changes detected. Command creation cancelled.")
             return None
 
-        # Extract the actual command code (remove the instructions)
-        lines = edited_code.split("\n")
-        code_lines = []
-        in_code_section = False
+        # Extract the actual command code (remove only the instruction docstring)
+        # The instruction docstring is at the top and contains "Instructions:"
+        final_code = edited_code
 
-        for line in lines:
-            if line.strip().startswith("# Your command implementation goes here:"):
-                in_code_section = True
-                continue
-            if in_code_section:
-                code_lines.append(line)
+        # Remove the instruction docstring if present (triple-quoted string at the start)
+        if final_code.lstrip().startswith('"""'):
+            # Find the closing triple quotes
+            first_quote = final_code.find('"""')
+            if first_quote != -1:
+                second_quote = final_code.find('"""', first_quote + 3)
+                if second_quote != -1:
+                    # Check if this docstring contains instruction markers
+                    docstring_content = final_code[first_quote : second_quote + 3]
+                    if "Instructions:" in docstring_content or "Example Click command" in docstring_content:
+                        # Remove the instruction docstring
+                        final_code = final_code[second_quote + 3 :].lstrip("\n")
 
-        if not code_lines or not any(line.strip() for line in code_lines):
-            # Fallback: use the entire file content
-            code_lines = lines
+        # Also remove the "# Your command implementation goes here:" comment and below
+        # if the user didn't write anything there (keep user code above it)
+        marker = "# Your command implementation goes here:"
+        if marker in final_code:
+            marker_pos = final_code.find(marker)
+            code_before_marker = final_code[:marker_pos].rstrip()
+            code_after_marker = final_code[marker_pos + len(marker) :].strip()
 
-        final_code = "\n".join(code_lines).strip()
+            # Check if there's meaningful code after the marker (not just comments)
+            after_lines = [
+                l for l in code_after_marker.split("\n") if l.strip() and not l.strip().startswith("#")
+            ]
+
+            if after_lines:
+                # User wrote code after marker, keep everything
+                final_code = final_code.strip()
+            else:
+                # No meaningful code after marker, just use code before it
+                final_code = code_before_marker
+
+        final_code = final_code.strip()
 
         if not final_code:
             click.echo("No command code found. Command creation cancelled.")

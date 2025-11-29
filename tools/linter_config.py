@@ -220,6 +220,51 @@ ALLOWED_PATTERNS = [
     r"command group\.\"\"\"\n",
     r"# Your command implementation",
     r"@app\.command\(",
+    r"command for mcli\.",
+    r"logger\.info\(f\"Hello",
+    # Sync patterns
+    r"^(Syncing|Synced|Synchronizing|Synchronized) ",
+    # Video/Media patterns
+    r"^Video saved to ",
+    r"^Image saved to ",
+    # Score/metric label patterns
+    r"Score: $",
+    r"Cores: $",
+    r"Count: $",
+    r"Rate: $",
+    r"Size: $",
+    # File quotes pattern
+    r"^File '",
+    # Model/action patterns
+    r"^\[yellow\]Model '",
+    r"^Model ID: ",
+    r"^Available models:",
+    # Test data patterns
+    r"^test document",
+    r"^Hello, World!$",
+    # Using patterns
+    r"^Using (random|default|specified|configured) ",
+    # Transition patterns
+    r"^Transitioned ",
+    # Color/style names
+    r"^bold (cyan|green|red|yellow|magenta|blue|white)$",
+    r"^(dim|italic|underline|bold)$",
+    # Download emoji pattern
+    r"^📥 ",
+    # Suffix patterns (often in f-strings)
+    r" (records|samples|features|scripts?|items|files|bytes|entries)$",
+    r" trading records$",
+    r" secrets to $",
+    # Optional dependency pattern
+    r"^Optional dependency '",
+    r"^Falling back to ",
+    # Tags pattern
+    r"^Tags for ",
+    r"    Tags: $",
+    # Action/Dataset patterns
+    r"^Action '",
+    r"^Dataset '",
+    r"^Variant ",
 ]
 
 # File patterns to exclude from checking (glob patterns)
