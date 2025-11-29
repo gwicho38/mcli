@@ -31,6 +31,7 @@ try:
 except ImportError:
     process = None
 
+from mcli.lib.constants import ErrorMessages
 from mcli.lib.logger.logger import get_logger
 
 logger = get_logger()
@@ -50,7 +51,7 @@ LOCKFILE_PATH = Path.home() / ".local" / "mcli" / "command_lock.json"
 
 
 # Version info utility
-@lru_cache()
+@lru_cache
 def get_version_info(verbose: bool = False) -> str:
     """Get version info, cached to prevent multiple calls."""
     try:
@@ -105,7 +106,7 @@ def hash_command_state(commands):
 
 def load_lockfile():
     if LOCKFILE_PATH.exists():
-        with open(LOCKFILE_PATH, "r") as f:
+        with open(LOCKFILE_PATH) as f:
             return json.load(f)
     return []
 
@@ -219,7 +220,7 @@ def {name}_command(name: str = "World"):
 # NOTE: search command has been moved to mcli.app.commands_cmd for better organization
 
 
-def collect_commands() -> List[Dict[str, Any]]:
+def collect_commands() -> list[dict[str, Any]]:
     """Collect all commands from the mcli application."""
     commands = []
 
@@ -347,9 +348,7 @@ def open_editor_for_command(
                 break
 
     if not editor:
-        click.echo(
-            "❌ No editor found. Please set the EDITOR environment variable or install vim/nano."
-        )
+        click.echo(f"❌ {ErrorMessages.EDITOR_NOT_FOUND}")
         return None
 
     # Create a temporary file with the template
@@ -422,7 +421,7 @@ logger = get_logger()
             return None
 
         # Read the edited content
-        with open(temp_file_path, "r") as f:
+        with open(temp_file_path) as f:
             edited_code = f.read()
 
         # Check if the file was actually edited (not just the template)
@@ -506,10 +505,7 @@ def plugin_add(plugin_name, repo_url=None):
                 config_path = top_level_config
 
     if not config_path or not config_path.exists():
-        click.echo(
-            "Config file not found in $MCLI_CONFIG, $HOME/.config/mcli/config.toml, or project root.",
-            err=True,
-        )
+        click.echo(ErrorMessages.CONFIG_NOT_FOUND, err=True)
         return 1
 
     with open(config_path, "rb") as f:
@@ -582,10 +578,7 @@ def plugin_remove(plugin_name):
                 config_path = top_level_config
 
     if not config_path or not config_path.exists():
-        click.echo(
-            "Config file not found in $MCLI_CONFIG, $HOME/.config/mcli/config.toml, or project root.",
-            err=True,
-        )
+        click.echo(ErrorMessages.CONFIG_NOT_FOUND, err=True)
         return 1
 
     with open(config_path, "rb") as f:
@@ -645,10 +638,7 @@ def plugin_update(plugin_name):
                 config_path = top_level_config
 
     if not config_path or not config_path.exists():
-        click.echo(
-            "Config file not found in $MCLI_CONFIG, $HOME/.config/mcli/config.toml, or project root.",
-            err=True,
-        )
+        click.echo(ErrorMessages.CONFIG_NOT_FOUND, err=True)
         return 1
 
     with open(config_path, "rb") as f:
