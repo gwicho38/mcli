@@ -110,6 +110,12 @@ ALLOWED_PATTERNS = [
     r"^\^",  # Starts with ^ (regex anchor)
     r"\$$",  # Ends with $ (regex anchor)
     r"\[[a-z]+-[a-z]+\]",  # Character classes like [a-z0-9]
+    # Emoji-prefixed UI strings (visual indicators, impractical to constantize)
+    r"^[✅❌⚠️🔄🚀📝💡📊🎯🔥🏁📈💻🛑🔤📄📏🔍⬆️📦ℹ️🦀🐍⚡🎉✓✗•→─]",  # Common UI emojis
+    r"^\[red\][✅❌⚠️]",  # Rich markup with emoji
+    r"^\[green\][✅❌⚠️]",  # Rich markup with emoji
+    r"^\[yellow\][✅❌⚠️]",  # Rich markup with emoji
+    r"^\[cyan\][✅❌⚠️📦🔍ℹ️]",  # Rich markup with emoji
 ]
 
 # File patterns to exclude from checking (glob patterns)
@@ -413,7 +419,7 @@ COMMON_ACCEPTABLE_STRINGS = {
     "   Process ID: ",
     "Task ",
     " stocks",
-    "tell application \"",
+    'tell application "',
     # Version/CLI patterns
     "--version",
     # Migration/completion messages
