@@ -35,7 +35,10 @@ class TestCodeExtraction:
                 # Check if the docstring contains instruction markers
                 docstring_lines = lines[: docstring_end_line + 1]
                 docstring_content = "\n".join(docstring_lines)
-                if "Instructions:" in docstring_content or "Example Click command" in docstring_content:
+                if (
+                    "Instructions:" in docstring_content
+                    or "Example Click command" in docstring_content
+                ):
                     # Remove the instruction docstring
                     final_code = "\n".join(lines[docstring_end_line + 1 :]).lstrip("\n")
 
@@ -115,12 +118,12 @@ def hello():
 
     def test_handles_code_without_docstrings(self):
         """Test extraction of code that has no docstrings."""
-        code = '''import click
+        code = """import click
 
 @click.command()
 def simple():
     print("simple command")
-'''
+"""
         result = self.extract_code(code)
         assert result == code.strip()
 

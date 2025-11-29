@@ -17,6 +17,7 @@ from rich.prompt import Prompt
 
 from mcli.lib.custom_commands import get_command_manager
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.templates import CommandTemplates, EditorTemplates
 from mcli.lib.ui.styling import console
 
 logger = get_logger(__name__)
@@ -26,81 +27,19 @@ def get_command_template(name: str, group: Optional[str] = None) -> str:
     """Generate template code for a new command."""
     if group:
         # Template for a command in a group using Click
-        template = f'''"""
-{name} command for mcli.{group}.
-"""
-import click
-from typing import Optional, List
-from pathlib import Path
-from mcli.lib.logger.logger import get_logger
-
-logger = get_logger()
-
-# Create a Click command group
-@click.group(name="{name}")
-def app():
-    """Description for {name} command group."""
-    pass
-
-@app.command("hello")
-@click.argument("name", default="World")
-def hello(name: str):
-    """Example subcommand."""
-    logger.info(f"Hello, {{name}}! This is the {name} command.")
-    click.echo(f"Hello, {{name}}! This is the {name} command.")
-'''
+        return CommandTemplates.PYTHON_GROUP.format(name=name, group=group)
     else:
         # Template for a command directly under workflow using Click
-        template = f'''"""
-{name} command for mcli.
-"""
-import click
-from typing import Optional, List
-from pathlib import Path
-from mcli.lib.logger.logger import get_logger
-
-logger = get_logger()
-
-def {name}_command(name: str = "World"):
-    """
-    {name.capitalize()} command.
-    """
-    logger.info(f"Hello, {{name}}! This is the {name} command.")
-    click.echo(f"Hello, {{name}}! This is the {name} command.")
-'''
-
-    return template
+        return CommandTemplates.PYTHON_STANDALONE.format(name=name, name_cap=name.capitalize())
 
 
 def get_shell_command_template(name: str, shell: str = "bash", description: str = "") -> str:
     """Generate template shell script for a new command."""
-    template = f"""#!/usr/bin/env {shell}
-# {name} - {description or "Shell workflow command"}
-#
-# This is a shell-based MCLI workflow command.
-# Arguments are passed as positional parameters: $1, $2, $3, etc.
-# The command name is available in: $MCLI_COMMAND
-
-set -euo pipefail  # Exit on error, undefined variables, and pipe failures
-
-# Command logic
-echo "Hello from {name} shell command!"
-echo "Command: $MCLI_COMMAND"
-
-# Example: Access arguments
-if [ $# -gt 0 ]; then
-    echo "Arguments: $@"
-    for arg in "$@"; do
-        echo "  - $arg"
-    done
-else
-    echo "No arguments provided"
-fi
-
-# Exit successfully
-exit 0
-"""
-    return template
+    return CommandTemplates.SHELL.format(
+        name=name,
+        shell=shell,
+        description=description or "Shell workflow command",
+    )
 
 
 def open_editor_for_command(
@@ -151,29 +90,12 @@ def open_editor_for_command(
                 break
 
     # Add helpful comments to the template
-    enhanced_template = f'''"""
-{command_name} command for mcli.{command_group}.
-
-Description: {description}
-
-Instructions:
-1. Write your Python command logic below
-2. Use Click decorators for command definition
-3. Save and close the editor to create the command
-4. The command will be automatically converted to JSON format
-
-Example Click command structure:
-@click.command()
-@click.argument('name', default='World')
-def my_command(name):
-    # My custom command.
-    click.echo(f"Hello, {{name}}!")
-"""
-# Write your command logic below.
-# Delete the example code and replace with your implementation.
-
-{template_code}
-'''
+    enhanced_template = EditorTemplates.EDITOR_PYTHON.format(
+        name=command_name,
+        group=command_group,
+        description=description,
+        template_code=template_code,
+    )
 
     # Create temporary file
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as temp_file:
@@ -232,7 +154,10 @@ def my_command(name):
                 # Check if the docstring contains instruction markers
                 docstring_lines = lines[: docstring_end_line + 1]
                 docstring_content = "\n".join(docstring_lines)
-                if "Instructions:" in docstring_content or "Example Click command" in docstring_content:
+                if (
+                    "Instructions:" in docstring_content
+                    or "Example Click command" in docstring_content
+                ):
                     # Remove the instruction docstring
                     final_code = "\n".join(lines[docstring_end_line + 1 :]).lstrip("\n")
 
