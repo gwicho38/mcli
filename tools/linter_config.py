@@ -662,6 +662,90 @@ ALLOWED_PATTERNS = [
     r"^Branching ",
     r"^Tagging ",
     r"^Releasing ",
+    # More newline prefix patterns
+    r"^\\nstderr:",
+    r"^\\nstdout:",
+    r"^\\nDescription:",
+    r"^\\n# MCLI",
+    r"^\\n📄 ",
+    # Markdown/emoji streaming pattern
+    r"^📡 \*\*Streaming",
+    # Timer patterns
+    r"^⏱️",
+    # Shell type patterns
+    r" \(Shell\):",
+    # Bytes/size patterns
+    r" bytes\)$",
+    r" bytes →",
+    r" (directories|command\(s\))$",
+    # Hardware info label patterns (indented)
+    r"^\s+(GPU|CPU|Memory)( Memory| Frequency)?:",
+    r"^\s+Uptime:",
+    # Accuracy/score patterns
+    r"^\s+Accuracy Score:",
+    # Location migration patterns
+    r"^\s+(Old|New) location:",
+    r"^\s+Files to migrate:",
+    # Target/Source with Rich markup
+    r"^\s+Target: \[cyan\]",
+    r"^\s+Source: \[cyan\]",
+    # Tags pattern with pipe
+    r" \| Tags:",
+    # at suffix
+    r" at $",
+    # Context flag
+    r" --context $",
+    # Ellipsis patterns
+    r"^\.\.\.$",
+    r" \.\.\.+$",
+    # sudo commands (system admin)
+    r"^\s+sudo ",
+    # pip install standalone
+    r"^pip install $",
+    # Failed to execute standalone
+    r"^Failed to execute $",
+    # Job standalone
+    r"^Job $",
+    # Port/Host/Device labels (indented)
+    r"^\s+(Port|Host|Device|Error|Parameters|Type):",
+    r"^\s+Data [Dd]irectory:",
+    # String: osascript pattern (nested output)
+    r"^\s+String: ",
+    # DID patterns with extra spaces
+    r"^\s+(Space|Agent) DID:\s+",
+    # Emoji labels with indentation
+    r"^\s+📄 ",
+    # Template instruction patterns
+    r"^Write your (Python|Shell|Bash) ",
+    # Video/Image model labels
+    r"^(Video|Image|Audio) Models$",
+    # Snake case identifiers (database columns, config keys)
+    r"^[a-z]+_[a-z_]+$",  # e.g., transaction_size_std, processed_trading_data
+    # Token error messages
+    r"^Token must be ",
+    # Not found patterns
+    r"^(Portfolio|Trade|Stock|User|Item) not found$",
+    # Package file names
+    r"^(package|composer|Cargo|Gemfile|requirements)\.(json|toml|lock|txt)$",
+    # Server/daemon names
+    r"^(redis|postgres|mysql|mongo|nginx|apache)-server$",
+    # Shell workflow pattern
+    r"^Shell workflow command$",
+    # Efficiency pattern with pipe
+    r" MB \| Efficiency:",
+    # Command count pattern
+    r" command\(s\):$",
+    # Newline patterns with real newlines (not escaped)
+    r"^\n(stderr|stdout|Description):",
+    r"^\n# MCLI",
+    r"^\n🧪 Testing",
+    r"^\n📝 Test",
+    r"^\n🚀 Starting",
+    r"^\n🎉 Setup complete",
+    r"^\n📄 ",
+    # Tokenizer/model files
+    r"^tokenizer\.(json|model)$",
+    r"^(config|model|vocab)\.(json|txt|bin)$",
 ]
 
 # File patterns to exclude from checking (glob patterns)
