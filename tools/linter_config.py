@@ -1641,6 +1641,172 @@ ALLOWED_PATTERNS = [
     r"^(windows|linux|macos|darwin|ubuntu|debian|centos|fedora)$",
     # Python builtins as strings
     r"^(str|int|float|bool|list|dict|tuple|set|None|True|False)$",
+    # API patterns (comprehensive)
+    r"^API (server|request|Key|endpoint|error)[ :]",
+    r"^API server (stopped|started|is disabled)[ ]",
+    # AI service patterns
+    r"^AI (service|commit)[ ]",
+    # Alert/Audit patterns
+    r"^Alert handler failed:",
+    r"^AUDIT:",
+    # Async cache patterns
+    r"^Async cache (set|get|delete) error:",
+    # Artifact patterns
+    r"^Artifact path does not exist:",
+    # Appended/Aggregated patterns
+    r"^Appended (new|command)[ ]",
+    r"^Aggregated (data|results)[ ]",
+    # Aliases patterns
+    r"^Aliases configured$",
+    # Available Models
+    r"^Available Models$",
+    # Attempt patterns
+    r"^Attempt[ :]",
+    # Backed up patterns
+    r"^Backed up existing (file|commands)[ ]",
+    # Rich formatted output patterns (terminal colors)
+    r"^\\n\\[(yellow|green|red|bold|dim)\\]",
+    r"^\\[(yellow|green|red|bold|dim)\\]",
+    # Performance metrics patterns
+    r"^\\n(Win Rate|Volatility|Total Trades|Total Return|Sharpe Ratio|Max Drawdown|Annual Return):",
+    r"^\\nPerformance Metrics:",
+    # Shell/zsh configuration patterns
+    r"^\\nautoload -U ",
+    r"^\\nbind ",
+    r"^\\ndir ",
+    # Progress indicator patterns
+    r"^\\r.*Progress:",
+    # Notebook validation patterns
+    r"^\\nNotebook (is valid|has validation|executed|completed)[ :]",
+    # Efficient frontier patterns
+    r"^\\nEfficient Frontier generated",
+    # kubectl/kubernetes patterns
+    r"^\\ncat <<EOF \\| kubectl",
+    r"^\\nkind: Secret",
+    # Markdown content patterns
+    r"^# MCLI Custom Workflows",
+    r"^\\n--- Content from",
+    r"^\\n---$",
+    r"^\\n- \\*\\*Location\\*\\*:",
+    # Status display patterns
+    r"^\\n(Status|Tags|Created|Cell|Delete):",
+    r"^\n\(showing first",
+    # Install patterns
+    r"^\\nInstall them with:",
+    # Scope patterns
+    r"^\\n\\[dim\\]Scope:",
+    # No remote configured
+    r"^\\nNo remote configured$",
+    # Results patterns
+    r"^\\nResults have been written to",
+    # Please ensure
+    r"^\\nPlease,? ensure",
+    # Python version
+    r"^\\nPython:",
+    # Validation working
+    r"^\\nValidation working:",
+    # Files to migrate
+    r"^\\nTotal files to migrate:",
+    # BA:BA pattern (hex/network)
+    r"^BA:BA$",
+    # Percentage patterns
+    r"^%\)",
+    r"^%, Memory:",
+    # Format strings
+    r"^>\\d+\\.\\d+f$",
+    r"^=<error>$",
+    # Time interval patterns
+    r"^\\d+Day$",
+    # already exists
+    r"^already exists$",
+    # does not exist
+    r"^does not exist$",
+    # add (lowercase command)
+    r"^add $",
+    # An error occurred
+    r"^An error occurred while calling",
+    # Applying patterns
+    r"^Applying (temporal|transformation|filter)",
+    # Command template patterns (multiline docstrings in templates)
+    r"^command\\.\\n",
+    r"^command group\\.\"\"\"",
+    r"^command for mcli\\.",
+    r"^command with name:",
+    r"^# Your command implementation",
+    # Simple action verbs (trailing space indicates more follows)
+    r"^Loading $",
+    r"^Initialized $",
+    r"^Generated $",
+    r"^Extracting frames$",
+    r"^Creating video$",
+    r"^Creating a tunnel at $",
+    r"^Backtest complete\\. Total return: $",
+    # File/path patterns
+    r"^daemon\\.pid$",
+    r"^commands\\.db$",
+    r"^dvc add $",
+    r"^data: $",
+    r"^\\*\\.backup\\n",
+    r"^@reboot$",
+    r"^@example\\.com$",
+    # API/model patterns
+    r"^chat\\.completion$",
+    r"^Command $",
+    r"^GB free\\n$",
+    # Date/time patterns
+    r"^2025-01-01T",
+    r"^1Day$",
+    # Format specifiers
+    r"^>8\\.1f$",
+    # Progress patterns with emoji
+    r"^\\r📥 Progress:",
+    # Rich output patterns (emoji prefixes)
+    r"^\n📝 Usage:$",
+    r"^\n💡 These are templates",
+    r"^\n🚀 Setting up $",
+    r"^\n🌐 Remotes:$",
+    r"^\n📥 Pulling $",
+    r"^\n🔗 Integration script created:",
+    r"^\n🔔 Event:",
+    r"^\n🎯 Estimated Performance Gain:",
+    r"^\n🚀 Downloading $",
+    r"^\n📁 Contains:",
+    r"^\n🧠 Command Knowledge:",
+    r"^\n📊 \\*\\*Total size:\\*\\*",
+    r"^\n📋 \\*\\*Last ",
+    r"^\n📡 \\*\\*Following ",
+    r"^\n📁 \\*\\*",
+    # Rich bracket patterns
+    r"^\n\\[yellow\\]⚠ Failed to push ",
+    r"^\n\\[red\\]",
+    r"^\n\\[green\\]✓ $",
+    r"^\n\[bold\]Local \(current repository:",
+    r"^\\[yellow\\]Skipped $",
+    r"^\\[yellow\\]Install mcli $",
+    r"^\\[yellow\\]  View CI status:$",
+    # AppleScript patterns
+    r"^\n        tell application ",
+    r"^\n            tell application ",
+    r"^\n                tell application ",
+    r"^\n        end tell\\n",
+    # Metrics display patterns
+    r"^\n        Volatility:",
+    r"^\n        Sharpe Ratio:",
+    r"^\n        Optimization Method:",
+    r"^\n        Number of Assets:",
+    r"^\n        Expected Return:",
+    r"^\n        Concentration:",
+    # Training patterns
+    r"^\\] Train Loss:",
+    r"^\\]> $",
+    # File glob patterns
+    r"^\*\* \(last ",
+    r"^\*\* \($",
+    # Workflow notebook template
+    r"^\n\nThis is a workflow notebook\\. Add code cells belo",
+    # Autoload patterns
+    r"^\nautoload -U mcli-quick",
+    r"^\nautoload -U compinit && compinit",
 ]
 
 # File patterns to exclude from checking (glob patterns)
