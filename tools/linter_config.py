@@ -1401,6 +1401,55 @@ ALLOWED_PATTERNS = [
     r"^HTML intermediate failed:",
     # how much patterns
     r"^how much (space|ram|memory|cpu|disk)$",
+    # Generic "Failed to" patterns (covers many error messages)
+    r"^Failed to (record|read|push|pull|place|parse|optimize|migrate|manage|log|list|kill|import|generate|fetch|extract|export|execute|estimate|enable|drop|disable|decrypt|decode|convert|compute|compare|clone|clear|cleanup|check|calculate|build|authenticate|analyze|add)",
+    # Additional Failed to patterns
+    r"^Failed to (save|send|serialize|set|start|stop|submit|sync|terminate|transfer|transform|update|upload|validate|verify|write|create|delete|download|edit|get|handle|initialize|install|invoke|load|locate|lock|lookup|map|match|merge|modify|move|open|parse|patch)",
+    # More Failed to patterns
+    r"^Failed to (register|remove|retrieve|run|simulate|store)",
+    # High outlier
+    r"^High outlier ratio detected:",
+    # Hello patterns
+    r"^Hello, $",
+    # Health check
+    r"^Health check (failed|passed|running)[ :]",
+    # Hash patterns
+    r"^Hash (mismatch|computed|stored) ",
+    # hardware info
+    r"^hardware info$",
+    # go to
+    r"^go to$",
+    # Global (user-wide)
+    r"^Global \(user-wide\)$",
+    # Git patterns
+    r"^Git (repository|init|clone|checkout|push|pull) ",
+    r"^git (checkout|clone|pull|push|status) ",
+    # getting url
+    r"^getting url$",
+    # Get a database
+    r"^Get a (database|redis|cache) ",
+    # Generated patterns
+    r"^Generated (response|Redis|JSON|AI|model|report|config|file|output) ",
+    # gemma patterns
+    r"^gemma[0-9]+n-[0-9]+b$",
+    # GB free
+    r"^GB free\\n$",
+    # Force killing
+    r"^Force killing (Redis|process|job) ",
+    # for repository
+    r"^for repository:",
+    # Flushed
+    r"^Flushed ",
+    # Final patterns
+    r"^Final (Validation|feature|accuracy|loss|score) ",
+    # File watcher
+    r"^File watcher (monitoring|extension|started|stopped)[ :]",
+    # File is not
+    r"^File is not (executable|readable|writable):",
+    # feature files
+    r"^feature_importance\.joblib$",
+    # Feature patterns
+    r"^Feature (selection|engineering|extraction|importance) ",
 ]
 
 # File patterns to exclude from checking (glob patterns)
