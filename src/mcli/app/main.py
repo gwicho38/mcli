@@ -6,7 +6,6 @@ from typing import List, Optional
 import click
 import tomli
 
-from mcli.lib.api.api import register_command_as_api
 from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_tracing, get_logger
 
 # Defer performance optimizations until needed
@@ -147,6 +146,9 @@ def register_command_as_api_endpoint(command_func, module_name: str, command_nam
         module_name: The module name for grouping
         command_name: The command name
     """
+    # Lazy import to avoid loading FastAPI at startup (saves ~280ms)
+    from mcli.lib.api.api import register_command_as_api
+
     try:
         # Create endpoint path based on module and command
         endpoint_path = f"/{module_name.replace('.', '/')}/{command_name}"

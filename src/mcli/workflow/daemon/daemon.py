@@ -14,8 +14,9 @@ from typing import Any, Dict, List, Optional
 
 import click
 import psutil
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+
+# Lazy imports for sklearn to reduce startup time (saves ~745ms)
+# TfidfVectorizer and cosine_similarity are imported where needed
 
 try:
     from watchdog.events import FileSystemEventHandler
@@ -147,7 +148,9 @@ def start_command_file_watcher(db, watch_dir: str = None):
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.init_database()
 
-        # Initialize vectorizer for similarity search
+        # Initialize vectorizer for similarity search (lazy import)
+        from sklearn.feature_extraction.text import TfidfVectorizer
+
         self.vectorizer = TfidfVectorizer(
             max_features=1000, stop_words="english", ngram_range=(1, 2)
         )
@@ -368,7 +371,9 @@ def start_command_file_watcher(db, watch_dir: str = None):
             query_vector = self.vectorizer.transform([query_text])
             command_vectors = self.vectorizer.transform(command_texts)
 
-            # Calculate cosine similarities
+            # Calculate cosine similarities (lazy import)
+            from sklearn.metrics.pairwise import cosine_similarity
+
             similarities = cosine_similarity(query_vector, command_vectors).flatten()
 
             # Sort by similarity

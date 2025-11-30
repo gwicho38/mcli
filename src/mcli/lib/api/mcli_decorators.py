@@ -14,12 +14,50 @@ import click
 
 from mcli.lib.logger.logger import get_logger
 
-from .api import api_endpoint as _api_endpoint
-from .api import get_api_app, start_api_server, stop_api_server
-from .daemon_decorator import daemon_command as _daemon_command
-from .daemon_decorator import is_daemon_available
+# Lazy imports to avoid loading FastAPI at startup (saves ~280ms)
+# These are imported inside functions that need them:
+# - _api_endpoint from .api
+# - get_api_app, start_api_server, stop_api_server from .api
+# - daemon_command, is_daemon_available from .daemon_decorator
 
 logger = get_logger(__name__)
+
+
+# Lazy import helpers
+def _get_api_endpoint():
+    from .api import api_endpoint
+
+    return api_endpoint
+
+
+def _get_api_app():
+    from .api import get_api_app
+
+    return get_api_app()
+
+
+def _start_api_server(*args, **kwargs):
+    from .api import start_api_server
+
+    return start_api_server(*args, **kwargs)
+
+
+def _stop_api_server(*args, **kwargs):
+    from .api import stop_api_server
+
+    return stop_api_server(*args, **kwargs)
+
+
+def _get_daemon_command():
+    from .daemon_decorator import daemon_command
+
+    return daemon_command
+
+
+def _is_daemon_available():
+    from .daemon_decorator import is_daemon_available
+
+    return is_daemon_available()
 
 # =============================================================================
 # Complete Click Superset Decorators
@@ -126,7 +164,7 @@ def command(
 
         # Apply API endpoint if specified
         if api_endpoint:
-            click_command = _api_endpoint(
+            click_command = _get_api_endpoint()(
                 endpoint_path=api_endpoint,
                 http_method=api_method,
                 description=api_description or help or f"API endpoint for {func.__name__}",
@@ -135,7 +173,7 @@ def command(
 
         # Apply background processing if enabled
         if background:
-            click_command = _daemon_command(
+            click_command = _get_daemon_command()(
                 command_name=name or func.__name__,
                 auto_route=True,
                 fallback_to_local=True,
@@ -800,9 +838,9 @@ def start_server(
     """
     try:
         if port is not None:
-            server_url = start_api_server(host=host, port=port, debug=debug)
+            server_url = _start_api_server(host=host, port=port, debug=debug)
         else:
-            server_url = start_api_server(host=host, debug=debug)
+            server_url = _start_api_server(host=host, debug=debug)
         logger.info(f"API server started at: {server_url}")
         return server_url
     except Exception as e:
@@ -819,7 +857,7 @@ def stop_server():
         atexit.register(mcli.stop_server)
     """
     try:
-        stop_api_server()
+        _stop_api_server()
         logger.info("API server stopped")
     except Exception as e:
         logger.error(f"Failed to stop API server: {e}")
@@ -833,7 +871,7 @@ def is_server_running() -> bool:
         True if server is running, False otherwise
     """
     try:
-        app = get_api_app()
+        app = _get_api_app()
         return app is not None
     except Exception:
         return False
@@ -846,7 +884,7 @@ def is_background_available() -> bool:
     Returns:
         True if background service is available, False otherwise
     """
-    return is_daemon_available()
+    return _is_daemon_available()
 
 
 # =============================================================================

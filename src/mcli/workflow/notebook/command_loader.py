@@ -7,6 +7,7 @@ a Click group with all the commands as subcommands.
 
 import ast
 import io
+import logging
 import os
 import re
 import sys
@@ -29,6 +30,56 @@ def _is_completion_mode() -> bool:
     return os.environ.get(EnvVars.COMPLETE) is not None
 
 
+def _is_command_execution_mode() -> bool:
+    """Check if we're in command execution mode (not just listing/loading)."""
+    return os.environ.get("MCLI_NOTEBOOK_EXECUTE", "") == "1"
+
+
+@contextmanager
+def _suppress_output_during_loading() -> Generator[None, None, None]:
+    """
+    Context manager to suppress stdout and logging during notebook loading.
+
+    When loading notebooks to discover commands, any stdout or logging output
+    from executed setup cells is unwanted noise. This suppresses:
+    - stdout (print statements)
+    - stderr (error output)
+    - logging at INFO level and below
+
+    Output is only suppressed when NOT in execution mode (i.e., during command
+    listing/loading). When actually running a command, output is preserved.
+    """
+    # If we're in command execution mode, don't suppress output
+    if _is_command_execution_mode():
+        yield
+        return
+
+    # Suppress stdout and stderr
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    sys.stdout = io.StringIO()
+    sys.stderr = io.StringIO()
+
+    # Suppress logging at INFO and below by temporarily raising the root logger level
+    root_logger = logging.getLogger()
+    old_level = root_logger.level
+    # Also suppress any handlers that might output to console
+    old_handler_levels = {}
+    for handler in root_logger.handlers:
+        old_handler_levels[handler] = handler.level
+        if handler.level < logging.WARNING:
+            handler.level = logging.WARNING
+
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+        root_logger.level = old_level
+        for handler, level in old_handler_levels.items():
+            handler.level = level
+
+
 @contextmanager
 def _suppress_stdout_if_completing() -> Generator[None, None, None]:
     """
@@ -37,6 +88,9 @@ def _suppress_stdout_if_completing() -> Generator[None, None, None]:
     When tab completion is running, any stdout output from executed cells
     (like print statements) corrupts the completion response. This suppresses
     stdout only during completion mode.
+
+    Note: This is kept for backwards compatibility. New code should use
+    _suppress_output_during_loading() instead.
     """
     if _is_completion_mode():
         old_stdout = sys.stdout
@@ -240,7 +294,7 @@ class NotebookCommandLoader:
 
             # Execute setup code (suppress stdout during completion to avoid corrupting output)
             try:
-                with _suppress_stdout_if_completing():
+                with _suppress_output_during_loading():
                     exec(source, self.globals_dict)
                 logger.debug("Executed setup cell successfully")
             except Exception as e:
@@ -269,7 +323,7 @@ class NotebookCommandLoader:
             try:
                 # Compile and execute each statement individually
                 code = compile(ast.Module(body=[node], type_ignores=[]), "<string>", "exec")
-                with _suppress_stdout_if_completing():
+                with _suppress_output_during_loading():
                     exec(code, self.globals_dict)
             except Exception as stmt_e:
                 # Log but continue - we want to execute as much as possible
@@ -294,7 +348,7 @@ class NotebookCommandLoader:
                 self.globals_dict["click"] = click
 
             # Execute the cell to define the command (suppress stdout during completion)
-            with _suppress_stdout_if_completing():
+            with _suppress_output_during_loading():
                 exec(source, self.globals_dict)
 
             # Extract function name
@@ -457,5 +511,8 @@ class NotebookCommandLoader:
         Returns:
             Click Group with all notebook commands
         """
-        loader = cls.from_file(notebook_path)
-        return loader.create_group(group_name)
+        # Wrap the entire loading process in output suppression
+        # This catches imports that happen during notebook cell execution
+        with _suppress_output_during_loading():
+            loader = cls.from_file(notebook_path)
+            return loader.create_group(group_name)
