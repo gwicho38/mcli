@@ -32,7 +32,7 @@ def _is_completion_mode() -> bool:
 
 def _is_command_execution_mode() -> bool:
     """Check if we're in command execution mode (not just listing/loading)."""
-    return os.environ.get("MCLI_NOTEBOOK_EXECUTE", "") == "1"
+    return os.environ.get(EnvVars.MCLI_NOTEBOOK_EXECUTE, "") == "1"
 
 
 @contextmanager
