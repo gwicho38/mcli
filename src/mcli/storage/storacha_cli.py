@@ -76,7 +76,7 @@ class StorachaCLI:
         if self.config_path.exists():
             try:
                 content = self.config_path.read_text()
-                result: Dict[str, Any] = json.loads(content)
+                result: dict[str, Any] = json.loads(content)
                 return result
             except Exception as e:
                 logger.warning(f"Failed to load config: {e}")

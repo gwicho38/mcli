@@ -8,7 +8,7 @@ import click
 from click.shell_completion import CompletionItem
 
 # Static completion data for lazy-loaded commands
-LAZY_COMMAND_COMPLETIONS: Dict[str, Any] = {
+LAZY_COMMAND_COMPLETIONS: dict[str, Any] = {
     "workflow": {
         "subcommands": [
             "api-daemon",
@@ -102,12 +102,12 @@ LAZY_COMMAND_COMPLETIONS: Dict[str, Any] = {
 }
 
 
-def get_completion_items(cmd_path: List[str], incomplete: str = "") -> List[CompletionItem]:
+def get_completion_items(cmd_path: list[str], incomplete: str = "") -> list[CompletionItem]:
     """Get completion items for a given command path without loading modules."""
-    items: List[CompletionItem] = []
+    items: list[CompletionItem] = []
 
     # Navigate to the completion data for this path
-    current_data: Dict[str, Any] = LAZY_COMMAND_COMPLETIONS
+    current_data: dict[str, Any] = LAZY_COMMAND_COMPLETIONS
 
     for part in cmd_path:
         if part in current_data:

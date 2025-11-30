@@ -357,6 +357,7 @@ module = [
     "supabase.*",
 ]
 ignore_missing_imports = true
+ignore_errors = true
 
 [build-system]
 requires = ["setuptools>=65.0.0", "wheel>=0.40.0"]

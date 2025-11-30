@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import joblib
-import mlflow
-import mlflow.pytorch
-import mlflow.sklearn
+import mlflow  # type: ignore[import-untyped]
+import mlflow.pytorch  # type: ignore[import-untyped]
+import mlflow.sklearn  # type: ignore[import-untyped]
 
 from .dvc_config import DVCConfig, get_dvc_config
 from .mlflow_config import MLflowConfig, get_mlflow_config

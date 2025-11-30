@@ -172,7 +172,7 @@ def tail_logs(log_type: str, lines: int, date: Optional[str], follow: bool):
         else:
             # Standard mode: just show last N lines
             # Read last N lines
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 all_lines = f.readlines()
                 tail_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
 
@@ -319,7 +319,7 @@ def _stream_single_file(log_file: Path, lines: int, follow: bool):
             process.terminate()
     else:
         # Just show last N lines
-        with open(log_file, "r") as f:
+        with open(log_file) as f:
             all_lines = f.readlines()
             tail_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
 
@@ -342,7 +342,7 @@ def _stream_multiple_files(log_files: list, lines: int, follow: bool):
             for log_file in log_files:
                 if log_file.exists():
                     # Show recent lines from each file
-                    with open(log_file, "r") as f:
+                    with open(log_file) as f:
                         all_lines = f.readlines()
                         recent_lines = all_lines[-5:] if len(all_lines) > 5 else all_lines
 
@@ -410,7 +410,7 @@ def _search_log_file(log_file: Path, pattern: str, context: int) -> list:
     matches = []
 
     try:
-        with open(log_file, "r") as f:
+        with open(log_file) as f:
             lines = f.readlines()
 
         for i, line in enumerate(lines):

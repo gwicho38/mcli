@@ -249,7 +249,7 @@ def redis_logs(lines):
 
         try:
             # Read last N lines
-            with open(log_file, "r") as f:
+            with open(log_file) as f:
                 all_lines = f.readlines()
                 recent_lines = all_lines[-lines:] if len(all_lines) > lines else all_lines
 

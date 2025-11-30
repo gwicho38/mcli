@@ -80,7 +80,7 @@ def command(
     api_endpoint: Optional[str] = None,
     api_method: str = "POST",
     api_description: Optional[str] = None,
-    api_tags: Optional[List[str]] = None,
+    api_tags: Optional[list[str]] = None,
     background: bool = False,
     background_timeout: Optional[int] = None,
     **kwargs,
@@ -188,8 +188,8 @@ def command(
 
 def group(
     name: Optional[str] = None,
-    commands: Optional[Union[Dict[str, Callable], List[Callable]]] = None,
-    order: Optional[List[str]] = None,
+    commands: Optional[Union[dict[str, Callable], list[Callable]]] = None,
+    order: Optional[list[str]] = None,
     help: Optional[str] = None,
     epilog: Optional[str] = None,
     short_help: Optional[str] = None,
@@ -201,7 +201,7 @@ def group(
     # MCLI extensions
     api_base_path: Optional[str] = None,
     api_description: Optional[str] = None,
-    api_tags: Optional[List[str]] = None,
+    api_tags: Optional[list[str]] = None,
     **kwargs,
 ):
     """
@@ -660,7 +660,7 @@ def api_command(
     endpoint_path: str,
     http_method: str = "POST",
     description: Optional[str] = None,
-    tags: Optional[List[str]] = None,
+    tags: Optional[list[str]] = None,
     background: bool = True,
     background_timeout: Optional[int] = None,
     **click_kwargs,
@@ -722,7 +722,7 @@ def api(
     endpoint_path: Optional[str] = None,
     http_method: str = "POST",
     description: Optional[str] = None,
-    tags: Optional[List[str]] = None,
+    tags: Optional[list[str]] = None,
     enable_background: bool = True,
     background_timeout: Optional[int] = None,
 ):
@@ -785,7 +785,7 @@ def cli_with_api(
     endpoint_path: Optional[str] = None,
     http_method: str = "POST",
     description: Optional[str] = None,
-    tags: Optional[List[str]] = None,
+    tags: Optional[list[str]] = None,
     enable_background: bool = True,
     background_timeout: Optional[int] = None,
 ):
@@ -893,7 +893,7 @@ def is_background_available() -> bool:
 # =============================================================================
 
 
-def get_api_config() -> Dict[str, Any]:
+def get_api_config() -> dict[str, Any]:
     """
     Get the current API configuration.
 

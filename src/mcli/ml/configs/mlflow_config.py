@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import mlflow
-from mlflow.tracking import MlflowClient
+import mlflow  # type: ignore[import-untyped]
+from mlflow.tracking import MlflowClient  # type: ignore[import-untyped]
 
 
 class MLflowConfig:

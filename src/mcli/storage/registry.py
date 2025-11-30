@@ -65,7 +65,7 @@ class RegistryManager:
         """
         try:
             # Create registry data
-            registry: Dict[str, Any] = {
+            registry: dict[str, Any] = {
                 "repo_name": repo_name,
                 "environment": environment,
                 "data_cid": data_cid,  # CID of actual data

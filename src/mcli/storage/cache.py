@@ -52,7 +52,7 @@ class LocalCache:
 
         try:
             content = self.metadata_file.read_text()
-            result: Dict[str, Dict[str, Any]] = json.loads(content)
+            result: dict[str, dict[str, Any]] = json.loads(content)
             return result
         except Exception as e:
             logger.warning(f"Failed to load cache metadata: {e}")
@@ -318,7 +318,7 @@ class LocalCache:
         total_size = sum(m.get("size", 0) for m in self.metadata.values())
 
         # Count by type
-        types: Dict[str, int] = {}
+        types: dict[str, int] = {}
         for metadata in self.metadata.values():
             data_type = metadata.get("type", "unknown")
             types[data_type] = types.get(data_type, 0) + 1

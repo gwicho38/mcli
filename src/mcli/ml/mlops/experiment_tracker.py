@@ -7,14 +7,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-import mlflow
-import mlflow.pytorch
-import mlflow.sklearn
+import mlflow  # type: ignore[import-untyped]
+import mlflow.pytorch  # type: ignore[import-untyped]
+import mlflow.sklearn  # type: ignore[import-untyped]
 import numpy as np
 import pandas as pd
 import torch
-from mlflow.models.signature import ModelSignature, infer_signature
-from mlflow.tracking import MlflowClient
+from mlflow.models.signature import ModelSignature, infer_signature  # type: ignore[import-untyped]
+from mlflow.tracking import MlflowClient  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 

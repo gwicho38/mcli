@@ -257,7 +257,7 @@ Thumbs.db
     console.print("  1. Create a workflow:  [cyan]mcli workflow add my-workflow[/cyan]")
     console.print("  2. List workflows:     [cyan]mcli workflow list --custom-only[/cyan]")
     console.print("  3. Execute workflow:   [cyan]mcli workflows my-workflow[/cyan]")
-    console.print("  4. View README:        [cyan]cat {}/README.md[/cyan]".format(workflows_dir))
+    console.print(f"  4. View README:        [cyan]cat {workflows_dir}/README.md[/cyan]")
     console.print()
 
     if in_git_repo:

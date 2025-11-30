@@ -123,7 +123,7 @@ def open_editor_for_command(
             return None
 
         # Read the edited content
-        with open(temp_file_path, "r") as f:
+        with open(temp_file_path) as f:
             edited_code = f.read()
 
         # Check if the file was actually edited (not just the template)
@@ -319,7 +319,7 @@ def new(command_name, group, description, template, language, shell, is_global):
                     click.echo("Editor exited with error. Command creation cancelled.")
                     return 1
 
-                with open(tmp_path, "r") as f:
+                with open(tmp_path) as f:
                     code = f.read()
 
                 if not code.strip():
