@@ -246,18 +246,14 @@ class LazyCommand(click.Command):
         cmd = self._load_command()
         return cmd.get_params(ctx)
 
-    def shell_complete(self, ctx, param, incomplete):
+    def shell_complete(self, ctx, incomplete):
         """Provide shell completion for the lazily loaded command."""
         cmd = self._load_command()
         # Delegate to the loaded command's completion
         if hasattr(cmd, "shell_complete"):
-            return cmd.shell_complete(ctx, param, incomplete)
+            return cmd.shell_complete(ctx, incomplete)
         # Fallback to default Click completion
-        return (
-            super().shell_complete(ctx, param, incomplete)
-            if hasattr(super(), "shell_complete")
-            else []
-        )
+        return super().shell_complete(ctx, incomplete) if hasattr(super(), "shell_complete") else []
 
 
 class LazyGroup(click.Group):
@@ -306,18 +302,14 @@ class LazyGroup(click.Group):
         group = self._load_group()
         return group.get_params(ctx)
 
-    def shell_complete(self, ctx, param, incomplete):
+    def shell_complete(self, ctx, incomplete):
         """Provide shell completion for the lazily loaded group."""
         group = self._load_group()
         # Delegate to the loaded group's completion
         if hasattr(group, "shell_complete"):
-            return group.shell_complete(ctx, param, incomplete)
+            return group.shell_complete(ctx, incomplete)
         # Fallback to default Click completion
-        return (
-            super().shell_complete(ctx, param, incomplete)
-            if hasattr(super(), "shell_complete")
-            else []
-        )
+        return super().shell_complete(ctx, incomplete) if hasattr(super(), "shell_complete") else []
 
 
 def _add_lazy_commands(app: click.Group):
@@ -416,7 +408,7 @@ def _add_lazy_commands(app: click.Group):
         try:
             from mcli.app.completion_helpers import create_completion_aware_lazy_group
 
-            workflows_group = create_completion_aware_lazy_group(
+            workflows_group = create_completion_aware_lazy_group(  # type: ignore[assignment]
                 "workflows",
                 "mcli.workflow.workflow.workflows",
                 "Runnable workflows for automation, video processing, and daemon management",
@@ -425,7 +417,7 @@ def _add_lazy_commands(app: click.Group):
             app.add_command(workflows_group, name="run")  # Add run alias
             logger.debug("Added completion-aware workflows group with 'run' alias (fallback)")
         except ImportError:
-            workflows_group = LazyGroup(
+            workflows_group = LazyGroup(  # type: ignore[assignment]
                 "workflows",
                 "mcli.workflow.workflow.workflows",
                 help="Runnable workflows for automation, video processing, and daemon management",
@@ -448,7 +440,7 @@ def _add_lazy_commands(app: click.Group):
     # - chat: removed from core commands
     # - model: moved to ~/.mcli/commands workflow
     # - test: removed from core commands
-    lazy_commands = {}
+    lazy_commands: dict[str, dict[str, str]] = {}
 
     for cmd_name, cmd_info in lazy_commands.items():
         # Skip workflows since we already added it with completion support
@@ -460,7 +452,7 @@ def _add_lazy_commands(app: click.Group):
             try:
                 from mcli.app.completion_helpers import create_completion_aware_lazy_group
 
-                lazy_cmd = create_completion_aware_lazy_group(
+                lazy_cmd: click.Command = create_completion_aware_lazy_group(
                     cmd_name, cmd_info["import_path"], cmd_info["help"]
                 )
             except ImportError:
@@ -501,7 +493,7 @@ def _add_lazy_commands(app: click.Group):
                 if os.getenv("MCLI_WATCH_SCRIPTS", "false").lower() == "true":
                     observer = start_watcher(commands_dir, sync_manager)
                     if observer:
-                        logger.info(f"Started file watcher for {commands_dir}")
+                        logger.info(f"Started file watcher for {commands_dir}")  # type: ignore[unreachable]
     except Exception as e:
         logger.debug(f"Could not sync scripts: {e}")
 

@@ -65,7 +65,7 @@ class RegistryManager:
         """
         try:
             # Create registry data
-            registry = {
+            registry: Dict[str, Any] = {
                 "repo_name": repo_name,
                 "environment": environment,
                 "data_cid": data_cid,  # CID of actual data
@@ -155,7 +155,7 @@ class RegistryManager:
                 registries.sort(key=lambda r: datetime.fromisoformat(r["timestamp"]), reverse=True)
 
                 latest = registries[0]
-                data_cid = latest["data_cid"]
+                data_cid: str = str(latest["data_cid"])
 
                 logger.debug(f"✅ Found latest CID for {repo_name}/{environment}: {data_cid}")
                 logger.debug(f"   Timestamp: {latest['timestamp']}")

@@ -161,10 +161,11 @@ def tail_logs(log_type: str, lines: int, date: Optional[str], follow: bool):
             )
 
             try:
-                for line in iter(process.stdout.readline, ""):
-                    if line:
-                        formatted_line = _format_log_line(line.rstrip())
-                        console.print(formatted_line)
+                if process.stdout:
+                    for line in iter(process.stdout.readline, ""):
+                        if line:
+                            formatted_line = _format_log_line(line.rstrip())
+                            console.print(formatted_line)
             except KeyboardInterrupt:
                 process.terminate()
                 console.print("\n👋 Log following stopped", style="cyan")
@@ -309,10 +310,11 @@ def _stream_single_file(log_file: Path, lines: int, follow: bool):
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         try:
-            for line in iter(process.stdout.readline, ""):
-                if line:
-                    formatted_line = _format_log_line(line.rstrip())
-                    console.print(formatted_line)
+            if process.stdout:
+                for line in iter(process.stdout.readline, ""):
+                    if line:
+                        formatted_line = _format_log_line(line.rstrip())
+                        console.print(formatted_line)
         except KeyboardInterrupt:
             process.terminate()
     else:
@@ -433,11 +435,12 @@ def _search_log_file(log_file: Path, pattern: str, context: int) -> list:
 
 def _format_file_size(size_bytes: int) -> str:
     """Format file size in human readable format."""
+    size: float = float(size_bytes)
     for unit in ["B", "KB", "MB", "GB"]:
-        if size_bytes < 1024.0:
-            return f"{size_bytes:.1f} {unit}"
-        size_bytes /= 1024.0
-    return f"{size_bytes:.1f} TB"
+        if size < 1024.0:
+            return f"{size:.1f} {unit}"
+        size /= 1024.0
+    return f"{size:.1f} TB"
 
 
 # Register with main CLI

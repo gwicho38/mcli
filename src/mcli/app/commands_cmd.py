@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
 from rich.prompt import Prompt
@@ -671,8 +671,8 @@ def list_commands(
 
             if isinstance(result, dict):
                 commands_data = result.get("commands", [])
-            elif isinstance(result, list):
-                commands_data = result
+            elif isinstance(result, list):  # type: ignore[unreachable]
+                commands_data = result  # type: ignore[unreachable]
             else:
                 commands_data = []
         else:
@@ -735,8 +735,8 @@ def search_commands(query: str, daemon_only: bool, as_json: bool, is_global: boo
 
             if isinstance(result, dict):
                 all_commands = result.get("commands", [])
-            elif isinstance(result, list):
-                all_commands = result
+            elif isinstance(result, list):  # type: ignore[unreachable]
+                all_commands = result  # type: ignore[unreachable]
             else:
                 all_commands = []
 
@@ -833,8 +833,8 @@ def command_info(command_name: str, as_json: bool):
 
         if isinstance(result, dict):
             all_commands = result.get("commands", [])
-        elif isinstance(result, list):
-            all_commands = result
+        elif isinstance(result, list):  # type: ignore[unreachable]
+            all_commands = result  # type: ignore[unreachable]
         else:
             all_commands = []
 
@@ -1255,10 +1255,11 @@ def add_command(command_name, group, description, template, language, shell, is_
                 Path(tmp_path).unlink(missing_ok=True)
         else:
             # Python command - use existing editor function
-            code = open_editor_for_command(command_name, command_group, description)
-            if code is None:
+            editor_result = open_editor_for_command(command_name, command_group, description)
+            if editor_result is None:
                 click.echo("Command creation cancelled.")
                 return 1
+            code = editor_result
 
     # Save the command
     saved_path = manager.save_command(

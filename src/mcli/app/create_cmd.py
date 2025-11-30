@@ -396,10 +396,11 @@ def create(command_name, group, description, template, language, shell, is_globa
                 Path(tmp_path).unlink(missing_ok=True)
         else:
             # Python command - use existing editor function
-            code = open_editor_for_command(command_name, command_group, description)
-            if code is None:
+            editor_result = open_editor_for_command(command_name, command_group, description)
+            if editor_result is None:
                 click.echo("Command creation cancelled.")
                 return 1
+            code = editor_result
 
     # Save the command
     saved_path = manager.save_command(

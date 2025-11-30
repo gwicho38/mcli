@@ -6,6 +6,7 @@ import json
 import shutil
 import subprocess
 from datetime import datetime
+from typing import Any
 
 import click
 from rich.prompt import Prompt
@@ -49,7 +50,10 @@ def init(is_global, git, force):
     # This bypasses the migration logic that would check for old commands/ directory
     if not is_global and in_git_repo:
         local_mcli = get_local_mcli_dir()
-        workflows_dir = local_mcli / "workflows"
+        if local_mcli is not None:
+            workflows_dir = local_mcli / "workflows"
+        else:
+            workflows_dir = get_mcli_home() / "workflows"
     else:
         workflows_dir = get_mcli_home() / "workflows"
 
@@ -75,7 +79,7 @@ def init(is_global, git, force):
     readme_path = workflows_dir / "README.md"
     if not readme_path.exists() or force:
         "local" if in_git_repo else "global"
-        scope_desc = f"for repository: {git_root.name}" if in_git_repo else "globally"
+        scope_desc = f"for repository: {git_root.name}" if in_git_repo and git_root else "globally"
 
         readme_content = f"""# MCLI Custom Workflows
 
@@ -168,7 +172,7 @@ Workflows are stored as JSON files with the following structure:
 
     # Initialize lockfile
     if not lockfile_path.exists() or force:
-        lockfile_data = {
+        lockfile_data: dict[str, Any] = {
             "version": "1.0",
             "initialized_at": datetime.now().isoformat(),
             "scope": "local" if in_git_repo else "global",
@@ -300,7 +304,10 @@ def teardown(is_global, force):
 
     if not is_global and in_git_repo:
         local_mcli = get_local_mcli_dir()
-        workflows_dir = local_mcli / "workflows"
+        if local_mcli is not None:
+            workflows_dir = local_mcli / "workflows"
+        else:
+            workflows_dir = get_mcli_home() / "workflows"
         scope = "local"
         scope_display = git_root.name if git_root else "current repository"
     else:
@@ -325,8 +332,7 @@ def teardown(is_global, force):
         file_count = sum(1 for _ in workflows_dir.rglob("*") if _.is_file())
         console.print(f"[bold]Files to delete:[/bold] {file_count}")
     except Exception:
-        file_count = "unknown"
-        console.print(f"[bold]Files to delete:[/bold] {file_count}")
+        console.print("[bold]Files to delete:[/bold] unknown")
 
     console.print()
 

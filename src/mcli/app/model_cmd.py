@@ -5,8 +5,10 @@ This stub exists for backwards compatibility with tests and imports.
 The actual model command implementation is now in ~/.mcli/workflows/model.json
 """
 
+import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from mcli.lib.constants.paths import DirNames
 
@@ -27,7 +29,7 @@ try:
 
         # Execute the code to get the app (model command group)
         code = command_data.get("code", "")
-        namespace = {}
+        namespace: dict[str, Any] = {}
         exec(code, namespace)
 
         # Extract the app (model command group) and individual commands

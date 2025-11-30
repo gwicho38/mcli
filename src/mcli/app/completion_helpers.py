@@ -2,13 +2,13 @@
 Completion helpers for MCLI that provide tab completion without loading heavy modules
 """
 
-from typing import List
+from typing import Any, Dict, List, Optional
 
 import click
 from click.shell_completion import CompletionItem
 
 # Static completion data for lazy-loaded commands
-LAZY_COMMAND_COMPLETIONS = {
+LAZY_COMMAND_COMPLETIONS: Dict[str, Any] = {
     "workflow": {
         "subcommands": [
             "api-daemon",
@@ -104,10 +104,10 @@ LAZY_COMMAND_COMPLETIONS = {
 
 def get_completion_items(cmd_path: List[str], incomplete: str = "") -> List[CompletionItem]:
     """Get completion items for a given command path without loading modules."""
-    items = []
+    items: List[CompletionItem] = []
 
     # Navigate to the completion data for this path
-    current_data = LAZY_COMMAND_COMPLETIONS
+    current_data: Dict[str, Any] = LAZY_COMMAND_COMPLETIONS
 
     for part in cmd_path:
         if part in current_data:
@@ -170,26 +170,26 @@ class CompletionAwareLazyGroup(click.Group):
         # Always try to get from static completion data first for workflow
         if self.name == "workflow" and self.name in LAZY_COMMAND_COMPLETIONS:
             data = LAZY_COMMAND_COMPLETIONS[self.name]
-            if "subcommands" in data:
+            if isinstance(data, dict) and "subcommands" in data:
                 return sorted(data["subcommands"])
 
         # Try to get from static completion data for other commands
         if self.name in LAZY_COMMAND_COMPLETIONS:
-            data = LAZY_COMMAND_COMPLETIONS[self.name]
-            if "subcommands" in data:
-                return sorted(data["subcommands"])
+            data_other = LAZY_COMMAND_COMPLETIONS[self.name]
+            if isinstance(data_other, dict) and "subcommands" in data_other:
+                return sorted(data_other["subcommands"])
 
         # Fallback to loading the actual group
         group = self._load_group()
         return group.list_commands(ctx)
 
-    def shell_complete(self, ctx, param, incomplete):
+    def shell_complete(self, ctx, incomplete):
         """Provide shell completion using static data when possible."""
         # Load the actual group to get proper completion for nested commands
         # This ensures file path completion works for subcommands
         group = self._load_group()
         if hasattr(group, "shell_complete"):
-            return group.shell_complete(ctx, param, incomplete)
+            return group.shell_complete(ctx, incomplete)
         return []
 
     def get_params(self, ctx):
@@ -199,7 +199,7 @@ class CompletionAwareLazyGroup(click.Group):
 
 
 def create_completion_aware_lazy_group(
-    name: str, import_path: str, help_text: str = None
+    name: str, import_path: str, help_text: Optional[str] = None
 ) -> CompletionAwareLazyGroup:
     """Create a completion-aware lazy group."""
     return CompletionAwareLazyGroup(name, import_path, help=help_text)

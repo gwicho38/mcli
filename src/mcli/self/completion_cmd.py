@@ -95,9 +95,9 @@ def install_completion(ctx, shell):
 
     try:
         if shell == "bash":
-            from click.shell_completion import BashComplete
+            from click.shell_completion import BashComplete, ShellComplete
 
-            complete = BashComplete(app, {}, "mcli", "_MCLI_COMPLETE")
+            complete: ShellComplete = BashComplete(app, {}, "mcli", "_MCLI_COMPLETE")
             script = complete.source()
 
             # Install to bash completion directory

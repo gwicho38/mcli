@@ -37,16 +37,19 @@ def get_migration_status() -> dict:
     old_commands_dir = mcli_home / "commands"
     new_workflows_dir = mcli_home / "workflows"
 
-    status = {
-        "global": {
-            "old_dir_exists": old_commands_dir.exists(),
-            "old_dir_path": str(old_commands_dir),
-            "new_dir_exists": new_workflows_dir.exists(),
-            "new_dir_path": str(new_workflows_dir),
-            "needs_migration": False,
-            "files_to_migrate": [],
-            "migration_done": False,
-        },
+    # Create global status dict with explicit types
+    global_status: dict = {
+        "old_dir_exists": old_commands_dir.exists(),
+        "old_dir_path": str(old_commands_dir),
+        "new_dir_exists": new_workflows_dir.exists(),
+        "new_dir_path": str(new_workflows_dir),
+        "needs_migration": False,
+        "files_to_migrate": [],
+        "migration_done": False,
+    }
+
+    status: dict = {
+        "global": global_status,
         "local": None,
     }
 
@@ -56,37 +59,41 @@ def get_migration_status() -> dict:
         files = [
             f for f in old_commands_dir.iterdir() if f.is_file() and not f.name.startswith(".")
         ]
-        status["global"]["files_to_migrate"] = [f.name for f in files]
-        status["global"]["needs_migration"] = len(files) > 0
+        global_status["files_to_migrate"] = [f.name for f in files]
+        global_status["needs_migration"] = len(files) > 0
 
     # Check if global migration already done
     if new_workflows_dir.exists() and not old_commands_dir.exists():
-        status["global"]["migration_done"] = True
+        global_status["migration_done"] = True
 
     # Check local migration (if in git repo)
     if is_git_repository():
         git_root = get_git_root()
-        local_old = git_root / DirNames.MCLI / "commands"
-        local_new = git_root / DirNames.MCLI / "workflows"
+        if git_root is not None:
+            local_old = git_root / DirNames.MCLI / "commands"
+            local_new = git_root / DirNames.MCLI / "workflows"
 
-        status["local"] = {
-            "git_root": str(git_root),
-            "old_dir_exists": local_old.exists(),
-            "old_dir_path": str(local_old),
-            "new_dir_exists": local_new.exists(),
-            "new_dir_path": str(local_new),
-            "needs_migration": False,
-            "files_to_migrate": [],
-            "migration_done": False,
-        }
+            local_status: dict = {
+                "git_root": str(git_root),
+                "old_dir_exists": local_old.exists(),
+                "old_dir_path": str(local_old),
+                "new_dir_exists": local_new.exists(),
+                "new_dir_path": str(local_new),
+                "needs_migration": False,
+                "files_to_migrate": [],
+                "migration_done": False,
+            }
+            status["local"] = local_status
 
-        if local_old.exists():
-            files = [f for f in local_old.iterdir() if f.is_file() and not f.name.startswith(".")]
-            status["local"]["files_to_migrate"] = [f.name for f in files]
-            status["local"]["needs_migration"] = len(files) > 0
+            if local_old.exists():
+                files = [
+                    f for f in local_old.iterdir() if f.is_file() and not f.name.startswith(".")
+                ]
+                local_status["files_to_migrate"] = [f.name for f in files]
+                local_status["needs_migration"] = len(files) > 0
 
-        if local_new.exists() and not local_old.exists():
-            status["local"]["migration_done"] = True
+            if local_new.exists() and not local_old.exists():
+                local_status["migration_done"] = True
 
     return status
 
@@ -222,15 +229,18 @@ def migrate_commands_to_workflows(
     # Migrate local (if in git repo)
     if scope in ["local", "all"] and is_git_repository():
         git_root = get_git_root()
-        old_dir = git_root / DirNames.MCLI / "commands"
-        new_dir = git_root / DirNames.MCLI / "workflows"
+        if git_root is not None:
+            old_dir = git_root / DirNames.MCLI / "commands"
+            new_dir = git_root / DirNames.MCLI / "workflows"
 
-        success, message, migrated, skipped = migrate_directory(old_dir, new_dir, dry_run, force)
+            success, message, migrated, skipped = migrate_directory(
+                old_dir, new_dir, dry_run, force
+            )
 
-        if old_dir.exists():
-            results.append(f"[Local - {git_root.name}] {message}")
-            if not success and "does not exist" not in message:
-                all_success = False
+            if old_dir.exists():
+                results.append(f"[Local - {git_root.name}] {message}")
+                if not success and "does not exist" not in message:
+                    all_success = False
 
     if not results:
         return False, "No migrations needed"

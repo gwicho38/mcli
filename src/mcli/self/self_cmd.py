@@ -77,8 +77,8 @@ def get_version_info(verbose: bool = False) -> str:
                 [
                     f"\nPython: {sys.version.split()[0]}",
                     f"Platform: {platform.platform()}",
-                    f"Description: {meta.get('Summary', 'Not available')}",
-                    f"Author: {meta.get('Author', 'Not available')}",
+                    f"Description: {meta.get('Summary', 'Not available') if meta else 'Not available'}",
+                    f"Author: {meta.get('Author', 'Not available') if meta else 'Not available'}",
                 ]
             )
         return "\n".join(info)

@@ -171,14 +171,17 @@ def redis_info():
             return
 
         try:
-            if not service.redis_client:
-                import redis.asyncio as redis
+            import redis.asyncio as redis
 
-                service.redis_client = redis.Redis(
+            # Use local variable to avoid type issues with Optional redis_client
+            redis_client = service.redis_client
+            if redis_client is None:
+                redis_client = redis.Redis(
                     host=service.host, port=service.port, decode_responses=True
                 )
+                service.redis_client = redis_client  # type: ignore[assignment]
 
-            info = await service.redis_client.info()
+            info = await redis_client.info()
 
             click.echo("📊 Redis Server Information")
             click.echo("=" * 40)

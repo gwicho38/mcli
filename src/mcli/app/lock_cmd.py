@@ -329,6 +329,9 @@ def verify_commands(is_global, code):
                 continue
 
             cmd_name = cmd_data.get("name")
+            if cmd_name is None:
+                continue  # Skip commands without names
+            cmd_name_str: str = str(cmd_name)
             temp_group = click.Group()
             language = cmd_data.get("language", "python")
 
@@ -338,14 +341,17 @@ def verify_commands(is_global, code):
                 else:
                     success = manager.register_command_with_click(cmd_data, temp_group)
 
-                if not success or not temp_group.commands.get(cmd_name):
+                if not success or not temp_group.commands.get(cmd_name_str):
                     invalid_workflows.append(
-                        {"name": cmd_name, "reason": "Code does not define a valid Click command"}
+                        {
+                            "name": cmd_name_str,
+                            "reason": "Code does not define a valid Click command",
+                        }
                     )
             except SyntaxError as e:
-                invalid_workflows.append({"name": cmd_name, "reason": f"Syntax error: {e}"})
+                invalid_workflows.append({"name": cmd_name_str, "reason": f"Syntax error: {e}"})
             except Exception as e:
-                invalid_workflows.append({"name": cmd_name, "reason": f"Failed to load: {e}"})
+                invalid_workflows.append({"name": cmd_name_str, "reason": f"Failed to load: {e}"})
 
         if invalid_workflows:
             has_issues = True

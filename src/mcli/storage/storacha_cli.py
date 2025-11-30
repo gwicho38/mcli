@@ -76,7 +76,8 @@ class StorachaCLI:
         if self.config_path.exists():
             try:
                 content = self.config_path.read_text()
-                return json.loads(content)
+                result: Dict[str, Any] = json.loads(content)
+                return result
             except Exception as e:
                 logger.warning(f"Failed to load config: {e}")
         return {}
@@ -135,7 +136,7 @@ class StorachaCLI:
         try:
             result = self._run_cli(["whoami"], check=False)
             if result.returncode == 0 and result.stdout.strip():
-                did = result.stdout.strip()
+                did: str = result.stdout.strip()
                 if did.startswith("did:key:"):
                     self.config["agent_did"] = did
                     self._save_config()
@@ -236,13 +237,13 @@ class StorachaCLI:
                     if "DID:" in line:
                         parts = line.split("DID:")
                         if len(parts) > 1:
-                            did = parts[1].strip()
+                            did: str = parts[1].strip()
                             if did.startswith("did:"):
                                 return did
                     # Also check for just the DID on its own line
-                    line = line.strip()
-                    if line.startswith("did:key:"):
-                        return line
+                    stripped_line: str = line.strip()
+                    if stripped_line.startswith("did:key:"):
+                        return stripped_line
         except Exception as e:
             logger.debug(f"Failed to get current space: {e}")
         return self.config.get("space_did")
@@ -270,7 +271,7 @@ class StorachaCLI:
                 for line in output.split("\n"):
                     line = line.strip()
                     if line.startswith("did:key:"):
-                        space_did = line
+                        space_did: str = line
                         self.config["space_did"] = space_did
                         self._save_config()
                         logger.info(
@@ -375,7 +376,7 @@ class StorachaCLI:
                         "agent_did": tokens.agent_did,
                         "space_did": tokens.space_did,
                         "capabilities": tokens.capabilities,
-                        "expires_at": tokens.expires_at.isoformat(),
+                        "expires_at": tokens.expires_at.isoformat() if tokens.expires_at else None,
                     }
                     self._save_config()
 
@@ -464,13 +465,15 @@ class StorachaCLI:
                     line = line.strip()
                     # Look for CID pattern (bafkrei... or bafy...)
                     if line.startswith("baf"):
-                        return line.split()[0]  # Get just the CID
+                        cid_parts = line.split()
+                        if cid_parts:
+                            return str(cid_parts[0])  # Get just the CID
                     # Or look for gateway URL
                     if "storacha.link" in line and "/ipfs/" in line:
                         # Extract CID from URL
                         parts = line.split("/ipfs/")
                         if len(parts) > 1:
-                            cid = parts[1].split("/")[0].split("?")[0]
+                            cid: str = parts[1].split("/")[0].split("?")[0]
                             return cid
 
                 logger.warning(f"Could not parse CID from output: {output}")
