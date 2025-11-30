@@ -89,6 +89,8 @@ help: ## Show this help message
 	@echo "  $(GREEN)lint-hardcoded-strings$(RESET) Check for hardcoded strings that should be in constants"
 	@echo "  $(GREEN)format$(RESET)                Auto-format code (black, isort)"
 	@echo "  $(GREEN)type-check$(RESET)            Run mypy type checking"
+	@echo "  $(GREEN)type-check-strict$(RESET)     Run strict mypy on priority modules (app, lib)"
+	@echo "  $(GREEN)type-check-report$(RESET)     Generate type checking report with error counts"
 	@echo "  $(GREEN)security-check$(RESET)        Run security checks (bandit, safety)"
 	@echo "  $(GREEN)pre-commit-install$(RESET)    Install pre-commit hooks"
 	@echo "  $(GREEN)pre-commit-run$(RESET)        Run pre-commit hooks on all files"
@@ -435,6 +437,32 @@ type-check: setup ## Run mypy type checking
 	@echo "$(CYAN)Running type checking...$(RESET)"
 	$(UV) run mypy src/
 	@echo "$(GREEN)Type checking completed ✅$(RESET)"
+
+.PHONY: type-check-strict
+type-check-strict: setup ## Run strict mypy type checking on priority modules
+	@echo "$(CYAN)Running strict type checking on priority modules...$(RESET)"
+	$(UV) run mypy src/mcli/app/ src/mcli/lib/ --strict --ignore-missing-imports || true
+	@echo "$(YELLOW)Note: Strict mode shows all type issues. Fix gradually.$(RESET)"
+
+.PHONY: type-check-report
+type-check-report: setup ## Generate type checking report with error counts
+	@echo "$(CYAN)Generating type checking report...$(RESET)"
+	@echo "=== Type Safety Report ===" > type_report.txt
+	@echo "Generated: $$(date)" >> type_report.txt
+	@echo "" >> type_report.txt
+	@echo "--- Summary by Module ---" >> type_report.txt
+	@for module in app lib chat workflow self public ml storage; do \
+		if [ -d "src/mcli/$$module" ]; then \
+			count=$$($(UV) run mypy src/mcli/$$module 2>&1 | grep -c "error:" || echo "0"); \
+			printf "  mcli/%-10s: %s errors\n" "$$module" "$$count" >> type_report.txt; \
+		fi; \
+	done
+	@echo "" >> type_report.txt
+	@echo "--- Full Output ---" >> type_report.txt
+	$(UV) run mypy src/ 2>&1 >> type_report.txt || true
+	@echo "$(GREEN)Report saved to type_report.txt$(RESET)"
+	@echo ""
+	@head -15 type_report.txt
 
 .PHONY: security-check
 security-check: setup ## Run security checks
