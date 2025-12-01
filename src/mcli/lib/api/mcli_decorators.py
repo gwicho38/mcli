@@ -651,6 +651,23 @@ def _get_click_types():
 _click_types = _get_click_types()
 globals().update(_click_types)
 
+# Explicit exports for type checkers (mypy can't see globals().update)
+Path = click.Path
+Choice = click.Choice
+IntRange = click.IntRange
+FloatRange = click.FloatRange
+UNPROCESSED = click.UNPROCESSED
+STRING = click.STRING
+INT = click.INT
+FLOAT = click.FLOAT
+BOOL = click.BOOL
+UUID = click.UUID
+File = click.File
+ParamType = click.ParamType
+BadParameter = click.BadParameter
+UsageError = click.UsageError
+Abort = click.Abort
+
 # =============================================================================
 # Convenience Decorators for Common Patterns
 # =============================================================================

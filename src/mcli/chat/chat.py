@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -23,7 +23,7 @@ from mcli.lib.ui.styling import console
 
 # Load config from config.toml
 CONFIG_PATH = "config.toml"
-config = {}
+config: Dict[str, Any] = {}
 try:
     config = read_from_toml(CONFIG_PATH, "llm") or {}
 except Exception:
@@ -50,25 +50,20 @@ elif not config.get("openai_api_key") and config.get("provider", "openai") == "o
 logger = get_logger(__name__)
 
 # Fallbacks if not set in config.toml
-LLM_PROVIDER = config.get("provider", "local")
-MODEL_NAME = config.get("model", "prajjwal1/bert-tiny")  # Default to lightweight model
-OPENAI_API_KEY = config.get("openai_api_key")
-OLLAMA_BASE_URL = config.get(
-    "ollama_base_url", "http://localhost:8080"
-)  # Default to lightweight server
-TEMPERATURE = float(config.get("temperature", 0.7))
-SYSTEM_PROMPT = config.get(
-    "system_prompt",
-    ChatMessages.FULL_SYSTEM_PROMPT,
-)
+LLM_PROVIDER: str = str(config.get("provider", "local"))
+MODEL_NAME: str = str(config.get("model", "prajjwal1/bert-tiny"))  # Default to lightweight model
+OPENAI_API_KEY: Optional[str] = config.get("openai_api_key")  # type: ignore[assignment]
+OLLAMA_BASE_URL: str = str(config.get("ollama_base_url", "http://localhost:8080"))
+TEMPERATURE: float = float(config.get("temperature", 0.7) or 0.7)
+SYSTEM_PROMPT: str = str(config.get("system_prompt", ChatMessages.FULL_SYSTEM_PROMPT))
 
 
 class ChatClient:
     """Interactive chat client for MCLI command management."""
 
-    def __init__(self, use_remote: bool = False, model_override: str = None):
+    def __init__(self, use_remote: bool = False, model_override: Optional[str] = None):
         self.daemon = get_daemon_client()
-        self.history = []
+        self.history: List[Dict[str, Any]] = []
         self.session_active = True
         self.use_remote = use_remote
         self.model_override = model_override
@@ -448,7 +443,7 @@ class ChatClient:
             else:
                 self.generate_llm_response(query)
 
-    def list_commands(self, commands: List[Dict] = None):
+    def list_commands(self, commands: Optional[List[Dict[str, Any]]] = None) -> None:
         """List available commands."""
         if commands is None:
             # Use discovery system to get all commands
@@ -488,7 +483,7 @@ class ChatClient:
             console.print(ChatMessages.AND_MORE.format(count=len(commands) - 20))
             console.print(ChatMessages.USE_MCLI_COMMANDS_LIST)
 
-    def search_commands(self, query: str, commands: List[Dict] = None):
+    def search_commands(self, query: str, commands: Optional[List[Dict[str, Any]]] = None) -> None:
         """Search commands based on query."""
         search_term = query.lower().replace("search", "").replace("find", "").strip()
 

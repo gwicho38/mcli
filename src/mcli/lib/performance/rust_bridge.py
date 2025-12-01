@@ -31,7 +31,7 @@ def check_rust_extensions() -> Dict[str, Optional[bool]]:
         }
 
     try:
-        import mcli_rust  # type: ignore[import-not-found]
+        import mcli_rust
 
         _RUST_AVAILABLE = True
 
@@ -67,7 +67,7 @@ def get_tfidf_vectorizer(use_rust: bool = True, **kwargs: Any) -> Any:
 
     if use_rust and rust_status["tfidf"]:
         try:
-            import mcli_rust  # type: ignore[import-not-found]
+            import mcli_rust
 
             return mcli_rust.TfIdfVectorizer(**kwargs)  # type: ignore[attr-defined]
         except Exception as e:
@@ -88,7 +88,7 @@ def get_file_watcher(use_rust: bool = True) -> Any:
 
     if use_rust and rust_status["file_watcher"]:
         try:
-            import mcli_rust  # type: ignore[import-not-found]
+            import mcli_rust
 
             return mcli_rust.FileWatcher()  # type: ignore[attr-defined]
         except Exception as e:
@@ -109,7 +109,7 @@ def get_command_matcher(use_rust: bool = True, **kwargs: Any) -> Any:
 
     if use_rust and rust_status["command_matcher"]:
         try:
-            import mcli_rust  # type: ignore[import-not-found]
+            import mcli_rust
 
             return mcli_rust.CommandMatcher(**kwargs)  # type: ignore[attr-defined]
         except Exception as e:
@@ -130,7 +130,7 @@ def get_process_manager(use_rust: bool = True) -> Any:
 
     if use_rust and rust_status["process_manager"]:
         try:
-            import mcli_rust  # type: ignore[import-not-found]
+            import mcli_rust
 
             return mcli_rust.ProcessManager()  # type: ignore[attr-defined]
         except Exception as e:
