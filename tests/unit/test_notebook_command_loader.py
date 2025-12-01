@@ -459,15 +459,21 @@ class TestCompletionModeStdoutSuppression:
             # Clean up environment
             del os.environ[EnvVars.COMPLETE]
 
-    def test_stdout_not_suppressed_outside_completion(self, notebook_with_print_statements, capsys):
-        """Test that print statements work normally outside completion mode."""
+    def test_stdout_suppressed_during_loading(self, notebook_with_print_statements, capsys):
+        """Test that print statements are suppressed during command loading.
+
+        Output should be suppressed during loading to prevent log spam when
+        listing or discovering commands (e.g., `mcli run`).
+        """
         import os
 
         from mcli.lib.constants import EnvVars
 
-        # Ensure completion mode is NOT set
+        # Ensure we're NOT in completion mode and NOT in execution mode
         if EnvVars.COMPLETE in os.environ:
             del os.environ[EnvVars.COMPLETE]
+        if EnvVars.MCLI_NOTEBOOK_EXECUTE in os.environ:
+            del os.environ[EnvVars.MCLI_NOTEBOOK_EXECUTE]
 
         loader = NotebookCommandLoader(notebook_with_print_statements)
         commands = loader.extract_commands()
@@ -475,11 +481,45 @@ class TestCompletionModeStdoutSuppression:
         # Capture what was printed
         captured = capsys.readouterr()
 
-        # Outside completion mode, print statements should appear
-        assert "0" in captured.out
-        assert "1" in captured.out
-        assert "hello from setup" in captured.out
+        # During loading, stdout should be suppressed (no print pollution)
+        assert captured.out == "", f"Expected no stdout during loading, but got: {captured.out!r}"
 
         # Commands should still be extracted successfully
         assert len(commands) == 1
         assert commands[0][0] == "my_command"
+
+    def test_stdout_not_suppressed_during_execution(self, notebook_with_print_statements, capsys):
+        """Test that print statements work during command execution mode.
+
+        When MCLI_NOTEBOOK_EXECUTE=1, output should NOT be suppressed because
+        the user is actually running a command and wants to see output.
+        """
+        import os
+
+        from mcli.lib.constants import EnvVars
+
+        # Set execution mode
+        os.environ[EnvVars.MCLI_NOTEBOOK_EXECUTE] = "1"
+
+        # Ensure we're NOT in completion mode
+        if EnvVars.COMPLETE in os.environ:
+            del os.environ[EnvVars.COMPLETE]
+
+        try:
+            loader = NotebookCommandLoader(notebook_with_print_statements)
+            commands = loader.extract_commands()
+
+            # Capture what was printed
+            captured = capsys.readouterr()
+
+            # During execution mode, print statements should appear
+            assert "0" in captured.out
+            assert "1" in captured.out
+            assert "hello from setup" in captured.out
+
+            # Commands should still be extracted successfully
+            assert len(commands) == 1
+            assert commands[0][0] == "my_command"
+        finally:
+            # Clean up environment
+            del os.environ[EnvVars.MCLI_NOTEBOOK_EXECUTE]
