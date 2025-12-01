@@ -426,9 +426,7 @@ class McliLogger:
             # Sleep until next collection cycle
             time.sleep(self._system_trace_interval)
 
-    def _trace_callback(
-        self, frame: FrameType, event: str, arg: Any
-    ) -> Optional[TraceFunction]:
+    def _trace_callback(self, frame: FrameType, event: str, arg: Any) -> Optional[TraceFunction]:
         """Trace callback function for sys.settrace()."""
         if self._trace_level == 0:
             return None
