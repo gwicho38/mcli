@@ -5,12 +5,12 @@ import queue
 import threading
 import time
 import uuid
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import click
 import cv2
 import numpy as np
-import requests
+import requests  # type: ignore[import-untyped]
 from PIL import Image
 
 # Configuration paths based on the provided directory structure
@@ -154,7 +154,9 @@ class VideoProcessor:
         click.echo("Motion analysis complete.")
         return motion_data
 
-    def frames_to_video(self, frame_paths: List[str], output_path: str, fps: float = None) -> str:
+    def frames_to_video(
+        self, frame_paths: List[str], output_path: str, fps: Optional[float] = None
+    ) -> str:
         """
         Convert frames back to video.
 
@@ -169,12 +171,15 @@ class VideoProcessor:
         if not frame_paths:
             raise ValueError("No frames provided")
 
+        actual_fps: float
         if fps is None:
-            fps = self.video_info.get("original_fps", 30)
+            actual_fps = float(self.video_info.get("original_fps", 30))
+        else:
+            actual_fps = fps
 
         click.echo(
             click.style(
-                f"Converting {len(frame_paths)} frames to video at {fps} FPS...", fg="green"
+                f"Converting {len(frame_paths)} frames to video at {actual_fps} FPS...", fg="green"
             )
         )
 
@@ -183,8 +188,8 @@ class VideoProcessor:
         h, w, _ = first_frame.shape
 
         # Initialize video writer
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        video_writer = cv2.VideoWriter(output_path, fourcc, fps, (w, h))
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # type: ignore[attr-defined]
+        video_writer = cv2.VideoWriter(output_path, fourcc, actual_fps, (w, h))
 
         # Add frames to video
         with click.progressbar(frame_paths, label="Creating video") as bar:
@@ -279,7 +284,7 @@ class ComfyUIClient:
         """
         p = {"prompt": prompt, "client_id": self.client_id}
         response = self.session.post(f"{self.api_url}/prompt", json=p)
-        return response.json()["prompt_id"]
+        return str(response.json()["prompt_id"])
 
     def get_image(self, filename: str, subfolder: str, folder_type: str) -> Image.Image:
         """
@@ -345,7 +350,7 @@ class ComfyUIClient:
                         if "outputs" in data[prompt_id]:
                             # Complete
                             bar.update(100 - progress)
-                            return data[prompt_id]
+                            return cast(Dict[str, Any], data[prompt_id])
                         # Update progress based on execution state
                         if "executed" in data[prompt_id]:
                             executed_nodes = len(data[prompt_id]["executed"])
@@ -362,7 +367,7 @@ class ComfyUIClient:
             if response.status_code == 200:
                 data = response.json()
                 if prompt_id in data:
-                    return data[prompt_id]
+                    return cast(Dict[str, Any], data[prompt_id])
 
             raise ValueError(f"Processing failed for prompt {prompt_id}")
 
@@ -519,9 +524,12 @@ class ComfyUIClient:
                 "class_type": "LoraLoader",
             }
             # Update model and clip reference
-            workflow["4"]["inputs"]["model"] = ["11", 0]
-            workflow["2"]["inputs"]["clip"] = ["11", 1]
-            workflow["3"]["inputs"]["clip"] = ["11", 1]
+            workflow_4 = cast(Dict[str, Any], workflow["4"])
+            workflow_2 = cast(Dict[str, Any], workflow["2"])
+            workflow_3 = cast(Dict[str, Any], workflow["3"])
+            workflow_4["inputs"]["model"] = ["11", 0]
+            workflow_2["inputs"]["clip"] = ["11", 1]
+            workflow_3["inputs"]["clip"] = ["11", 1]
 
         # Add ControlNet if requested
         if use_controlnet:
@@ -534,12 +542,14 @@ class ComfyUIClient:
                 "class_type": "ControlNetApply",
             }
             # Update model with ControlNet
+            workflow_13 = cast(Dict[str, Any], workflow["13"])
+            workflow_4 = cast(Dict[str, Any], workflow["4"])
             if use_lora:
-                workflow["13"]["inputs"]["model"] = ["11", 0]
-                workflow["4"]["inputs"]["model"] = ["13", 0]
+                workflow_13["inputs"]["model"] = ["11", 0]
+                workflow_4["inputs"]["model"] = ["13", 0]
             else:
-                workflow["13"]["inputs"]["model"] = ["5", 0]
-                workflow["4"]["inputs"]["model"] = ["13", 0]
+                workflow_13["inputs"]["model"] = ["5", 0]
+                workflow_4["inputs"]["model"] = ["13", 0]
 
         return workflow
 
@@ -694,8 +704,8 @@ class VideoToVideoGenerator:
                 )
 
                 # Use threading to process batch in parallel
-                threads = []
-                results_queue = queue.Queue()
+                threads: List[threading.Thread] = []
+                results_queue: "queue.Queue[Tuple[int, str]]" = queue.Queue()
 
                 for j, frame_path in enumerate(batch):
                     thread = threading.Thread(
@@ -912,7 +922,12 @@ def config(config_file, output):
 @click.option("--path", "-p", default="./models", help="Path to search for models")
 def list_models(path):
     """List available models that can be used with the workflow."""
-    models = {"Video Models": [], "VAE Models": [], "LoRA Models": [], "ControlNet Models": []}
+    models: Dict[str, List[str]] = {
+        "Video Models": [],
+        "VAE Models": [],
+        "LoRA Models": [],
+        "ControlNet Models": [],
+    }
 
     # Function to check if file is potentially a model
     def is_model(file):

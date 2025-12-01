@@ -138,7 +138,9 @@ class VideoProcessor:
         click.echo("Motion analysis complete.")
         return motion_data
 
-    def frames_to_video(self, frame_paths: List[str], output_path: str, fps: float = None) -> str:
+    def frames_to_video(
+        self, frame_paths: List[str], output_path: str, fps: Optional[float] = None
+    ) -> str:
         """
         Convert frames back to video.
 
@@ -153,12 +155,15 @@ class VideoProcessor:
         if not frame_paths:
             raise ValueError("No frames provided")
 
+        actual_fps: float
         if fps is None:
-            fps = self.video_info.get("original_fps", 30)
+            actual_fps = float(self.video_info.get("original_fps", 30))
+        else:
+            actual_fps = fps
 
         click.echo(
             click.style(
-                f"Converting {len(frame_paths)} frames to video at {fps} FPS...", fg="green"
+                f"Converting {len(frame_paths)} frames to video at {actual_fps} FPS...", fg="green"
             )
         )
 
@@ -167,8 +172,8 @@ class VideoProcessor:
         h, w, _ = first_frame.shape
 
         # Initialize video writer
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-        video_writer = cv2.VideoWriter(output_path, fourcc, fps, (w, h))
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # type: ignore[attr-defined]
+        video_writer = cv2.VideoWriter(output_path, fourcc, actual_fps, (w, h))
 
         # Add frames to video
         with click.progressbar(frame_paths, label="Creating video") as bar:
@@ -255,7 +260,9 @@ class OverlayRemover:
         self.green_rgb_lower = np.array([0, 200, 0])
         self.green_rgb_upper = np.array([100, 255, 100])
 
-    def detect_green_overlay(self, frame: np.ndarray, method: str = "hsv") -> np.ndarray:
+    def detect_green_overlay(
+        self, frame: "np.ndarray[Any, Any]", method: str = "hsv"
+    ) -> "np.ndarray[Any, Any]":
         """
         Detect green overlay areas in a frame.
 
@@ -284,7 +291,7 @@ class OverlayRemover:
             morphology.remove_small_objects(mask.astype(bool), min_size=50).astype(np.uint8) * 255
         )
 
-        return mask
+        return mask  # type: ignore[no-any-return]
 
     def create_inpainting_mask(self, overlay_mask: np.ndarray, dilate_size: int = 3) -> np.ndarray:
         """
@@ -457,7 +464,7 @@ class EnhancedVideoProcessor(VideoProcessor):
     def remove_overlay_from_video(
         self,
         video_path: str,
-        output_path: str = None,
+        output_path: Optional[str] = None,
         fps: int = 8,
         apply_temporal_smoothing: bool = True,
     ) -> str:
@@ -473,9 +480,12 @@ class EnhancedVideoProcessor(VideoProcessor):
         Returns:
             Path to output video
         """
+        actual_output_path: str
         if output_path is None:
             base_name = os.path.splitext(os.path.basename(video_path))[0]
-            output_path = os.path.join(CONFIG["output_dir"], f"{base_name}_cleaned.mp4")
+            actual_output_path = os.path.join(CONFIG["output_dir"], f"{base_name}_cleaned.mp4")
+        else:
+            actual_output_path = output_path
 
         try:
             # Step 1: Extract frames
@@ -498,7 +508,7 @@ class EnhancedVideoProcessor(VideoProcessor):
                 final_frame_paths = cleaned_frame_paths
 
             # Step 5: Convert back to video
-            output_video = self.frames_to_video(final_frame_paths, output_path)
+            output_video = self.frames_to_video(final_frame_paths, actual_output_path)
 
             click.echo(
                 click.style(
@@ -533,7 +543,9 @@ class AdvancedOverlayRemover:
         self.search_radius = 50
         self.coherence_threshold = 0.85
 
-    def detect_green_overlay(self, frame: np.ndarray, method: str = "combined") -> np.ndarray:
+    def detect_green_overlay(
+        self, frame: "np.ndarray[Any, Any]", method: str = "combined"
+    ) -> "np.ndarray[Any, Any]":
         """Enhanced green overlay detection with multiple methods."""
         if method == "combined":
             # HSV detection
@@ -584,11 +596,14 @@ class AdvancedOverlayRemover:
             * 255
         )
 
-        return mask
+        return mask  # type: ignore[no-any-return]
 
     def find_similar_patches(
-        self, frame: np.ndarray, mask: np.ndarray, target_point: Tuple[int, int]
-    ) -> np.ndarray:
+        self,
+        frame: "np.ndarray[Any, Any]",
+        mask: "np.ndarray[Any, Any]",
+        target_point: Tuple[int, int],
+    ) -> List[Any]:
         """Find similar patches in the frame for exemplar-based inpainting."""
         y, x = target_point
         h, w = frame.shape[:2]
@@ -601,8 +616,8 @@ class AdvancedOverlayRemover:
         target_patch = frame[y_start:y_end, x_start:x_end]
         target_mask = mask[y_start:y_end, x_start:x_end]
 
-        best_patches = []
-        best_scores = []
+        best_patches: List[Any] = []
+        best_scores: List[float] = []
 
         # Search for similar patches in valid areas
         search_y_start = max(0, y - self.search_radius)
@@ -638,7 +653,7 @@ class AdvancedOverlayRemover:
                     ]
                     if not np.isnan(correlation):
                         best_patches.append(candidate_patch)
-                        best_scores.append(correlation)
+                        best_scores.append(float(correlation))
 
         # Return best matching patches
         if best_patches:
@@ -774,8 +789,10 @@ class AdvancedOverlayRemover:
         return final_result
 
     def remove_overlay_with_context(
-        self, frame: np.ndarray, reference_frames: List[np.ndarray] = None
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self,
+        frame: "np.ndarray[Any, Any]",
+        reference_frames: Optional[List["np.ndarray[Any, Any]"]] = None,
+    ) -> Tuple["np.ndarray[Any, Any]", "np.ndarray[Any, Any]"]:
         """
         Remove overlay with intelligent content reconstruction using context.
 
@@ -863,7 +880,7 @@ class IntelligentVideoProcessor(VideoProcessor):
 
                         # Filter good points
                         good_old = corners[status == 1]
-                        good_new = next_corners[status == 1]
+                        good_new = next_corners[status == 1]  # type: ignore[index]
 
                         if len(good_old) > 0:
                             # Calculate motion statistics
@@ -952,7 +969,11 @@ class IntelligentVideoProcessor(VideoProcessor):
         return cleaned_frame_paths
 
     def remove_overlay_from_video_intelligent(
-        self, video_path: str, output_path: str = None, fps: int = 30, context_window: int = 3
+        self,
+        video_path: str,
+        output_path: Optional[str] = None,
+        fps: int = 30,
+        context_window: int = 3,
     ) -> str:
         """
         Complete pipeline for intelligent overlay removal while maintaining original video speed.
@@ -966,9 +987,14 @@ class IntelligentVideoProcessor(VideoProcessor):
         Returns:
             Path to output video
         """
+        actual_output_path: str
         if output_path is None:
             base_name = os.path.splitext(os.path.basename(video_path))[0]
-            output_path = os.path.join(CONFIG["output_dir"], f"{base_name}_intelligent_cleaned.mp4")
+            actual_output_path = os.path.join(
+                CONFIG["output_dir"], f"{base_name}_intelligent_cleaned.mp4"
+            )
+        else:
+            actual_output_path = output_path
 
         try:
             click.echo(click.style("🚀 Starting intelligent overlay removal...", fg="bright_cyan"))
@@ -999,7 +1025,7 @@ class IntelligentVideoProcessor(VideoProcessor):
                 final_frame_paths = cleaned_frame_paths
 
             # Step 5: Reconstruct video at extraction FPS to maintain original speed
-            output_video = self.frames_to_video(final_frame_paths, output_path)
+            output_video = self.frames_to_video(final_frame_paths, actual_output_path)
 
             click.echo(
                 click.style(

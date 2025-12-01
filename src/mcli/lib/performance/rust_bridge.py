@@ -3,21 +3,21 @@ Bridge module for integrating Rust extensions with Python code
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Union
 
 from mcli.lib.logger.logger import get_logger
 
 logger = get_logger(__name__)
 
 # Global flags for Rust extension availability
-_RUST_AVAILABLE = None
-_RUST_TFIDF = None
-_RUST_FILE_WATCHER = None
-_RUST_COMMAND_MATCHER = None
-_RUST_PROCESS_MANAGER = None
+_RUST_AVAILABLE: Optional[bool] = None
+_RUST_TFIDF: Optional[bool] = None
+_RUST_FILE_WATCHER: Optional[bool] = None
+_RUST_COMMAND_MATCHER: Optional[bool] = None
+_RUST_PROCESS_MANAGER: Optional[bool] = None
 
 
-def check_rust_extensions() -> Dict[str, bool]:
+def check_rust_extensions() -> Dict[str, Optional[bool]]:
     """Check which Rust extensions are available."""
     global _RUST_AVAILABLE, _RUST_TFIDF, _RUST_FILE_WATCHER, _RUST_COMMAND_MATCHER, _RUST_PROCESS_MANAGER
 
@@ -31,7 +31,7 @@ def check_rust_extensions() -> Dict[str, bool]:
         }
 
     try:
-        import mcli_rust
+        import mcli_rust  # type: ignore[import-not-found]
 
         _RUST_AVAILABLE = True
 
@@ -61,15 +61,15 @@ def check_rust_extensions() -> Dict[str, bool]:
     }
 
 
-def get_tfidf_vectorizer(use_rust: bool = True, **kwargs):
+def get_tfidf_vectorizer(use_rust: bool = True, **kwargs: Any) -> Any:
     """Get the best available TF-IDF vectorizer."""
     rust_status = check_rust_extensions()
 
     if use_rust and rust_status["tfidf"]:
         try:
-            import mcli_rust
+            import mcli_rust  # type: ignore[import-not-found]
 
-            return mcli_rust.TfIdfVectorizer(**kwargs)
+            return mcli_rust.TfIdfVectorizer(**kwargs)  # type: ignore[attr-defined]
         except Exception as e:
             logger.warning(f"Failed to create Rust TF-IDF vectorizer: {e}")
 
@@ -82,15 +82,15 @@ def get_tfidf_vectorizer(use_rust: bool = True, **kwargs):
         raise RuntimeError("No TF-IDF vectorizer implementation available")
 
 
-def get_file_watcher(use_rust: bool = True):
+def get_file_watcher(use_rust: bool = True) -> Any:
     """Get the best available file watcher."""
     rust_status = check_rust_extensions()
 
     if use_rust and rust_status["file_watcher"]:
         try:
-            import mcli_rust
+            import mcli_rust  # type: ignore[import-not-found]
 
-            return mcli_rust.FileWatcher()
+            return mcli_rust.FileWatcher()  # type: ignore[attr-defined]
         except Exception as e:
             logger.warning(f"Failed to create Rust file watcher: {e}")
 
@@ -103,15 +103,15 @@ def get_file_watcher(use_rust: bool = True):
         raise RuntimeError("No file watcher implementation available")
 
 
-def get_command_matcher(use_rust: bool = True, **kwargs):
+def get_command_matcher(use_rust: bool = True, **kwargs: Any) -> Any:
     """Get the best available command matcher."""
     rust_status = check_rust_extensions()
 
     if use_rust and rust_status["command_matcher"]:
         try:
-            import mcli_rust
+            import mcli_rust  # type: ignore[import-not-found]
 
-            return mcli_rust.CommandMatcher(**kwargs)
+            return mcli_rust.CommandMatcher(**kwargs)  # type: ignore[attr-defined]
         except Exception as e:
             logger.warning(f"Failed to create Rust command matcher: {e}")
 
@@ -124,15 +124,15 @@ def get_command_matcher(use_rust: bool = True, **kwargs):
         raise RuntimeError("No command matcher implementation available")
 
 
-def get_process_manager(use_rust: bool = True):
+def get_process_manager(use_rust: bool = True) -> Any:
     """Get the best available process manager."""
     rust_status = check_rust_extensions()
 
     if use_rust and rust_status["process_manager"]:
         try:
-            import mcli_rust
+            import mcli_rust  # type: ignore[import-not-found]
 
-            return mcli_rust.ProcessManager()
+            return mcli_rust.ProcessManager()  # type: ignore[attr-defined]
         except Exception as e:
             logger.warning(f"Failed to create Rust process manager: {e}")
 
@@ -148,15 +148,15 @@ def get_process_manager(use_rust: bool = True):
 class PerformanceMonitor:
     """Monitor performance differences between Rust and Python implementations."""
 
-    def __init__(self):
-        self.benchmarks = {}
+    def __init__(self) -> None:
+        self.benchmarks: Dict[str, Any] = {}
         self.rust_status = check_rust_extensions()
 
     def benchmark_tfidf(self, documents: List[str], queries: List[str]) -> Dict[str, Any]:
         """Benchmark TF-IDF performance."""
         import time
 
-        results = {"rust": None, "python": None, "speedup": None}
+        results: Dict[str, Optional[float]] = {"rust": None, "python": None, "speedup": None}
 
         # Benchmark Rust implementation
         if self.rust_status["tfidf"]:
@@ -222,7 +222,7 @@ class PerformanceMonitor:
         import tempfile
         import time
 
-        results = {"rust": None, "python": None, "speedup": None}
+        results: Dict[str, Optional[float]] = {"rust": None, "python": None, "speedup": None}
 
         # Create test directory
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -321,22 +321,20 @@ class PythonFileWatcher:
 class PythonCommandMatcher:
     """Fallback Python command matcher."""
 
-    def __init__(self, fuzzy_threshold: float = 0.3):
+    def __init__(self, fuzzy_threshold: float = 0.3) -> None:
         self.fuzzy_threshold = fuzzy_threshold
-        self.commands = []
+        self.commands: List[Dict[str, Any]] = []
 
-    def add_commands(self, commands: List[Dict[str, Any]]):
+    def add_commands(self, commands: List[Dict[str, Any]]) -> None:
         self.commands.extend(commands)
 
     def search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        pass
-
-        results = []
+        results: List[Dict[str, Any]] = []
         query_lower = query.lower()
 
         for cmd in self.commands:
             score = 0.0
-            matched_fields = []
+            matched_fields: List[str] = []
 
             # Exact name match
             if cmd["name"].lower() == query_lower:
@@ -365,7 +363,7 @@ class PythonCommandMatcher:
                     }
                 )
 
-        results.sort(key=lambda x: x["score"], reverse=True)
+        results.sort(key=lambda x: float(x["score"]), reverse=True)
         return results[:limit]
 
 
@@ -373,7 +371,7 @@ class PythonCommandMatcher:
 _RUST_EXTENSIONS_STATUS = check_rust_extensions()
 
 
-def print_performance_summary():
+def print_performance_summary() -> None:
     """Print a stunning visual summary of available performance optimizations."""
     try:
         from rich.rule import Rule
@@ -387,11 +385,11 @@ def print_performance_summary():
         console.print()
 
         # Check all optimization status
-        optimization_data = {
+        optimization_data: Dict[str, Dict[str, Any]] = {
             "rust": {"success": status["available"], "extensions": status},
-            "uvloop": {"success": False},
-            "redis": {"success": False},
-            "aiosqlite": {"success": False},
+            "uvloop": {"success": False, "reason": ""},
+            "redis": {"success": False, "reason": ""},
+            "aiosqlite": {"success": False, "reason": ""},
             "python": {
                 "success": True,
                 "reason": "GC tuning, bytecode optimization, recursion limit adjustment",
@@ -438,7 +436,9 @@ def print_performance_summary():
 
         # Show Rust extensions details if available
         if status["available"]:
-            rust_table = VisualTable.create_rust_extensions_table(status)
+            # Convert status to Dict[str, bool] for the table
+            status_for_table: Dict[str, bool] = {k: bool(v) for k, v in status.items()}
+            rust_table = VisualTable.create_rust_extensions_table(status_for_table)
             console.print(rust_table)
             console.print()
 

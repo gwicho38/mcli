@@ -5,8 +5,9 @@ import random
 import socket
 import threading
 import time
+from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
 
 import uvicorn
 from fastapi import FastAPI
@@ -89,8 +90,9 @@ def get_api_config() -> Dict[str, Any]:
     if os.environ.get("MCLI_API_HOST"):
         config["host"] = os.environ.get("MCLI_API_HOST")
 
-    if os.environ.get("MCLI_API_PORT"):
-        config["port"] = int(os.environ.get("MCLI_API_PORT"))
+    api_port = os.environ.get("MCLI_API_PORT")
+    if api_port:
+        config["port"] = int(api_port)
         config["use_random_port"] = False
 
     if os.environ.get("MCLI_API_DEBUG", "false").lower() in ("true", "1", "yes"):
@@ -109,11 +111,11 @@ class ClickToAPIDecorator:
 
     def __init__(
         self,
-        endpoint_path: str = None,
+        endpoint_path: Optional[str] = None,
         http_method: str = "POST",
-        response_model: BaseModel = None,
-        description: str = None,
-        tags: List[str] = None,
+        response_model: Optional[Type[BaseModel]] = None,
+        description: Optional[str] = None,
+        tags: Optional[Sequence[Union[str, Enum]]] = None,
     ):
         """
         Initialize the decorator.
@@ -129,7 +131,7 @@ class ClickToAPIDecorator:
         self.http_method = http_method.upper()
         self.response_model = response_model
         self.description = description
-        self.tags = tags or []
+        self.tags: Sequence[Union[str, Enum]] = tags if tags is not None else []
 
     def __call__(self, func: Callable) -> Callable:
         """Apply the decorator to a function."""
@@ -139,7 +141,7 @@ class ClickToAPIDecorator:
 
         # Create a wrapper that registers the API endpoint
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Register the API endpoint
             self._register_api_endpoint(func, sig)
 
@@ -147,12 +149,13 @@ class ClickToAPIDecorator:
             return func(*args, **kwargs)
 
         # Store decorator info for later registration
-        wrapper._api_decorator = self
-        wrapper._original_func = func
+        # Use setattr to add custom attributes to the wrapper function
+        setattr(wrapper, "_api_decorator", self)
+        setattr(wrapper, "_original_func", func)
 
         return wrapper
 
-    def _register_api_endpoint(self, func: Callable, sig: inspect.Signature):
+    def _register_api_endpoint(self, func: Callable[..., Any], sig: inspect.Signature) -> None:
         """Register the function as an API endpoint."""
         global _api_app
 
@@ -170,7 +173,7 @@ class ClickToAPIDecorator:
         request_model = self._create_request_model(func, sig)
 
         # Create response model
-        response_model = self.response_model or self._create_response_model()
+        response_model_type = self.response_model or self._create_response_model()
 
         # Register the endpoint
         self._register_endpoint(
@@ -179,8 +182,8 @@ class ClickToAPIDecorator:
             method=self.http_method,
             func=func,
             request_model=request_model,
-            response_model=response_model,
-            description=self.description or func.__doc__,
+            response_model=response_model_type,
+            description=self.description or func.__doc__ or "",
             tags=self.tags,
         )
 
@@ -218,20 +221,27 @@ class ClickToAPIDecorator:
 
         return app
 
-    def _create_request_model(self, func: Callable, sig: inspect.Signature) -> BaseModel:
+    def _create_request_model(
+        self, func: Callable[..., Any], sig: inspect.Signature
+    ) -> Type[BaseModel]:
         """Create a Pydantic model from function signature."""
-        fields = {}
+        fields: Dict[str, Any] = {}
 
         for param_name, param in sig.parameters.items():
             if param_name in ["sel", "ctx"]:
                 continue
 
             # Get parameter type and default
-            param_type = param.annotation if param.annotation != inspect.Parameter.empty else str
-            default = param.default if param.default != inspect.Parameter.empty else ...
+            param_type: Any = (
+                param.annotation if param.annotation != inspect.Parameter.empty else str
+            )
+            default: Any = param.default if param.default != inspect.Parameter.empty else ...
 
             # Handle Click-specific types
-            if hasattr(param_type, "__origin__") and param_type.__origin__ is Union:
+            if (
+                hasattr(param_type, "__origin__")
+                and getattr(param_type, "__origin__", None) is Union
+            ):
                 # Handle Union types (e.g., Optional[str])
                 param_type = str
             elif param_type == bool:
@@ -246,16 +256,16 @@ class ClickToAPIDecorator:
 
         # Create dynamic model
         model_name = f"{func.__name__}Request"
-        return type(model_name, (BaseModel,), fields)
+        return cast(Type[BaseModel], type(model_name, (BaseModel,), fields))
 
-    def _create_response_model(self) -> BaseModel:
+    def _create_response_model(self) -> Type[BaseModel]:
         """Create a default response model."""
 
         class DefaultResponse(BaseModel):
             success: bool = Field(..., description="Operation success status")
-            result: Any = Field(None, description="Operation result")
-            message: str = Field("", description="Operation message")
-            error: str = Field(None, description="Error message if any")
+            result: Any = Field(default=None, description="Operation result")
+            message: str = Field(default="", description="Operation message")
+            error: Optional[str] = Field(default=None, description="Error message if any")
 
         return DefaultResponse
 
@@ -264,19 +274,19 @@ class ClickToAPIDecorator:
         app: FastAPI,
         path: str,
         method: str,
-        func: Callable,
-        request_model: BaseModel,
-        response_model: BaseModel,
+        func: Callable[..., Any],
+        request_model: Type[BaseModel],
+        response_model: Type[BaseModel],
         description: str,
-        tags: List[str],
-    ):
+        tags: Sequence[Union[str, Enum]],
+    ) -> None:
         """Register an endpoint with FastAPI."""
 
-        async def api_endpoint(request: request_model):
+        async def api_endpoint(request: BaseModel) -> BaseModel:
             """API endpoint wrapper."""
             try:
                 # Convert request model to kwargs
-                kwargs = request.dict()
+                kwargs = request.model_dump()
 
                 # Call the original function
                 result = func(**kwargs)
@@ -290,23 +300,26 @@ class ClickToAPIDecorator:
                 logger.error(f"API endpoint error: {e}")
                 return response_model(success=False, error=str(e), message="Operation failed")
 
+        # Convert tags to list for FastAPI
+        tags_list: List[Union[str, Enum]] = list(tags)
+
         # Register with FastAPI
         if method == "GET":
-            app.get(path, response_model=response_model, description=description, tags=tags)(
+            app.get(path, response_model=response_model, description=description, tags=tags_list)(
                 api_endpoint
             )
         elif method == "POST":
-            app.post(path, response_model=response_model, description=description, tags=tags)(
+            app.post(path, response_model=response_model, description=description, tags=tags_list)(
                 api_endpoint
             )
         elif method == "PUT":
-            app.put(path, response_model=response_model, description=description, tags=tags)(
+            app.put(path, response_model=response_model, description=description, tags=tags_list)(
                 api_endpoint
             )
         elif method == "DELETE":
-            app.delete(path, response_model=response_model, description=description, tags=tags)(
-                api_endpoint
-            )
+            app.delete(
+                path, response_model=response_model, description=description, tags=tags_list
+            )(api_endpoint)
 
     def _get_registered_endpoints(self, app: FastAPI) -> List[Dict[str, str]]:
         """Get list of registered endpoints."""
@@ -325,12 +338,12 @@ class ClickToAPIDecorator:
 
 
 def api_endpoint(
-    endpoint_path: str = None,
+    endpoint_path: Optional[str] = None,
     http_method: str = "POST",
-    response_model: BaseModel = None,
-    description: str = None,
-    tags: List[str] = None,
-):
+    response_model: Optional[Type[BaseModel]] = None,
+    description: Optional[str] = None,
+    tags: Optional[Sequence[Union[str, Enum]]] = None,
+) -> ClickToAPIDecorator:
     """
     Decorator that makes Click commands also serve as API endpoints.
 
@@ -407,7 +420,9 @@ def ensure_api_app() -> Optional[FastAPI]:
     return _api_app
 
 
-def start_api_server(host: str = None, port: int = None, debug: bool = None) -> str:
+def start_api_server(
+    host: Optional[str] = None, port: Optional[int] = None, debug: Optional[bool] = None
+) -> Optional[str]:
     """Start the API server with configuration from MCLI config."""
     global _api_app, _api_server_thread, _api_server_running
 
@@ -511,13 +526,13 @@ def is_api_server_running() -> bool:
 
 
 def register_command_as_api(
-    command_func: Callable,
-    endpoint_path: str = None,
+    command_func: Callable[..., Any],
+    endpoint_path: Optional[str] = None,
     http_method: str = "POST",
-    response_model: BaseModel = None,
-    description: str = None,
-    tags: List[str] = None,
-):
+    response_model: Optional[Type[BaseModel]] = None,
+    description: Optional[str] = None,
+    tags: Optional[Sequence[Union[str, Enum]]] = None,
+) -> None:
     """
     Register a Click command as an API endpoint.
 
@@ -559,23 +574,25 @@ def register_command_as_api(
 
 
 # Convenience function for common response models
-def create_success_response_model(result_type: type = str):
+def create_success_response_model(result_type: type = str) -> Type[BaseModel]:
     """Create a success response model."""
 
     class SuccessResponse(BaseModel):
-        success: bool = Field(True, description="Operation success status")
-        result: result_type = Field(..., description="Operation result")
-        message: str = Field("Operation completed successfully", description="Operation message")
+        success: bool = Field(default=True, description="Operation success status")
+        result: Any = Field(..., description="Operation result")
+        message: str = Field(
+            default="Operation completed successfully", description="Operation message"
+        )
 
     return SuccessResponse
 
 
-def create_error_response_model():
+def create_error_response_model() -> Type[BaseModel]:
     """Create an error response model."""
 
     class ErrorResponse(BaseModel):
-        success: bool = Field(False, description="Operation success status")
+        success: bool = Field(default=False, description="Operation success status")
         error: str = Field(..., description="Error message")
-        message: str = Field("Operation failed", description="Operation message")
+        message: str = Field(default="Operation failed", description="Operation message")
 
     return ErrorResponse
