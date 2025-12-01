@@ -357,7 +357,17 @@ module = [
     "supabase.*",
 ]
 ignore_missing_imports = true
-ignore_errors = true
+
+# Improved type checking for priority modules (issue #40)
+# These modules have improved type annotations - gradually adding more
+[[tool.mypy.overrides]]
+module = [
+    "mcli.lib.logger.logger",
+    "mcli.lib.custom_commands",
+]
+# Keep these at default for now, will enable stricter checking as more types are added
+warn_return_any = true
+strict_equality = true
 
 [build-system]
 requires = ["setuptools>=65.0.0", "wheel>=0.40.0"]

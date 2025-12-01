@@ -14,7 +14,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 import click
 
@@ -141,7 +141,7 @@ class CustomCommandManager:
                     },
                 }
 
-            return command_data
+            return dict(command_data)  # Cast json.load result to dict
         except Exception as e:
             logger.error(f"Failed to load command from {command_file}: {e}")
             return None
@@ -217,15 +217,16 @@ class CustomCommandManager:
         """
         commands = self.load_all_commands()
 
-        lockfile_data = {
+        commands_dict: dict[str, Any] = {}
+        lockfile_data: dict[str, Any] = {
             "version": "1.0",
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "commands": {},
+            "commands": commands_dict,
         }
 
         for command_data in commands:
             name = command_data["name"]
-            lockfile_data["commands"][name] = {
+            commands_dict[name] = {
                 "name": name,
                 "description": command_data.get("description", ""),
                 "group": command_data.get("group"),
@@ -265,7 +266,7 @@ class CustomCommandManager:
 
         try:
             with open(self.lockfile_path) as f:
-                return json.load(f)
+                return dict(json.load(f))  # Cast json.load result to dict
         except Exception as e:
             logger.error(f"Failed to load lockfile: {e}")
             return None
@@ -281,11 +282,14 @@ class CustomCommandManager:
             - 'extra': list of commands in filesystem but not in lockfile
             - 'modified': list of commands with different metadata
         """
-        result = {
+        missing: list[str] = []
+        extra: list[str] = []
+        modified: list[str] = []
+        result: dict[str, Any] = {
             "valid": True,
-            "missing": [],
-            "extra": [],
-            "modified": [],
+            "missing": missing,
+            "extra": extra,
+            "modified": modified,
         }
 
         lockfile_data = self.load_lockfile()
@@ -299,13 +303,13 @@ class CustomCommandManager:
         # Check for missing commands (in lockfile but not in filesystem)
         for name in lockfile_commands:
             if name not in current_commands:
-                result["missing"].append(name)
+                missing.append(name)
                 result["valid"] = False
 
         # Check for extra commands (in filesystem but not in lockfile)
         for name in current_commands:
             if name not in lockfile_commands:
-                result["extra"].append(name)
+                extra.append(name)
                 result["valid"] = False
 
         # Check for modified commands (different metadata)
@@ -314,7 +318,7 @@ class CustomCommandManager:
             locked = lockfile_commands[name]
 
             if current.get("updated_at") != locked.get("updated_at"):
-                result["modified"].append(name)
+                modified.append(name)
                 result["valid"] = False
 
         return result
@@ -347,39 +351,42 @@ class CustomCommandManager:
             try:
                 # Load the module from the temporary file
                 spec = importlib.util.spec_from_file_location(module_name, temp_file_path)
-                if spec and spec.loader:
-                    module = importlib.util.module_from_spec(spec)
-                    sys.modules[module_name] = module
-                    spec.loader.exec_module(module)
+                if not spec or not spec.loader:
+                    logger.warning(f"Could not load spec for custom command: {name}")
+                    return False
 
-                    # Look for a command or command group in the module
-                    # Prioritize Groups over Commands to handle commands with subcommands correctly
-                    command_obj = None
-                    found_commands = []
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[module_name] = module
+                spec.loader.exec_module(module)
 
-                    for attr_name in dir(module):
-                        attr = getattr(module, attr_name)
-                        if isinstance(attr, click.Group):
-                            # Found a group - this takes priority
-                            command_obj = attr
-                            break
-                        elif isinstance(attr, click.Command):
-                            # Store command for fallback
-                            found_commands.append(attr)
+                # Look for a command or command group in the module
+                # Prioritize Groups over Commands to handle commands with subcommands correctly
+                command_obj: Optional[Union[click.Command, click.Group]] = None
+                found_commands: list[click.Command] = []
 
-                    # If no group found, use the first command
-                    if not command_obj and found_commands:
-                        command_obj = found_commands[0]
+                for attr_name in dir(module):
+                    attr = getattr(module, attr_name)
+                    if isinstance(attr, click.Group):
+                        # Found a group - this takes priority
+                        command_obj = attr
+                        break
+                    elif isinstance(attr, click.Command):
+                        # Store command for fallback
+                        found_commands.append(attr)
 
-                    if command_obj:
-                        # Register with the target group
-                        target_group.add_command(command_obj, name=name)
-                        self.loaded_commands[name] = command_obj
-                        logger.info(f"Registered custom command: {name}")
-                        return True
-                    else:
-                        logger.warning(f"No Click command found in custom command: {name}")
-                        return False
+                # If no group found, use the first command
+                if not command_obj and found_commands:
+                    command_obj = found_commands[0]
+
+                if command_obj:
+                    # Register with the target group
+                    target_group.add_command(command_obj, name=name)
+                    self.loaded_commands[name] = command_obj
+                    logger.info(f"Registered custom command: {name}")
+                    return True
+                else:
+                    logger.warning(f"No Click command found in custom command: {name}")
+                    return False
             finally:
                 # Clean up temporary file
                 Path(temp_file_path).unlink(missing_ok=True)

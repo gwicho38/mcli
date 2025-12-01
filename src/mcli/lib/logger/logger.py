@@ -8,9 +8,12 @@ import time
 import traceback
 from datetime import datetime
 from types import FrameType
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 import psutil
+
+# Type alias for trace functions
+TraceFunction = Callable[[FrameType, str, Any], "Optional[TraceFunction]"]
 
 
 class McliLogger:
@@ -18,15 +21,15 @@ class McliLogger:
     Central logger for mcli that logs only to file, not to console.
     """
 
-    _instance = None
-    _runtime_tracing_enabled = False
-    _system_tracing_enabled = False
-    _system_trace_interval = 5  # Default to check every 5 seconds
-    _system_trace_process_ids = set()  # Process IDs to monitor
-    _system_trace_thread = None
+    _instance: Optional["McliLogger"] = None
+    _runtime_tracing_enabled: bool = False
+    _system_tracing_enabled: bool = False
+    _system_trace_interval: int = 5  # Default to check every 5 seconds
+    _system_trace_process_ids: Set[int] = set()  # Process IDs to monitor
+    _system_trace_thread: Optional[threading.Thread] = None
     _excluded_modules: Set[str] = set()
-    _trace_level = 0  # 0=off, 1=function calls, 2=line by line, 3=verbose
-    _system_trace_level = 0  # 0=off, 1=basic, 2=detailed
+    _trace_level: int = 0  # 0=off, 1=function calls, 2=line by line, 3=verbose
+    _system_trace_level: int = 0  # 0=off, 1=basic, 2=detailed
 
     @classmethod
     def get_logger(cls, name="mcli.out"):
@@ -96,9 +99,9 @@ class McliLogger:
                 f"Python interpreter tracing enabled (level={cls._trace_level})"
             )
         elif cls._trace_level == 0 and cls._runtime_tracing_enabled:
-            # Disable tracing
+            # Disable tracing (None is valid to disable tracing per Python docs)
             sys.settrace(None)
-            threading.settrace(None)
+            threading.settrace(None)  # type: ignore[arg-type]
             cls._runtime_tracing_enabled = False
             cls._instance.trace_logger.info("Python interpreter tracing disabled")
 
@@ -143,7 +146,7 @@ class McliLogger:
         cls.enable_system_tracing(level=0)
 
     @classmethod
-    def register_process(cls, pid: int):
+    def register_process(cls, pid: int) -> bool:
         """Register a process for monitoring."""
         if cls._instance is None:
             cls._instance = cls("mcli.out")
@@ -423,7 +426,9 @@ class McliLogger:
             # Sleep until next collection cycle
             time.sleep(self._system_trace_interval)
 
-    def _trace_callback(self, frame: FrameType, event: str, arg: Any) -> Callable:
+    def _trace_callback(
+        self, frame: FrameType, event: str, arg: Any
+    ) -> Optional[TraceFunction]:
         """Trace callback function for sys.settrace()."""
         if self._trace_level == 0:
             return None

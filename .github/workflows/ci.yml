@@ -40,9 +40,16 @@ jobs:
       run: python tools/lint_hardcoded_strings.py --check-all --json
       continue-on-error: true  # Non-blocking until codebase refactoring is complete (13k+ violations)
 
-    - name: Type checking with mypy
+    - name: Type checking with mypy (full codebase)
       run: mypy src/ --ignore-missing-imports
-      continue-on-error: true  # Non-blocking due to type errors in notebook schema
+      continue-on-error: true  # Non-blocking due to type errors in remaining modules
+
+    - name: Type checking with mypy (priority modules)
+      run: |
+        # Check priority modules that have improved type annotations (issue #40)
+        # These modules have fewer errors and are gradually being fully typed
+        mypy src/mcli/lib/logger/logger.py src/mcli/lib/custom_commands.py --ignore-missing-imports
+      continue-on-error: true  # Non-blocking until all function signatures are typed
 
   test-rust:
     name: Test Rust Extensions
