@@ -1,9 +1,20 @@
 """
 Script synchronization commands for mcli.
 
-Commands to manage the script → JSON synchronization system.
+DEPRECATION NOTICE:
+The script → JSON synchronization system is deprecated.
+Native scripts (.py, .sh, .js, .ts, .ipynb) are now loaded directly.
+
+The JSON sync commands (all, one, status, cleanup, watch) are kept for
+backward compatibility but will be removed in a future version.
+
+Use `mcli workflow migrate` to convert legacy JSON files to native scripts.
+
+The IPFS sync commands (push, pull, history, verify) remain active for
+cloud synchronization of the lockfile.
 """
 
+import warnings
 from pathlib import Path
 from typing import Optional
 
@@ -12,15 +23,25 @@ import click
 from mcli.lib.constants import SyncMessages
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.paths import get_custom_commands_dir
-from mcli.lib.script_sync import ScriptSyncManager
 from mcli.lib.ui.styling import console, error, info, success, warning
 
 logger = get_logger(__name__)
 
+# Deprecation message for JSON sync commands
+JSON_SYNC_DEPRECATION = (
+    "[yellow]⚠ DEPRECATED:[/yellow] JSON sync is deprecated. "
+    "Native scripts are now loaded directly.\n"
+    "Run [cyan]mcli workflow migrate run -g[/cyan] to convert JSON files to native scripts."
+)
+
 
 @click.group(name="sync")
 def sync_group():
-    """Manage script-to-JSON synchronization."""
+    """Manage script synchronization and IPFS cloud sync.
+
+    Note: JSON sync commands (all, one, status, cleanup, watch) are deprecated.
+    Use 'mcli workflow migrate' to convert to native scripts.
+    """
     pass
 
 
@@ -29,16 +50,23 @@ def sync_group():
 @click.option("--force", "-f", is_flag=True, help="Force regeneration of all JSONs")
 def sync_all_command(global_mode: bool, force: bool):
     """
-    Sync all scripts to JSON workflow files.
+    [DEPRECATED] Sync all scripts to JSON workflow files.
 
-    Scans the commands directory for script files (.py, .sh, .js, etc.) and
-    generates/updates their JSON workflow representations.
+    This command is deprecated. Native scripts are now loaded directly
+    without JSON intermediate files.
 
-    Examples:
-        mcli workflows sync all           # Sync local commands
-        mcli workflows sync all --global  # Sync global commands
-        mcli workflows sync all --force   # Force regeneration
+    Run 'mcli workflow migrate run -g' to convert JSON files to native scripts.
     """
+    console.print(JSON_SYNC_DEPRECATION)
+    console.print()
+
+    # Import lazily to avoid errors if script_sync is removed
+    try:
+        from mcli.lib.script_sync import ScriptSyncManager
+    except ImportError:
+        error("Script sync module not available. Use 'mcli workflow migrate' instead.")
+        return
+
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
 
     if not commands_dir.exists():
@@ -64,14 +92,19 @@ def sync_all_command(global_mode: bool, force: bool):
 @click.option("--force", "-f", is_flag=True, help="Force regeneration")
 def sync_one_command(script_path: Path, global_mode: bool, force: bool):
     """
-    Sync a single script to JSON.
+    [DEPRECATED] Sync a single script to JSON.
 
-    SCRIPT_PATH: Path to the script file to sync
-
-    Examples:
-        mcli workflows sync one ~/.mcli/commands/utils/backup.sh
-        mcli workflows sync one ./my_script.py --force
+    This command is deprecated. Native scripts are now loaded directly.
     """
+    console.print(JSON_SYNC_DEPRECATION)
+    console.print()
+
+    try:
+        from mcli.lib.script_sync import ScriptSyncManager
+    except ImportError:
+        error("Script sync module not available. Use 'mcli workflow migrate' instead.")
+        return
+
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
     sync_manager = ScriptSyncManager(commands_dir)
 
@@ -89,10 +122,19 @@ def sync_one_command(script_path: Path, global_mode: bool, force: bool):
 @click.option("--global", "-g", "global_mode", is_flag=True, help="Check global commands")
 def sync_status_command(global_mode: bool):
     """
-    Show synchronization status of scripts.
+    [DEPRECATED] Show synchronization status of scripts.
 
-    Displays which scripts are in sync with their JSON files and which need updating.
+    This command is deprecated. Use 'mcli workflow migrate status' instead.
     """
+    console.print(JSON_SYNC_DEPRECATION)
+    console.print()
+
+    try:
+        from mcli.lib.script_sync import ScriptSyncManager
+    except ImportError:
+        error("Script sync module not available. Use 'mcli workflow migrate status' instead.")
+        return
+
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
 
     if not commands_dir.exists():
@@ -163,11 +205,20 @@ def sync_status_command(global_mode: bool):
 @click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
 def sync_cleanup_command(global_mode: bool, yes: bool):
     """
-    Remove orphaned JSON files.
+    [DEPRECATED] Remove orphaned JSON files.
 
-    Finds and removes JSON files that no longer have corresponding script files.
-    Only removes auto-generated JSON files (not manually created ones).
+    This command is deprecated. Run 'mcli workflow migrate run' to convert
+    JSON files to native scripts, then delete *.json.bak files manually.
     """
+    console.print(JSON_SYNC_DEPRECATION)
+    console.print()
+
+    try:
+        from mcli.lib.script_sync import ScriptSyncManager
+    except ImportError:
+        error("Script sync module not available. Use 'mcli workflow migrate' instead.")
+        return
+
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
 
     if not commands_dir.exists():
@@ -236,21 +287,26 @@ def sync_cleanup_command(global_mode: bool, yes: bool):
 @click.option("--global", "-g", "global_mode", is_flag=True, help="Watch global commands")
 def sync_watch_command(global_mode: bool):
     """
-    Watch for script changes and auto-sync (development mode).
+    [DEPRECATED] Watch for script changes and auto-sync.
 
-    Starts a file watcher that monitors the commands directory for changes
-    and automatically syncs scripts to JSON in real-time.
-
-    Press Ctrl+C to stop watching.
+    This command is deprecated. Native scripts are loaded directly
+    without JSON synchronization. No watcher is needed.
     """
+    console.print(JSON_SYNC_DEPRECATION)
+    console.print()
+
+    try:
+        from mcli.lib.script_sync import ScriptSyncManager
+        from mcli.lib.script_watcher import start_watcher, stop_watcher
+    except ImportError:
+        error("Script sync module not available. This command is deprecated.")
+        return
+
     commands_dir = get_custom_commands_dir(global_mode=global_mode)
 
     if not commands_dir.exists():
         error(SyncMessages.DIR_NOT_EXIST.format(path=commands_dir))
         return
-
-    from mcli.lib.script_sync import ScriptSyncManager
-    from mcli.lib.script_watcher import start_watcher, stop_watcher
 
     info(SyncMessages.STARTING_WATCHER.format(path=commands_dir))
     console.print(SyncMessages.PRESS_CTRL_C)
