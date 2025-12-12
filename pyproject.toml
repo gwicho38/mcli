@@ -1,7 +1,7 @@
 [project]
 name = "mcli-framework"
-version = "7.19.16"
-description = "Universal script runner with intelligent tab completion. Run any Python/Shell/Jupyter script directly with mcli run ./script.py, or register as versioned workflows for scheduling and sharing."
+version = "7.20.0"
+description = "Portable workflow framework - transform any script into a versioned, schedulable command. Store in ~/.mcli/workflows/, version with lockfile, run as daemon or cron job."
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "Luis Fernandez de la Vara", email = "luis@lefv.io" }]
@@ -109,7 +109,6 @@ dependencies = [
   "python-jose[cryptography]>=3.3.0",
   "passlib[bcrypt]>=1.7.4",
   "pydantic-settings>=2.1.0",
-  "email-validator>=2.0.0",
   "dynaconf>=3.2.0",
   "pandera>=0.17.0",
   "pendulum>=2.1.2",
@@ -118,8 +117,6 @@ dependencies = [
   "jupyter>=1.0.0",
   "jupyterlab>=4.0.0",
   "ipykernel>=6.27.0",
-  # Testing framework (core dependencies for async tests)
-  "pytest-asyncio>=1.1.0",
   # Production monitoring
   "prometheus-client>=0.19.0",
   "structlog>=23.2.0",
@@ -233,11 +230,6 @@ dev = [
   "mypy>=1.7.1,<2.0.0",
   "ruff>=0.1.0",                  # Fast linter
   "pre-commit>=3.6.0",            # Git hooks
-
-  # Type stubs
-  "types-requests>=2.31.0",       # Type stubs for requests
-  "types-toml>=0.10.8",           # Type stubs for toml
-  "types-PyYAML>=6.0.12",         # Type stubs for PyYAML
 
   # Build tools
   "build>=1.2.2.post1",
@@ -357,98 +349,11 @@ module = [
     "streamlit.*",
     "torch.*",
     "transformers.*",
+    "mlflow.*",
     "plotly.*",
     "supabase.*",
 ]
 ignore_missing_imports = true
-
-# Skip mlflow entirely - has Python 3.10+ syntax in webhook.py
-[[tool.mypy.overrides]]
-module = ["mlflow.*"]
-ignore_missing_imports = true
-follow_imports = "skip"
-
-# Skip Alpaca SDK - has loose Union types that are imprecise
-[[tool.mypy.overrides]]
-module = ["alpaca.*"]
-ignore_missing_imports = true
-follow_imports = "skip"
-
-# Trading modules use external SDKs with imprecise typing
-[[tool.mypy.overrides]]
-module = [
-    "mcli.ml.trading.*",
-]
-ignore_errors = true
-
-# Chat modules have complex control flow and external library dependencies
-# Will be gradually improved as types are added
-[[tool.mypy.overrides]]
-module = [
-    "mcli.chat.*",
-]
-ignore_errors = true
-
-# Database models use SQLAlchemy declarative patterns that mypy doesn't understand
-# Would need sqlalchemy-stubs or mypy-sqlalchemy plugin for full support
-[[tool.mypy.overrides]]
-module = [
-    "mcli.ml.database.*",
-]
-ignore_errors = true
-
-# ML modules with external dependencies (sklearn, torch, pandas, etc.)
-# These use optional dependencies and external ML libraries with loose types
-[[tool.mypy.overrides]]
-module = [
-    "mcli.ml.*",
-]
-ignore_errors = true
-
-# Workflow modules with complex async and external integrations
-[[tool.mypy.overrides]]
-module = [
-    "mcli.workflow.*",
-]
-ignore_errors = true
-
-# Modules with external dependencies or complex patterns
-[[tool.mypy.overrides]]
-module = [
-    "mcli.lib.services.*",
-    "mcli.lib.search.*",
-    "mcli.lib.auth.*",
-    "mcli.lib.erd.*",
-    "mcli.lib.shell.*",
-    "mcli.lib.pickles.*",
-    "mcli.lib.api.mcli_decorators",
-    "mcli.lib.api.daemon_client",
-    "mcli.lib.api.daemon_client_local",
-    "mcli.lib.ipfs_sync",
-    "mcli.lib.script_watcher",
-    "mcli.lib.script_sync",
-    "mcli.lib.discovery.*",
-    "mcli.lib.ui.*",
-    "mcli.lib.performance.*",
-    "mcli.lib.lib",
-    "mcli.lib.folder_workflows",
-    "mcli.lib.files.*",
-    "mcli.lib.config.*",
-    "mcli.app.*",
-    "mcli.cli",
-]
-ignore_errors = true
-
-# Improved type checking for priority modules (issue #40)
-# These modules have improved type annotations - gradually adding more
-[[tool.mypy.overrides]]
-module = [
-    "mcli.lib.logger.logger",
-    "mcli.lib.custom_commands",
-]
-# Keep these at default for now, will enable stricter checking as more types are added
-warn_return_any = true
-strict_equality = true
 
 [build-system]
 requires = ["setuptools>=65.0.0", "wheel>=0.40.0"]
@@ -541,7 +446,6 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",

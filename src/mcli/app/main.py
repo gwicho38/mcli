@@ -6,6 +6,7 @@ from typing import List, Optional
 import click
 import tomli
 
+from mcli.lib.api.api import register_command_as_api
 from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_tracing, get_logger
 
 # Defer performance optimizations until needed
@@ -33,7 +34,7 @@ if trace_level:
 logger.debug("main")
 
 
-def discover_modules(base_path: Path, config_path: Optional[Path] = None) -> list[str]:
+def discover_modules(base_path: Path, config_path: Optional[Path] = None) -> List[str]:
     """
     Discovers Python modules in specified paths.
     Paths must omit trailing backslash.
@@ -146,9 +147,6 @@ def register_command_as_api_endpoint(command_func, module_name: str, command_nam
         module_name: The module name for grouping
         command_name: The command name
     """
-    # Lazy import to avoid loading FastAPI at startup (saves ~280ms)
-    from mcli.lib.api.api import register_command_as_api
-
     try:
         # Create endpoint path based on module and command
         endpoint_path = f"/{module_name.replace('.', '/')}/{command_name}"
@@ -246,14 +244,18 @@ class LazyCommand(click.Command):
         cmd = self._load_command()
         return cmd.get_params(ctx)
 
-    def shell_complete(self, ctx, incomplete):
+    def shell_complete(self, ctx, param, incomplete):
         """Provide shell completion for the lazily loaded command."""
         cmd = self._load_command()
         # Delegate to the loaded command's completion
         if hasattr(cmd, "shell_complete"):
-            return cmd.shell_complete(ctx, incomplete)
+            return cmd.shell_complete(ctx, param, incomplete)
         # Fallback to default Click completion
-        return super().shell_complete(ctx, incomplete) if hasattr(super(), "shell_complete") else []
+        return (
+            super().shell_complete(ctx, param, incomplete)
+            if hasattr(super(), "shell_complete")
+            else []
+        )
 
 
 class LazyGroup(click.Group):
@@ -302,21 +304,23 @@ class LazyGroup(click.Group):
         group = self._load_group()
         return group.get_params(ctx)
 
-    def shell_complete(self, ctx, incomplete):
+    def shell_complete(self, ctx, param, incomplete):
         """Provide shell completion for the lazily loaded group."""
         group = self._load_group()
         # Delegate to the loaded group's completion
         if hasattr(group, "shell_complete"):
-            return group.shell_complete(ctx, incomplete)
+            return group.shell_complete(ctx, param, incomplete)
         # Fallback to default Click completion
-        return super().shell_complete(ctx, incomplete) if hasattr(super(), "shell_complete") else []
+        return (
+            super().shell_complete(ctx, param, incomplete)
+            if hasattr(super(), "shell_complete")
+            else []
+        )
 
 
 def _add_lazy_commands(app: click.Group):
     """Add command groups with lazy loading."""
-    # Order: init, new, edit, delete, self, sync, teardown, workflow, workflows
-
-    # 1. init command
+    # Top-level init command
     try:
         from mcli.app.init_cmd import init
 
@@ -325,53 +329,7 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load init command: {e}")
 
-    # 2. new command
-    try:
-        from mcli.app.new_cmd import new
-
-        app.add_command(new, name="new")
-        logger.debug("Added new command")
-    except ImportError as e:
-        logger.debug(f"Could not load new command: {e}")
-
-    # 3. edit command
-    try:
-        from mcli.app.edit_cmd import edit
-
-        app.add_command(edit, name="edit")
-        logger.debug("Added edit command")
-    except ImportError as e:
-        logger.debug(f"Could not load edit command: {e}")
-
-    # 4. delete command (and remove alias)
-    try:
-        from mcli.app.remove_cmd import delete, remove
-
-        app.add_command(delete, name="delete")
-        app.add_command(remove, name="remove")
-        logger.debug("Added delete/remove commands")
-    except ImportError as e:
-        logger.debug(f"Could not load delete/remove commands: {e}")
-
-    # 5. self management - load immediately as it's commonly used
-    try:
-        from mcli.self.self_cmd import self_app
-
-        app.add_command(self_app, name="self")
-        logger.debug("Added self management commands")
-    except Exception as e:
-        logger.debug(f"Could not load self commands: {e}")
-
-    # 6. sync command
-    try:
-        from mcli.app.sync_cmd import sync
-
-        app.add_command(sync, name="sync")
-        logger.debug("Added sync command")
-    except ImportError as e:
-        logger.debug(f"Could not load sync command: {e}")
-
-    # 7. teardown command
+    # Top-level teardown command
     try:
         from mcli.app.init_cmd import teardown
 
@@ -380,7 +338,18 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load teardown command: {e}")
 
-    # 8. workflow management group (renamed from 'commands')
+    # Top-level lock group
+    try:
+        from mcli.app.lock_cmd import lock
+
+        app.add_command(lock, name="lock")
+        logger.debug("Added lock group")
+    except ImportError as e:
+        logger.debug(f"Could not load lock group: {e}")
+
+    # Store commands moved to workflow group
+
+    # Workflow management - load immediately for fast access (renamed from 'commands')
     try:
         from mcli.app.commands_cmd import workflow
 
@@ -389,10 +358,19 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load workflow management group: {e}")
 
+    # Self management - load immediately as it's commonly used
+    try:
+        from mcli.self.self_cmd import self_app
+
+        app.add_command(self_app, name="self")
+        logger.debug("Added self management commands")
+    except Exception as e:
+        logger.debug(f"Could not load self commands: {e}")
+
     # Note: lib group removed - secrets moved to workflows
     # Previous: mcli lib secrets -> Now: mcli workflows secrets
 
-    # 9. workflows group - Add workflows group directly (not lazy-loaded) to preserve -g/--global option
+    # Add workflows group directly (not lazy-loaded) to preserve -g/--global option
     try:
         from mcli.workflow.workflow import workflows as workflows_group
 
@@ -408,7 +386,7 @@ def _add_lazy_commands(app: click.Group):
         try:
             from mcli.app.completion_helpers import create_completion_aware_lazy_group
 
-            workflows_group = create_completion_aware_lazy_group(  # type: ignore[assignment]
+            workflows_group = create_completion_aware_lazy_group(
                 "workflows",
                 "mcli.workflow.workflow.workflows",
                 "Runnable workflows for automation, video processing, and daemon management",
@@ -417,7 +395,7 @@ def _add_lazy_commands(app: click.Group):
             app.add_command(workflows_group, name="run")  # Add run alias
             logger.debug("Added completion-aware workflows group with 'run' alias (fallback)")
         except ImportError:
-            workflows_group = LazyGroup(  # type: ignore[assignment]
+            workflows_group = LazyGroup(
                 "workflows",
                 "mcli.workflow.workflow.workflows",
                 help="Runnable workflows for automation, video processing, and daemon management",
@@ -426,21 +404,12 @@ def _add_lazy_commands(app: click.Group):
             app.add_command(workflows_group, name="run")  # Add run alias
             logger.debug("Added lazy workflows group with 'run' alias (fallback)")
 
-    # 10. lock group (after workflows)
-    try:
-        from mcli.app.lock_cmd import lock
-
-        app.add_command(lock, name="lock")
-        logger.debug("Added lock group")
-    except ImportError as e:
-        logger.debug(f"Could not load lock group: {e}")
-
     # Lazy load other heavy commands that are used less frequently
     # NOTE: chat and model commands have been removed
     # - chat: removed from core commands
     # - model: moved to ~/.mcli/commands workflow
     # - test: removed from core commands
-    lazy_commands: dict[str, dict[str, str]] = {}
+    lazy_commands = {}
 
     for cmd_name, cmd_info in lazy_commands.items():
         # Skip workflows since we already added it with completion support
@@ -452,7 +421,7 @@ def _add_lazy_commands(app: click.Group):
             try:
                 from mcli.app.completion_helpers import create_completion_aware_lazy_group
 
-                lazy_cmd: click.Command = create_completion_aware_lazy_group(
+                lazy_cmd = create_completion_aware_lazy_group(
                     cmd_name, cmd_info["import_path"], cmd_info["help"]
                 )
             except ImportError:
@@ -473,58 +442,19 @@ def _add_lazy_commands(app: click.Group):
         app.add_command(lazy_cmd)
         logger.debug(f"Added lazy command: {cmd_name}")
 
-    # Sync scripts → JSON before loading custom commands
-    try:
-        from mcli.lib.paths import get_custom_commands_dir
-        from mcli.lib.script_sync import ScriptSyncManager
-        from mcli.lib.script_watcher import start_watcher
+    # Note: Native script workflows are now loaded directly by ScopedWorkflowsGroup
+    # in workflow.py using ScriptLoader. No sync step needed.
 
-        # Sync scripts in both local and global directories
-        for global_mode in [False, True]:
-            commands_dir = get_custom_commands_dir(global_mode=global_mode)
-            if commands_dir.exists():
-                sync_manager = ScriptSyncManager(commands_dir)
-                synced = sync_manager.sync_all()
-                if synced:
-                    scope = "global" if global_mode else "local"
-                    logger.info(f"Synced {len(synced)} {scope} script(s) to JSON")
-
-                # Optional: Start file watcher for development mode
-                if os.getenv("MCLI_WATCH_SCRIPTS", "false").lower() == "true":
-                    observer = start_watcher(commands_dir, sync_manager)
-                    if observer:
-                        logger.info(f"Started file watcher for {commands_dir}")  # type: ignore[unreachable]
-    except Exception as e:
-        logger.debug(f"Could not sync scripts: {e}")
-
-    # Load custom user commands from ~/.mcli/commands/ AFTER all groups are added
+    # Load legacy JSON commands (for non-workflow group commands only)
+    # Workflow-group JSON commands are handled by ScopedWorkflowsGroup
     try:
         from mcli.lib.custom_commands import load_custom_commands
 
         loaded_count = load_custom_commands(app)
         if loaded_count > 0:
-            logger.info(f"Loaded {loaded_count} custom user command(s)")
+            logger.info(f"Loaded {loaded_count} legacy JSON command(s)")
     except Exception as e:
-        logger.debug(f"Could not load custom commands: {e}")
-
-
-class OrderedGroup(click.Group):
-    """Click group that preserves command order instead of alphabetizing."""
-
-    def __init__(self, name=None, commands=None, **attrs):
-        super().__init__(name, commands, **attrs)
-        self.commands_order = []
-
-    def add_command(self, cmd, name=None):
-        """Add command and track order."""
-        super().add_command(cmd, name)
-        cmd_name = name or cmd.name
-        if cmd_name not in self.commands_order:
-            self.commands_order.append(cmd_name)
-
-    def list_commands(self, ctx):
-        """Return commands in the order they were added, not alphabetically."""
-        return self.commands_order
+        logger.debug(f"Could not load legacy JSON commands: {e}")
 
 
 def create_app() -> click.Group:
@@ -532,7 +462,7 @@ def create_app() -> click.Group:
 
     logger.debug("create_app")
 
-    app = OrderedGroup(name="mcli")
+    app = click.Group(name="mcli")
 
     # Version command moved to self group (mcli self version)
     # Add lazy-loaded command groups

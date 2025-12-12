@@ -1,11 +1,16 @@
 """
 Script → JSON synchronization system.
 
-This module manages the automatic conversion of raw script files (.py, .sh, .js, etc.)
-into JSON workflow definitions. The JSON acts as an intermediate translation layer that
-provides metadata, execution context, and fast loading.
+DEPRECATION NOTICE:
+This module is deprecated. Scripts are now loaded directly without JSON conversion.
+Use `mcli.lib.script_loader.ScriptLoader` instead.
 
-Architecture:
+The JSON intermediate layer has been removed in favor of direct script loading.
+Existing JSON files can be migrated to native scripts using `mcli workflow migrate`.
+
+This module is kept for backward compatibility and will be removed in a future version.
+
+Legacy Architecture (deprecated):
     User's Script (source of truth)
         ↓
     Auto-generate JSON (if missing)
@@ -14,11 +19,23 @@ Architecture:
         ↓
     Load from JSON (fast startup)
 
-Example:
+New Architecture:
+    User's Script (source of truth)
+        ↓
+    Load directly via ScriptLoader
+        ↓
+    Execute with appropriate runtime (Python, Bun, shell, etc.)
+
+Example (deprecated):
     >>> from mcli.lib.script_sync import ScriptSyncManager
     >>> manager = ScriptSyncManager(Path("~/.mcli/commands"))
     >>> manager.sync_all()  # Sync all scripts to JSON
     >>> manager.generate_json(Path("~/.mcli/commands/utils/backup.sh"))
+
+New approach:
+    >>> from mcli.lib.script_loader import ScriptLoader
+    >>> loader = ScriptLoader(Path("~/.mcli/workflows"))
+    >>> loader.register_all_commands(app)
 """
 
 import hashlib

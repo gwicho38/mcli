@@ -9,23 +9,16 @@ import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
 
 import click
 from rich.prompt import Prompt
 
 from mcli.lib.api.daemon_client import get_daemon_client
-from mcli.lib.constants import (
-    CommandMessages,
-    ErrorMessages,
-    InfoMessages,
-    SuccessMessages,
-    WarningMessages,
-)
-from mcli.lib.constants.paths import DirNames
 from mcli.lib.custom_commands import get_command_manager
 from mcli.lib.discovery.command_discovery import get_command_discovery
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.paths import get_custom_commands_dir
 from mcli.lib.ui.styling import console, error, info, success, warning
 
 logger = get_logger(__name__)
@@ -35,13 +28,144 @@ LOCKFILE_PATH = Path.home() / ".local" / "mcli" / "command_lock.json"
 
 # Command store configuration
 DEFAULT_STORE_PATH = Path.home() / "repos" / "mcli-commands"
-COMMANDS_PATH = Path.home() / DirNames.MCLI / "commands"
+COMMANDS_PATH = Path.home() / ".mcli" / "commands"
+
+# File extensions for each language
+LANGUAGE_EXTENSIONS = {
+    "python": ".py",
+    "shell": ".sh",
+    "javascript": ".js",
+    "typescript": ".ts",
+    "ipynb": ".ipynb",
+}
+
+
+def get_script_template(name: str, language: str, description: str, group: str, shell: str = "bash", version: str = "1.0.0") -> str:
+    """Generate template code for a script in any supported language."""
+    if language == "python":
+        return f'''#!/usr/bin/env python3
+# @description: {description}
+# @version: {version}
+# @group: {group}
+
+"""
+{name} command for mcli.
+"""
+import click
+from mcli.lib.logger.logger import get_logger
+
+logger = get_logger()
+
+
+@click.command(name="{name}")
+@click.argument("name", default="World")
+def {name}_command(name: str):
+    """
+    {description}
+    """
+    logger.info(f"Hello, {{name}}! This is the {name} command.")
+    click.echo(f"Hello, {{name}}! This is the {name} command.")
+'''
+    elif language == "shell":
+        return f"""#!/usr/bin/env {shell}
+# @description: {description}
+# @version: {version}
+# @group: {group}
+# @shell: {shell}
+
+# {name} - {description}
+
+set -euo pipefail
+
+echo "Hello from {name} shell command!"
+
+if [ $# -gt 0 ]; then
+    echo "Arguments: $@"
+fi
+
+exit 0
+"""
+    elif language == "javascript":
+        return f"""#!/usr/bin/env bun
+// @description: {description}
+// @version: {version}
+// @group: {group}
+
+// {name} - {description}
+
+const args = process.argv.slice(2);
+
+console.log("Hello from {name} JavaScript command!");
+
+if (args.length > 0) {{
+    console.log("Arguments:", args.join(", "));
+}}
+"""
+    elif language == "typescript":
+        return f"""#!/usr/bin/env bun
+// @description: {description}
+// @version: {version}
+// @group: {group}
+
+// {name} - {description}
+
+const args: string[] = process.argv.slice(2);
+
+console.log("Hello from {name} TypeScript command!");
+
+if (args.length > 0) {{
+    console.log("Arguments:", args.join(", "));
+}}
+"""
+    elif language == "ipynb":
+        import json as json_module
+        notebook = {
+            "cells": [
+                {
+                    "cell_type": "markdown",
+                    "metadata": {},
+                    "source": [
+                        f"# {name}\n",
+                        "\n",
+                        description
+                    ]
+                },
+                {
+                    "cell_type": "code",
+                    "execution_count": None,
+                    "metadata": {},
+                    "outputs": [],
+                    "source": [
+                        "# Your notebook code here\n",
+                        f"print('Hello from {name} notebook!')"
+                    ]
+                }
+            ],
+            "metadata": {
+                "mcli": {
+                    "description": description,
+                    "version": version,
+                    "group": group,
+                    "name": name
+                },
+                "kernelspec": {
+                    "display_name": "Python 3",
+                    "language": "python",
+                    "name": "python3"
+                }
+            },
+            "nbformat": 4,
+            "nbformat_minor": 4
+        }
+        return json_module.dumps(notebook, indent=2)
+    else:
+        raise ValueError(f"Unsupported language: {language}")
 
 
 # Helper functions for command state management
 
 
-def collect_commands() -> list[dict[str, Any]]:
+def collect_commands() -> List[Dict[str, Any]]:
     """Collect all commands from the mcli application."""
     commands = []
 
@@ -138,7 +262,7 @@ def hash_command_state(commands):
 def load_lockfile():
     """Load the command state lockfile."""
     if LOCKFILE_PATH.exists():
-        with open(LOCKFILE_PATH) as f:
+        with open(LOCKFILE_PATH, "r") as f:
             data = json.load(f)
             # Handle both old format (array) and new format (object with "states" key)
             if isinstance(data, dict) and "states" in data:
@@ -201,7 +325,7 @@ commands = workflow
 # Helper function for store commands
 def _get_store_path() -> Path:
     """Get store path from config or default."""
-    config_file = Path.home() / DirNames.MCLI / "store.conf"
+    config_file = Path.home() / ".mcli" / "store.conf"
 
     if config_file.exists():
         store_path = Path(config_file.read_text().strip())
@@ -230,7 +354,7 @@ def init_store(path, remote):
         git_dir = store_path / ".git"
         if not git_dir.exists():
             subprocess.run(["git", "init"], cwd=store_path, check=True, capture_output=True)
-            success(SuccessMessages.INITIALIZED_GIT_REPO.format(path=store_path))
+            success(f"Initialized git repository at {store_path}")
 
             # Create .gitignore
             gitignore = store_path / ".gitignore"
@@ -273,21 +397,21 @@ Last updated: {datetime.now().isoformat()}
                 subprocess.run(
                     ["git", "remote", "add", "origin", remote], cwd=store_path, check=True
                 )
-                success(CommandMessages.ADDED_REMOTE.format(remote=remote))
+                success(f"Added remote: {remote}")
         else:
-            info(CommandMessages.GIT_REPO_EXISTS.format(path=store_path))
+            info(f"Git repository already exists at {store_path}")
 
         # Save store path to config
-        config_file = Path.home() / DirNames.MCLI / "store.conf"
+        config_file = Path.home() / ".mcli" / "store.conf"
         config_file.parent.mkdir(parents=True, exist_ok=True)
         config_file.write_text(str(store_path))
 
-        success(SuccessMessages.COMMAND_STORE_INITIALIZED.format(path=store_path))
-        info(CommandMessages.STORE_PATH_SAVED.format(path=config_file))
+        success(f"Command store initialized at {store_path}")
+        info(f"Store path saved to {config_file}")
 
     except subprocess.CalledProcessError as e:
-        error(ErrorMessages.GIT_COMMAND_FAILED.format(error=e))
-        logger.error(CommandMessages.GIT_INIT_FAILED.format(error=e))
+        error(f"Git command failed: {e}")
+        logger.error(f"Git init failed: {e}")
     except Exception as e:
         error(f"Failed to initialize store: {e}")
         logger.exception(e)
@@ -312,7 +436,7 @@ def push_commands(message, all, is_global):
         COMMANDS_PATH = get_custom_commands_dir(global_mode=is_global)
 
         # Copy commands to store
-        info(InfoMessages.COPYING_COMMANDS.format(source=COMMANDS_PATH, dest=store_path))
+        info(f"Copying commands from {COMMANDS_PATH} to {store_path}...")
 
         copied_count = 0
         for item in COMMANDS_PATH.glob("*"):
@@ -328,7 +452,7 @@ def push_commands(message, all, is_global):
                 shutil.copytree(item, dest, dirs_exist_ok=True)
                 copied_count += 1
 
-        success(CommandMessages.COPIED_ITEMS.format(count=copied_count))
+        success(f"Copied {copied_count} items to store")
 
         # Git add, commit, push
         subprocess.run(["git", "add", "."], cwd=store_path, check=True)
@@ -339,24 +463,23 @@ def push_commands(message, all, is_global):
         )
 
         if not result.stdout.strip():
-            info(WarningMessages.NO_CHANGES)
+            info("No changes to commit")
             return
 
         # Commit with message
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        commit_msg = message or CommandMessages.UPDATE_COMMANDS.format(timestamp=timestamp)
+        commit_msg = message or f"Update commands {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True)
-        success(CommandMessages.COMMITTED_CHANGES.format(message=commit_msg))
+        success(f"Committed changes: {commit_msg}")
 
         # Push to remote if configured
         try:
             subprocess.run(["git", "push"], cwd=store_path, check=True, capture_output=True)
-            success(CommandMessages.PUSHED_TO_REMOTE)
+            success("Pushed to remote")
         except subprocess.CalledProcessError:
-            warning(WarningMessages.NO_REMOTE)
+            warning("No remote configured or push failed. Commands committed locally.")
 
     except Exception as e:
-        error(CommandMessages.FAILED_TO_PUSH.format(error=e))
+        error(f"Failed to push commands: {e}")
         logger.exception(e)
 
 
@@ -380,9 +503,9 @@ def pull_commands(force, is_global):
         # Pull from remote
         try:
             subprocess.run(["git", "pull"], cwd=store_path, check=True)
-            success(CommandMessages.PULLED_FROM_REMOTE)
+            success("Pulled latest changes from remote")
         except subprocess.CalledProcessError:
-            warning(CommandMessages.NO_REMOTE_PULL)
+            warning("No remote configured or pull failed. Using local store.")
 
         # Backup existing commands if not force
         if not force and COMMANDS_PATH.exists():
@@ -390,10 +513,10 @@ def pull_commands(force, is_global):
                 COMMANDS_PATH.parent / f"commands_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             )
             shutil.copytree(COMMANDS_PATH, backup_dir)
-            info(CommandMessages.BACKED_UP_TO.format(path=backup_dir))
+            info(f"Backed up existing commands to {backup_dir}")
 
         # Copy from store to commands directory
-        info(InfoMessages.COPYING_COMMANDS.format(source=store_path, dest=COMMANDS_PATH))
+        info(f"Copying commands from {store_path} to {COMMANDS_PATH}...")
 
         COMMANDS_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -411,10 +534,10 @@ def pull_commands(force, is_global):
                 shutil.copytree(item, dest, dirs_exist_ok=True)
                 copied_count += 1
 
-        success(CommandMessages.PULLED_ITEMS.format(count=copied_count))
+        success(f"Pulled {copied_count} items from store")
 
     except Exception as e:
-        error(CommandMessages.FAILED_TO_PULL.format(error=e))
+        error(f"Failed to pull commands: {e}")
         logger.exception(e)
 
 
@@ -525,7 +648,7 @@ def configure_store(remote, path):
 
         if path:
             new_path = Path(path).expanduser().resolve()
-            config_file = Path.home() / DirNames.MCLI / "store.conf"
+            config_file = Path.home() / ".mcli" / "store.conf"
             config_file.write_text(str(new_path))
             success(f"Store path updated to: {new_path}")
             return
@@ -671,8 +794,8 @@ def list_commands(
 
             if isinstance(result, dict):
                 commands_data = result.get("commands", [])
-            elif isinstance(result, list):  # type: ignore[unreachable]
-                commands_data = result  # type: ignore[unreachable]
+            elif isinstance(result, list):
+                commands_data = result
             else:
                 commands_data = []
         else:
@@ -735,8 +858,8 @@ def search_commands(query: str, daemon_only: bool, as_json: bool, is_global: boo
 
             if isinstance(result, dict):
                 all_commands = result.get("commands", [])
-            elif isinstance(result, list):  # type: ignore[unreachable]
-                all_commands = result  # type: ignore[unreachable]
+            elif isinstance(result, list):
+                all_commands = result
             else:
                 all_commands = []
 
@@ -833,8 +956,8 @@ def command_info(command_name: str, as_json: bool):
 
         if isinstance(result, dict):
             all_commands = result.get("commands", [])
-        elif isinstance(result, list):  # type: ignore[unreachable]
-            all_commands = result  # type: ignore[unreachable]
+        elif isinstance(result, list):
+            all_commands = result
         else:
             all_commands = []
 
@@ -1063,7 +1186,7 @@ logger = get_logger()
             return None
 
         # Read the edited content
-        with open(temp_file_path) as f:
+        with open(temp_file_path, "r") as f:
             edited_code = f.read()
 
         # Check if the file was actually edited (not just the template)
@@ -1123,9 +1246,9 @@ logger = get_logger()
 @click.option(
     "--language",
     "-l",
-    type=click.Choice(["python", "shell"], case_sensitive=False),
-    default="python",
-    help="Command language (python or shell)",
+    type=click.Choice(["python", "shell", "javascript", "typescript", "ipynb"], case_sensitive=False),
+    required=True,
+    help="Script language (required): python, shell, javascript, typescript, or ipynb",
 )
 @click.option(
     "--shell",
@@ -1138,28 +1261,26 @@ logger = get_logger()
     "-g",
     "is_global",
     is_flag=True,
-    help="Add to global commands (~/.mcli/commands/) instead of local (.mcli/commands/)",
+    help="Add to global commands (~/.mcli/workflows/) instead of local (.mcli/workflows/)",
 )
 def add_command(command_name, group, description, template, language, shell, is_global):
     """
-    Generate a new portable custom command saved to ~/.mcli/commands/.
+    Generate a new native script workflow command.
 
-    This command will open your default editor to allow you to write Python or shell
-    logic for your command. The editor will be opened with a template that you can modify.
+    Creates a native script file (.py, .sh, .js, .ts, or .ipynb) in the workflows
+    directory. The --language option is required.
 
-    Commands are automatically nested under the 'workflow' group by default,
-    making them portable and persistent across updates.
+    Commands are automatically nested under the 'workflow' group by default.
 
     Examples:
-        # Python command (default)
-        mcli commands add my_command
-        mcli commands add analytics --group data
-        mcli commands add quick_cmd --template
+        mcli workflow add my_command -l python
+        mcli workflow add backup_db -l shell --shell bash
+        mcli workflow add api_client -l javascript
+        mcli workflow add typed_client -l typescript
+        mcli workflow add analysis -l ipynb
 
-        # Shell command
-        mcli commands add backup-db --language shell
-        mcli commands add deploy --language shell --shell bash
-        mcli commands add quick-sh -l shell -t  # Template mode
+        # With template mode (skip editor)
+        mcli workflow add quick_cmd -l python -t
     """
     command_name = command_name.lower().replace("-", "_")
 
@@ -1189,110 +1310,108 @@ def add_command(command_name, group, description, template, language, shell, is_
     else:
         command_group = "workflow"  # Default to workflow group
 
-    # Get the command manager
-    manager = get_command_manager(global_mode=is_global)
-
-    # Check if command already exists
-    command_file = manager.commands_dir / f"{command_name}.json"
-    if command_file.exists():
-        logger.warning(f"Custom command already exists: {command_name}")
-        should_override = Prompt.ask(
-            "Command already exists. Override?", choices=["y", "n"], default="n"
-        )
-        if should_override.lower() != "y":
-            logger.info("Command creation aborted.")
-            click.echo("Command creation aborted.")
-            return 1
+    # Get workflows directory
+    workflows_dir = get_custom_commands_dir(global_mode=is_global)
+    workflows_dir.mkdir(parents=True, exist_ok=True)
 
     # Normalize language
     language = language.lower()
 
+    # Get file extension for language
+    extension = LANGUAGE_EXTENSIONS.get(language)
+    if not extension:
+        click.echo(f"Unsupported language: {language}", err=True)
+        return 1
+
+    # Check if script already exists
+    script_path = workflows_dir / f"{command_name}{extension}"
+    if script_path.exists():
+        logger.warning(f"Script already exists: {script_path}")
+        should_override = Prompt.ask(
+            "Script already exists. Override?", choices=["y", "n"], default="n"
+        )
+        if should_override.lower() != "y":
+            logger.info("Script creation aborted.")
+            click.echo("Script creation aborted.")
+            return 1
+
     # Determine shell type for shell commands
-    if language == "shell":  # noqa: SIM102
+    if language == "shell":
         if not shell:
-            # Default to $SHELL environment variable or bash
             shell_env = os.environ.get("SHELL", "/bin/bash")
             shell = shell_env.split("/")[-1]
             click.echo(f"Using shell: {shell} (from $SHELL environment variable)")
 
-    # Generate command code
+    # Generate script code
     if template:
         # Use template mode - generate and save directly
-        if language == "shell":
-            code = get_shell_command_template(command_name, shell, description)
-            click.echo(f"Using shell template for command: {command_name}")
-        else:
-            code = get_command_template(command_name, command_group)
-            click.echo(f"Using Python template for command: {command_name}")
+        code = get_script_template(command_name, language, description, command_group, shell or "bash")
+        click.echo(f"Using {language} template for command: {command_name}")
     else:
         # Editor mode - open editor for user to write code
         click.echo(f"Opening editor for command: {command_name}")
 
-        if language == "shell":
-            # For shell commands, open editor with shell template
-            shell_template = get_shell_command_template(command_name, shell, description)
+        # Generate initial template
+        initial_code = get_script_template(command_name, language, description, command_group, shell or "bash")
 
-            # Create temp file with shell template
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as tmp:
-                tmp.write(shell_template)
-                tmp_path = tmp.name
+        # Create temp file with template
+        with tempfile.NamedTemporaryFile(mode="w", suffix=extension, delete=False) as tmp:
+            tmp.write(initial_code)
+            tmp_path = tmp.name
 
-            try:
-                editor = os.environ.get("EDITOR", "vim")
-                result = subprocess.run([editor, tmp_path])
+        try:
+            editor = os.environ.get("EDITOR", "vim")
+            result = subprocess.run([editor, tmp_path])
 
-                if result.returncode != 0:
-                    click.echo("Editor exited with error. Command creation cancelled.")
-                    return 1
-
-                with open(tmp_path) as f:
-                    code = f.read()
-
-                if not code.strip():
-                    click.echo("No code provided. Command creation cancelled.")
-                    return 1
-            finally:
-                Path(tmp_path).unlink(missing_ok=True)
-        else:
-            # Python command - use existing editor function
-            editor_result = open_editor_for_command(command_name, command_group, description)
-            if editor_result is None:
-                click.echo("Command creation cancelled.")
+            if result.returncode != 0:
+                click.echo("Editor exited with error. Script creation cancelled.")
                 return 1
-            code = editor_result
 
-    # Save the command
-    saved_path = manager.save_command(
-        name=command_name,
-        code=code,
-        description=description,
-        group=command_group,
-        language=language,
-        shell=shell if language == "shell" else None,
-    )
+            with open(tmp_path, "r") as f:
+                code = f.read()
 
-    lang_display = f"{language}" if language == "python" else f"{language} ({shell})"
-    scope = "global" if is_global or not manager.is_local else "local"
+            if not code.strip():
+                click.echo("No code provided. Script creation cancelled.")
+                return 1
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+
+    # Save the script file
+    try:
+        with open(script_path, "w") as f:
+            f.write(code)
+
+        # Make executable for non-notebook scripts
+        if language != "ipynb":
+            import stat
+            script_path.chmod(script_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+        logger.info(f"Created script: {script_path}")
+    except Exception as e:
+        logger.error(f"Failed to save script: {e}")
+        click.echo(f"Failed to save script: {e}", err=True)
+        return 1
+
+    lang_display = f"{language}" if language != "shell" else f"{language} ({shell})"
+    scope = "global" if is_global else "local"
     scope_display = f"[cyan]{scope}[/cyan]" if scope == "global" else f"[yellow]{scope}[/yellow]"
 
-    logger.info(f"Created portable custom command: {command_name} ({lang_display}) [{scope}]")
+    logger.info(f"Created native script command: {command_name} ({lang_display}) [{scope}]")
     console.print(
-        f"[green]Created portable custom command: {command_name}[/green] [dim]({lang_display}) [Scope: {scope_display}][/dim]"
+        f"[green]Created native script command: {command_name}[/green] [dim]({lang_display}) [Scope: {scope_display}][/dim]"
     )
-    console.print(f"[dim]Saved to: {saved_path}[/dim]")
-    if manager.is_local and manager.git_root:
-        console.print(f"[dim]Git repository: {manager.git_root}[/dim]")
+    console.print(f"[dim]Saved to: {script_path}[/dim]")
     console.print(f"[dim]Group: {command_group}[/dim]")
-    console.print(f"[dim]Execute with: mcli {command_group} {command_name}[/dim]")
-    console.print("[dim]Command will be automatically loaded on next mcli startup[/dim]")
+    console.print(f"[dim]Execute with: mcli run {command_name}[/dim]")
+    console.print("[dim]Script will be automatically discovered on next mcli run[/dim]")
 
     if scope == "global":
         console.print(
-            f"[dim]You can share this command by copying {saved_path} to another machine's ~/.mcli/commands/ directory[/dim]"
+            f"[dim]Share by copying {script_path} to another machine's ~/.mcli/workflows/ directory[/dim]"
         )
     else:
         console.print(
-            "[dim]This command is local to this git repository. Use --global/-g to create global commands.[/dim]"
+            "[dim]This script is local to this git repository. Use --global/-g for global scripts.[/dim]"
         )
 
     return 0
@@ -1376,7 +1495,7 @@ def export_commands(target, script, standalone, output, is_global):
             return 1
 
         try:
-            with open(command_file) as f:
+            with open(command_file, "r") as f:
                 command_data = json.load(f)
         except Exception as e:
             console.print(f"[red]Failed to load command: {e}[/red]")
@@ -1476,7 +1595,7 @@ def import_commands(source, script, overwrite, name, group, description, interac
 
         # Read the script content
         try:
-            with open(source_path) as f:
+            with open(source_path, "r") as f:
                 code = f.read()
         except Exception as e:
             console.print(f"[red]Failed to read script: {e}[/red]")
@@ -1542,7 +1661,7 @@ def import_commands(source, script, overwrite, name, group, description, interac
                 subprocess.run([editor, tmp_path], check=True)
 
                 # Read edited content
-                with open(tmp_path) as f:
+                with open(tmp_path, "r") as f:
                     code = f.read()
             finally:
                 Path(tmp_path).unlink(missing_ok=True)
@@ -1640,7 +1759,7 @@ def edit_command(command_name, editor, is_global):
         return 1
 
     try:
-        with open(command_file) as f:
+        with open(command_file, "r") as f:
             command_data = json.load(f)
     except Exception as e:
         console.print(f"[red]Failed to load command: {e}[/red]")
@@ -1673,7 +1792,7 @@ def edit_command(command_name, editor, is_global):
             console.print(f"[yellow]Editor exited with code {result.returncode}[/yellow]")
 
         # Read edited content
-        with open(tmp_path) as f:
+        with open(tmp_path, "r") as f:
             new_code = f.read()
 
         # Check if code changed
@@ -1813,3 +1932,12 @@ def app():
 
         click.echo(traceback.format_exc(), err=True)
         return 1
+
+
+# Add migrate command for JSON to script migration
+try:
+    from mcli.app.migrate_cmd import migrate
+
+    workflow.add_command(migrate)
+except ImportError as e:
+    logger.debug(f"Migrate command not available: {e}")

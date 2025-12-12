@@ -2,12 +2,15 @@
 Top-level new command for MCLI.
 
 This module provides the `mcli new` command for creating new portable
-workflow commands saved to ~/.mcli/commands/.
+workflow commands as native script files in ~/.mcli/workflows/.
 """
 
+import json
 import os
 import re
+import stat
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Optional
@@ -15,53 +18,233 @@ from typing import Optional
 import click
 from rich.prompt import Prompt
 
-from mcli.lib.custom_commands import get_command_manager
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.templates import CommandTemplates, EditorTemplates
+from mcli.lib.paths import get_custom_commands_dir, get_git_root, is_git_repository
+from mcli.lib.script_loader import ScriptLoader
 from mcli.lib.ui.styling import console
 
 logger = get_logger(__name__)
 
+# File extensions for each language
+LANGUAGE_EXTENSIONS = {
+    "python": ".py",
+    "shell": ".sh",
+    "javascript": ".js",
+    "typescript": ".ts",
+    "ipynb": ".ipynb",
+}
 
-def get_command_template(name: str, group: Optional[str] = None) -> str:
-    """Generate template code for a new command."""
-    if group:
-        # Template for a command in a group using Click
-        return CommandTemplates.PYTHON_GROUP.format(name=name, group=group)
-    else:
-        # Template for a command directly under workflow using Click
-        return CommandTemplates.PYTHON_STANDALONE.format(name=name, name_cap=name.capitalize())
+
+def get_python_template(name: str, description: str, group: str, version: str = "1.0.0") -> str:
+    """Generate template code for a Python command."""
+    return f'''#!/usr/bin/env python3
+# @description: {description}
+# @version: {version}
+# @group: {group}
+
+"""
+{name} command for mcli.
+"""
+import click
+from typing import Optional, List
+from pathlib import Path
+from mcli.lib.logger.logger import get_logger
+
+logger = get_logger()
 
 
-def get_shell_command_template(name: str, shell: str = "bash", description: str = "") -> str:
+@click.command(name="{name}")
+@click.argument("name", default="World")
+def {name}_command(name: str):
+    """
+    {description}
+    """
+    logger.info(f"Hello, {{name}}! This is the {name} command.")
+    click.echo(f"Hello, {{name}}! This is the {name} command.")
+'''
+
+
+def get_shell_template(
+    name: str, description: str, group: str, shell: str = "bash", version: str = "1.0.0"
+) -> str:
     """Generate template shell script for a new command."""
-    return CommandTemplates.SHELL.format(
-        name=name,
-        shell=shell,
-        description=description or "Shell workflow command",
-    )
+    return f"""#!/usr/bin/env {shell}
+# @description: {description}
+# @version: {version}
+# @group: {group}
+# @shell: {shell}
+
+# {name} - {description}
+#
+# This is a shell-based MCLI workflow command.
+# Arguments are passed as positional parameters: $1, $2, $3, etc.
+# The command name is available in: $MCLI_COMMAND
+
+set -euo pipefail  # Exit on error, undefined variables, and pipe failures
+
+# Command logic
+echo "Hello from {name} shell command!"
+echo "Command: $MCLI_COMMAND"
+
+# Example: Access arguments
+if [ $# -gt 0 ]; then
+    echo "Arguments: $@"
+    for arg in "$@"; do
+        echo "  - $arg"
+    done
+else
+    echo "No arguments provided"
+fi
+
+# Exit successfully
+exit 0
+"""
 
 
-def open_editor_for_command(
-    command_name: str, command_group: str, description: str
+def get_javascript_template(name: str, description: str, group: str, version: str = "1.0.0") -> str:
+    """Generate template JavaScript code for a new command."""
+    return f"""#!/usr/bin/env bun
+// @description: {description}
+// @version: {version}
+// @group: {group}
+
+/**
+ * {name} - {description}
+ *
+ * This is a JavaScript MCLI workflow command executed with Bun.
+ * Arguments are available in Bun.argv (first two are bun and script path).
+ * The command name is available in process.env.MCLI_COMMAND
+ */
+
+const args = Bun.argv.slice(2);
+
+console.log(`Hello from {name} JavaScript command!`);
+console.log(`Command: ${{process.env.MCLI_COMMAND}}`);
+
+if (args.length > 0) {{
+    console.log(`Arguments: ${{args.join(', ')}}`);
+    args.forEach((arg, i) => console.log(`  ${{i + 1}}. ${{arg}}`));
+}} else {{
+    console.log('No arguments provided');
+}}
+"""
+
+
+def get_typescript_template(name: str, description: str, group: str, version: str = "1.0.0") -> str:
+    """Generate template TypeScript code for a new command."""
+    return f"""#!/usr/bin/env bun
+// @description: {description}
+// @version: {version}
+// @group: {group}
+
+/**
+ * {name} - {description}
+ *
+ * This is a TypeScript MCLI workflow command executed with Bun.
+ * Arguments are available in Bun.argv (first two are bun and script path).
+ * The command name is available in process.env.MCLI_COMMAND
+ */
+
+const args: string[] = Bun.argv.slice(2);
+const commandName: string = process.env.MCLI_COMMAND || '{name}';
+
+console.log(`Hello from {name} TypeScript command!`);
+console.log(`Command: ${{commandName}}`);
+
+if (args.length > 0) {{
+    console.log(`Arguments: ${{args.join(', ')}}`);
+    args.forEach((arg: string, i: number) => console.log(`  ${{i + 1}}. ${{arg}}`));
+}} else {{
+    console.log('No arguments provided');
+}}
+"""
+
+
+def get_ipynb_template(name: str, description: str, group: str, version: str = "1.0.0") -> str:
+    """Generate template Jupyter notebook for a new command."""
+    notebook = {
+        "cells": [
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    f"# {name}\n",
+                    "\n",
+                    f"{description}\n",
+                    "\n",
+                    "This notebook can be executed as an MCLI workflow command using papermill.\n",
+                    "Parameters can be passed via `mcli run {name} -p key value`.\n",
+                ],
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {
+                    "tags": ["parameters"],
+                },
+                "outputs": [],
+                "source": [
+                    "# Parameters cell - values can be overridden at runtime\n",
+                    "name = 'World'\n",
+                    "verbose = False\n",
+                ],
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "outputs": [],
+                "source": [
+                    "# Main logic\n",
+                    f"print(f'Hello from {name} notebook!')\n",
+                    "print(f'name parameter: {name}')\n",
+                    "\n",
+                    "if verbose:\n",
+                    "    print('Verbose mode enabled')\n",
+                ],
+            },
+        ],
+        "metadata": {
+            "mcli": {
+                "description": description,
+                "version": version,
+                "group": group,
+            },
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3",
+            },
+            "language_info": {
+                "name": "python",
+                "version": "3.11.0",
+            },
+        },
+        "nbformat": 4,
+        "nbformat_minor": 5,
+    }
+    return json.dumps(notebook, indent=2)
+
+
+def open_editor_for_script(
+    script_path: Path,
+    template_content: str,
+    language: str,
 ) -> Optional[str]:
     """
-    Open the user's default editor to allow them to write command logic.
+    Open the user's default editor to allow them to write script code.
 
     Args:
-        command_name: Name of the command
-        command_group: Group for the command
-        description: Description of the command
+        script_path: Path where the script will be saved
+        template_content: Initial template content
+        language: Script language
 
     Returns:
-        The Python code written by the user, or None if cancelled
+        The code written by the user, or None if cancelled
     """
-    import sys
-
     # Get the user's default editor
     editor = os.environ.get("EDITOR")
     if not editor:
-        # Try common editors in order of preference
         for common_editor in ["vim", "nano", "code", "subl", "atom", "emacs"]:
             if subprocess.run(["which", common_editor], capture_output=True).returncode == 0:
                 editor = common_editor
@@ -73,102 +256,41 @@ def open_editor_for_command(
         )
         return None
 
-    # Create a temporary file with the template
-    template = get_command_template(command_name, command_group)
+    # Check if we're in an interactive environment
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        click.echo(
+            "Editor requires an interactive terminal. Use --template flag for non-interactive mode."
+        )
+        return None
 
-    # Extract the code portion from the template (skip the module docstring)
-    # We need to find the closing """ of the module docstring (on its own line)
-    template_code = template
-    if template.lstrip().startswith('"""'):
-        lines = template.split("\n")
-        for i, line in enumerate(lines):
-            if i == 0:
-                continue
-            if line.strip() == '"""':
-                # Found the end of module docstring, take everything after
-                template_code = "\n".join(lines[i + 1 :]).lstrip("\n")
-                break
+    # Determine file suffix
+    suffix = LANGUAGE_EXTENSIONS.get(language, ".txt")
 
-    # Add helpful comments to the template
-    enhanced_template = EditorTemplates.EDITOR_PYTHON.format(
-        name=command_name,
-        group=command_group,
-        description=description,
-        template_code=template_code,
-    )
-
-    # Create temporary file
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as temp_file:
-        temp_file.write(enhanced_template)
+    # Create temporary file with template
+    with tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False) as temp_file:
+        temp_file.write(template_content)
         temp_file_path = temp_file.name
 
     try:
-        # Check if we're in an interactive environment
-        if not sys.stdin.isatty() or not sys.stdout.isatty():
-            click.echo(
-                "Editor requires an interactive terminal. Use --template flag for non-interactive mode."
-            )
-            return None
+        click.echo(f"Opening {editor} to edit {language} script...")
+        click.echo("Write your code and save the file to continue.")
+        click.echo("Press Ctrl+C to cancel.")
 
-        # Open editor
-        click.echo(f"Opening {editor} to edit command logic...")
-        click.echo("Write your Python command logic and save the file to continue.")
-        click.echo("Press Ctrl+C to cancel command creation.")
-
-        # Run the editor
         result = subprocess.run([editor, temp_file_path], check=False)
 
         if result.returncode != 0:
             click.echo("Editor exited with error. Command creation cancelled.")
             return None
 
-        # Read the edited content
-        with open(temp_file_path) as f:
+        with open(temp_file_path, "r") as f:
             edited_code = f.read()
 
-        # Check if the file was actually edited (not just the template)
-        if edited_code.strip() == enhanced_template.strip():
-            click.echo("No changes detected. Command creation cancelled.")
+        if not edited_code.strip():
+            click.echo("No code provided. Command creation cancelled.")
             return None
 
-        # Extract the actual command code (remove only the instruction docstring)
-        # The instruction docstring is at the top and contains "Instructions:"
-        final_code = edited_code
-
-        # Remove the instruction docstring if present (triple-quoted string at the start)
-        # The docstring may contain nested """ (in examples), so we need to find the
-        # closing """ that is on its own line (the actual end of the docstring)
-        if final_code.lstrip().startswith('"""'):
-            lines = final_code.split("\n")
-            docstring_end_line = None
-
-            for i, line in enumerate(lines):
-                if i == 0:
-                    continue
-                # Look for a line that is just """ (possibly with whitespace)
-                if line.strip() == '"""':
-                    docstring_end_line = i
-                    break
-
-            if docstring_end_line is not None:
-                # Check if the docstring contains instruction markers
-                docstring_lines = lines[: docstring_end_line + 1]
-                docstring_content = "\n".join(docstring_lines)
-                if (
-                    "Instructions:" in docstring_content
-                    or "Example Click command" in docstring_content
-                ):
-                    # Remove the instruction docstring
-                    final_code = "\n".join(lines[docstring_end_line + 1 :]).lstrip("\n")
-
-        final_code = final_code.strip()
-
-        if not final_code:
-            click.echo("No command code found. Command creation cancelled.")
-            return None
-
-        click.echo("Command code captured successfully!")
-        return final_code
+        click.echo("Script code captured successfully!")
+        return edited_code
 
     except KeyboardInterrupt:
         click.echo("\nCommand creation cancelled by user.")
@@ -177,17 +299,56 @@ def open_editor_for_command(
         click.echo(f"Error opening editor: {e}")
         return None
     finally:
-        # Clean up temporary file
-        try:  # noqa: SIM105
-            os.unlink(temp_file_path)
-        except OSError:
-            pass
+        Path(temp_file_path).unlink(missing_ok=True)
+
+
+def save_script(
+    workflows_dir: Path,
+    name: str,
+    code: str,
+    language: str,
+) -> Path:
+    """
+    Save script code to a file.
+
+    Args:
+        workflows_dir: Directory to save the script
+        name: Command name
+        code: Script code content
+        language: Script language
+
+    Returns:
+        Path to the saved script file
+    """
+    extension = LANGUAGE_EXTENSIONS.get(language, ".txt")
+    script_path = workflows_dir / f"{name}{extension}"
+
+    # Ensure directory exists
+    workflows_dir.mkdir(parents=True, exist_ok=True)
+
+    # Write the script
+    with open(script_path, "w") as f:
+        f.write(code)
+
+    # Make executable for shell/python scripts
+    if language in ("python", "shell"):
+        script_path.chmod(script_path.stat().st_mode | stat.S_IXUSR)
+
+    return script_path
 
 
 @click.command("new")
 @click.argument("command_name", required=True)
+@click.option(
+    "--language",
+    "-l",
+    type=click.Choice(["python", "shell", "javascript", "typescript", "ipynb"], case_sensitive=False),
+    required=True,
+    help="Script language (required): python, shell, javascript, typescript, or ipynb",
+)
 @click.option("--group", help="Command group (defaults to 'workflows')", default="workflows")
-@click.option("--description", "-d", help="Description for the command", default="Custom command")
+@click.option("--description", "-d", help="Description for the command", default="")
+@click.option("--version", "-v", "cmd_version", help="Initial version", default="1.0.0")
 @click.option(
     "--template",
     "-t",
@@ -195,178 +356,177 @@ def open_editor_for_command(
     help="Use template mode (skip editor and use predefined template)",
 )
 @click.option(
-    "--language",
-    "-l",
-    type=click.Choice(["python", "shell"], case_sensitive=False),
-    default="python",
-    help="Command language (python or shell)",
-)
-@click.option(
     "--shell",
     "-s",
     type=click.Choice(["bash", "zsh", "fish", "sh"], case_sensitive=False),
-    help="Shell type for shell commands (defaults to $SHELL)",
+    help="Shell type for shell scripts (defaults to $SHELL)",
 )
 @click.option(
     "--global",
     "-g",
     "is_global",
     is_flag=True,
-    help="Add to global commands (~/.mcli/commands/) instead of local (.mcli/commands/)",
+    help="Add to global workflows (~/.mcli/workflows/) instead of local (.mcli/workflows/)",
 )
-def new(command_name, group, description, template, language, shell, is_global):
+def new(command_name, language, group, description, cmd_version, template, shell, is_global):
     """
-    Create a new workflow command.
+    Create a new workflow command as a native script file.
 
-    This command will open your default editor to allow you to write Python or shell
-    logic for your command. The editor will be opened with a template that you can modify.
+    LANGUAGE is required: python, shell, javascript, typescript, or ipynb
 
-    Commands are automatically nested under the 'workflows' group by default,
-    making them portable and persistent across updates.
+    This command will open your default editor to allow you to write your
+    script. The script will be saved directly as a native file (.py, .sh, .js, .ts, or .ipynb).
+
+    Commands are automatically nested under the 'workflows' group by default.
 
     Examples:
-        # Python command (default)
-        mcli new my_command
-        mcli new analytics --group data
-        mcli new quick_cmd --template
 
-        # Shell command
-        mcli new backup-db --language shell
-        mcli new deploy --language shell --shell bash
-        mcli new quick-sh -l shell -t  # Template mode
+        mcli new my_command -l python
+
+        mcli new backup_db -l shell
+
+        mcli new data_fetch -l javascript
+
+        mcli new processor -l typescript
+
+        mcli new analysis -l ipynb
+
+        mcli new quick_cmd -l python -t  # Template mode (no editor)
     """
+    # Normalize command name
     command_name = command_name.lower().replace("-", "_")
 
     # Validate command name
     if not re.match(r"^[a-z][a-z0-9_]*$", command_name):
         logger.error(
-            f"Invalid command name: {command_name}. Use lowercase letters, numbers, and underscores (starting with a letter)."
+            f"Invalid command name: {command_name}. "
+            "Use lowercase letters, numbers, and underscores (starting with a letter)."
         )
         click.echo(
-            f"Invalid command name: {command_name}. Use lowercase letters, numbers, and underscores (starting with a letter).",
+            f"Invalid command name: {command_name}. "
+            "Use lowercase letters, numbers, and underscores (starting with a letter).",
             err=True,
         )
         return 1
 
-    # Validate group name if provided
+    # Validate and normalize group name
     if group:
         command_group = group.lower().replace("-", "_")
         if not re.match(r"^[a-z][a-z0-9_]*$", command_group):
             logger.error(
-                f"Invalid group name: {command_group}. Use lowercase letters, numbers, and underscores (starting with a letter)."
+                f"Invalid group name: {command_group}. "
+                "Use lowercase letters, numbers, and underscores (starting with a letter)."
             )
             click.echo(
-                f"Invalid group name: {command_group}. Use lowercase letters, numbers, and underscores (starting with a letter).",
+                f"Invalid group name: {command_group}. "
+                "Use lowercase letters, numbers, and underscores (starting with a letter).",
                 err=True,
             )
             return 1
     else:
-        command_group = "workflows"  # Default to workflows group
+        command_group = "workflows"
 
-    # Get the command manager
-    manager = get_command_manager(global_mode=is_global)
+    # Normalize language
+    language = language.lower()
+
+    # Get workflows directory
+    workflows_dir = get_custom_commands_dir(global_mode=is_global)
 
     # Check if command already exists
-    command_file = manager.commands_dir / f"{command_name}.json"
-    if command_file.exists():
-        logger.warning(f"Custom command already exists: {command_name}")
+    extension = LANGUAGE_EXTENSIONS.get(language, ".txt")
+    script_path = workflows_dir / f"{command_name}{extension}"
+
+    if script_path.exists():
+        logger.warning(f"Script already exists: {script_path}")
         should_override = Prompt.ask(
-            "Command already exists. Override?", choices=["y", "n"], default="n"
+            "Script already exists. Override?", choices=["y", "n"], default="n"
         )
         if should_override.lower() != "y":
             logger.info("Command creation aborted.")
             click.echo("Command creation aborted.")
             return 1
 
-    # Normalize language
-    language = language.lower()
+    # Set default description if not provided
+    if not description:
+        description = f"{command_name.replace('_', ' ').title()} command"
 
     # Determine shell type for shell commands
-    if language == "shell":  # noqa: SIM102
-        if not shell:
-            # Default to $SHELL environment variable or bash
-            shell_env = os.environ.get("SHELL", "/bin/bash")
-            shell = shell_env.split("/")[-1]
-            click.echo(f"Using shell: {shell} (from $SHELL environment variable)")
+    if language == "shell" and not shell:
+        shell_env = os.environ.get("SHELL", "/bin/bash")
+        shell = shell_env.split("/")[-1]
+        click.echo(f"Using shell: {shell} (from $SHELL environment variable)")
 
-    # Generate command code
-    if template:
-        # Use template mode - generate and save directly
-        if language == "shell":
-            code = get_shell_command_template(command_name, shell, description)
-            click.echo(f"Using shell template for command: {command_name}")
-        else:
-            code = get_command_template(command_name, command_group)
-            click.echo(f"Using Python template for command: {command_name}")
+    # Generate template code based on language
+    if language == "python":
+        template_code = get_python_template(command_name, description, command_group, cmd_version)
+    elif language == "shell":
+        template_code = get_shell_template(
+            command_name, description, command_group, shell or "bash", cmd_version
+        )
+    elif language == "javascript":
+        template_code = get_javascript_template(command_name, description, command_group, cmd_version)
+    elif language == "typescript":
+        template_code = get_typescript_template(command_name, description, command_group, cmd_version)
+    elif language == "ipynb":
+        template_code = get_ipynb_template(command_name, description, command_group, cmd_version)
     else:
-        # Editor mode - open editor for user to write code
-        click.echo(f"Opening editor for command: {command_name}")
+        click.echo(f"Unsupported language: {language}", err=True)
+        return 1
 
-        if language == "shell":
-            # For shell commands, open editor with shell template
-            shell_template = get_shell_command_template(command_name, shell, description)
+    # Get final code
+    if template:
+        # Use template mode - save directly
+        code = template_code
+        click.echo(f"Using {language} template for command: {command_name}")
+    else:
+        # Editor mode
+        click.echo(f"Opening editor for {language} command: {command_name}")
+        code = open_editor_for_script(script_path, template_code, language)
+        if code is None:
+            click.echo("Command creation cancelled.")
+            return 1
 
-            # Create temp file with shell template
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".sh", delete=False) as tmp:
-                tmp.write(shell_template)
-                tmp_path = tmp.name
+    # Save the script
+    saved_path = save_script(workflows_dir, command_name, code, language)
 
-            try:
-                editor = os.environ.get("EDITOR", "vim")
-                result = subprocess.run([editor, tmp_path])
+    # Update lockfile
+    try:
+        loader = ScriptLoader(workflows_dir)
+        loader.save_lockfile()
+    except Exception as e:
+        logger.warning(f"Failed to update lockfile: {e}")
 
-                if result.returncode != 0:
-                    click.echo("Editor exited with error. Command creation cancelled.")
-                    return 1
+    # Display success message
+    is_local = not is_global and is_git_repository()
+    git_root = get_git_root() if is_local else None
+    scope = "local" if is_local else "global"
+    scope_display = f"[yellow]{scope}[/yellow]" if is_local else f"[cyan]{scope}[/cyan]"
 
-                with open(tmp_path) as f:
-                    code = f.read()
+    lang_display = language
+    if language == "shell" and shell:
+        lang_display = f"{language} ({shell})"
 
-                if not code.strip():
-                    click.echo("No code provided. Command creation cancelled.")
-                    return 1
-            finally:
-                Path(tmp_path).unlink(missing_ok=True)
-        else:
-            # Python command - use existing editor function
-            editor_result = open_editor_for_command(command_name, command_group, description)
-            if editor_result is None:
-                click.echo("Command creation cancelled.")
-                return 1
-            code = editor_result
-
-    # Save the command
-    saved_path = manager.save_command(
-        name=command_name,
-        code=code,
-        description=description,
-        group=command_group,
-        language=language,
-        shell=shell if language == "shell" else None,
-    )
-
-    lang_display = f"{language}" if language == "python" else f"{language} ({shell})"
-    scope = "global" if is_global or not manager.is_local else "local"
-    scope_display = f"[cyan]{scope}[/cyan]" if scope == "global" else f"[yellow]{scope}[/yellow]"
-
-    logger.info(f"Created portable custom command: {command_name} ({lang_display}) [{scope}]")
+    logger.info(f"Created workflow script: {command_name} ({lang_display}) [{scope}]")
     console.print(
-        f"[green]Created portable custom command: {command_name}[/green] [dim]({lang_display}) [Scope: {scope_display}][/dim]"
+        f"[green]Created workflow script: {command_name}[/green] "
+        f"[dim]({lang_display}) [Scope: {scope_display}][/dim]"
     )
     console.print(f"[dim]Saved to: {saved_path}[/dim]")
-    if manager.is_local and manager.git_root:
-        console.print(f"[dim]Git repository: {manager.git_root}[/dim]")
+    if is_local and git_root:
+        console.print(f"[dim]Git repository: {git_root}[/dim]")
     console.print(f"[dim]Group: {command_group}[/dim]")
-    console.print(f"[dim]Execute with: mcli {command_group} {command_name}[/dim]")
-    console.print("[dim]Command will be automatically loaded on next mcli startup[/dim]")
+    console.print(f"[dim]Execute with: mcli run {command_name}[/dim]")
+    console.print("[dim]Or with global flag: mcli run -g {command_name}[/dim]")
 
     if scope == "global":
         console.print(
-            f"[dim]You can share this command by copying {saved_path} to another machine's ~/.mcli/commands/ directory[/dim]"
+            f"[dim]You can share this command by copying {saved_path} to another machine's "
+            "~/.mcli/workflows/ directory[/dim]"
         )
     else:
         console.print(
-            "[dim]This command is local to this git repository. Use --global/-g to create global commands.[/dim]"
+            "[dim]This command is local to this git repository. "
+            "Use --global/-g to create global commands.[/dim]"
         )
 
     return 0

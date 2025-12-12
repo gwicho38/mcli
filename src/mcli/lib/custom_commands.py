@@ -1,5 +1,15 @@
 """
-Custom command storage and loading for mcli.
+Custom command storage and loading for mcli (Legacy JSON Format).
+
+DEPRECATION NOTICE:
+This module handles legacy JSON-based commands. New commands should be created
+as native script files (.py, .sh, .js, .ts, .ipynb) using `mcli new -l <language>`.
+
+The new native script system is in `mcli.lib.script_loader.ScriptLoader`.
+
+Migration:
+- Use `mcli workflow migrate` to convert JSON files to native scripts
+- JSON files will continue to work but are deprecated
 
 This module provides functionality to store user-created commands in a portable
 format in ~/.mcli/commands/ and automatically load them at startup.
@@ -634,9 +644,34 @@ def get_command_manager(global_mode: bool = False) -> CustomCommandManager:
             return _global_command_manager
 
 
+def has_legacy_json_commands(global_mode: bool = False) -> bool:
+    """
+    Check if there are legacy JSON command files that need migration.
+
+    Args:
+        global_mode: If True, check global directory. If False, check local.
+
+    Returns:
+        True if there are JSON command files, False otherwise
+    """
+    commands_dir = get_custom_commands_dir(global_mode=global_mode)
+    if not commands_dir.exists():
+        return False
+
+    for json_file in commands_dir.glob("*.json"):
+        # Skip lockfiles
+        if json_file.name in ("commands.lock.json", "workflows.lock.json", ".sync_cache.json"):
+            continue
+        return True
+    return False
+
+
 def load_custom_commands(target_group: click.Group) -> int:
     """
     Load all custom commands and register them with the target Click group.
+
+    DEPRECATED: This function loads legacy JSON commands. New code should use
+    ScriptLoader.register_all_commands() for native script files.
 
     Args:
         target_group: Click group to register commands with
@@ -646,6 +681,15 @@ def load_custom_commands(target_group: click.Group) -> int:
     """
     manager = get_command_manager()
     commands = manager.load_all_commands()
+
+    if not commands:
+        return 0
+
+    # Log deprecation warning if JSON commands are found
+    logger.debug(
+        "Loading legacy JSON commands. Consider migrating to native scripts "
+        "with 'mcli workflow migrate'"
+    )
 
     loaded_count = 0
     for command_data in commands:
@@ -700,6 +744,6 @@ def load_custom_commands(target_group: click.Group) -> int:
                 loaded_count += 1
 
     if loaded_count > 0:
-        logger.info(f"Loaded {loaded_count} custom commands")
+        logger.info(f"Loaded {loaded_count} legacy JSON commands")
 
     return loaded_count
