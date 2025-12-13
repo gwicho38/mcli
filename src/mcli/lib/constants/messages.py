@@ -822,14 +822,20 @@ class SystemIntegrationMessages:
 
 
 class SyncMessages:
-    """Script synchronization command messages."""
+    """Script synchronization command messages.
 
-    # Status messages
-    SYNCING_SCRIPTS = "Syncing scripts in {path}..."
-    SYNCED_SCRIPTS = "Synced {count} script(s) to JSON"
+    DEPRECATION NOTE (v7.20.0):
+    The script-to-JSON synchronization system has been deprecated.
+    Scripts are now loaded directly using ScriptLoader.
+    Legacy messages are kept for backward compatibility.
+    """
+
+    # Legacy status messages (deprecated - kept for backward compatibility)
+    SYNCING_SCRIPTS = "[dim](deprecated)[/dim] Syncing scripts in {path}..."
+    SYNCED_SCRIPTS = "[dim](deprecated)[/dim] Synced {count} script(s) to JSON"
     NO_SCRIPTS_NEEDED_SYNCING = "No scripts needed syncing"
-    SYNCING_SCRIPT = "Syncing {path}..."
-    GENERATED_JSON = "Generated JSON: {path}"
+    SYNCING_SCRIPT = "[dim](deprecated)[/dim] Syncing {path}..."
+    GENERATED_JSON = "[dim](deprecated)[/dim] Generated JSON: {path}"
     FAILED_TO_GENERATE_JSON = "Failed to generate JSON for {path}"
 
     # Status display
@@ -850,7 +856,7 @@ class SyncMessages:
     REMOVED_ORPHANED = "Removed {count} orphaned JSON file(s)"
     NO_FILES_REMOVED = "No files were removed"
 
-    # Watch mode
+    # Watch mode (deprecated)
     STARTING_WATCHER = "Starting file watcher for {path}"
     PRESS_CTRL_C = "Press Ctrl+C to stop\n"
     FAILED_START_WATCHER = "Failed to start file watcher"

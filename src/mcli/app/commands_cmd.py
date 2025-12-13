@@ -1129,7 +1129,7 @@ Instructions:
 1. Write your Python command logic below
 2. Use Click decorators for command definition
 3. Save and close the editor to create the command
-4. The command will be automatically converted to JSON format
+4. The command will be saved as a native script file
 
 Example Click command structure:
 @click.command()
@@ -1468,7 +1468,10 @@ def export_commands(target, script, standalone, output, is_global):
     """
     Export custom commands to JSON file or export a single command to Python script.
 
-    Default behavior (no flags): Export all commands to JSON
+    NOTE: JSON export is for legacy commands only. New commands are stored as
+    native scripts and don't need export - they're already in script format.
+
+    Default behavior (no flags): Export all legacy JSON commands
     With --script/-s: Export a single command to Python script
 
     Examples:
@@ -1573,8 +1576,11 @@ def import_commands(source, script, overwrite, name, group, description, interac
     """
     Import custom commands from JSON file or import a Python script as a command.
 
-    Default behavior (no flags): Import from JSON file
-    With --script/-s: Import a Python script as a command
+    NOTE: For new commands, use `mcli new -l python` to create native scripts instead.
+    JSON import creates legacy JSON commands. Consider migrating with `mcli workflow migrate`.
+
+    Default behavior (no flags): Import from legacy JSON file
+    With --script/-s: Import a script as a legacy JSON command
 
     Examples:
         mcli commands import commands-export.json        # Import to local (if in git repo)
@@ -1844,10 +1850,16 @@ def edit_command(command_name, editor, is_global):
 )
 def extract_workflow_commands(output):
     """
-    Extract workflow commands from Python modules to JSON format.
+    [DEPRECATED] Extract workflow commands from Python modules to JSON format.
 
-    This command helps migrate existing workflow commands to portable JSON format.
+    This command is deprecated. Use `mcli new -l python` to create native scripts instead.
+    The JSON format is legacy; native scripts are the new standard as of v7.20.0.
     """
+    console.print(
+        "[yellow][bold]DEPRECATED:[/bold] This command exports to legacy JSON format.\n"
+        "Use `mcli new -l python` to create native script commands instead.[/yellow]\n"
+    )
+
     output_file = Path(output) if output else Path("workflow-commands.json")
 
     workflow_commands = []
