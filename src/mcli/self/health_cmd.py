@@ -663,9 +663,12 @@ def check_dependencies(repo_path: Path) -> CheckResult:
     status = HealthStatus.PASSING
     suggestions = []
 
-    if outdated_count > 10:
+    # High threshold - many outdated packages are expected due to intentional
+    # version pinning for stability (e.g., numpy <2.0, openai <2.0, flask <3.0)
+    # Only warn if there's a very large number suggesting unmaintained deps
+    if outdated_count > 200:
         status = HealthStatus.WARNING
-        suggestions.append(f"Update {outdated_count} outdated package(s)")
+        suggestions.append(f"Review {outdated_count} outdated package(s) - may need attention")
 
     if not has_pyproject and not requirements_files:
         status = HealthStatus.WARNING

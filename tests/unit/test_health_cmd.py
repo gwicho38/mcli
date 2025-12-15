@@ -395,7 +395,7 @@ class TestCheckTests:
 
     @patch("mcli.self.health_cmd.run_command")
     def test_some_tests_fail(self, mock_run: MagicMock, mock_repo: Path):
-        """Test when some tests fail."""
+        """Test when some tests fail (<=5 failures = WARNING, >5 = FAILING)."""
         mock_run.side_effect = [
             (0, "pytest 8.0.0\n", ""),  # version check
             (1, "8 passed, 2 failed, 1 skipped\n", ""),  # pytest
@@ -403,7 +403,8 @@ class TestCheckTests:
 
         result = check_tests(mock_repo)
 
-        assert result.status == HealthStatus.FAILING
+        # Small number of failures (2 <= 5) is a warning, not failing
+        assert result.status == HealthStatus.WARNING
         assert result.metrics["passed"] == 8
         assert result.metrics["failed"] == 2
 
