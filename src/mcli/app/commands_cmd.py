@@ -40,7 +40,14 @@ LANGUAGE_EXTENSIONS = {
 }
 
 
-def get_script_template(name: str, language: str, description: str, group: str, shell: str = "bash", version: str = "1.0.0") -> str:
+def get_script_template(
+    name: str,
+    language: str,
+    description: str,
+    group: str,
+    shell: str = "bash",
+    version: str = "1.0.0",
+) -> str:
     """Generate template code for a script in any supported language."""
     if language == "python":
         return f'''#!/usr/bin/env python3
@@ -119,16 +126,13 @@ if (args.length > 0) {{
 """
     elif language == "ipynb":
         import json as json_module
+
         notebook = {
             "cells": [
                 {
                     "cell_type": "markdown",
                     "metadata": {},
-                    "source": [
-                        f"# {name}\n",
-                        "\n",
-                        description
-                    ]
+                    "source": [f"# {name}\n", "\n", description],
                 },
                 {
                     "cell_type": "code",
@@ -137,25 +141,21 @@ if (args.length > 0) {{
                     "outputs": [],
                     "source": [
                         "# Your notebook code here\n",
-                        f"print('Hello from {name} notebook!')"
-                    ]
-                }
+                        f"print('Hello from {name} notebook!')",
+                    ],
+                },
             ],
             "metadata": {
                 "mcli": {
                     "description": description,
                     "version": version,
                     "group": group,
-                    "name": name
+                    "name": name,
                 },
-                "kernelspec": {
-                    "display_name": "Python 3",
-                    "language": "python",
-                    "name": "python3"
-                }
+                "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
             },
             "nbformat": 4,
-            "nbformat_minor": 4
+            "nbformat_minor": 4,
         }
         return json_module.dumps(notebook, indent=2)
     else:
@@ -1246,7 +1246,9 @@ logger = get_logger()
 @click.option(
     "--language",
     "-l",
-    type=click.Choice(["python", "shell", "javascript", "typescript", "ipynb"], case_sensitive=False),
+    type=click.Choice(
+        ["python", "shell", "javascript", "typescript", "ipynb"], case_sensitive=False
+    ),
     required=True,
     help="Script language (required): python, shell, javascript, typescript, or ipynb",
 )
@@ -1345,14 +1347,18 @@ def add_command(command_name, group, description, template, language, shell, is_
     # Generate script code
     if template:
         # Use template mode - generate and save directly
-        code = get_script_template(command_name, language, description, command_group, shell or "bash")
+        code = get_script_template(
+            command_name, language, description, command_group, shell or "bash"
+        )
         click.echo(f"Using {language} template for command: {command_name}")
     else:
         # Editor mode - open editor for user to write code
         click.echo(f"Opening editor for command: {command_name}")
 
         # Generate initial template
-        initial_code = get_script_template(command_name, language, description, command_group, shell or "bash")
+        initial_code = get_script_template(
+            command_name, language, description, command_group, shell or "bash"
+        )
 
         # Create temp file with template
         with tempfile.NamedTemporaryFile(mode="w", suffix=extension, delete=False) as tmp:
@@ -1384,7 +1390,10 @@ def add_command(command_name, group, description, template, language, shell, is_
         # Make executable for non-notebook scripts
         if language != "ipynb":
             import stat
-            script_path.chmod(script_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+            script_path.chmod(
+                script_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            )
 
         logger.info(f"Created script: {script_path}")
     except Exception as e:

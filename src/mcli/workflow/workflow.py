@@ -112,7 +112,9 @@ class ScopedWorkflowsGroup(click.Group):
                 auto_detected_commands.append("npm")
                 logger.debug("Auto-detected package.json in current directory")
 
-        return sorted(set(script_commands + legacy_commands + builtin_commands + auto_detected_commands))
+        return sorted(
+            set(script_commands + legacy_commands + builtin_commands + auto_detected_commands)
+        )
 
     def get_command(self, ctx, cmd_name):
         """Get a command by name, loading from appropriate scope."""

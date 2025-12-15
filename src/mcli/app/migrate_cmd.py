@@ -226,9 +226,7 @@ def migrate():
 
 
 @migrate.command("status")
-@click.option(
-    "--global", "-g", "is_global", is_flag=True, help="Check global workflows"
-)
+@click.option("--global", "-g", "is_global", is_flag=True, help="Check global workflows")
 def migration_status(is_global):
     """Show migration status - JSON files that can be migrated."""
     workflows_dir = get_custom_commands_dir(global_mode=is_global)
@@ -255,7 +253,11 @@ def migration_status(is_global):
                 data.get("name", json_path.stem),
                 data.get("language", "python"),
                 data.get("group", "-"),
-                (data.get("description", "")[:50] + "...") if len(data.get("description", "")) > 50 else data.get("description", "-"),
+                (
+                    (data.get("description", "")[:50] + "...")
+                    if len(data.get("description", "")) > 50
+                    else data.get("description", "-")
+                ),
             )
         except Exception:
             table.add_row(json_path.stem, "?", "?", "Failed to read")
@@ -266,15 +268,9 @@ def migration_status(is_global):
 
 
 @migrate.command("run")
-@click.option(
-    "--global", "-g", "is_global", is_flag=True, help="Migrate global workflows"
-)
-@click.option(
-    "--backup/--no-backup", default=True, help="Backup JSON files (default: backup)"
-)
-@click.option(
-    "--dry-run", is_flag=True, help="Preview migration without making changes"
-)
+@click.option("--global", "-g", "is_global", is_flag=True, help="Migrate global workflows")
+@click.option("--backup/--no-backup", default=True, help="Backup JSON files (default: backup)")
+@click.option("--dry-run", is_flag=True, help="Preview migration without making changes")
 @click.argument("name", required=False)
 def run_migration(is_global, backup, dry_run, name):
     """
@@ -352,15 +348,15 @@ def run_migration(is_global, backup, dry_run, name):
             logger.warning(f"Failed to update lockfile: {e}")
 
     if dry_run:
-        console.print("\n[yellow]DRY RUN complete. Run without --dry-run to apply changes.[/yellow]")
+        console.print(
+            "\n[yellow]DRY RUN complete. Run without --dry-run to apply changes.[/yellow]"
+        )
 
     return 0 if not failed else 1
 
 
 @migrate.command("restore")
-@click.option(
-    "--global", "-g", "is_global", is_flag=True, help="Restore global workflows"
-)
+@click.option("--global", "-g", "is_global", is_flag=True, help="Restore global workflows")
 @click.argument("name", required=False)
 def restore_backup(is_global, name):
     """

@@ -88,9 +88,7 @@ def lock():
 
 
 @lock.command("list")
-@click.option(
-    "--global", "-g", "is_global", is_flag=True, help="List global workflow scripts"
-)
+@click.option("--global", "-g", "is_global", is_flag=True, help="List global workflow scripts")
 def list_scripts(is_global):
     """List all workflow scripts and their lockfile status."""
     workflows_dir = get_custom_commands_dir(global_mode=is_global)
@@ -160,11 +158,7 @@ def list_history():
     table.add_column("# Commands", style="yellow")
 
     for state in states:
-        table.add_row(
-            state["hash"][:8],
-            state["timestamp"],
-            str(len(state.get("commands", [])))
-        )
+        table.add_row(state["hash"][:8], state["timestamp"], str(len(state.get("commands", []))))
 
     console.print(table)
 
@@ -254,10 +248,9 @@ def verify_scripts(is_global, code):
             try:
                 command = loader.load_command(script_path)
                 if command is None:
-                    invalid_scripts.append({
-                        "name": name,
-                        "reason": "Could not load as Click command"
-                    })
+                    invalid_scripts.append(
+                        {"name": name, "reason": "Could not load as Click command"}
+                    )
             except SyntaxError as e:
                 invalid_scripts.append({"name": name, "reason": f"Syntax error: {e}"})
             except Exception as e:
@@ -313,9 +306,7 @@ def update_lockfile(is_global):
 
 @lock.command("show")
 @click.argument("name", required=False)
-@click.option(
-    "--global", "-g", "is_global", is_flag=True, help="Show global lockfile"
-)
+@click.option("--global", "-g", "is_global", is_flag=True, help="Show global lockfile")
 def show_lockfile(name, is_global):
     """
     Show lockfile contents or details for a specific script.
@@ -348,9 +339,7 @@ def show_lockfile(name, is_global):
 
 
 @lock.command("diff")
-@click.option(
-    "--global", "-g", "is_global", is_flag=True, help="Diff global workflows"
-)
+@click.option("--global", "-g", "is_global", is_flag=True, help="Diff global workflows")
 def diff_lockfile(is_global):
     """
     Show differences between current scripts and lockfile.
@@ -406,7 +395,8 @@ def diff_lockfile(is_global):
 
     # Version-only changes (no hash change)
     version_only = [
-        n for n in verification.get("version_mismatch", [])
+        n
+        for n in verification.get("version_mismatch", [])
         if n not in verification["hash_mismatch"]
     ]
     if version_only:

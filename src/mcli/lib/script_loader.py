@@ -390,9 +390,7 @@ class ScriptLoader:
             logger.error(f"Failed to load Python command {name}: {e}")
             return None
 
-    def load_shell_command(
-        self, script_path: Path, metadata: Dict[str, Any]
-    ) -> click.Command:
+    def load_shell_command(self, script_path: Path, metadata: Dict[str, Any]) -> click.Command:
         """
         Create Click wrapper for shell script.
 
@@ -446,9 +444,7 @@ class ScriptLoader:
 
         return shell_command
 
-    def load_bun_command(
-        self, script_path: Path, metadata: Dict[str, Any]
-    ) -> click.Command:
+    def load_bun_command(self, script_path: Path, metadata: Dict[str, Any]) -> click.Command:
         """
         Create Click wrapper for JavaScript/TypeScript script using Bun.
 
@@ -509,9 +505,7 @@ class ScriptLoader:
 
         return bun_command
 
-    def load_ipynb_command(
-        self, script_path: Path, metadata: Dict[str, Any]
-    ) -> click.Command:
+    def load_ipynb_command(self, script_path: Path, metadata: Dict[str, Any]) -> click.Command:
         """
         Create Click wrapper for Jupyter notebook using papermill.
 
@@ -527,13 +521,15 @@ class ScriptLoader:
 
         @click.command(name=name, help=description)
         @click.option(
-            "--param", "-p",
+            "--param",
+            "-p",
             multiple=True,
             type=(str, str),
             help="Parameter key-value pairs (can be used multiple times)",
         )
         @click.option(
-            "--output", "-o",
+            "--output",
+            "-o",
             type=click.Path(),
             help="Output notebook path (default: {name}.output.ipynb)",
         )

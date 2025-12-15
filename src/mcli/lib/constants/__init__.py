@@ -20,14 +20,6 @@ from .commands import (
     DefaultExcludedFiles,
     DefaultIncludedDirs,
 )
-from .scripts import (
-    ScriptCommentPrefixes,
-    ScriptExtensions,
-    ScriptLanguages,
-    ScriptMetadataDefaults,
-    ScriptMetadataKeys,
-    ShellTypes,
-)
 from .defaults import (
     DateFormats,
     Editors,
@@ -53,6 +45,14 @@ from .messages import (
     WarningMessages,
 )
 from .paths import DirNames, FileNames, GitIgnorePatterns, PathPatterns
+from .scripts import (
+    ScriptCommentPrefixes,
+    ScriptExtensions,
+    ScriptLanguages,
+    ScriptMetadataDefaults,
+    ScriptMetadataKeys,
+    ShellTypes,
+)
 from .storage import (
     StorachaBridgeCapabilities,
     StorachaHTTPHeaders,

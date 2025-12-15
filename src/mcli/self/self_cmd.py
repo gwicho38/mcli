@@ -1087,6 +1087,14 @@ try:
 except ImportError as e:
     logger.debug(f"Could not load migrate command: {e}")
 
+try:
+    from mcli.self.health_cmd import health
+
+    self_app.add_command(health, name="health")
+    logger.debug("Added health command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load health command: {e}")
+
 # NOTE: store command has been moved to mcli.app.commands_cmd for better organization
 
 # This part is important to make the command available to the CLI
