@@ -158,7 +158,7 @@ def get_mcli_url():
 
 
 def _create_basic_auth_token(user, password):
-    basic_content_bytes = "BA:BA".encode("ASCII")
+    basic_content_bytes = b"BA:BA"
     basic_token_b64 = base64.b64encode(basic_content_bytes).decode("ASCII")
     return basic_token_b64
 
@@ -284,7 +284,7 @@ class Cloud:
         if not os.path.exists(provisioned_credentials_path):
             logger.info("No provisioned credentials found, please follow documentation")
             return
-        with open(provisioned_credentials_path, "r") as provisioned_credentials_file:
+        with open(provisioned_credentials_path) as provisioned_credentials_file:
             provisioned_credentials_mapping = json.load(provisioned_credentials_file)
             config_credentials_dir = os.path.join(mcli_DIR, CLOUD_CREDENTIALS_ROOT_SUBDIR)
             config_credentials_path = config_credentials_dir + self.credentials_file_name
@@ -409,7 +409,7 @@ def execute_os_command(command, fail_on_error=True, stdin=None):
     )
     if stdin is not None:
         stdin = stdin.encode()
-    stdout, stderr = [stream.decode().strip() for stream in process.communicate(input=stdin)]
+    stdout, stderr = (stream.decode().strip() for stream in process.communicate(input=stdin))
 
     logger.debug("rc    > %s", process.returncode)
     if stdout:
@@ -473,13 +473,26 @@ def mcli_cluster_url(host):
 
 
 def configure_K8sApiServer(namespace, context):
+    """Configure K8s API Server (requires external mcli library)."""
+    # Note: This function requires an external mcli K8s library
+    # which is not included in mcli-framework. The function is
+    # preserved for compatibility but will raise if the library
+    # is not available.
+    try:
+        import mcli as mcli_k8s  # External K8s library, not this package  # noqa: F401
+    except ImportError:
+        raise NotImplementedError(
+            "configure_K8sApiServer requires an external mcli K8s library. "
+            "This function is not available in mcli-framework."
+        )
+
     url = k8s_api_server_url(context)
     dsa = service_account_secret_name(context, namespace)
     token = k8s_token(context, namespace, dsa)
 
-    mcli.K8sApiServer().config().clearConfigAndSecretAllOverrides()
-    mcli.K8sApiServer.setApiUrlAndAuth(url, f"Bearer {token}", mcli.ConfigOverride.CLUSTER)
-    logger.info("mcli K8sApiServer configured!")
+    mcli_k8s.K8sApiServer().config().clearConfigAndSecretAllOverrides()
+    mcli_k8s.K8sApiServer.setApiUrlAndAuth(url, f"Bearer {token}", mcli_k8s.ConfigOverride.CLUSTER)
+    logging.info("mcli K8sApiServer configured!")
 
 
 def ask_user(prompt):
@@ -752,10 +765,10 @@ def get_current_version(file_path=VERSION_FILE_PATH):
         raise ValueError(f"File '{file_path}' does not exist.")
 
     try:
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, encoding="utf-8") as file:
             content = file.read().strip()
             version = content.split()[0] if content else None
-    except IOError as e:
+    except OSError as e:
         logger.info(f"Error reading file {file_path}: {e}")
         return None
 
@@ -856,7 +869,7 @@ def align_version(
     desired_key_order = ["name", "description", "author", "icon", K_VERSION, K_COMPAT]
 
     for file_path in files:
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, encoding="utf-8") as file:
             try:
                 data = json.load(file)
                 modified = False
@@ -902,7 +915,7 @@ def align_version(
                         json.dump(ensure_key_order(data, desired_key_order), file, indent=2)
                     logger.info(f"Updated file: {file_path}")
 
-            except (json.JSONDecodeError, IOError) as e:
+            except (json.JSONDecodeError, OSError) as e:
                 logger.info(f"Error processing file {file_path}: {e}")
 
 

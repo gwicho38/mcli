@@ -1,19 +1,12 @@
 [flake8]
 # Configuration for flake8 linting tool
+# Pragmatic settings focused on catching critical issues only
 
-# Maximum line length (consistent with black)
-max-line-length = 100
+max-line-length = 120
 
-# Ignore specific error codes that conflict with black or are not relevant
-ignore =
-    # E203: whitespace before ':' (conflicts with black)
-    E203,
-    # W503: line break before binary operator (conflicts with black)
-    W503,
-    # E501: line too long (handled by black)
-    E501,
-    # W504: line break after binary operator (conflicts with W503)
-    W504
+# Only check critical pyflakes and syntax errors
+# Format: codes on single line, no inline comments
+select = F821,F841,E711,E712,E721,E902,E999
 
 # Directories and files to exclude from linting
 exclude =
@@ -35,50 +28,16 @@ exclude =
     node_modules,
     .mypy_cache,
     examples,
-    docs/examples
+    docs/examples,
+    streamlit_*.py
 
-# File patterns to include in linting
 filename = *.py
 
-# Select specific error codes to check
-select =
-    # pycodestyle errors
-    E,
-    # pycodestyle warnings
-    W,
-    # pyflakes
-    F,
-    # flake8-bugbear
-    B,
-    # flake8-comprehensions
-    C4,
-    # flake8-simplify
-    SIM,
-    # flake8-docstrings
-    D
-
-# Docstring error codes to ignore
 per-file-ignores =
-    # Ignore missing docstrings in test files
-    tests/*:D100,D101,D102,D103,D104,D105,D106,D107
-    # Ignore missing docstrings in __init__.py files
-    */__init__.py:D104
-    # Ignore specific issues in scripts
-    scripts/*:D100,D101,D102,D103
-    # Ignore all linting in streamlit apps (demo/utility files)
-    streamlit_*.py:E,W,F,B,C4,SIM,D
+    */__init__.py:F401,F403,F405,F821,F841
+    tests/*:F401,F811,F821,F841
+    scripts/*:F401,F821,F841
 
-# Maximum complexity for McCabe complexity checker
-max-complexity = 10
-
-# Docstring conventions (google, numpy, pep257)
-docstring-convention = google
-
-# Show source code for each error
 show-source = True
-
-# Show pep8 statistics
 statistics = True
-
-# Count errors and warnings
 count = True

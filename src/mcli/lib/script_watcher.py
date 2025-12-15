@@ -55,7 +55,7 @@ class DebouncedScriptHandler(FileSystemEventHandler):
         super().__init__()
         self.sync_manager = sync_manager
         self.debounce_seconds = debounce_seconds
-        self.pending_timers: Dict[str, Timer] = {}
+        self.pending_timers: dict[str, Timer] = {}
 
     def _is_script_file(self, path: Path) -> bool:
         """Check if path is a script file we should watch."""
@@ -131,7 +131,7 @@ class DebouncedScriptHandler(FileSystemEventHandler):
                 import json
 
                 try:
-                    with open(json_path, "r") as f:
+                    with open(json_path) as f:
                         json_data = json.load(f)
                         if json_data.get("metadata", {}).get("auto_generated"):
                             json_path.unlink()
@@ -208,11 +208,14 @@ def start_watcher(
     Returns:
         Observer instance if started successfully, None otherwise
 
-    Example:
-        >>> observer = start_watcher(Path("~/.mcli/commands"), sync_manager)
-        >>> # Do other work...
-        >>> observer.stop()
-        >>> observer.join()
+    Example::
+
+        # Create a sync manager first
+        manager = ScriptSyncManager(commands_dir)
+        observer = start_watcher(Path("~/.mcli/commands"), manager)
+        # Do other work...
+        observer.stop()
+        observer.join()
     """
     if not commands_dir.exists():
         logger.warning(f"Commands directory does not exist: {commands_dir}")

@@ -662,17 +662,6 @@ class TestLockCommands:
         # Should succeed or fail gracefully
         assert result.exit_code in [0, 1]
 
-    def test_lock_write_help(self, cli_runner, mcli_app):
-        """Test mcli lock write --help."""
-        result = cli_runner.invoke(mcli_app, ["lock", "write", "--help"])
-        assert result.exit_code == 0
-
-    def test_lock_write(self, cli_runner, mcli_app, env_setup):
-        """Test mcli lock write."""
-        result = cli_runner.invoke(mcli_app, ["lock", "write"])
-        # Should create/update the lockfile
-        assert result.exit_code in [0, 1]
-
     def test_lock_restore_help(self, cli_runner, mcli_app):
         """Test mcli lock restore --help."""
         result = cli_runner.invoke(mcli_app, ["lock", "restore", "--help"])
@@ -787,9 +776,11 @@ class TestCommandRegistration:
             expected_subcommands = [
                 "list",
                 "restore",
-                "write",
                 "verify",
                 "update",
+                "diff",
+                "show",
+                "history",
             ]
 
             for subcmd in expected_subcommands:
