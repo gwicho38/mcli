@@ -20,6 +20,14 @@ from .commands import (
     DefaultExcludedFiles,
     DefaultIncludedDirs,
 )
+from .scripts import (
+    ScriptCommentPrefixes,
+    ScriptExtensions,
+    ScriptLanguages,
+    ScriptMetadataDefaults,
+    ScriptMetadataKeys,
+    ShellTypes,
+)
 from .defaults import (
     DateFormats,
     Editors,
@@ -102,4 +110,11 @@ __all__ = [
     "StorageContentTypes",
     "StorachaBridgeCapabilities",
     "StorachaHTTPHeaders",
+    # Scripts
+    "ScriptLanguages",
+    "ScriptExtensions",
+    "ScriptCommentPrefixes",
+    "ScriptMetadataKeys",
+    "ScriptMetadataDefaults",
+    "ShellTypes",
 ]

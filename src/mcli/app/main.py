@@ -338,6 +338,15 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load teardown command: {e}")
 
+    # Top-level new command for creating workflow commands
+    try:
+        from mcli.app.new_cmd import new
+
+        app.add_command(new, name="new")
+        logger.debug("Added new command")
+    except ImportError as e:
+        logger.debug(f"Could not load new command: {e}")
+
     # Top-level lock group
     try:
         from mcli.app.lock_cmd import lock
