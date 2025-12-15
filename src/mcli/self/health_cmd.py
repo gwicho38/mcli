@@ -557,16 +557,24 @@ def check_dependencies(repo_path: Path) -> CheckResult:
     """Check dependency health."""
     start = time.time()
 
-    # Check for outdated packages
-    code, stdout, _ = run_command(
-        [sys.executable, "-m", "pip", "list", "--outdated", "--format=json"]
-    )
+    # Try uv first, then pip
+    outdated = []
+    outdated_count = 0
+
+    # Try uv pip list
+    code, stdout, _ = run_command(["uv", "pip", "list", "--outdated", "--format=json"])
+
+    if code != 0:
+        # Fallback to pip
+        code, stdout, _ = run_command(
+            [sys.executable, "-m", "pip", "list", "--outdated", "--format=json"]
+        )
 
     if code != 0:
         return CheckResult(
             name="Dependencies",
             status=HealthStatus.SKIPPED,
-            message="Could not check dependencies",
+            message="Could not check dependencies (install uv or pip)",
             duration_ms=(time.time() - start) * 1000,
         )
 
@@ -674,27 +682,60 @@ def check_build(repo_path: Path) -> CheckResult:
             duration_ms=(time.time() - start) * 1000,
         )
 
-    # Try to build wheel
-    code, stdout, stderr = run_command(
-        [sys.executable, "-m", "pip", "wheel", "--no-deps", "-w", "/tmp/mcli_health_wheel", "."],
-        cwd=repo_path,
-        timeout=120,
-    )
+    # Try multiple build methods in order of preference
+    build_methods = [
+        # uv build (preferred for uv-managed projects)
+        (["uv", "build", "--wheel", "--out-dir", "/tmp/mcli_health_wheel"], "uv build"),
+        # pip wheel via current Python
+        (
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "wheel",
+                "--no-deps",
+                "-w",
+                "/tmp/mcli_health_wheel",
+                ".",
+            ],
+            "pip wheel",
+        ),
+        # python -m build
+        ([sys.executable, "-m", "build", "--wheel", "--outdir", "/tmp/mcli_health_wheel"], "build"),
+    ]
 
-    if code == 0:
+    for cmd, method_name in build_methods:
+        code, stdout, stderr = run_command(cmd, cwd=repo_path, timeout=120)
+
+        if code == 0:
+            return CheckResult(
+                name="Build",
+                status=HealthStatus.PASSING,
+                message=f"Wheel builds successfully ({method_name})",
+                duration_ms=(time.time() - start) * 1000,
+            )
+
+        # If command not found, try next method
+        if code == -2:
+            continue
+
+        # Command found but failed
+        error_detail = stderr[:500] if stderr else stdout[:500] if stdout else "Unknown error"
         return CheckResult(
             name="Build",
-            status=HealthStatus.PASSING,
-            message="Wheel builds successfully",
+            status=HealthStatus.FAILING,
+            message=f"Build failed ({method_name})",
+            details=error_detail,
+            suggestions=["Fix build errors before releasing", "Run: make wheel"],
             duration_ms=(time.time() - start) * 1000,
         )
 
+    # No build method available
     return CheckResult(
         name="Build",
-        status=HealthStatus.FAILING,
-        message="Build failed",
-        details=stderr[:500] if stderr else None,
-        suggestions=["Fix build errors before releasing"],
+        status=HealthStatus.SKIPPED,
+        message="No build tool available (uv, pip, or build)",
+        suggestions=["Install: pip install build", "Or use: uv build"],
         duration_ms=(time.time() - start) * 1000,
     )
 
