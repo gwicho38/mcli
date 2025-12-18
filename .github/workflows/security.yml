@@ -25,7 +25,7 @@ jobs:
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
         with:
-          fail-on-severity: high
+          fail-on-severity: moderate
           config-file: './.github/dependency-review-config.yml'
 
   bandit:
@@ -44,7 +44,7 @@ jobs:
         run: pip install bandit[toml]
 
       - name: Run Bandit
-        run: bandit -r src/ -f json -o bandit-report.json || true
+        run: bandit -r src/ -f json -o bandit-report.json
 
       - name: Upload Bandit results
         uses: actions/upload-artifact@v4
@@ -68,7 +68,7 @@ jobs:
         run: pip install safety
 
       - name: Run Safety Check
-        run: safety check --json > safety-report.json || true
+        run: safety check --json > safety-report.json || safety check --ignore 59234,71691,71584,71578,71577,71692,71579,71587,71693,64459,64396
 
       - name: Upload Safety results
         uses: actions/upload-artifact@v4
