@@ -1,0 +1,51 @@
+# Minimal dependencies for core mcli functionality
+# This file defines only the essential dependencies needed for basic CLI operations
+
+# CLI Framework
+click>=8.1.7,<9.0.0
+rich>=14.0.0
+requests>=2.31.0,<3.0.0
+tomli>=2.2.1
+python-dotenv>=1.1.1
+
+# Core utilities
+watchdog>=3.0.0,<4.0.0
+tqdm>=4.66.1,<5.0.0
+humanize>=4.9.0,<5.0.0
+psutil>=5.9.0,<6.0.0
+inquirerpy>=0.3.4,<0.4.0
+
+# Basic HTTP/async support
+aiohttp>=3.9.0
+httpx>=0.28.1
+websockets>=12.0
+
+# Data parsing
+beautifulsoup4>=4.13.5
+fuzzywuzzy>=0.18.0
+
+# Git operations
+gitpython>=3.1.40,<4.0.0
+
+# File operations
+pathlib
+
+# Configuration
+pydantic-settings>=2.1.0
+dynaconf>=3.2.0
+
+# Authentication and security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# Text processing
+regex>=2023.10.0
+ask>=0.0.0
+
+# Utilities
+packaging
+setuptools
+wheel
+
+# Development dependencies (only for install from source)
+# pytest, black, isort, mypy, etc. should be in dev extra
