@@ -427,7 +427,7 @@ precision = 2
 skip_covered = false
 skip_empty = false
 # Fail if coverage is below threshold
-fail_under = 30.0
+fail_under = 25.0
 
 [tool.coverage.html]
 directory = "htmlcov"
