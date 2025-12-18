@@ -324,24 +324,24 @@ cache_dir = ".mypy_cache"
 # strict_optional = true
 # warn_incomplete_stub = true
 
-# Per-module options - ignore errors in all modules for now
+# Per-module options - enable strict checking for core modules first
 # Type checking can be enabled gradually per-module
 [[tool.mypy.overrides]]
 module = [
     "tests.*",
-    "scripts.*",
+    "scripts.*", 
     "docs.*",
-    "mcli.*",
 ]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = [
     "mcli.workflow.openai.*",
-    "mcli.workflow.anthropic.*",
+    "mcli.workflow.anthropic.*", 
     "mcli.lib.performance.*",
 ]
 warn_return_any = false
+ignore_errors = false
 
 # Ignore missing imports for optional dependencies
 [[tool.mypy.overrides]]
@@ -353,7 +353,19 @@ module = [
     "plotly.*",
     "supabase.*",
 ]
+warn_return_any = false
 ignore_missing_imports = true
+
+# Core modules - enable stricter type checking
+[[tool.mypy.overrides]]
+module = [
+    "mcli.app.*",
+    "mcli.lib.*",
+    "mcli.chat.*",
+]
+disallow_untyped_defs = true
+check_untyped_defs = true
+strict_optional = true
 
 # Skip mlflow entirely due to Python version syntax issues
 [[tool.mypy.overrides]]
