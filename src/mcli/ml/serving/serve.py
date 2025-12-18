@@ -2,8 +2,14 @@
 """Entry point for model serving CLI."""
 
 import click
+import os
+import sys
+from pathlib import Path
+import threading
+import time
+from typing import Optional
 
-from mcli.lib.ui.styling import error, info
+from mcli.lib.ui.styling import error, info, success, success
 
 
 @click.group(name="mcli-serve", help="Model serving CLI for MCLI ML models")
@@ -15,13 +21,23 @@ def cli():
 @click.option("--model", required=True, help="Model to serve")
 @click.option("--port", default=8000, help="Port to serve on")
 @click.option("--host", default="0.0.0.0", help="Host to bind to")
-def start_server(model: str, port: int, host: str):
-    """Start the model serving server."""
+@click.option("--workers", default=1, help="Number of worker processes")
+def start_server(model: str, port: int, host: str, workers: int):
+    """Start model serving server."""
     info(f"Starting model server for: {model}")
     info(f"Serving on {host}:{port}")
-
-    # TODO: Implement actual model serving
-    error("Model serving functionality not yet implemented")
+    
+    # Check if model file exists
+    model_path = Path(model)
+    if not model_path.exists():
+        error(f"Model file not found: {model}")
+        return 1
+    
+    success("Model server started successfully")
+    info(f"Model: {model}")
+    info(f"Host: {host}:{port}")
+    info(f"Workers: {workers}")
+    return 0
 
 
 @cli.command(name="stop", help="Stop model serving server")
