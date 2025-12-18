@@ -36,12 +36,21 @@ _*.*
 *.c
 *.o
 *.so
+tests/**/*.pyc
+tests/**/*.pyo
+tests/**/*.pyd
 
 **/__pycache__/
+tests/__pycache__/
+tests/**/__pycache__/
 .vscode/
 **bin/
 
 *.log
+.pytest_cache/
+tests/.coverage
+tests/htmlcov/
+tests/.pytest_cache/
 
 **/.claude/settings.local.json
 nuitka-crash-report.xml
