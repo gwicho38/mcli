@@ -874,7 +874,7 @@ class SyncMessages:
     FAILED_RETRIEVE_IPFS = "Failed to retrieve from IPFS"
     CID_INVALID_OR_NOT_PROPAGATED = "CID may be invalid or not yet propagated to gateways"
     NO_SYNC_HISTORY = "No sync history found"
-    RUN_PUSH_FIRST = "\nRun 'mcli workflows sync push' to create your first sync"
+    RUN_PUSH_FIRST = "\nRun 'mcli sync push' to create your first sync"
     IPFS_SYNC_HISTORY_HEADER = "\n[bold]IPFS Sync History[/bold] (last {count} entries)\n"
     VERIFYING_CID = "Verifying CID: {cid}"
     CID_ACCESSIBLE = "CID is accessible on IPFS"
@@ -901,7 +901,7 @@ class SyncMessages:
     # Display formatting
     CID_LABEL = "\n[bold]CID:[/bold] {cid}"
     RETRIEVE_HINT = "\n[dim]Anyone can retrieve with:[/dim]"
-    RETRIEVE_COMMAND = "  mcli workflows sync pull {cid}"
+    RETRIEVE_COMMAND = "  mcli sync pull {cid}"
     VIEW_BROWSER_HINT = "\n[dim]Or view in browser:[/dim]"
     IPFS_GATEWAY_URL = "  https://ipfs.io/ipfs/{cid}"
     COMMANDS_COUNT = "\n[bold]Commands:[/bold] {count}"

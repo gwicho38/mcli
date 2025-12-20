@@ -356,6 +356,15 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load lock group: {e}")
 
+    # Top-level sync group (IPFS sync)
+    try:
+        from mcli.app.sync_cmd import sync_group
+
+        app.add_command(sync_group, name="sync")
+        logger.debug("Added sync group")
+    except ImportError as e:
+        logger.debug(f"Could not load sync group: {e}")
+
     # Store commands moved to workflow group
 
     # Workflow management - load immediately for fast access (renamed from 'commands')
