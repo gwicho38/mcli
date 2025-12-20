@@ -229,8 +229,8 @@ jobs:
 
     - name: Test visual effects
       run: |
-        .venv/bin/mcli visual message --style success "Integration tests passed!"
-        .venv/bin/mcli visual spinner --spinner-type rust --duration 2 --message "Testing spinner..."
+        .venv/bin/mcli self visual message --style success "Integration tests passed!"
+        .venv/bin/mcli self visual spinner --spinner-type rust --duration 2 --message "Testing spinner..."
 
   security-scan:
     name: Security Scan
