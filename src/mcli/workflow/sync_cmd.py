@@ -14,7 +14,6 @@ The IPFS sync commands (push, pull, history, verify) remain active for
 cloud synchronization of the lockfile.
 """
 
-import warnings
 from pathlib import Path
 from typing import Optional
 
@@ -355,9 +354,8 @@ def sync_push_command(global_mode: bool, description: str):
         mcli workflows sync push --global
     """
     from mcli.lib.ipfs_sync import IPFSSync
-    from mcli.lib.paths import get_workflows_dir
 
-    workflows_dir = get_workflows_dir(global_mode=global_mode)
+    workflows_dir = get_custom_commands_dir(global_mode=global_mode)
     lockfile_path = workflows_dir / "commands.lock.json"
 
     if not lockfile_path.exists():
@@ -365,9 +363,22 @@ def sync_push_command(global_mode: bool, description: str):
         info(SyncMessages.RUN_UPDATE_LOCKFILE)
         return
 
+    ipfs = IPFSSync()
+
+    # Check if IPFS is available
+    if not ipfs._check_local_ipfs():
+        error(SyncMessages.NO_LOCAL_IPFS_DAEMON)
+        console.print()
+        console.print(SyncMessages.IPFS_SETUP_HEADER)
+        console.print(SyncMessages.IPFS_SETUP_STEP_1)
+        console.print(SyncMessages.IPFS_SETUP_STEP_1_ALT)
+        console.print(SyncMessages.IPFS_SETUP_STEP_2)
+        console.print(SyncMessages.IPFS_SETUP_STEP_3)
+        console.print(SyncMessages.IPFS_SETUP_STEP_4)
+        return
+
     info(SyncMessages.UPLOADING_TO_IPFS)
 
-    ipfs = IPFSSync()
     cid = ipfs.push(lockfile_path, description=description or "")
 
     if cid:

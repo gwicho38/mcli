@@ -56,6 +56,8 @@ class FileNames:
     DS_STORE = ".DS_Store"
     PYPROJECT_TOML = "pyproject.toml"
     REQUIREMENTS_TXT = "requirements.txt"
+    IPFS_SYNC_HISTORY_JSON = "ipfs_sync_history.json"
+    COMMANDS_JSON = "commands.json"
 
 
 class PathPatterns:

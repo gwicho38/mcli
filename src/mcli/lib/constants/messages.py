@@ -881,6 +881,19 @@ class SyncMessages:
     CID_NOT_ACCESSIBLE = "CID is not accessible"
     PROPAGATION_DELAY_NOTE = "It may take a few minutes for new uploads to propagate"
 
+    # IPFS daemon messages
+    NO_LOCAL_IPFS_DAEMON = "No local IPFS daemon available"
+    IPFS_SETUP_HEADER = "[yellow]To enable IPFS sync:[/yellow]"
+    IPFS_SETUP_STEP_1 = "  1. Install IPFS: [cyan]brew install ipfs[/cyan]"
+    IPFS_SETUP_STEP_1_ALT = "     (or see https://docs.ipfs.tech/install/)"
+    IPFS_SETUP_STEP_2 = "  2. Initialize: [cyan]ipfs init[/cyan]"
+    IPFS_SETUP_STEP_3 = "  3. Start daemon: [cyan]ipfs daemon[/cyan]"
+    IPFS_SETUP_STEP_4 = "  4. Re-run this command"
+    LOCAL_IPFS_DAEMON_DETECTED = "Local IPFS daemon detected"
+    LOCAL_IPFS_UPLOAD_FAILED = "Local IPFS upload failed: {status}"
+    LOCAL_IPFS_UPLOAD_ERROR = "Local IPFS upload error: {error}"
+    HASH_VERIFICATION_FAILED = "Hash verification failed! Data may be corrupted."
+
     # Lockfile messages
     LOCKFILE_NOT_FOUND = "Lockfile not found: {path}"
     RUN_UPDATE_LOCKFILE = "Run 'mcli workflow update-lockfile' first"

@@ -28,11 +28,11 @@ import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 import requests
 
-from mcli.lib.constants import DirNames, ErrorMessages, InfoMessages, SuccessMessages
+from mcli.lib.constants import FileNames, SyncMessages
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.paths import get_data_dir
 
@@ -44,11 +44,13 @@ class IPFSSync:
     Zero-config immutable command sync via IPFS.
 
     Uploads command state to IPFS and tracks sync history locally.
-    No user configuration or accounts required.
+    Supports local IPFS node or fallback methods.
     """
 
-    # Public IPFS gateways (no auth required for small uploads)
-    UPLOAD_GATEWAY = "https://ipfs.io/api/v0/add"
+    # Local IPFS daemon endpoint (default port)
+    LOCAL_IPFS_API = "http://127.0.0.1:5001/api/v0/add"
+
+    # Public IPFS gateways for retrieval
     RETRIEVE_GATEWAY = "https://ipfs.io/ipfs/{cid}"
 
     # Alternative gateways for redundancy
@@ -56,13 +58,15 @@ class IPFSSync:
         "https://dweb.link/ipfs/{cid}",
         "https://cloudflare-ipfs.com/ipfs/{cid}",
         "https://gateway.pinata.cloud/ipfs/{cid}",
+        "https://w3s.link/ipfs/{cid}",
     ]
 
     def __init__(self):
         """Initialize IPFS sync manager."""
         self.data_dir = get_data_dir()
-        self.sync_history_path = self.data_dir / "ipfs_sync_history.json"
+        self.sync_history_path = self.data_dir / FileNames.IPFS_SYNC_HISTORY_JSON
         self.sync_history = self._load_sync_history()
+        self._local_ipfs_available: Optional[bool] = None
 
     def _load_sync_history(self) -> list[dict]:
         """Load sync history from local storage."""
@@ -89,9 +93,30 @@ class IPFSSync:
         """Compute SHA256 hash of data."""
         return hashlib.sha256(data.encode()).hexdigest()
 
+    def _check_local_ipfs(self) -> bool:
+        """Check if local IPFS daemon is running."""
+        if self._local_ipfs_available is not None:
+            return self._local_ipfs_available
+
+        try:
+            # Try to connect to local IPFS daemon
+            response = requests.post(
+                "http://127.0.0.1:5001/api/v0/id",
+                timeout=2,
+            )
+            self._local_ipfs_available = response.status_code == 200
+            if self._local_ipfs_available:
+                logger.info(SyncMessages.LOCAL_IPFS_DAEMON_DETECTED)
+            return self._local_ipfs_available
+        except Exception:
+            self._local_ipfs_available = False
+            return False
+
     def upload_to_ipfs(self, data: dict) -> Optional[str]:
         """
         Upload data to IPFS and return CID.
+
+        Tries local IPFS daemon first, then provides guidance for alternatives.
 
         Args:
             data: Dictionary to upload (will be JSON serialized)
@@ -99,30 +124,40 @@ class IPFSSync:
         Returns:
             CID string if successful, None otherwise
         """
-        try:
-            # Serialize data
-            json_data = json.dumps(data, indent=2, sort_keys=True)
+        # Serialize data
+        json_data = json.dumps(data, indent=2, sort_keys=True)
 
-            # Upload via IPFS HTTP API
-            files = {"file": ("commands.json", json_data)}
-            response = requests.post(
-                self.UPLOAD_GATEWAY,
-                files=files,
-                timeout=30,
-            )
+        # Try local IPFS daemon first
+        if self._check_local_ipfs():
+            try:
+                files = {"file": (FileNames.COMMANDS_JSON, json_data)}
+                response = requests.post(
+                    self.LOCAL_IPFS_API,
+                    files=files,
+                    timeout=30,
+                )
 
-            if response.status_code == 200:
-                result = response.json()
-                cid = result.get("Hash")
-                logger.info(f"Uploaded to IPFS: {cid}")
-                return cid
-            else:
-                logger.error(f"IPFS upload failed: {response.status_code} {response.text}")
-                return None
+                if response.status_code == 200:
+                    result = response.json()
+                    cid = result.get("Hash")
+                    logger.info(f"Uploaded to local IPFS: {cid}")
+                    return cid
+                else:
+                    logger.error(
+                        SyncMessages.LOCAL_IPFS_UPLOAD_FAILED.format(status=response.status_code)
+                    )
+            except Exception as e:
+                logger.error(SyncMessages.LOCAL_IPFS_UPLOAD_ERROR.format(error=e))
 
-        except Exception as e:
-            logger.error(f"Failed to upload to IPFS: {e}")
-            return None
+        # No local IPFS - log helpful guidance
+        logger.error(
+            "No local IPFS daemon available. To enable IPFS sync:\n"
+            "  1. Install IPFS: brew install ipfs (or see https://docs.ipfs.tech/install/)\n"
+            "  2. Initialize: ipfs init\n"
+            "  3. Start daemon: ipfs daemon\n"
+            "  4. Re-run this command"
+        )
+        return None
 
     def retrieve_from_ipfs(self, cid: str) -> Optional[dict]:
         """
@@ -238,7 +273,7 @@ class IPFSSync:
             computed_hash = self._compute_hash(json_str)
 
             if computed_hash != original_hash:
-                logger.error("Hash verification failed! Data may be corrupted.")
+                logger.error(SyncMessages.HASH_VERIFICATION_FAILED)
                 return None
 
         return data.get("commands", {})
