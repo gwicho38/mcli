@@ -220,6 +220,7 @@ The CLI has been simplified to focus on the core command runner experience:
   - Options: `-g/--global` for global workflows, `-f/--workspace` for specific workspace
   - Located in `src/mcli/workflow/workflow.py`
   - **Alias**: `mcli workflows` for backward compatibility
+- **`mcli init`** - Initialize workflows directory (shortcut for `config init`)
 - **`mcli list`** - List available workflow commands
 - **`mcli search <query>`** - Search commands by name/description
 - **`mcli new <name>`** - Create new workflow command

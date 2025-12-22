@@ -391,6 +391,15 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load config group: {e}")
 
+    # mcli init - Top-level shortcut to initialize workflows directory
+    try:
+        from mcli.app.config_cmd import config_init
+
+        app.add_command(config_init, name="init")
+        logger.debug("Added init command")
+    except ImportError as e:
+        logger.debug(f"Could not load init command: {e}")
+
     # mcli self - Self management (version, update, health, plugin, completion)
     try:
         from mcli.self.self_cmd import self_app
