@@ -212,17 +212,26 @@ click.echo(f"Command {cmd_name} not found")
 
 See [Constants README](src/mcli/lib/constants/README.md) for detailed usage examples.
 
-### Command Structure (Updated in 7.11.0)
-- **`mcli workflow`** - Workflow management (formerly `mcli commands`)
-  - Located in `src/mcli/app/commands_cmd.py`
-  - Commands: add, edit, import, export, list, search, remove, info, verify, update-lockfile, store
-- **`mcli workflows`** or **`mcli run`** - Running workflows (formerly `mcli workflow`)
+### Command Structure (v8.0.0 - Simplified CLI)
+The CLI has been simplified to focus on the core command runner experience:
+
+**Top-Level Commands:**
+- **`mcli run <cmd>`** - The killer app: run workflow commands
+  - Options: `-g/--global` for global workflows, `-f/--workspace` for specific workspace
   - Located in `src/mcli/workflow/workflow.py`
-  - Contains runnable workflows: secrets, pdf, clean, scheduler, daemon, etc.
-  - **Alias**: `mcli run` is a convenient shorthand for `mcli workflows`
-- **Secrets** - Moved from `mcli lib secrets` to `mcli workflows secrets`
-  - Located in `src/mcli/workflow/secrets/secrets_cmd.py`
-- **lib group removed** - No longer a top-level command group
+  - **Alias**: `mcli workflows` for backward compatibility
+- **`mcli list`** - List available workflow commands
+- **`mcli search <query>`** - Search commands by name/description
+- **`mcli new <name>`** - Create new workflow command
+- **`mcli edit <name>`** - Edit command in $EDITOR
+- **`mcli delete <name>`** - Delete command (alias: `rm`)
+- **`mcli sync`** - IPFS sync + lockfile management (merged from `lock`)
+  - Lockfile: `status`, `update`, `diff`, `show`
+  - IPFS: `push`, `pull`, `verify`, `history`
+- **`mcli config`** - Configuration management
+  - `init`, `teardown`, `show`
+  - `store init/push/pull/status` - Git-based workflow store
+- **`mcli self`** - Self-management (version, update, health, plugin, completion)
 
 ### Testing Requirements
 - Current minimum coverage: 30% (configured in `pyproject.toml`, goal: 80%)

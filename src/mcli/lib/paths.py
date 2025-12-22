@@ -222,3 +222,93 @@ def get_lockfile_path(global_mode: bool = False) -> Path:
     workflows_dir = get_custom_commands_dir(global_mode=global_mode)
     # Keep the old lockfile name for compatibility
     return workflows_dir / "commands.lock.json"
+
+
+def resolve_workspace(workspace_path: str) -> Optional[Path]:
+    """
+    Resolve a workspace path to a workflows directory.
+
+    Accepts either:
+    - A directory path (uses <dir>/.mcli/workflows/)
+    - A config file path (parses for workflows location)
+
+    Args:
+        workspace_path: Path to a directory or config file
+
+    Returns:
+        Path to the workflows directory, or None if not found
+    """
+    path = Path(workspace_path).expanduser().resolve()
+
+    if not path.exists():
+        return None
+
+    # If it's a directory, look for .mcli/workflows/ inside it
+    if path.is_dir():
+        # Check for .mcli/workflows/
+        workflows_dir = path / DirNames.MCLI / "workflows"
+        if workflows_dir.exists():
+            return workflows_dir
+
+        # Check for legacy .mcli/commands/
+        commands_dir = path / DirNames.MCLI / "commands"
+        if commands_dir.exists():
+            return commands_dir
+
+        # If neither exists, return the expected workflows path
+        return workflows_dir
+
+    # If it's a file, try to parse it as a config file
+    if path.is_file():
+        # Support common config formats
+        suffix = path.suffix.lower()
+
+        if suffix == ".json":
+            import json
+
+            try:
+                with open(path) as f:
+                    config = json.load(f)
+                # Look for workflows_dir or commands_dir in config
+                workflows_path = config.get("workflows_dir") or config.get("commands_dir")
+                if workflows_path:
+                    resolved = Path(workflows_path).expanduser().resolve()
+                    if resolved.exists():
+                        return resolved
+            except (json.JSONDecodeError, OSError):
+                pass
+
+        elif suffix == ".toml":
+            try:
+                import tomli
+
+                with open(path, "rb") as f:
+                    config = tomli.load(f)
+                # Look for workflows_dir or commands_dir in config
+                workflows_path = config.get("workflows_dir") or config.get("commands_dir")
+                if workflows_path:
+                    resolved = Path(workflows_path).expanduser().resolve()
+                    if resolved.exists():
+                        return resolved
+            except (ImportError, OSError):
+                pass
+
+        elif suffix in (".yaml", ".yml"):
+            try:
+                import yaml
+
+                with open(path) as f:
+                    config = yaml.safe_load(f)
+                if config:
+                    workflows_path = config.get("workflows_dir") or config.get("commands_dir")
+                    if workflows_path:
+                        resolved = Path(workflows_path).expanduser().resolve()
+                        if resolved.exists():
+                            return resolved
+            except (ImportError, OSError):
+                pass
+
+        # If we couldn't parse the config, try the parent directory
+        return resolve_workspace(str(path.parent))
+
+    return None

@@ -34,7 +34,7 @@ if trace_level:
 logger.debug("main")
 
 
-def discover_modules(base_path: Path, config_path: Optional[Path] = None) -> List[str]:
+def discover_modules(base_path: Path, config_path: Optional[Path] = None) -> list[str]:
     """
     Discovers Python modules in specified paths.
     Paths must omit trailing backslash.
@@ -320,25 +320,32 @@ class LazyGroup(click.Group):
 
 def _add_lazy_commands(app: click.Group):
     """Add command groups with lazy loading."""
-    # Top-level init command
+    # ============================================================
+    # Core top-level commands (simplified CLI structure v8.0.0)
+    # ============================================================
+
+    # mcli run - The killer app: run workflow commands
+    # (registered below with workflows group)
+
+    # mcli list - List available commands
     try:
-        from mcli.app.init_cmd import init
+        from mcli.app.list_cmd import list_cmd
 
-        app.add_command(init, name="init")
-        logger.debug("Added init command")
+        app.add_command(list_cmd, name="list")
+        logger.debug("Added list command")
     except ImportError as e:
-        logger.debug(f"Could not load init command: {e}")
+        logger.debug(f"Could not load list command: {e}")
 
-    # Top-level teardown command
+    # mcli search - Search for commands
     try:
-        from mcli.app.init_cmd import teardown
+        from mcli.app.search_cmd import search
 
-        app.add_command(teardown, name="teardown")
-        logger.debug("Added teardown command")
+        app.add_command(search, name="search")
+        logger.debug("Added search command")
     except ImportError as e:
-        logger.debug(f"Could not load teardown command: {e}")
+        logger.debug(f"Could not load search command: {e}")
 
-    # Top-level new command for creating workflow commands
+    # mcli new - Create new workflow command
     try:
         from mcli.app.new_cmd import new
 
@@ -347,16 +354,26 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load new command: {e}")
 
-    # Top-level lock group
+    # mcli edit - Edit a command
     try:
-        from mcli.app.lock_cmd import lock
+        from mcli.app.edit_cmd import edit
 
-        app.add_command(lock, name="lock")
-        logger.debug("Added lock group")
+        app.add_command(edit, name="edit")
+        logger.debug("Added edit command")
     except ImportError as e:
-        logger.debug(f"Could not load lock group: {e}")
+        logger.debug(f"Could not load edit command: {e}")
 
-    # Top-level sync group (IPFS sync)
+    # mcli delete - Delete a command (aliases: rm, remove)
+    try:
+        from mcli.app.delete_cmd import delete, rm
+
+        app.add_command(delete, name="delete")
+        app.add_command(rm, name="rm")
+        logger.debug("Added delete/rm commands")
+    except ImportError as e:
+        logger.debug(f"Could not load delete command: {e}")
+
+    # mcli sync - IPFS sync + lockfile management
     try:
         from mcli.app.sync_cmd import sync_group
 
@@ -365,18 +382,16 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load sync group: {e}")
 
-    # Store commands moved to workflow group
-
-    # Workflow management - load immediately for fast access (renamed from 'commands')
+    # mcli config - Configuration management
     try:
-        from mcli.app.commands_cmd import workflow
+        from mcli.app.config_cmd import config
 
-        app.add_command(workflow, name="workflow")
-        logger.debug("Added workflow management group")
+        app.add_command(config, name="config")
+        logger.debug("Added config group")
     except ImportError as e:
-        logger.debug(f"Could not load workflow management group: {e}")
+        logger.debug(f"Could not load config group: {e}")
 
-    # Self management - load immediately as it's commonly used
+    # mcli self - Self management (version, update, health, plugin, completion)
     try:
         from mcli.self.self_cmd import self_app
 
@@ -385,42 +400,43 @@ def _add_lazy_commands(app: click.Group):
     except Exception as e:
         logger.debug(f"Could not load self commands: {e}")
 
-    # Note: lib group removed - secrets moved to workflows
-    # Previous: mcli lib secrets -> Now: mcli workflows secrets
-
+    # ============================================================
+    # mcli run - The killer app: run workflow commands
+    # ============================================================
     # Add workflows group directly (not lazy-loaded) to preserve -g/--global option
     try:
         from mcli.workflow.workflow import workflows as workflows_group
 
-        app.add_command(workflows_group, name="workflows")
-        logger.debug("Added workflows group with -g/--global support")
-
-        # Add 'run' as an alias for workflows
+        # Primary command: mcli run
         app.add_command(workflows_group, name="run")
-        logger.debug("Added 'run' alias for workflows group")
+        logger.debug("Added 'run' command")
+
+        # Keep 'workflows' as alias for backward compatibility
+        app.add_command(workflows_group, name="workflows")
+        logger.debug("Added 'workflows' alias for backward compatibility")
     except ImportError as e:
-        logger.error(f"Could not load workflows group: {e}")
+        logger.error(f"Could not load run/workflows group: {e}")
         # Fallback to lazy loading if import fails
         try:
             from mcli.app.completion_helpers import create_completion_aware_lazy_group
 
             workflows_group = create_completion_aware_lazy_group(
-                "workflows",
+                "run",
                 "mcli.workflow.workflow.workflows",
-                "Runnable workflows for automation, video processing, and daemon management",
+                "Run workflow commands",
             )
-            app.add_command(workflows_group, name="workflows")
-            app.add_command(workflows_group, name="run")  # Add run alias
-            logger.debug("Added completion-aware workflows group with 'run' alias (fallback)")
+            app.add_command(workflows_group, name="run")
+            app.add_command(workflows_group, name="workflows")  # Backward compat alias
+            logger.debug("Added completion-aware run group with 'workflows' alias (fallback)")
         except ImportError:
             workflows_group = LazyGroup(
-                "workflows",
+                "run",
                 "mcli.workflow.workflow.workflows",
-                help="Runnable workflows for automation, video processing, and daemon management",
+                help="Run workflow commands",
             )
-            app.add_command(workflows_group, name="workflows")
-            app.add_command(workflows_group, name="run")  # Add run alias
-            logger.debug("Added lazy workflows group with 'run' alias (fallback)")
+            app.add_command(workflows_group, name="run")
+            app.add_command(workflows_group, name="workflows")  # Backward compat alias
+            logger.debug("Added lazy run group with 'workflows' alias (fallback)")
 
     # Lazy load other heavy commands that are used less frequently
     # NOTE: chat and model commands have been removed

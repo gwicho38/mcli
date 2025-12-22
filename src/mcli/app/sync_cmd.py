@@ -1,33 +1,266 @@
-"""IPFS sync commands for mcli.
+"""Sync and lockfile management commands for mcli.
 
-Provides immutable cloud synchronization of workflow state via IPFS.
-Push your command lockfile to IPFS and share the CID with anyone.
+Provides:
+- IPFS synchronization of workflow state (push/pull)
+- Lockfile management (status/update/diff)
 """
 
+import json
 from pathlib import Path
 from typing import Optional
 
 import click
+from rich.table import Table
 
 from mcli.lib.constants import SyncMessages
 from mcli.lib.paths import get_custom_commands_dir
-from mcli.lib.ui.styling import console, error, info, success
+from mcli.lib.script_loader import ScriptLoader
+from mcli.lib.ui.styling import console, error, info, success, warning
 
 
 @click.group(name="sync")
 def sync_group():
-    """Sync workflow state to IPFS (immutable cloud storage).
+    """Sync workflow state and manage lockfile.
 
-    Push your command lockfile to IPFS and get a CID that anyone can use
-    to retrieve the exact same workflow state.
+    Lockfile Management:
+        status   Show workflow scripts and their lockfile status
+        update   Update lockfile with current script state
+        diff     Show differences between scripts and lockfile
+        show     Show lockfile contents
 
-    Commands:
+    IPFS Sync:
         push     Upload workflow state to IPFS
         pull     Download workflow state from IPFS
-        history  Show your sync history
-        verify   Check if a CID is accessible
+        verify   Verify lockfile or IPFS CID accessibility
     """
     pass
+
+
+# ============================================================
+# Lockfile Management Commands
+# ============================================================
+
+
+@sync_group.command(name="status")
+@click.option("--global", "-g", "is_global", is_flag=True, help="Show global workflow scripts")
+def sync_status(is_global: bool):
+    """Show workflow scripts and their lockfile status.
+
+    Lists all workflow scripts and shows whether they are:
+    - synced: matches lockfile
+    - modified: content changed since last lock
+    - unlocked: not yet in lockfile
+
+    Examples:
+        mcli sync status           # Show local workflows status
+        mcli sync status --global  # Show global workflows status
+    """
+    workflows_dir = get_custom_commands_dir(global_mode=is_global)
+    loader = ScriptLoader(workflows_dir)
+
+    scripts = loader.discover_scripts()
+    if not scripts:
+        scope = "global" if is_global else "local"
+        info(f"No {scope} workflow scripts found.")
+        return
+
+    lockfile = loader.load_lockfile()
+    locked_commands = lockfile.get("commands", {}) if lockfile else {}
+
+    table = Table(title=f"Workflow Scripts ({'global' if is_global else 'local'})")
+    table.add_column("Name", style="cyan")
+    table.add_column("Language", style="blue")
+    table.add_column("Version", style="green")
+    table.add_column("Hash", style="dim")
+    table.add_column("Status", style="yellow")
+
+    for script_path in scripts:
+        name = script_path.stem
+        script_info = loader.get_script_info(script_path)
+
+        # Check status against lockfile
+        if name in locked_commands:
+            locked = locked_commands[name]
+            current_hash = script_info.get("content_hash", "")
+            locked_hash = locked.get("content_hash", "")
+
+            if current_hash == locked_hash:
+                status = "[green]synced[/green]"
+            else:
+                status = "[yellow]modified[/yellow]"
+        else:
+            status = "[red]unlocked[/red]"
+
+        table.add_row(
+            name,
+            script_info.get("language", "unknown"),
+            script_info.get("version", "1.0.0"),
+            (
+                script_info.get("content_hash", "")[:16] + "..."
+                if script_info.get("content_hash")
+                else "-"
+            ),
+            status,
+        )
+
+    console.print(table)
+
+    # Show lockfile info
+    if lockfile:
+        console.print(f"\n[dim]Lockfile: {loader.lockfile_path}[/dim]")
+        console.print(f"[dim]Generated: {lockfile.get('generated_at', 'unknown')}[/dim]")
+        console.print(f"[dim]Schema version: {lockfile.get('version', '1.0')}[/dim]")
+
+
+@sync_group.command(name="update")
+@click.option(
+    "--global", "-g", "is_global", is_flag=True, help="Update global lockfile instead of local"
+)
+def sync_update(is_global: bool):
+    """Update the workflows lockfile with current script state.
+
+    Regenerates workflows.lock.json from the current script files,
+    capturing their content hash, version, and other metadata.
+
+    Examples:
+        mcli sync update           # Update local lockfile
+        mcli sync update --global  # Update global lockfile
+    """
+    workflows_dir = get_custom_commands_dir(global_mode=is_global)
+    loader = ScriptLoader(workflows_dir)
+
+    scripts = loader.discover_scripts()
+    if not scripts:
+        scope = "global" if is_global else "local"
+        warning(f"No {scope} workflow scripts found.")
+        return 0
+
+    if loader.save_lockfile():
+        success(f"Updated lockfile: {loader.lockfile_path}")
+        info(f"Tracked {len(scripts)} workflow script(s)")
+        return 0
+    else:
+        error("Failed to update lockfile.")
+        return 1
+
+
+@sync_group.command(name="diff")
+@click.option("--global", "-g", "is_global", is_flag=True, help="Diff global workflows")
+def sync_diff(is_global: bool):
+    """Show differences between current scripts and lockfile.
+
+    Compares current script state against the lockfile and shows
+    what has changed (added, removed, modified).
+
+    Examples:
+        mcli sync diff           # Show local changes
+        mcli sync diff --global  # Show global changes
+    """
+    workflows_dir = get_custom_commands_dir(global_mode=is_global)
+    loader = ScriptLoader(workflows_dir)
+
+    lockfile = loader.load_lockfile()
+    if not lockfile:
+        warning("No lockfile found. Run 'mcli sync update' to create one.")
+        return 1
+
+    verification = loader.verify_lockfile()
+    locked_commands = lockfile.get("commands", {})
+
+    has_changes = False
+
+    # Added scripts
+    if verification["extra"]:
+        has_changes = True
+        console.print("[green]Added scripts:[/green]")
+        for name in verification["extra"]:
+            console.print(f"  + {name}")
+        console.print("")
+
+    # Removed scripts
+    if verification["missing"]:
+        has_changes = True
+        console.print("[red]Removed scripts:[/red]")
+        for name in verification["missing"]:
+            console.print(f"  - {name}")
+        console.print("")
+
+    # Modified scripts
+    if verification["hash_mismatch"]:
+        has_changes = True
+        console.print("[yellow]Modified scripts:[/yellow]")
+        for name in verification["hash_mismatch"]:
+            if name in locked_commands:
+                old_version = locked_commands[name].get("version", "?")
+                # Get current version
+                scripts = {p.stem: p for p in loader.discover_scripts()}
+                if name in scripts:
+                    script_info = loader.get_script_info(scripts[name])
+                    new_version = script_info.get("version", "?")
+                    console.print(f"  ~ {name} (v{old_version} -> v{new_version})")
+                else:
+                    console.print(f"  ~ {name}")
+        console.print("")
+
+    # Version-only changes (no hash change)
+    version_only = [
+        n
+        for n in verification.get("version_mismatch", [])
+        if n not in verification["hash_mismatch"]
+    ]
+    if version_only:
+        console.print("[cyan]Version bumped (metadata only):[/cyan]")
+        for name in version_only:
+            console.print(f"  * {name}")
+        console.print("")
+
+    if not has_changes:
+        success("No changes detected. Lockfile is in sync.")
+
+    return 0
+
+
+@sync_group.command(name="show")
+@click.argument("name", required=False)
+@click.option("--global", "-g", "is_global", is_flag=True, help="Show global lockfile")
+def sync_show(name: Optional[str], is_global: bool):
+    """Show lockfile contents or details for a specific script.
+
+    If NAME is provided, shows detailed info for that script.
+    Otherwise shows the full lockfile.
+
+    Examples:
+        mcli sync show                 # Show full lockfile
+        mcli sync show my-workflow     # Show details for 'my-workflow'
+        mcli sync show --global        # Show global lockfile
+    """
+    workflows_dir = get_custom_commands_dir(global_mode=is_global)
+    loader = ScriptLoader(workflows_dir)
+
+    lockfile = loader.load_lockfile()
+    if not lockfile:
+        warning("No lockfile found. Run 'mcli sync update' to create one.")
+        return 1
+
+    if name:
+        commands = lockfile.get("commands", {})
+        if name not in commands:
+            error(f"Script '{name}' not found in lockfile.")
+            return 1
+
+        script_info = commands[name]
+        console.print(f"[cyan]Script: {name}[/cyan]\n")
+        console.print(json.dumps(script_info, indent=2))
+    else:
+        console.print(f"[cyan]Lockfile: {loader.lockfile_path}[/cyan]\n")
+        console.print(json.dumps(lockfile, indent=2))
+
+    return 0
+
+
+# ============================================================
+# IPFS Sync Commands
+# ============================================================
 
 
 @sync_group.command(name="push")
