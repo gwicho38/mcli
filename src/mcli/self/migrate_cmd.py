@@ -7,10 +7,11 @@ Handles migrations between different versions of mcli, including:
 - Command structure changes
 """
 
+import json
 import shutil
+import stat
 from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple
 
 import click
 from rich.console import Console
@@ -18,10 +19,128 @@ from rich.table import Table
 
 from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.ui.styling import error, info, success
+from mcli.lib.ui.styling import error, info, success, warning
 
 logger = get_logger(__name__)
 console = Console()
+
+
+def convert_json_to_script(
+    json_path: Path, output_dir: Path, dry_run: bool = False
+) -> tuple[bool, str, Path | None]:
+    """Convert a JSON workflow definition to a native script file."""
+    try:
+        with open(json_path) as f:
+            workflow = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        return False, f"Failed to read {json_path}: {e}", None
+
+    name = workflow.get("name", json_path.stem)
+    code = workflow.get("code", "")
+    language = workflow.get("language", "python")
+    description = workflow.get("description", "")
+    version = workflow.get("version", "1.0.0")
+
+    if not code:
+        return False, f"No code found in {json_path}", None
+
+    extension_map = {
+        "python": ".py",
+        "shell": ".sh",
+        "bash": ".sh",
+        "zsh": ".sh",
+        "javascript": ".js",
+        "typescript": ".ts",
+    }
+    ext = extension_map.get(language, ".sh")
+    output_path = output_dir / f"{name}{ext}"
+
+    if dry_run:
+        return True, f"Would create {output_path}", output_path
+
+    lines = code.split("\n")
+    has_shebang = lines and lines[0].startswith("#!")
+
+    metadata_comments = []
+    if description and "@description" not in code:
+        if language in ["python", "shell", "bash", "zsh"]:
+            metadata_comments.append(f"# @description: {description}")
+        elif language in ["javascript", "typescript"]:
+            metadata_comments.append(f"// @description: {description}")
+
+    if version and "@version" not in code:
+        if language in ["python", "shell", "bash", "zsh"]:
+            metadata_comments.append(f"# @version: {version}")
+        elif language in ["javascript", "typescript"]:
+            metadata_comments.append(f"// @version: {version}")
+
+    if metadata_comments:
+        if has_shebang:
+            lines = [lines[0]] + metadata_comments + lines[1:]
+        else:
+            lines = metadata_comments + lines
+
+    final_code = "\n".join(lines)
+
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
+            f.write(final_code)
+
+        if ext == ".sh":
+            output_path.chmod(output_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+        return True, f"Created {output_path}", output_path
+
+    except OSError as e:
+        return False, f"Failed to write {output_path}: {e}", None
+
+
+def migrate_json_workflows(
+    workflows_dir: Path, dry_run: bool = False, remove_json: bool = False
+) -> tuple[int, int, list[str]]:
+    """Find and convert all JSON workflow files to native scripts."""
+    json_files = list(workflows_dir.glob("*.json"))
+    json_files = [f for f in json_files if not f.name.endswith(".lock.json")]
+
+    if not json_files:
+        return 0, 0, ["No JSON workflow files found"]
+
+    converted = 0
+    failed = 0
+    messages = []
+
+    for json_file in json_files:
+        try:
+            with open(json_file) as f:
+                data = json.load(f)
+
+            if "code" not in data:
+                messages.append(f"  ⚠ {json_file.name} (not a workflow file)")
+                continue
+        except json.JSONDecodeError:
+            messages.append(f"  ✗ {json_file.name} (invalid JSON)")
+            failed += 1
+            continue
+
+        success_flag, msg, output_path = convert_json_to_script(json_file, workflows_dir, dry_run)
+
+        if success_flag:
+            ext = output_path.suffix if output_path else ".py"
+            messages.append(f"  ✓ {json_file.name} → {json_file.stem}{ext}")
+            converted += 1
+
+            if remove_json and not dry_run:
+                try:
+                    json_file.unlink()
+                    messages.append(f"    Removed {json_file.name}")
+                except OSError as e:
+                    messages.append(f"    Warning: Could not remove {json_file.name}: {e}")
+        else:
+            messages.append(f"  ✗ {json_file.name}: {msg}")
+            failed += 1
+
+    return converted, failed, messages
 
 
 def get_migration_status() -> dict:
@@ -280,8 +399,25 @@ def migrate_commands_to_workflows(
     "-d",
     help="Description for IPFS sync (when using --to-ipfs)",
 )
+@click.option(
+    "--json-to-scripts",
+    is_flag=True,
+    help="Convert legacy JSON workflow files to native scripts (.py, .sh, etc.)",
+)
+@click.option(
+    "--remove-json",
+    is_flag=True,
+    help="Remove JSON files after successful conversion (use with --json-to-scripts)",
+)
 def migrate_command(
-    dry_run: bool, force: bool, status: bool, scope: str, to_ipfs: bool, description: str
+    dry_run: bool,
+    force: bool,
+    status: bool,
+    scope: str,
+    to_ipfs: bool,
+    description: str,
+    json_to_scripts: bool,
+    remove_json: bool,
 ):
     """
     Migrate mcli configuration and data to new structure.
@@ -289,15 +425,17 @@ def migrate_command(
     Currently handles:
     - Moving ~/.mcli/commands to ~/.mcli/workflows (global)
     - Moving .mcli/commands to .mcli/workflows (local, in git repos)
+    - Converting JSON workflow files to native scripts (--json-to-scripts)
     - Optionally pushing to IPFS for decentralized backup
 
     Examples:
-        mcli self migrate --status        # Check migration status
-        mcli self migrate --dry-run       # See what would be done
-        mcli self migrate                 # Perform migration (both global and local)
-        mcli self migrate --scope global  # Migrate only global
-        mcli self migrate --scope local   # Migrate only local (current repo)
-        mcli self migrate --force         # Force migration (overwrite existing)
+        mcli self migrate --status           # Check migration status
+        mcli self migrate --dry-run          # See what would be done
+        mcli self migrate                    # Perform migration (both global and local)
+        mcli self migrate --scope global     # Migrate only global
+        mcli self migrate --scope local      # Migrate only local (current repo)
+        mcli self migrate --force            # Force migration (overwrite existing)
+        mcli self migrate --json-to-scripts  # Convert JSON workflows to scripts
         mcli self migrate --to-ipfs -d "Migrated workflows v1.0"  # Push to IPFS after
     """
 
@@ -361,6 +499,61 @@ def migrate_command(
 
             console.print(table)
             console.print("\n[dim]Run 'mcli self migrate' to perform migration[/dim]")
+
+        return
+
+    # Handle --json-to-scripts conversion
+    if json_to_scripts:
+        from mcli.lib.paths import get_custom_commands_dir, get_git_root, is_git_repository
+
+        console.print("[bold cyan]Converting JSON Workflows to Native Scripts[/bold cyan]")
+        if dry_run:
+            console.print("[yellow]DRY RUN MODE - No changes will be made[/yellow]")
+        console.print()
+
+        dirs_to_convert = []
+
+        if scope in ["global", "all"]:
+            global_dir = get_custom_commands_dir(global_mode=True)
+            if global_dir.exists():
+                dirs_to_convert.append(("Global", global_dir))
+
+        if scope in ["local", "all"] and is_git_repository():
+            git_root = get_git_root()
+            if git_root:
+                local_dir = get_custom_commands_dir(global_mode=False)
+                if local_dir and local_dir.exists():
+                    dirs_to_convert.append((f"Local ({git_root.name})", local_dir))
+
+        if not dirs_to_convert:
+            info("No workflow directories found")
+            return
+
+        total_converted = 0
+        total_failed = 0
+
+        for label, workflows_dir in dirs_to_convert:
+            console.print(f"[bold]{label}:[/bold]")
+            converted, failed, messages = migrate_json_workflows(workflows_dir, dry_run, remove_json)
+
+            for msg in messages:
+                console.print(msg)
+
+            total_converted += converted
+            total_failed += failed
+            console.print()
+
+        console.print("[bold]Summary:[/bold]")
+        if total_converted > 0:
+            console.print(f"  [green]✓ Converted: {total_converted}[/green]")
+        if total_failed > 0:
+            console.print(f"  [red]✗ Failed: {total_failed}[/red]")
+        if total_converted == 0 and total_failed == 0:
+            console.print("  No JSON workflow files found to convert")
+
+        if total_converted > 0 and not dry_run:
+            console.print()
+            console.print("[dim]Run 'mcli sync update' to update the lockfile[/dim]")
 
         return
 
