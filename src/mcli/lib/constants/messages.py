@@ -821,6 +821,35 @@ class SystemIntegrationMessages:
     ]
 
 
+class EditMessages:
+    """Edit command message constants."""
+
+    # Info messages
+    OPENING_IN_EDITOR = "Opening command in {editor}..."
+    EDITING_NATIVE_SCRIPT = "Editing native script: {path}"
+    LEGACY_JSON_NOTE = (
+        "[dim]Note: This is a legacy JSON command. Consider migrating to native scripts.[/dim]"
+    )
+
+    # Success messages
+    EDITED_FILE = "[green]Edited: {filename}[/green]"
+    UPDATED_COMMAND = "[green]Updated command: {name}[/green]"
+    SAVED_TO = "[dim]Saved to: {path}[/dim]"
+    RELOAD_HINT = "[dim]Reload with: mcli self reload or restart mcli[/dim]"
+
+    # Warning messages
+    EDITOR_EXIT_CODE = "[yellow]Editor exited with code {code}[/yellow]"
+    NO_CHANGES = "No changes made"
+
+    # Error messages
+    COMMAND_NOT_FOUND = "[red]Command not found: {name}[/red]"
+    SEARCHED_IN = "[dim]Searched in: {path}[/dim]"
+    LOOKING_FOR_EXTENSIONS = "[dim]Looking for: .py, .sh, .js, .ts, .ipynb, or .json[/dim]"
+    FAILED_TO_LOAD = "[red]Failed to load command: {error}[/red]"
+    NO_CODE = "[red]Command has no code: {name}[/red]"
+    SYNTAX_ERROR = "[red]Syntax error in edited code: {error}[/red]"
+
+
 class SyncMessages:
     """Script synchronization command messages.
 
@@ -923,5 +952,6 @@ __all__ = [
     "ModelServiceMessages",
     "CommandMessages",
     "SystemIntegrationMessages",
+    "EditMessages",
     "SyncMessages",
 ]

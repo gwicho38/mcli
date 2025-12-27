@@ -35,6 +35,7 @@ from .env import EnvVars
 from .messages import (
     ChatMessages,
     CommandMessages,
+    EditMessages,
     ErrorMessages,
     InfoMessages,
     ModelServiceMessages,
@@ -81,6 +82,7 @@ __all__ = [
     "PromptMessages",
     "ChatMessages",
     "CommandMessages",
+    "EditMessages",
     "ModelServiceMessages",
     "SystemIntegrationMessages",
     "SyncMessages",
