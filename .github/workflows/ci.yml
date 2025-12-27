@@ -94,7 +94,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - name: Checkout code
@@ -129,7 +129,7 @@ jobs:
       run: |
         cd mcli_rust
         maturin develop --release || maturin develop || echo "Warning: Rust extension build failed, continuing without extensions"
-      continue-on-error: ${{ matrix.python-version == '3.12' || matrix.python-version == '3.9' }}
+      continue-on-error: ${{ matrix.python-version == '3.12' }}
 
     - name: Run Python tests with coverage
       run: |
