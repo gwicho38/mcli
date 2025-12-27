@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Entry point for model serving CLI."""
 
-import click
 import os
 import sys
-from pathlib import Path
 import threading
 import time
+from pathlib import Path
 from typing import Optional
 
-from mcli.lib.ui.styling import error, info, success, success
+import click
+
+from mcli.lib.ui.styling import error, info, success
 
 
 @click.group(name="mcli-serve", help="Model serving CLI for MCLI ML models")
@@ -26,13 +27,13 @@ def start_server(model: str, port: int, host: str, workers: int):
     """Start model serving server."""
     info(f"Starting model server for: {model}")
     info(f"Serving on {host}:{port}")
-    
+
     # Check if model file exists
     model_path = Path(model)
     if not model_path.exists():
         error(f"Model file not found: {model}")
         return 1
-    
+
     success("Model server started successfully")
     info(f"Model: {model}")
     info(f"Host: {host}:{port}")

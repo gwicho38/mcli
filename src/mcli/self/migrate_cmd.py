@@ -88,7 +88,9 @@ def convert_json_to_script(
             f.write(final_code)
 
         if ext == ".sh":
-            output_path.chmod(output_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            output_path.chmod(
+                output_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+            )
 
         return True, f"Created {output_path}", output_path
 
@@ -534,7 +536,9 @@ def migrate_command(
 
         for label, workflows_dir in dirs_to_convert:
             console.print(f"[bold]{label}:[/bold]")
-            converted, failed, messages = migrate_json_workflows(workflows_dir, dry_run, remove_json)
+            converted, failed, messages = migrate_json_workflows(
+                workflows_dir, dry_run, remove_json
+            )
 
             for msg in messages:
                 console.print(msg)
