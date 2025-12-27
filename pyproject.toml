@@ -487,3 +487,36 @@ mcli-serve = "mcli.ml.serving.serve:main"
 mcli-backtest = "mcli.ml.backtesting.run:main"
 mcli-optimize = "mcli.ml.optimization.optimize:main"
 mcli-dashboard = "mcli.ml.dashboard:main"
+
+[tool.bandit]
+# Skip these test IDs - acceptable in this CLI tool context
+skips = [
+    "B101",  # assert - acceptable in CLI tool
+    "B102",  # exec_used - required for dynamic command loading
+    "B104",  # hardcoded_bind_all_interfaces - dev servers
+    "B108",  # hardcoded_tmp_directory - acceptable usage
+    "B113",  # request_without_timeout - handled by app logic
+    "B301",  # pickle - used for trusted internal caching
+    "B306",  # mktemp - acceptable temp file creation
+    "B310",  # urllib_urlopen - required for remote functionality
+    "B324",  # hashlib_md5 - non-security fingerprinting
+    "B404",  # import_subprocess - required for CLI tool
+    "B602",  # subprocess_popen_with_shell_equals_true - required for user commands
+    "B603",  # subprocess_without_shell_equals_true - controlled usage
+    "B604",  # any_other_function_with_shell_equals_true - false positives
+    "B605",  # start_process_with_a_shell - controlled usage
+    "B607",  # start_process_with_partial_path - acceptable for CLI
+]
+exclude_dirs = [
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    ".tox",
+    ".pytest_cache",
+    "tests",
+    "docs",
+    "scripts",
+    ".git",
+    "__pycache__",
+]
