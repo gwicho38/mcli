@@ -56,7 +56,7 @@ jobs:
           bandit -r src/ -f txt -o bandit-full-report.txt || true
 
       - name: Upload Bandit results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: bandit-results
           path: |
@@ -82,7 +82,7 @@ jobs:
         run: safety check --json > safety-report.json || safety check --ignore 59234,71691,71584,71578,71577,71692,71579,71587,71693,64459,64396
 
       - name: Upload Safety results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: safety-results
           path: safety-report.json
