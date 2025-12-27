@@ -81,11 +81,8 @@ repos:
       - id: pyupgrade
         args: [--py39-plus]
 
-  # Check for common Python security issues
-  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-    rev: v1.3.2
-    hooks:
-      - id: python-safety-dependencies-check
+  # NOTE: Dependency security checks run in CI via security.yml workflow
+  # Removed safety/pip-audit pre-commit hook as it's redundant with CI
 
   # YAML formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
