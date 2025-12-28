@@ -111,7 +111,6 @@ mcli commands sync -g
 
 # 3. Run it!
 mcli run -g backup
-# Note: 'mcli run' is an alias for 'mcli workflows'
 ```
 
 **Supported Languages**: Python, Bash, JavaScript, TypeScript, Ruby, Perl, Lua
@@ -281,17 +280,17 @@ Share workflows globally using IPFS - zero configuration, immutable storage:
 
 ```bash
 # Push your workflows to IPFS
-mcli workflows sync push -g -d "Production workflows v1.0"
+mcli sync push -g -d "Production workflows v1.0"
 # → Returns: QmXyZ123... (immutable CID)
 
 # Anyone can pull your exact workflow state
-mcli workflows sync pull QmXyZ123...
+mcli sync pull QmXyZ123...
 
 # View sync history
-mcli workflows sync history
+mcli sync history
 
 # Verify a CID is accessible
-mcli workflows sync verify QmXyZ123...
+mcli sync verify QmXyZ123...
 ```
 
 **Features:**
@@ -319,7 +318,7 @@ mcli self migrate --to-ipfs -d "Production migration"
 # → Moves commands/ to workflows/ AND pushes to IPFS
 
 # Just push existing workflows to IPFS
-mcli workflows sync push -g -d "Production v1.0"
+mcli sync push -g -d "Production v1.0"
 ```
 
 ### 6. **Run as Daemon or Scheduled Task**
@@ -443,10 +442,7 @@ MCLI comes with powerful built-in workflows:
 
 ```bash
 mcli run --help
-# or use the full command: mcli workflows --help
 ```
-
-**Note**: `mcli run` is a convenient alias for `mcli workflows`
 
 Available workflows:
 - **pdf** - Intelligent PDF processing (extract, compress, split, merge)

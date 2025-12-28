@@ -111,7 +111,7 @@ MCLI automatically converts raw script files to JSON workflow definitions, enabl
 cp backup.sh ~/.mcli/commands/utils/backup.sh
 
 # JSON is auto-generated on next mcli run
-mcli workflows sync all
+mcli sync all
 
 # Script is now available as a command
 mcli utils backup
@@ -130,11 +130,11 @@ mcli utils backup
 
 **Sync commands**:
 ```bash
-mcli workflows sync all          # Sync all scripts to JSON
-mcli workflows sync one <path>   # Sync single script
-mcli workflows sync status       # Show sync status
-mcli workflows sync cleanup      # Remove orphaned JSONs
-mcli workflows sync watch        # Watch mode (auto-sync)
+mcli sync all          # Sync all scripts to JSON
+mcli sync one <path>   # Sync single script
+mcli sync status       # Show sync status
+mcli sync cleanup      # Remove orphaned JSONs
+mcli sync watch        # Watch mode (auto-sync)
 ```
 
 See [Script Sync System Documentation](docs/SCRIPT_SYNC_SYSTEM.md) for complete details.
@@ -219,7 +219,6 @@ The CLI has been simplified to focus on the core command runner experience:
 - **`mcli run <cmd>`** - The killer app: run workflow commands
   - Options: `-g/--global` for global workflows, `-f/--workspace` for specific workspace
   - Located in `src/mcli/workflow/workflow.py`
-  - **Alias**: `mcli workflows` for backward compatibility
 - **`mcli init`** - Initialize workflows directory (shortcut for `config init`)
 - **`mcli list`** - List available workflow commands
 - **`mcli search <query>`** - Search commands by name/description

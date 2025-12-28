@@ -136,12 +136,13 @@ class CustomCommandManager:
                 created_at = datetime.fromtimestamp(stat.st_ctime).isoformat() + "Z"
 
                 # Notebooks are handled specially - create minimal metadata
+                # Notebooks are registered under 'run' group (the workflow runner)
                 return {
                     "name": command_file.stem,
                     "description": f"Jupyter notebook: {command_file.stem}",
                     "type": "notebook",
                     "file": str(command_file),
-                    "group": "workflow",
+                    "group": "run",
                     "version": "1.0",
                     "created_at": created_at,
                     "updated_at": updated_at,

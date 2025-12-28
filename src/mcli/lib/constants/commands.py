@@ -35,16 +35,16 @@ class CommandKeys:
 class CommandGroups:
     """Standard command group names.
 
-    Note: WORKFLOW vs WORKFLOWS:
+    Note: WORKFLOW vs RUN:
     - WORKFLOW: Management commands for workflows (add, edit, remove, etc.)
       Used by: mcli workflow (formerly mcli commands)
-    - WORKFLOWS: Runnable workflow executions (secrets, pdf, clean, etc.)
-      Used by: mcli workflows (formerly mcli workflow)
+    - RUN: Execute workflow commands (secrets, pdf, clean, etc.)
+      Used by: mcli run
     """
 
     APP = "app"
     WORKFLOW = "workflow"  # Management of workflows
-    WORKFLOWS = "workflows"  # Running workflows
+    RUN = "run"  # Running workflows (formerly WORKFLOWS)
     SELF = "self"
     PUBLIC = "public"
     CUSTOM = "custom"

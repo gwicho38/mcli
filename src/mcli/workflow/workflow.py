@@ -254,8 +254,6 @@ def workflows(ctx, is_global, workspace):
         mcli run my-workflow              # Execute local workflow (if in git repo)
         mcli run -g my-workflow           # Execute global workflow
         mcli run -f ~/projects/myapp my-workflow  # Execute from specific workspace
-
-    Alias: You can also use 'mcli workflows' as an alias for 'mcli run'
     """
     from mcli.lib.paths import resolve_workspace
     from mcli.lib.ui.styling import error

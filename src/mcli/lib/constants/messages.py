@@ -874,7 +874,7 @@ class SyncMessages:
     NEEDS_SYNC_COUNT = "Needs sync: {count} script(s)"
     NO_JSON_COUNT = "No JSON: {count} script(s)"
     TOTAL_SCRIPTS = "Total scripts: {count}"
-    RUN_SYNC_ALL_HINT = "\nRun [bold]mcli workflows sync all[/bold] to sync all scripts"
+    RUN_SYNC_ALL_HINT = "\nRun [bold]mcli sync all[/bold] to sync all scripts"
 
     # Cleanup messages
     SCANNING_ORPHANED = "Scanning for orphaned JSON files..."

@@ -9,6 +9,33 @@ import tomli
 from mcli.lib.api.api import register_command_as_api
 from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_tracing, get_logger
 
+# Desired command order for help display
+COMMAND_ORDER = ["init", "new", "edit", "rm", "search", "list", "self", "sync", "run"]
+
+
+class OrderedGroup(click.Group):
+    """A Click Group that displays commands in a specific order."""
+
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        """Return commands in the defined order, with unlisted commands at the end."""
+        ordered = []
+        remaining = []
+
+        for name in self.commands:
+            if name in COMMAND_ORDER:
+                ordered.append(name)
+            else:
+                remaining.append(name)
+
+        # Sort ordered commands by their position in COMMAND_ORDER
+        ordered.sort(key=lambda x: COMMAND_ORDER.index(x))
+
+        # Sort remaining commands alphabetically
+        remaining.sort()
+
+        return ordered + remaining
+
+
 # Defer performance optimizations until needed
 _optimization_results = None
 
@@ -363,15 +390,14 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load edit command: {e}")
 
-    # mcli delete - Delete a command (aliases: rm, remove)
+    # mcli rm - Delete a command
     try:
-        from mcli.app.delete_cmd import delete, rm
+        from mcli.app.delete_cmd import rm
 
-        app.add_command(delete, name="delete")
         app.add_command(rm, name="rm")
-        logger.debug("Added delete/rm commands")
+        logger.debug("Added rm command")
     except ImportError as e:
-        logger.debug(f"Could not load delete command: {e}")
+        logger.debug(f"Could not load rm command: {e}")
 
     # mcli sync - IPFS sync + lockfile management
     try:
@@ -416,13 +442,9 @@ def _add_lazy_commands(app: click.Group):
     try:
         from mcli.workflow.workflow import workflows as workflows_group
 
-        # Primary command: mcli run
+        # Primary command: mcli run (the only way to run workflows)
         app.add_command(workflows_group, name="run")
         logger.debug("Added 'run' command")
-
-        # Keep 'workflows' as alias for backward compatibility
-        app.add_command(workflows_group, name="workflows")
-        logger.debug("Added 'workflows' alias for backward compatibility")
     except ImportError as e:
         logger.error(f"Could not load run/workflows group: {e}")
         # Fallback to lazy loading if import fails
@@ -435,8 +457,7 @@ def _add_lazy_commands(app: click.Group):
                 "Run workflow commands",
             )
             app.add_command(workflows_group, name="run")
-            app.add_command(workflows_group, name="workflows")  # Backward compat alias
-            logger.debug("Added completion-aware run group with 'workflows' alias (fallback)")
+            logger.debug("Added completion-aware run group (fallback)")
         except ImportError:
             workflows_group = LazyGroup(
                 "run",
@@ -444,8 +465,7 @@ def _add_lazy_commands(app: click.Group):
                 help="Run workflow commands",
             )
             app.add_command(workflows_group, name="run")
-            app.add_command(workflows_group, name="workflows")  # Backward compat alias
-            logger.debug("Added lazy run group with 'workflows' alias (fallback)")
+            logger.debug("Added lazy run group (fallback)")
 
     # Lazy load other heavy commands that are used less frequently
     # NOTE: chat and model commands have been removed
@@ -505,7 +525,7 @@ def create_app() -> click.Group:
 
     logger.debug("create_app")
 
-    app = click.Group(name="mcli")
+    app = OrderedGroup(name="mcli")
 
     # Version command moved to self group (mcli self version)
     # Add lazy-loaded command groups
