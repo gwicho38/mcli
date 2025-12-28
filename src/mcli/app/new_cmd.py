@@ -685,8 +685,7 @@ def new(
     is_global: bool,
     source_file: Optional[str],
 ) -> int:
-    """
-    Create a new workflow command as a native script file.
+    """✨ Create a new workflow command as a native script file.
 
     When using --file, the command name is derived from the filename and the
     language is auto-detected from the file extension.

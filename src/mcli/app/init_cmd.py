@@ -28,8 +28,7 @@ logger = get_logger(__name__)
 @click.option("--git", is_flag=True, help="Initialize git repository in workflows directory")
 @click.option("--force", "-f", is_flag=True, help="Force initialization even if directory exists")
 def init(is_global, git, force):
-    """
-    Initialize workflows directory structure.
+    """🚀 Initialize workflows directory structure.
 
     Creates the necessary directories and configuration files for managing
     custom workflows. By default, creates a local .mcli/workflows/ directory

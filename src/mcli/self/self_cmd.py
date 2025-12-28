@@ -38,7 +38,7 @@ logger = get_logger()
 
 
 # Create a Click command group instead of Typer
-@click.group(name="self", help="Manage and extend the mcli application")
+@click.group(name="self", help="⚙️ Manage and extend the mcli application")
 def self_app():
     """
     Self-management commands for mcli.

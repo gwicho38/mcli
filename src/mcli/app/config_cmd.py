@@ -46,8 +46,7 @@ def config():
 @click.option("--git", is_flag=True, help="Initialize git repository in workflows directory")
 @click.option("--force", "-f", is_flag=True, help="Force initialization even if directory exists")
 def config_init(is_global: bool, git: bool, force: bool):
-    """
-    Initialize workflows directory structure.
+    """🚀 Initialize workflows directory structure.
 
     Creates the necessary directories and configuration files for managing
     custom workflows. By default, creates a local .mcli/workflows/ directory

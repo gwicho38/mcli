@@ -30,8 +30,7 @@ logger = get_logger(__name__)
     help="Use global commands (~/.mcli/workflows/) instead of local",
 )
 def list_cmd(include_groups: bool, custom_only: bool, as_json: bool, is_global: bool):
-    """
-    List all available workflow commands.
+    """📋 List all available workflow commands.
 
     By default, shows all discovered commands. Use flags to filter:
     - --custom-only: Show only custom commands

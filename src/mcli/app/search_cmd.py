@@ -22,8 +22,7 @@ logger = get_logger(__name__)
     "--global", "-g", "is_global", is_flag=True, help="Search global commands instead of local"
 )
 def search(query: str, as_json: bool, is_global: bool):
-    """
-    Search commands by name, description, or tags.
+    """🔍 Search commands by name, description, or tags.
 
     By default searches local commands (if in git repo), use --global/-g for global commands.
 

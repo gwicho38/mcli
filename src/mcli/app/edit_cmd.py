@@ -43,7 +43,7 @@ def find_native_script(workflows_dir: Path, command_name: str) -> Path | None:
     "--global", "-g", "is_global", is_flag=True, help="Edit global command instead of local"
 )
 def edit(command_name, editor, is_global):
-    """Edit a command interactively using $EDITOR.
+    """✏️ Edit a command interactively using $EDITOR.
 
     Opens the command's script file in your preferred editor.
     Supports both native scripts (.py, .sh, .js, .ts, .ipynb) and legacy JSON commands.

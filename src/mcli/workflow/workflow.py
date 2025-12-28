@@ -248,7 +248,7 @@ class ScopedWorkflowsGroup(click.Group):
 )
 @click.pass_context
 def workflows(ctx, is_global, workspace):
-    """Runnable workflows for automation, video processing, and daemon management
+    """▶️ Run workflows for automation, video processing, and daemon management
 
     Examples:
         mcli run my-workflow              # Execute local workflow (if in git repo)

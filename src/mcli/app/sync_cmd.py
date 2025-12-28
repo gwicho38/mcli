@@ -20,7 +20,7 @@ from mcli.lib.ui.styling import console, error, info, success, warning
 
 @click.group(name="sync")
 def sync_group():
-    """Sync workflow state and manage lockfile.
+    """🔄 Sync workflow state and manage lockfile.
 
     Lockfile Management:
         status   Show workflow scripts and their lockfile status

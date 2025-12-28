@@ -26,8 +26,7 @@ logger = get_logger(__name__)
     help="Remove from global commands instead of local",
 )
 def delete(command_name: str, yes: bool, is_global: bool):
-    """
-    Delete a workflow command.
+    """🗑️ Delete a workflow command.
 
     By default removes from local commands (if in git repo), use --global/-g for global commands.
 
