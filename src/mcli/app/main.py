@@ -408,15 +408,6 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load sync group: {e}")
 
-    # mcli config - Configuration management
-    try:
-        from mcli.app.config_cmd import config
-
-        app.add_command(config, name="config")
-        logger.debug("Added config group")
-    except ImportError as e:
-        logger.debug(f"Could not load config group: {e}")
-
     # mcli init - Top-level shortcut to initialize workflows directory
     try:
         from mcli.app.config_cmd import config_init
