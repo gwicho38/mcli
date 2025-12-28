@@ -44,7 +44,7 @@ def sync_group():
 @sync_group.command(name="status")
 @click.option("--global", "-g", "is_global", is_flag=True, help="Show global workflow scripts")
 def sync_status(is_global: bool):
-    """Show workflow scripts and their lockfile status.
+    """📊 Show workflow scripts and their lockfile status.
 
     Lists all workflow scripts and shows whether they are:
     - synced: matches lockfile
@@ -117,7 +117,7 @@ def sync_status(is_global: bool):
     "--global", "-g", "is_global", is_flag=True, help="Update global lockfile instead of local"
 )
 def sync_update(is_global: bool):
-    """Update the workflows lockfile with current script state.
+    """🔒 Update the workflows lockfile with current script state.
 
     Regenerates workflows.lock.json from the current script files,
     capturing their content hash, version, and other metadata.
@@ -147,7 +147,7 @@ def sync_update(is_global: bool):
 @sync_group.command(name="diff")
 @click.option("--global", "-g", "is_global", is_flag=True, help="Diff global workflows")
 def sync_diff(is_global: bool):
-    """Show differences between current scripts and lockfile.
+    """📝 Show differences between current scripts and lockfile.
 
     Compares current script state against the lockfile and shows
     what has changed (added, removed, modified).
@@ -224,7 +224,7 @@ def sync_diff(is_global: bool):
 @click.argument("name", required=False)
 @click.option("--global", "-g", "is_global", is_flag=True, help="Show global lockfile")
 def sync_show(name: Optional[str], is_global: bool):
-    """Show lockfile contents or details for a specific script.
+    """👁️ Show lockfile contents or details for a specific script.
 
     If NAME is provided, shows detailed info for that script.
     Otherwise shows the full lockfile.
@@ -267,7 +267,7 @@ def sync_show(name: Optional[str], is_global: bool):
 @click.option("--global", "-g", "global_mode", is_flag=True, help="Push global commands")
 @click.option("--description", "-d", help="Description for this sync")
 def sync_push_command(global_mode: bool, description: str):
-    """Push workflow state to IPFS.
+    """⬆️ Push workflow state to IPFS.
 
     Uploads your current command lockfile to IPFS and returns an immutable
     CID (Content Identifier) that anyone can use to retrieve the exact same
@@ -322,7 +322,7 @@ def sync_push_command(global_mode: bool, description: str):
 @click.option("--output", "-o", type=click.Path(path_type=Path), help="Output file path")
 @click.option("--no-verify", is_flag=True, help="Skip hash verification")
 def sync_pull_command(cid: str, output: Optional[Path], no_verify: bool):
-    """Pull workflow state from IPFS by CID.
+    """⬇️ Pull workflow state from IPFS by CID.
 
     Retrieves a command lockfile from IPFS using its Content Identifier (CID).
     The CID guarantees you get the exact same content that was uploaded.
@@ -371,7 +371,7 @@ def sync_pull_command(cid: str, output: Optional[Path], no_verify: bool):
 @sync_group.command(name="history")
 @click.option("--limit", "-n", default=10, help="Number of entries to show")
 def sync_history_command(limit: int):
-    """Show IPFS sync history.
+    """📜 Show IPFS sync history.
 
     Displays your local history of IPFS syncs, including CIDs,
     timestamps, and descriptions.
@@ -406,7 +406,7 @@ def sync_history_command(limit: int):
 @sync_group.command(name="verify")
 @click.argument("cid")
 def sync_verify_command(cid: str):
-    """Verify that a CID is accessible on IPFS.
+    """✅ Verify that a CID is accessible on IPFS.
 
     Checks if the given CID can be retrieved from IPFS gateways.
 
@@ -424,3 +424,60 @@ def sync_verify_command(cid: str):
     else:
         error(SyncMessages.CID_NOT_ACCESSIBLE)
         info(SyncMessages.PROPAGATION_DELAY_NOTE)
+
+
+@sync_group.command(name="now")
+@click.option("--global", "-g", "is_global", is_flag=True, help="Sync global workflows")
+@click.option("--description", "-d", help="Description for IPFS sync")
+def sync_now(is_global: bool, description: str):
+    """⚡ Update lockfile and push to IPFS in one command.
+
+    Combines 'update' and 'push' into a single operation:
+    1. Updates the lockfile with current script state
+    2. Pushes to IPFS for distributed backup
+
+    Examples:
+        mcli sync now                    # Sync local workflows
+        mcli sync now --global           # Sync global workflows
+        mcli sync now -d "v1.0 release"  # Sync with description
+    """
+    from mcli.lib.ipfs_sync import IPFSSync
+
+    scope = "global" if is_global else "local"
+    workflows_dir = get_custom_commands_dir(global_mode=is_global)
+    loader = ScriptLoader(workflows_dir)
+
+    # Step 1: Check for scripts
+    scripts = loader.discover_scripts()
+    if not scripts:
+        warning(f"No {scope} workflow scripts found.")
+        return 1
+
+    # Step 2: Update lockfile
+    info(f"🔒 Updating {scope} lockfile...")
+    if not loader.save_lockfile():
+        error("Failed to update lockfile.")
+        return 1
+    success(f"Updated lockfile with {len(scripts)} script(s)")
+
+    # Step 3: Push to IPFS
+    info("⬆️ Pushing to IPFS...")
+    ipfs = IPFSSync()
+
+    if not ipfs._check_local_ipfs():
+        warning("IPFS daemon not running. Lockfile updated but not pushed to IPFS.")
+        info("Start IPFS with: ipfs daemon")
+        return 0
+
+    lockfile_path = loader.lockfile_path
+    cid = ipfs.push(lockfile_path, description=description or "")
+
+    if cid:
+        success("✅ Sync complete!")
+        console.print(f"\n[bold cyan]CID:[/bold cyan] {cid}")
+        console.print(f"[dim]Retrieve with: mcli sync pull {cid}[/dim]")
+    else:
+        error("Failed to push to IPFS.")
+        return 1
+
+    return 0

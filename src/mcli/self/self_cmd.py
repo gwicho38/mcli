@@ -15,7 +15,7 @@ from datetime import datetime
 from functools import lru_cache
 from importlib.metadata import metadata, version
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
 import tomli
@@ -473,8 +473,7 @@ logger = get_logger()
 
 @click.group("plugin")
 def plugin():
-    """
-    Manage plugins for mcli.
+    """🔌 Manage plugins for mcli.
 
     Use one of the subcommands: add, remove, update.
     """
@@ -485,7 +484,7 @@ def plugin():
 @click.argument("plugin_name")
 @click.argument("repo_url", required=False)
 def plugin_add(plugin_name, repo_url=None):
-    """Add a new plugin."""
+    """➕ Add a new plugin."""
     # First, check for config path in environment variable
     logger.info(f"Adding plugin: {plugin_name} with repo URL: {repo_url}")
     config_env = os.environ.get("MCLI_CONFIG")
@@ -560,7 +559,7 @@ def plugin_add(plugin_name, repo_url=None):
 @plugin.command("remove")
 @click.argument("plugin_name")
 def plugin_remove(plugin_name):
-    """Remove an existing plugin."""
+    """➖ Remove an existing plugin."""
     # Determine plugin install path as in plugin_add
     logger.info(f"Removing plugin: {plugin_name}")
     config_env = os.environ.get("MCLI_CONFIG")
@@ -616,8 +615,7 @@ def plugin_remove(plugin_name):
 @plugin.command("update")
 @click.argument("plugin_name")
 def plugin_update(plugin_name):
-    """Update an existing plugin (git pull on default branch)."""
-    """Update an existing plugin by pulling the latest changes from its repository."""
+    """🔄 Update an existing plugin (git pull on default branch)."""
     # Determine plugin install path as in plugin_add
     config_env = os.environ.get("MCLI_CONFIG")
     config_path = None
@@ -675,7 +673,7 @@ def plugin_update(plugin_name):
 @self_app.command("version")
 @click.option("--verbose", "-v", is_flag=True, help="Show additional system information")
 def version_cmd(verbose: bool):
-    """Show mcli version and system information."""
+    """📦 Show mcli version and system information."""
     from mcli.lib.ui.styling import info
 
     message = get_version_info(verbose)
@@ -686,7 +684,7 @@ def version_cmd(verbose: bool):
 @self_app.command("hello")
 @click.argument("name", default="World")
 def hello(name: str):
-    """A simple hello command for testing."""
+    """👋 A simple hello command for testing."""
     message = f"Hello, {name}! This is the MCLI hello command."
     logger.info(message)
     console.print(f"[green]{message}[/green]")
@@ -694,8 +692,7 @@ def hello(name: str):
 
 @self_app.command("logs")
 def logs():
-    """
-    [DEPRECATED] Display runtime logs - Use 'mcli logs' instead.
+    """📜 [DEPRECATED] Display runtime logs - Use 'mcli logs' instead.
 
     This command has been moved to 'mcli logs' with enhanced features.
     """
@@ -1102,6 +1099,142 @@ try:
     logger.debug("Added config command to self group")
 except ImportError as e:
     logger.debug(f"Could not load config command: {e}")
+
+
+# Workspace management commands
+@click.group("workspace")
+def workspace():
+    """📁 Manage registered workflow workspaces.
+
+    Track workflow locations across multiple repositories for unified
+    command listing with 'mcli list --all'.
+
+    Examples:
+        mcli self workspace list       # List registered workspaces
+        mcli self workspace add        # Register current directory
+        mcli self workspace add ~/myrepo  # Register specific directory
+        mcli self workspace remove     # Unregister current directory
+    """
+    pass
+
+
+@workspace.command("list")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+def workspace_list(as_json: bool):
+    """📋 List all registered workspaces."""
+    import json as json_module
+
+    from mcli.lib.workspace_registry import list_registered_workspaces
+
+    workspaces = list_registered_workspaces()
+
+    if as_json:
+        click.echo(
+            json_module.dumps({"workspaces": workspaces, "total": len(workspaces)}, indent=2)
+        )
+        return
+
+    if not workspaces:
+        console.print("[yellow]No workspaces registered.[/yellow]")
+        console.print("\n[dim]Register a workspace:[/dim]")
+        console.print("  mcli self workspace add [PATH]")
+        return
+
+    table = Table(title="Registered Workspaces")
+    table.add_column("Name", style="cyan")
+    table.add_column("Path", style="dim")
+    table.add_column("Status", style="green")
+
+    for ws in workspaces:
+        status = "✅ Active" if ws["exists"] else "⚠️ Missing"
+        table.add_row(ws["name"], ws["path"], status)
+
+    console.print(table)
+    console.print(f"\n[dim]Total: {len(workspaces)} workspace(s)[/dim]")
+
+
+@workspace.command("add")
+@click.argument("path", required=False, type=click.Path(exists=True))
+@click.option("--name", "-n", help="Custom name for the workspace")
+def workspace_add(path: Optional[str], name: Optional[str]):
+    """➕ Register a workspace (current directory if no path given)."""
+    from mcli.lib.workspace_registry import register_workspace
+
+    workspace_path = Path(path).resolve() if path else None
+
+    result = register_workspace(workspace_path, name)
+    if result:
+        console.print(f"[green]✅ Workspace registered successfully![/green]")
+        console.print(f"[dim]ID: {result}[/dim]")
+        console.print("\n[dim]View all workflows with:[/dim]")
+        console.print("  mcli list --all")
+    else:
+        console.print("[red]❌ Failed to register workspace[/red]")
+        console.print("[dim]Make sure the directory has .mcli/workflows/[/dim]")
+
+
+@workspace.command("remove")
+@click.argument("path", required=False, type=click.Path())
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
+def workspace_remove(path: Optional[str], yes: bool):
+    """➖ Unregister a workspace (current directory if no path given)."""
+    from rich.prompt import Confirm
+
+    from mcli.lib.workspace_registry import unregister_workspace
+
+    workspace_path = Path(path).resolve() if path else None
+
+    if not yes:
+        path_str = str(workspace_path) if workspace_path else "current directory"
+        if not Confirm.ask(f"[yellow]Unregister workspace at {path_str}?[/yellow]"):
+            console.print("[yellow]Cancelled[/yellow]")
+            return
+
+    if unregister_workspace(workspace_path):
+        console.print("[green]✅ Workspace unregistered[/green]")
+    else:
+        console.print("[red]❌ Failed to unregister workspace[/red]")
+        console.print("[dim]Make sure the path is registered[/dim]")
+
+
+@workspace.command("prune")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
+def workspace_prune(yes: bool):
+    """🧹 Remove workspaces that no longer exist."""
+    from rich.prompt import Confirm
+
+    from mcli.lib.workspace_registry import list_registered_workspaces, load_registry, save_registry
+
+    workspaces = list_registered_workspaces()
+    missing = [ws for ws in workspaces if not ws["exists"]]
+
+    if not missing:
+        console.print("[green]✅ All registered workspaces exist[/green]")
+        return
+
+    console.print(f"[yellow]Found {len(missing)} missing workspace(s):[/yellow]")
+    for ws in missing:
+        console.print(f"  - {ws['name']} ({ws['path']})")
+
+    if not yes:
+        if not Confirm.ask("[yellow]Remove these workspaces from registry?[/yellow]"):
+            console.print("[yellow]Cancelled[/yellow]")
+            return
+
+    # Remove missing workspaces
+    registry = load_registry()
+    for ws in missing:
+        if ws["id"] in registry.get("workspaces", {}):
+            del registry["workspaces"][ws["id"]]
+
+    if save_registry(registry):
+        console.print(f"[green]✅ Removed {len(missing)} missing workspace(s)[/green]")
+    else:
+        console.print("[red]❌ Failed to update registry[/red]")
+
+
+self_app.add_command(workspace)
+logger.debug("Added workspace command to self group")
 
 # NOTE: store command has been moved to mcli.app.commands_cmd for better organization
 

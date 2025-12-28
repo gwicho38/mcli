@@ -23,10 +23,9 @@ def run_async(coro):
     return asyncio.get_event_loop().run_until_complete(coro)
 
 
-@click.group(name="storage", help="Decentralized storage with Storacha/IPFS")
+@click.group(name="storage", help="📦 Decentralized storage with Storacha/IPFS")
 def storage():
-    """
-    Storage workflow - manage decentralized storage with Storacha/IPFS.
+    """📦 Storage workflow - manage decentralized storage with Storacha/IPFS.
 
     Examples:
         mcli workflows storage status          # Show storage status
@@ -42,7 +41,7 @@ def storage():
 @storage.command(name="status")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 def status_cmd(as_json: bool):
-    """Show current storage status."""
+    """📊 Show current storage status."""
     from mcli.storage import get_storage_backend
 
     try:
@@ -96,8 +95,7 @@ def status_cmd(as_json: bool):
 @storage.command(name="login")
 @click.argument("email")
 def login_cmd(email: str):
-    """
-    Login to Storacha with email verification.
+    """🔑 Login to Storacha with email verification.
 
     This will send a verification email. Click the link in your email
     to complete authentication.
@@ -121,8 +119,7 @@ def login_cmd(email: str):
 @storage.command(name="setup")
 @click.option("--email", "-e", help="Email for authentication (if not already logged in)")
 def setup_cmd(email: Optional[str]):
-    """
-    Complete storage setup: login, create space, generate tokens.
+    """⚙️ Complete storage setup: login, create space, generate tokens.
 
     If already authenticated, this will ensure a space exists and
     generate HTTP bridge tokens for programmatic access.
@@ -149,8 +146,7 @@ def setup_cmd(email: Optional[str]):
 @click.option("--key", "-k", help="Storage key/identifier (default: filename)")
 @click.option("--metadata", "-m", multiple=True, help="Metadata as KEY=VALUE pairs")
 def upload_cmd(file_path: str, key: Optional[str], metadata: tuple):
-    """
-    Upload a file to storage.
+    """⬆️ Upload a file to storage.
 
     The file will be encrypted and uploaded to Storacha/IPFS.
     Returns the CID (Content Identifier) that can be used to retrieve it.
@@ -198,8 +194,7 @@ def upload_cmd(file_path: str, key: Optional[str], metadata: tuple):
 @click.argument("cid")
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 def download_cmd(cid: str, output: Optional[str]):
-    """
-    Download a file by CID.
+    """⬇️ Download a file by CID.
 
     Retrieves and decrypts data from local cache or Storacha network.
     """
@@ -235,7 +230,7 @@ def download_cmd(cid: str, output: Optional[str]):
 @click.option("--prefix", "-p", help="Filter by CID prefix")
 @click.option("--remote", "-r", is_flag=True, help="List remote uploads (not just cache)")
 def list_cmd(limit: int, prefix: Optional[str], remote: bool):
-    """List stored files."""
+    """📋 List stored files."""
     from mcli.storage import get_storage_backend
 
     try:
@@ -274,8 +269,7 @@ def list_cmd(limit: int, prefix: Optional[str], remote: bool):
 @click.argument("cid")
 @click.confirmation_option(prompt="Are you sure you want to delete this from local cache?")
 def delete_cmd(cid: str):
-    """
-    Delete a file from local cache.
+    """🗑️ Delete a file from local cache.
 
     Note: This only removes from local cache. IPFS data is immutable
     and cannot be deleted from the network.
@@ -300,7 +294,7 @@ def delete_cmd(cid: str):
 
 @storage.command(name="enable")
 def enable_cmd():
-    """Enable Storacha network sync."""
+    """✅ Enable Storacha network sync."""
     from mcli.storage import get_storage_backend
 
     try:
@@ -315,7 +309,7 @@ def enable_cmd():
 
 @storage.command(name="disable")
 def disable_cmd():
-    """Disable Storacha network sync (use local cache only)."""
+    """🚫 Disable Storacha network sync (use local cache only)."""
     from mcli.storage import get_storage_backend
 
     try:
@@ -334,7 +328,7 @@ def disable_cmd():
 @click.option("--cleanup", is_flag=True, help="Clean up old cache files")
 @click.option("--max-age", default=30, help="Max age in days for cleanup (default: 30)")
 def cache_cmd(stats: bool, cleanup: bool, max_age: int):
-    """Manage local cache."""
+    """💾 Manage local cache."""
     from mcli.storage import get_storage_backend
 
     try:
@@ -373,13 +367,13 @@ def cache_cmd(stats: bool, cleanup: bool, max_age: int):
 
 @storage.group(name="space")
 def space_group():
-    """Manage Storacha spaces."""
+    """🌐 Manage Storacha spaces."""
     pass
 
 
 @space_group.command(name="list")
 def space_list_cmd():
-    """List available spaces."""
+    """📋 List available spaces."""
     from mcli.storage.storacha_cli import StorachaCLI
 
     try:
@@ -406,7 +400,7 @@ def space_list_cmd():
 @space_group.command(name="create")
 @click.option("--name", "-n", help="Space name")
 def space_create_cmd(name: Optional[str]):
-    """Create a new space."""
+    """✨ Create a new space."""
     from mcli.storage.storacha_cli import StorachaCLI
 
     try:
@@ -426,7 +420,7 @@ def space_create_cmd(name: Optional[str]):
 @space_group.command(name="use")
 @click.argument("space_did")
 def space_use_cmd(space_did: str):
-    """Select a space to use."""
+    """🎯 Select a space to use."""
     from mcli.storage.storacha_cli import StorachaCLI
 
     try:
@@ -445,7 +439,7 @@ def space_use_cmd(space_did: str):
 @click.option("--refresh", "-r", is_flag=True, help="Force refresh tokens")
 @click.option("--expiration", "-e", default=24, help="Token expiration in hours (default: 24)")
 def tokens_cmd(refresh: bool, expiration: int):
-    """Manage HTTP bridge tokens."""
+    """🔑 Manage HTTP bridge tokens."""
     from mcli.storage.storacha_cli import StorachaCLI
 
     try:

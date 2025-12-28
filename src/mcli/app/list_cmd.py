@@ -1,25 +1,30 @@
 """
 Top-level list command for MCLI.
 
-This module provides the `mcli list` command for listing available workflows.
+This module provides the `mcli list` command for listing available workflows
+from all registered workspaces.
 """
 
 import json
 
 import click
 
-from mcli.lib.custom_commands import get_command_manager
-from mcli.lib.discovery.command_discovery import get_command_discovery
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.paths import get_custom_commands_dir, get_git_root, is_git_repository
+from mcli.lib.script_loader import ScriptLoader
 from mcli.lib.ui.styling import console
+from mcli.lib.workspace_registry import (
+    auto_register_current,
+    get_all_workflows,
+    list_registered_workspaces,
+)
 
 logger = get_logger(__name__)
 
 
 @click.command("list")
-@click.option("--include-groups", is_flag=True, help="Include command groups in listing")
 @click.option(
-    "--custom-only", is_flag=True, help="Show only custom commands from command directory"
+    "--all", "-a", "show_all", is_flag=True, help="Show workflows from all registered workspaces"
 )
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @click.option(
@@ -27,97 +32,215 @@ logger = get_logger(__name__)
     "-g",
     "is_global",
     is_flag=True,
-    help="Use global commands (~/.mcli/workflows/) instead of local",
+    help="Show only global workflows (~/.mcli/workflows/)",
 )
-def list_cmd(include_groups: bool, custom_only: bool, as_json: bool, is_global: bool):
+@click.option(
+    "--workspaces",
+    "-w",
+    is_flag=True,
+    help="List registered workspaces instead of workflows",
+)
+def list_cmd(show_all: bool, as_json: bool, is_global: bool, workspaces: bool):
     """📋 List all available workflow commands.
 
-    By default, shows all discovered commands. Use flags to filter:
-    - --custom-only: Show only custom commands
-    - --global/-g: Use global commands directory instead of local
+    By default, shows workflows from the current workspace (local if in git repo,
+    or global otherwise). Use flags to see more:
+
+    - --all/-a: Show workflows from ALL registered workspaces
+    - --global/-g: Show only global workflows
+    - --workspaces/-w: List registered workspaces
 
     Examples:
-        mcli list                  # Show all commands
-        mcli list --custom-only    # Show only custom commands
-        mcli list --global         # Show global commands
+        mcli list                  # Show current workspace workflows
+        mcli list --all            # Show all workflows from all workspaces
+        mcli list --global         # Show global workflows only
+        mcli list --workspaces     # List registered workspaces
         mcli list --json           # Output as JSON
     """
-    from rich.table import Table
-
     try:
-        if custom_only:
-            # Show only custom commands
-            manager = get_command_manager(global_mode=is_global)
-            cmds = manager.load_all_commands()
-
-            if not cmds:
-                console.print("No custom commands found.")
-                console.print("Create one with: mcli new <name>")
-                return 0
-
-            if as_json:
-                click.echo(json.dumps({"commands": cmds, "total": len(cmds)}, indent=2))
-                return 0
-
-            table = Table(title="Custom Commands")
-            table.add_column("Name", style="green")
-            table.add_column("Group", style="blue")
-            table.add_column("Description", style="yellow")
-            table.add_column("Version", style="cyan")
-            table.add_column("Updated", style="dim")
-
-            for cmd in cmds:
-                table.add_row(
-                    cmd["name"],
-                    cmd.get("group", "-"),
-                    cmd.get("description", ""),
-                    cmd.get("version", "1.0"),
-                    cmd.get("updated_at", "")[:10] if cmd.get("updated_at") else "-",
-                )
-
-            console.print(table)
-
-            # Show context information
-            scope = "global" if is_global or not manager.is_local else "local"
-            scope_color = "yellow" if scope == "local" else "cyan"
-            console.print(f"\n[dim]Scope: [{scope_color}]{scope}[/{scope_color}][/dim]")
-            if manager.is_local and manager.git_root:
-                console.print(f"[dim]Git repository: {manager.git_root}[/dim]")
-            console.print(f"[dim]Commands directory: {manager.commands_dir}[/dim]")
-            console.print(f"[dim]Lockfile: {manager.lockfile_path}[/dim]")
-
+        # List workspaces mode
+        if workspaces:
+            _list_workspaces(as_json)
             return 0
 
-        else:
-            # Show all discovered Click commands
-            discovery = get_command_discovery()
-            commands_data = discovery.get_commands(include_groups=include_groups)
+        # Auto-register current workspace if applicable
+        auto_register_current()
 
-        if as_json:
-            click.echo(
-                json.dumps({"commands": commands_data, "total": len(commands_data)}, indent=2)
-            )
-            return
+        # Show all workspaces
+        if show_all:
+            _list_all_workflows(as_json)
+            return 0
 
-        if not commands_data:
-            console.print("No commands found")
-            return
-
-        console.print(f"[bold]Available Commands ({len(commands_data)}):[/bold]")
-        for cmd in commands_data:
-            group_indicator = "[blue][GROUP][/blue] " if cmd.get("is_group") else ""
-            console.print(f"{group_indicator}[green]{cmd['full_name']}[/green]")
-
-            if cmd.get("description"):
-                console.print(f"  {cmd['description']}")
-            if cmd.get("module"):
-                console.print(f"  Module: {cmd['module']}")
-            if cmd.get("tags"):
-                console.print(f"  Tags: {', '.join(cmd['tags'])}")
-            console.print()
+        # Show specific scope (global or local)
+        _list_scope_workflows(is_global, as_json)
+        return 0
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
+        return 1
+
+
+def _list_workspaces(as_json: bool):
+    """List all registered workspaces."""
+    from rich.table import Table
+
+    workspaces = list_registered_workspaces()
+
+    if as_json:
+        click.echo(json.dumps({"workspaces": workspaces, "total": len(workspaces)}, indent=2))
+        return
+
+    if not workspaces:
+        console.print("[yellow]No workspaces registered.[/yellow]")
+        console.print("\n[dim]Register a workspace with:[/dim]")
+        console.print("  mcli self workspace add [PATH]")
+        console.print("\n[dim]Or initialize workflows in current directory:[/dim]")
+        console.print("  mcli init")
+        return
+
+    table = Table(title="Registered Workspaces")
+    table.add_column("Name", style="cyan")
+    table.add_column("Path", style="dim")
+    table.add_column("Status", style="green")
+
+    for ws in workspaces:
+        status = "✅ Active" if ws["exists"] else "⚠️ Missing"
+        table.add_row(ws["name"], ws["path"], status)
+
+    console.print(table)
+    console.print(f"\n[dim]Total: {len(workspaces)} workspace(s)[/dim]")
+
+
+def _list_all_workflows(as_json: bool):
+    """List workflows from all registered workspaces."""
+    from rich.panel import Panel
+    from rich.table import Table
+
+    all_workflows = get_all_workflows()
+
+    if as_json:
+        # Flatten for JSON output
+        flat_workflows = []
+        for workspace_name, workflows in all_workflows.items():
+            for wf in workflows:
+                wf["workspace"] = workspace_name
+                flat_workflows.append(wf)
+        click.echo(
+            json.dumps({"workflows": flat_workflows, "total": len(flat_workflows)}, indent=2)
+        )
+        return
+
+    if not all_workflows:
+        console.print("[yellow]No workflows found in any registered workspace.[/yellow]")
+        console.print("\n[dim]Create a workflow with:[/dim]")
+        console.print("  mcli new <name>")
+        return
+
+    total = 0
+
+    for workspace_name, workflows in all_workflows.items():
+        if not workflows:
+            continue
+
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Name", style="cyan")
+        table.add_column("Description", style="white")
+        table.add_column("Language", style="blue")
+        table.add_column("Version", style="green")
+
+        for wf in workflows:
+            desc = wf.get("description", "")
+            if len(desc) > 50:
+                desc = desc[:47] + "..."
+            table.add_row(
+                wf["name"],
+                desc,
+                wf.get("language", "?"),
+                wf.get("version", "1.0.0"),
+            )
+
+        console.print(
+            Panel(table, title=f"📁 {workspace_name}", subtitle=f"{len(workflows)} workflow(s)")
+        )
+        total += len(workflows)
+
+    console.print(
+        f"\n[bold]Total: {total} workflow(s) across {len(all_workflows)} workspace(s)[/bold]"
+    )
+
+
+def _list_scope_workflows(is_global: bool, as_json: bool):
+    """List workflows from a specific scope (global or local)."""
+    from rich.table import Table
+
+    workflows_dir = get_custom_commands_dir(global_mode=is_global)
+
+    if not workflows_dir.exists():
+        scope = "global" if is_global else "local"
+        console.print(f"[yellow]No {scope} workflows found.[/yellow]")
+        console.print("\n[dim]Create a workflow with:[/dim]")
+        console.print("  mcli new <name>")
+        return
+
+    loader = ScriptLoader(workflows_dir)
+    scripts = loader.discover_scripts()
+
+    if not scripts:
+        scope = "global" if is_global else "local"
+        console.print(f"[yellow]No {scope} workflows found.[/yellow]")
+        console.print("\n[dim]Create a workflow with:[/dim]")
+        console.print("  mcli new <name>")
+        return
+
+    workflows = []
+    for script_path in scripts:
+        try:
+            info = loader.get_script_info(script_path)
+            info["name"] = script_path.stem
+            info["path"] = str(script_path)
+            workflows.append(info)
+        except Exception as e:
+            logger.debug(f"Failed to get info for {script_path}: {e}")
+
+    if as_json:
+        click.echo(json.dumps({"workflows": workflows, "total": len(workflows)}, indent=2))
+        return
+
+    # Determine scope name
+    if is_global:
+        scope_name = "Global (~/.mcli/workflows)"
+    elif is_git_repository():
+        git_root = get_git_root()
+        scope_name = f"Local ({git_root.name if git_root else 'current'})"
+    else:
+        scope_name = "Local"
+
+    table = Table(title=f"Workflows - {scope_name}")
+    table.add_column("Name", style="cyan")
+    table.add_column("Description", style="white")
+    table.add_column("Language", style="blue")
+    table.add_column("Version", style="green")
+
+    for wf in workflows:
+        desc = wf.get("description", "")
+        if len(desc) > 50:
+            desc = desc[:47] + "..."
+        table.add_row(
+            wf["name"],
+            desc,
+            wf.get("language", "?"),
+            wf.get("version", "1.0.0"),
+        )
+
+    console.print(table)
+
+    # Show context information
+    console.print(f"\n[dim]Workflows directory: {workflows_dir}[/dim]")
+    console.print(f"[dim]Total: {len(workflows)} workflow(s)[/dim]")
+
+    # Hint about --all flag
+    if not is_global:
+        console.print("\n[dim]Use --all/-a to see workflows from all registered workspaces[/dim]")
 
 
 # Alias for backward compatibility

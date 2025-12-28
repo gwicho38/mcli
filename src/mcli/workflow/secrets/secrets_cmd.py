@@ -17,7 +17,7 @@ from mcli.lib.secrets.store import SecretsStore
 from mcli.lib.ui.styling import error, info, success, warning
 
 
-@click.command(name="secrets", help="Secure secrets management with encryption and git sync")
+@click.command(name="secrets", help="🔐 Secure secrets management with encryption and git sync")
 @click.option("--repl", is_flag=True, help="Launch interactive secrets shell")
 @click.option("--set", "set_secret", nargs=2, type=str, help="Set a secret (KEY VALUE)")
 @click.option("--get", "get_secret", type=str, help="Get a secret value")

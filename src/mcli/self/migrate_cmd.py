@@ -369,7 +369,7 @@ def migrate_commands_to_workflows(
     return all_success, "\n".join(results)
 
 
-@click.command(name="migrate", help="Perform system migrations for mcli")
+@click.command(name="migrate", help="🔄 Perform system migrations for mcli")
 @click.option(
     "--dry-run",
     is_flag=True,

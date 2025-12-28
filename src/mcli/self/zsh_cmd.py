@@ -14,12 +14,12 @@ logger = get_logger(__name__)
 from mcli.lib.ui.styling import error, info, success, warning
 
 
-@click.group(name="zsh", help="ZSH shell integration and utilities")
+@click.group(name="zsh", help="🐚 ZSH shell integration and utilities")
 def zsh_group():
-    """ZSH-specific commands and utilities."""
+    """🐚 ZSH-specific commands and utilities."""
 
 
-@zsh_group.command(name="config", help="Configure ZSH for optimal MCLI experience")
+@zsh_group.command(name="config", help="⚙️ Configure ZSH for optimal MCLI experience")
 @click.option("--force", is_flag=True, help="Force reconfiguration even if already set up")
 def zsh_config(force: bool):
     """Configure ZSH with MCLI-specific settings."""
@@ -115,7 +115,7 @@ def zsh_config(force: bool):
     info("  source ~/.zshrc")
 
 
-@zsh_group.command(name="aliases", help="Show available ZSH aliases")
+@zsh_group.command(name="aliases", help="📋 Show available ZSH aliases")
 def zsh_aliases():
     """Display MCLI ZSH aliases."""
     aliases = [
@@ -132,7 +132,7 @@ def zsh_aliases():
         click.echo(f"  {alias:<6} → {command:<25} # {desc}")
 
 
-@zsh_group.command(name="prompt", help="Configure ZSH prompt with MCLI integration")
+@zsh_group.command(name="prompt", help="💬 Configure ZSH prompt with MCLI integration")
 @click.option("--style", type=click.Choice(["simple", "powerline", "minimal"]), default="simple")
 def zsh_prompt(style: str):
     """Add MCLI status to ZSH prompt."""
@@ -169,7 +169,7 @@ def zsh_prompt(style: str):
         warning("MCLI ZSH configuration not found. Run 'mcli self zsh config' first.")
 
 
-@zsh_group.command(name="functions", help="Install useful ZSH functions")
+@zsh_group.command(name="functions", help="📦 Install useful ZSH functions")
 def zsh_functions():
     """Install MCLI-specific ZSH functions."""
     functions_dir = Path.home() / ".config" / "zsh" / "functions"
@@ -213,7 +213,7 @@ mcli-fzf() {
     info("  • mcli-fzf: Fuzzy find MCLI commands (requires fzf)")
 
 
-@zsh_group.command(name="test", help="Test ZSH integration")
+@zsh_group.command(name="test", help="🧪 Test ZSH integration")
 def zsh_test():
     """Test ZSH integration and configuration."""
     checks = []

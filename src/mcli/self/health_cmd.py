@@ -1144,7 +1144,7 @@ def display_report(report: HealthReport, verbose: bool = False) -> None:
 
 @click.group("health")
 def health_group():
-    """Repository health analysis and reporting.
+    """🏥 Repository health analysis and reporting.
 
     Run comprehensive checks on your codebase including tests,
     linting, type checking, security, and more.
@@ -1167,7 +1167,7 @@ def health_group():
 def check_command(
     quick: bool, verbose: bool, skip_tests: bool, skip_build: bool, output_json: bool
 ):
-    """Run comprehensive health checks on the repository.
+    """🔍 Run comprehensive health checks on the repository.
 
     Analyzes the codebase for:
     - Git status and uncommitted changes
@@ -1210,7 +1210,7 @@ def check_command(
 @health_group.command("fix")
 @click.option("--dry-run", is_flag=True, help="Show what would be fixed without making changes")
 def fix_command(dry_run: bool):
-    """Auto-fix issues that can be automatically resolved.
+    """🔧 Auto-fix issues that can be automatically resolved.
 
     This will run:
     - black (code formatting)
@@ -1250,7 +1250,7 @@ def fix_command(dry_run: bool):
 @click.option("--output", "-o", type=click.Path(), help="Output file path")
 @click.option("--format", "fmt", type=click.Choice(["json", "markdown"]), default="json")
 def report_command(output: Optional[str], fmt: str):
-    """Generate a health report file.
+    """📄 Generate a health report file.
 
     Creates a detailed report that can be saved for CI/CD
     or documentation purposes.

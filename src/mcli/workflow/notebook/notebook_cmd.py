@@ -27,7 +27,7 @@ logger = get_logger()
 
 @click.group(name="notebook")
 def notebook():
-    """Workflow notebook management commands."""
+    """📓 Workflow notebook management commands."""
 
 
 @notebook.command(name="convert")
@@ -51,8 +51,7 @@ def notebook():
     help="Create backup before conversion",
 )
 def convert(input_file: str, format_type: str, output: Optional[str], backup: bool):
-    """
-    Convert between workflow and notebook formats.
+    """🔄 Convert between workflow and notebook formats.
 
     Examples:
 
@@ -112,8 +111,7 @@ def convert(input_file: str, format_type: str, output: Optional[str], backup: bo
     help="Show what would be migrated without making changes",
 )
 def migrate(directory: Optional[str], backup: bool, in_place: bool, dry_run: bool):
-    """
-    Migrate all workflow files in a directory to notebook format.
+    """📦 Migrate all workflow files in a directory to notebook format.
 
     Examples:
 
@@ -188,8 +186,7 @@ def migrate(directory: Optional[str], backup: bool, in_place: bool, dry_run: boo
     help="Run all validations",
 )
 def validate(notebook_file: str, schema: bool, syntax: bool, validate_all: bool):
-    """
-    Validate a workflow notebook.
+    """✅ Validate a workflow notebook.
 
     Examples:
 
@@ -259,8 +256,7 @@ def validate(notebook_file: str, schema: bool, syntax: bool, validate_all: bool)
     help="Output as JSON",
 )
 def notebook_info(notebook_file: str, output_json: bool):
-    """
-    Display information about a workflow notebook.
+    """ℹ️ Display information about a workflow notebook.
 
     Examples:
 
@@ -341,8 +337,7 @@ def notebook_info(notebook_file: str, output_json: bool):
     help="Output file path",
 )
 def create(name: str, description: str, group: Optional[str], language: str, output: Optional[str]):
-    """
-    Create a new workflow notebook.
+    """✨ Create a new workflow notebook.
 
     Examples:
 
@@ -426,8 +421,7 @@ echo "Hello from workflow!"
     help="Output results as JSON",
 )
 def run(notebook_file: str, stop_on_error: bool, verbose: bool, output_json: bool):
-    """
-    Execute a notebook file cell by cell.
+    """▶️ Execute a notebook file cell by cell.
 
     This runs all code cells in the notebook in order, capturing outputs
     and maintaining execution state across cells.
@@ -496,8 +490,7 @@ def run(notebook_file: str, stop_on_error: bool, verbose: bool, output_json: boo
     help="Server port for editor",
 )
 def edit(notebook_file: str, port: int):
-    """
-    Open a workflow notebook in the visual editor.
+    """✏️ Open a workflow notebook in the visual editor.
 
     This launches a web server with Monaco editor for visual editing.
 
