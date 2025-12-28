@@ -173,6 +173,10 @@ class CustomCommandManager:
 
         # Load .json workflow files
         for command_file in self.commands_dir.glob("*.json"):
+            # Skip hidden files (e.g., .sync_cache.json)
+            if command_file.name.startswith("."):
+                continue
+
             # Skip the lockfile
             if command_file.name == "commands.lock.json":
                 continue
@@ -188,6 +192,10 @@ class CustomCommandManager:
 
         # Load .ipynb notebook files
         for notebook_file in self.commands_dir.glob("*.ipynb"):
+            # Skip hidden files
+            if notebook_file.name.startswith("."):
+                continue
+
             # Skip test notebooks unless explicitly included
             if not include_test and notebook_file.stem.startswith(("test_", "test-")):
                 logger.debug(f"Skipping test notebook: {notebook_file.name}")
@@ -346,8 +354,14 @@ class CustomCommandManager:
         Returns:
             True if successful, False otherwise
         """
+        name = command_data.get("name", "<unknown>")
         try:
-            name = command_data["name"]
+            if "name" not in command_data:
+                logger.error(f"Command data missing 'name' key: {list(command_data.keys())}")
+                return False
+            if "code" not in command_data:
+                logger.error(f"Command data missing 'code' key for {name}")
+                return False
             code = command_data["code"]
 
             # Create a temporary module to execute the command code
@@ -418,8 +432,14 @@ class CustomCommandManager:
         Returns:
             True if successful, False otherwise
         """
+        name = command_data.get("name", "<unknown>")
         try:
-            name = command_data["name"]
+            if "name" not in command_data:
+                logger.error(f"Shell command data missing 'name' key: {list(command_data.keys())}")
+                return False
+            if "code" not in command_data:
+                logger.error(f"Shell command data missing 'code' key for {name}")
+                return False
             code = command_data["code"]
             shell_type = command_data.get("shell", "bash")
             description = command_data.get("description", "Shell command")
