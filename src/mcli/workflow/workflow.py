@@ -19,7 +19,6 @@ class ScopedWorkflowsGroup(click.Group):
     Supports:
     - Native script files (.py, .sh, .js, .ts, .ipynb) via ScriptLoader
     - Legacy JSON files via CustomCommandManager (deprecated)
-    - Auto-detected project workflows (Makefile, package.json)
     - Custom workspace paths via -f/--workspace
     """
 
@@ -113,66 +112,21 @@ class ScopedWorkflowsGroup(click.Group):
         except Exception as e:
             logger.debug(f"Could not load legacy JSON commands: {e}")
 
-        # Also include built-in subcommands
-        builtin_commands = list(super().list_commands(ctx))
+        # Only return user-defined workflows (scripts + legacy JSON)
+        # This matches the behavior of `mcli list`.
 
-        # Auto-detect project-level workflows (Makefile, package.json)
-        auto_detected_commands = []
-
-        # Only auto-detect for local (non-global) workflows
-        if not is_global:
-            from mcli.lib.makefile_workflows import find_makefile
-            from mcli.lib.packagejson_workflows import find_package_json
-
-            # Check for Makefile
-            if find_makefile(Path.cwd()):
-                auto_detected_commands.append("make")
-                logger.debug("Auto-detected Makefile in current directory")
-
-            # Check for package.json
-            if find_package_json(Path.cwd()):
-                auto_detected_commands.append("npm")
-                logger.debug("Auto-detected package.json in current directory")
-
-        return sorted(
-            set(script_commands + legacy_commands + builtin_commands + auto_detected_commands)
-        )
+        return sorted(set(script_commands + legacy_commands))
 
     def get_command(self, ctx, cmd_name):
         """Get a command by name, loading from appropriate scope."""
-        from pathlib import Path
-
         from mcli.lib.logger.logger import get_logger
         from mcli.lib.script_loader import ScriptLoader
 
         logger = get_logger()
 
-        # First check if it's a built-in command
-        builtin_cmd = super().get_command(ctx, cmd_name)
-        if builtin_cmd:
-            return builtin_cmd
-
         # Get scope from context
         is_global = ctx.params.get("is_global", False)
         workspace = ctx.params.get("workspace")
-
-        # Check for auto-detected project workflows (only for local mode without workspace)
-        if not is_global and not workspace:
-            # Check for Makefile workflows
-            if cmd_name == "make":
-                from mcli.lib.makefile_workflows import load_makefile_workflow
-
-                make_group = load_makefile_workflow(Path.cwd())
-                if make_group:
-                    return make_group
-
-            # Check for package.json workflows
-            if cmd_name == "npm":
-                from mcli.lib.packagejson_workflows import load_package_json_workflow
-
-                npm_group = load_package_json_workflow(Path.cwd())
-                if npm_group:
-                    return npm_group
 
         # Get workflows directory
         workflows_dir = self._get_workflows_dir(ctx)
@@ -281,48 +235,6 @@ def workflows(ctx, is_global, workspace):
 
     # If no subcommand, show help
     click.echo(ctx.get_help())
-
-
-# Add secrets workflow
-try:
-    from mcli.workflow.secrets.secrets_cmd import secrets
-
-    workflows.add_command(secrets)
-except ImportError as e:
-    # Secrets workflow not available
-    import sys
-
-    from mcli.lib.logger.logger import get_logger
-
-    logger = get_logger()
-    logger.debug(f"Secrets workflow not available: {e}")
-
-# Add notebook subcommand
-try:
-    from mcli.workflow.notebook.notebook_cmd import notebook
-
-    workflows.add_command(notebook)
-except ImportError as e:
-    # Notebook commands not available
-    import sys
-
-    from mcli.lib.logger.logger import get_logger
-
-    logger = get_logger()
-    logger.debug(f"Notebook commands not available: {e}")
-
-# Note: sync is now a top-level command (mcli sync)
-
-# Add storage subcommand (Storacha/IPFS)
-try:
-    from mcli.workflow.storage.storage_cmd import storage
-
-    workflows.add_command(storage)
-except ImportError as e:
-    from mcli.lib.logger.logger import get_logger
-
-    logger = get_logger()
-    logger.debug(f"Storage commands not available: {e}")
 
 
 # For backward compatibility, keep workflow as an alias

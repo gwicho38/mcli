@@ -146,6 +146,21 @@ class ShellTypes:
     DEFAULT = BASH
 
 
+class CommandTypes:
+    """Command structure types for new commands.
+
+    Example:
+        if cmd_type == CommandTypes.GROUP:
+            # generate command group template
+    """
+
+    COMMAND = "command"
+    GROUP = "group"
+
+    ALL: List[str] = [COMMAND, GROUP]
+    DEFAULT = COMMAND
+
+
 __all__ = [
     "ScriptLanguages",
     "ScriptExtensions",
@@ -153,4 +168,5 @@ __all__ = [
     "ScriptMetadataKeys",
     "ScriptMetadataDefaults",
     "ShellTypes",
+    "CommandTypes",
 ]

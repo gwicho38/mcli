@@ -33,7 +33,6 @@ from mcli.self.health_cmd import (
     run_command,
 )
 
-
 # =============================================================================
 # Test Fixtures
 # =============================================================================
@@ -71,9 +70,7 @@ def mock_repo(tmp_path: Path) -> Path:
     (tmp_path / "README.md").write_text("# My Project\n")
 
     # Create pyproject.toml
-    (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "mypackage"\nversion = "1.0.0"\n'
-    )
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "mypackage"\nversion = "1.0.0"\n')
 
     return tmp_path
 

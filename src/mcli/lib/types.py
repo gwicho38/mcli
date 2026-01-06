@@ -161,6 +161,7 @@ class ScriptTemplate:
         group: Command group
         version: Initial version
         language: Script language
+        command_type: Type of command (command or group)
         shell: Shell type (for shell scripts)
         content: Generated template content
     """
@@ -170,6 +171,7 @@ class ScriptTemplate:
     group: str
     version: str
     language: str
+    command_type: str = "command"
     shell: Optional[str] = None
     content: str = ""
 

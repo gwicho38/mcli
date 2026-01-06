@@ -47,6 +47,7 @@ from .messages import (
 )
 from .paths import DirNames, FileNames, GitIgnorePatterns, PathPatterns
 from .scripts import (
+    CommandTypes,
     ScriptCommentPrefixes,
     ScriptExtensions,
     ScriptLanguages,
@@ -119,4 +120,5 @@ __all__ = [
     "ScriptMetadataKeys",
     "ScriptMetadataDefaults",
     "ShellTypes",
+    "CommandTypes",
 ]

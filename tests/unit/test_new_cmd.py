@@ -30,6 +30,7 @@ from mcli.app.new_cmd import (
     validate_group_name,
 )
 from mcli.lib.constants import (
+    CommandTypes,
     ScriptCommentPrefixes,
     ScriptExtensions,
     ScriptLanguages,
@@ -44,7 +45,6 @@ from mcli.lib.errors import (
     UnsupportedLanguageError,
 )
 from mcli.lib.types import ScriptTemplate
-
 
 # =============================================================================
 # Validation Tests
@@ -315,19 +315,38 @@ print("hello")
 class TestGetTemplate:
     """Tests for get_template function."""
 
-    def test_python_template(self):
-        """Generate Python template."""
+    def test_python_template_standalone(self):
+        """Generate Python standalone command template."""
         template = ScriptTemplate(
             name="mycommand",
             description="My command",
             group="utils",
             version="1.0.0",
             language=ScriptLanguages.PYTHON,
+            command_type=CommandTypes.COMMAND,
         )
         result = get_template(template)
         assert "#!/usr/bin/env python3" in result
         assert "@description: My command" in result
         assert "def mycommand_command" in result
+        assert "@click.command" in result
+
+    def test_python_template_group(self):
+        """Generate Python command group template."""
+        template = ScriptTemplate(
+            name="mygroup",
+            description="My group",
+            group="utils",
+            version="1.0.0",
+            language=ScriptLanguages.PYTHON,
+            command_type=CommandTypes.GROUP,
+        )
+        result = get_template(template)
+        assert "#!/usr/bin/env python3" in result
+        assert "@description: My group" in result
+        assert "@click.group" in result
+        assert "def app():" in result
+        assert "@app.command" in result
 
     def test_shell_template(self):
         """Generate shell template."""
@@ -537,6 +556,7 @@ class TestExecuteNewCommand:
         result = _execute_new_command(
             command_name=None,
             language=None,
+            command_type=CommandTypes.COMMAND,
             group="workflows",
             description="",
             cmd_version="1.0.0",
@@ -565,6 +585,7 @@ class TestExecuteNewCommand:
         result = _execute_new_command(
             command_name="mycommand",
             language="python",
+            command_type=CommandTypes.COMMAND,
             group="utils",
             description="My command",
             cmd_version="1.0.0",
@@ -580,11 +601,46 @@ class TestExecuteNewCommand:
         content = created_file.read_text()
         assert "@description: My command" in content
 
+    @patch("mcli.app.new_cmd.get_custom_commands_dir")
+    @patch("mcli.app.new_cmd.ScriptLoader")
+    @patch("mcli.app.new_cmd.is_git_repository")
+    @patch("mcli.app.new_cmd.console")
+    def test_creates_group_command_with_template_mode(
+        self, mock_console, mock_is_git, mock_loader, mock_get_dir, tmp_path
+    ):
+        """Creates command group using template mode."""
+        mock_get_dir.return_value = tmp_path
+        mock_is_git.return_value = False
+        mock_loader_instance = MagicMock()
+        mock_loader.return_value = mock_loader_instance
+
+        result = _execute_new_command(
+            command_name="mygroup",
+            language="python",
+            command_type=CommandTypes.GROUP,
+            group="utils",
+            description="My group",
+            cmd_version="1.0.0",
+            template=True,
+            shell=None,
+            is_global=True,
+            source_file=None,
+        )
+
+        assert result == EXIT_SUCCESS
+        created_file = tmp_path / "mygroup.py"
+        assert created_file.exists()
+        content = created_file.read_text()
+        assert "@description: My group" in content
+        assert "@click.group" in content
+        assert "def app():" in content
+
     def test_missing_command_name_returns_error(self):
         """Returns error when command name is missing."""
         result = _execute_new_command(
             command_name=None,
             language="python",
+            command_type=CommandTypes.COMMAND,
             group="workflows",
             description="",
             cmd_version="1.0.0",
@@ -600,6 +656,7 @@ class TestExecuteNewCommand:
         result = _execute_new_command(
             command_name="mycommand",
             language=None,
+            command_type=CommandTypes.COMMAND,
             group="workflows",
             description="",
             cmd_version="1.0.0",
@@ -616,6 +673,7 @@ class TestExecuteNewCommand:
             _execute_new_command(
                 command_name="123invalid",
                 language="python",
+                command_type=CommandTypes.COMMAND,
                 group="workflows",
                 description="",
                 cmd_version="1.0.0",
@@ -661,6 +719,16 @@ class TestScriptConstants:
         assert ShellTypes.ZSH in ShellTypes.ALL
         assert ShellTypes.FISH in ShellTypes.ALL
         assert ShellTypes.SH in ShellTypes.ALL
+
+    def test_command_types_all_list(self):
+        """CommandTypes.ALL contains all command types."""
+        assert CommandTypes.COMMAND in CommandTypes.ALL
+        assert CommandTypes.GROUP in CommandTypes.ALL
+        assert len(CommandTypes.ALL) == 2
+
+    def test_command_types_default(self):
+        """CommandTypes.DEFAULT is 'command'."""
+        assert CommandTypes.DEFAULT == CommandTypes.COMMAND
 
 
 # =============================================================================

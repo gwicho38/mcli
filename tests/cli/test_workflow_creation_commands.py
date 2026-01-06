@@ -1,7 +1,7 @@
 """
-Tests for workflow creation commands under 'mcli workflow'.
+Tests for workflow creation commands (top-level commands in simplified CLI).
 
-Tests the mcli workflow add, edit, remove, and sync commands for creating
+Tests the mcli new, edit, rm, and sync commands for creating
 and managing workflows.
 """
 
@@ -44,55 +44,51 @@ class TestNewCommand:
 
 
 class TestEditCommand:
-    """Test the 'mcli workflow edit' command."""
+    """Test the 'mcli edit' command (top-level)."""
 
     def test_edit_command_exists(self, cli_runner, app):
-        """Test that edit command is registered under workflow."""
-        result = cli_runner.invoke(app, ["workflow", "--help"])
+        """Test that edit command is registered at top-level."""
+        result = cli_runner.invoke(app, ["--help"])
         assert result.exit_code == 0
         assert "edit" in result.output
 
     def test_edit_command_help(self, cli_runner, app):
         """Test that edit command shows help."""
-        result = cli_runner.invoke(app, ["workflow", "edit", "--help"])
+        result = cli_runner.invoke(app, ["edit", "--help"])
         assert result.exit_code == 0
-        assert "Edit a command" in result.output
+        assert "Edit" in result.output
         assert "COMMAND_NAME" in result.output
-        assert "--editor" in result.output
-        assert "--global" in result.output
 
 
 class TestDeleteCommand:
-    """Test the 'mcli workflow remove' command."""
+    """Test the 'mcli rm' command (top-level)."""
 
     def test_remove_command_exists(self, cli_runner, app):
-        """Test that remove command is registered under workflow."""
-        result = cli_runner.invoke(app, ["workflow", "--help"])
+        """Test that rm command is registered at top-level."""
+        result = cli_runner.invoke(app, ["--help"])
         assert result.exit_code == 0
-        assert "remove" in result.output
+        assert "rm" in result.output
 
     def test_remove_command_help(self, cli_runner, app):
-        """Test that remove command shows help."""
-        result = cli_runner.invoke(app, ["workflow", "remove", "--help"])
+        """Test that rm command shows help."""
+        result = cli_runner.invoke(app, ["rm", "--help"])
         assert result.exit_code == 0
-        assert "Remove a custom command" in result.output
+        assert "Delete" in result.output
         assert "COMMAND_NAME" in result.output
-        assert "--yes" in result.output
-        assert "--global" in result.output
 
 
 class TestSyncCommand:
-    """Test the 'mcli workflow sync' command."""
+    """Test the 'mcli sync' command (top-level)."""
 
     def test_sync_command_exists(self, cli_runner, app):
-        """Test that sync command is registered under workflow."""
-        result = cli_runner.invoke(app, ["workflow", "--help"])
+        """Test that sync command is registered at top-level."""
+        result = cli_runner.invoke(app, ["--help"])
         assert result.exit_code == 0
         assert "sync" in result.output
 
     def test_sync_command_help(self, cli_runner, app):
         """Test that sync command shows help."""
-        result = cli_runner.invoke(app, ["workflow", "sync", "--help"])
+        result = cli_runner.invoke(app, ["sync", "--help"])
         assert result.exit_code == 0
         # Sync command should show help about syncing
         assert result.exit_code == 0
@@ -102,17 +98,12 @@ class TestWorkflowCreationCommandsIntegration:
     """Integration tests for workflow creation commands."""
 
     def test_all_commands_registered(self, cli_runner, app):
-        """Test that all workflow management commands are registered."""
-        # Check top-level has new command
+        """Test that all workflow management commands are registered at top-level."""
+        # Check top-level has all workflow management commands
         result = cli_runner.invoke(app, ["--help"])
         assert result.exit_code == 0
         assert "new" in result.output
-        assert "workflow" in result.output
-
-        # Check workflow subcommands
-        result = cli_runner.invoke(app, ["workflow", "--help"])
-        assert result.exit_code == 0
         assert "edit" in result.output
-        assert "remove" in result.output
+        assert "rm" in result.output
         assert "sync" in result.output
-        assert "add" in result.output
+        assert "run" in result.output

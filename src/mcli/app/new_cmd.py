@@ -23,6 +23,7 @@ import click
 from rich.prompt import Prompt
 
 from mcli.lib.constants import (
+    CommandTypes,
     ScriptCommentPrefixes,
     ScriptExtensions,
     ScriptLanguages,
@@ -316,7 +317,40 @@ def get_template(template: ScriptTemplate) -> str:
 
 def _get_python_template(t: ScriptTemplate) -> str:
     """Generate Python command template."""
-    return f'''#!/usr/bin/env python3
+    if t.command_type == CommandTypes.GROUP:
+        return f'''#!/usr/bin/env python3
+# @{ScriptMetadataKeys.DESCRIPTION}: {t.description}
+# @{ScriptMetadataKeys.VERSION}: {t.version}
+# @{ScriptMetadataKeys.GROUP}: {t.group}
+
+"""
+{t.name} command group for mcli.
+"""
+import click
+from typing import Optional, List
+from pathlib import Path
+from mcli.lib.logger.logger import get_logger
+
+logger = get_logger()
+
+
+@click.group(name="{t.name}")
+def app():
+    """
+    {t.description}
+    """
+    pass
+
+
+@app.command("hello")
+@click.argument("name", default="World")
+def hello(name: str):
+    """Example subcommand."""
+    logger.info(f"Hello, {{name}}!")
+    click.echo(f"Hello, {{name}}!")
+'''
+    else:
+        return f'''#!/usr/bin/env python3
 # @{ScriptMetadataKeys.DESCRIPTION}: {t.description}
 # @{ScriptMetadataKeys.VERSION}: {t.version}
 # @{ScriptMetadataKeys.GROUP}: {t.group}
@@ -636,6 +670,13 @@ def save_script(
     help="Script language (auto-detected with --file)",
 )
 @click.option(
+    "--type",
+    "command_type",
+    type=click.Choice(CommandTypes.ALL, case_sensitive=False),
+    required=True,
+    help="Command type: 'command' for standalone, 'group' for command group with subcommands",
+)
+@click.option(
     "--group",
     default=ScriptMetadataDefaults.GROUP,
     help=f"Command group (default: '{ScriptMetadataDefaults.GROUP}')",
@@ -677,6 +718,7 @@ def save_script(
 def new(
     command_name: Optional[str],
     language: Optional[str],
+    command_type: str,
     group: str,
     description: str,
     cmd_version: str,
@@ -695,16 +737,17 @@ def new(
 
     \b
     Examples:
-        mcli new my_command -l python
-        mcli new backup_db -l shell
-        mcli new --file ./my_script.py
-        mcli new --file ./backup.sh --group utils
-        mcli new quick_cmd -l python -t
+        mcli new my_command -l python --type command
+        mcli new my_group -l python --type group
+        mcli new backup_db -l shell --type command
+        mcli new --file ./my_script.py --type command
+        mcli new --file ./backup.sh --group utils --type command
     """
     try:
         return _execute_new_command(
             command_name=command_name,
             language=language,
+            command_type=command_type.lower(),
             group=group,
             description=description,
             cmd_version=cmd_version,
@@ -723,6 +766,7 @@ def new(
 def _execute_new_command(
     command_name: Optional[str],
     language: Optional[str],
+    command_type: str,
     group: str,
     description: str,
     cmd_version: str,
@@ -816,6 +860,7 @@ def _execute_new_command(
             command_group=command_group,
             cmd_version=cmd_version,
             language=language,
+            command_type=command_type,
             shell=shell,
             template=template,
             script_path=script_path,
@@ -852,6 +897,7 @@ def _generate_or_edit_code(
     command_group: str,
     cmd_version: str,
     language: str,
+    command_type: str,
     shell: Optional[str],
     template: bool,
     script_path: Path,
@@ -870,6 +916,7 @@ def _generate_or_edit_code(
         group=command_group,
         version=cmd_version,
         language=language,
+        command_type=command_type,
         shell=shell,
     )
 

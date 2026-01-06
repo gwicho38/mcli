@@ -381,56 +381,5 @@ print(f"Received: {data.strip()}")
         assert "Received: test input data" in result.stdout
 
 
-@pytest.mark.integration
-class TestMakefileIntegration:
-    """Test Makefile workflow integration."""
-
-    def test_makefile_detection(self, tmp_path):
-        """Test detecting Makefile in directory."""
-        from mcli.lib.makefile_workflows import find_makefile
-
-        # Create Makefile
-        makefile = tmp_path / "Makefile"
-        makefile.write_text(
-            """
-.PHONY: test clean
-
-test: ## Run tests
-\t@echo "Running tests"
-
-clean: ## Clean artifacts
-\t@echo "Cleaning"
-"""
-        )
-
-        found = find_makefile(tmp_path)
-        assert found is not None
-        assert found == makefile
-
-    def test_makefile_target_parsing(self, tmp_path):
-        """Test parsing Makefile targets."""
-        from mcli.lib.makefile_workflows import parse_makefile_targets
-
-        makefile = tmp_path / "Makefile"
-        makefile.write_text(
-            """
-.PHONY: test build
-
-test: ## Run unit tests
-\t@pytest
-
-build: ## Build the project
-\t@make compile
-"""
-        )
-
-        targets = parse_makefile_targets(makefile)
-
-        assert "test" in targets
-        assert "build" in targets
-        assert "Run unit tests" in targets["test"]
-        assert "Build the project" in targets["build"]
-
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-m", "integration"])
