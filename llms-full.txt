@@ -1,6 +1,6 @@
 # mcli-framework - Complete Agent Documentation
 
-> Version 8.0.3 | Python >=3.10 | MIT License
+> Version 8.0.4 | Python >=3.10 | MIT License
 
 This document provides comprehensive documentation for ML models and AI agents to use mcli effectively. For programmatic access, run `mcli context` to output this documentation.
 

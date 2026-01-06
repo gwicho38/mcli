@@ -2,7 +2,7 @@
 
 > Portable workflow framework that transforms any script into a versioned, schedulable command. Run `mcli context --full` for comprehensive agent documentation.
 
-mcli is a Python CLI tool (v8.0.3) that provides workflow automation, command management, and IPFS-based sync. It enables ML models and agents to execute scripts, manage workflows, and automate tasks programmatically.
+mcli is a Python CLI tool (v8.0.4) that provides workflow automation, command management, and IPFS-based sync. It enables ML models and agents to execute scripts, manage workflows, and automate tasks programmatically.
 
 ## Quick Reference
 
