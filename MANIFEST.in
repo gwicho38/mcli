@@ -3,6 +3,10 @@ include README.md
 include LICENSE
 include PERFORMANCE_OPTIMIZATIONS.md
 
+# Include LLM/AI agent documentation (llms.txt convention)
+include llms.txt
+include llms-full.txt
+
 # Include configuration files
 include pyproject.toml
 include setup.cfg

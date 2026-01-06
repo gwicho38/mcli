@@ -10,7 +10,17 @@ from mcli.lib.api.api import register_command_as_api
 from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_tracing, get_logger
 
 # Desired command order for help display
-COMMAND_ORDER = ["init", "new", "edit", "rm", "search", "list", "self", "sync", "run"]
+COMMAND_ORDER = [
+    "init",
+    "new",
+    "edit",
+    "rm",
+    "search",
+    "list",
+    "self",
+    "sync",
+    "run",
+]
 
 
 class OrderedGroup(click.Group):
@@ -416,6 +426,15 @@ def _add_lazy_commands(app: click.Group):
         logger.debug("Added init command")
     except ImportError as e:
         logger.debug(f"Could not load init command: {e}")
+
+    # mcli context - Agent documentation (llms.txt convention)
+    try:
+        from mcli.app.context_cmd import context
+
+        app.add_command(context, name="context")
+        logger.debug("Added context command")
+    except ImportError as e:
+        logger.debug(f"Could not load context command: {e}")
 
     # mcli self - Self management (version, update, health, plugin, completion)
     try:

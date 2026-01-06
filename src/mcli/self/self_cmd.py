@@ -1100,6 +1100,14 @@ try:
 except ImportError as e:
     logger.debug(f"Could not load config command: {e}")
 
+try:
+    from mcli.self.workflows_cmd import workflows_cmd
+
+    self_app.add_command(workflows_cmd, name="workflows")
+    logger.debug("Added workflows command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load workflows command: {e}")
+
 
 # Workspace management commands
 @click.group("workspace")

@@ -1,0 +1,35 @@
+# mcli-framework
+
+> Portable workflow framework that transforms any script into a versioned, schedulable command. Run `mcli context --full` for comprehensive agent documentation.
+
+mcli is a Python CLI tool (v8.0.3) that provides workflow automation, command management, and IPFS-based sync. It enables ML models and agents to execute scripts, manage workflows, and automate tasks programmatically.
+
+## Quick Reference
+
+- [Full Agent Documentation](llms-full.txt): Complete documentation optimized for ML model context
+- [README](README.md): Human-readable project overview
+- [CLAUDE.md](CLAUDE.md): Development instructions and architecture details
+
+## Core Commands
+
+- [mcli run](docs/features/WORKFLOW_RUNNER.md): Execute workflow commands from local or global directories
+- [mcli new](docs/features/WORKFLOW_CREATION.md): Create new workflow commands (Python, Shell, JS, TS, Jupyter)
+- [mcli list](docs/features/WORKFLOW_LISTING.md): List available workflows with metadata
+- [mcli sync](docs/SCRIPT_SYNC_SYSTEM.md): IPFS sync and lockfile management
+
+## Agent Integration
+
+- [mcli context](docs/features/CONTEXT_COMMAND.md): Output comprehensive documentation for agent context building
+- [mcli self version](docs/features/VERSION_INFO.md): Get version and system information
+- [mcli self health](docs/features/HEALTH_CHECK.md): Repository health analysis
+
+## Configuration
+
+- [Installation](docs/setup/INSTALL.md): Setup instructions via pip/uv
+- [Shell Completion](docs/features/SHELL_COMPLETION.md): Tab completion for bash/zsh/fish
+
+## Optional
+
+- [ML Features](docs/features/ML_FEATURES.md): Training, backtesting, and optimization
+- [Dashboard](docs/features/DASHBOARD.md): Streamlit-based visualization
+- [Plugin System](docs/features/PLUGINS.md): Extend mcli functionality
