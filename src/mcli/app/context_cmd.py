@@ -104,14 +104,15 @@ Version: {version}
 @click.option("--full", "-f", is_flag=True, help="Output full documentation (llms-full.txt)")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON for programmatic use")
 def context(full: bool, as_json: bool):
-    """Output agent documentation for ML models and AI agents.
+    """🤖 Output comprehensive documentation for ML models and AI agents.
 
-    This command outputs comprehensive documentation optimized for ML model
-    context building. It follows the llms.txt convention for AI-friendly docs.
+    Provides complete CRUD operations guide, language-specific examples,
+    and workflow management instructions optimized for agent context building.
+    Follows the llms.txt convention for AI-friendly documentation.
 
     Examples:
         mcli context           # Output llms.txt (index)
-        mcli context --full    # Output complete llms-full.txt
+        mcli context --full    # Output complete documentation with all examples
         mcli context --json    # Output as JSON for programmatic use
     """
     # Find the llms.txt files relative to the package

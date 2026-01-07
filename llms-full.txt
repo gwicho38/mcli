@@ -1,6 +1,6 @@
 # mcli-framework - Complete Agent Documentation
 
-> Version 8.0.4 | Python >=3.10 | MIT License
+> Version 8.0.5 | Python >=3.10 | MIT License
 
 This document provides comprehensive documentation for ML models and AI agents to use mcli effectively. For programmatic access, run `mcli context` to output this documentation.
 
@@ -33,328 +33,764 @@ mcli self version
 
 ---
 
-## Command Reference
+## CRUD Operations - Complete Guide
 
-### Top-Level Commands
+### CREATE: Adding New Workflows
 
-```
-mcli [OPTIONS] COMMAND [ARGS]...
+There are **3 methods** to create workflows:
 
-Commands:
-  run     Execute workflow commands
-  new     Create new workflow commands
-  edit    Edit command in $EDITOR
-  rm      Delete a workflow command
-  search  Search commands by name/description/tags
-  list    List available workflows
-  init    Initialize workflows directory
-  sync    IPFS sync and lockfile management
-  self    Self-management commands
-```
-
-### mcli run - Execute Workflows
-
-The primary command for executing workflows.
+#### Method 1: Interactive Creation with `mcli new`
 
 ```bash
-mcli run [OPTIONS] COMMAND [ARGS]...
+# Python workflow (opens $EDITOR)
+mcli new my-workflow -l python --type command -d "Description here"
 
-Options:
-  -g, --global          Use global workflows (~/.mcli/workflows/)
-  -f, --workspace TEXT  Use specific workspace directory
+# Shell workflow
+mcli new backup -l shell --type command -d "Backup files to S3"
 
-Examples:
-  mcli run my-workflow              # Run local workflow
-  mcli run -g backup                # Run global workflow
-  mcli run -f ~/project workflow    # Run from specific workspace
-  mcli run modeling train --epochs 100  # Pass arguments to workflow
+# JavaScript workflow
+mcli new api-check -l javascript --type command -d "Check API health"
+
+# TypeScript workflow
+mcli new data-processor -l typescript --type command -d "Process data"
+
+# Jupyter notebook workflow
+mcli new analysis -l ipynb --type command -d "Data analysis notebook"
+
+# Create a command GROUP (contains subcommands)
+mcli new utils -l python --type group -d "Utility commands"
 ```
 
-### mcli new - Create Workflows
+**Options for `mcli new`:**
+| Option | Description |
+|--------|-------------|
+| `-l, --language` | python, shell, javascript, typescript, ipynb |
+| `--type` | command (standalone) or group (with subcommands) |
+| `-d, --description` | Human-readable description |
+| `-v, --version` | Initial version (default: 1.0.0) |
+| `-t, --template` | Skip editor, create with template only |
+| `-g, --global` | Create in ~/.mcli/workflows/ instead of local |
+| `--group` | Parent group name (default: root level) |
+| `-s, --shell` | Shell type: bash, zsh, fish, sh |
 
-Create new workflow commands from scratch or import existing scripts.
+#### Method 2: Import Existing Script with `mcli new --file`
 
 ```bash
-mcli new [OPTIONS] [COMMAND_NAME]
+# Import a Python script
+mcli new --file ./my_script.py --type command
 
-Options:
-  -l, --language [python|shell|javascript|typescript|ipynb]
-  --type [command|group]     Required: 'command' or 'group'
-  --group TEXT               Command group (default: 'workflows')
-  -d, --description TEXT     Command description
-  -v, --version TEXT         Initial version (default: 1.0.0)
-  -t, --template             Skip editor, use template
-  -s, --shell [bash|zsh|fish|sh]  Shell type for shell scripts
-  -g, --global               Create in global directory
-  -f, --file FILE            Import existing script file
+# Import a shell script into a group
+mcli new --file ./deploy.sh --type command --group devops
 
-Examples:
-  mcli new backup -l python --type command -d "Backup databases"
-  mcli new utils -l shell --type group
-  mcli new --file ./existing.py --type command --group tools
-  mcli new -g deploy -l shell --type command  # Global workflow
+# Import globally
+mcli new --file ./backup.sh --type command -g
 ```
 
-### mcli list - List Workflows
+#### Method 3: Direct File Creation (Drop-in)
 
-Display available workflows with metadata.
+Simply create a script file directly in the workflows directory:
 
 ```bash
-mcli list [OPTIONS]
-
-Options:
-  -a, --all      Show workflows from all registered workspaces
-  -g, --global   Show only global workflows
-  --json         Output as JSON (for programmatic use)
-
-Output columns: Name, Description, Language, Version
-```
-
-### mcli search - Search Workflows
-
-Search workflows by name, description, or tags.
-
-```bash
-mcli search [OPTIONS] QUERY
-
-Arguments:
-  QUERY    Search term
-
-Options:
-  -g, --global   Search global workflows only
-  --json         Output as JSON
-```
-
-### mcli sync - Sync & Lockfile Management
-
-Manage workflow state and IPFS synchronization.
-
-```bash
-mcli sync COMMAND [ARGS]...
-
-Subcommands:
-  status   Show scripts and lockfile status
-  update   Update lockfile with current state
-  diff     Show differences from lockfile
-  show     Show lockfile contents
-  push     Upload state to IPFS
-  pull     Download state from IPFS by CID
-  verify   Verify CID accessibility
-  history  Show IPFS sync history
-  now      Update and push in one command
-```
-
-### mcli self - Self-Management
-
-System management and diagnostics.
-
-```bash
-mcli self COMMAND [ARGS]...
-
-Subcommands:
-  version      Show version and system info
-  health       Repository health analysis
-  update       Check/install updates from PyPI
-  completion   Shell completion utilities
-  config       Configuration management
-  plugin       Plugin management
-  workspace    Workspace management
-  llms         Output agent documentation (this file)
-  logs         Stream/manage log files
-  dashboard    Launch system dashboard
-  migrate      Perform system migrations
-```
-
----
-
-## Workflow Structure
-
-### Directory Layout
-
-```
-~/.mcli/                    # Global mcli directory
-  workflows/                # Global workflows
-    command.py              # Global command
-  config.toml               # Global configuration
-
-/project/.mcli/             # Local (per-project) workflows
-  workflows/
-    backup.py               # Local command
-    utils/                  # Command group
-      deploy.sh
-      rollback.sh
-  lockfile.json             # Workflow state tracking
-```
-
-### Script Metadata Format
-
-Scripts can include metadata via special comments:
-
-```python
+# For local workflows (in a git repo)
+mkdir -p .mcli/workflows
+cat > .mcli/workflows/hello.py << 'EOF'
 #!/usr/bin/env python3
-# @description: Backup database to S3
+# @description: Say hello
 # @version: 1.0.0
-# @requires: boto3, click
-# @tags: backup, aws, database
-# @author: user@example.com
+# @tags: demo, hello
 
 import click
 
 @click.command()
-@click.option('--bucket', required=True)
-def main(bucket):
-    """Backup database to specified S3 bucket."""
-    # Implementation
-    pass
+@click.argument('name', default='World')
+def main(name):
+    """Greet someone."""
+    click.echo(f"Hello, {name}!")
+
+if __name__ == '__main__':
+    main()
+EOF
+
+# For global workflows
+cat > ~/.mcli/workflows/backup.sh << 'EOF'
+#!/usr/bin/env bash
+# @description: Backup home directory
+# @version: 1.0.0
+# @tags: backup, system
+
+set -e
+tar -czf ~/backup-$(date +%Y%m%d).tar.gz ~/Documents
+echo "Backup complete!"
+EOF
+chmod +x ~/.mcli/workflows/backup.sh
+```
+
+---
+
+### READ: Viewing and Listing Workflows
+
+#### List All Workflows
+
+```bash
+# List local workflows (current repo)
+mcli list
+
+# List global workflows
+mcli list -g
+
+# List from all registered workspaces
+mcli list --all
+
+# JSON output for programmatic use
+mcli list --json
+```
+
+**JSON Output Structure:**
+```json
+{
+  "workflows": [
+    {
+      "name": "backup",
+      "description": "Backup files to S3",
+      "language": "shell",
+      "version": "1.0.0",
+      "path": "/path/to/.mcli/workflows/backup.sh"
+    }
+  ],
+  "total": 1,
+  "scope": "local"
+}
+```
+
+#### Search Workflows
+
+```bash
+# Search by name or description
+mcli search backup
+
+# Search global workflows
+mcli search -g deploy
+
+# JSON output
+mcli search backup --json
+```
+
+#### View Workflow Details
+
+```bash
+# Show lockfile status for all workflows
+mcli sync status
+
+# Show specific workflow in lockfile
+mcli sync show backup
+
+# View the actual script file
+cat $(mcli list --json | jq -r '.workflows[] | select(.name=="backup") | .path')
+```
+
+---
+
+### UPDATE: Editing Workflows
+
+#### Edit with $EDITOR
+
+```bash
+# Edit a local workflow
+mcli edit backup
+
+# Edit a global workflow
+mcli edit -g backup
+```
+
+This opens the workflow script in your configured `$EDITOR` (vim, nano, code, etc.).
+
+#### Direct File Editing
+
+```bash
+# Find the workflow path
+mcli list --json | jq -r '.workflows[] | select(.name=="backup") | .path'
+
+# Edit directly
+vim ~/.mcli/workflows/backup.sh
+```
+
+#### Update Lockfile After Changes
+
+```bash
+# Update lockfile to track changes
+mcli sync update
+
+# Show what changed
+mcli sync diff
+```
+
+---
+
+### DELETE: Removing Workflows
+
+```bash
+# Delete a local workflow
+mcli rm backup
+
+# Delete a global workflow
+mcli rm -g backup
+
+# Alternative syntax
+mcli delete backup
+```
+
+**Important:** Deletion is permanent. The script file is removed from the workflows directory.
+
+---
+
+## Creating Workflows by Language
+
+### Python Workflows (.py)
+
+**Basic Structure:**
+```python
+#!/usr/bin/env python3
+# @description: My Python workflow
+# @version: 1.0.0
+# @requires: requests, click
+# @tags: api, automation
+
+import click
+import requests
+
+@click.command()
+@click.option('--url', required=True, help='API endpoint URL')
+@click.option('--timeout', default=30, help='Request timeout in seconds')
+def main(url, timeout):
+    """Fetch data from an API endpoint."""
+    response = requests.get(url, timeout=timeout)
+    click.echo(f"Status: {response.status_code}")
+    click.echo(response.json())
 
 if __name__ == '__main__':
     main()
 ```
 
-Shell script equivalent:
-
-```bash
-#!/usr/bin/env bash
-# @description: Deploy application
+**With Subcommands (Group):**
+```python
+#!/usr/bin/env python3
+# @description: Database management commands
 # @version: 1.0.0
-# @requires: docker, kubectl
-# @tags: deploy, kubernetes
 
-set -e
-# Implementation
+import click
+
+@click.group()
+def main():
+    """Database management utilities."""
+    pass
+
+@main.command()
+@click.argument('name')
+def create(name):
+    """Create a new database."""
+    click.echo(f"Creating database: {name}")
+
+@main.command()
+@click.argument('name')
+def drop(name):
+    """Drop a database."""
+    click.echo(f"Dropping database: {name}")
+
+@main.command()
+def list():
+    """List all databases."""
+    click.echo("Listing databases...")
+
+if __name__ == '__main__':
+    main()
 ```
 
-### Supported Languages
+**Create it:**
+```bash
+mcli new db -l python --type group -d "Database management"
+```
 
-| Extension | Language | Runtime |
-|-----------|----------|---------|
-| .py | Python | python3 |
-| .sh, .bash | Shell | bash/sh |
-| .js | JavaScript | node |
-| .ts | TypeScript | ts-node/deno |
-| .ipynb | Jupyter | jupyter/papermill |
+**Run it:**
+```bash
+mcli run db create mydb
+mcli run db list
+mcli run db drop mydb
+```
 
 ---
 
-## Programmatic Usage
+### Shell Workflows (.sh, .bash)
 
-### JSON Output
+**Basic Structure:**
+```bash
+#!/usr/bin/env bash
+# @description: Deploy application to production
+# @version: 1.0.0
+# @requires: docker, kubectl
+# @tags: deploy, kubernetes, production
 
-Most commands support `--json` for machine-readable output:
+set -euo pipefail
+
+# Parse arguments
+ENVIRONMENT="${1:-staging}"
+VERSION="${2:-latest}"
+
+echo "Deploying version $VERSION to $ENVIRONMENT..."
+
+# Your deployment logic here
+docker build -t myapp:$VERSION .
+kubectl set image deployment/myapp myapp=myapp:$VERSION
+
+echo "Deployment complete!"
+```
+
+**With Argument Parsing:**
+```bash
+#!/usr/bin/env bash
+# @description: Backup with options
+# @version: 1.0.0
+
+set -e
+
+# Default values
+DEST="/tmp/backup"
+COMPRESS=false
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -d|--dest)
+            DEST="$2"
+            shift 2
+            ;;
+        -c|--compress)
+            COMPRESS=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
+echo "Backing up to $DEST (compress: $COMPRESS)"
+# Backup logic here
+```
+
+**Create it:**
+```bash
+mcli new deploy -l shell --type command -d "Deploy to production"
+```
+
+**Run it:**
+```bash
+mcli run deploy production v1.2.3
+mcli run backup --dest /mnt/backup --compress
+```
+
+---
+
+### JavaScript Workflows (.js)
+
+**Basic Structure:**
+```javascript
+#!/usr/bin/env node
+// @description: Check API health endpoints
+// @version: 1.0.0
+// @requires: node-fetch
+// @tags: api, health, monitoring
+
+const https = require('https');
+
+const endpoints = process.argv.slice(2);
+
+if (endpoints.length === 0) {
+    console.log('Usage: health-check <url1> [url2] ...');
+    process.exit(1);
+}
+
+async function checkHealth(url) {
+    return new Promise((resolve) => {
+        https.get(url, (res) => {
+            resolve({ url, status: res.statusCode, ok: res.statusCode === 200 });
+        }).on('error', (err) => {
+            resolve({ url, status: 'error', ok: false, error: err.message });
+        });
+    });
+}
+
+(async () => {
+    for (const url of endpoints) {
+        const result = await checkHealth(url);
+        const icon = result.ok ? '✓' : '✗';
+        console.log(`${icon} ${result.url}: ${result.status}`);
+    }
+})();
+```
+
+**Create it:**
+```bash
+mcli new health-check -l javascript --type command -d "Check API health"
+```
+
+**Run it:**
+```bash
+mcli run health-check https://api.example.com/health https://api2.example.com/health
+```
+
+---
+
+### TypeScript Workflows (.ts)
+
+**Basic Structure:**
+```typescript
+#!/usr/bin/env ts-node
+// @description: Process and validate data files
+// @version: 1.0.0
+// @requires: ts-node, typescript
+// @tags: data, validation
+
+import * as fs from 'fs';
+import * as path from 'path';
+
+interface DataRecord {
+    id: number;
+    name: string;
+    value: number;
+}
+
+function validateRecord(record: DataRecord): boolean {
+    return record.id > 0 && record.name.length > 0 && record.value >= 0;
+}
+
+const inputFile = process.argv[2];
+
+if (!inputFile) {
+    console.error('Usage: process-data <input-file>');
+    process.exit(1);
+}
+
+const data: DataRecord[] = JSON.parse(fs.readFileSync(inputFile, 'utf-8'));
+const valid = data.filter(validateRecord);
+const invalid = data.length - valid.length;
+
+console.log(`Processed ${data.length} records`);
+console.log(`Valid: ${valid.length}, Invalid: ${invalid}`);
+```
+
+**Create it:**
+```bash
+mcli new process-data -l typescript --type command -d "Process data files"
+```
+
+---
+
+### Jupyter Notebook Workflows (.ipynb)
+
+Jupyter notebooks can be run as workflows using papermill:
+
+**Create it:**
+```bash
+mcli new analysis -l ipynb --type command -d "Data analysis notebook"
+```
+
+**The notebook structure should have:**
+- Parameters cell tagged with `parameters`
+- Output cells for results
+
+**Run it:**
+```bash
+mcli run analysis --input data.csv --output results.json
+```
+
+---
+
+## Workflow Metadata Reference
+
+All scripts can include metadata via special comments:
+
+| Tag | Description | Example |
+|-----|-------------|---------|
+| `@description` | Human-readable description | `# @description: Backup database` |
+| `@version` | Semantic version | `# @version: 1.2.3` |
+| `@requires` | Dependencies (comma-separated) | `# @requires: requests, boto3` |
+| `@tags` | Searchable tags | `# @tags: backup, aws, production` |
+| `@author` | Author information | `# @author: user@example.com` |
+
+---
+
+## Directory Structure
+
+```
+~/.mcli/                      # Global mcli directory
+├── workflows/                # Global workflows (shared across all projects)
+│   ├── backup.sh            # Global shell command
+│   ├── deploy.py            # Global Python command
+│   └── utils/               # Command group
+│       ├── cleanup.sh
+│       └── report.py
+├── config.toml              # Global configuration
+└── registry.json            # Workspace registry
+
+/your-project/                # Your project directory
+└── .mcli/                   # Local mcli directory (project-specific)
+    ├── workflows/           # Local workflows
+    │   ├── build.sh        # Project build script
+    │   ├── test.py         # Project test runner
+    │   └── ci/             # CI command group
+    │       ├── lint.sh
+    │       └── deploy.sh
+    └── lockfile.json        # Workflow state tracking
+```
+
+---
+
+## Running Workflows
+
+### Basic Execution
+
+```bash
+# Run local workflow
+mcli run <workflow-name> [args...]
+
+# Run global workflow
+mcli run -g <workflow-name> [args...]
+
+# Run from specific workspace
+mcli run -f /path/to/project <workflow-name> [args...]
+```
+
+### Passing Arguments
+
+```bash
+# Positional arguments
+mcli run deploy production v1.2.3
+
+# Named arguments (for Click-based Python workflows)
+mcli run backup --bucket my-bucket --compress
+
+# Mixed arguments
+mcli run process input.csv --format json --verbose
+```
+
+### Workflow Groups
+
+```bash
+# Run subcommand within a group
+mcli run db create mydb
+mcli run db migrate --version 3
+mcli run ci lint
+mcli run ci deploy --env staging
+```
+
+---
+
+## Workspace Management
+
+### Register Workspaces
+
+```bash
+# Register current directory
+mcli self workspace add
+
+# Register specific directory
+mcli self workspace add /path/to/project
+
+# With custom name
+mcli self workspace add /path/to/project --name "my-project"
+```
+
+### List Workspaces
+
+```bash
+mcli self workspace list
+mcli self workspace list --json
+```
+
+### Remove Workspaces
+
+```bash
+mcli self workspace remove
+mcli self workspace remove /path/to/project
+mcli self workspace prune  # Remove missing workspaces
+```
+
+---
+
+## Sync & Version Control
+
+### Lockfile Management
+
+```bash
+# Show current status
+mcli sync status
+
+# Update lockfile with current script state
+mcli sync update
+
+# Show differences
+mcli sync diff
+
+# View lockfile contents
+mcli sync show
+```
+
+### IPFS Synchronization
+
+```bash
+# Push current state to IPFS
+mcli sync push
+
+# Pull state from IPFS by CID
+mcli sync pull QmXxx...
+
+# Verify CID is accessible
+mcli sync verify QmXxx...
+
+# Show sync history
+mcli sync history
+
+# Update and push in one command
+mcli sync now
+```
+
+---
+
+## Programmatic Usage (for Agents)
+
+### JSON Output for All Commands
 
 ```bash
 mcli list --json
 mcli search backup --json
 mcli self version --json
+mcli sync status --json
 ```
 
 ### Exit Codes
 
-- 0: Success
-- 1: General error
-- 2: Command not found
-- 3: Invalid arguments
-- 4: Workflow execution failed
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | General error |
+| 2 | Command not found |
+| 3 | Invalid arguments |
+| 4 | Workflow execution failed |
 
 ### Environment Variables
 
-```bash
-MCLI_ENV=development|staging|production  # Environment
-DEBUG=1                                   # Enable debug mode
-MCLI_TRACE_LEVEL=0|1|2|3                 # Tracing verbosity
-MCLI_AUTO_OPTIMIZE=1                     # Auto-optimization
-MCLI_WATCH_SCRIPTS=true                  # Auto-sync on change
-```
+| Variable | Description | Values |
+|----------|-------------|--------|
+| `MCLI_ENV` | Environment mode | development, staging, production |
+| `DEBUG` | Enable debug output | 1 |
+| `MCLI_TRACE_LEVEL` | Tracing verbosity | 0, 1, 2, 3 |
+| `MCLI_AUTO_OPTIMIZE` | Auto-optimization | 1 |
+| `MCLI_WATCH_SCRIPTS` | Auto-sync on change | true |
+| `EDITOR` | Editor for mcli edit | vim, nano, code |
 
 ---
 
-## Common Patterns for Agents
+## Common Agent Workflows
 
-### Execute a workflow and capture output
-
-```bash
-mcli run backup --output /tmp/backup.tar.gz 2>&1
-```
-
-### Create a new workflow programmatically
-
-```bash
-mcli new process_data -l python --type command -d "Process data files" -t
-# Then edit the generated file
-```
-
-### Check workflow status
-
-```bash
-mcli list --json | jq '.workflows[] | select(.name == "backup")'
-```
-
-### Sync workflows to IPFS
-
-```bash
-mcli sync now  # Update lockfile and push to IPFS
-```
-
-### Get system information
+### 1. Check if mcli is installed and working
 
 ```bash
 mcli self version --json
 ```
 
----
-
-## Error Handling
-
-### Common Errors
-
-| Error | Cause | Resolution |
-|-------|-------|------------|
-| "Command not found" | Workflow doesn't exist | Run `mcli list` to see available workflows |
-| "No workflows directory" | Not initialized | Run `mcli init` |
-| "Permission denied" | Script not executable | Check file permissions |
-| "Missing dependency" | Required package missing | Check @requires metadata |
-
-### Debugging
+### 2. List available workflows
 
 ```bash
-DEBUG=1 mcli run workflow_name    # Enable debug output
-MCLI_TRACE_LEVEL=2 mcli run ...   # Detailed tracing
-mcli self logs --tail 100         # View recent logs
+mcli list --json | jq '.workflows[].name'
+```
+
+### 3. Create a new workflow programmatically
+
+```bash
+# Create with template (no editor)
+mcli new my-task -l python --type command -d "My task" -t
+
+# Then write the script content
+cat > .mcli/workflows/my-task.py << 'EOF'
+#!/usr/bin/env python3
+# @description: My task
+# @version: 1.0.0
+
+import click
+
+@click.command()
+def main():
+    click.echo("Task executed!")
+
+if __name__ == '__main__':
+    main()
+EOF
+```
+
+### 4. Run a workflow and capture output
+
+```bash
+output=$(mcli run my-task 2>&1)
+exit_code=$?
+echo "Exit code: $exit_code"
+echo "Output: $output"
+```
+
+### 5. Check if a specific workflow exists
+
+```bash
+mcli list --json | jq -e '.workflows[] | select(.name == "backup")' > /dev/null && echo "exists" || echo "not found"
+```
+
+### 6. Get workflow path for direct file manipulation
+
+```bash
+path=$(mcli list --json | jq -r '.workflows[] | select(.name == "backup") | .path')
+echo "Workflow located at: $path"
 ```
 
 ---
 
-## Best Practices for Agents
+## Debugging
 
-1. **Always check `mcli list` first** to see available workflows
-2. **Use `--json` flag** for programmatic parsing
-3. **Capture stderr** along with stdout for error messages
-4. **Use `mcli self version`** to verify installation
-5. **Prefer local workflows** (`.mcli/workflows/`) for project-specific tasks
-6. **Use global workflows** (`-g`) for system-wide utilities
-7. **Check exit codes** to determine success/failure
-8. **Use `mcli sync status`** to verify workflow integrity
+```bash
+# Enable debug output
+DEBUG=1 mcli run workflow_name
+
+# Detailed tracing
+MCLI_TRACE_LEVEL=2 mcli run workflow_name
+
+# View recent logs
+mcli self logs --tail 100
+
+# Health check
+mcli self health
+```
 
 ---
 
-## Quick Start for Agents
+## Quick Reference Card
 
-```bash
-# 1. Verify installation
-mcli self version
-
-# 2. Initialize (if needed)
-mcli init
-
-# 3. List available workflows
-mcli list --json
-
-# 4. Run a workflow
-mcli run <workflow_name> [args...]
-
-# 5. Create new workflow if needed
-mcli new my_task -l python --type command -d "Description" -t
-```
+| Task | Command |
+|------|---------|
+| Install | `pip install mcli-framework` |
+| Initialize | `mcli init` |
+| Create Python workflow | `mcli new NAME -l python --type command` |
+| Create Shell workflow | `mcli new NAME -l shell --type command` |
+| Create command group | `mcli new NAME -l python --type group` |
+| Import existing script | `mcli new --file SCRIPT --type command` |
+| List workflows | `mcli list` |
+| List global workflows | `mcli list -g` |
+| Search workflows | `mcli search QUERY` |
+| Run workflow | `mcli run NAME [args]` |
+| Run global workflow | `mcli run -g NAME [args]` |
+| Edit workflow | `mcli edit NAME` |
+| Delete workflow | `mcli rm NAME` |
+| Sync status | `mcli sync status` |
+| Update lockfile | `mcli sync update` |
+| Get version | `mcli self version` |
+| Get this documentation | `mcli context --full` |
 
 ---
 
