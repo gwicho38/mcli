@@ -111,6 +111,8 @@ jobs:
   secret-scan:
     name: Secret Scanning
     runs-on: ubuntu-latest
+    # Skip on schedule - TruffleHog requires different base/head commits for diff scanning
+    if: github.event_name != 'schedule'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
