@@ -378,7 +378,7 @@ def {t.name}_command(name: str):
 
 
 def _get_shell_template(t: ScriptTemplate) -> str:
-    """Generate shell script template."""
+    """Generate shell script template with function dispatching."""
     shell = t.shell or ShellTypes.DEFAULT
     return f"""#!/usr/bin/env {shell}
 # @{ScriptMetadataKeys.DESCRIPTION}: {t.description}
@@ -388,28 +388,59 @@ def _get_shell_template(t: ScriptTemplate) -> str:
 
 # {t.name} - {t.description}
 #
-# This is a shell-based MCLI workflow command.
-# Arguments are passed as positional parameters: $1, $2, $3, etc.
-# The command name is available in: $MCLI_COMMAND
+# This is a shell-based MCLI workflow command with function dispatching.
+# Define functions below, then call them via: mcli run {t.name} <function> [args...]
+# Run without arguments to see available functions.
 
 set -euo pipefail  # Exit on error, undefined variables, and pipe failures
 
-# Command logic
-echo "Hello from {t.name} shell command!"
-echo "Command: $MCLI_COMMAND"
+# =============================================================================
+# Functions - Define your functions below
+# =============================================================================
 
-# Example: Access arguments
-if [ $# -gt 0 ]; then
-    echo "Arguments: $@"
-    for arg in "$@"; do
-        echo "  - $arg"
+hello() {{
+    echo "Hello from {t.name}!"
+}}
+
+greet() {{
+    local name="${{1:-World}}"
+    echo "Hello, $name!"
+}}
+
+# =============================================================================
+# Function Dispatcher (do not modify below this line)
+# =============================================================================
+
+_list_functions() {{
+    echo "Available functions for '{t.name}':"
+    # Works in both bash and zsh
+    typeset -f | grep '^[a-z][a-z0-9_]* ()' | sed 's/ ().*//' | sort | while read -r fn; do
+        echo "  $fn"
     done
-else
-    echo "No arguments provided"
-fi
+}}
 
-# Exit successfully
-exit 0
+_main() {{
+    local cmd="${{1:-}}"
+
+    if [ -z "$cmd" ]; then
+        echo "Usage: mcli run {t.name} <function> [args...]"
+        echo ""
+        _list_functions
+        exit 0
+    fi
+
+    if declare -f "$cmd" > /dev/null 2>&1; then
+        shift
+        "$cmd" "$@"
+    else
+        echo "Error: Unknown function '$cmd'"
+        echo ""
+        _list_functions
+        exit 1
+    fi
+}}
+
+_main "$@"
 """
 
 
