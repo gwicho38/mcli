@@ -43,9 +43,10 @@ from .messages import (
     SuccessMessages,
     SyncMessages,
     SystemIntegrationMessages,
+    VenvMessages,
     WarningMessages,
 )
-from .paths import DirNames, FileNames, GitIgnorePatterns, PathPatterns
+from .paths import DirNames, FileNames, GitIgnorePatterns, PathPatterns, VenvPaths
 from .scripts import (
     CommandTypes,
     ScriptCommentPrefixes,
@@ -75,6 +76,7 @@ __all__ = [
     "FileNames",
     "PathPatterns",
     "GitIgnorePatterns",
+    "VenvPaths",
     # Messages
     "ErrorMessages",
     "SuccessMessages",
@@ -87,6 +89,7 @@ __all__ = [
     "ModelServiceMessages",
     "SystemIntegrationMessages",
     "SyncMessages",
+    "VenvMessages",
     # Defaults
     "Editors",
     "Shells",

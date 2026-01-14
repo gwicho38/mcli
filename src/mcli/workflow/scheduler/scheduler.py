@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.pyenv import PyEnvManager
 
 from .cron_parser import CronExpression
 from .job import JobStatus, JobType, ScheduledJob
@@ -118,7 +119,11 @@ class JobExecutor:
                 self.running_processes.pop(job.id, None)
 
     def _execute_python(self, job: ScheduledJob) -> Dict[str, Any]:
-        """Execute Python code."""
+        """Execute Python code.
+
+        Uses the resolved Python executable from PyEnvManager, which prefers
+        local venvs over global to allow access to workspace-specific packages.
+        """
         try:
             # Create temporary Python file
             import tempfile
@@ -128,12 +133,16 @@ class JobExecutor:
                 temp_file = f.name
 
             try:
+                # Get the appropriate Python executable
+                env_manager = PyEnvManager()
+                python_exe = str(env_manager.get_python_executable())
+
                 # Execute Python file
                 env = os.environ.copy()
                 env.update(job.environment)
 
                 process = subprocess.Popen(
-                    [os.sys.executable, temp_file],
+                    [python_exe, temp_file],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,

@@ -31,6 +31,7 @@ except ImportError:
 
 # Import existing utilities
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.pyenv import PyEnvManager
 from mcli.lib.toml.toml import read_from_toml
 
 logger = get_logger(__name__)
@@ -565,7 +566,11 @@ class CommandExecutor:
             }
 
     def _execute_python(self, command: Command, args: List[str]) -> Dict[str, str]:
-        """Execute Python code safely."""
+        """Execute Python code safely.
+
+        Uses the resolved Python executable from PyEnvManager, which prefers
+        local venvs over global to allow access to workspace-specific packages.
+        """
         # Create temporary file
         script_file = self.temp_dir / f"{command.id}_{int(time.time())}.py"
 
@@ -574,9 +579,13 @@ class CommandExecutor:
             with open(script_file, "w") as f:
                 f.write(command.code)
 
+            # Get the appropriate Python executable
+            env_manager = PyEnvManager()
+            python_exe = str(env_manager.get_python_executable())
+
             # Execute with subprocess
             result = subprocess.run(
-                [sys.executable, str(script_file)] + args,
+                [python_exe, str(script_file)] + args,
                 capture_output=True,
                 text=True,
                 timeout=30,  # 30 second timeout

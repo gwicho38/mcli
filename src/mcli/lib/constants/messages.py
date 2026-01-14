@@ -942,6 +942,36 @@ class SyncMessages:
     DIR_NOT_EXIST = "Commands directory does not exist: {path}"
 
 
+class VenvMessages:
+    """Virtual environment related messages."""
+
+    # Info
+    DETECTING_VENV = "Detecting Python environment..."
+    USING_LOCAL_VENV = "Using local venv: {path}"
+    USING_GLOBAL_VENV = "Using global MCLI venv: {path}"
+    USING_SYSTEM_PYTHON = "Using system Python: {path}"
+    CREATING_GLOBAL_VENV = "Creating global MCLI venv at {path}..."
+    GLOBAL_VENV_CREATED = "Created global MCLI venv at {path}"
+
+    # Dependency messages
+    CHECKING_DEPS = "Checking dependencies for {script}..."
+    DEPS_SATISFIED = "All dependencies satisfied"
+    MISSING_DEPS = "Missing dependencies: {packages}"
+    INSTALLING_DEPS = "Installing dependencies: {packages}"
+    DEPS_INSTALLED = "Dependencies installed successfully"
+
+    # Prompts
+    PROMPT_INSTALL_DEPS = "Install missing dependencies to {venv}? [{packages}]"
+
+    # Errors
+    UV_NOT_INSTALLED = (
+        "uv is not installed. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    )
+    VENV_CREATE_FAILED = "Failed to create virtual environment: {error}"
+    DEP_INSTALL_FAILED = "Failed to install dependencies: {error}"
+    DEP_CHECK_FAILED = "Failed to check dependencies: {error}"
+
+
 __all__ = [
     "ErrorMessages",
     "SuccessMessages",
@@ -954,4 +984,5 @@ __all__ = [
     "SystemIntegrationMessages",
     "EditMessages",
     "SyncMessages",
+    "VenvMessages",
 ]

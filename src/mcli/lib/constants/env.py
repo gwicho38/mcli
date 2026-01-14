@@ -63,5 +63,10 @@ class EnvVars:
     GITHUB_ACTIONS = "GITHUB_ACTIONS"
     GITHUB_TOKEN = "GITHUB_TOKEN"
 
+    # Python environment management
+    MCLI_AUTO_INSTALL_DEPS = "MCLI_AUTO_INSTALL_DEPS"  # Auto-install without prompt
+    MCLI_USE_SYSTEM_PYTHON = "MCLI_USE_SYSTEM_PYTHON"  # Skip venv detection
+    MCLI_VENV_PATH = "MCLI_VENV_PATH"  # Override venv path
+
 
 __all__ = ["EnvVars"]

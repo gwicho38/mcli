@@ -37,6 +37,7 @@ class DirNames:
     SRC = "src"
     LIB = "Lib"
     SITE_PACKAGES = "site-packages"
+    GLOBAL_VENV = "venv"  # Global venv directory name under ~/.mcli/
 
 
 class FileNames:
@@ -83,4 +84,14 @@ class GitIgnorePatterns:
     EGG_INFO = "*.egg-info/"
 
 
-__all__ = ["DirNames", "FileNames", "PathPatterns", "GitIgnorePatterns"]
+class VenvPaths:
+    """Virtual environment path constants."""
+
+    LOCAL_VENV_NAMES = [".venv", "venv"]
+    BIN_DIR_UNIX = "bin"
+    BIN_DIR_WINDOWS = "Scripts"
+    PYTHON_UNIX = "python"
+    PYTHON_WINDOWS = "python.exe"
+
+
+__all__ = ["DirNames", "FileNames", "PathPatterns", "GitIgnorePatterns", "VenvPaths"]

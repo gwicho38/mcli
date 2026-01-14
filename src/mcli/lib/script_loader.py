@@ -28,6 +28,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import click
 
 from mcli.lib.logger.logger import get_logger, register_subprocess
+from mcli.lib.pyenv import PyEnvManager
 
 logger = get_logger(__name__)
 
@@ -342,6 +343,31 @@ class ScriptLoader:
         """
         Load Python script with Click decorators.
 
+        If the script has @requires dependencies, it will be executed via subprocess
+        in the appropriate virtual environment. Otherwise, it's loaded in-process.
+
+        Args:
+            script_path: Path to the Python script
+            metadata: Script metadata
+
+        Returns:
+            Click command/group or None if loading failed
+        """
+        requires = metadata.get("requires", [])
+
+        # If script has dependencies, use subprocess execution with venv
+        if requires:
+            return self._load_python_with_deps(script_path, metadata)
+
+        # No dependencies - load in-process (original behavior)
+        return self._load_python_inprocess(script_path, metadata)
+
+    def _load_python_inprocess(
+        self, script_path: Path, metadata: Dict[str, Any]
+    ) -> Optional[click.Command]:
+        """
+        Load Python script in-process via importlib.
+
         Args:
             script_path: Path to the Python script
             metadata: Script metadata
@@ -389,6 +415,65 @@ class ScriptLoader:
         except Exception as e:
             logger.error(f"Failed to load Python command {name}: {e}")
             return None
+
+    def _load_python_with_deps(self, script_path: Path, metadata: Dict[str, Any]) -> click.Command:
+        """
+        Create Click wrapper for Python script with dependencies.
+
+        Executes the script via subprocess in the appropriate virtual environment.
+
+        Args:
+            script_path: Path to the Python script
+            metadata: Script metadata
+
+        Returns:
+            Click command that executes the Python script in venv
+        """
+        name = script_path.stem
+        description = metadata.get("description", "Python command")
+        requires = metadata.get("requires", [])
+
+        @click.command(name=name, help=description)
+        @click.argument("args", nargs=-1)
+        @click.pass_context
+        def python_venv_command(ctx: click.Context, args: Tuple[str, ...]) -> None:
+            """Execute Python script with dependencies in venv."""
+            try:
+                # Get workspace directory from script location
+                workspace_dir = script_path.parent
+
+                # Initialize environment manager
+                env_manager = PyEnvManager(workspace_dir=workspace_dir)
+
+                # Check and install dependencies
+                if not env_manager.check_and_install_deps(requires, name):
+                    click.echo("Dependency installation cancelled or failed.", err=True)
+                    ctx.exit(1)
+                    return
+
+                # Execute in venv
+                logger.info(f"Executing Python command in venv: {name}")
+                result = env_manager.execute_in_venv(
+                    script_path,
+                    list(args),
+                    env={"MCLI_COMMAND": name},
+                )
+
+                if result.stdout:
+                    click.echo(result.stdout, nl=False)
+                if result.stderr:
+                    click.echo(result.stderr, nl=False, err=True)
+
+                if result.returncode != 0:
+                    logger.warning(f"Python command {name} exited with code {result.returncode}")
+                    ctx.exit(result.returncode)
+
+            except Exception as e:
+                logger.error(f"Failed to execute Python command {name}: {e}")
+                click.echo(f"Error executing Python command: {e}", err=True)
+                ctx.exit(1)
+
+        return python_venv_command
 
     def load_shell_command(self, script_path: Path, metadata: Dict[str, Any]) -> click.Command:
         """
