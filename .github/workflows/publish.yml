@@ -135,10 +135,10 @@ jobs:
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
           skip-existing: true
 
-  # Job 4: Publish to Production PyPI (main branch or release)
+  # Job 4: Publish to Production PyPI (main branch, release, or manual dispatch)
   publish-pypi:
     name: Publish to PyPI
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'release'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     environment:
