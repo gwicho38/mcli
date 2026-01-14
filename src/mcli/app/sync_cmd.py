@@ -3,9 +3,13 @@
 Provides:
 - IPFS synchronization of workflow state (push/pull)
 - Lockfile management (status/update/diff)
+- IPFS daemon initialization
 """
 
 import json
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +26,9 @@ from mcli.lib.ui.styling import console, error, info, success, warning
 def sync_group():
     """🔄 Sync workflow state and manage lockfile.
 
+    Setup:
+        init     Initialize and start IPFS daemon
+
     Lockfile Management:
         status   Show workflow scripts and their lockfile status
         update   Update lockfile with current script state
@@ -34,6 +41,146 @@ def sync_group():
         verify   Verify lockfile or IPFS CID accessibility
     """
     pass
+
+
+# ============================================================
+# IPFS Setup Commands
+# ============================================================
+
+
+def _ipfs_installed() -> bool:
+    """Check if IPFS is installed."""
+    return shutil.which("ipfs") is not None
+
+
+def _ipfs_initialized() -> bool:
+    """Check if IPFS is initialized (~/.ipfs exists)."""
+    ipfs_dir = Path.home() / ".ipfs"
+    return ipfs_dir.exists() and (ipfs_dir / "config").exists()
+
+
+def _ipfs_daemon_running() -> bool:
+    """Check if IPFS daemon is running."""
+    try:
+        import requests
+
+        response = requests.post("http://127.0.0.1:5001/api/v0/id", timeout=2)
+        return response.status_code == 200
+    except Exception:
+        return False
+
+
+@sync_group.command(name="init")
+@click.option("--install", "-i", is_flag=True, help="Install IPFS if not present (requires brew)")
+@click.option("--foreground", "-f", is_flag=True, help="Run daemon in foreground (blocking)")
+def sync_init(install: bool, foreground: bool):
+    """🚀 Initialize and start the IPFS daemon.
+
+    This command sets up IPFS for workflow synchronization:
+    1. Checks if IPFS is installed (optionally installs with --install)
+    2. Initializes IPFS if not already initialized
+    3. Starts the IPFS daemon in the background
+
+    Examples:
+        mcli sync init              # Initialize and start daemon
+        mcli sync init --install    # Install IPFS first (via brew)
+        mcli sync init --foreground # Run daemon in foreground
+    """
+    # Step 1: Check/Install IPFS
+    if not _ipfs_installed():
+        if install:
+            if sys.platform != "darwin":
+                error("Auto-install only supported on macOS. Please install IPFS manually:")
+                console.print("  https://docs.ipfs.tech/install/command-line/")
+                return 1
+
+            info("Installing IPFS via Homebrew...")
+            result = subprocess.run(
+                ["brew", "install", "ipfs"],
+                capture_output=False,
+            )
+            if result.returncode != 0:
+                error("Failed to install IPFS via brew.")
+                console.print("[dim]Try: brew install ipfs[/dim]")
+                return 1
+            success("IPFS installed successfully!")
+        else:
+            error("IPFS is not installed.")
+            console.print()
+            console.print("[yellow]To install IPFS:[/yellow]")
+            console.print("  [dim]macOS:[/dim]   brew install ipfs")
+            console.print("  [dim]Linux:[/dim]   See https://docs.ipfs.tech/install/command-line/")
+            console.print("  [dim]Windows:[/dim] See https://docs.ipfs.tech/install/command-line/")
+            console.print()
+            console.print("[dim]Or run: mcli sync init --install[/dim]")
+            return 1
+
+    success("IPFS is installed")
+
+    # Step 2: Initialize IPFS
+    if not _ipfs_initialized():
+        info("Initializing IPFS...")
+        result = subprocess.run(
+            ["ipfs", "init"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            error("Failed to initialize IPFS.")
+            console.print(f"[dim]{result.stderr}[/dim]")
+            return 1
+        success("IPFS initialized!")
+    else:
+        info("IPFS already initialized")
+
+    # Step 3: Check if daemon is already running
+    if _ipfs_daemon_running():
+        success("IPFS daemon is already running!")
+        console.print()
+        console.print("[green]✓ IPFS is ready for workflow sync[/green]")
+        console.print("[dim]Try: mcli sync push[/dim]")
+        return 0
+
+    # Step 4: Start daemon
+    if foreground:
+        info("Starting IPFS daemon in foreground (Ctrl+C to stop)...")
+        console.print()
+        try:
+            subprocess.run(["ipfs", "daemon"])
+        except KeyboardInterrupt:
+            console.print("\n[dim]Daemon stopped.[/dim]")
+        return 0
+    else:
+        info("Starting IPFS daemon in background...")
+
+        # Start daemon in background
+        process = subprocess.Popen(
+            ["ipfs", "daemon"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+
+        # Wait a moment for daemon to start
+        import time
+
+        for _ in range(10):
+            time.sleep(0.5)
+            if _ipfs_daemon_running():
+                break
+
+        if _ipfs_daemon_running():
+            success("IPFS daemon started!")
+            console.print()
+            console.print("[green]✓ IPFS is ready for workflow sync[/green]")
+            console.print(f"[dim]Daemon PID: {process.pid}[/dim]")
+            console.print("[dim]Try: mcli sync push[/dim]")
+            console.print("[dim]Stop with: pkill -f 'ipfs daemon'[/dim]")
+            return 0
+        else:
+            warning("Daemon started but may still be initializing...")
+            console.print("[dim]Check status with: mcli sync init[/dim]")
+            return 0
 
 
 # ============================================================
