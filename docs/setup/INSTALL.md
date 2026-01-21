@@ -1,15 +1,15 @@
 # MCLI Installation Guide
 
-Version 8.0.7 is now available through multiple installation methods!
+Version 8.0.8 is now available through multiple installation methods!
 
-## 🎉 What's New in 8.0.7
+## 🎉 What's New in 8.0.8
 
-Bug fixes in this release:
-- **Fixed async test configuration** - All async unit tests now pass correctly
-- **Fixed store command test** - Resolved mocking issue in test_init_already_exists
-- **100% test pass rate** - All 774 unit tests passing
+Documentation updates in this release:
+- **Updated all documentation** - README, INDEX, INSTALL, and CHANGELOG synchronized
+- **PyPI documentation** - Package page now shows current project state
+- **Release notes** - Complete release history for 8.0.x series
 
-For detailed release notes, see [8.0.7 Release Notes](../releases/8.0.7.md)
+For detailed release notes, see [8.0.8 Release Notes](../releases/8.0.8.md)
 
 ## 🚀 What's New in 8.0.x
 
@@ -192,6 +192,6 @@ make build
 make publish
 
 # Create new release
-git tag v8.0.7
+git tag v8.0.8
 git push --tags
 ```

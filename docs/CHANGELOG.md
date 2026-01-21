@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.8] - 2026-01-21
+
+### Changed
+- **Documentation**: Updated all documentation to reflect current project state
+  - README.md updated with latest release reference
+  - docs/INDEX.md updated with version 8.0.8 and release history
+  - docs/setup/INSTALL.md updated with 8.0.x features
+  - docs/CHANGELOG.md updated with complete 8.0.x history
+- **PyPI**: Documentation patch to synchronize PyPI package page with current README
+
 ## [8.0.7] - 2026-01-21
 
 ### Fixed

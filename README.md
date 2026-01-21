@@ -554,7 +554,7 @@ make wheel
 - **Shell Completion**: See [Shell Completion Guide](https://github.com/gwicho38/mcli/blob/main/docs/features/SHELL_COMPLETION.md)
 - **Testing**: See [Testing Guide](https://github.com/gwicho38/mcli/blob/main/docs/development/TESTING.md)
 - **Contributing**: See [Contributing Guide](https://github.com/gwicho38/mcli/blob/main/docs/CONTRIBUTING.md)
-- **Release Notes**: See [Latest Release (8.0.7)](https://github.com/gwicho38/mcli/blob/main/docs/releases/8.0.7.md)
+- **Release Notes**: See [Latest Release (8.0.8)](https://github.com/gwicho38/mcli/blob/main/docs/releases/8.0.8.md)
 - **Code of Conduct**: See [Code of Conduct](https://github.com/gwicho38/mcli/blob/main/docs/CODE_OF_CONDUCT.md)
 - **Changelog**: See [Changelog](https://github.com/gwicho38/mcli/blob/main/docs/CHANGELOG.md)
 

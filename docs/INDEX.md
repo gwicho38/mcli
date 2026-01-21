@@ -2,7 +2,7 @@
 
 Welcome to the MCLI Framework documentation! This index helps you find the documentation you need quickly.
 
-**Current Version**: 8.0.7
+**Current Version**: 8.0.8
 **Last Updated**: 2026-01-21
 
 ---
@@ -163,6 +163,7 @@ Welcome to the MCLI Framework documentation! This index helps you find the docum
 ### Latest Releases
 | Version | Date | Highlights |
 |---------|------|------------|
+| [8.0.8](releases/8.0.8.md) | 2026-01-21 | Documentation updates for PyPI synchronization |
 | [8.0.7](releases/8.0.7.md) | 2026-01-21 | Fixed async test configuration, store command test fix, 100% test pass rate |
 | [8.0.6](releases/8.0.6.md) | 2026-01-21 | Python venv support for workflow scripts with @requires |
 | [8.0.3](releases/8.0.3.md) | 2025-12-28 | Native script support in edit command, CI/CD pipeline fixes |
@@ -294,5 +295,5 @@ Need help? Try these resources:
 ---
 
 **Last Updated**: 2026-01-21
-**Version**: 8.0.7
+**Version**: 8.0.8
 **Maintained By**: MCLI Contributors
