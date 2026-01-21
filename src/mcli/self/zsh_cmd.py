@@ -68,7 +68,7 @@ def zsh_config(force: bool):
         mcli_block_start,
         "# MCLI aliases",
         "alias m='mcli'",
-        "alias mc='mcli chat'",
+        "alias mr='mcli run'",
         "alias mw='mcli workflow'",
         "alias ms='mcli self'",
         "alias mls='mcli lib secrets'",
@@ -108,7 +108,7 @@ def zsh_config(force: bool):
             warning("Failed to install completion automatically")
 
     info("\nConfigured:")
-    info("  • Aliases: m, mc, mw, ms, mls, mlsr")
+    info("  • Aliases: m, mr, mw, ms, mls, mlsr")
     info("  • Environment variables: MCLI_HOME, PATH")
     info("  • Shell completion support")
     info("\nReload your shell configuration:")
@@ -120,7 +120,7 @@ def zsh_aliases():
     """Display MCLI ZSH aliases."""
     aliases = [
         ("m", "mcli", "Main MCLI command"),
-        ("mc", "mcli chat", "Open chat interface"),
+        ("mr", "mcli run", "Run workflows"),
         ("mw", "mcli workflow", "Workflow commands"),
         ("ms", "mcli self", "Self management commands"),
         ("mls", "mcli lib secrets", "Secrets management"),

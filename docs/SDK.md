@@ -10,11 +10,10 @@ Complete guide to using `mcli-framework` as a Python library for building custom
 4. [Creating Custom Commands](#creating-custom-commands)
 5. [Workflow Management](#workflow-management)
 6. [Scheduler & Automation](#scheduler--automation)
-7. [Chat & AI Integration](#chat--ai-integration)
-8. [Database Operations](#database-operations)
-9. [Performance & Monitoring](#performance--monitoring)
-10. [Advanced Patterns](#advanced-patterns)
-11. [API Reference](#api-reference)
+7. [Database Operations](#database-operations)
+8. [Performance & Monitoring](#performance--monitoring)
+9. [Advanced Patterns](#advanced-patterns)
+10. [API Reference](#api-reference)
 
 ---
 
@@ -28,9 +27,8 @@ pip install mcli-framework
 uv pip install mcli-framework
 
 # Install with specific feature sets
-pip install mcli-framework[chat]  # AI chat capabilities
 pip install mcli-framework[ml]    # ML/data pipeline features
-pip install mcli-framework[all]   # All features (default in 7.x)
+pip install mcli-framework[all]   # All features (default in 8.x)
 ```
 
 ---
@@ -497,65 +495,6 @@ async def manage_daemons():
 # Run async
 import asyncio
 asyncio.run(manage_daemons())
-```
-
----
-
-## Chat & AI Integration
-
-### Command Discovery with RAG
-
-```python
-from mcli.chat.command_rag import CommandRAGSystem
-from mcli.lib.discovery.command_discovery import ClickCommandDiscovery
-
-# Initialize RAG system
-discovery = ClickCommandDiscovery()
-commands = discovery.discover_all_commands()
-
-rag = CommandRAGSystem(commands)
-
-# Semantic search
-results = rag.search("schedule a recurring task")
-for cmd in results:
-    print(f"{cmd.full_name}: {cmd.description}")
-
-# Get recommendations
-intent = rag.analyze_intent("I want to backup my data every night")
-recommendations = rag.get_recommendations(intent)
-```
-
-### OpenAI Integration
-
-```python
-from mcli.chat.openai.openai_client import OpenAIClient
-
-client = OpenAIClient(api_key="your-api-key")
-
-# Simple completion
-response = client.complete("Explain how MCLI workflows work")
-print(response)
-
-# Streaming completion
-for chunk in client.complete_streaming("Write a Python script to process CSV"):
-    print(chunk, end="", flush=True)
-```
-
-### Anthropic Integration
-
-```python
-from mcli.chat.anthropic.anthropic_client import AnthropicClient
-
-client = AnthropicClient(api_key="your-api-key")
-
-# Chat with Claude
-response = client.chat(
-    messages=[
-        {"role": "user", "content": "Help me create a data pipeline"}
-    ],
-    model="claude-3-sonnet-20240229"
-)
-print(response["content"])
 ```
 
 ---

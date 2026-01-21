@@ -167,10 +167,10 @@ mcli self version            # Show version
 ### Other Common Commands
 
 ```bash
-mcli chat                # Start AI chat
-mcli workflow            # Run workflows
-mcli commands            # List all commands
+mcli run <workflow>      # Run workflows
+mcli list                # List available workflows
 mcli self update         # Update mcli
+mcli self version        # Show version
 ```
 
 ## Development

@@ -33,7 +33,7 @@ class MCLIBanner:
     MAIN_BANNER = """
 ╔════════════════════════════════════════════════════════════════╗
 ║  ███╗   ███╗ ██████╗██╗     ██╗    ┌─┐┌─┐┬ ┬┌─┐┬─┐┌─┐┌┬┐    ║
-║  ████╗ ████║██╔════╝██║     ██║    ├─┘│ ││││├┤ ├┬┘├┤  ││     ║  
+║  ████╗ ████║██╔════╝██║     ██║    ├─┘│ ││││├┤ ├┬┘├┤  ││     ║
 ║  ██╔████╔██║██║     ██║     ██║    ┴  └─┘└┴┘└─┘┴└─└─┘─┴┘    ║
 ║  ██║╚██╔╝██║██║     ██║     ██║    ┌┐ ┬ ┬  ┬─┐┬ ┬┌─┐┌┬┐      ║
 ║  ██║ ╚═╝ ██║╚██████╗███████╗██║    ├┴┐└┬┘  ├┬┘│ │└─┐ │       ║
@@ -224,7 +224,7 @@ class VisualTable:
     """Enhanced tables with visual styling."""
 
     @staticmethod
-    def create_performance_table(data: Dict[str, Any]) -> Table:
+    def create_performance_table(data: dict[str, Any]) -> Table:
         """Create a beautiful performance status table."""
         table = Table(
             title="🚀 Performance Optimization Status",
@@ -267,7 +267,7 @@ class VisualTable:
         return table
 
     @staticmethod
-    def create_rust_extensions_table(extensions: Dict[str, bool]) -> Table:
+    def create_rust_extensions_table(extensions: dict[str, bool]) -> Table:
         """Create a table showing Rust extension status."""
         table = Table(
             title="🦀 Rust Extensions Status",
@@ -393,18 +393,6 @@ class LiveDashboard:
         services = Text()
         services.append("🔧 Services Status\n\n", style="bold yellow")
 
-        # Check daemon status
-        try:
-            from mcli.lib.api.daemon_client import get_daemon_client
-
-            daemon = get_daemon_client()
-            if daemon.is_running():
-                services.append("✅ MCLI Daemon: Running\n", style="green")
-            else:
-                services.append("❌ MCLI Daemon: Stopped\n", style="red")
-        except Exception:
-            services.append("⚠️  MCLI Daemon: Unknown\n", style="yellow")
-
         # Check Ollama status
         try:
             import requests
@@ -417,6 +405,18 @@ class LiveDashboard:
         except Exception:
             services.append("❌ Ollama: Not running\n", style="red")
 
+        # Check IPFS status
+        try:
+            import requests
+
+            response = requests.get("http://localhost:5001/api/v0/id", timeout=2)
+            if response.status_code == 200:
+                services.append("✅ IPFS: Running\n", style="green")
+            else:
+                services.append("❌ IPFS: Not responding\n", style="red")
+        except Exception:
+            services.append("⚠️  IPFS: Not running\n", style="yellow")
+
         return Panel(services, box=ROUNDED, border_style="bright_yellow", padding=(1, 2))
 
     def create_recent_activity_panel(self) -> Panel:
@@ -425,9 +425,9 @@ class LiveDashboard:
         activity.append("📊 Recent Activity\n\n", style="bold blue")
 
         # This would typically read from logs or activity history
-        activity.append("• Started chat session at 14:32\n", style="dim")
-        activity.append("• Executed 'mcli self performance' at 14:30\n", style="dim")
-        activity.append("• Daemon started at 14:25\n", style="dim")
+        activity.append("• Executed 'mcli run' workflow\n", style="dim")
+        activity.append("• Executed 'mcli self performance'\n", style="dim")
+        activity.append("• Synced workflows to IPFS\n", style="dim")
         activity.append("• Last command execution: SUCCESS\n", style="green")
 
         return Panel(activity, box=ROUNDED, border_style="bright_blue", padding=(1, 2))

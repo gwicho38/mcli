@@ -27,7 +27,7 @@ MCLI currently uses a **hybrid architecture**:
 │                        MCLI CLI Layer                                │
 │                     (Click Framework)                                 │
 │                                                                       │
-│  mcli workflow │ mcli chat │ mcli self │ mcli run                   │
+│  mcli workflow │ mcli self │ mcli run │ mcli sync                   │
 └────────┬─────────┬──────────┬───────────┬──────────────────────────┘
          │         │          │           │
          ▼         ▼          ▼           ▼
@@ -83,7 +83,7 @@ MCLI currently uses a **hybrid architecture**:
 │                        MCLI CLI Layer                                │
 │                     (Click Framework)                                 │
 │                                                                       │
-│  mcli workflow │ mcli chat │ mcli self │ mcli run                   │
+│  mcli workflow │ mcli self │ mcli run │ mcli sync                   │
 └────────┬─────────┬──────────┬───────────┬──────────────────────────┘
          │         │          │           │
          │         │          │           │

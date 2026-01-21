@@ -1,6 +1,6 @@
 [project]
 name = "mcli-framework"
-version = "8.0.9"
+version = "8.0.10"
 description = "Portable workflow framework - transform any script into a versioned, schedulable command. Store in ~/.mcli/workflows/, version with lockfile, run as daemon or cron job."
 readme = "README.md"
  requires-python = ">=3.10"
@@ -8,8 +8,8 @@ authors = [{ name = "Luis Fernandez de la Vara", email = "luis@lefv.io" }]
 maintainers = [{ name = "Luis Fernandez de la Vara", email = "luis@lefv.io" }]
 license = { text = "MIT" }
 keywords = [
-  "cli", "command-line", "framework", "chat", "assistant", "rust", "performance",
-  "visual", "tui", "terminal", "ai", "openai", "anthropic", "productivity"
+  "cli", "command-line", "framework", "workflow", "automation", "rust", "performance",
+  "visual", "tui", "terminal", "ai", "productivity"
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -194,7 +194,6 @@ trading-plugin = [
 
 # Legacy extras for backward compatibility (all features now included by default)
 # TODO: Remove in v8.0.0
-chat = []
 async-extras = []
 video = []
 documents = []
@@ -361,7 +360,6 @@ ignore_missing_imports = true
 module = [
     "mcli.app.*",
     "mcli.lib.*",
-    "mcli.chat.*",
 ]
 disallow_untyped_defs = true
 check_untyped_defs = true

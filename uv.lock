@@ -3889,7 +3889,7 @@ wheels = [
 
 [[package]]
 name = "mcli-framework"
-version = "8.0.6"
+version = "8.0.10"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -4193,7 +4193,7 @@ requires-dist = [
     { name = "yfinance", specifier = ">=0.2.18" },
     { name = "yfinance", marker = "extra == 'trading-plugin'", specifier = ">=0.2.18" },
 ]
-provides-extras = ["gpu", "ml-plugin", "video-plugin", "trading-plugin", "chat", "async-extras", "video", "documents", "viz", "database", "ml", "monitoring", "streaming", "dashboard", "web", "dev", "all"]
+provides-extras = ["gpu", "ml-plugin", "video-plugin", "trading-plugin", "async-extras", "video", "documents", "viz", "database", "ml", "monitoring", "streaming", "dashboard", "web", "dev", "all"]
 
 [package.metadata.requires-dev]
 dev = [

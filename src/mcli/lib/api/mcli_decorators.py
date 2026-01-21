@@ -8,7 +8,7 @@ the familiar Click interface. Users only need to import mcli and get everything.
 
 import os
 import time
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import click
 
@@ -997,37 +997,6 @@ def status_check():
 
 
 # =============================================================================
-# Chat Interface
-# =============================================================================
-
-
-class ChatCommandGroup(click.Group):
-    """Special command group that provides chat-based interaction."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.chat_client = None
-
-    def get_help(self, ctx):
-        """Start interactive chat session instead of showing normal help."""
-        from mcli.chat.chat import ChatClient
-
-        self.chat_client = ChatClient()
-        self.chat_client.start_interactive_session()
-        return ""
-
-
-from typing import Any, Callable
-
-
-def chat(**kwargs) -> Callable[[Callable[..., Any]], click.Group]:
-    """Create a chat command group that provides an interactive LLM-powered interface."""
-    kwargs.setdefault("invoke_without_command", True)
-    kwargs.setdefault("no_args_is_help", False)
-    return click.group(cls=ChatCommandGroup, **kwargs)
-
-
-# =============================================================================
 # Export everything for complete Click subsume
 # =============================================================================
 
@@ -1036,7 +1005,6 @@ __all__ = [
     # Core decorators
     "command",  # @mcli.command - Complete Click command with API/background
     "group",  # @mcli.group - Complete Click group with API support
-    "chat",  # @mcli.chat - Interactive command chat interface
     # Click re-exports (complete subsume)
     "option",  # @mcli.option - Click option decorator
     "argument",  # @mcli.argument - Click argument decorator
