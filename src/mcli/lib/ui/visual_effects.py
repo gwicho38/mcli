@@ -389,35 +389,46 @@ class LiveDashboard:
             )
 
     def create_services_panel(self) -> Panel:
-        """Create services status panel."""
-        services = Text()
-        services.append("🔧 Services Status\n\n", style="bold yellow")
+        """Create system resources panel with CPU/RAM profiling."""
+        import psutil
 
-        # Check Ollama status
+        resources = Text()
+        resources.append("💻 System Resources\n\n", style="bold yellow")
+
+        # CPU Usage
+        cpu_percent = psutil.cpu_percent(interval=0.1)
+        cpu_bar = self._create_usage_bar(cpu_percent)
+        cpu_color = "green" if cpu_percent < 60 else "yellow" if cpu_percent < 85 else "red"
+        resources.append(f"CPU:  {cpu_bar} ", style=cpu_color)
+        resources.append(f"{cpu_percent:5.1f}%\n", style=cpu_color)
+
+        # RAM Usage
+        memory = psutil.virtual_memory()
+        ram_percent = memory.percent
+        ram_bar = self._create_usage_bar(ram_percent)
+        ram_color = "green" if ram_percent < 60 else "yellow" if ram_percent < 85 else "red"
+        resources.append(f"RAM:  {ram_bar} ", style=ram_color)
+        resources.append(f"{ram_percent:5.1f}%\n", style=ram_color)
+
+        # Memory details
+        used_gb = memory.used / (1024**3)
+        total_gb = memory.total / (1024**3)
+        resources.append(f"      {used_gb:.1f}GB / {total_gb:.1f}GB\n\n", style="dim")
+
+        # Load average (Unix only)
         try:
-            import requests
+            load1, load5, load15 = psutil.getloadavg()
+            resources.append(f"Load: {load1:.2f} {load5:.2f} {load15:.2f}\n", style="cyan")
+        except (AttributeError, OSError):
+            pass
 
-            response = requests.get("http://localhost:11434/api/tags", timeout=2)
-            if response.status_code == 200:
-                services.append("✅ Ollama: Running\n", style="green")
-            else:
-                services.append("❌ Ollama: Not responding\n", style="red")
-        except Exception:
-            services.append("❌ Ollama: Not running\n", style="red")
+        return Panel(resources, box=ROUNDED, border_style="bright_yellow", padding=(1, 2))
 
-        # Check IPFS status
-        try:
-            import requests
-
-            response = requests.get("http://localhost:5001/api/v0/id", timeout=2)
-            if response.status_code == 200:
-                services.append("✅ IPFS: Running\n", style="green")
-            else:
-                services.append("❌ IPFS: Not responding\n", style="red")
-        except Exception:
-            services.append("⚠️  IPFS: Not running\n", style="yellow")
-
-        return Panel(services, box=ROUNDED, border_style="bright_yellow", padding=(1, 2))
+    def _create_usage_bar(self, percent: float, width: int = 15) -> str:
+        """Create a visual usage bar."""
+        filled = int(width * percent / 100)
+        empty = width - filled
+        return "█" * filled + "░" * empty
 
     def create_recent_activity_panel(self) -> Panel:
         """Create recent activity panel."""
