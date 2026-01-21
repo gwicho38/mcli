@@ -138,7 +138,9 @@ class TestStoreInit:
         store_path.mkdir(parents=True)
         (store_path / ".git").mkdir()
 
-        result = runner.invoke(store, ["init"])
+        # Patch DEFAULT_STORE_PATH since it's evaluated at import time
+        with patch("mcli.self.store_cmd.DEFAULT_STORE_PATH", store_path):
+            result = runner.invoke(store, ["init"])
 
         assert result.exit_code == 0
         assert "already exists" in result.output.lower()
