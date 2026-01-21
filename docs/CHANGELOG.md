@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.7] - 2026-01-21
+
+### Fixed
+- **Async Test Configuration**: Fixed 32 failing async unit tests by ensuring `pytest-asyncio` is properly installed
+- **Store Command Test**: Fixed `test_init_already_exists` by patching `DEFAULT_STORE_PATH` (evaluated at import time)
+- **Test Suite**: Achieved 100% test pass rate (774 passing, 0 failing, 52 skipped)
+
+### Changed
+- Updated `uv.lock` to properly include `pytest-asyncio>=1.3.0`
+
+## [8.0.6] - 2026-01-21
+
+### Added
+- **Python venv support**: Workflow scripts can now specify dependencies with `@requires` metadata
+- Dependencies are automatically installed in isolated virtual environments
+
+## [8.0.3] - 2025-12-28
+
+### Added
+- **Native Script Support in Edit Command**: `mcli edit` now supports editing Python and shell scripts directly
+
+### Fixed
+- CI/CD pipeline fixes (Bandit security scan, Python version matrix)
+- Pre-commit hook cleanup (removed unsupported safety hook)
+- Code formatting fixes
+
+## [8.0.0] - 2025-12-22
+
+### Added
+- **Simplified CLI Structure**: Cleaner command hierarchy focused on workflow management
+- **IPFS Sync**: Decentralized workflow sharing with immutable CIDs
+- **Lockfile Management**: Version control for workflows with `commands.lock.json`
+- **`mcli sync` command**: Merged lockfile and IPFS sync functionality
+
+### Changed
+- Reorganized top-level commands for better UX
+- `mcli run` is now the primary command for executing workflows
+
 ### Added (2025-10-30)
 - **Code Quality Infrastructure**: Complete linting and formatting configuration
   - Added comprehensive `.pylintrc` configuration

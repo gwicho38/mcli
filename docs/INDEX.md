@@ -2,8 +2,8 @@
 
 Welcome to the MCLI Framework documentation! This index helps you find the documentation you need quickly.
 
-**Current Version**: 7.14.5
-**Last Updated**: 2025-11-15
+**Current Version**: 8.0.7
+**Last Updated**: 2026-01-21
 
 ---
 
@@ -163,24 +163,24 @@ Welcome to the MCLI Framework documentation! This index helps you find the docum
 ### Latest Releases
 | Version | Date | Highlights |
 |---------|------|------------|
-| [7.14.5](releases/7.14.5.md) | 2025-11-15 | **Critical bugfix**: Fixed `-g/--global` flag not loading global workflows |
-| [7.14.4](releases/7.14.4.md) | 2025-11-15 | Added `mcli run` alias for `mcli workflows` command |
-| [7.14.3](releases/7.14.3.md) | 2025-11-14 | Documentation improvements, CI/CD enhancements, Azure deployment fix |
-| [7.14.2](releases/7.14.2.md) | 2025-11-14 | Documentation updates, workflow migration, bug fixes |
+| [8.0.7](releases/8.0.7.md) | 2026-01-21 | Fixed async test configuration, store command test fix, 100% test pass rate |
+| [8.0.6](releases/8.0.6.md) | 2026-01-21 | Python venv support for workflow scripts with @requires |
+| [8.0.3](releases/8.0.3.md) | 2025-12-28 | Native script support in edit command, CI/CD pipeline fixes |
+| [8.0.0](releases/8.0.0.md) | 2025-12-22 | **Major release**: Simplified CLI structure, IPFS sync, lockfile management |
+| [7.19.x](releases/) | 2025-11-28 | Various improvements and bug fixes |
+| [7.14.5](releases/7.14.5.md) | 2025-11-15 | Fixed `-g/--global` flag not loading global workflows |
 | [7.14.0](releases/7.14.0.md) | 2025-11-06 | Command naming simplification |
-| [7.12.2](releases/7.12.2.md) | 2025-11-01 | Workflow code validation in verify command |
-| [7.12.1](releases/7.12.1.md) | 2025-11-01 | Version command moved to self group |
 | [7.12.0](releases/7.12.0.md) | 2025-11-01 | Command structure reorganization |
 | [7.10.2](releases/7.10.2.md) | 2025-10-30 | Test suite 100% pass rate, security enhancements |
 
 ### Major Version History
 | Version Range | Description |
 |---------------|-------------|
+| [8.0.x](releases/) | **Current**: Simplified CLI, IPFS sync, native script support |
+| [7.19.x](releases/) | Pre-8.0 improvements and stabilization |
+| [7.14.x](releases/) | Global workflows, run command alias |
 | [7.9.x](releases/) | VSCode extension, marketplace preparation |
 | [7.8.x](releases/) | Testing improvements, Streamlit enhancements |
-| [7.7.x](releases/) | Dashboard features, model service updates |
-| [7.6.x](releases/) | Model service enhancements |
-| [7.1.x](releases/) | ML features, trading dashboard |
 | [7.0.x](releases/) | Major architecture update |
 | [0.8.x](releases/) | Early releases |
 
@@ -293,6 +293,6 @@ Need help? Try these resources:
 
 ---
 
-**Last Updated**: 2025-11-01
-**Version**: 7.12.2
+**Last Updated**: 2026-01-21
+**Version**: 8.0.7
 **Maintained By**: MCLI Contributors

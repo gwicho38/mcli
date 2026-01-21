@@ -1,16 +1,24 @@
 # MCLI Installation Guide
 
-Version 7.14.5 is now available through multiple installation methods!
+Version 8.0.7 is now available through multiple installation methods!
 
-## 🎉 What's New in 7.14.5
+## 🎉 What's New in 8.0.7
 
-Critical bugfix in this release:
-- **Fixed `-g/--global` flag** - Global workflows now load correctly with `mcli workflows -g` and `mcli run -g`
-- **Resolved group name filter bug** - Both "workflow" and "workflows" group names now supported
-- **Improved workflow discovery** - All 24 global workflows now accessible when using `-g` flag
-- **Full backward compatibility** - All existing workflows continue to work
+Bug fixes in this release:
+- **Fixed async test configuration** - All async unit tests now pass correctly
+- **Fixed store command test** - Resolved mocking issue in test_init_already_exists
+- **100% test pass rate** - All 774 unit tests passing
 
-For detailed release notes, see [7.14.5 Release Notes](../releases/7.14.5.md)
+For detailed release notes, see [8.0.7 Release Notes](../releases/8.0.7.md)
+
+## 🚀 What's New in 8.0.x
+
+The 8.0 series brings major improvements:
+- **Simplified CLI structure** - Cleaner command hierarchy
+- **IPFS sync** - Decentralized workflow sharing
+- **Native script support** - Edit Python/shell scripts directly
+- **Lockfile management** - Version control for workflows
+- **Python venv support** - `@requires` metadata for dependencies
 
 ## Installation Methods
 
@@ -184,6 +192,6 @@ make build
 make publish
 
 # Create new release
-git tag v7.10.3
+git tag v8.0.7
 git push --tags
 ```
