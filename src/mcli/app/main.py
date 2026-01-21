@@ -420,9 +420,9 @@ def _add_lazy_commands(app: click.Group):
 
     # mcli init - Top-level shortcut to initialize workflows directory
     try:
-        from mcli.app.config_cmd import config_init
+        from mcli.app.init_cmd import init
 
-        app.add_command(config_init, name="init")
+        app.add_command(init, name="init")
         logger.debug("Added init command")
     except ImportError as e:
         logger.debug(f"Could not load init command: {e}")

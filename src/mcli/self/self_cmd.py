@@ -1092,13 +1092,6 @@ try:
 except ImportError as e:
     logger.debug(f"Could not load health command: {e}")
 
-try:
-    from mcli.app.config_cmd import config
-
-    self_app.add_command(config, name="config")
-    logger.debug("Added config command to self group")
-except ImportError as e:
-    logger.debug(f"Could not load config command: {e}")
 
 try:
     from mcli.self.workflows_cmd import workflows_cmd

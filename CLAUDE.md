@@ -219,18 +219,16 @@ The CLI has been simplified to focus on the core command runner experience:
 - **`mcli run <cmd>`** - The killer app: run workflow commands
   - Options: `-g/--global` for global workflows, `-f/--workspace` for specific workspace
   - Located in `src/mcli/workflow/workflow.py`
-- **`mcli init`** - Initialize workflows directory (shortcut for `config init`)
+- **`mcli init`** - Initialize workflows directory
 - **`mcli list`** - List available workflow commands
 - **`mcli search <query>`** - Search commands by name/description
 - **`mcli new <name>`** - Create new workflow command
 - **`mcli edit <name>`** - Edit command in $EDITOR
 - **`mcli delete <name>`** - Delete command (alias: `rm`)
-- **`mcli sync`** - IPFS sync + lockfile management (merged from `lock`)
+- **`mcli sync`** - IPFS sync + lockfile management
+  - Setup: `init` (IPFS daemon), `info` (show config), `teardown` (remove workflows)
   - Lockfile: `status`, `update`, `diff`, `show`
-  - IPFS: `push`, `pull`, `verify`, `history`
-- **`mcli config`** - Configuration management
-  - `init`, `teardown`, `show`
-  - `store init/push/pull/status` - Git-based workflow store
+  - IPFS: `push`, `pull`, `verify`, `history`, `now`
 - **`mcli self`** - Self-management (version, update, health, plugin, completion)
 
 ### Testing Requirements

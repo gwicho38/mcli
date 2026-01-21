@@ -27,7 +27,9 @@ def sync_group():
     """🔄 Sync workflow state and manage lockfile.
 
     Setup:
-        init     Initialize and start IPFS daemon
+        init       Initialize and start IPFS daemon
+        info       Show mcli configuration and paths
+        teardown   Remove workflows directory
 
     Lockfile Management:
         status   Show workflow scripts and their lockfile status
@@ -39,6 +41,7 @@ def sync_group():
         push     Upload workflow state to IPFS
         pull     Download workflow state from IPFS
         verify   Verify lockfile or IPFS CID accessibility
+        now      Update lockfile and push to IPFS in one command
     """
     pass
 
@@ -628,3 +631,157 @@ def sync_now(is_global: bool, description: str):
         return 1
 
     return 0
+
+
+# ============================================================
+# Configuration Commands (moved from config_cmd)
+# ============================================================
+
+
+@sync_group.command(name="teardown")
+@click.option(
+    "--global",
+    "-g",
+    "is_global",
+    is_flag=True,
+    help="Teardown global workflows directory",
+)
+@click.option("--force", "-f", is_flag=True, help="Skip confirmation prompt")
+def sync_teardown(is_global: bool, force: bool):
+    """🗑️ Remove workflows directory and configuration.
+
+    This will delete all custom workflows and configuration.
+    Use with caution - this cannot be undone!
+
+    Examples:
+        mcli sync teardown           # Remove local workflows
+        mcli sync teardown --global  # Remove global workflows
+        mcli sync teardown --force   # Skip confirmation
+    """
+    from rich.prompt import Prompt
+
+    from mcli.lib.paths import get_local_mcli_dir, get_mcli_home, is_git_repository
+
+    # Determine directory to remove
+    in_git_repo = is_git_repository() and not is_global
+
+    if not is_global and in_git_repo:
+        local_mcli = get_local_mcli_dir()
+        if local_mcli is not None:
+            workflows_dir = local_mcli / "workflows"
+        else:
+            workflows_dir = get_mcli_home() / "workflows"
+    else:
+        workflows_dir = get_mcli_home() / "workflows"
+
+    if not workflows_dir.exists():
+        info(f"Workflows directory does not exist: {workflows_dir}")
+        return 0
+
+    # Count items
+    items = list(workflows_dir.glob("*"))
+    workflow_count = len([f for f in items if f.suffix in [".py", ".sh", ".js", ".ts", ".ipynb"]])
+
+    if not force:
+        warning(f"This will delete {workflow_count} workflow(s) from: {workflows_dir}")
+        should_delete = Prompt.ask("Are you sure?", choices=["y", "n"], default="n")
+        if should_delete.lower() != "y":
+            info("Teardown cancelled")
+            return 0
+
+    try:
+        shutil.rmtree(workflows_dir)
+        success(f"Removed workflows directory: {workflows_dir}")
+    except Exception as e:
+        error(f"Failed to remove directory: {e}")
+        return 1
+
+    return 0
+
+
+@sync_group.command(name="info")
+@click.option(
+    "--global",
+    "-g",
+    "is_global",
+    is_flag=True,
+    help="Show global configuration",
+)
+def sync_info(is_global: bool):
+    """ℹ️ Show mcli configuration and paths.
+
+    Displays the current configuration including paths, settings,
+    and environment variables.
+
+    Examples:
+        mcli sync info           # Show local configuration
+        mcli sync info --global  # Show global configuration
+    """
+    from mcli.lib.paths import (
+        get_custom_commands_dir,
+        get_git_root,
+        get_local_mcli_dir,
+        get_mcli_home,
+        is_git_repository,
+    )
+
+    console.print("[bold]MCLI Configuration[/bold]")
+    console.print()
+
+    # Environment
+    in_git_repo = is_git_repository()
+    git_root = get_git_root() if in_git_repo else None
+
+    console.print("[bold cyan]Environment:[/bold cyan]")
+    console.print(f"  In git repository: {'Yes' if in_git_repo else 'No'}")
+    if git_root:
+        console.print(f"  Git root: {git_root}")
+    console.print()
+
+    # Paths
+    console.print("[bold cyan]Paths:[/bold cyan]")
+    console.print(f"  MCLI home: {get_mcli_home()}")
+
+    local_mcli = get_local_mcli_dir()
+    if local_mcli:
+        console.print(f"  Local .mcli: {local_mcli}")
+
+    workflows_dir = get_custom_commands_dir(global_mode=is_global)
+    console.print(f"  Workflows directory: {workflows_dir}")
+
+    lockfile = workflows_dir / "commands.lock.json"
+    console.print(f"  Lockfile: {lockfile} ({'exists' if lockfile.exists() else 'missing'})")
+    console.print()
+
+    # Stats
+    if workflows_dir.exists():
+        console.print("[bold cyan]Workflows:[/bold cyan]")
+        py_count = len(list(workflows_dir.glob("*.py")))
+        sh_count = len(list(workflows_dir.glob("*.sh")))
+        js_count = len(list(workflows_dir.glob("*.js")))
+        ts_count = len(list(workflows_dir.glob("*.ts")))
+        nb_count = len(list(workflows_dir.glob("*.ipynb")))
+        total = py_count + sh_count + js_count + ts_count + nb_count
+
+        console.print(f"  Total: {total}")
+        if py_count:
+            console.print(f"  Python: {py_count}")
+        if sh_count:
+            console.print(f"  Shell: {sh_count}")
+        if js_count:
+            console.print(f"  JavaScript: {js_count}")
+        if ts_count:
+            console.print(f"  TypeScript: {ts_count}")
+        if nb_count:
+            console.print(f"  Notebooks: {nb_count}")
+
+    # IPFS status
+    console.print()
+    console.print("[bold cyan]IPFS Status:[/bold cyan]")
+    if _ipfs_installed():
+        console.print("  Installed: Yes")
+        console.print(f"  Initialized: {'Yes' if _ipfs_initialized() else 'No'}")
+        console.print(f"  Daemon running: {'Yes' if _ipfs_daemon_running() else 'No'}")
+    else:
+        console.print("  Installed: No")
+        console.print("  [dim]Install with: brew install ipfs[/dim]")
