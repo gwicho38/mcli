@@ -948,6 +948,7 @@ class MoveMessages:
     # Info messages
     RENAMING_COMMAND = "[cyan]Renaming {scope} command:[/cyan]"
     MOVING_COMMAND = "[cyan]Moving command:[/cyan]"
+    MOVING_TO_WORKSPACE = "[cyan]Moving command to workspace:[/cyan]"
     FROM_PATH = "  From: {path}"
     TO_PATH = "  To:   {path}"
     PROCEED_PROMPT = "Proceed?"
@@ -966,10 +967,13 @@ class MoveMessages:
     ALREADY_EXISTS = "[red]Command '{name}' already exists at destination.[/red]"
     PATH_DISPLAY = "[dim]Path: {path}[/dim]"
     MOVE_FAILED = "[red]Failed to move command: {error}[/red]"
+    WORKSPACE_NOT_FOUND = "[red]Workspace directory not found: {path}[/red]"
+    CONFLICTING_OPTIONS = "[red]Cannot use --workspace with --to-global[/red]"
 
     # Operation descriptions
     RENAME_OP = "Rename '{from_name}' to '{to_name}'"
     MOVE_OP = "Move '{from_name}' from {from_scope} to {to_scope}"
+    MOVE_TO_WORKSPACE_OP = "Move '{from_name}' to workspace {workspace}"
     MOVE_AS_OP = " as '{to_name}'"
 
 
