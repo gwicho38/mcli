@@ -1095,6 +1095,14 @@ except ImportError as e:
 # NOTE: workspace commands have been merged into 'mcli self workflows'
 # Use: mcli self workflows add/remove/prune
 
+try:
+    from mcli.self.env_cmd import env
+
+    self_app.add_command(env, name="env")
+    logger.debug("Added env command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load env command: {e}")
+
 # NOTE: store command has been moved to mcli.app.commands_cmd for better organization
 
 # This part is important to make the command available to the CLI
