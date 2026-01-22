@@ -134,6 +134,502 @@ def find_repo_root() -> Path:
     return Path.cwd()
 
 
+# =============================================================================
+# Language Detection
+# =============================================================================
+
+
+def detect_languages(repo_path: Path) -> Dict[str, bool]:
+    """Detect which programming languages are used in the repository."""
+    languages = {
+        "python": False,
+        "typescript": False,
+        "javascript": False,
+        "java": False,
+        "elixir": False,
+        "dart": False,
+    }
+
+    # Python: pyproject.toml, setup.py, requirements.txt, or .py files
+    if (
+        (repo_path / "pyproject.toml").exists()
+        or (repo_path / "setup.py").exists()
+        or (repo_path / "requirements.txt").exists()
+        or list(repo_path.glob("**/*.py"))[:1]
+    ):
+        languages["python"] = True
+
+    # TypeScript: tsconfig.json or .ts files
+    if (repo_path / "tsconfig.json").exists() or list(repo_path.glob("**/*.ts"))[:1]:
+        languages["typescript"] = True
+
+    # JavaScript: package.json or .js files
+    if (repo_path / "package.json").exists() or list(repo_path.glob("**/*.js"))[:1]:
+        languages["javascript"] = True
+
+    # Java: pom.xml, build.gradle, or .java files
+    if (
+        (repo_path / "pom.xml").exists()
+        or (repo_path / "build.gradle").exists()
+        or (repo_path / "build.gradle.kts").exists()
+        or list(repo_path.glob("**/*.java"))[:1]
+    ):
+        languages["java"] = True
+
+    # Elixir: mix.exs or .ex/.exs files
+    if (repo_path / "mix.exs").exists() or list(repo_path.glob("**/*.ex"))[:1]:
+        languages["elixir"] = True
+
+    # Dart: pubspec.yaml or .dart files
+    if (repo_path / "pubspec.yaml").exists() or list(repo_path.glob("**/*.dart"))[:1]:
+        languages["dart"] = True
+
+    return languages
+
+
+# =============================================================================
+# TypeScript/JavaScript Checks
+# =============================================================================
+
+
+def check_npm_test(repo_path: Path) -> CheckResult:
+    """Run npm/yarn tests."""
+    start = time.time()
+
+    if not (repo_path / "package.json").exists():
+        return CheckResult(
+            name="JS/TS Tests",
+            status=HealthStatus.SKIPPED,
+            message="No package.json found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    # Determine package manager
+    if (repo_path / "yarn.lock").exists():
+        pkg_manager = "yarn"
+        test_cmd = ["yarn", "test", "--passWithNoTests"]
+    elif (repo_path / "pnpm-lock.yaml").exists():
+        pkg_manager = "pnpm"
+        test_cmd = ["pnpm", "test", "--passWithNoTests"]
+    else:
+        pkg_manager = "npm"
+        test_cmd = ["npm", "test", "--", "--passWithNoTests"]
+
+    # Check if test script exists
+    try:
+        import json as json_mod
+
+        pkg_json = json_mod.loads((repo_path / "package.json").read_text())
+        if "test" not in pkg_json.get("scripts", {}):
+            return CheckResult(
+                name="JS/TS Tests",
+                status=HealthStatus.SKIPPED,
+                message="No test script in package.json",
+                duration_ms=(time.time() - start) * 1000,
+            )
+    except Exception:
+        pass
+
+    code, stdout, stderr = run_command(test_cmd, cwd=repo_path, timeout=300)
+
+    if code == 0:
+        return CheckResult(
+            name="JS/TS Tests",
+            status=HealthStatus.PASSING,
+            message=f"Tests passed ({pkg_manager})",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    return CheckResult(
+        name="JS/TS Tests",
+        status=HealthStatus.FAILING,
+        message=f"Tests failed ({pkg_manager})",
+        details=(stderr or stdout)[:300],
+        suggestions=["Fix failing tests", f"Run: {pkg_manager} test"],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+def check_eslint(repo_path: Path) -> CheckResult:
+    """Check JavaScript/TypeScript linting with ESLint."""
+    start = time.time()
+
+    eslint_configs = [".eslintrc", ".eslintrc.js", ".eslintrc.json", ".eslintrc.yml", "eslint.config.js"]
+    has_eslint = any((repo_path / cfg).exists() for cfg in eslint_configs)
+
+    if not has_eslint:
+        try:
+            import json as json_mod
+
+            pkg_json = json_mod.loads((repo_path / "package.json").read_text())
+            has_eslint = "eslintConfig" in pkg_json
+        except Exception:
+            pass
+
+    if not has_eslint:
+        return CheckResult(
+            name="ESLint",
+            status=HealthStatus.SKIPPED,
+            message="No ESLint config found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    code, stdout, stderr = run_command(["npx", "eslint", ".", "--max-warnings=0"], cwd=repo_path)
+
+    if code == 0:
+        return CheckResult(
+            name="ESLint",
+            status=HealthStatus.PASSING,
+            message="No linting errors",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    output = stdout + stderr
+    error_count = len(re.findall(r"^\s*\d+:\d+\s+error", output, re.MULTILINE))
+    warn_count = len(re.findall(r"^\s*\d+:\d+\s+warning", output, re.MULTILINE))
+
+    return CheckResult(
+        name="ESLint",
+        status=HealthStatus.FAILING if error_count > 0 else HealthStatus.WARNING,
+        message=f"{error_count} errors, {warn_count} warnings",
+        suggestions=["Run: npx eslint . --fix"],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+def check_typescript(repo_path: Path) -> CheckResult:
+    """Check TypeScript compilation."""
+    start = time.time()
+
+    if not (repo_path / "tsconfig.json").exists():
+        return CheckResult(
+            name="TypeScript",
+            status=HealthStatus.SKIPPED,
+            message="No tsconfig.json found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    code, stdout, stderr = run_command(["npx", "tsc", "--noEmit"], cwd=repo_path)
+
+    if code == 0:
+        return CheckResult(
+            name="TypeScript",
+            status=HealthStatus.PASSING,
+            message="No type errors",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    output = stdout + stderr
+    error_count = len(re.findall(r"error TS\d+:", output))
+
+    return CheckResult(
+        name="TypeScript",
+        status=HealthStatus.FAILING,
+        message=f"{error_count} type error(s)",
+        suggestions=["Fix TypeScript errors", "Run: npx tsc --noEmit"],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+# =============================================================================
+# Java Checks
+# =============================================================================
+
+
+def check_java_build(repo_path: Path) -> CheckResult:
+    """Check Java build and tests."""
+    start = time.time()
+
+    if (repo_path / "pom.xml").exists():
+        build_tool = "maven"
+        test_cmd = ["mvn", "test", "-q"]
+        build_cmd = ["mvn", "compile", "-q"]
+    elif (repo_path / "build.gradle").exists() or (repo_path / "build.gradle.kts").exists():
+        build_tool = "gradle"
+        gradlew = "./gradlew" if (repo_path / "gradlew").exists() else "gradle"
+        test_cmd = [gradlew, "test", "-q"]
+        build_cmd = [gradlew, "build", "-q"]
+    else:
+        return CheckResult(
+            name="Java Build",
+            status=HealthStatus.SKIPPED,
+            message="No pom.xml or build.gradle found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    code, stdout, stderr = run_command(build_cmd, cwd=repo_path, timeout=300)
+    if code != 0:
+        return CheckResult(
+            name="Java Build",
+            status=HealthStatus.FAILING,
+            message=f"Build failed ({build_tool})",
+            details=(stderr or stdout)[:300],
+            suggestions=["Fix build errors"],
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    code, stdout, stderr = run_command(test_cmd, cwd=repo_path, timeout=300)
+    if code == 0:
+        return CheckResult(
+            name="Java Build",
+            status=HealthStatus.PASSING,
+            message=f"Build and tests passed ({build_tool})",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    return CheckResult(
+        name="Java Build",
+        status=HealthStatus.FAILING,
+        message=f"Tests failed ({build_tool})",
+        suggestions=["Fix failing tests"],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+# =============================================================================
+# Elixir Checks
+# =============================================================================
+
+
+def check_mix_test(repo_path: Path) -> CheckResult:
+    """Run Elixir tests with mix."""
+    start = time.time()
+
+    if not (repo_path / "mix.exs").exists():
+        return CheckResult(
+            name="Elixir Tests",
+            status=HealthStatus.SKIPPED,
+            message="No mix.exs found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    code, stdout, stderr = run_command(["mix", "test"], cwd=repo_path, timeout=300)
+
+    if code == 0:
+        output = stdout + stderr
+        match = re.search(r"(\d+) tests?, (\d+) failures?", output)
+        if match:
+            tests, failures = int(match.group(1)), int(match.group(2))
+            return CheckResult(
+                name="Elixir Tests",
+                status=HealthStatus.PASSING,
+                message=f"{tests} tests passed",
+                metrics={"tests": tests, "failures": failures},
+                duration_ms=(time.time() - start) * 1000,
+            )
+        return CheckResult(
+            name="Elixir Tests",
+            status=HealthStatus.PASSING,
+            message="Tests passed",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    return CheckResult(
+        name="Elixir Tests",
+        status=HealthStatus.FAILING,
+        message="Tests failed",
+        details=(stderr or stdout)[:300],
+        suggestions=["Fix failing tests", "Run: mix test"],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+def check_mix_format(repo_path: Path) -> CheckResult:
+    """Check Elixir formatting with mix format."""
+    start = time.time()
+
+    if not (repo_path / "mix.exs").exists():
+        return CheckResult(
+            name="Elixir Format",
+            status=HealthStatus.SKIPPED,
+            message="No mix.exs found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    code, _, _ = run_command(["mix", "format", "--check-formatted"], cwd=repo_path)
+
+    if code == 0:
+        return CheckResult(
+            name="Elixir Format",
+            status=HealthStatus.PASSING,
+            message="All files formatted",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    return CheckResult(
+        name="Elixir Format",
+        status=HealthStatus.FAILING,
+        message="Files need formatting",
+        suggestions=["Run: mix format"],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+def check_credo(repo_path: Path) -> CheckResult:
+    """Check Elixir code quality with Credo."""
+    start = time.time()
+
+    if not (repo_path / "mix.exs").exists():
+        return CheckResult(
+            name="Credo",
+            status=HealthStatus.SKIPPED,
+            message="No mix.exs found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    try:
+        mix_content = (repo_path / "mix.exs").read_text()
+        if ":credo" not in mix_content:
+            return CheckResult(
+                name="Credo",
+                status=HealthStatus.SKIPPED,
+                message="Credo not in dependencies",
+                duration_ms=(time.time() - start) * 1000,
+            )
+    except Exception:
+        pass
+
+    code, stdout, stderr = run_command(["mix", "credo", "--strict"], cwd=repo_path)
+
+    if code == 0:
+        return CheckResult(
+            name="Credo",
+            status=HealthStatus.PASSING,
+            message="No issues found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    output = stdout + stderr
+    issues = len(re.findall(r"┃", output))
+
+    return CheckResult(
+        name="Credo",
+        status=HealthStatus.WARNING,
+        message=f"{issues} issue(s) found",
+        suggestions=["Run: mix credo --strict"],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+# =============================================================================
+# Dart Checks
+# =============================================================================
+
+
+def check_dart_test(repo_path: Path) -> CheckResult:
+    """Run Dart tests."""
+    start = time.time()
+
+    if not (repo_path / "pubspec.yaml").exists():
+        return CheckResult(
+            name="Dart Tests",
+            status=HealthStatus.SKIPPED,
+            message="No pubspec.yaml found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    if not (repo_path / "test").exists():
+        return CheckResult(
+            name="Dart Tests",
+            status=HealthStatus.SKIPPED,
+            message="No test directory found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    is_flutter = "flutter" in (repo_path / "pubspec.yaml").read_text().lower()
+    test_cmd = ["flutter", "test"] if is_flutter else ["dart", "test"]
+
+    code, stdout, stderr = run_command(test_cmd, cwd=repo_path, timeout=300)
+
+    if code == 0:
+        return CheckResult(
+            name="Dart Tests",
+            status=HealthStatus.PASSING,
+            message="Tests passed",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    return CheckResult(
+        name="Dart Tests",
+        status=HealthStatus.FAILING,
+        message="Tests failed",
+        details=(stderr or stdout)[:300],
+        suggestions=["Fix failing tests"],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+def check_dart_analyze(repo_path: Path) -> CheckResult:
+    """Run Dart static analysis."""
+    start = time.time()
+
+    if not (repo_path / "pubspec.yaml").exists():
+        return CheckResult(
+            name="Dart Analyze",
+            status=HealthStatus.SKIPPED,
+            message="No pubspec.yaml found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    code, stdout, stderr = run_command(["dart", "analyze", "--fatal-infos"], cwd=repo_path)
+
+    if code == 0:
+        return CheckResult(
+            name="Dart Analyze",
+            status=HealthStatus.PASSING,
+            message="No issues found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    output = stdout + stderr
+    errors = len(re.findall(r"error •", output, re.IGNORECASE))
+    warnings = len(re.findall(r"warning •", output, re.IGNORECASE))
+
+    return CheckResult(
+        name="Dart Analyze",
+        status=HealthStatus.FAILING if errors > 0 else HealthStatus.WARNING,
+        message=f"{errors} errors, {warnings} warnings",
+        suggestions=["Run: dart analyze"],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+def check_dart_format(repo_path: Path) -> CheckResult:
+    """Check Dart formatting."""
+    start = time.time()
+
+    if not (repo_path / "pubspec.yaml").exists():
+        return CheckResult(
+            name="Dart Format",
+            status=HealthStatus.SKIPPED,
+            message="No pubspec.yaml found",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    code, _, _ = run_command(["dart", "format", "--set-exit-if-changed", "--output=none", "."], cwd=repo_path)
+
+    if code == 0:
+        return CheckResult(
+            name="Dart Format",
+            status=HealthStatus.PASSING,
+            message="All files formatted",
+            duration_ms=(time.time() - start) * 1000,
+        )
+
+    return CheckResult(
+        name="Dart Format",
+        status=HealthStatus.FAILING,
+        message="Files need formatting",
+        suggestions=["Run: dart format ."],
+        duration_ms=(time.time() - start) * 1000,
+    )
+
+
+# =============================================================================
+# Python Checks
+# =============================================================================
+
+
 def check_git_status(repo_path: Path) -> CheckResult:
     """Check git repository status."""
     start = time.time()
@@ -966,33 +1462,71 @@ def generate_report(
     checks: list[CheckResult] = []
     start_time = time.time()
 
-    # Define checks to run
+    # Detect languages in the repository
+    languages = detect_languages(repo_path)
+    detected = [lang for lang, present in languages.items() if present]
+    console.print(f"[dim]Detected languages: {', '.join(detected) or 'none'}[/dim]\n")
+
+    # Universal checks
     check_functions = [
         ("Git Status", lambda: check_git_status(repo_path)),
         ("Code Metrics", lambda: check_code_metrics(repo_path)),
-        ("Black", lambda: check_black(repo_path)),
-        ("isort", lambda: check_isort(repo_path)),
-        ("Flake8", lambda: check_flake8(repo_path)),
     ]
 
-    if not quick:
-        check_functions.extend(
-            [
+    # Python-specific checks
+    if languages["python"]:
+        check_functions.extend([
+            ("Black", lambda: check_black(repo_path)),
+            ("isort", lambda: check_isort(repo_path)),
+            ("Flake8", lambda: check_flake8(repo_path)),
+        ])
+        if not skip_tests:
+            check_functions.append(("Python Tests", lambda: check_tests(repo_path, fast=quick)))
+            if not quick:
+                check_functions.append(("Coverage", lambda: check_coverage(repo_path)))
+        if not quick:
+            check_functions.extend([
                 ("Mypy", lambda: check_mypy(repo_path)),
                 ("Security", lambda: check_security(repo_path)),
                 ("Dependencies", lambda: check_dependencies(repo_path)),
-                ("Documentation", lambda: check_documentation(repo_path)),
-                ("CI Status", lambda: check_ci_status(repo_path)),
-            ]
-        )
+            ])
+        if not skip_build and not quick:
+            check_functions.append(("Python Build", lambda: check_build(repo_path)))
 
-    if not skip_tests:
-        check_functions.insert(2, ("Tests", lambda: check_tests(repo_path, fast=quick)))
+    # TypeScript/JavaScript checks
+    if languages["typescript"] or languages["javascript"]:
+        if not skip_tests:
+            check_functions.append(("JS/TS Tests", lambda: check_npm_test(repo_path)))
+        check_functions.append(("ESLint", lambda: check_eslint(repo_path)))
+        if languages["typescript"]:
+            check_functions.append(("TypeScript", lambda: check_typescript(repo_path)))
+
+    # Java checks
+    if languages["java"]:
+        if not skip_tests:
+            check_functions.append(("Java Build", lambda: check_java_build(repo_path)))
+
+    # Elixir checks
+    if languages["elixir"]:
+        if not skip_tests:
+            check_functions.append(("Elixir Tests", lambda: check_mix_test(repo_path)))
+        check_functions.append(("Elixir Format", lambda: check_mix_format(repo_path)))
         if not quick:
-            check_functions.insert(3, ("Coverage", lambda: check_coverage(repo_path)))
+            check_functions.append(("Credo", lambda: check_credo(repo_path)))
 
-    if not skip_build and not quick:
-        check_functions.append(("Build", lambda: check_build(repo_path)))
+    # Dart checks
+    if languages["dart"]:
+        if not skip_tests:
+            check_functions.append(("Dart Tests", lambda: check_dart_test(repo_path)))
+        check_functions.append(("Dart Analyze", lambda: check_dart_analyze(repo_path)))
+        check_functions.append(("Dart Format", lambda: check_dart_format(repo_path)))
+
+    # Universal non-quick checks
+    if not quick:
+        check_functions.extend([
+            ("Documentation", lambda: check_documentation(repo_path)),
+            ("CI Status", lambda: check_ci_status(repo_path)),
+        ])
 
     # Run checks with progress
     with Progress(
