@@ -11,15 +11,16 @@ from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_traci
 
 # Desired command order for help display
 COMMAND_ORDER = [
-    "init",
+    "run",
+    "list",
+    "search",
     "new",
     "edit",
     "rm",
-    "search",
-    "list",
-    "self",
+    "health",
     "sync",
-    "run",
+    "self",
+    "init",
 ]
 
 
@@ -436,7 +437,16 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load context command: {e}")
 
-    # mcli self - Self management (version, update, health, plugin, completion)
+    # mcli health - Repository health analysis (promoted from mcli self health)
+    try:
+        from mcli.self.health_cmd import health_group
+
+        app.add_command(health_group, name="health")
+        logger.debug("Added health command group")
+    except ImportError as e:
+        logger.debug(f"Could not load health command: {e}")
+
+    # mcli self - Self management (version, update, plugin, completion)
     try:
         from mcli.self.self_cmd import self_app
 

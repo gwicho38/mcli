@@ -1150,10 +1150,10 @@ def health_group():
     linting, type checking, security, and more.
 
     Examples:
-        mcli self health check          # Full health check
-        mcli self health check --quick  # Quick check (skip slow operations)
-        mcli self health report         # Generate JSON report
-        mcli self health fix            # Auto-fix what can be fixed
+        mcli health check          # Full health check
+        mcli health check --quick  # Quick check (skip slow operations)
+        mcli health report         # Generate JSON report
+        mcli health fix            # Auto-fix what can be fixed
     """
     pass
 
@@ -1243,7 +1243,7 @@ def fix_command(dry_run: bool):
     if dry_run:
         console.print("[yellow]Dry run complete. Run without --dry-run to apply fixes.[/yellow]")
     else:
-        console.print("[green]Auto-fix complete. Run 'mcli self health check' to verify.[/green]")
+        console.print("[green]Auto-fix complete. Run 'mcli health check' to verify.[/green]")
 
 
 @health_group.command("report")
