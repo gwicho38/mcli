@@ -11,16 +11,18 @@ from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_traci
 
 # Desired command order for help display
 COMMAND_ORDER = [
-    "run",
-    "list",
-    "search",
+    "init",
     "new",
     "edit",
+    "mv",
     "rm",
+    "search",
+    "list",
+    "run",
+    "context",
     "health",
     "sync",
     "self",
-    "init",
 ]
 
 
@@ -400,6 +402,15 @@ def _add_lazy_commands(app: click.Group):
         logger.debug("Added edit command")
     except ImportError as e:
         logger.debug(f"Could not load edit command: {e}")
+
+    # mcli mv - Move/rename a command
+    try:
+        from mcli.app.mv_cmd import mv
+
+        app.add_command(mv, name="mv")
+        logger.debug("Added mv command")
+    except ImportError as e:
+        logger.debug(f"Could not load mv command: {e}")
 
     # mcli rm - Delete a command
     try:

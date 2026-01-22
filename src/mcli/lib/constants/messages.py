@@ -942,6 +942,37 @@ class SyncMessages:
     DIR_NOT_EXIST = "Commands directory does not exist: {path}"
 
 
+class MoveMessages:
+    """Move/rename command message constants."""
+
+    # Info messages
+    RENAMING_COMMAND = "[cyan]Renaming {scope} command:[/cyan]"
+    MOVING_COMMAND = "[cyan]Moving command:[/cyan]"
+    FROM_PATH = "  From: {path}"
+    TO_PATH = "  To:   {path}"
+    PROCEED_PROMPT = "Proceed?"
+
+    # Success messages
+    MOVE_SUCCESS = "[green]✅ {operation}[/green]"
+    NEW_LOCATION = "[dim]New location: {path}[/dim]"
+
+    # Warning messages
+    NO_CHANGE_NEEDED = "[yellow]Source and destination are the same. Nothing to do.[/yellow]"
+    CANCELLED = "[yellow]Cancelled.[/yellow]"
+
+    # Error messages
+    COMMAND_NOT_FOUND = "[red]Command '{name}' not found.[/red]"
+    SEARCHED_IN = "[dim]Searched in: {path}[/dim]"
+    ALREADY_EXISTS = "[red]Command '{name}' already exists at destination.[/red]"
+    PATH_DISPLAY = "[dim]Path: {path}[/dim]"
+    MOVE_FAILED = "[red]Failed to move command: {error}[/red]"
+
+    # Operation descriptions
+    RENAME_OP = "Rename '{from_name}' to '{to_name}'"
+    MOVE_OP = "Move '{from_name}' from {from_scope} to {to_scope}"
+    MOVE_AS_OP = " as '{to_name}'"
+
+
 class VenvMessages:
     """Virtual environment related messages."""
 
@@ -984,5 +1015,6 @@ __all__ = [
     "SystemIntegrationMessages",
     "EditMessages",
     "SyncMessages",
+    "MoveMessages",
     "VenvMessages",
 ]
