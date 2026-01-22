@@ -389,46 +389,47 @@ class LiveDashboard:
             )
 
     def create_services_panel(self) -> Panel:
-        """Create system resources panel with CPU/RAM profiling."""
-        import psutil
+        """Create workflows panel showing managed workflows."""
+        workflows_text = Text()
+        workflows_text.append("📂 Workflows\n\n", style="bold yellow")
 
-        resources = Text()
-        resources.append("💻 System Resources\n\n", style="bold yellow")
-
-        # CPU Usage
-        cpu_percent = psutil.cpu_percent(interval=0.1)
-        cpu_bar = self._create_usage_bar(cpu_percent)
-        cpu_color = "green" if cpu_percent < 60 else "yellow" if cpu_percent < 85 else "red"
-        resources.append(f"CPU:  {cpu_bar} ", style=cpu_color)
-        resources.append(f"{cpu_percent:5.1f}%\n", style=cpu_color)
-
-        # RAM Usage
-        memory = psutil.virtual_memory()
-        ram_percent = memory.percent
-        ram_bar = self._create_usage_bar(ram_percent)
-        ram_color = "green" if ram_percent < 60 else "yellow" if ram_percent < 85 else "red"
-        resources.append(f"RAM:  {ram_bar} ", style=ram_color)
-        resources.append(f"{ram_percent:5.1f}%\n", style=ram_color)
-
-        # Memory details
-        used_gb = memory.used / (1024**3)
-        total_gb = memory.total / (1024**3)
-        resources.append(f"      {used_gb:.1f}GB / {total_gb:.1f}GB\n\n", style="dim")
-
-        # Load average (Unix only)
         try:
-            load1, load5, load15 = psutil.getloadavg()
-            resources.append(f"Load: {load1:.2f} {load5:.2f} {load15:.2f}\n", style="cyan")
-        except (AttributeError, OSError):
-            pass
+            from mcli.lib.workspace_registry import get_all_workflows
 
-        return Panel(resources, box=ROUNDED, border_style="bright_yellow", padding=(1, 2))
+            all_workflows = get_all_workflows()
 
-    def _create_usage_bar(self, percent: float, width: int = 15) -> str:
-        """Create a visual usage bar."""
-        filled = int(width * percent / 100)
-        empty = width - filled
-        return "█" * filled + "░" * empty
+            if not all_workflows:
+                workflows_text.append("No workflows found\n", style="dim")
+                workflows_text.append("\nRun: mcli new <name>", style="cyan")
+            else:
+                total = 0
+                for workspace_name, workflows in all_workflows.items():
+                    # Shorten workspace name for display
+                    short_name = workspace_name.split("/")[-1] if "/" in workspace_name else workspace_name
+                    if len(short_name) > 20:
+                        short_name = short_name[:17] + "..."
+
+                    workflows_text.append(f"▸ {short_name}\n", style="cyan")
+
+                    # Show up to 3 workflows per workspace
+                    for wf in workflows[:3]:
+                        name = wf.get("name", "unnamed")
+                        lang = wf.get("language", "?")[:3]
+                        workflows_text.append(f"  • {name} ", style="white")
+                        workflows_text.append(f"[{lang}]\n", style="dim")
+                        total += 1
+
+                    if len(workflows) > 3:
+                        remaining = len(workflows) - 3
+                        workflows_text.append(f"  +{remaining} more\n", style="dim")
+                        total += remaining
+
+                workflows_text.append(f"\n{total} total", style="green")
+
+        except Exception as e:
+            workflows_text.append(f"Error: {str(e)[:30]}\n", style="red")
+
+        return Panel(workflows_text, box=ROUNDED, border_style="bright_yellow", padding=(1, 2))
 
     def create_recent_activity_panel(self) -> Panel:
         """Create recent activity panel."""
