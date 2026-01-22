@@ -1142,32 +1142,16 @@ def display_report(report: HealthReport, verbose: bool = False) -> None:
 # =============================================================================
 
 
-@click.group("health")
-def health_group():
-    """🏥 Repository health analysis and reporting.
-
-    Run comprehensive checks on your codebase including tests,
-    linting, type checking, security, and more.
-
-    Examples:
-        mcli health check          # Full health check
-        mcli health check --quick  # Quick check (skip slow operations)
-        mcli health report         # Generate JSON report
-        mcli health fix            # Auto-fix what can be fixed
-    """
-    pass
-
-
-@health_group.command("check")
+@click.command("health")
 @click.option("--quick", "-q", is_flag=True, help="Quick check (skip slow operations)")
 @click.option("--verbose", "-v", is_flag=True, help="Show detailed metrics")
 @click.option("--skip-tests", is_flag=True, help="Skip running tests")
 @click.option("--skip-build", is_flag=True, help="Skip build verification")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
-def check_command(
+def health(
     quick: bool, verbose: bool, skip_tests: bool, skip_build: bool, output_json: bool
 ):
-    """🔍 Run comprehensive health checks on the repository.
+    """🏥 Run comprehensive health checks on the repository.
 
     Analyzes the codebase for:
     - Git status and uncommitted changes
@@ -1180,6 +1164,12 @@ def check_command(
     - Documentation completeness
     - CI/CD status
     - Build validation
+
+    Examples:
+        mcli health              # Full health check
+        mcli health --quick      # Quick check (skip slow operations)
+        mcli health --json       # Output as JSON
+        mcli health --skip-tests # Skip running tests
     """
     repo_path = find_repo_root()
 
@@ -1207,120 +1197,5 @@ def check_command(
         raise SystemExit(0)
 
 
-@health_group.command("fix")
-@click.option("--dry-run", is_flag=True, help="Show what would be fixed without making changes")
-def fix_command(dry_run: bool):
-    """🔧 Auto-fix issues that can be automatically resolved.
-
-    This will run:
-    - black (code formatting)
-    - isort (import sorting)
-
-    Other issues require manual intervention.
-    """
-    repo_path = find_repo_root()
-
-    fixes = [
-        ("Black (formatting)", [sys.executable, "-m", "black", "src/"]),
-        ("isort (imports)", [sys.executable, "-m", "isort", "src/"]),
-    ]
-
-    console.print("[cyan]Auto-fixing issues...[/cyan]")
-    console.print()
-
-    for name, cmd in fixes:
-        if dry_run:
-            console.print(f"  [dim]Would run:[/dim] {' '.join(cmd)}")
-        else:
-            console.print(f"  [cyan]Running:[/cyan] {name}")
-            code, stdout, stderr = run_command(cmd, cwd=repo_path)
-            if code == 0:
-                console.print(f"  [green]Done[/green]")
-            else:
-                console.print(f"  [red]Failed:[/red] {stderr[:100]}")
-        console.print()
-
-    if dry_run:
-        console.print("[yellow]Dry run complete. Run without --dry-run to apply fixes.[/yellow]")
-    else:
-        console.print("[green]Auto-fix complete. Run 'mcli health check' to verify.[/green]")
-
-
-@health_group.command("report")
-@click.option("--output", "-o", type=click.Path(), help="Output file path")
-@click.option("--format", "fmt", type=click.Choice(["json", "markdown"]), default="json")
-def report_command(output: Optional[str], fmt: str):
-    """📄 Generate a health report file.
-
-    Creates a detailed report that can be saved for CI/CD
-    or documentation purposes.
-    """
-    repo_path = find_repo_root()
-
-    console.print("[cyan]Generating comprehensive health report...[/cyan]")
-    console.print()
-
-    report = generate_report(repo_path, quick=False, skip_tests=False, skip_build=False)
-
-    if fmt == "json":
-        content = json.dumps(report.to_dict(), indent=2)
-        ext = ".json"
-    else:
-        # Markdown format
-        lines = [
-            f"# Repository Health Report",
-            f"",
-            f"Generated: {report.timestamp}",
-            f"Repository: {report.repo_path}",
-            f"Overall Status: **{report.overall_status.value.upper()}**",
-            f"",
-            f"## Summary",
-            f"",
-            f"| Status | Count |",
-            f"|--------|-------|",
-            f"| Passing | {report.summary['passing']} |",
-            f"| Warnings | {report.summary['warning']} |",
-            f"| Failing | {report.summary['failing']} |",
-            f"| Skipped | {report.summary['skipped']} |",
-            f"",
-            f"## Check Results",
-            f"",
-        ]
-
-        for check in report.checks:
-            status_emoji = {
-                HealthStatus.PASSING: ":white_check_mark:",
-                HealthStatus.WARNING: ":warning:",
-                HealthStatus.FAILING: ":x:",
-                HealthStatus.SKIPPED: ":fast_forward:",
-                HealthStatus.ERROR: ":boom:",
-            }.get(check.status, ":question:")
-
-            lines.append(f"### {status_emoji} {check.name}")
-            lines.append(f"")
-            lines.append(f"**Status:** {check.status.value}")
-            lines.append(f"**Result:** {check.message}")
-
-            if check.suggestions:
-                lines.append(f"")
-                lines.append(f"**Suggestions:**")
-                for s in check.suggestions:
-                    if s:
-                        lines.append(f"- {s}")
-
-            lines.append(f"")
-
-        content = "\n".join(lines)
-        ext = ".md"
-
-    if output:
-        output_path = Path(output)
-    else:
-        output_path = repo_path / f"health-report{ext}"
-
-    output_path.write_text(content)
-    console.print(f"[green]Report saved to:[/green] {output_path}")
-
-
-# Export the command group
-health = health_group
+# Alias for backwards compatibility
+health_group = health

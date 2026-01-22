@@ -439,10 +439,10 @@ def _add_lazy_commands(app: click.Group):
 
     # mcli health - Repository health analysis (promoted from mcli self health)
     try:
-        from mcli.self.health_cmd import health_group
+        from mcli.self.health_cmd import health
 
-        app.add_command(health_group, name="health")
-        logger.debug("Added health command group")
+        app.add_command(health, name="health")
+        logger.debug("Added health command")
     except ImportError as e:
         logger.debug(f"Could not load health command: {e}")
 
