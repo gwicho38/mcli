@@ -1,14 +1,16 @@
 """
-Workflows command for mcli self.
+Workflows command group for mcli self.
 
-Provides a comprehensive view of all workflows tracked by mcli,
-including a dashboard summary and detailed listings.
+Provides comprehensive workflow and workspace management:
+- Dashboard summary of all workflows
+- Detailed workflow listings
+- Workspace registration and management
 """
 
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import click
 from rich.console import Console
@@ -24,6 +26,9 @@ from mcli.lib.workspace_registry import (
     get_registry_path,
     list_registered_workspaces,
     load_registry,
+    register_workspace,
+    save_registry,
+    unregister_workspace,
 )
 
 logger = get_logger(__name__)
@@ -211,94 +216,162 @@ def _render_workflow_list(
     console.print(f"\n[bold]Total: {total} workflow(s)[/bold]")
 
 
-@click.command("workflows")
-@click.option(
-    "--all",
-    "-a",
-    "show_all",
-    is_flag=True,
-    help="Show detailed list of all workflows",
-)
-@click.option(
-    "--global",
-    "-g",
-    "is_global",
-    is_flag=True,
-    help="Show only global workflows (~/.mcli/workflows/)",
-)
-@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
-@click.option(
-    "--dashboard",
-    "-d",
-    is_flag=True,
-    help="Show dashboard view (default when no flags)",
-)
-def workflows_cmd(show_all: bool, is_global: bool, as_json: bool, dashboard: bool):
-    """📊 View all workflows tracked by mcli.
+# =============================================================================
+# CLI Group and Commands
+# =============================================================================
 
-    Shows a dashboard summary of all registered workspaces and their workflows.
-    Use flags to get different views:
+
+@click.group("workflows", invoke_without_command=True)
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+@click.pass_context
+def workflows_group(ctx, as_json: bool):
+    """📊 Manage workflows and workspaces.
+
+    View all workflows tracked by mcli and manage workspace registrations.
 
     \b
-    Default (no flags):  Dashboard with summary stats
-    --all/-a:            Detailed list of all workflows
-    --global/-g:         Show only global workflows
-    --json:              Output as JSON for scripting
-    --dashboard/-d:      Force dashboard view
+    Commands:
+        (default)     Dashboard with summary stats
+        list          Detailed list of all workflows
+        add           Register a workspace
+        remove        Unregister a workspace
+        prune         Remove missing workspaces
 
     \b
     Examples:
         mcli self workflows              # Dashboard summary
-        mcli self workflows --all        # List all workflows
-        mcli self workflows --global     # Global workflows only
-        mcli self workflows --json       # JSON output
+        mcli self workflows list         # List all workflows
+        mcli self workflows list -g      # Global workflows only
+        mcli self workflows add          # Register current directory
+        mcli self workflows remove       # Unregister current directory
     """
-    try:
-        # Auto-register current workspace if applicable
-        auto_register_current()
+    # If no subcommand, show dashboard
+    if ctx.invoked_subcommand is None:
+        try:
+            auto_register_current()
+            stats = _get_workflow_stats()
 
-        # Gather stats
+            if as_json:
+                output = {
+                    "summary": {
+                        "total_workflows": stats["total_workflows"],
+                        "total_workspaces": stats["total_workspaces"],
+                        "active_workspaces": stats["active_workspaces"],
+                        "missing_workspaces": stats["missing_workspaces"],
+                        "global_workflows": stats["global_workflows"],
+                        "local_workflows": stats["local_workflows"],
+                        "current_workspace": stats["current_workspace"],
+                        "registry_updated": stats["registry_updated"],
+                    },
+                    "language_counts": stats["language_counts"],
+                    "workspaces": stats["workspaces"],
+                }
+                click.echo(json.dumps(output, indent=2, default=str))
+            else:
+                _render_dashboard(stats)
+        except Exception as e:
+            console.print(f"[red]Error: {e}[/red]")
+            logger.exception("Failed to display workflows")
+
+
+@workflows_group.command("list")
+@click.option("--global", "-g", "is_global", is_flag=True, help="Show only global workflows")
+@click.option("--json", "as_json", is_flag=True, help="Output as JSON")
+def workflows_list(is_global: bool, as_json: bool):
+    """📋 List all workflows in detail."""
+    try:
+        auto_register_current()
         stats = _get_workflow_stats()
 
-        # JSON output
         if as_json:
-            output = {
-                "summary": {
-                    "total_workflows": stats["total_workflows"],
-                    "total_workspaces": stats["total_workspaces"],
-                    "active_workspaces": stats["active_workspaces"],
-                    "missing_workspaces": stats["missing_workspaces"],
-                    "global_workflows": stats["global_workflows"],
-                    "local_workflows": stats["local_workflows"],
-                    "current_workspace": stats["current_workspace"],
-                    "registry_updated": stats["registry_updated"],
-                },
-                "language_counts": stats["language_counts"],
-                "workspaces": stats["workspaces"],
-            }
-
-            # Add full workflow details if --all
-            if show_all:
-                flat_workflows = []
-                for workspace_name, workflows in stats["all_workflows"].items():
-                    for wf in workflows:
-                        wf["workspace"] = workspace_name
-                        flat_workflows.append(wf)
-                output["workflows"] = flat_workflows
-
-            click.echo(json.dumps(output, indent=2, default=str))
-            return 0
-
-        # Detailed list mode
-        if show_all or is_global:
+            flat_workflows = []
+            for workspace_name, workflows in stats["all_workflows"].items():
+                if is_global and "global" not in workspace_name.lower():
+                    continue
+                for wf in workflows:
+                    wf["workspace"] = workspace_name
+                    flat_workflows.append(wf)
+            click.echo(json.dumps({"workflows": flat_workflows, "total": len(flat_workflows)}, indent=2, default=str))
+        else:
             _render_workflow_list(stats["all_workflows"], is_global)
-            return 0
-
-        # Default: dashboard view
-        _render_dashboard(stats)
-        return 0
-
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
-        logger.exception("Failed to display workflows")
-        return 1
+        logger.exception("Failed to list workflows")
+
+
+@workflows_group.command("add")
+@click.argument("path", required=False, type=click.Path(exists=True))
+@click.option("--name", "-n", help="Custom name for the workspace")
+def workflows_add(path: Optional[str], name: Optional[str]):
+    """➕ Register a workspace (current directory if no path given)."""
+    workspace_path = Path(path).resolve() if path else None
+
+    result = register_workspace(workspace_path, name)
+    if result:
+        console.print("[green]✅ Workspace registered successfully![/green]")
+        console.print(f"[dim]ID: {result}[/dim]")
+        console.print("\n[dim]View all workflows with:[/dim]")
+        console.print("  mcli self workflows list")
+    else:
+        console.print("[red]❌ Failed to register workspace[/red]")
+        console.print("[dim]Make sure the directory has .mcli/workflows/[/dim]")
+
+
+@workflows_group.command("remove")
+@click.argument("path", required=False, type=click.Path())
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
+def workflows_remove(path: Optional[str], yes: bool):
+    """➖ Unregister a workspace (current directory if no path given)."""
+    from rich.prompt import Confirm
+
+    workspace_path = Path(path).resolve() if path else None
+
+    if not yes:
+        path_str = str(workspace_path) if workspace_path else "current directory"
+        if not Confirm.ask(f"[yellow]Unregister workspace at {path_str}?[/yellow]"):
+            console.print("[yellow]Cancelled[/yellow]")
+            return
+
+    if unregister_workspace(workspace_path):
+        console.print("[green]✅ Workspace unregistered[/green]")
+    else:
+        console.print("[red]❌ Failed to unregister workspace[/red]")
+        console.print("[dim]Make sure the path is registered[/dim]")
+
+
+@workflows_group.command("prune")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
+def workflows_prune(yes: bool):
+    """🧹 Remove workspaces that no longer exist."""
+    from rich.prompt import Confirm
+
+    workspaces = list_registered_workspaces()
+    missing = [ws for ws in workspaces if not ws["exists"]]
+
+    if not missing:
+        console.print("[green]✅ All registered workspaces exist[/green]")
+        return
+
+    console.print(f"[yellow]Found {len(missing)} missing workspace(s):[/yellow]")
+    for ws in missing:
+        console.print(f"  - {ws['name']} ({ws['path']})")
+
+    if not yes:
+        if not Confirm.ask("[yellow]Remove these workspaces from registry?[/yellow]"):
+            console.print("[yellow]Cancelled[/yellow]")
+            return
+
+    # Remove missing workspaces
+    registry = load_registry()
+    for ws in missing:
+        if ws["id"] in registry.get("workspaces", {}):
+            del registry["workspaces"][ws["id"]]
+
+    if save_registry(registry):
+        console.print(f"[green]✅ Removed {len(missing)} missing workspace(s)[/green]")
+    else:
+        console.print("[red]❌ Failed to update registry[/red]")
+
+
+# Export the group
+workflows = workflows_group
