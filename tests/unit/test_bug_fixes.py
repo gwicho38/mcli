@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-"""
-Test script to verify our fix to the find_top_nodes_in_graph function.
-"""
+"""Test script to verify the fix to the find_top_nodes_in_graph function."""
 
 import json
 
@@ -12,6 +9,7 @@ logger = get_logger(__name__)
 
 
 def test_find_top_nodes():
+    """Test that find_top_nodes_in_graph returns correct results."""
     try:
         # Load the graph data
         with open("realGraph.json", "r") as f:
@@ -24,13 +22,18 @@ def test_find_top_nodes():
         for node_id, count in top_nodes:
             print(f"- {node_id}: {count} descendants")
 
-        return top_nodes
+        assert isinstance(top_nodes, list), "Expected a list of top nodes"
+    except FileNotFoundError:
+        # Skip test if realGraph.json doesn't exist
+        import pytest
+
+        pytest.skip("realGraph.json not found")
     except Exception as e:
         print(f"Error: {e}")
         import traceback
 
         print(traceback.format_exc())
-        return []
+        raise
 
 
 if __name__ == "__main__":

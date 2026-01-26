@@ -7,11 +7,20 @@ from .feature_extractors import (
     SentimentFeatureExtractor,
     TemporalFeatureExtractor,
 )
-from .ml_pipeline import MLDataPipeline, MLDataPipelineConfig
-from .politician_trading_preprocessor import PoliticianTradingPreprocessor
+
+# MLDataPipeline and PoliticianTradingPreprocessor were migrated to
+# https://github.com/gwicho38/politician-trading-tracker
+# These imports are optional to avoid breaking existing code
+try:
+    from .ml_pipeline import MLDataPipeline, MLDataPipelineConfig
+
+    _ml_pipeline_available = True
+except ImportError:
+    MLDataPipeline = None  # type: ignore
+    MLDataPipelineConfig = None  # type: ignore
+    _ml_pipeline_available = False
 
 __all__ = [
-    "PoliticianTradingPreprocessor",
     "PoliticianFeatureExtractor",
     "MarketFeatureExtractor",
     "TemporalFeatureExtractor",

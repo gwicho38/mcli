@@ -120,15 +120,11 @@ requires-python = ">=3.9"
 
         # Test UV venv creation
         success, _ = run_command(["uv", "venv"], "Create virtual environment")
-        if not success:
-            return False
+        assert success, "Failed to create virtual environment with UV"
 
         # Test UV pip install
         success, _ = run_command(["uv", "pip", "install", "rich"], "Install package")
-        if not success:
-            return False
-
-        return True
+        assert success, "Failed to install package with UV"
     finally:
         # Clean up
         os.chdir(Path(__file__).parent.absolute())

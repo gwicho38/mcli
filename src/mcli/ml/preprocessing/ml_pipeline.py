@@ -6,7 +6,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -14,11 +14,51 @@ from mcli.lib.services.data_pipeline import DataPipelineConfig, LSHDataPipeline
 from mcli.lib.services.lsh_client import LSHClient
 from mcli.ml.configs.mlops_manager import get_mlops_manager
 
-from .politician_trading_preprocessor import (
-    PoliticianTradingPreprocessor,
-    PreprocessingConfig,
-    PreprocessingResults,
-)
+# PoliticianTradingPreprocessor was migrated to:
+# https://github.com/gwicho38/politician-trading-tracker
+# Using optional import with stub fallback
+try:
+    from .politician_trading_preprocessor import (
+        PoliticianTradingPreprocessor,
+        PreprocessingConfig,
+        PreprocessingResults,
+    )
+except ImportError:
+    # Provide stub implementations when the module is not available
+    @dataclass
+    class PreprocessingConfig:
+        """Stub configuration for preprocessing."""
+
+        pass
+
+    @dataclass
+    class PreprocessingResults:
+        """Stub results for preprocessing."""
+
+        train_data: pd.DataFrame = None  # type: ignore
+        val_data: pd.DataFrame = None  # type: ignore
+        test_data: pd.DataFrame = None  # type: ignore
+        feature_names: List[str] = None  # type: ignore
+        categorical_features: List[str] = None  # type: ignore
+        numerical_features: List[str] = None  # type: ignore
+        target_columns: List[str] = None  # type: ignore
+        original_shape: Tuple[int, int] = (0, 0)
+        final_shape: Tuple[int, int] = (0, 0)
+        feature_count: int = 0
+        cleaning_stats: Any = None
+        feature_metadata_path: Optional[Path] = None
+
+    class PoliticianTradingPreprocessor:
+        """Stub preprocessor when the full module is not available."""
+
+        def __init__(self, config: Optional[PreprocessingConfig] = None):
+            self.config = config
+            raise NotImplementedError(
+                "PoliticianTradingPreprocessor has been migrated to "
+                "https://github.com/gwicho38/politician-trading-tracker. "
+                "Please install that package to use this functionality."
+            )
+
 
 logger = logging.getLogger(__name__)
 

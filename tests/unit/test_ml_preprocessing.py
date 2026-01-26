@@ -71,7 +71,6 @@ def test_basic_functionality():
             break
 
     logger.info("✅ Basic functionality test passed!")
-    return True
 
 
 def test_feature_extraction():
@@ -120,7 +119,6 @@ def test_feature_extraction():
     assert len(result_df.columns) > len(test_data.columns), "Should have extracted new features"
 
     logger.info("✅ Feature extraction test passed!")
-    return True
 
 
 def main():
