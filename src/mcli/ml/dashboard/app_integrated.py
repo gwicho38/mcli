@@ -58,7 +58,6 @@ except (ImportError, KeyError, ModuleNotFoundError):
 
 # Add ML pipeline imports
 try:
-    from mcli.ml.models import get_model_by_id
     from mcli.ml.preprocessing import MLDataPipeline, PoliticianTradingPreprocessor
 
     HAS_ML_PIPELINE = True
@@ -529,7 +528,7 @@ def check_lsh_daemon():
         lsh_api_url = os.getenv("LSH_API_URL", "http://localhost:3030")
         response = requests.get(f"{lsh_api_url}/health", timeout=2)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 
@@ -546,7 +545,7 @@ def get_lsh_jobs():
                 data = response.json()
                 if "jobs" in data and len(data["jobs"]) > 0:
                     return pd.DataFrame(data["jobs"])
-        except:
+        except Exception:
             pass
 
         # Fallback: Try reading from local LSH log file (for local development)
@@ -590,7 +589,7 @@ def run_ml_pipeline(df_disclosures):
         if preprocessor:
             try:
                 processed_data = preprocessor.preprocess(df_disclosures)
-            except:
+            except Exception:
                 processed_data = df_disclosures
         else:
             # Use raw data if preprocessor not available
@@ -601,7 +600,7 @@ def run_ml_pipeline(df_disclosures):
         if ml_pipeline:
             try:
                 features = ml_pipeline.transform(processed_data)
-            except:
+            except Exception:
                 features = processed_data
         else:
             features = processed_data
@@ -885,7 +884,7 @@ def get_model_metrics():
                             "status": "deployed",
                         }
                     )
-        except:
+        except Exception:
             continue
 
     return pd.DataFrame(metrics)
@@ -1192,7 +1191,7 @@ def show_pipeline_overview():
                     feature_count = len(processed.columns)
                 else:
                     feature_count = len(disclosures.columns)
-            except:
+            except Exception:
                 feature_count = len(disclosures.columns) if not disclosures.empty else 0
         else:
             feature_count = 0
@@ -1848,8 +1847,8 @@ def show_train_model_tab():
     else:
         st.session_state.model_name = model_name_input
 
-    # Model selection
-    model_type = st.selectbox(
+    # Model selection (stored for future training implementation - issue #142)
+    _model_type = st.selectbox(
         "Select Model Architecture",
         ["LSTM", "Transformer", "CNN-LSTM", "Ensemble"],
         help="Neural network architecture type:\n• LSTM: Long Short-Term Memory, excellent for time series and sequential data\n• Transformer: Attention-based, state-of-the-art for many tasks, handles long sequences well\n• CNN-LSTM: Combines convolutional layers with LSTM, good for spatiotemporal patterns\n• Ensemble: Combines multiple models for better predictions (slower but often more accurate)",
@@ -1860,22 +1859,23 @@ def show_train_model_tab():
 
     col1, col2, col3 = st.columns(3)
 
+    # Training parameters (stored for future training implementation - issue #142)
     with col1:
         st.markdown("**Training Parameters**")
-        epochs = st.slider(
+        _epochs = st.slider(
             "Epochs",
             1,
             100,
             20,
             help="Number of complete passes through the training dataset. More epochs can improve accuracy but may lead to overfitting. Typical range: 10-50 for most tasks.",
         )
-        batch_size = st.select_slider(
+        _batch_size = st.select_slider(
             "Batch Size",
             options=[8, 16, 32, 64, 128, 256],
             value=32,
             help="Number of samples processed before updating model weights. Larger batches train faster but use more memory. Smaller batches may generalize better. Common values: 16, 32, 64.",
         )
-        learning_rate = st.select_slider(
+        _learning_rate = st.select_slider(
             "Learning Rate",
             options=[0.0001, 0.001, 0.01, 0.1],
             value=0.001,
@@ -1884,14 +1884,14 @@ def show_train_model_tab():
 
     with col2:
         st.markdown("**Model Architecture**")
-        hidden_layers = st.slider(
+        _hidden_layers = st.slider(
             "Hidden Layers",
             1,
             5,
             2,
             help="Number of hidden layers in the neural network. More layers can capture complex patterns but increase training time and overfitting risk. Start with 2-3 layers for most problems.",
         )
-        neurons_per_layer = st.slider(
+        _neurons_per_layer = st.slider(
             "Neurons per Layer",
             32,
             512,
@@ -1899,7 +1899,7 @@ def show_train_model_tab():
             step=32,
             help="Number of neurons in each hidden layer. More neurons increase model capacity and training time. Common values: 64, 128, 256. Higher values for complex data.",
         )
-        dropout_rate = st.slider(
+        _dropout_rate = st.slider(
             "Dropout Rate",
             0.0,
             0.5,
@@ -1910,17 +1910,17 @@ def show_train_model_tab():
 
     with col3:
         st.markdown("**Optimization**")
-        optimizer = st.selectbox(
+        _optimizer = st.selectbox(
             "Optimizer",
             ["Adam", "SGD", "RMSprop", "AdamW"],
             help="Algorithm for updating model weights:\n• Adam: Adaptive learning rate, works well for most tasks (recommended)\n• SGD: Simple but requires careful learning rate tuning\n• RMSprop: Good for recurrent networks\n• AdamW: Adam with weight decay, better generalization",
         )
-        early_stopping = st.checkbox(
+        _early_stopping = st.checkbox(
             "Early Stopping",
             value=True,
             help="Stop training when validation performance stops improving. Prevents overfitting and saves training time. Recommended for most tasks.",
         )
-        patience = (
+        _patience = (
             st.number_input(
                 "Patience (epochs)",
                 3,
@@ -1928,7 +1928,7 @@ def show_train_model_tab():
                 5,
                 help="Number of epochs to wait for improvement before stopping. Higher patience allows more time to escape local minima. Typical range: 3-10 epochs.",
             )
-            if early_stopping
+            if _early_stopping
             else None
         )
 
@@ -1936,12 +1936,12 @@ def show_train_model_tab():
     with st.expander("🔧 Advanced Options"):
         col1, col2 = st.columns(2)
         with col1:
-            use_validation_split = st.checkbox(
+            _use_validation_split = st.checkbox(
                 "Use Validation Split",
                 value=True,
                 help="Split data into training and validation sets. Validation set is used to monitor overfitting and select best model. Essential for reliable training. Recommended: Always enabled.",
             )
-            validation_split = (
+            _validation_split = (
                 st.slider(
                     "Validation Split",
                     0.1,
@@ -1949,30 +1949,30 @@ def show_train_model_tab():
                     0.2,
                     help="Fraction of data reserved for validation (not used for training). Higher values give more reliable validation but less training data. Typical: 0.2 (20% validation, 80% training).",
                 )
-                if use_validation_split
+                if _use_validation_split
                 else 0
             )
-            use_data_augmentation = st.checkbox(
+            _use_data_augmentation = st.checkbox(
                 "Data Augmentation",
                 value=False,
                 help="Generate additional training samples by applying random transformations to existing data. Reduces overfitting and improves generalization. Useful when training data is limited. May increase training time.",
             )
         with col2:
-            use_lr_scheduler = st.checkbox(
+            _use_lr_scheduler = st.checkbox(
                 "Learning Rate Scheduler",
                 value=False,
                 help="Automatically adjust learning rate during training. Can improve convergence and final performance. Useful for long training runs or when training plateaus. Not always necessary with Adam optimizer.",
             )
-            scheduler_type = (
+            _scheduler_type = (
                 st.selectbox(
                     "Scheduler Type",
                     ["StepLR", "ReduceLROnPlateau"],
                     help="Learning rate adjustment strategy:\n• StepLR: Reduce LR by fixed factor at regular intervals\n• ReduceLROnPlateau: Reduce LR when validation metric stops improving (adaptive, often better)",
                 )
-                if use_lr_scheduler
+                if _use_lr_scheduler
                 else None
             )
-            class_weights = st.checkbox(
+            _class_weights = st.checkbox(
                 "Use Class Weights",
                 value=False,
                 help="Give higher importance to underrepresented classes during training. Helps with imbalanced datasets (e.g., if you have many HOLD predictions but few BUY/SELL). Enable if your classes are imbalanced.",
@@ -2355,7 +2355,7 @@ def show_interactive_predictions_tab():
                         recent_date.strftime("%Y-%m-%d"),
                         help="Date of most recent trading disclosure. Newer trades may be more relevant for predictions.",
                     )
-                except:
+                except Exception:
                     st.metric("Last Trade", "N/A")
             else:
                 st.metric("Last Trade", "N/A")
@@ -2916,7 +2916,7 @@ def show_lsh_jobs():
                     labels={"x": "Time", "y": "Job Count"},
                 )
                 st.plotly_chart(fig, width="stretch", config={"responsive": True})
-            except:
+            except Exception:
                 pass
     else:
         st.info("No LSH job data available. Make sure the LSH daemon is running and logging.")
@@ -2950,7 +2950,7 @@ def show_system_health():
             try:
                 client.table("politicians").select("id").limit(1).execute()
                 st.success("✅ Supabase: Connected")
-            except:
+            except Exception:
                 st.error("❌ Supabase: Error")
         else:
             st.warning("⚠️ Supabase: Not configured")

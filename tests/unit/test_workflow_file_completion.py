@@ -1,7 +1,6 @@
-"""Test file path completion for mcli run ./ command.."""
+"""Test file path completion for mcli run ./ command."""
 
 import os
-from pathlib import Path
 
 import pytest
 
@@ -18,10 +17,10 @@ class MockContext:
 
 @pytest.mark.skip(reason="Shell completion tests require full Click context setup")
 class TestFilePathCompletion:
-    """Test file path completion in workflow commands.."""
+    """Test file path completion in workflow commands."""
 
     def test_file_path_completion_relative(self, tmp_path):
-        """Test that ./ triggers file path completion.."""
+        """Test that ./ triggers file path completion."""
         # Create test files
         (tmp_path / "test_script.py").write_text("#!/usr/bin/env python3\nprint('test')")
         (tmp_path / "another_file.sh").write_text("#!/bin/bash\necho test")
@@ -35,8 +34,6 @@ class TestFilePathCompletion:
 
         # Test completion for ./
         # Change to test directory
-        import os
-
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
@@ -65,8 +62,6 @@ class TestFilePathCompletion:
             params = {"is_global": False}
 
         ctx = MockContext()
-
-        import os
 
         original_cwd = os.getcwd()
         try:
@@ -117,8 +112,6 @@ class TestFilePathCompletion:
             params = {"is_global": False}
 
         ctx = MockContext()
-
-        import os
 
         original_cwd = os.getcwd()
         try:
@@ -171,8 +164,6 @@ class TestFilePathCompletion:
 
         ctx = MockContext()
 
-        import os
-
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
@@ -207,8 +198,6 @@ class TestFilePathCompletion:
             params = {"is_global": False}
 
         ctx = MockContext()
-
-        import os
 
         original_cwd = os.getcwd()
         try:

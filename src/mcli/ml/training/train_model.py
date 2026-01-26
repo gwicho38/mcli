@@ -152,7 +152,7 @@ def engineer_features_from_disclosure(row: pd.Series, politician_stats: Dict) ->
             # Calculate how "recent" this trade is (older = less relevant)
             days_old = (datetime.now() - date_obj).days
             features["timing_score"] = 1.0 / (1.0 + days_old / 365)
-        except:
+        except Exception:
             features["timing_score"] = 0.5
     else:
         features["timing_score"] = 0.5

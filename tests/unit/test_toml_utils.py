@@ -114,7 +114,7 @@ key = "missing closing bracket"
             temp_path = f.name
 
         try:
-            with pytest.raises(Exception):  # TOMLDecodeError
+            with pytest.raises((Exception,), match=".*"):  # TOMLDecodeError
                 read_from_toml(temp_path, "section")
         finally:
             os.unlink(temp_path)

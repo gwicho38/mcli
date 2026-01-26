@@ -43,7 +43,7 @@ class PoliticianTradingPredictor:
                 disclosures["disclosure_date"] = pd.to_datetime(disclosures["disclosure_date"])
                 cutoff_date = datetime.now() - timedelta(days=self.recent_days)
                 recent_disclosures = disclosures[disclosures["disclosure_date"] >= cutoff_date]
-            except:
+            except Exception:
                 recent_disclosures = disclosures
         else:
             recent_disclosures = disclosures
@@ -93,7 +93,7 @@ class PoliticianTradingPredictor:
                     amounts = ticker_trades["amount"].astype(str)
                     # This is a simplified extraction - adjust based on actual data format
                     total_amount = len(ticker_trades) * 50000  # Rough estimate
-                except:
+                except Exception:
                     total_amount = len(ticker_trades) * 50000
             else:
                 total_amount = len(ticker_trades) * 50000
@@ -175,7 +175,7 @@ class PoliticianTradingPredictor:
                 most_recent = ticker_trades["disclosure_date"].max()
                 days_ago = (datetime.now() - most_recent).days
                 recency_score = max(0.3, 1.0 - (days_ago / self.recent_days))
-            except:
+            except Exception:
                 pass
 
         # Combined confidence (weighted average)

@@ -24,7 +24,7 @@ class PerformanceOptimizer:
 
     def apply_all_optimizations(self) -> Dict[str, Any]:
         """Apply all available performance optimizations."""
-        results = {}  # noqa: SIM904
+        results = {}
 
         # 1. Install UVLoop for better async performance
         results["uvloop"] = self._optimize_event_loop()

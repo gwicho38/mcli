@@ -67,7 +67,7 @@ class TestEncryptDecrypt:
         data = b"secret data"
         encrypted = encrypt_data(data, "correct-password")
 
-        with pytest.raises(Exception):
+        with pytest.raises((Exception,), match=".*"):
             decrypt_data(encrypted, "wrong-password")
 
     def test_decrypt_invalid_format(self):

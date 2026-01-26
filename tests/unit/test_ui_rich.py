@@ -19,4 +19,4 @@ def test_rich_import():
         import sys
 
         logger.info(f"Python path: {sys.path}")
-        assert False, f"Rich import failed: {e}"
+        raise AssertionError(f"Rich import failed: {e}")
