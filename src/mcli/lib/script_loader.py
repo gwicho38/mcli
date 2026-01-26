@@ -514,28 +514,41 @@ class ScriptLoader:
                 # Make script executable if not already
                 script_path.chmod(script_path.stat().st_mode | stat.S_IXUSR)
 
-                # Execute the shell script directly
                 logger.info(f"Executing shell command: {name}")
-                process = subprocess.Popen(
-                    [str(script_path)] + list(args),
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    env={**os.environ, "MCLI_COMMAND": name},
-                )
 
-                register_subprocess(process)
+                # Check if we're running in a terminal (TTY)
+                # If so, use inherited stdio for real-time/interactive output
+                # Otherwise, capture output for piping/testing
+                is_tty = sys.stdout.isatty()
 
-                stdout, stderr = process.communicate()
+                if is_tty:
+                    # Interactive mode: inherit stdio for real-time output
+                    process = subprocess.Popen(
+                        [str(script_path)] + list(args),
+                        env={**os.environ, "MCLI_COMMAND": name},
+                    )
+                    register_subprocess(process)
+                    returncode = process.wait()
+                else:
+                    # Non-interactive: capture and print output
+                    process = subprocess.Popen(
+                        [str(script_path)] + list(args),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        env={**os.environ, "MCLI_COMMAND": name},
+                    )
+                    register_subprocess(process)
+                    stdout, stderr = process.communicate()
+                    if stdout:
+                        click.echo(stdout, nl=False)
+                    if stderr:
+                        click.echo(stderr, nl=False, err=True)
+                    returncode = process.returncode
 
-                if stdout:
-                    click.echo(stdout, nl=False)
-                if stderr:
-                    click.echo(stderr, nl=False, err=True)
-
-                if process.returncode != 0:
-                    logger.warning(f"Shell command {name} exited with code {process.returncode}")
-                    ctx.exit(process.returncode)
+                if returncode != 0:
+                    logger.warning(f"Shell command {name} exited with code {returncode}")
+                    ctx.exit(returncode)
 
             except Exception as e:
                 logger.error(f"Failed to execute shell command {name}: {e}")
