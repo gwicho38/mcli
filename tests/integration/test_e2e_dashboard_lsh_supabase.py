@@ -395,7 +395,7 @@ class TestMLPredictionPipeline:
         # Load latest model metadata
         latest_metadata = sorted(metadata_files, reverse=True)[0]
 
-        with open(latest_metadata, "r") as f:
+        with open(latest_metadata) as f:
             metadata = json.load(f)
 
         # Verify metadata structure

@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import click
 from rich.console import Console
@@ -139,7 +139,7 @@ def find_repo_root() -> Path:
 # =============================================================================
 
 
-def detect_languages(repo_path: Path) -> Dict[str, bool]:
+def detect_languages(repo_path: Path) -> dict[str, bool]:
     """Detect which programming languages are used in the repository."""
     languages = {
         "python": False,

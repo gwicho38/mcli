@@ -23,7 +23,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import click
 
@@ -34,7 +34,7 @@ logger = get_logger(__name__)
 
 
 # Supported script extensions and their language mappings
-SUPPORTED_EXTENSIONS: Dict[str, str] = {
+SUPPORTED_EXTENSIONS: dict[str, str] = {
     ".py": "python",
     ".sh": "shell",
     ".bash": "shell",
@@ -44,7 +44,7 @@ SUPPORTED_EXTENSIONS: Dict[str, str] = {
 }
 
 # Shebang patterns for language detection
-SHEBANG_PATTERNS: Dict[str, re.Pattern] = {
+SHEBANG_PATTERNS: dict[str, re.Pattern] = {
     "python": re.compile(r"#!/.*python"),
     "shell": re.compile(r"#!/.*(?:bash|sh|zsh|fish)"),
     "javascript": re.compile(r"#!/.*(?:node|bun)"),
@@ -52,7 +52,7 @@ SHEBANG_PATTERNS: Dict[str, re.Pattern] = {
 }
 
 # Comment prefixes by language
-COMMENT_PREFIX: Dict[str, str] = {
+COMMENT_PREFIX: dict[str, str] = {
     "python": "#",
     "shell": "#",
     "javascript": "//",
@@ -60,7 +60,7 @@ COMMENT_PREFIX: Dict[str, str] = {
 }
 
 # Default metadata values
-DEFAULT_METADATA: Dict[str, Any] = {
+DEFAULT_METADATA: dict[str, Any] = {
     "description": "",
     "version": "1.0.0",
     "author": "",
@@ -92,16 +92,16 @@ class ScriptLoader:
         """
         self.workflows_dir = Path(workflows_dir).expanduser()
         self.lockfile_path = self.workflows_dir / "workflows.lock.json"
-        self.loaded_commands: Dict[str, click.Command] = {}
+        self.loaded_commands: dict[str, click.Command] = {}
 
-    def discover_scripts(self) -> List[Path]:
+    def discover_scripts(self) -> list[Path]:
         """
         Find all supported script files in the workflows directory.
 
         Returns:
             List of paths to script files, sorted by name
         """
-        scripts: List[Path] = []
+        scripts: list[Path] = []
 
         if not self.workflows_dir.exists():
             logger.debug(f"Workflows directory does not exist: {self.workflows_dir}")
@@ -156,7 +156,7 @@ class ScriptLoader:
 
         try:
             # Check shebang first (more reliable)
-            with open(script_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(script_path, encoding="utf-8", errors="ignore") as f:
                 first_line = f.readline().strip()
                 if first_line.startswith("#!"):
                     for lang, pattern in SHEBANG_PATTERNS.items():
@@ -175,7 +175,7 @@ class ScriptLoader:
 
         return language
 
-    def extract_metadata(self, script_path: Path, language: str) -> Dict[str, Any]:
+    def extract_metadata(self, script_path: Path, language: str) -> dict[str, Any]:
         """
         Extract metadata from script comments.
 
@@ -207,7 +207,7 @@ class ScriptLoader:
         metadata_pattern = re.compile(rf"^{re.escape(comment_prefix)}\s*@(\w+):\s*(.+)$")
 
         try:
-            with open(script_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(script_path, encoding="utf-8", errors="ignore") as f:
                 for line in f:
                     line = line.strip()
                     match = metadata_pattern.match(line)
@@ -233,7 +233,7 @@ class ScriptLoader:
 
         return metadata
 
-    def _extract_notebook_metadata(self, notebook_path: Path) -> Dict[str, Any]:
+    def _extract_notebook_metadata(self, notebook_path: Path) -> dict[str, Any]:
         """
         Extract metadata from Jupyter notebook.
 
@@ -250,7 +250,7 @@ class ScriptLoader:
         metadata["tags"] = []
 
         try:
-            with open(notebook_path, "r", encoding="utf-8") as f:
+            with open(notebook_path, encoding="utf-8") as f:
                 notebook = json.load(f)
 
             # Check for mcli metadata section
@@ -304,7 +304,7 @@ class ScriptLoader:
             logger.error(f"Failed to calculate hash for {script_path}: {e}")
             return ""
 
-    def get_script_info(self, script_path: Path) -> Dict[str, Any]:
+    def get_script_info(self, script_path: Path) -> dict[str, Any]:
         """
         Get complete information about a script.
 
@@ -338,7 +338,7 @@ class ScriptLoader:
         }
 
     def load_python_command(
-        self, script_path: Path, metadata: Dict[str, Any]
+        self, script_path: Path, metadata: dict[str, Any]
     ) -> Optional[click.Command]:
         """
         Load Python script with Click decorators.
@@ -363,7 +363,7 @@ class ScriptLoader:
         return self._load_python_inprocess(script_path, metadata)
 
     def _load_python_inprocess(
-        self, script_path: Path, metadata: Dict[str, Any]
+        self, script_path: Path, metadata: dict[str, Any]
     ) -> Optional[click.Command]:
         """
         Load Python script in-process via importlib.
@@ -392,7 +392,7 @@ class ScriptLoader:
             # Look for a command or command group in the module
             # Prioritize Groups over Commands
             command_obj = None
-            found_commands: List[click.Command] = []
+            found_commands: list[click.Command] = []
 
             for attr_name in dir(module):
                 attr = getattr(module, attr_name)
@@ -416,7 +416,7 @@ class ScriptLoader:
             logger.error(f"Failed to load Python command {name}: {e}")
             return None
 
-    def _load_python_with_deps(self, script_path: Path, metadata: Dict[str, Any]) -> click.Command:
+    def _load_python_with_deps(self, script_path: Path, metadata: dict[str, Any]) -> click.Command:
         """
         Create Click wrapper for Python script with dependencies.
 
@@ -436,15 +436,15 @@ class ScriptLoader:
         @click.command(
             name=name,
             help=description,
-            context_settings=dict(
-                ignore_unknown_options=True,
-                allow_extra_args=True,
-                allow_interspersed_args=False,
-            ),
+            context_settings={
+                "ignore_unknown_options": True,
+                "allow_extra_args": True,
+                "allow_interspersed_args": False,
+            },
         )
         @click.argument("args", nargs=-1, type=click.UNPROCESSED)
         @click.pass_context
-        def python_venv_command(ctx: click.Context, args: Tuple[str, ...]) -> None:
+        def python_venv_command(ctx: click.Context, args: tuple[str, ...]) -> None:
             """Execute Python script with dependencies in venv."""
             try:
                 # Get workspace directory from script location
@@ -483,7 +483,7 @@ class ScriptLoader:
 
         return python_venv_command
 
-    def load_shell_command(self, script_path: Path, metadata: Dict[str, Any]) -> click.Command:
+    def load_shell_command(self, script_path: Path, metadata: dict[str, Any]) -> click.Command:
         """
         Create Click wrapper for shell script.
 
@@ -496,20 +496,19 @@ class ScriptLoader:
         """
         name = script_path.stem
         description = metadata.get("description", "Shell command")
-        shell_type = metadata.get("shell", "bash")
 
         @click.command(
             name=name,
             help=description,
-            context_settings=dict(
-                ignore_unknown_options=True,
-                allow_extra_args=True,
-                allow_interspersed_args=False,
-            ),
+            context_settings={
+                "ignore_unknown_options": True,
+                "allow_extra_args": True,
+                "allow_interspersed_args": False,
+            },
         )
         @click.argument("args", nargs=-1, type=click.UNPROCESSED)
         @click.pass_context
-        def shell_command(ctx: click.Context, args: Tuple[str, ...]) -> None:
+        def shell_command(ctx: click.Context, args: tuple[str, ...]) -> None:
             """Execute shell script command."""
             try:
                 # Make script executable if not already
@@ -545,7 +544,7 @@ class ScriptLoader:
 
         return shell_command
 
-    def load_bun_command(self, script_path: Path, metadata: Dict[str, Any]) -> click.Command:
+    def load_bun_command(self, script_path: Path, metadata: dict[str, Any]) -> click.Command:
         """
         Create Click wrapper for JavaScript/TypeScript script using Bun.
 
@@ -563,15 +562,15 @@ class ScriptLoader:
         @click.command(
             name=name,
             help=description,
-            context_settings=dict(
-                ignore_unknown_options=True,
-                allow_extra_args=True,
-                allow_interspersed_args=False,
-            ),
+            context_settings={
+                "ignore_unknown_options": True,
+                "allow_extra_args": True,
+                "allow_interspersed_args": False,
+            },
         )
         @click.argument("args", nargs=-1, type=click.UNPROCESSED)
         @click.pass_context
-        def bun_command(ctx: click.Context, args: Tuple[str, ...]) -> None:
+        def bun_command(ctx: click.Context, args: tuple[str, ...]) -> None:
             """Execute JS/TS script with Bun."""
             # Check if bun is available
             bun_path = shutil.which("bun")
@@ -614,7 +613,7 @@ class ScriptLoader:
 
         return bun_command
 
-    def load_ipynb_command(self, script_path: Path, metadata: Dict[str, Any]) -> click.Command:
+    def load_ipynb_command(self, script_path: Path, metadata: dict[str, Any]) -> click.Command:
         """
         Create Click wrapper for Jupyter notebook using papermill.
 
@@ -650,7 +649,7 @@ class ScriptLoader:
         @click.pass_context
         def notebook_command(
             ctx: click.Context,
-            param: Tuple[Tuple[str, str], ...],
+            param: tuple[tuple[str, str], ...],
             output: Optional[str],
             no_output: bool,
         ) -> None:
@@ -756,7 +755,7 @@ class ScriptLoader:
 
         return registered
 
-    def generate_lockfile(self) -> Dict[str, Any]:
+    def generate_lockfile(self) -> dict[str, Any]:
         """
         Generate lockfile data for all scripts.
 
@@ -795,7 +794,7 @@ class ScriptLoader:
             logger.error(f"Failed to save lockfile: {e}")
             return False
 
-    def load_lockfile(self) -> Optional[Dict[str, Any]]:
+    def load_lockfile(self) -> Optional[dict[str, Any]]:
         """
         Load lockfile from disk.
 
@@ -806,13 +805,13 @@ class ScriptLoader:
             return None
 
         try:
-            with open(self.lockfile_path, "r") as f:
+            with open(self.lockfile_path) as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load lockfile: {e}")
             return None
 
-    def verify_lockfile(self) -> Dict[str, Any]:
+    def verify_lockfile(self) -> dict[str, Any]:
         """
         Verify scripts match the lockfile.
 

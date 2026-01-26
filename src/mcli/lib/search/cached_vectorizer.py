@@ -2,12 +2,10 @@
 Cached TF-IDF Vectorizer with Redis support for high-performance text similarity
 """
 
-import asyncio
 import hashlib
 import json
 import pickle
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 
@@ -105,7 +103,7 @@ class CachedTfIdfVectorizer:
         except ImportError:
             raise RuntimeError("Neither Rust nor sklearn TF-IDF implementation available")
 
-    async def fit_transform(self, documents: List[str]) -> np.ndarray:
+    async def fit_transform(self, documents: list[str]) -> np.ndarray:
         """Fit the vectorizer and transform documents with caching"""
         # Generate cache key for the document set
         cache_key = self._generate_cache_key(documents, "fit_transform")
@@ -150,7 +148,7 @@ class CachedTfIdfVectorizer:
 
         return vectors
 
-    async def transform(self, documents: List[str]) -> np.ndarray:
+    async def transform(self, documents: list[str]) -> np.ndarray:
         """Transform documents using fitted vectorizer with caching"""
         if not self.is_fitted:
             raise ValueError("Vectorizer must be fitted before transform")
@@ -186,8 +184,8 @@ class CachedTfIdfVectorizer:
         return vectors
 
     async def similarity_search(
-        self, query: str, documents: List[str], top_k: int = 10
-    ) -> List[Tuple[int, float]]:
+        self, query: str, documents: list[str], top_k: int = 10
+    ) -> list[tuple[int, float]]:
         """Perform similarity search with caching"""
         # Generate cache key for similarity search
         search_data = {"query": query, "documents": documents, "top_k": top_k}
@@ -230,8 +228,8 @@ class CachedTfIdfVectorizer:
         return results
 
     async def batch_similarity_search(
-        self, queries: List[str], documents: List[str], top_k: int = 10
-    ) -> List[List[Tuple[int, float]]]:
+        self, queries: list[str], documents: list[str], top_k: int = 10
+    ) -> list[list[tuple[int, float]]]:
         """Perform batch similarity search for multiple queries"""
         # Try to use cached individual results first
         results = []
@@ -297,13 +295,13 @@ class CachedTfIdfVectorizer:
 
         return results
 
-    def _generate_cache_key(self, documents: List[str], operation: str) -> str:
+    def _generate_cache_key(self, documents: list[str], operation: str) -> str:
         """Generate a cache key for a list of documents and operation"""
         content = f"{operation}:{':'.join(documents)}"
         hash_obj = hashlib.sha256(content.encode("utf-8"))
         return f"{self.cache_prefix}:{hash_obj.hexdigest()[:16]}"
 
-    def _generate_cache_key_from_dict(self, data: Dict[str, Any], operation: str) -> str:
+    def _generate_cache_key_from_dict(self, data: dict[str, Any], operation: str) -> str:
         """Generate a cache key from a dictionary"""
         content = f"{operation}:{json.dumps(data, sort_keys=True)}"
         hash_obj = hashlib.sha256(content.encode("utf-8"))
@@ -362,7 +360,7 @@ class CachedTfIdfVectorizer:
         except Exception as e:
             logger.warning(f"Failed to clear cache: {e}")
 
-    async def get_cache_stats(self) -> Dict[str, Any]:
+    async def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics"""
         stats = {
             "cache_hits": self.cache_hits,
@@ -392,7 +390,7 @@ class CachedTfIdfVectorizer:
 
         return stats
 
-    async def warm_cache(self, documents: List[str], common_queries: List[str]):
+    async def warm_cache(self, documents: list[str], common_queries: list[str]):
         """Pre-populate cache with common queries"""
         logger.info(
             f"Warming cache with {len(common_queries)} queries and {len(documents)} documents"
@@ -427,14 +425,14 @@ class SmartVectorizerManager:
 
     def __init__(self, redis_url: str = "redis://localhost:6379"):
         self.redis_url = redis_url
-        self.vectorizers: Dict[str, CachedTfIdfVectorizer] = {}
+        self.vectorizers: dict[str, CachedTfIdfVectorizer] = {}
         self.default_vectorizer = None
 
     async def get_vectorizer(
         self,
         domain: str = "default",
         max_features: int = 1000,
-        ngram_range: Tuple[int, int] = (1, 2),
+        ngram_range: tuple[int, int] = (1, 2),
     ) -> CachedTfIdfVectorizer:
         """Get or create a vectorizer for a specific domain"""
         vectorizer_key = f"{domain}_{max_features}_{ngram_range[0]}_{ngram_range[1]}"
@@ -452,8 +450,8 @@ class SmartVectorizerManager:
         return self.vectorizers[vectorizer_key]
 
     async def search_commands(
-        self, query: str, commands: List[Dict[str, Any]], top_k: int = 10
-    ) -> List[Tuple[Dict[str, Any], float]]:
+        self, query: str, commands: list[dict[str, Any]], top_k: int = 10
+    ) -> list[tuple[dict[str, Any], float]]:
         """Search commands using optimized vectorization"""
         vectorizer = await self.get_vectorizer("commands")
 

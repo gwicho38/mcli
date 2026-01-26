@@ -8,9 +8,8 @@ Provides comprehensive workflow and workspace management:
 """
 
 import json
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
 from rich.console import Console
@@ -18,8 +17,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.paths import get_custom_commands_dir, get_git_root, get_mcli_home, is_git_repository
-from mcli.lib.script_loader import ScriptLoader
+from mcli.lib.paths import get_git_root, get_mcli_home, is_git_repository
 from mcli.lib.workspace_registry import (
     auto_register_current,
     get_all_workflows,
@@ -35,7 +33,7 @@ logger = get_logger(__name__)
 console = Console()
 
 
-def _get_workflow_stats() -> Dict[str, Any]:
+def _get_workflow_stats() -> dict[str, Any]:
     """
     Gather comprehensive workflow statistics.
 
@@ -52,14 +50,13 @@ def _get_workflow_stats() -> Dict[str, Any]:
     missing_workspaces = len(workspaces) - active_workspaces
 
     # Count by language
-    language_counts: Dict[str, int] = {}
+    language_counts: dict[str, int] = {}
     for workflows in all_workflows.values():
         for wf in workflows:
             lang = wf.get("language", "unknown")
             language_counts[lang] = language_counts.get(lang, 0) + 1
 
     # Global workflows
-    global_dir = get_mcli_home() / "workflows"
     global_count = len(all_workflows.get("global (~/.mcli/workflows)", []))
 
     # Local workflows (current workspace)
@@ -92,7 +89,7 @@ def _get_workflow_stats() -> Dict[str, Any]:
     }
 
 
-def _render_dashboard(stats: Dict[str, Any]) -> None:
+def _render_dashboard(stats: dict[str, Any]) -> None:
     """Render the workflow dashboard to console."""
     # Header
     console.print()
@@ -168,7 +165,7 @@ def _render_dashboard(stats: Dict[str, Any]) -> None:
 
 
 def _render_workflow_list(
-    all_workflows: Dict[str, List[Dict[str, Any]]], is_global: bool = False
+    all_workflows: dict[str, list[dict[str, Any]]], is_global: bool = False
 ) -> None:
     """Render detailed workflow listing."""
     if not all_workflows:
