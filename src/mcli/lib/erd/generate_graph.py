@@ -1,8 +1,7 @@
 import json
 import os
 import time
-from collections import Counter, defaultdict
-from pathlib import Path
+from collections import defaultdict
 
 import pydot
 
@@ -154,7 +153,7 @@ def create_table_html(entity, node_data, font_size=10):
     entity = entity.replace(">", "]")
 
     # Start the HTML table
-    html = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="2">'
+    html = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="2">'
 
     # Header row
     html += f'<TR><TD PORT="header" COLSPAN="2" BGCOLOR="lightgrey"><B><FONT POINT-SIZE="{font_size+2}">{entity}</FONT></B></TD></TR>'

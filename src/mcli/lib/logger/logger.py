@@ -8,7 +8,7 @@ import time
 import traceback
 from datetime import datetime
 from types import FrameType
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Callable, Dict, List, Optional, Set
 
 import psutil
 

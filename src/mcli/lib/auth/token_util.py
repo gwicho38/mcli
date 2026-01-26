@@ -214,9 +214,6 @@ def _parse_args(args):
 
 #!/usr/bin/env python3
 
-import json
-import os
-import sys
 from enum import Enum
 
 mcli_DIR = os.getenv("mcli_DIR")
@@ -322,16 +319,12 @@ class Cloud:
 # strictly prohibited except as set forth in a written license agreement with mcli and/or its authorized distributors.
 # This material may be covered by one or more patents or pending patent applications.
 
-import base64
 import builtins
-import json
 import logging
 import os
 import platform
 import socket
 import subprocess
-import sys
-import time
 import urllib.error
 
 try:

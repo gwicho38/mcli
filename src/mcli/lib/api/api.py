@@ -244,12 +244,11 @@ class ClickToAPIDecorator:
             ):
                 # Handle Union types (e.g., Optional[str])
                 param_type = str
-            elif param_type == bool:
+            elif param_type is bool:
                 # Handle boolean flags
                 param_type = bool
-            elif param_type in [int, float]:
-                param_type = param_type  # noqa: SIM909
-            else:
+            elif param_type not in (int, float):
+                # Default to string for other types
                 param_type = str
 
             fields[param_name] = (param_type, default)

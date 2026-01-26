@@ -8,10 +8,7 @@ systems and generic type system interfaces.
 import json
 import os
 import time
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol, Set, Tuple, Union
-from urllib.request import urlopen
+from typing import Any, Dict, List, Optional, Protocol, Set, Tuple
 
 import click
 import pydot
@@ -275,7 +272,6 @@ def do_erd(max_depth=1, type_system: Optional[TypeSystem] = None):
         max_depth: Maximum depth of relationships to include in the diagram
     """
     # Ask the user which mode they prefer
-    import click
     import pydot
 
     logger.info("do_erd")
@@ -626,7 +622,7 @@ def do_erd(max_depth=1, type_system: Optional[TypeSystem] = None):
             entity = entity.replace("<", "[")
             entity = entity.replace(">", "]")
 
-            html = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="2">'
+            html = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="2">'
             html += f'<TR><TD PORT="header" COLSPAN="2" BGCOLOR="lightgrey"><B><FONT POINT-SIZE="{font_size}">{entity}</FONT></B></TD></TR>'
 
             # Fields/Members section
@@ -917,7 +913,7 @@ def create_merged_graph(
         entity = entity.replace("<", "[")
         entity = entity.replace(">", "]")
 
-        html = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="2">'
+        html = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="2">'
         html += f'<TR><TD PORT="header" COLSPAN="2" BGCOLOR="lightgrey"><B><FONT POINT-SIZE="{font_size+2}">{entity}</FONT></B></TD></TR>'
 
         # Fields/Members section

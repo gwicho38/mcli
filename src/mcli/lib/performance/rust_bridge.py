@@ -3,7 +3,7 @@ Bridge module for integrating Rust extensions with Python code
 """
 
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from mcli.lib.logger.logger import get_logger
 

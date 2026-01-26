@@ -19,7 +19,7 @@ from rich.table import Table
 
 from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.ui.styling import error, info, success, warning
+from mcli.lib.ui.styling import error, info, success
 
 logger = get_logger(__name__)
 console = Console()

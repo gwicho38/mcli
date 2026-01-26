@@ -256,7 +256,7 @@ def env_command(
             console.print(Panel(pkg_table, title=title, border_style="green"))
 
             if len(pkg_list) == limit:
-                console.print(f"[dim]Use --limit to show more packages[/dim]")
+                console.print("[dim]Use --limit to show more packages[/dim]")
         else:
             console.print("[yellow]Could not retrieve installed packages[/yellow]")
 

@@ -3,15 +3,14 @@
 import logging
 import os
 from datetime import datetime, timedelta
-from decimal import Decimal
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional
 
 import pandas as pd
 from alpaca.data.historical import StockHistoricalDataClient
 from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 from alpaca.trading.client import TradingClient
-from alpaca.trading.enums import OrderSide, OrderStatus, TimeInForce
+from alpaca.trading.enums import OrderSide, TimeInForce
 from alpaca.trading.requests import (
     GetOrdersRequest,
     GetPortfolioHistoryRequest,

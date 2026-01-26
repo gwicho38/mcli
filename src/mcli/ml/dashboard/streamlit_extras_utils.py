@@ -215,7 +215,7 @@ def trading_status_card(
 
     section_header(
         f"{status_color} Trading Status: {status}",
-        f"Real-time portfolio monitoring and execution",
+        "Real-time portfolio monitoring and execution",
         divider="blue",
     )
 

@@ -2,7 +2,7 @@
 Completion helpers for MCLI that provide tab completion without loading heavy modules
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import click
 from click.shell_completion import CompletionItem

@@ -41,7 +41,6 @@ class ScopedWorkflowsGroup(click.Group):
 
     def list_commands(self, ctx):
         """List available commands based on scope."""
-        from pathlib import Path
 
         from mcli.lib.logger.logger import get_logger
         from mcli.lib.script_loader import ScriptLoader

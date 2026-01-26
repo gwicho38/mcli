@@ -10,7 +10,7 @@ import sys
 import tempfile
 from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from mcli.lib.logger.logger import get_logger
 

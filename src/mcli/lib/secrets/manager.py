@@ -5,7 +5,7 @@ Secrets manager for handling secure storage and retrieval of secrets.
 import base64
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 import click
 from cryptography.fernet import Fernet

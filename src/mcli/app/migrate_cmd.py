@@ -8,7 +8,6 @@ as part of the transition away from JSON-based command storage.
 import json
 import shutil
 import stat
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 

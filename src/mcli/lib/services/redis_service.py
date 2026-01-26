@@ -3,20 +3,18 @@ Redis Service Manager - Manages Redis as a background process
 """
 
 import asyncio
-import os
 import signal
 import subprocess
-import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import psutil
 import redis.asyncio as redis
 
 from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
-from mcli.workflow.daemon.async_process_manager import AsyncProcessManager, ProcessStatus
+from mcli.workflow.daemon.async_process_manager import AsyncProcessManager
 
 logger = get_logger(__name__)
 

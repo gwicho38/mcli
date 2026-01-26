@@ -5,7 +5,7 @@ Git-based secrets store for synchronization across machines.
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from git import GitCommandError, Repo
 

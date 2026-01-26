@@ -16,7 +16,7 @@ import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from mcli.lib.constants import StorachaBridgeCapabilities, StorageMessages, StoragePaths
 from mcli.lib.logger import get_logger

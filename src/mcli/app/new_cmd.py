@@ -40,7 +40,7 @@ from mcli.lib.errors import (
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.paths import get_custom_commands_dir, get_git_root, is_git_repository
 from mcli.lib.script_loader import ScriptLoader
-from mcli.lib.types import CommandMetadata, ScriptTemplate
+from mcli.lib.types import ScriptTemplate
 from mcli.lib.ui.styling import console
 
 logger = get_logger(__name__)

@@ -17,7 +17,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from mcli.lib.logger.logger import get_logger
-from mcli.lib.paths import get_git_root, get_mcli_home, is_git_repository
+from mcli.lib.paths import get_git_root, is_git_repository
 from mcli.lib.workspace_registry import (
     auto_register_current,
     get_all_workflows,

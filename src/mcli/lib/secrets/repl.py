@@ -3,7 +3,6 @@ REPL (Read-Eval-Print Loop) for LSH secrets management.
 """
 
 from pathlib import Path
-from typing import List
 
 import click
 from prompt_toolkit import prompt

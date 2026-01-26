@@ -3,9 +3,8 @@ Prediction Engine for Politician Trading Analysis
 Generates stock predictions based on politician trading disclosures
 """
 
-from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd

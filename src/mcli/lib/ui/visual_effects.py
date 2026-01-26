@@ -5,7 +5,7 @@ Provides stunning visual elements, animations, and rich formatting for the CLI
 
 import threading
 import time
-from typing import Any, Dict
+from typing import Any
 
 from rich.align import Align
 from rich.box import DOUBLE, HEAVY, ROUNDED

@@ -7,7 +7,7 @@ of data across distributed storage.
 
 import json
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 from mcli.lib.logger import get_logger
 

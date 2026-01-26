@@ -13,7 +13,7 @@ import re
 import sys
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any, Generator, Optional
 
 import click
 
@@ -267,7 +267,7 @@ class NotebookCommandLoader:
                         if "command" in decorator_name or "group" in decorator_name:
                             return node.name
         except SyntaxError:
-            logger.warning(f"Failed to parse cell for function name")
+            logger.warning("Failed to parse cell for function name")
 
         return None
 

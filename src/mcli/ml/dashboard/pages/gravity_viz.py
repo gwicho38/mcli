@@ -5,7 +5,7 @@ Correlates gravitational measurements with politician locations and trading acti
 
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import pandas as pd

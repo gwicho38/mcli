@@ -2,14 +2,13 @@
 """Entry point for backtesting CLI."""
 
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List
 
 import click
 import numpy as np
 import pandas as pd
 
-from mcli.lib.ui.styling import error, info, success, warning
+from mcli.lib.ui.styling import error, info, success
 
 
 @click.group(name="mcli-backtest", help="Backtesting CLI for MCLI trading strategies")

@@ -8,7 +8,7 @@ import json
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger

@@ -1,10 +1,8 @@
 """Integrated Streamlit dashboard for ML system with LSH daemon integration"""
 
-import asyncio
 import json
 import logging
 import os
-import pickle
 import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -25,7 +23,6 @@ import plotly.graph_objects as go
 import requests
 import streamlit as st
 from plotly.subplots import make_subplots
-from supabase import Client
 
 # Import common dashboard utilities
 from mcli.ml.dashboard.common import (
@@ -49,7 +46,7 @@ try:
     )
 
     HAS_STREAMLIT_EXTRAS = True
-except (ImportError, KeyError, ModuleNotFoundError) as e:
+except (ImportError, KeyError, ModuleNotFoundError):
     HAS_STREAMLIT_EXTRAS = False
     enhanced_metrics = None
     section_header = None
@@ -132,7 +129,7 @@ try:
     try:
         import alpaca
 
-        st.success(f"✅ alpaca module imported successfully")
+        st.success("✅ alpaca module imported successfully")
         if hasattr(alpaca, "__version__"):
             st.info(f"Alpaca version: {alpaca.__version__}")
         if hasattr(alpaca, "__file__"):
@@ -190,7 +187,7 @@ try:
     from mcli.ml.dashboard.pages.monte_carlo_predictions import show_monte_carlo_predictions
 
     HAS_MONTE_CARLO_PAGE = True
-except (ImportError, KeyError, ModuleNotFoundError) as e:
+except (ImportError, KeyError, ModuleNotFoundError):
     HAS_MONTE_CARLO_PAGE = False
 
 # Import CI/CD and Workflows pages
@@ -576,7 +573,7 @@ def get_lsh_jobs():
         else:
             # No jobs available
             return pd.DataFrame()
-    except Exception as e:
+    except Exception:
         # On any error, return empty DataFrame
         return pd.DataFrame()
 
@@ -1694,7 +1691,7 @@ def show_ml_processing():
                         st.write(
                             f"- Features generated: {len(features.columns) if features is not None else 'N/A'}"
                         )
-                        st.write(f"- Predictions: None")
+                        st.write("- Predictions: None")
 
                 else:
                     st.warning("⚠️ No predictions generated (empty results)")
@@ -2450,7 +2447,7 @@ def show_interactive_predictions_tab():
                             markers=True,
                         )
                         st.plotly_chart(fig, width="stretch", config={"responsive": True})
-                    except Exception as e:
+                    except Exception:
                         st.info("Timeline visualization not available")
 
     else:

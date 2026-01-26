@@ -1,12 +1,7 @@
 #!/usr/bin/env python3
 """Entry point for model serving CLI."""
 
-import os
-import sys
-import threading
-import time
 from pathlib import Path
-from typing import Optional
 
 import click
 

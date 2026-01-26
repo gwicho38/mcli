@@ -8,7 +8,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from mcli.lib.api import mcli_decorators as mcli
 from mcli.lib.constants.paths import DirNames

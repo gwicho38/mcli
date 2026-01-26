@@ -23,7 +23,7 @@ Example:
 
 from pathlib import Path
 from threading import Timer
-from typing import Dict, Optional
+from typing import Optional
 
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer

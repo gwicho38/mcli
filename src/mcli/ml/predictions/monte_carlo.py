@@ -5,12 +5,10 @@ expected returns based on politician trading patterns.
 """
 
 import logging
-from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
