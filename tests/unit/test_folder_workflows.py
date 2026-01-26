@@ -288,8 +288,8 @@ class TestCommandCreation:
         # Verify subprocess.run was called
         assert mock_run.called
         call_args = mock_run.call_args[0][0]
-        # Check that python3 is in the command (could be full path)
-        assert any("python3" in str(arg) for arg in call_args)
+        # Check that python is in the command (could be full path like /path/python or /path/python3)
+        assert any("python" in str(arg) for arg in call_args)
         assert str(script) in call_args
 
     @patch("mcli.lib.folder_workflows.subprocess.run")

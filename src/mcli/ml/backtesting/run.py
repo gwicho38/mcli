@@ -17,6 +17,36 @@ def cli():
     """Main CLI group for backtesting."""
 
 
+def _generate_mock_backtest_results(
+    strategy: str, start_date: datetime, end_date: datetime, initial_capital: float
+) -> List[Dict[str, Any]]:
+    """Generate mock backtest results for demonstration purposes."""
+    # Generate date range
+    date_range = pd.date_range(start=start_date, end=end_date, freq="D")
+
+    # Generate mock daily returns (random walk)
+    np.random.seed(42)  # For reproducibility
+    daily_returns = np.random.normal(0.001, 0.02, len(date_range))
+
+    # Calculate cumulative returns and capital
+    cumulative_returns = np.cumprod(1 + daily_returns)
+    capital = initial_capital * cumulative_returns
+
+    results = []
+    for i, date in enumerate(date_range):
+        results.append(
+            {
+                "date": date.strftime("%Y-%m-%d"),
+                "strategy": strategy,
+                "daily_return": daily_returns[i],
+                "cumulative_return": cumulative_returns[i] - 1,
+                "capital": capital[i],
+            }
+        )
+
+    return results
+
+
 @cli.command(name="run", help="Run a backtest on historical data")
 @click.option("--strategy", required=True, help="Strategy to backtest")
 @click.option("--start-date", required=True, help="Start date (YYYY-MM-DD)")
@@ -31,7 +61,11 @@ def run_backtest(
     info(f"Period: {start_date} to {end_date}")
     info(f"Initial capital: ${initial_capital:,.2f}")
 
-    # Simple backtesting logic for demonstration
+    # Parse dates
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+
+    # Generate backtest results
     results = _generate_mock_backtest_results(strategy, start_dt, end_dt, initial_capital)
 
     if output:

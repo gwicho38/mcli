@@ -13,7 +13,6 @@ from .performance_metrics import (
     RiskMetrics,
     plot_performance,
 )
-from .trading_simulator import MarketSimulator, Order, Portfolio, Position, TradingSimulator
 
 __all__ = [
     "BacktestEngine",
@@ -25,9 +24,4 @@ __all__ = [
     "PortfolioMetrics",
     "RiskMetrics",
     "plot_performance",
-    "TradingSimulator",
-    "Order",
-    "Position",
-    "Portfolio",
-    "MarketSimulator",
 ]
