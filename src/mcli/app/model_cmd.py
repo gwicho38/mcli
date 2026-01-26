@@ -22,8 +22,6 @@ try:
 
     if model_json_path.exists():
         # Load the command from the JSON file
-        import json
-
         with open(model_json_path) as f:
             command_data = json.load(f)
 

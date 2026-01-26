@@ -167,7 +167,7 @@ def test_logs_tail_follow_mode_subprocess_called(runner, temp_logs_dir):
                 mock_popen.return_value = mock_process
 
                 # Run with --follow flag
-                result = runner.invoke(logs_group, ["tail", "main", "-f"], catch_exceptions=False)
+                _result = runner.invoke(logs_group, ["tail", "main", "-f"], catch_exceptions=False)
 
                 # Verify Popen was called with tail -f
                 mock_popen.assert_called_once()
@@ -189,7 +189,7 @@ def test_logs_tail_follow_short_flag(runner, temp_logs_dir):
                 mock_popen.return_value = mock_process
 
                 # Use -f instead of --follow
-                result = runner.invoke(logs_group, ["tail", "main", "-f"], catch_exceptions=False)
+                _result = runner.invoke(logs_group, ["tail", "main", "-f"], catch_exceptions=False)
 
                 # Should call Popen
                 assert mock_popen.called
@@ -207,7 +207,7 @@ def test_logs_tail_follow_with_custom_lines(runner, temp_logs_dir):
                 mock_popen.return_value = mock_process
 
                 # Test with custom line count
-                result = runner.invoke(
+                _result = runner.invoke(
                     logs_group, ["tail", "main", "-f", "-n", "50"], catch_exceptions=False
                 )
 

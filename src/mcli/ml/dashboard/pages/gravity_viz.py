@@ -652,7 +652,7 @@ def main():
     # Filters
     st.sidebar.subheader("📊 Filters")
 
-    date_range = st.sidebar.slider(
+    _date_range = st.sidebar.slider(  # noqa: F841
         "Data Range (days)",
         min_value=1,
         max_value=30,
@@ -702,7 +702,7 @@ def main():
         with col3:
             gravity_data = GravityData.generate_gravity_anomalies(pol["lat"], pol["lon"])
             max_anomaly = gravity_data["gravity_anomaly_mgal"].max()
-            alert_class = (
+            _alert_class = (  # noqa: F841
                 "alert-high"
                 if max_anomaly > 40
                 else "alert-medium" if max_anomaly > 20 else "alert-low"

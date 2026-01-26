@@ -22,6 +22,10 @@ from typing import Any, Dict
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
+# Import LSH services (may not be available, tests are skipped)
+from mcli.lib.services.data_pipeline import DataPipelineConfig, LSHDataPipeline
+from mcli.lib.services.lsh_client import LSHClient
+
 
 class EndToEndTestRunner:
     """Manages the complete end-to-end integration test"""

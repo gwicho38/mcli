@@ -210,7 +210,7 @@ def trading_status_card(
         cash: Available cash
     """
     status_color = "🟢" if status == "Active" else "🔴"
-    pnl_emoji = "📈" if daily_pnl >= 0 else "📉"
+    _pnl_emoji = "📈" if daily_pnl >= 0 else "📉"  # noqa: F841
     pnl_sign = "+" if daily_pnl >= 0 else ""
 
     section_header(

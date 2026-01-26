@@ -33,7 +33,6 @@ class PoliticianTradingPredictor:
             return pd.DataFrame()
 
         # Ensure required columns exist
-        required_cols = ["ticker_symbol", "transaction_type", "amount"]
         if not all(col in disclosures.columns for col in ["ticker_symbol"]):
             return pd.DataFrame()
 
@@ -90,7 +89,7 @@ class PoliticianTradingPredictor:
             if "amount" in ticker_trades.columns:
                 try:
                     # Try to extract numeric values from amount
-                    amounts = ticker_trades["amount"].astype(str)
+                    _amounts = ticker_trades["amount"].astype(str)  # noqa: F841
                     # This is a simplified extraction - adjust based on actual data format
                     total_amount = len(ticker_trades) * 50000  # Rough estimate
                 except Exception:

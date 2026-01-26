@@ -165,8 +165,6 @@ except (ImportError, KeyError, ModuleNotFoundError) as e:
 
     # Show installed packages related to alpaca
     try:
-        import subprocess
-
         result = subprocess.run(["pip", "list"], capture_output=True, text=True, timeout=5)
         alpaca_packages = [line for line in result.stdout.split("\n") if "alpaca" in line.lower()]
         if alpaca_packages:
@@ -1848,7 +1846,7 @@ def show_train_model_tab():
         st.session_state.model_name = model_name_input
 
     # Model selection (stored for future training implementation - issue #142)
-    _model_type = st.selectbox(
+    _model_type = st.selectbox(  # noqa: F841
         "Select Model Architecture",
         ["LSTM", "Transformer", "CNN-LSTM", "Ensemble"],
         help="Neural network architecture type:\n• LSTM: Long Short-Term Memory, excellent for time series and sequential data\n• Transformer: Attention-based, state-of-the-art for many tasks, handles long sequences well\n• CNN-LSTM: Combines convolutional layers with LSTM, good for spatiotemporal patterns\n• Ensemble: Combines multiple models for better predictions (slower but often more accurate)",
@@ -1862,20 +1860,20 @@ def show_train_model_tab():
     # Training parameters (stored for future training implementation - issue #142)
     with col1:
         st.markdown("**Training Parameters**")
-        _epochs = st.slider(
+        _epochs = st.slider(  # noqa: F841
             "Epochs",
             1,
             100,
             20,
             help="Number of complete passes through the training dataset. More epochs can improve accuracy but may lead to overfitting. Typical range: 10-50 for most tasks.",
         )
-        _batch_size = st.select_slider(
+        _batch_size = st.select_slider(  # noqa: F841
             "Batch Size",
             options=[8, 16, 32, 64, 128, 256],
             value=32,
             help="Number of samples processed before updating model weights. Larger batches train faster but use more memory. Smaller batches may generalize better. Common values: 16, 32, 64.",
         )
-        _learning_rate = st.select_slider(
+        _learning_rate = st.select_slider(  # noqa: F841
             "Learning Rate",
             options=[0.0001, 0.001, 0.01, 0.1],
             value=0.001,
@@ -1884,14 +1882,14 @@ def show_train_model_tab():
 
     with col2:
         st.markdown("**Model Architecture**")
-        _hidden_layers = st.slider(
+        _hidden_layers = st.slider(  # noqa: F841
             "Hidden Layers",
             1,
             5,
             2,
             help="Number of hidden layers in the neural network. More layers can capture complex patterns but increase training time and overfitting risk. Start with 2-3 layers for most problems.",
         )
-        _neurons_per_layer = st.slider(
+        _neurons_per_layer = st.slider(  # noqa: F841
             "Neurons per Layer",
             32,
             512,
@@ -1899,7 +1897,7 @@ def show_train_model_tab():
             step=32,
             help="Number of neurons in each hidden layer. More neurons increase model capacity and training time. Common values: 64, 128, 256. Higher values for complex data.",
         )
-        _dropout_rate = st.slider(
+        _dropout_rate = st.slider(  # noqa: F841
             "Dropout Rate",
             0.0,
             0.5,
@@ -1910,7 +1908,7 @@ def show_train_model_tab():
 
     with col3:
         st.markdown("**Optimization**")
-        _optimizer = st.selectbox(
+        _optimizer = st.selectbox(  # noqa: F841
             "Optimizer",
             ["Adam", "SGD", "RMSprop", "AdamW"],
             help="Algorithm for updating model weights:\n• Adam: Adaptive learning rate, works well for most tasks (recommended)\n• SGD: Simple but requires careful learning rate tuning\n• RMSprop: Good for recurrent networks\n• AdamW: Adam with weight decay, better generalization",
@@ -1920,7 +1918,7 @@ def show_train_model_tab():
             value=True,
             help="Stop training when validation performance stops improving. Prevents overfitting and saves training time. Recommended for most tasks.",
         )
-        _patience = (
+        _patience = (  # noqa: F841
             st.number_input(
                 "Patience (epochs)",
                 3,
@@ -1941,7 +1939,7 @@ def show_train_model_tab():
                 value=True,
                 help="Split data into training and validation sets. Validation set is used to monitor overfitting and select best model. Essential for reliable training. Recommended: Always enabled.",
             )
-            _validation_split = (
+            _validation_split = (  # noqa: F841
                 st.slider(
                     "Validation Split",
                     0.1,
@@ -1952,7 +1950,7 @@ def show_train_model_tab():
                 if _use_validation_split
                 else 0
             )
-            _use_data_augmentation = st.checkbox(
+            _use_data_augmentation = st.checkbox(  # noqa: F841
                 "Data Augmentation",
                 value=False,
                 help="Generate additional training samples by applying random transformations to existing data. Reduces overfitting and improves generalization. Useful when training data is limited. May increase training time.",
@@ -1963,7 +1961,7 @@ def show_train_model_tab():
                 value=False,
                 help="Automatically adjust learning rate during training. Can improve convergence and final performance. Useful for long training runs or when training plateaus. Not always necessary with Adam optimizer.",
             )
-            _scheduler_type = (
+            _scheduler_type = (  # noqa: F841
                 st.selectbox(
                     "Scheduler Type",
                     ["StepLR", "ReduceLROnPlateau"],
@@ -1972,7 +1970,7 @@ def show_train_model_tab():
                 if _use_lr_scheduler
                 else None
             )
-            _class_weights = st.checkbox(
+            _class_weights = st.checkbox(  # noqa: F841
                 "Use Class Weights",
                 value=False,
                 help="Give higher importance to underrepresented classes during training. Helps with imbalanced datasets (e.g., if you have many HOLD predictions but few BUY/SELL). Enable if your classes are imbalanced.",

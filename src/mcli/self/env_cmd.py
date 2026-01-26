@@ -173,7 +173,7 @@ def env_command(
         env_info["venv_exists"] = venv_path.exists()
 
     # Get workflows directory for this workspace
-    workflows_dir = get_custom_commands_dir(global_mode=False)
+    _workflows_dir = get_custom_commands_dir(global_mode=False)  # noqa: F841
     if workspace_dir and is_git_repository():
         local_workflows = workspace_dir / ".mcli" / "workflows"
         if local_workflows.exists():

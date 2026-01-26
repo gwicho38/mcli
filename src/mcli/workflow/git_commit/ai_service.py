@@ -150,9 +150,9 @@ class GitCommitAIService:
         """Create a detailed prompt for AI commit message generation."""
 
         # Truncate diff if too long (keep first 2000 chars)
-        _truncated_diff = (
+        _truncated_diff = (  # noqa: F841
             diff_content[:2000] + "..." if len(diff_content) > 2000 else diff_content
-        )  # noqa: F841
+        )
 
         prompt = """You are an expert software developer writing git commit messages following conventional commit standards.
 

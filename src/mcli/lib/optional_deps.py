@@ -149,8 +149,8 @@ def requires(*dependencies: str, install_all_hint: Optional[str] = None):
     Example:
         >>> @requires("torch", "transformers")
         ... def train_model():
-        ...     import torch
-        ...     import transformers
+        ...     import torch  # noqa: F401
+        ...     import transformers  # noqa: F401
         ...     # training code
     """
 
