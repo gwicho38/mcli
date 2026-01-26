@@ -1,15 +1,13 @@
-"""Comprehensive integration test for all MCLI commands.
+"""Comprehensive integration test for all MCLI commands (v8.0.0+).
 
 This test creates a mock repository structure and runs through every single
 mcli command to ensure they all work correctly. It uses fixtures to set up
 a complete mock environment with proper directory structure.
 
-Test Coverage:
-- Top-level commands: init, new, edit, delete, sync, teardown
+Test Coverage (v8.0.0 CLI Structure):
+- Top-level commands: init, new, edit, mv, rm, search, list, run, context, health, sync
 - mcli self: version, hello, plugin, logs, completion, update, performance
-- mcli workflow: add, edit, list, search, remove, import, export, info, verify
-- mcli workflows (run): sync, scheduler, daemon, secrets, dashboard, make, npm
-- mcli lock: list, restore, write, verify, update
+- mcli sync: init, info, teardown, status, update, diff, show, push, pull, verify, now, history
 """
 
 import json
@@ -125,16 +123,13 @@ def sample_script():
         )
     )
 
-    # Create commands.lock.json
-    lockfile = mcli_dir / "commands.lock.json"
+    # Create workflows.lock.json
+    lockfile = mcli_dir / "workflows.lock.json"
     lockfile.write_text(
         json.dumps(
             {
                 "version": "1.0.0",
-                "commands": [
-                    {"name": "test_workflow", "group": "workflow", "hash": "abc123"},
-                    {"name": "sample_script", "group": "workflow", "hash": "def456"},
-                ],
+                "scripts": {},
             },
             indent=2,
         )
@@ -221,14 +216,9 @@ theme = "default"
 """
     )
 
-    # Create .local/mcli for lockfile
-    local_mcli = home_dir / ".local" / "mcli"
-    local_mcli.mkdir(parents=True)
-
-    (local_mcli / "command_lock.json").write_text(
-        json.dumps(
-            [{"hash": "test123abc", "timestamp": "2025-01-01T00:00:00Z", "commands": []}], indent=2
-        )
+    # Create lockfile
+    (mcli_dir / "workflows.lock.json").write_text(
+        json.dumps({"version": "1.0.0", "scripts": {}}, indent=2)
     )
 
     return home_dir
@@ -280,14 +270,14 @@ class TestMainApp:
         """Test that the app lists available commands."""
         result = cli_runner.invoke(mcli_app, ["--help"])
         assert result.exit_code == 0
-        # Check for expected top-level commands
-        expected_commands = ["self", "workflow", "workflows", "lock"]
+        # Check for expected top-level commands (v8 structure)
+        expected_commands = ["self", "sync", "list", "run", "search"]
         for cmd in expected_commands:
             assert cmd in result.output, f"Expected command '{cmd}' not found in help output"
 
 
 # ============================================================================
-# Top-Level Commands Tests
+# Top-Level Commands Tests (v8.0.0 structure)
 # ============================================================================
 
 
@@ -297,38 +287,75 @@ class TestTopLevelCommands:
     def test_init_help(self, cli_runner, mcli_app):
         """Test mcli init --help."""
         result = cli_runner.invoke(mcli_app, ["init", "--help"])
-        # May succeed or fail depending on if init command exists
-        assert result.exit_code in [0, 2]
+        assert result.exit_code == 0
+        assert "Initialize" in result.output
 
     def test_new_help(self, cli_runner, mcli_app):
         """Test mcli new --help."""
         result = cli_runner.invoke(mcli_app, ["new", "--help"])
-        assert result.exit_code in [0, 2]
+        assert result.exit_code == 0
+        assert "Create" in result.output
 
     def test_edit_help(self, cli_runner, mcli_app):
         """Test mcli edit --help."""
         result = cli_runner.invoke(mcli_app, ["edit", "--help"])
-        assert result.exit_code in [0, 2]
+        assert result.exit_code == 0
 
-    def test_delete_help(self, cli_runner, mcli_app):
-        """Test mcli delete --help."""
-        result = cli_runner.invoke(mcli_app, ["delete", "--help"])
-        assert result.exit_code in [0, 2]
+    def test_rm_help(self, cli_runner, mcli_app):
+        """Test mcli rm --help."""
+        result = cli_runner.invoke(mcli_app, ["rm", "--help"])
+        assert result.exit_code == 0
+        assert "Delete" in result.output
 
-    def test_remove_alias(self, cli_runner, mcli_app):
-        """Test that 'remove' is an alias for 'delete'."""
-        result = cli_runner.invoke(mcli_app, ["remove", "--help"])
-        assert result.exit_code in [0, 2]
+    def test_mv_help(self, cli_runner, mcli_app):
+        """Test mcli mv --help."""
+        result = cli_runner.invoke(mcli_app, ["mv", "--help"])
+        assert result.exit_code == 0
 
-    def test_sync_help(self, cli_runner, mcli_app):
-        """Test mcli sync --help."""
-        result = cli_runner.invoke(mcli_app, ["sync", "--help"])
-        assert result.exit_code in [0, 2]
+    def test_search_help(self, cli_runner, mcli_app):
+        """Test mcli search --help."""
+        result = cli_runner.invoke(mcli_app, ["search", "--help"])
+        assert result.exit_code == 0
+        assert "Search" in result.output
 
-    def test_teardown_help(self, cli_runner, mcli_app):
-        """Test mcli teardown --help."""
-        result = cli_runner.invoke(mcli_app, ["teardown", "--help"])
-        assert result.exit_code in [0, 2]
+    def test_list_help(self, cli_runner, mcli_app):
+        """Test mcli list --help."""
+        result = cli_runner.invoke(mcli_app, ["list", "--help"])
+        assert result.exit_code == 0
+        assert "List" in result.output
+
+    def test_list_command(self, cli_runner, mcli_app, env_setup):
+        """Test mcli list."""
+        result = cli_runner.invoke(mcli_app, ["list"])
+        # Should succeed even with no workflows
+        assert result.exit_code in [0, 1]
+
+    def test_list_global(self, cli_runner, mcli_app, env_setup):
+        """Test mcli list --global."""
+        result = cli_runner.invoke(mcli_app, ["list", "--global"])
+        assert result.exit_code in [0, 1]
+
+    def test_search_command(self, cli_runner, mcli_app, env_setup):
+        """Test mcli search <query>."""
+        result = cli_runner.invoke(mcli_app, ["search", "test"])
+        # Should succeed even with no matches
+        assert result.exit_code in [0, 1]
+
+    def test_run_help(self, cli_runner, mcli_app):
+        """Test mcli run --help."""
+        result = cli_runner.invoke(mcli_app, ["run", "--help"])
+        assert result.exit_code == 0
+
+    def test_context_help(self, cli_runner, mcli_app):
+        """Test mcli context --help."""
+        result = cli_runner.invoke(mcli_app, ["context", "--help"])
+        assert result.exit_code == 0
+
+    def test_health_help(self, cli_runner, mcli_app):
+        """Test mcli health --help."""
+        result = cli_runner.invoke(mcli_app, ["health", "--help"])
+        assert result.exit_code == 0
+        assert "health checks" in result.output.lower()
 
 
 # ============================================================================
@@ -457,10 +484,10 @@ class TestSelfCommands:
     @patch("importlib.metadata.version")
     def test_self_update_check(self, mock_version, mock_get, cli_runner, mcli_app):
         """Test mcli self update --check."""
-        mock_version.return_value = "7.0.5"
+        mock_version.return_value = "8.0.21"
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"info": {"version": "7.0.5"}, "releases": {}}
+        mock_response.json.return_value = {"info": {"version": "8.0.21"}, "releases": {}}
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
@@ -484,194 +511,90 @@ class TestSelfCommands:
 
 
 # ============================================================================
-# Workflow Management Commands Tests
+# Sync Commands Tests (v8 - replaces old lock commands)
 # ============================================================================
 
 
-class TestWorkflowManagementCommands:
-    """Tests for mcli workflow subcommands (management)."""
+class TestSyncCommands:
+    """Tests for mcli sync subcommands (v8.0.0 structure)."""
 
-    def test_workflow_help(self, cli_runner, mcli_app):
-        """Test mcli workflow --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "--help"])
+    def test_sync_help(self, cli_runner, mcli_app):
+        """Test mcli sync --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "--help"])
+        assert result.exit_code == 0
+        assert "Sync" in result.output
+
+    def test_sync_init_help(self, cli_runner, mcli_app):
+        """Test mcli sync init --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "init", "--help"])
         assert result.exit_code == 0
 
-    def test_workflow_list(self, cli_runner, mcli_app, env_setup):
-        """Test mcli workflow list."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "list"])
-        # Should succeed even with no workflows
-        assert result.exit_code in [0, 1]
-
-    def test_workflow_list_global(self, cli_runner, mcli_app, env_setup):
-        """Test mcli workflow list --global."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "list", "--global"])
-        assert result.exit_code in [0, 1]
-
-    def test_workflow_search_help(self, cli_runner, mcli_app):
-        """Test mcli workflow search --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "search", "--help"])
+    def test_sync_info_help(self, cli_runner, mcli_app):
+        """Test mcli sync info --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "info", "--help"])
         assert result.exit_code == 0
 
-    def test_workflow_search(self, cli_runner, mcli_app, env_setup):
-        """Test mcli workflow search <query>."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "search", "test"])
-        # Should succeed even with no matches
-        assert result.exit_code in [0, 1]
-
-    def test_workflow_add_help(self, cli_runner, mcli_app):
-        """Test mcli workflow add --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "add", "--help"])
+    def test_sync_teardown_help(self, cli_runner, mcli_app):
+        """Test mcli sync teardown --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "teardown", "--help"])
         assert result.exit_code == 0
 
-    def test_workflow_edit_help(self, cli_runner, mcli_app):
-        """Test mcli workflow edit --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "edit", "--help"])
+    def test_sync_status_help(self, cli_runner, mcli_app):
+        """Test mcli sync status --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "status", "--help"])
         assert result.exit_code == 0
 
-    def test_workflow_remove_help(self, cli_runner, mcli_app):
-        """Test mcli workflow remove --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "remove", "--help"])
-        assert result.exit_code == 0
-
-    def test_workflow_import_help(self, cli_runner, mcli_app):
-        """Test mcli workflow import --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "import", "--help"])
-        assert result.exit_code == 0
-
-    def test_workflow_export_help(self, cli_runner, mcli_app):
-        """Test mcli workflow export --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "export", "--help"])
-        assert result.exit_code == 0
-
-    def test_workflow_info_help(self, cli_runner, mcli_app):
-        """Test mcli workflow info --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "info", "--help"])
-        assert result.exit_code == 0
-
-    def test_workflow_status_help(self, cli_runner, mcli_app):
-        """Test mcli workflow status --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "status", "--help"])
-        assert result.exit_code == 0
-
-    def test_workflow_store_help(self, cli_runner, mcli_app):
-        """Test mcli workflow store --help."""
-        result = cli_runner.invoke(mcli_app, ["workflow", "store", "--help"])
-        assert result.exit_code in [0, 2]
-
-
-# ============================================================================
-# Workflows (Run) Commands Tests
-# ============================================================================
-
-
-class TestWorkflowsRunCommands:
-    """Tests for mcli workflows subcommands (runnable workflows)."""
-
-    def test_workflows_help(self, cli_runner, mcli_app):
-        """Test mcli workflows --help."""
-        result = cli_runner.invoke(mcli_app, ["workflows", "--help"])
-        assert result.exit_code == 0
-
-    def test_run_alias_help(self, cli_runner, mcli_app):
-        """Test mcli run --help (alias for workflows)."""
-        result = cli_runner.invoke(mcli_app, ["run", "--help"])
-        assert result.exit_code == 0
-
-    def test_workflows_sync_help(self, cli_runner, mcli_app):
-        """Test mcli workflows sync --help."""
-        result = cli_runner.invoke(mcli_app, ["workflows", "sync", "--help"])
-        assert result.exit_code in [0, 2]
-
-    def test_workflows_scheduler_help(self, cli_runner, mcli_app):
-        """Test mcli workflows scheduler --help."""
-        result = cli_runner.invoke(mcli_app, ["workflows", "scheduler", "--help"])
-        assert result.exit_code in [0, 2]
-
-    def test_workflows_daemon_help(self, cli_runner, mcli_app):
-        """Test mcli workflows daemon --help."""
-        result = cli_runner.invoke(mcli_app, ["workflows", "daemon", "--help"])
-        assert result.exit_code in [0, 2]
-
-    def test_workflows_secrets_help(self, cli_runner, mcli_app):
-        """Test mcli workflows secrets --help."""
-        result = cli_runner.invoke(mcli_app, ["workflows", "secrets", "--help"])
-        assert result.exit_code in [0, 2]
-
-    def test_workflows_dashboard_help(self, cli_runner, mcli_app):
-        """Test mcli workflows dashboard --help."""
-        result = cli_runner.invoke(mcli_app, ["workflows", "dashboard", "--help"])
-        assert result.exit_code in [0, 2]
-
-    def test_workflows_global_flag(self, cli_runner, mcli_app, env_setup):
-        """Test mcli workflows -g (global flag)."""
-        result = cli_runner.invoke(mcli_app, ["workflows", "-g", "--help"])
-        assert result.exit_code == 0
-
-
-# ============================================================================
-# Lock Commands Tests
-# ============================================================================
-
-
-class TestLockCommands:
-    """Tests for mcli lock subcommands."""
-
-    def test_lock_help(self, cli_runner, mcli_app):
-        """Test mcli lock --help."""
-        result = cli_runner.invoke(mcli_app, ["lock", "--help"])
-        assert result.exit_code == 0
-        assert "Manage workflow lockfile" in result.output
-
-    def test_lock_list(self, cli_runner, mcli_app, env_setup):
-        """Test mcli lock list."""
-        result = cli_runner.invoke(mcli_app, ["lock", "list"])
-        # Should succeed even with empty lockfile
-        assert result.exit_code == 0
-
-    def test_lock_verify_help(self, cli_runner, mcli_app):
-        """Test mcli lock verify --help."""
-        result = cli_runner.invoke(mcli_app, ["lock", "verify", "--help"])
-        assert result.exit_code == 0
-        assert "--global" in result.output or "-g" in result.output
-
-    def test_lock_verify(self, cli_runner, mcli_app, env_setup):
-        """Test mcli lock verify."""
-        result = cli_runner.invoke(mcli_app, ["lock", "verify"])
+    def test_sync_status(self, cli_runner, mcli_app, env_setup):
+        """Test mcli sync status."""
+        result = cli_runner.invoke(mcli_app, ["sync", "status"])
         # Should succeed or report issues
         assert result.exit_code in [0, 1]
 
-    def test_lock_verify_global(self, cli_runner, mcli_app, env_setup):
-        """Test mcli lock verify --global."""
-        result = cli_runner.invoke(mcli_app, ["lock", "verify", "--global"])
-        assert result.exit_code in [0, 1]
-
-    def test_lock_verify_with_code(self, cli_runner, mcli_app, env_setup):
-        """Test mcli lock verify --code."""
-        result = cli_runner.invoke(mcli_app, ["lock", "verify", "--code"])
-        assert result.exit_code in [0, 1]
-
-    def test_lock_update_help(self, cli_runner, mcli_app):
-        """Test mcli lock update --help."""
-        result = cli_runner.invoke(mcli_app, ["lock", "update", "--help"])
+    def test_sync_update_help(self, cli_runner, mcli_app):
+        """Test mcli sync update --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "update", "--help"])
         assert result.exit_code == 0
-        assert "--global" in result.output or "-g" in result.output
 
-    def test_lock_update(self, cli_runner, mcli_app, env_setup):
-        """Test mcli lock update."""
-        result = cli_runner.invoke(mcli_app, ["lock", "update"])
+    def test_sync_update(self, cli_runner, mcli_app, env_setup):
+        """Test mcli sync update."""
+        result = cli_runner.invoke(mcli_app, ["sync", "update"])
         # Should succeed or fail gracefully
         assert result.exit_code in [0, 1]
 
-    def test_lock_restore_help(self, cli_runner, mcli_app):
-        """Test mcli lock restore --help."""
-        result = cli_runner.invoke(mcli_app, ["lock", "restore", "--help"])
+    def test_sync_diff_help(self, cli_runner, mcli_app):
+        """Test mcli sync diff --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "diff", "--help"])
         assert result.exit_code == 0
 
-    def test_lock_restore_missing_arg(self, cli_runner, mcli_app):
-        """Test mcli lock restore without argument."""
-        result = cli_runner.invoke(mcli_app, ["lock", "restore"])
-        assert result.exit_code != 0
-        assert "Missing argument" in result.output
+    def test_sync_show_help(self, cli_runner, mcli_app):
+        """Test mcli sync show --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "show", "--help"])
+        assert result.exit_code == 0
+
+    def test_sync_push_help(self, cli_runner, mcli_app):
+        """Test mcli sync push --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "push", "--help"])
+        assert result.exit_code == 0
+
+    def test_sync_pull_help(self, cli_runner, mcli_app):
+        """Test mcli sync pull --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "pull", "--help"])
+        assert result.exit_code == 0
+
+    def test_sync_verify_help(self, cli_runner, mcli_app):
+        """Test mcli sync verify --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "verify", "--help"])
+        assert result.exit_code == 0
+
+    def test_sync_now_help(self, cli_runner, mcli_app):
+        """Test mcli sync now --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "now", "--help"])
+        assert result.exit_code == 0
+
+    def test_sync_history_help(self, cli_runner, mcli_app):
+        """Test mcli sync history --help."""
+        result = cli_runner.invoke(mcli_app, ["sync", "history", "--help"])
+        assert result.exit_code == 0
 
 
 # ============================================================================
@@ -683,21 +606,17 @@ class TestMockEnvironmentIntegration:
     """Integration tests that use the full mock environment."""
 
     def test_full_workflow_lifecycle(self, cli_runner, mcli_app, env_setup):
-        """Test a complete workflow lifecycle: list, check, update, verify."""
+        """Test a complete workflow lifecycle: list, sync status, sync update."""
         # Step 1: List workflows
-        result = cli_runner.invoke(mcli_app, ["workflow", "list"])
+        result = cli_runner.invoke(mcli_app, ["list"])
         assert result.exit_code in [0, 1]
 
-        # Step 2: Check lock status
-        result = cli_runner.invoke(mcli_app, ["lock", "list"])
-        assert result.exit_code == 0
+        # Step 2: Check sync status
+        result = cli_runner.invoke(mcli_app, ["sync", "status"])
+        assert result.exit_code in [0, 1]
 
         # Step 3: Update lockfile
-        result = cli_runner.invoke(mcli_app, ["lock", "update"])
-        assert result.exit_code in [0, 1]
-
-        # Step 4: Verify lockfile
-        result = cli_runner.invoke(mcli_app, ["lock", "verify"])
+        result = cli_runner.invoke(mcli_app, ["sync", "update"])
         assert result.exit_code in [0, 1]
 
     def test_self_commands_in_mock_env(self, cli_runner, mcli_app, env_setup):
@@ -714,14 +633,14 @@ class TestMockEnvironmentIntegration:
         result = cli_runner.invoke(mcli_app, ["self", "performance"])
         assert result.exit_code == 0
 
-    def test_workflows_group_with_scope(self, cli_runner, mcli_app, env_setup):
-        """Test workflows group with different scopes."""
-        # Local scope (default)
-        result = cli_runner.invoke(mcli_app, ["workflows", "--help"])
+    def test_run_with_scope(self, cli_runner, mcli_app, env_setup):
+        """Test run command with different scopes."""
+        # Default help
+        result = cli_runner.invoke(mcli_app, ["run", "--help"])
         assert result.exit_code == 0
 
         # Global scope
-        result = cli_runner.invoke(mcli_app, ["workflows", "-g", "--help"])
+        result = cli_runner.invoke(mcli_app, ["run", "-g", "--help"])
         assert result.exit_code == 0
 
 
@@ -737,12 +656,17 @@ class TestCommandRegistration:
         """Test that all top-level commands are registered."""
         commands = list(mcli_app.commands.keys())
 
+        # v8.0.0 structure
         expected_commands = [
             "self",
-            "workflow",
-            "workflows",
+            "sync",
+            "list",
             "run",
-            "lock",
+            "search",
+            "init",
+            "new",
+            "edit",
+            "rm",
         ]
 
         for cmd in expected_commands:
@@ -767,24 +691,29 @@ class TestCommandRegistration:
             for subcmd in expected_subcommands:
                 assert subcmd in subcommands, f"Expected self subcommand '{subcmd}' not registered"
 
-    def test_lock_subcommands_registered(self, mcli_app):
-        """Test that lock subcommands are registered."""
-        lock_cmd = mcli_app.commands.get("lock")
-        if lock_cmd and hasattr(lock_cmd, "commands"):
-            subcommands = list(lock_cmd.commands.keys())
+    def test_sync_subcommands_registered(self, mcli_app):
+        """Test that sync subcommands are registered."""
+        sync_cmd = mcli_app.commands.get("sync")
+        if sync_cmd and hasattr(sync_cmd, "commands"):
+            subcommands = list(sync_cmd.commands.keys())
 
             expected_subcommands = [
-                "list",
-                "restore",
-                "verify",
+                "init",
+                "info",
+                "teardown",
+                "status",
                 "update",
                 "diff",
                 "show",
+                "push",
+                "pull",
+                "verify",
+                "now",
                 "history",
             ]
 
             for subcmd in expected_subcommands:
-                assert subcmd in subcommands, f"Expected lock subcommand '{subcmd}' not registered"
+                assert subcmd in subcommands, f"Expected sync subcommand '{subcmd}' not registered"
 
 
 # ============================================================================
@@ -807,9 +736,9 @@ class TestErrorHandling:
 
     def test_missing_required_argument(self, cli_runner, mcli_app):
         """Test that missing required arguments produce appropriate errors."""
-        result = cli_runner.invoke(mcli_app, ["lock", "restore"])
+        result = cli_runner.invoke(mcli_app, ["edit"])
         assert result.exit_code != 0
-        assert "Missing argument" in result.output
+        assert "Missing argument" in result.output or "missing" in result.output.lower()
 
     def test_invalid_option(self, cli_runner, mcli_app):
         """Test that invalid options produce appropriate errors."""
@@ -898,25 +827,29 @@ class TestAllCommandsSummary:
             ["self", "completion"],
             ["self", "update"],
             ["self", "performance"],
-            ["workflow"],
-            ["workflow", "list"],
-            ["workflow", "search"],
-            ["workflow", "add"],
-            ["workflow", "edit"],
-            ["workflow", "remove"],
-            ["workflow", "import"],
-            ["workflow", "export"],
-            ["workflow", "info"],
-            ["workflow", "status"],
-            ["workflow", "sync"],
-            ["workflows"],
+            ["sync"],
+            ["sync", "init"],
+            ["sync", "info"],
+            ["sync", "teardown"],
+            ["sync", "status"],
+            ["sync", "update"],
+            ["sync", "diff"],
+            ["sync", "show"],
+            ["sync", "push"],
+            ["sync", "pull"],
+            ["sync", "verify"],
+            ["sync", "now"],
+            ["sync", "history"],
+            ["list"],
+            ["search"],
             ["run"],
-            ["lock"],
-            ["lock", "list"],
-            ["lock", "verify"],
-            ["lock", "update"],
-            ["lock", "write"],
-            ["lock", "restore"],
+            ["init"],
+            ["new"],
+            ["edit"],
+            ["rm"],
+            ["mv"],
+            ["health"],
+            ["context"],
         ]
 
         failures = []

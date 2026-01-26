@@ -516,25 +516,26 @@ class TestHealthCLI:
         """Test health --help command."""
         result = runner.invoke(health_group, ["--help"])
         assert result.exit_code == 0
-        assert "Repository health analysis" in result.output
-
-    def test_check_help(self, runner: CliRunner):
-        """Test health check --help command."""
-        result = runner.invoke(health_group, ["check", "--help"])
-        assert result.exit_code == 0
+        # The health command now shows comprehensive health checks
         assert "comprehensive health checks" in result.output.lower()
 
-    def test_fix_help(self, runner: CliRunner):
-        """Test health fix --help command."""
-        result = runner.invoke(health_group, ["fix", "--help"])
+    def test_has_quick_option(self, runner: CliRunner):
+        """Test health command has --quick option."""
+        result = runner.invoke(health_group, ["--help"])
         assert result.exit_code == 0
-        assert "Auto-fix" in result.output
+        assert "--quick" in result.output
 
-    def test_report_help(self, runner: CliRunner):
-        """Test health report --help command."""
-        result = runner.invoke(health_group, ["report", "--help"])
+    def test_has_json_option(self, runner: CliRunner):
+        """Test health command has --json option."""
+        result = runner.invoke(health_group, ["--help"])
         assert result.exit_code == 0
-        assert "Generate a health report" in result.output
+        assert "--json" in result.output
+
+    def test_has_skip_tests_option(self, runner: CliRunner):
+        """Test health command has --skip-tests option."""
+        result = runner.invoke(health_group, ["--help"])
+        assert result.exit_code == 0
+        assert "--skip-tests" in result.output
 
     @patch("mcli.self.health_cmd.generate_report")
     @patch("mcli.self.health_cmd.find_repo_root")
@@ -545,7 +546,7 @@ class TestHealthCLI:
         runner: CliRunner,
         tmp_path: Path,
     ):
-        """Test health check with JSON output."""
+        """Test health with JSON output."""
         mock_root.return_value = tmp_path
         mock_report.return_value = HealthReport(
             timestamp="2025-01-01T00:00:00",
@@ -555,7 +556,7 @@ class TestHealthCLI:
             overall_status=HealthStatus.PASSING,
         )
 
-        result = runner.invoke(health_group, ["check", "--json", "--skip-tests"])
+        result = runner.invoke(health_group, ["--json", "--skip-tests"])
 
         assert result.exit_code == 0
         # The JSON output should contain valid JSON somewhere in the output
@@ -573,24 +574,6 @@ class TestHealthCLI:
         assert "timestamp" in parsed
         assert "overall_status" in parsed
 
-    @patch("mcli.self.health_cmd.run_command")
-    @patch("mcli.self.health_cmd.find_repo_root")
-    def test_fix_dry_run(
-        self,
-        mock_root: MagicMock,
-        mock_run: MagicMock,
-        runner: CliRunner,
-        tmp_path: Path,
-    ):
-        """Test health fix --dry-run."""
-        mock_root.return_value = tmp_path
-
-        result = runner.invoke(health_group, ["fix", "--dry-run"])
-
-        assert result.exit_code == 0
-        assert "Would run" in result.output
-        assert "Dry run complete" in result.output
-
 
 # =============================================================================
 # Integration Tests
@@ -603,8 +586,9 @@ class TestHealthIntegration:
 
     def test_check_on_real_repo(self, runner: CliRunner):
         """Test running health check on the actual repo."""
-        result = runner.invoke(health_group, ["check", "--quick", "--skip-tests"])
+        result = runner.invoke(health_group, ["--quick", "--skip-tests"])
 
         # Should run without crashing
         assert result.exit_code in [0, 1]  # Can fail if issues exist
-        assert "Check Results" in result.output or "Repository Health" in result.output
+        # Check for health-related output
+        assert "Health" in result.output or "Check" in result.output or "Checking" in result.output

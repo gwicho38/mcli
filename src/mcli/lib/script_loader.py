@@ -433,8 +433,16 @@ class ScriptLoader:
         description = metadata.get("description", "Python command")
         requires = metadata.get("requires", [])
 
-        @click.command(name=name, help=description)
-        @click.argument("args", nargs=-1)
+        @click.command(
+            name=name,
+            help=description,
+            context_settings=dict(
+                ignore_unknown_options=True,
+                allow_extra_args=True,
+                allow_interspersed_args=False,
+            ),
+        )
+        @click.argument("args", nargs=-1, type=click.UNPROCESSED)
         @click.pass_context
         def python_venv_command(ctx: click.Context, args: Tuple[str, ...]) -> None:
             """Execute Python script with dependencies in venv."""
@@ -490,8 +498,16 @@ class ScriptLoader:
         description = metadata.get("description", "Shell command")
         shell_type = metadata.get("shell", "bash")
 
-        @click.command(name=name, help=description)
-        @click.argument("args", nargs=-1)
+        @click.command(
+            name=name,
+            help=description,
+            context_settings=dict(
+                ignore_unknown_options=True,
+                allow_extra_args=True,
+                allow_interspersed_args=False,
+            ),
+        )
+        @click.argument("args", nargs=-1, type=click.UNPROCESSED)
         @click.pass_context
         def shell_command(ctx: click.Context, args: Tuple[str, ...]) -> None:
             """Execute shell script command."""
@@ -544,8 +560,16 @@ class ScriptLoader:
         description = metadata.get("description", "JavaScript/TypeScript command")
         language = "TypeScript" if script_path.suffix == ".ts" else "JavaScript"
 
-        @click.command(name=name, help=description)
-        @click.argument("args", nargs=-1)
+        @click.command(
+            name=name,
+            help=description,
+            context_settings=dict(
+                ignore_unknown_options=True,
+                allow_extra_args=True,
+                allow_interspersed_args=False,
+            ),
+        )
+        @click.argument("args", nargs=-1, type=click.UNPROCESSED)
         @click.pass_context
         def bun_command(ctx: click.Context, args: Tuple[str, ...]) -> None:
             """Execute JS/TS script with Bun."""

@@ -91,7 +91,7 @@ class CachedTfIdfVectorizer:
                 )
                 logger.info("Using Rust TF-IDF vectorizer for enhanced performance")
                 return
-            except ImportError:
+            except (ImportError, AttributeError):
                 logger.warning("Rust vectorizer not available, falling back to sklearn")
 
         # Fallback to sklearn

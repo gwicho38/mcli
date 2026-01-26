@@ -149,9 +149,7 @@ def mv(
         # Moving between scopes
         from_scope = "global" if from_global else "local"
         to_scope = "global" if to_global else "local"
-        operation = MM.MOVE_OP.format(
-            from_name=from_name, from_scope=from_scope, to_scope=to_scope
-        )
+        operation = MM.MOVE_OP.format(from_name=from_name, from_scope=from_scope, to_scope=to_scope)
         if from_name != to_name:
             operation += MM.MOVE_AS_OP.format(to_name=to_name)
         console.print(MM.MOVING_COMMAND)

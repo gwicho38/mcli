@@ -291,7 +291,13 @@ def workflows_list(is_global: bool, as_json: bool):
                 for wf in workflows:
                     wf["workspace"] = workspace_name
                     flat_workflows.append(wf)
-            click.echo(json.dumps({"workflows": flat_workflows, "total": len(flat_workflows)}, indent=2, default=str))
+            click.echo(
+                json.dumps(
+                    {"workflows": flat_workflows, "total": len(flat_workflows)},
+                    indent=2,
+                    default=str,
+                )
+            )
         else:
             _render_workflow_list(stats["all_workflows"], is_global)
     except Exception as e:

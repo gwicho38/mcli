@@ -180,9 +180,7 @@ def env_command(
             env_info["workflows_dir"] = str(local_workflows)
             # Count workflow scripts
             script_count = sum(
-                1
-                for f in local_workflows.iterdir()
-                if f.suffix in [".py", ".sh", ".js", ".ts"]
+                1 for f in local_workflows.iterdir() if f.suffix in [".py", ".sh", ".js", ".ts"]
             )
             env_info["workflow_count"] = script_count
 

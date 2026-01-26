@@ -405,7 +405,9 @@ class LiveDashboard:
                 total = 0
                 for workspace_name, workflows in all_workflows.items():
                     # Shorten workspace name for display
-                    short_name = workspace_name.split("/")[-1] if "/" in workspace_name else workspace_name
+                    short_name = (
+                        workspace_name.split("/")[-1] if "/" in workspace_name else workspace_name
+                    )
                     if len(short_name) > 20:
                         short_name = short_name[:17] + "..."
 

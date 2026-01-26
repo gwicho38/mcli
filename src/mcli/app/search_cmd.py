@@ -42,15 +42,9 @@ def _search_workflows(query: str, workflows: list) -> list:
 @click.command("search")
 @click.argument("query")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
-@click.option(
-    "--all", "-a", "search_all", is_flag=True, help="Search all registered workspaces"
-)
-@click.option(
-    "--global", "-g", "is_global", is_flag=True, help="Search global workflows only"
-)
-@click.option(
-    "--builtin", "-b", is_flag=True, help="Also search built-in CLI commands"
-)
+@click.option("--all", "-a", "search_all", is_flag=True, help="Search all registered workspaces")
+@click.option("--global", "-g", "is_global", is_flag=True, help="Search global workflows only")
+@click.option("--builtin", "-b", is_flag=True, help="Also search built-in CLI commands")
 def search(query: str, as_json: bool, search_all: bool, is_global: bool, builtin: bool):
     """🔍 Search workflows by name, description, or tags.
 

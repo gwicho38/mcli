@@ -242,6 +242,16 @@ class TestConnectionPoolerFailover:
 class TestEnvironmentConfiguration:
     """Test environment variable configuration handling"""
 
+    def setup_method(self):
+        """Set up test environment"""
+        # Save original environment
+        self.original_env = os.environ.copy()
+
+    def teardown_method(self):
+        """Restore original environment"""
+        os.environ.clear()
+        os.environ.update(self.original_env)
+
     def test_sqlite_fallback_when_no_credentials(self):
         """Test that SQLite fallback is used when no credentials provided"""
         # Clear all database-related env vars

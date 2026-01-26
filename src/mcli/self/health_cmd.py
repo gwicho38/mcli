@@ -254,7 +254,13 @@ def check_eslint(repo_path: Path) -> CheckResult:
     """Check JavaScript/TypeScript linting with ESLint."""
     start = time.time()
 
-    eslint_configs = [".eslintrc", ".eslintrc.js", ".eslintrc.json", ".eslintrc.yml", "eslint.config.js"]
+    eslint_configs = [
+        ".eslintrc",
+        ".eslintrc.js",
+        ".eslintrc.json",
+        ".eslintrc.yml",
+        "eslint.config.js",
+    ]
     has_eslint = any((repo_path / cfg).exists() for cfg in eslint_configs)
 
     if not has_eslint:
@@ -606,7 +612,9 @@ def check_dart_format(repo_path: Path) -> CheckResult:
             duration_ms=(time.time() - start) * 1000,
         )
 
-    code, _, _ = run_command(["dart", "format", "--set-exit-if-changed", "--output=none", "."], cwd=repo_path)
+    code, _, _ = run_command(
+        ["dart", "format", "--set-exit-if-changed", "--output=none", "."], cwd=repo_path
+    )
 
     if code == 0:
         return CheckResult(
@@ -1475,21 +1483,25 @@ def generate_report(
 
     # Python-specific checks
     if languages["python"]:
-        check_functions.extend([
-            ("Black", lambda: check_black(repo_path)),
-            ("isort", lambda: check_isort(repo_path)),
-            ("Flake8", lambda: check_flake8(repo_path)),
-        ])
+        check_functions.extend(
+            [
+                ("Black", lambda: check_black(repo_path)),
+                ("isort", lambda: check_isort(repo_path)),
+                ("Flake8", lambda: check_flake8(repo_path)),
+            ]
+        )
         if not skip_tests:
             check_functions.append(("Python Tests", lambda: check_tests(repo_path, fast=quick)))
             if not quick:
                 check_functions.append(("Coverage", lambda: check_coverage(repo_path)))
         if not quick:
-            check_functions.extend([
-                ("Mypy", lambda: check_mypy(repo_path)),
-                ("Security", lambda: check_security(repo_path)),
-                ("Dependencies", lambda: check_dependencies(repo_path)),
-            ])
+            check_functions.extend(
+                [
+                    ("Mypy", lambda: check_mypy(repo_path)),
+                    ("Security", lambda: check_security(repo_path)),
+                    ("Dependencies", lambda: check_dependencies(repo_path)),
+                ]
+            )
         if not skip_build and not quick:
             check_functions.append(("Python Build", lambda: check_build(repo_path)))
 
@@ -1523,10 +1535,12 @@ def generate_report(
 
     # Universal non-quick checks
     if not quick:
-        check_functions.extend([
-            ("Documentation", lambda: check_documentation(repo_path)),
-            ("CI Status", lambda: check_ci_status(repo_path)),
-        ])
+        check_functions.extend(
+            [
+                ("Documentation", lambda: check_documentation(repo_path)),
+                ("CI Status", lambda: check_ci_status(repo_path)),
+            ]
+        )
 
     # Run checks with progress
     with Progress(
@@ -1682,9 +1696,7 @@ def display_report(report: HealthReport, verbose: bool = False) -> None:
 @click.option("--skip-tests", is_flag=True, help="Skip running tests")
 @click.option("--skip-build", is_flag=True, help="Skip build verification")
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON")
-def health(
-    quick: bool, verbose: bool, skip_tests: bool, skip_build: bool, output_json: bool
-):
+def health(quick: bool, verbose: bool, skip_tests: bool, skip_build: bool, output_json: bool):
     """🏥 Run comprehensive health checks on the repository.
 
     Analyzes the codebase for:

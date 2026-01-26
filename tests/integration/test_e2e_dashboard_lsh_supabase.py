@@ -34,9 +34,10 @@ except ImportError:
     load_dotenv = lambda: None
     HAS_DEPENDENCIES = False
 
-# Load environment variables if available
-if HAS_DEPENDENCIES:
-    load_dotenv()
+# Note: We don't call load_dotenv() here at module level because it would
+# pollute the environment for other tests. Instead, we rely on the fixture
+# to check for environment variables, and load_dotenv can be called in
+# specific fixtures if needed.
 
 
 class TestInfrastructureConnectivity:
