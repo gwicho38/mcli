@@ -1,4 +1,4 @@
-"""Tests for LSH data pipeline"""
+"""Tests for LSH data pipeline."""
 
 import asyncio
 import json
@@ -6,7 +6,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -470,7 +470,7 @@ class TestDataProcessor:
         assert len(output_files) == 1
 
         # Verify content
-        with open(output_files[0], "r") as f:
+        with open(output_files[0]) as f:
             lines = f.readlines()
             assert len(lines) == 2
             assert json.loads(lines[0])["id"] == "1"
@@ -489,7 +489,7 @@ class TestDataProcessor:
         assert len(output_files) == 1
 
         # Verify content
-        with open(output_files[0], "r") as f:
+        with open(output_files[0]) as f:
             data = json.load(f)
             assert len(data) == 2
             assert data[0]["id"] == "1"
@@ -512,7 +512,7 @@ class TestDataProcessor:
         # Verify content
         import csv
 
-        with open(output_files[0], "r") as f:
+        with open(output_files[0]) as f:
             reader = csv.DictReader(f)
             rows = list(reader)
             assert len(rows) == 2

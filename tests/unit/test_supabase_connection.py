@@ -124,7 +124,7 @@ class TestIPv6ErrorHandling:
 
             # Should raise ConnectionError with helpful message
             with pytest.raises(ConnectionError) as exc_info:
-                with get_session() as session:
+                with get_session():  # noqa: F841
                     pass
 
             error_message = str(exc_info.value)
@@ -187,7 +187,7 @@ class TestDatabaseSessionManagement:
 
         from mcli.ml.database.session import get_session
 
-        with get_session() as session:
+        with get_session():  # noqa: F841
             pass
 
         # Verify SELECT 1 was executed to test connection

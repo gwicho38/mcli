@@ -11,7 +11,6 @@ Tests cover:
 """
 
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -34,8 +33,6 @@ from mcli.lib.constants import (
     ScriptCommentPrefixes,
     ScriptExtensions,
     ScriptLanguages,
-    ScriptMetadataDefaults,
-    ScriptMetadataKeys,
     ShellTypes,
 )
 from mcli.lib.errors import (

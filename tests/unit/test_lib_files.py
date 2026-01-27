@@ -5,10 +5,19 @@ NOTE: This module has been migrated to portable JSON commands.
 Tests are skipped as the Python module no longer exists.
 """
 
+import click
 import pytest
+from click.testing import CliRunner
 
 # Skip all tests in this module - file commands now loaded from JSON
 pytestmark = pytest.mark.skip(reason="file commands migrated to portable JSON format")
+
+
+# Stub command group for skipped tests (actual module was migrated to JSON)
+@click.group()
+def file():
+    """Personal file utility."""
+    pass
 
 
 def test_file_group_help():

@@ -8,8 +8,7 @@ that hasn't been fully implemented yet. These tests are skipped until the
 feature is complete.
 """
 
-import json
-from pathlib import Path
+import json  # noqa: F401
 
 import pytest
 from click.testing import CliRunner

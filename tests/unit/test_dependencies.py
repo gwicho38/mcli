@@ -5,9 +5,6 @@ Tests that optional dependencies (redis) are handled gracefully
 when not installed.
 """
 
-import sys
-from unittest.mock import Mock, patch
-
 import pytest
 
 

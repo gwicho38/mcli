@@ -1,30 +1,25 @@
 """Unit tests for the health command module."""
 
 import json
-import subprocess
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import MagicMock, patch
 
 import pytest
 from click.testing import CliRunner
 
+from mcli.self.health_cmd import check_coverage  # noqa: F401 - used in patch decorators
+from mcli.self.health_cmd import check_dependencies  # noqa: F401 - used in patch decorators
+from mcli.self.health_cmd import check_flake8  # noqa: F401 - used in patch decorators
+from mcli.self.health_cmd import check_isort  # noqa: F401 - used in patch decorators
+from mcli.self.health_cmd import check_mypy  # noqa: F401 - used in patch decorators
 from mcli.self.health_cmd import (
     CheckResult,
     HealthReport,
     HealthStatus,
     check_black,
-    check_build,
-    check_ci_status,
     check_code_metrics,
-    check_coverage,
-    check_dependencies,
     check_documentation,
-    check_flake8,
     check_git_status,
-    check_isort,
-    check_mypy,
     check_security,
     check_tests,
     find_repo_root,

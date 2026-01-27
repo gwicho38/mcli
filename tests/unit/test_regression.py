@@ -118,7 +118,7 @@ class TestFixedErdFunctions(unittest.TestCase):
             self.assertIsInstance(
                 result, list, f"Expected list result with top_n=3, but got {type(result)}"
             )
-            print(f"✓ top_n=3 returned a valid result")
+            print("✓ top_n=3 returned a valid result")
 
             return True
         except ImportError:

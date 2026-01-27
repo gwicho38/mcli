@@ -1,10 +1,4 @@
-"""
-Tests for notebook executor functionality.
-"""
-
-import json
-import tempfile
-from pathlib import Path
+"""Tests for notebook executor functionality."""
 
 import pytest
 

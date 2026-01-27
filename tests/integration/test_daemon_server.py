@@ -9,8 +9,10 @@ Tests are skipped until they can be refactored for the new architecture.
 import os
 import sqlite3
 import tempfile
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Optional
 from unittest.mock import patch
 
 import pytest
@@ -20,6 +22,74 @@ from click.testing import CliRunner
 pytestmark = pytest.mark.skip(
     reason="daemon commands migrated to portable JSON format, needs test refactoring"
 )
+
+
+# Stub classes for skipped tests (actual modules were migrated to JSON format)
+@dataclass
+class Command:
+    """Stub Command class for skipped tests."""
+
+    id: str
+    name: str
+    description: str
+    code: str
+    language: str
+    group: Optional[str] = None
+    tags: list = field(default_factory=list)
+    execution_count: int = 0
+    is_active: bool = True
+    last_executed: Optional[datetime] = None
+    created_at: datetime = field(default_factory=datetime.now)
+    updated_at: datetime = field(default_factory=datetime.now)
+
+
+class CommandDatabase:
+    """Stub CommandDatabase class for skipped tests."""
+
+    def __init__(self, db_path: str) -> None:
+        pass
+
+    def add_command(self, cmd: Any) -> None:
+        pass
+
+    def get_command(self, cmd_id: str) -> Optional[Any]:
+        return None
+
+    def list_commands(self, **kwargs: Any) -> list:
+        return []
+
+    def update_command(self, cmd: Any) -> None:
+        pass
+
+    def delete_command(self, cmd_id: str) -> None:
+        pass
+
+
+class CommandExecutor:
+    """Stub CommandExecutor class for skipped tests."""
+
+    def __init__(self, db: Any) -> None:
+        pass
+
+    def execute(self, cmd: Any) -> Any:
+        return None
+
+
+class DaemonService:
+    """Stub DaemonService class for skipped tests."""
+
+    def __init__(self, **kwargs: Any) -> None:
+        pass
+
+    def start(self) -> None:
+        pass
+
+    def stop(self) -> None:
+        pass
+
+
+# Stub daemon instance for tests
+daemon = DaemonService()
 
 
 class TestCommand:

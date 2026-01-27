@@ -5,8 +5,6 @@ Tests language detection, help text extraction, script validation,
 and Click command creation for folder-based and standalone workflows.
 """
 
-import tempfile
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import click
@@ -283,7 +281,7 @@ class TestCommandCreation:
         from click.testing import CliRunner
 
         runner = CliRunner()
-        result = runner.invoke(cmd, [])
+        runner.invoke(cmd, [])
 
         # Verify subprocess.run was called
         assert mock_run.called
@@ -307,7 +305,7 @@ class TestCommandCreation:
         from click.testing import CliRunner
 
         runner = CliRunner()
-        result = runner.invoke(cmd, [])
+        runner.invoke(cmd, [])
 
         # Verify subprocess.run was called
         assert mock_run.called

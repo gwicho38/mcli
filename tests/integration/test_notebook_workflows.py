@@ -7,13 +7,11 @@ NOTE: Dynamic notebook discovery as CLI commands is a planned feature that
 requires additional work. These tests are skipped until the feature is complete.
 """
 
-import json
-from pathlib import Path
+import json  # noqa: F401
 
 import pytest
 from click.testing import CliRunner
 
-from mcli.lib.custom_commands import get_command_manager
 from mcli.workflow.workflow import workflows
 
 pytestmark = pytest.mark.skip(reason="Dynamic notebook command discovery not yet implemented")

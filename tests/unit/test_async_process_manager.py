@@ -6,17 +6,15 @@ Tests are conditional on dependencies being available.
 """
 
 import asyncio
-import json
 import tempfile
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 # Check for async dependencies
 try:
-    import aiosqlite
+    import aiosqlite  # noqa: F401
 
     from mcli.workflow.daemon.async_process_manager import (
         AsyncProcessContainer,
@@ -374,9 +372,7 @@ class TestAsyncProcessManager:
     @pytest.mark.asyncio
     async def test_start_process_failure(self, manager):
         """Test handling start process failure"""
-        with patch(
-            "asyncio.create_subprocess_exec", side_effect=Exception("Failed to start")
-        ) as mock_exec:
+        with patch("asyncio.create_subprocess_exec", side_effect=Exception("Failed to start")):
             with pytest.raises(RuntimeError, match="Failed to start process"):
                 await manager.start_process("failing_proc", "invalid_command", [])
 

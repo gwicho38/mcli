@@ -5,15 +5,30 @@ NOTE: This module has been migrated to portable JSON commands.
 Tests are skipped as the Python module no longer exists.
 """
 
-import subprocess
+import subprocess  # noqa: F401
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from typing import Any, Optional
+from unittest.mock import Mock, patch  # noqa: F401
 
 import pytest
 
 # Skip all tests in this module - git_commit commands now loaded from JSON
 pytestmark = pytest.mark.skip(reason="git_commit commands migrated to portable JSON format")
+
+
+# Stub class for skipped tests (actual module was migrated to JSON format)
+class GitCommitWorkflow:
+    """Stub GitCommitWorkflow class for skipped tests."""
+
+    def __init__(
+        self, repo_path: str, use_ai: bool = False, ai_service: Optional[Any] = None
+    ) -> None:
+        self.repo_path = Path(repo_path)
+        self.use_ai = use_ai
+        self.ai_service = ai_service
+        if not (self.repo_path / ".git").exists():
+            raise ValueError("Not a git repository")
 
 
 class TestGitCommitWorkflow:

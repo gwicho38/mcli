@@ -18,7 +18,7 @@ def mock_fitz():
 
         # Mock page
         mock_page = MagicMock()
-        mock_page.rect = MagickMock()
+        mock_page.rect = MagicMock()
         mock_page.rect.width = 612
         mock_page.rect.height = 792
         mock_doc.load_page.return_value = mock_page

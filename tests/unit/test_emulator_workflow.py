@@ -7,11 +7,10 @@ Android emulators and iOS simulators.
 
 import json
 import subprocess
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
-from click.testing import CliRunner
+from click.testing import CliRunner  # noqa: F401
 
 # Import the emulator manager class
 # Note: Since this is loaded dynamically from JSON, we'll test the JSON structure

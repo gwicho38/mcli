@@ -972,7 +972,7 @@ import pydot
 SAMPLE_GRAPH_DATA = {}
 try:
     json_file_path = "/Users/lefv/repos/mcli/realGraph.json"
-    with open(json_file_path, "r") as f:
+    with open(json_file_path) as f:
         SAMPLE_GRAPH_DATA = json.load(f)
 except Exception as e:
     print(e)
@@ -982,14 +982,14 @@ except Exception as e:
 def load_graph_data(json_file_path):
     """Load the graph data from a JSON file."""
     try:
-        with open(json_file_path, "r") as f:
+        with open(json_file_path) as f:
             return json.load(f)
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON: {e}")
         print("Attempting to fix the JSON file...")
 
         # Try to read the file and fix common JSON issues
-        with open(json_file_path, "r") as f:
+        with open(json_file_path) as f:
             content = f.read()
 
         # Replace any trailing commas in arrays or objects
@@ -1004,7 +1004,7 @@ def load_graph_data(json_file_path):
         print("Trying to load the fixed file...")
 
         # Try loading the fixed file
-        with open(fixed_file, "r") as f:
+        with open(fixed_file) as f:
             return json.load(f)
 
 
@@ -1135,7 +1135,7 @@ def create_table_html(entity, node_data, font_size=10):
     entity = entity.replace(">", "]")
 
     # Start the HTML table
-    html = f'<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="2">'
+    html = '<<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="2">'
 
     # Header row
     html += f'<TR><TD PORT="header" COLSPAN="2" BGCOLOR="lightgrey"><B><FONT POINT-SIZE="{font_size+2}">{entity}</FONT></B></TD></TR>'

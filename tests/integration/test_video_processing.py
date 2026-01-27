@@ -5,10 +5,19 @@ NOTE: This module has been migrated to portable JSON commands.
 Tests are skipped as the Python module no longer exists.
 """
 
+import click
 import pytest
+from click.testing import CliRunner
 
 # Skip all tests in this module - videos commands now loaded from JSON
 pytestmark = pytest.mark.skip(reason="videos commands migrated to portable JSON format")
+
+
+# Stub command group for skipped tests (actual module was migrated to JSON)
+@click.group()
+def videos():
+    """Video processing and overlay removal tools."""
+    pass
 
 
 def test_videos_group_help():

@@ -435,7 +435,7 @@ class TestJobStorage:
             assert export_path.exists()
 
             # Verify export content
-            with open(export_path, "r") as f:
+            with open(export_path) as f:
                 export_data = json.load(f)
 
             assert "jobs" in export_data
@@ -519,7 +519,7 @@ class TestJobStorage:
             with open(import_path2, "w") as f:
                 json.dump(import_data2, f)
 
-            count = storage.import_jobs(str(import_path2), replace=True)
+            storage.import_jobs(str(import_path2), replace=True)
 
             # Old job should be replaced
             jobs = storage.load_jobs()
@@ -628,7 +628,7 @@ class TestJobStorage:
 
             # Verify file exists and contains correct data
             assert test_file.exists()
-            with open(test_file, "r") as f:
+            with open(test_file) as f:
                 loaded_data = json.load(f)
 
             assert loaded_data == test_data

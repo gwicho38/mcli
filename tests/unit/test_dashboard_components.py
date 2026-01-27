@@ -192,7 +192,7 @@ class TestMetricsComponent:
         for status in statuses:
             badge = display_status_badge(status)
             assert isinstance(badge, str), f"Badge should be a string for {status}"
-            assert status in badge.lower(), f"Badge should contain status text"
+            assert status in badge.lower(), "Badge should contain status text"
 
         logger.info("✅ Status badge test passed!")
 

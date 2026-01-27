@@ -1,7 +1,7 @@
-"""Test suite for authentication and authorization"""
+"""Test suite for authentication and authorization."""
 
-from datetime import datetime, timedelta
-from unittest.mock import MagicMock, Mock, patch
+from datetime import timedelta
+from unittest.mock import Mock, patch
 
 import jwt
 import pytest
@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 # Check for aiosqlite dependency
 try:
-    import aiosqlite
+    import aiosqlite  # noqa: F401
 
     HAS_AIOSQLITE = True
 except ImportError:
@@ -109,7 +109,7 @@ class TestAuthManager:
             last_name="User",
         )
 
-        user = await auth_manager.register_user(user_data, mock_db)
+        await auth_manager.register_user(user_data, mock_db)
         assert mock_db.add.called
         assert mock_db.commit.called
 
@@ -358,7 +358,7 @@ class TestAuthIntegration:
             )
             mock_register.return_value = mock_user
 
-            registered_user = await auth_manager.register_user(user_data, mock_db)
+            await auth_manager.register_user(user_data, mock_db)
 
         # Login
         with patch.object(auth_manager, "authenticate_user") as mock_auth:

@@ -1,7 +1,6 @@
 """Unit tests for Storacha CLI wrapper."""
 
 import json
-import subprocess
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -98,7 +97,7 @@ class TestStorachaCLIInit:
     def test_creates_parent_directory(self, tmp_path):
         """Test that parent directory is created if missing."""
         config_path = tmp_path / "subdir" / "config.json"
-        cli = StorachaCLI(config_path=config_path)
+        StorachaCLI(config_path=config_path)
         assert config_path.parent.exists()
 
 

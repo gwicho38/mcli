@@ -805,7 +805,7 @@ class TranslationRequest(BaseModel):
 class ModelService:
     """Main model service daemon."""
 
-    def __init__(self, config: dict[str, Any] = dict["", object()]()):
+    def __init__(self, config: dict[str, Any] | None = None):
         self.config = {**DEFAULT_CONFIG, **(config or {})}
         self.model_manager = ModelManager(
             models_dir=self.config["models_dir"], max_cache_size=self.config["model_cache_size"]

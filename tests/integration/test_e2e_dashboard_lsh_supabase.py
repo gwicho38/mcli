@@ -90,7 +90,7 @@ class TestInfrastructureConnectivity:
         assert "pid" in data, "Missing PID in status"
         assert "memoryUsage" in data, "Missing memory usage"
 
-        print(f"✓ LSH Daemon Status: Running")
+        print("✓ LSH Daemon Status: Running")
         print(f"  PID: {data['pid']}")
         print(f"  Memory: {data['memoryUsage']['heapUsed'] / 1024 / 1024:.2f} MB")
 
@@ -104,7 +104,7 @@ class TestInfrastructureConnectivity:
         assert "jobs" in data, "Missing jobs in response"
         assert "total" in data, "Missing total in response"
 
-        print(f"✓ LSH Jobs Endpoint: Accessible")
+        print("✓ LSH Jobs Endpoint: Accessible")
         print(f"  Total jobs: {data['total']}")
 
     def test_supabase_connection(self, supabase_client):
@@ -115,8 +115,8 @@ class TestInfrastructureConnectivity:
 
             assert response.data is not None, "Supabase query returned None"
 
-            print(f"✓ Supabase Connection: Successful")
-            print(f"  Database: Connected")
+            print("✓ Supabase Connection: Successful")
+            print("  Database: Connected")
 
         except Exception as e:
             pytest.fail(f"Supabase connection failed: {e}")
@@ -154,7 +154,7 @@ class TestInfrastructureConnectivity:
                 f"  Sample: {disclosure.get('asset_ticker')} - {disclosure.get('transaction_type')}"
             )
         else:
-            print(f"⚠ Trading Disclosures Table: Empty (no test data)")
+            print("⚠ Trading Disclosures Table: Empty (no test data)")
 
 
 class TestDataFlow:
@@ -252,7 +252,7 @@ class TestDataFlow:
             print(f"✓ Fetched {len(df)} recent disclosures (last 90 days)")
             print(f"  Date range: {df['disclosure_date'].min()} to {df['disclosure_date'].max()}")
         else:
-            print(f"⚠ No recent disclosures (last 90 days)")
+            print("⚠ No recent disclosures (last 90 days)")
 
     def test_politician_statistics_calculation(self, supabase_client, sample_politician):
         """Test calculating politician trading statistics"""
@@ -473,7 +473,7 @@ class TestMLPredictionPipeline:
         assert -1.0 <= predicted_return <= 1.0, f"Predicted return out of range: {predicted_return}"
         assert 0.5 <= confidence <= 0.95, f"Confidence out of range: {confidence}"
 
-        print(f"✓ Generated prediction from features")
+        print("✓ Generated prediction from features")
         print(f"  Recommendation: {recommendation}")
         print(f"  Predicted return: {predicted_return*100:.2f}%")
         print(f"  Confidence: {confidence*100:.1f}%")
@@ -518,7 +518,7 @@ class TestLSHIntegration:
         assert "jobs" in data, "Missing jobs in response"
         assert "total" in data, "Missing total count"
 
-        print(f"✓ LSH jobs listed successfully")
+        print("✓ LSH jobs listed successfully")
         print(f"  Total jobs: {data['total']}")
 
 
@@ -642,7 +642,7 @@ class TestEndToEndWorkflow:
 
         # Final verification
         print("\n✅ Complete end-to-end workflow successful!")
-        print(f"   Supabase → Features → Prediction → LSH verification")
+        print("   Supabase → Features → Prediction → LSH verification")
 
     def test_dashboard_data_pipeline(self, supabase_client):
         """Test dashboard's complete data pipeline"""
@@ -685,7 +685,7 @@ class TestEndToEndWorkflow:
             for col in required_cols:
                 assert col in df.columns, f"Missing required column: {col}"
 
-            print(f"  ✓ Data structure validated")
+            print("  ✓ Data structure validated")
 
         print("\n✅ Dashboard data pipeline test successful!")
 
