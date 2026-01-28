@@ -1,15 +1,21 @@
 import json
 import logging
 import os
+import shlex
 import shutil
 import subprocess
 import sys
+import warnings
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Union
 
 from mcli.lib.logger.logger import get_logger, register_subprocess
 
 logger = get_logger(__name__)
+
+
+# Maximum command length to prevent memory issues
+MAX_COMMAND_LENGTH = 100000
 
 
 def shell_exec(script_path: str, function_name: str, *args) -> Dict[str, Any]:
@@ -100,11 +106,57 @@ def fatal_error(msg):
     sys.exit(1)
 
 
-def execute_os_command(command, fail_on_error=True, stdin=None):
-    logger.debug("Executing command '%s'", command)
+def execute_os_command(
+    command: Union[str, List[str]],
+    fail_on_error: bool = True,
+    stdin: Optional[str] = None,
+    timeout: Optional[int] = None,
+) -> str:
+    """
+    Execute an OS command and return stdout.
+
+    SECURITY WARNING: This function uses shell=True when command is a string,
+    which can be vulnerable to shell injection if the command contains
+    unsanitized user input. Prefer using execute_command_safe() or pass
+    command as a list of arguments.
+
+    Args:
+        command: Command to execute (string or list of args)
+        fail_on_error: If True, call fatal_error on failure; else raise RuntimeError
+        stdin: Optional string to pass to stdin
+        timeout: Optional timeout in seconds
+
+    Returns:
+        stdout from the command
+
+    Raises:
+        RuntimeError: If command fails and fail_on_error is False
+        ValueError: If command is empty or too long
+    """
+    # Input validation
+    if not command:
+        raise ValueError("Command cannot be empty")
+
+    # Check for dangerous patterns in string commands
+    use_shell = isinstance(command, str)
+
+    if use_shell:
+        # Validate command length
+        if len(command) > MAX_COMMAND_LENGTH:
+            raise ValueError(f"Command exceeds maximum length of {MAX_COMMAND_LENGTH}")
+
+        # Check for null bytes (potential injection)
+        if "\x00" in command:
+            raise ValueError("Command contains null bytes")
+
+        # Log warning for shell=True usage
+        logger.debug("Executing shell command (shell=True): %s", _sanitize_for_log(command))
+    else:
+        logger.debug("Executing command: %s", command)
+
     process = subprocess.Popen(
         command,
-        shell=True,
+        shell=use_shell,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         stdin=subprocess.PIPE,
@@ -113,24 +165,142 @@ def execute_os_command(command, fail_on_error=True, stdin=None):
     # Register the process for system monitoring
     register_subprocess(process)
 
-    if stdin is not None:
-        stdin = stdin.encode()
-    stdout, stderr = [stream.decode().strip() for stream in process.communicate(input=stdin)]
+    stdin_bytes = stdin.encode() if stdin is not None else None
+
+    try:
+        stdout_bytes, stderr_bytes = process.communicate(input=stdin_bytes, timeout=timeout)
+        stdout = stdout_bytes.decode().strip()
+        stderr = stderr_bytes.decode().strip()
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.communicate()  # Clean up
+        msg = f"Command timed out after {timeout} seconds"
+        if fail_on_error:
+            fatal_error(msg)
+        else:
+            raise RuntimeError(msg)
 
     logger.debug("rc    > %s", process.returncode)
     if stdout:
-        logger.debug("stdout> %s", stdout)
+        logger.debug("stdout> %s", stdout[:500] if len(stdout) > 500 else stdout)
     if stderr:
-        logger.debug("stderr> %s", stderr)
+        logger.debug("stderr> %s", stderr[:500] if len(stderr) > 500 else stderr)
 
     if process.returncode:
-        msg = f'Failed to execute command "{command}", error:\n{stdout}{stderr}'
+        msg = f"Failed to execute command, error:\n{stdout}{stderr}"
         if fail_on_error:
             fatal_error(msg)
         else:
             raise RuntimeError(msg)
 
     return stdout
+
+
+def execute_command_safe(
+    args: List[str],
+    fail_on_error: bool = True,
+    stdin: Optional[str] = None,
+    timeout: Optional[int] = None,
+    cwd: Optional[str] = None,
+    env: Optional[Dict[str, str]] = None,
+) -> str:
+    """
+    Execute a command safely without shell interpolation.
+
+    This is the preferred way to execute commands as it avoids shell injection
+    vulnerabilities by not using shell=True.
+
+    Args:
+        args: List of command arguments (first element is the executable)
+        fail_on_error: If True, call fatal_error on failure; else raise RuntimeError
+        stdin: Optional string to pass to stdin
+        timeout: Optional timeout in seconds
+        cwd: Optional working directory
+        env: Optional environment variables (merged with current env)
+
+    Returns:
+        stdout from the command
+
+    Raises:
+        RuntimeError: If command fails and fail_on_error is False
+        ValueError: If args is empty
+    """
+    if not args:
+        raise ValueError("Command arguments cannot be empty")
+
+    logger.debug("Executing command safely: %s", args)
+
+    # Merge environment if provided
+    cmd_env = None
+    if env:
+        cmd_env = os.environ.copy()
+        cmd_env.update(env)
+
+    process = subprocess.Popen(
+        args,
+        shell=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+        cwd=cwd,
+        env=cmd_env,
+    )
+
+    # Register the process for system monitoring
+    register_subprocess(process)
+
+    stdin_bytes = stdin.encode() if stdin is not None else None
+
+    try:
+        stdout_bytes, stderr_bytes = process.communicate(input=stdin_bytes, timeout=timeout)
+        stdout = stdout_bytes.decode().strip()
+        stderr = stderr_bytes.decode().strip()
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.communicate()  # Clean up
+        msg = f"Command timed out after {timeout} seconds"
+        if fail_on_error:
+            fatal_error(msg)
+        else:
+            raise RuntimeError(msg)
+
+    logger.debug("rc    > %s", process.returncode)
+    if stdout:
+        logger.debug("stdout> %s", stdout[:500] if len(stdout) > 500 else stdout)
+    if stderr:
+        logger.debug("stderr> %s", stderr[:500] if len(stderr) > 500 else stderr)
+
+    if process.returncode:
+        msg = f"Failed to execute command {args[0]}, error:\n{stdout}{stderr}"
+        if fail_on_error:
+            fatal_error(msg)
+        else:
+            raise RuntimeError(msg)
+
+    return stdout
+
+
+def _sanitize_for_log(command: str, max_length: int = 200) -> str:
+    """Sanitize command string for safe logging, masking potential secrets."""
+    import re
+
+    if not command:
+        return "<empty>"
+
+    # Mask potential secrets
+    patterns = [
+        (re.compile(r"(password|passwd|pwd|secret|token|key|api_key)\s*=\s*\S+", re.I), r"\1=****"),
+        (re.compile(r"(Bearer|Basic)\s+\S+", re.I), r"\1 ****"),
+    ]
+
+    sanitized = command
+    for pattern, replacement in patterns:
+        sanitized = pattern.sub(replacement, sanitized)
+
+    if len(sanitized) > max_length:
+        sanitized = sanitized[: max_length - 3] + "..."
+
+    return sanitized
 
 
 def cli_exec():
