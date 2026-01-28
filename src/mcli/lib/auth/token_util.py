@@ -660,7 +660,7 @@ EOF"""
 
     execute_os_command(secret)
     time.sleep(10)
-    patch_service_account(namespace, container_registry, context_arg)
+    patch_service_account(namespace, container_registry, context)
 
 
 def az_login():

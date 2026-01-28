@@ -173,3 +173,53 @@ class TestPatchServiceAccountSecurity:
             # Both namespace and service_account should be quoted
             assert shlex.quote(malicious_namespace) in cmd
             assert shlex.quote(malicious_service_account) in cmd
+
+
+class TestConfigureRegistrySecret:
+    """Tests for configure_registry_secret function."""
+
+    def test_configure_registry_secret_passes_context_not_context_arg(self):
+        """Test that configure_registry_secret passes context (not context_arg) to patch_service_account.
+
+        This is a regression test for a bug where context_arg (e.g., ' --context dev')
+        was incorrectly passed to patch_service_account instead of context (e.g., 'dev').
+        """
+        with (
+            patch("mcli.lib.auth.token_util.execute_os_command") as mock_exec,
+            patch("mcli.lib.auth.token_util.container_access_token") as mock_token,
+            patch("mcli.lib.auth.token_util.time.sleep"),
+        ):  # Skip the 10 second sleep
+
+            # Mock the container_access_token to return a fake token
+            mock_token.return_value = "fake-token"
+
+            # Mock execute_os_command to return valid JSON for namespace check
+            def mock_exec_side_effect(cmd, *args, **kwargs):
+                if "get ns -o json" in cmd:
+                    # Return namespace list with test-ns already existing
+                    return '{"items": [{"metadata": {"name": "test-ns"}}]}'
+                return ""
+
+            mock_exec.side_effect = mock_exec_side_effect
+
+            from mcli.lib.auth.token_util import configure_registry_secret
+
+            test_context = "my-kube-context"
+            configure_registry_secret(
+                namespace="test-ns", container_registry="registry.example.com", context=test_context
+            )
+
+            # Find the patch serviceaccount call
+            patch_calls = [
+                call for call in mock_exec.call_args_list if "patch serviceaccount" in call[0][0]
+            ]
+
+            assert len(patch_calls) == 1, "Expected exactly one patch serviceaccount call"
+            patch_cmd = patch_calls[0][0][0]
+
+            # The context should be properly quoted, not contain the raw --context flag
+            # Bug: was passing " --context my-kube-context" instead of "my-kube-context"
+            assert f"--context {shlex.quote(test_context)}" in patch_cmd
+            # Should NOT have double --context flags
+            assert "--context  --context" not in patch_cmd
+            assert "--context ' --context" not in patch_cmd
