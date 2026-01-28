@@ -4,6 +4,7 @@ import base64
 import json
 import math
 import os
+import shlex
 import sys
 import time
 from urllib.request import urlopen
@@ -502,8 +503,10 @@ def delete_namespace(context, namespace):
         namespace,
     )
     try:
+        # Use shlex.quote to prevent command injection
         execute_os_command(
-            f"kubectl --context={context} delete ns {namespace}", fail_on_error=False
+            f"kubectl --context={shlex.quote(context)} delete ns {shlex.quote(namespace)}",
+            fail_on_error=False,
         )
     except BaseException as e:
         if "Error from server (NotFound): namespaces" in str(e):
@@ -531,7 +534,8 @@ def configure_k8s_context(namespace, context):
             sys.exit(1)
         # noinspection PyBroadException
         try:
-            execute_os_command(f"kubectl config use-context {context}")
+            # Use shlex.quote to prevent command injection
+            execute_os_command(f"kubectl config use-context {shlex.quote(context)}")
             logger.info(
                 "Configured successfully to Namespace (%s) and Context (%s)", namespace, context
             )
@@ -539,7 +543,7 @@ def configure_k8s_context(namespace, context):
             fatal_error(
                 f'No context exists with the name: "{context}"'
                 f" Run the following command to start minikube:\n"
-                f" minikube -p {context} start"
+                f" minikube -p {shlex.quote(context)} start"
             )
 
 
@@ -597,25 +601,28 @@ def imagepull_secret_name(container_registry: str) -> str:
 
 
 def ensure_namespace(namespace, context=None):
-    context = "" if context is None else f" --context {context}"
-    namespaces = json.loads(execute_os_command(f"kubectl{context} get ns -o json")).get("items")
+    # Use shlex.quote to prevent command injection
+    context_arg = "" if context is None else f" --context {shlex.quote(context)}"
+    namespaces = json.loads(execute_os_command(f"kubectl{context_arg} get ns -o json")).get("items")
     namespace_exists = any(n.get("metadata").get("name") == namespace for n in namespaces)
 
     if not namespace_exists:
         logger.debug(f"Creating namespace:${namespace}")
-        execute_os_command(f"kubectl{context} create ns {namespace}")
+        execute_os_command(f"kubectl{context_arg} create ns {shlex.quote(namespace)}")
 
 
 def patch_service_account(
     namespace, container_registry, context=None, service_account_name="default"
 ):
     """Patches the provided service account with the image pull secret for the given container registry"""
-
+    # Use shlex.quote to prevent command injection
+    context_arg = "" if context is None else f" --context {shlex.quote(context)}"
     imagepull_secrets = (
         f'{{"imagePullSecrets": [{{"name": "{imagepull_secret_name(container_registry)}"}}]}}'
     )
     execute_os_command(
-        f"kubectl{context} -n {namespace} patch serviceaccount {service_account_name} -p '{imagepull_secrets}' --type=merge"
+        f"kubectl{context_arg} -n {shlex.quote(namespace)} patch serviceaccount "
+        f"{shlex.quote(service_account_name)} -p '{imagepull_secrets}' --type=merge"
     )
 
 
@@ -638,9 +645,10 @@ def configure_registry_secret(namespace, container_registry, context=None):
         json.dumps(json_credentials).encode("utf-8")
     ).decode()
 
-    context = "" if context is None else f" --context {context}"
+    # Use shlex.quote to prevent command injection
+    context_arg = "" if context is None else f" --context {shlex.quote(context)}"
     secret = f"""
-cat <<EOF | kubectl{context} -n {namespace} apply -f -
+cat <<EOF | kubectl{context_arg} -n {shlex.quote(namespace)} apply -f -
 apiVersion: v1
 data:
   .dockerconfigjson: {base64_json_encoded_credentials}
@@ -652,7 +660,7 @@ EOF"""
 
     execute_os_command(secret)
     time.sleep(10)
-    patch_service_account(namespace, container_registry, context)
+    patch_service_account(namespace, container_registry, context_arg)
 
 
 def az_login():
@@ -669,8 +677,10 @@ def az_login():
 def uninstall_helm(namespace, release, context):
     logger.info(f"Uninstalling {release} helm chart")
     try:
+        # Use shlex.quote to prevent command injection
         execute_os_command(
-            "helm uninstall" f" --namespace {namespace}" f" --kube-context {context}" f" {release}",
+            f"helm uninstall --namespace {shlex.quote(namespace)} "
+            f"--kube-context {shlex.quote(context)} {shlex.quote(release)}",
             fail_on_error=False,
         )
     except BaseException as e:
