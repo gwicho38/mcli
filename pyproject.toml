@@ -1,6 +1,6 @@
 [project]
 name = "mcli-framework"
-version = "8.0.28"
+version = "8.0.29"
 description = "Portable workflow framework - transform any script into a versioned, schedulable command. Store in ~/.mcli/workflows/, version with lockfile, run as daemon or cron job."
 readme = "README.md"
  requires-python = ">=3.10"
@@ -50,7 +50,7 @@ dependencies = [
   "gitpython>=3.1.40,<4.0.0",
   "prompt-toolkit>=3.0.0,<4.0.0",
   # Basic HTTP/async support
-  "aiohttp>=3.9.0",
+  "aiohttp>=3.13.3",  # CVE-2025-69223 through CVE-2025-69230 fixes
   "httpx>=0.28.1",
   "websockets>=12.0",
   # Data parsing
