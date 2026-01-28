@@ -26,6 +26,7 @@ Features:
 
 import hashlib
 import json
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -93,6 +94,51 @@ class IPFSSync:
         """Compute SHA256 hash of data."""
         return hashlib.sha256(data.encode()).hexdigest()
 
+    def _retry_with_backoff(
+        self,
+        func,
+        max_retries: int = 3,
+        base_delay: float = 1.0,
+        max_delay: float = 30.0,
+        backoff_factor: float = 2.0,
+    ):
+        """
+        Execute a function with exponential backoff retry logic.
+
+        Args:
+            func: Callable that returns (success: bool, result: any)
+            max_retries: Maximum number of retry attempts
+            base_delay: Initial delay in seconds
+            max_delay: Maximum delay cap in seconds
+            backoff_factor: Multiplier for each retry
+
+        Returns:
+            Result from successful call, or None if all retries failed
+        """
+        last_exception = None
+        delay = base_delay
+
+        for attempt in range(max_retries + 1):
+            try:
+                success, result = func()
+                if success:
+                    return result
+                # If not successful but no exception, log and retry
+                if attempt < max_retries:
+                    logger.warning(f"Attempt {attempt + 1} failed, retrying in {delay:.1f}s...")
+            except Exception as e:
+                last_exception = e
+                if attempt < max_retries:
+                    logger.warning(f"Attempt {attempt + 1} error: {e}, retrying in {delay:.1f}s...")
+
+            if attempt < max_retries:
+                time.sleep(delay)
+                delay = min(delay * backoff_factor, max_delay)
+
+        if last_exception:
+            logger.error(f"All {max_retries + 1} attempts failed. Last error: {last_exception}")
+        return None
+
     def _check_local_ipfs(self) -> bool:
         """Check if local IPFS daemon is running."""
         if self._local_ipfs_available is not None:
@@ -112,14 +158,15 @@ class IPFSSync:
             self._local_ipfs_available = False
             return False
 
-    def upload_to_ipfs(self, data: dict) -> Optional[str]:
+    def upload_to_ipfs(self, data: dict, max_retries: int = 3) -> Optional[str]:
         """
         Upload data to IPFS and return CID.
 
-        Tries local IPFS daemon first, then provides guidance for alternatives.
+        Tries local IPFS daemon first with retry logic, then provides guidance for alternatives.
 
         Args:
             data: Dictionary to upload (will be JSON serialized)
+            max_retries: Maximum number of retry attempts (default: 3)
 
         Returns:
             CID string if successful, None otherwise
@@ -129,7 +176,8 @@ class IPFSSync:
 
         # Try local IPFS daemon first
         if self._check_local_ipfs():
-            try:
+
+            def attempt_upload():
                 files = {"file": (FileNames.COMMANDS_JSON, json_data)}
                 response = requests.post(
                     self.LOCAL_IPFS_API,
@@ -141,13 +189,18 @@ class IPFSSync:
                     result = response.json()
                     cid = result.get("Hash")
                     logger.info(f"Uploaded to local IPFS: {cid}")
-                    return cid
+                    return (True, cid)
                 else:
-                    logger.error(
+                    logger.warning(
                         SyncMessages.LOCAL_IPFS_UPLOAD_FAILED.format(status=response.status_code)
                     )
-            except Exception as e:
-                logger.error(SyncMessages.LOCAL_IPFS_UPLOAD_ERROR.format(error=e))
+                    return (False, None)
+
+            result = self._retry_with_backoff(attempt_upload, max_retries=max_retries)
+            if result:
+                return result
+
+            logger.error(f"Failed to upload to local IPFS after {max_retries + 1} attempts")
 
         # No local IPFS - log helpful guidance
         logger.error(
@@ -159,14 +212,19 @@ class IPFSSync:
         )
         return None
 
-    def retrieve_from_ipfs(self, cid: str) -> Optional[dict]:
+    def retrieve_from_ipfs(
+        self, cid: str, max_retries_per_gateway: int = 2, timeout: int = 30
+    ) -> Optional[dict]:
         """
         Retrieve data from IPFS by CID.
 
-        Tries multiple gateways for redundancy.
+        Tries multiple gateways for redundancy with exponential backoff retry
+        logic for each gateway.
 
         Args:
             cid: Content identifier
+            max_retries_per_gateway: Max retries per gateway (default: 2)
+            timeout: Request timeout in seconds (default: 30)
 
         Returns:
             Retrieved data dict if successful, None otherwise
@@ -175,22 +233,37 @@ class IPFSSync:
         gateways = [self.RETRIEVE_GATEWAY] + self.ALT_GATEWAYS
 
         for gateway_template in gateways:
-            try:
-                url = gateway_template.format(cid=cid)
-                logger.info(f"Retrieving from {url}")
+            url = gateway_template.format(cid=cid)
 
-                response = requests.get(url, timeout=30)
+            def attempt_retrieve():
+                logger.info(f"Retrieving from {url}")
+                response = requests.get(url, timeout=timeout)
 
                 if response.status_code == 200:
                     data = response.json()
                     logger.info(f"Retrieved from IPFS: {cid}")
-                    return data
+                    return (True, data)
+                elif response.status_code == 429:
+                    # Rate limited - should retry
+                    logger.warning(f"Gateway {gateway_template} rate limited (429)")
+                    raise requests.exceptions.RequestException("Rate limited")
+                elif response.status_code >= 500:
+                    # Server error - should retry
+                    logger.warning(f"Gateway {gateway_template} server error: {response.status_code}")
+                    raise requests.exceptions.RequestException(f"Server error {response.status_code}")
                 else:
+                    # Client error (4xx except 429) - don't retry, try next gateway
                     logger.warning(f"Gateway {gateway_template} failed: {response.status_code}")
+                    return (False, None)
 
-            except Exception as e:
-                logger.warning(f"Gateway {gateway_template} error: {e}")
-                continue
+            result = self._retry_with_backoff(
+                attempt_retrieve,
+                max_retries=max_retries_per_gateway,
+                base_delay=1.0,
+                max_delay=10.0,
+            )
+            if result is not None:
+                return result
 
         logger.error(f"Failed to retrieve from all gateways: {cid}")
         return None
