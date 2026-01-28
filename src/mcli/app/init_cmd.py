@@ -22,7 +22,7 @@ logger = get_logger(__name__)
     "-g",
     "is_global",
     is_flag=True,
-    help="Initialize global workflows directory instead of local",
+    help="Initialize global workflows directory (~/.mcli/workflows) instead of local",
 )
 @click.option("--git", is_flag=True, help="Initialize git repository in workflows directory")
 @click.option("--force", "-f", is_flag=True, help="Force initialization even if directory exists")
@@ -31,29 +31,31 @@ def init(is_global, git, force):
 
     Creates the necessary directories and configuration files for managing
     custom workflows. By default, creates a local .mcli/workflows/ directory
-    if in a git repository, otherwise uses ~/.mcli/workflows/.
+    in the current directory.
 
     Examples:
-        mcli init              # Initialize local workflows (if in git repo)
-        mcli init --global     # Initialize global workflows
+        mcli init              # Initialize local .mcli/workflows/ in current directory
+        mcli init --global     # Initialize global ~/.mcli/workflows/
         mcli init --git        # Also initialize git repository
     """
-    from mcli.lib.paths import get_git_root, get_local_mcli_dir, get_mcli_home, is_git_repository
+    from mcli.lib.paths import get_git_root, get_mcli_home, is_git_repository
 
-    # Determine if we're in a git repository
-    in_git_repo = is_git_repository() and not is_global
+    # Check if we're in a git repository (for informational purposes)
+    in_git_repo = is_git_repository()
     git_root = get_git_root() if in_git_repo else None
 
-    # Explicitly create workflows directory (not commands)
-    # This bypasses the migration logic that would check for old commands/ directory
-    if not is_global and in_git_repo:
-        local_mcli = get_local_mcli_dir()
-        if local_mcli is not None:
-            workflows_dir = local_mcli / "workflows"
-        else:
-            workflows_dir = get_mcli_home() / "workflows"
-    else:
+    # Determine workflows directory location
+    if is_global:
+        # Global: ~/.mcli/workflows
         workflows_dir = get_mcli_home() / "workflows"
+        is_local = False
+    else:
+        # Local: .mcli/workflows in current directory (default behavior)
+        from pathlib import Path
+
+        cwd = Path.cwd()
+        workflows_dir = cwd / ".mcli" / "workflows"
+        is_local = True
 
     lockfile_path = workflows_dir / "commands.lock.json"
 
@@ -76,8 +78,13 @@ def init(is_global, git, force):
     # Create README.md
     readme_path = workflows_dir / "README.md"
     if not readme_path.exists() or force:
-        "local" if in_git_repo else "global"
-        scope_desc = f"for repository: {git_root.name}" if in_git_repo and git_root else "globally"
+        if is_local:
+            if git_root:
+                scope_desc = f"for repository: {git_root.name}"
+            else:
+                scope_desc = f"for directory: {workflows_dir.parent.parent.name}"
+        else:
+            scope_desc = "globally"
 
         readme_content = f"""# MCLI Custom Workflows
 
@@ -151,7 +158,7 @@ Workflows are stored as JSON files with the following structure:
 
 ## Scope
 
-- **Scope**: {'Local (repository-specific)' if in_git_repo else 'Global (user-wide)'}
+- **Scope**: {'Local (directory-specific)' if is_local else 'Global (user-wide)'}
 - **Location**: `{workflows_dir}`
 {f"- **Git Repository**: `{git_root}`" if git_root else ""}
 
@@ -173,7 +180,7 @@ Workflows are stored as JSON files with the following structure:
         lockfile_data: dict[str, Any] = {
             "version": "1.0",
             "initialized_at": datetime.now().isoformat(),
-            "scope": "local" if in_git_repo else "global",
+            "scope": "local" if is_local else "global",
             "commands": {},
         }
 
@@ -240,7 +247,7 @@ Thumbs.db
     table.add_column("Property", style="cyan")
     table.add_column("Value", style="green")
 
-    table.add_row("Scope", "Local (repository-specific)" if in_git_repo else "Global (user-wide)")
+    table.add_row("Scope", "Local (directory-specific)" if is_local else "Global (user-wide)")
     table.add_row("Location", str(workflows_dir))
     if git_root:
         table.add_row("Git Repository", str(git_root))
@@ -258,13 +265,14 @@ Thumbs.db
     console.print(f"  4. View README:        [cyan]cat {workflows_dir}/README.md[/cyan]")
     console.print()
 
-    if in_git_repo:
+    if is_local:
         console.print(
-            "[dim]Tip: Workflows are local to this repository. Use --global for user-wide workflows.[/dim]"
+            "[dim]Tip: Workflows are local to this directory. Use --global for user-wide workflows.[/dim]"
         )
     else:
         console.print(
-            "[dim]Tip: Use workflows in any git repository, or create local ones with 'mcli init' inside repos.[/dim]"
+            "[dim]Tip: Global workflows are available everywhere. "
+            "Use 'mcli init' (without --global) for directory-specific workflows.[/dim]"
         )
 
     return 0

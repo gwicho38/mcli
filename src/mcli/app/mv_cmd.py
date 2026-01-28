@@ -89,7 +89,27 @@ def mv(
         mcli mv my-cmd -g new-name          # Move global to local with new name
         mcli mv my-cmd -g -G new-name       # Rename global command
         mcli mv -g ai-quiz -w ~/repos/app/  # Move global cmd to workspace
+        mcli mv ai-quiz ~/repos/app/        # Move cmd to workspace (auto-detect)
     """
+    # Check if to_name looks like a directory path
+    # This allows: mcli mv ai-quiz ~/repos/app/
+    if to_name is not None:
+        to_name_path = Path(to_name).expanduser()
+        # If it's an existing directory or ends with /, treat as workspace
+        if to_name_path.is_dir() or to_name.endswith("/"):
+            if workspace:
+                console.print(MM.CONFLICTING_OPTIONS)
+                return 1
+            # Resolve the path and use it as workspace
+            if to_name_path.is_dir():
+                workspace = str(to_name_path.resolve())
+            else:
+                # Path ends with / but doesn't exist yet - error
+                console.print(f"[red]Error:[/red] Directory does not exist: {to_name}")
+                return 1
+            # Keep the original command name
+            to_name = from_name
+
     # Default to_name to from_name if not provided
     if to_name is None:
         to_name = from_name
