@@ -2,6 +2,13 @@
 
 import pytest
 
+from mcli.lib.shell.exceptions import (
+    CommandError,
+    CommandFailedError,
+    CommandSecurityError,
+    CommandTimeoutError,
+    CommandValidationError,
+)
 from mcli.lib.shell.shell import _sanitize_for_log, execute_command_safe, execute_os_command
 
 
@@ -14,14 +21,14 @@ class TestExecuteOsCommand:
         assert result == "hello"
 
     def test_empty_command_raises(self):
-        """Test empty command raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        """Test empty command raises CommandValidationError."""
+        with pytest.raises(CommandValidationError) as exc_info:
             execute_os_command("", fail_on_error=False)
         assert "empty" in str(exc_info.value).lower()
 
     def test_null_bytes_rejected(self):
         """Test command with null bytes is rejected."""
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(CommandSecurityError) as exc_info:
             execute_os_command("echo\x00hello", fail_on_error=False)
         assert "null" in str(exc_info.value).lower()
 
@@ -36,20 +43,20 @@ class TestExecuteOsCommand:
         assert result == "hello"
 
     def test_command_failure_raises(self):
-        """Test failed command raises RuntimeError when fail_on_error=False."""
-        with pytest.raises(RuntimeError):
+        """Test failed command raises CommandFailedError when fail_on_error=False."""
+        with pytest.raises(CommandFailedError):
             execute_os_command("exit 1", fail_on_error=False)
 
     def test_command_timeout(self):
         """Test command timeout."""
-        with pytest.raises(RuntimeError) as exc_info:
+        with pytest.raises(CommandTimeoutError) as exc_info:
             execute_os_command("sleep 10", fail_on_error=False, timeout=1)
         assert "timed out" in str(exc_info.value).lower()
 
     def test_very_long_command_rejected(self):
         """Test very long command is rejected."""
         long_cmd = "echo " + "x" * 200000
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(CommandValidationError) as exc_info:
             execute_os_command(long_cmd, fail_on_error=False)
         assert "length" in str(exc_info.value).lower()
 
@@ -63,8 +70,8 @@ class TestExecuteCommandSafe:
         assert result == "hello"
 
     def test_empty_args_raises(self):
-        """Test empty args raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
+        """Test empty args raises CommandValidationError."""
+        with pytest.raises(CommandValidationError) as exc_info:
             execute_command_safe([], fail_on_error=False)
         assert "empty" in str(exc_info.value).lower()
 
@@ -100,7 +107,7 @@ class TestExecuteCommandSafe:
 
     def test_command_timeout(self):
         """Test command timeout."""
-        with pytest.raises(RuntimeError) as exc_info:
+        with pytest.raises(CommandTimeoutError) as exc_info:
             execute_command_safe(["sleep", "10"], fail_on_error=False, timeout=1)
         assert "timed out" in str(exc_info.value).lower()
 
