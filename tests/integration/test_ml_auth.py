@@ -8,33 +8,34 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-# Check for aiosqlite dependency
+# Check for required dependencies (aiosqlite and email_validator for Pydantic)
 try:
     import aiosqlite  # noqa: F401
+    import email_validator  # noqa: F401
 
-    HAS_AIOSQLITE = True
+    HAS_AUTH_DEPS = True
 except ImportError:
-    HAS_AIOSQLITE = False
+    HAS_AUTH_DEPS = False
 
-if HAS_AIOSQLITE:
+if HAS_AUTH_DEPS:
     from mcli.ml.auth.auth_manager import AuthManager, RateLimiter
     from mcli.ml.auth.models import PasswordChange, UserCreate, UserLogin
     from mcli.ml.auth.permissions import Permission, check_permission, has_permission
     from mcli.ml.database.models import User, UserRole
 
 
-@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
+@pytest.mark.skipif(not HAS_AUTH_DEPS, reason="aiosqlite or email_validator module not installed")
 class TestAuthManager:
-    """Test authentication manager"""
+    """Test authentication manager."""
 
     @pytest.fixture
     def auth_manager(self):
-        """Create auth manager instance"""
+        """Create auth manager instance."""
         return AuthManager()
 
     @pytest.fixture
     def mock_user(self):
-        """Create mock user"""
+        """Create mock user."""
         user = Mock(spec=User)
         user.id = "test-user-id"
         user.username = "testuser"
@@ -48,7 +49,7 @@ class TestAuthManager:
         return user
 
     def test_password_hashing(self, auth_manager):
-        """Test password hashing and verification"""
+        """Test password hashing and verification."""
         password = "SecurePassword123!"
 
         hashed = auth_manager.hash_password(password)
@@ -57,7 +58,7 @@ class TestAuthManager:
         assert not auth_manager.verify_password("WrongPassword", hashed)
 
     def test_jwt_token_creation(self, auth_manager):
-        """Test JWT token creation"""
+        """Test JWT token creation."""
         user_id = "test-user-123"
         username = "testuser"
         role = "user"
@@ -73,7 +74,7 @@ class TestAuthManager:
         assert payload["role"] == role
 
     def test_token_verification(self, auth_manager):
-        """Test token verification"""
+        """Test token verification."""
         token = auth_manager.create_access_token("user-123", "testuser", "user")
 
         token_data = auth_manager.verify_token(token)
@@ -82,7 +83,7 @@ class TestAuthManager:
         assert token_data.role == "user"
 
     def test_expired_token(self, auth_manager):
-        """Test expired token handling"""
+        """Test expired token handling."""
         # Create token that expires immediately
         token = auth_manager.create_access_token(
             "user-123", "testuser", "user", expires_delta=timedelta(seconds=-1)
@@ -94,7 +95,7 @@ class TestAuthManager:
 
     @pytest.mark.asyncio
     async def test_user_registration(self, auth_manager):
-        """Test user registration"""
+        """Test user registration."""
         mock_db = Mock(spec=Session)
         mock_db.query.return_value.filter.return_value.first.return_value = None
         mock_db.add = Mock()
@@ -116,7 +117,7 @@ class TestAuthManager:
     @pytest.mark.skip(reason="Complex mocking issues with Pydantic validation")
     @pytest.mark.asyncio
     async def test_user_login(self, auth_manager, mock_user):
-        """Test user login"""
+        """Test user login."""
         mock_db = Mock(spec=Session)
         mock_db.query.return_value.filter.return_value.first.return_value = mock_user
         mock_db.commit = Mock()
@@ -132,7 +133,7 @@ class TestAuthManager:
 
     @pytest.mark.asyncio
     async def test_invalid_login(self, auth_manager):
-        """Test invalid login credentials"""
+        """Test invalid login credentials."""
         mock_db = Mock(spec=Session)
         mock_db.query.return_value.filter.return_value.first.return_value = None
 
@@ -145,7 +146,7 @@ class TestAuthManager:
     @pytest.mark.skip(reason="Complex mocking issues with JWT library")
     @pytest.mark.asyncio
     async def test_refresh_token(self, auth_manager, mock_user):
-        """Test refresh token functionality"""
+        """Test refresh token functionality."""
         mock_db = Mock(spec=Session)
         mock_db.query.return_value.filter.return_value.first.return_value = mock_user
 
@@ -156,12 +157,12 @@ class TestAuthManager:
         assert new_token_response.access_token is not None
 
 
-@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
+@pytest.mark.skipif(not HAS_AUTH_DEPS, reason="aiosqlite or email_validator module not installed")
 class TestPasswordValidation:
-    """Test password validation"""
+    """Test password validation."""
 
     def test_password_requirements(self):
-        """Test password meets requirements"""
+        """Test password meets requirements."""
         # Valid password
         valid_user = UserCreate(username="user", email="user@example.com", password="ValidPass123!")
         assert valid_user.password == "ValidPass123!"
@@ -179,7 +180,7 @@ class TestPasswordValidation:
             UserCreate(username="user", email="user@example.com", password="nouppercase123!")
 
     def test_password_change_validation(self):
-        """Test password change validation"""
+        """Test password change validation."""
         # Valid change
         valid_change = PasswordChange(current_password="OldPass123!", new_password="NewPass456!")
         assert valid_change.new_password == "NewPass456!"
@@ -189,31 +190,31 @@ class TestPasswordValidation:
             PasswordChange(current_password="SamePass123!", new_password="SamePass123!")
 
 
-@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
+@pytest.mark.skipif(not HAS_AUTH_DEPS, reason="aiosqlite or email_validator module not installed")
 class TestPermissions:
-    """Test permission system"""
+    """Test permission system."""
 
     @pytest.fixture
     def admin_user(self):
-        """Create admin user"""
+        """Create admin user."""
         user = Mock(spec=User)
         user.role = UserRole.ADMIN
         return user
 
     @pytest.fixture
     def regular_user(self):
-        """Create regular user"""
+        """Create regular user."""
         user = Mock(spec=User)
         user.role = UserRole.USER
         return user
 
     def test_admin_permissions(self, admin_user):
-        """Test admin has all permissions"""
+        """Test admin has all permissions."""
         for permission in Permission:
             assert has_permission(admin_user, permission)
 
     def test_user_permissions(self, regular_user):
-        """Test regular user permissions"""
+        """Test regular user permissions."""
         # Should have
         assert has_permission(regular_user, Permission.MODEL_VIEW)
         assert has_permission(regular_user, Permission.PORTFOLIO_CREATE)
@@ -223,13 +224,13 @@ class TestPermissions:
         assert not has_permission(regular_user, Permission.ADMIN_ACCESS)
 
     def test_check_permission_raises(self, regular_user):
-        """Test permission check raises exception"""
+        """Test permission check raises exception."""
         with pytest.raises(HTTPException) as exc_info:
             check_permission(regular_user, Permission.ADMIN_ACCESS)
         assert exc_info.value.status_code == 403
 
     def test_role_based_permissions(self):
-        """Test different role permissions"""
+        """Test different role permissions."""
         viewer = Mock(spec=User, role=UserRole.VIEWER)
         analyst = Mock(spec=User, role=UserRole.ANALYST)
 
@@ -243,18 +244,18 @@ class TestPermissions:
         assert not has_permission(analyst, Permission.USER_DELETE)
 
 
-@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
+@pytest.mark.skipif(not HAS_AUTH_DEPS, reason="aiosqlite or email_validator module not installed")
 class TestRateLimiter:
-    """Test rate limiting"""
+    """Test rate limiting."""
 
     @pytest.fixture
     def rate_limiter(self):
-        """Create rate limiter"""
+        """Create rate limiter."""
         return RateLimiter(requests=5, window=60)
 
     @pytest.mark.asyncio
     async def test_rate_limit_allows_requests(self, rate_limiter):
-        """Test rate limiter allows requests within limit"""
+        """Test rate limiter allows requests within limit."""
         client_id = "127.0.0.1"
 
         for _ in range(5):
@@ -263,7 +264,7 @@ class TestRateLimiter:
 
     @pytest.mark.asyncio
     async def test_rate_limit_blocks_excess(self, rate_limiter):
-        """Test rate limiter blocks excess requests"""
+        """Test rate limiter blocks excess requests."""
         client_id = "127.0.0.1"
 
         # Use up limit
@@ -276,7 +277,7 @@ class TestRateLimiter:
 
     @pytest.mark.asyncio
     async def test_rate_limit_separate_clients(self, rate_limiter):
-        """Test rate limiting is per client"""
+        """Test rate limiting is per client."""
         client1 = "127.0.0.1"
         client2 = "127.0.0.2"
 
@@ -289,12 +290,12 @@ class TestRateLimiter:
         assert allowed
 
 
-@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
+@pytest.mark.skipif(not HAS_AUTH_DEPS, reason="aiosqlite or email_validator module not installed")
 class TestResourcePermissions:
-    """Test resource-based permissions"""
+    """Test resource-based permissions."""
 
     def test_portfolio_edit_permission(self):
-        """Test portfolio edit permissions"""
+        """Test portfolio edit permissions."""
         from mcli.ml.auth.permissions import ResourcePermission
 
         owner = Mock(spec=User, id="user1", role=UserRole.USER)
@@ -313,7 +314,7 @@ class TestResourcePermissions:
         assert ResourcePermission.can_edit_portfolio(admin, portfolio)
 
     def test_model_deployment_permission(self):
-        """Test model deployment permissions"""
+        """Test model deployment permissions."""
         from mcli.ml.auth.permissions import ResourcePermission
 
         user = Mock(spec=User, role=UserRole.USER)
@@ -326,14 +327,14 @@ class TestResourcePermissions:
         assert ResourcePermission.can_deploy_model(admin, model)
 
 
-@pytest.mark.skipif(not HAS_AIOSQLITE, reason="aiosqlite module not installed")
+@pytest.mark.skipif(not HAS_AUTH_DEPS, reason="aiosqlite or email_validator module not installed")
 class TestAuthIntegration:
-    """Integration tests for auth system"""
+    """Integration tests for auth system."""
 
     @pytest.mark.skip(reason="Complex mocking issues with Pydantic validation")
     @pytest.mark.asyncio
     async def test_complete_auth_flow(self):
-        """Test complete authentication flow"""
+        """Test complete authentication flow."""
         auth_manager = AuthManager()
         mock_db = Mock(spec=Session)
 

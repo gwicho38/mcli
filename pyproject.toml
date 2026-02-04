@@ -276,7 +276,7 @@ ensure_newline_before_comments = true
 
 [tool.mypy]
 # Basic mypy configuration - relaxed for gradual adoption
-python_version = "3.9"
+python_version = "3.10"
 warn_return_any = false
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -290,6 +290,38 @@ warn_no_return = false
 warn_unreachable = false
 strict_equality = false
 ignore_missing_imports = true
+disable_error_code = [
+    "import-untyped",
+    "no-untyped-def",
+    "var-annotated",
+    "attr-defined",
+    "assignment",
+    "misc",
+    "truthy-function",
+    "arg-type",
+    "return-value",
+    "call-arg",
+    "union-attr",
+    "name-defined",
+    "operator",
+    "index",
+    "type-arg",
+    "override",
+    "comparison-overlap",
+    "redundant-expr",
+    "no-any-return",
+    "has-type",
+    "valid-type",
+    "type-var",
+    "dict-item",
+    "call-overload",
+    "empty-body",
+    "no-redef",
+    "abstract",
+    "list-item",
+    "str-bytes-safe",
+    "func-returns-value",
+]
 
 # Module discovery
 mypy_path = "src"

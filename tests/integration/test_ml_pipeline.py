@@ -1,4 +1,4 @@
-"""Test suite for ML pipeline and data processing
+"""Test suite for ML pipeline and data processing.
 
 NOTE: ML pipeline tests require torch and ML pipeline modules.
 Tests are conditional on torch installation and module availability.
@@ -38,11 +38,11 @@ if not HAS_ML_MODULES:
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestDataPreprocessing:
-    """Test data preprocessing functionality"""
+    """Test data preprocessing functionality."""
 
     @pytest.fixture
     def sample_dataframe(self):
-        """Create sample dataframe for testing"""
+        """Create sample dataframe for testing."""
         dates = pd.date_range(start="2023-01-01", periods=100, freq="D")
         return pd.DataFrame(
             {
@@ -57,13 +57,13 @@ class TestDataPreprocessing:
         )
 
     def test_preprocessor_initialization(self):
-        """Test preprocessor initialization"""
+        """Test preprocessor initialization."""
         preprocessor = DataPreprocessor()
         assert preprocessor is not None
         assert hasattr(preprocessor, "scaler")
 
     def test_data_cleaning(self, sample_dataframe):
-        """Test data cleaning"""
+        """Test data cleaning."""
         preprocessor = DataPreprocessor()
 
         # Add some NaN values
@@ -75,7 +75,7 @@ class TestDataPreprocessing:
         assert len(cleaned_data) > 0
 
     def test_outlier_removal(self, sample_dataframe):
-        """Test outlier removal"""
+        """Test outlier removal."""
         preprocessor = DataPreprocessor()
 
         # Add outliers
@@ -88,7 +88,7 @@ class TestDataPreprocessing:
         assert cleaned_data["close"].max() < 1000
 
     def test_data_normalization(self, sample_dataframe):
-        """Test data normalization"""
+        """Test data normalization."""
         preprocessor = DataPreprocessor()
 
         normalized_data = preprocessor.normalize_data(
@@ -102,11 +102,11 @@ class TestDataPreprocessing:
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestFeatureEngineering:
-    """Test feature engineering"""
+    """Test feature engineering."""
 
     @pytest.fixture
     def price_data(self):
-        """Create sample price data"""
+        """Create sample price data."""
         dates = pd.date_range(start="2023-01-01", periods=200, freq="D")
         prices = 100 + np.cumsum(np.random.randn(200) * 2)
 
@@ -122,7 +122,7 @@ class TestFeatureEngineering:
         )
 
     def test_technical_indicators(self, price_data):
-        """Test technical indicator calculation"""
+        """Test technical indicator calculation."""
         engineer = FeatureEngineer()
 
         features = engineer.calculate_technical_indicators(price_data)
@@ -138,7 +138,7 @@ class TestFeatureEngineering:
         assert features["rsi"].max() <= 100
 
     def test_price_features(self, price_data):
-        """Test price-based features"""
+        """Test price-based features."""
         engineer = FeatureEngineer()
 
         features = engineer.calculate_price_features(price_data)
@@ -148,7 +148,7 @@ class TestFeatureEngineering:
         assert "volatility_20d" in features.columns
 
     def test_volume_features(self, price_data):
-        """Test volume-based features"""
+        """Test volume-based features."""
         engineer = FeatureEngineer()
 
         features = engineer.calculate_volume_features(price_data)
@@ -157,7 +157,7 @@ class TestFeatureEngineering:
         assert "obv" in features.columns
 
     def test_pattern_recognition(self, price_data):
-        """Test pattern recognition features"""
+        """Test pattern recognition features."""
         engineer = FeatureEngineer()
 
         patterns = engineer.detect_patterns(price_data)
@@ -168,11 +168,11 @@ class TestFeatureEngineering:
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestMLPipeline:
-    """Test ML pipeline orchestration"""
+    """Test ML pipeline orchestration."""
 
     @pytest.fixture
     def pipeline_config(self):
-        """Create pipeline configuration"""
+        """Create pipeline configuration."""
         return PipelineConfig(
             experiment_name="test_experiment",
             enable_mlflow=False,
@@ -182,14 +182,14 @@ class TestMLPipeline:
 
     @pytest.mark.asyncio
     async def test_pipeline_initialization(self, pipeline_config):
-        """Test pipeline initialization"""
+        """Test pipeline initialization."""
         pipeline = MLPipeline(pipeline_config)
         assert pipeline is not None
         assert pipeline.config == pipeline_config
 
     @pytest.mark.asyncio
     async def test_pipeline_data_loading(self, pipeline_config):
-        """Test data loading step"""
+        """Test data loading step."""
         pipeline = MLPipeline(pipeline_config)
 
         with patch.object(pipeline, "load_data") as mock_load:
@@ -200,7 +200,7 @@ class TestMLPipeline:
 
     @pytest.mark.asyncio
     async def test_pipeline_feature_engineering(self, pipeline_config):
-        """Test feature engineering step"""
+        """Test feature engineering step."""
         pipeline = MLPipeline(pipeline_config)
 
         test_data = pd.DataFrame(
@@ -215,7 +215,7 @@ class TestMLPipeline:
 
     @pytest.mark.asyncio
     async def test_pipeline_model_training(self, pipeline_config):
-        """Test model training step"""
+        """Test model training step."""
         pipeline = MLPipeline(pipeline_config)
 
         with patch.object(pipeline, "train_model") as mock_train:
@@ -227,16 +227,16 @@ class TestMLPipeline:
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestBacktesting:
-    """Test backtesting functionality"""
+    """Test backtesting functionality."""
 
     @pytest.fixture
     def backtest_config(self):
-        """Create backtest configuration"""
+        """Create backtest configuration."""
         return BacktestConfig(initial_capital=100000, commission=0.001, slippage=0.001)
 
     @pytest.fixture
     def price_history(self):
-        """Create price history for backtesting"""
+        """Create price history for backtesting."""
         dates = pd.date_range(start="2022-01-01", periods=252, freq="D")
         prices = 100 * (1 + np.cumsum(np.random.randn(252) * 0.02))
 
@@ -252,13 +252,13 @@ class TestBacktesting:
         )
 
     def test_backtest_initialization(self, backtest_config):
-        """Test backtest engine initialization"""
+        """Test backtest engine initialization."""
         engine = BacktestEngine(backtest_config)
         assert engine.initial_capital == 100000
         assert engine.commission == 0.001
 
     def test_position_management(self, backtest_config, price_history):
-        """Test position management"""
+        """Test position management."""
         engine = BacktestEngine(backtest_config)
 
         # Test opening position
@@ -271,7 +271,7 @@ class TestBacktesting:
         assert position["entry_price"] == 150.0
 
     def test_performance_calculation(self, backtest_config):
-        """Test performance metrics calculation"""
+        """Test performance metrics calculation."""
         engine = BacktestEngine(backtest_config)
 
         # Simulate some trades
@@ -285,7 +285,7 @@ class TestBacktesting:
 
     @pytest.mark.asyncio
     async def test_backtest_run(self, backtest_config, price_history):
-        """Test running backtest"""
+        """Test running backtest."""
         engine = BacktestEngine(backtest_config)
 
         # Mock strategy
@@ -303,11 +303,11 @@ class TestBacktesting:
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestModelMonitoring:
-    """Test model monitoring and drift detection"""
+    """Test model monitoring and drift detection."""
 
     @pytest.fixture
     def reference_data(self):
-        """Create reference data for drift detection"""
+        """Create reference data for drift detection."""
         return pd.DataFrame(
             {
                 "feature1": np.random.normal(0, 1, 1000),
@@ -318,7 +318,7 @@ class TestModelMonitoring:
 
     @pytest.fixture
     def current_data(self):
-        """Create current data (potentially drifted)"""
+        """Create current data (potentially drifted)."""
         return pd.DataFrame(
             {
                 "feature1": np.random.normal(0.5, 1.2, 1000),  # Slight drift
@@ -328,12 +328,12 @@ class TestModelMonitoring:
         )
 
     def test_monitor_initialization(self):
-        """Test model monitor initialization"""
+        """Test model monitor initialization."""
         monitor = ModelMonitor("test_model")
         assert monitor.model_name == "test_model"
 
     def test_data_drift_detection(self, reference_data, current_data):
-        """Test data drift detection"""
+        """Test data drift detection."""
         monitor = ModelMonitor("test_model")
 
         drift_report = monitor.detect_data_drift(reference_data, current_data, threshold=0.05)
@@ -343,7 +343,7 @@ class TestModelMonitoring:
         assert len(drift_report["drifted_features"]) > 0
 
     def test_prediction_drift_detection(self):
-        """Test prediction drift detection"""
+        """Test prediction drift detection."""
         monitor = ModelMonitor("test_model")
 
         reference_predictions = np.random.normal(0, 1, 1000)
@@ -353,10 +353,10 @@ class TestModelMonitoring:
             reference_predictions, current_predictions, threshold=0.05
         )
 
-        assert drift_detected == True
+        assert drift_detected is True
 
     def test_performance_monitoring(self):
-        """Test performance monitoring"""
+        """Test performance monitoring."""
         monitor = ModelMonitor("test_model")
 
         # Simulate performance over time
@@ -370,11 +370,11 @@ class TestModelMonitoring:
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestIntegration:
-    """Integration tests for complete workflows"""
+    """Integration tests for complete workflows."""
 
     @pytest.mark.asyncio
     async def test_end_to_end_pipeline(self):
-        """Test end-to-end pipeline execution"""
+        """Test end-to-end pipeline execution."""
         config = PipelineConfig(experiment_name="integration_test", enable_mlflow=False)
 
         pipeline = MLPipeline(config)
@@ -391,7 +391,7 @@ class TestIntegration:
             assert "accuracy" in result
 
     def test_model_deployment_workflow(self):
-        """Test model deployment workflow"""
+        """Test model deployment workflow."""
         # Mock model
         model = Mock()
         model.predict = Mock(return_value=np.array([0.1, 0.2, 0.3]))
@@ -407,10 +407,10 @@ class TestIntegration:
 @pytest.mark.performance
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestPerformance:
-    """Performance and scalability tests"""
+    """Performance and scalability tests."""
 
     def test_large_dataset_processing(self):
-        """Test processing large datasets"""
+        """Test processing large datasets."""
         # Create large dataset
         large_data = pd.DataFrame(
             {"feature": np.random.randn(100000), "target": np.random.randn(100000)}
@@ -428,7 +428,7 @@ class TestPerformance:
         assert len(processed) > 0
 
     def test_concurrent_predictions(self):
-        """Test concurrent prediction handling"""
+        """Test concurrent prediction handling."""
         from concurrent.futures import ThreadPoolExecutor
 
         model = Mock()
