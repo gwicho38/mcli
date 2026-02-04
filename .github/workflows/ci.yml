@@ -229,8 +229,8 @@ jobs:
 
     - name: Test CLI basic functionality
       run: |
-        .venv/bin/mcli --version
         .venv/bin/mcli self version
+        .venv/bin/mcli --help
         .venv/bin/mcli self health
 
   build-package:
