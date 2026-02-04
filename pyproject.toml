@@ -223,7 +223,7 @@ dev = [
   "pytest-json-report>=1.5.0",   # JSON reports
 
   # Code quality
-  "black>=23.0.0",
+  "black>=25.0.0,<26.0.0",  # Pin to 25.x to match lockfile, avoid 26.x formatting changes
   "isort>=5.12.0,<6.0.0",
   "mypy>=1.7.1,<2.0.0",
   "ruff>=0.1.0",                  # Fast linter
@@ -409,7 +409,7 @@ build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = [
-    "black>=25.1.0",
+    "black>=25.0.0,<26.0.0",  # Pin to 25.x to match lockfile
     "isort>=5.13.2",
     "mypy>=1.16.1",
     "pylint>=3.0.0",
