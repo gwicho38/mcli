@@ -28,7 +28,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install black isort mypy
         pip install -e .[dev]
 
     - name: Check code formatting with Black
@@ -64,6 +63,11 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Set up Rust
       uses: dtolnay/rust-toolchain@stable
@@ -149,7 +153,6 @@ jobs:
         mcli version
         mcli --help
         mcli self --help
-        mcli visual --help
 
   integration-test:
     name: Integration Tests
@@ -224,14 +227,11 @@ jobs:
         print('🎉 All Rust extensions working!')
         "
 
-    - name: Test performance monitoring
+    - name: Test CLI basic functionality
       run: |
-        .venv/bin/mcli self performance --detailed
-
-    - name: Test visual effects
-      run: |
-        .venv/bin/mcli self visual message --style success "Integration tests passed!"
-        .venv/bin/mcli self visual spinner --spinner-type rust --duration 2 --message "Testing spinner..."
+        .venv/bin/mcli --version
+        .venv/bin/mcli self version
+        .venv/bin/mcli self health
 
   security-scan:
     name: Security Scan

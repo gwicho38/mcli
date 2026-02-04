@@ -12,7 +12,18 @@ import sys
 import tempfile
 from pathlib import Path
 
+import pytest
+
 logger = logging.getLogger(__name__)
+
+
+def _uv_available():
+    """Check if uv command is available."""
+    try:
+        subprocess.run(["uv", "--version"], check=True, capture_output=True)
+        return True
+    except (FileNotFoundError, subprocess.SubprocessError):
+        return False
 
 
 class Colors:
@@ -36,7 +47,7 @@ def log(message, color=None):
 def check_command(command):
     """Check if a command is available."""
     try:
-        subprocess.run(command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run(command, check=True, capture_output=True)
         return True
     except (subprocess.SubprocessError, FileNotFoundError):
         return False
@@ -49,8 +60,7 @@ def run_command(command, description, timeout=60, check=True):
         result = subprocess.run(
             command,
             check=check,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
             timeout=timeout,
         )
@@ -67,7 +77,7 @@ def check_build_files():
 
     # Check pyproject.toml
     if os.path.exists("pyproject.toml"):
-        with open("pyproject.toml", "r") as f:
+        with open("pyproject.toml") as f:
             content = f.read()
             if (
                 "poetry" in content.lower()
@@ -79,7 +89,7 @@ def check_build_files():
 
     # Check Makefile
     if os.path.exists("Makefile"):
-        with open("Makefile", "r") as f:
+        with open("Makefile") as f:
             content = f.read()
             if "poetry" in content.lower():
                 issues.append("Makefile still contains 'poetry' references")
@@ -95,6 +105,7 @@ def check_build_files():
     return issues
 
 
+@pytest.mark.skipif(not _uv_available(), reason="uv command not available")
 def test_virtual_env():
     """Test if UV can create and manage a virtual environment."""
     # Create a temporary directory
