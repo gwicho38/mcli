@@ -231,7 +231,7 @@ jobs:
       run: |
         .venv/bin/mcli self version
         .venv/bin/mcli --help
-        .venv/bin/mcli self health
+        .venv/bin/mcli health
 
   build-package:
     name: Build Distribution Package
