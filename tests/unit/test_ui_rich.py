@@ -4,7 +4,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_rich_import():
-    """Test that rich can be imported"""
+    """Test that rich can be imported."""
     try:
         import rich
 

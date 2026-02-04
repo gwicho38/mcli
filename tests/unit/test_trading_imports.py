@@ -1,10 +1,10 @@
-"""Unit tests for trading module imports"""
+"""Unit tests for trading module imports."""
 
 import pytest
 
 
 def test_trading_module_imports():
-    """Test that trading module can be imported without errors"""
+    """Test that trading module can be imported without errors."""
     try:
         from mcli.ml.trading import (
             OrderCreate,
@@ -26,7 +26,7 @@ def test_trading_module_imports():
 
 
 def test_trading_enums():
-    """Test that trading enums are properly defined"""
+    """Test that trading enums are properly defined."""
     from mcli.ml.trading import OrderSide, OrderType, PortfolioType, RiskLevel
 
     # Test PortfolioType enum
@@ -49,7 +49,7 @@ def test_trading_enums():
 
 
 def test_trading_pydantic_models():
-    """Test that trading Pydantic models can be instantiated"""
+    """Test that trading Pydantic models can be instantiated."""
     from mcli.ml.trading import (
         OrderCreate,
         OrderSide,
@@ -92,7 +92,7 @@ def test_trading_pydantic_models():
 
 @pytest.mark.skipif(True, reason="Requires database connection - integration test")
 def test_trading_service_initialization():
-    """Test that TradingService can be initialized (requires DB)"""
+    """Test that TradingService can be initialized (requires DB)."""
     from mcli.ml.database.session import get_session
     from mcli.ml.trading import TradingService
 
@@ -102,7 +102,7 @@ def test_trading_service_initialization():
 
 
 def test_trading_page_imports():
-    """Test that trading dashboard page can be imported"""
+    """Test that trading dashboard page can be imported."""
     try:
         pass
 

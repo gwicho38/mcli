@@ -276,7 +276,7 @@ if __name__ == "__main__":
             result_path = WorkflowConverter.convert_file_to_notebook(temp_path)
 
             # Load and verify
-            with open(result_path, "r") as f:
+            with open(result_path) as f:
                 data = json.load(f)
 
             assert "nbformat" in data
@@ -379,7 +379,7 @@ import click
 
 @click.command()
 def hello():
-    """Say hello"""
+    """Say hello."""
     click.echo("Hello from workflow!")
 '''
         )
@@ -408,12 +408,12 @@ def hello():
 
 @click.group()
 def cli():
-    """Legacy workflow"""
+    """Legacy workflow."""
     pass
 
 @cli.command()
 def test():
-    """Test command"""
+    """Test command."""
     click.echo("Test")
 ''',
             "created_at": "2025-01-01T00:00:00Z",

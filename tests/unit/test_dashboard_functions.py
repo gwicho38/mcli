@@ -58,7 +58,7 @@ def test_lsh_jobs_nonexistent_file():
         # Verify we can call .empty without AttributeError
         try:
             is_empty = result.empty
-            assert is_empty == True, "Empty DataFrame check should work"
+            assert is_empty is True, "Empty DataFrame check should work"
         except AttributeError:
             pytest.fail("Calling .empty on result raised AttributeError (None was returned)")
 

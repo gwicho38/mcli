@@ -1,6 +1,4 @@
-"""
-Unit tests for mcli.lib.toml module
-"""
+"""Unit tests for mcli.lib.toml module."""
 
 import os
 import tempfile
@@ -9,10 +7,10 @@ import pytest
 
 
 class TestTomlUtils:
-    """Test suite for TOML utilities"""
+    """Test suite for TOML utilities."""
 
     def test_read_from_toml_success(self):
-        """Test reading from a valid TOML file"""
+        """Test reading from a valid TOML file."""
         from mcli.lib.toml.toml import read_from_toml
 
         toml_content = """
@@ -36,7 +34,7 @@ timeout = 30
             os.unlink(temp_path)
 
     def test_read_from_toml_simple_key(self):
-        """Test reading simple key-value pair"""
+        """Test reading simple key-value pair."""
         from mcli.lib.toml.toml import read_from_toml
 
         toml_content = """
@@ -54,7 +52,7 @@ version = "1.0.0"
             os.unlink(temp_path)
 
     def test_read_from_toml_nested_section(self):
-        """Test reading nested TOML section"""
+        """Test reading nested TOML section."""
         from mcli.lib.toml.toml import read_from_toml
 
         toml_content = """
@@ -77,7 +75,7 @@ cert_path = "/path/to/cert"
             os.unlink(temp_path)
 
     def test_read_from_toml_missing_key(self):
-        """Test reading non-existent key returns None"""
+        """Test reading non-existent key returns None."""
         from mcli.lib.toml.toml import read_from_toml
 
         toml_content = """
@@ -95,14 +93,14 @@ key = "value"
             os.unlink(temp_path)
 
     def test_read_from_toml_file_not_found(self):
-        """Test reading from non-existent file raises error"""
+        """Test reading from non-existent file raises error."""
         from mcli.lib.toml.toml import read_from_toml
 
         with pytest.raises(FileNotFoundError):
             read_from_toml("/nonexistent/path/to/file.toml", "key")
 
     def test_read_from_toml_invalid_syntax(self):
-        """Test reading invalid TOML raises error"""
+        """Test reading invalid TOML raises error."""
         from mcli.lib.toml.toml import read_from_toml
 
         invalid_toml = """
@@ -120,7 +118,7 @@ key = "missing closing bracket"
             os.unlink(temp_path)
 
     def test_read_from_toml_array_values(self):
-        """Test reading TOML with array values"""
+        """Test reading TOML with array values."""
         from mcli.lib.toml.toml import read_from_toml
 
         toml_content = """
@@ -138,7 +136,7 @@ supported = ["async", "video", "ml"]
             os.unlink(temp_path)
 
     def test_read_from_toml_numeric_values(self):
-        """Test reading various numeric types"""
+        """Test reading various numeric types."""
         from mcli.lib.toml.toml import read_from_toml
 
         toml_content = """
@@ -160,7 +158,7 @@ negative = -10
             os.unlink(temp_path)
 
     def test_read_from_toml_boolean_values(self):
-        """Test reading boolean values"""
+        """Test reading boolean values."""
         from mcli.lib.toml.toml import read_from_toml
 
         toml_content = """
@@ -180,7 +178,7 @@ disabled = false
             os.unlink(temp_path)
 
     def test_read_from_toml_empty_file(self):
-        """Test reading from empty TOML file"""
+        """Test reading from empty TOML file."""
         from mcli.lib.toml.toml import read_from_toml
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
