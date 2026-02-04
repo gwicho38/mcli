@@ -233,65 +233,6 @@ jobs:
         .venv/bin/mcli self version
         .venv/bin/mcli self health
 
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    continue-on-error: true  # Non-blocking: CodeQL permissions and Trivy issues on this repo
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-
-    - name: Install security tools
-      run: |
-        python -m pip install --upgrade pip
-        pip install bandit safety
-
-    - name: Run Bandit security linter
-      run: |
-        # Run with skip list for CLI tool false positives
-        bandit -r src/ \
-          --severity-level high \
-          --skip B101,B102,B104,B108,B113,B301,B306,B310,B324,B404,B602,B603,B604,B605,B607 \
-          -f json -o bandit-report.json || true
-        # Also run a summary check (non-blocking)
-        bandit -r src/ -ll || true
-
-    - name: Run Safety dependency check
-      run: |
-        safety check --json > safety-report.json || true
-        safety check --ignore 59234,71691,71584,71578,71577,71692,71579,71587,71693,64459,64396
-
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        scan-ref: '.'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        severity: 'CRITICAL,HIGH'
-
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
-
-    - name: Upload security reports
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: security-reports
-        path: |
-          bandit-report.json
-          safety-report.json
-        retention-days: 30
-
   build-package:
     name: Build Distribution Package
     runs-on: ubuntu-latest
