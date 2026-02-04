@@ -150,7 +150,7 @@ jobs:
 
     - name: Test CLI functionality
       run: |
-        mcli version
+        mcli self version
         mcli --help
         mcli self --help
 
