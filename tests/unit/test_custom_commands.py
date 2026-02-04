@@ -12,10 +12,10 @@ from mcli.lib.custom_commands import CustomCommandManager, get_command_manager
 
 
 class TestCustomCommandManager:
-    """Test suite for CustomCommandManager"""
+    """Test suite for CustomCommandManager."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         # Create a temporary directory for tests
         self.temp_dir = tempfile.mkdtemp()
         self.commands_dir = Path(self.temp_dir) / "commands"
@@ -39,7 +39,7 @@ class TestCustomCommandManager:
         self.manager = CustomCommandManager()
 
     def teardown_method(self):
-        """Cleanup test environment"""
+        """Cleanup test environment."""
         self.patcher_commands.stop()
         self.patcher_lockfile.stop()
         # Clean up environment variable
@@ -49,13 +49,13 @@ class TestCustomCommandManager:
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_initialization(self):
-        """Test manager initialization"""
+        """Test manager initialization."""
         assert self.manager.commands_dir == self.commands_dir
         assert isinstance(self.manager.loaded_commands, dict)
         assert self.manager.lockfile_path == self.commands_dir / "commands.lock.json"
 
     def test_save_command(self):
-        """Test saving a command"""
+        """Test saving a command."""
         code = "import click\n@click.command()\ndef test():\n    click.echo('test')"
         path = self.manager.save_command(name="test_cmd", code=code, description="Test command")
 
@@ -73,7 +73,7 @@ class TestCustomCommandManager:
         assert "updated_at" in data
 
     def test_load_command(self):
-        """Test loading a command"""
+        """Test loading a command."""
         # Create a test command file
         test_data = {
             "name": "test_cmd",
@@ -94,7 +94,7 @@ class TestCustomCommandManager:
         assert loaded["code"] == "test code"
 
     def test_load_all_commands(self):
-        """Test loading all commands"""
+        """Test loading all commands."""
         # Create multiple test commands
         for i in range(3):
             test_data = {
@@ -113,7 +113,7 @@ class TestCustomCommandManager:
         assert all("name" in cmd for cmd in commands)
 
     def test_delete_command(self):
-        """Test deleting a command"""
+        """Test deleting a command."""
         # Create a test command
         self.manager.save_command(name="test_cmd", code="test", description="Test")
 
@@ -132,7 +132,7 @@ class TestCustomCommandManager:
         assert result is False
 
     def test_generate_lockfile(self):
-        """Test lockfile generation"""
+        """Test lockfile generation."""
         # Create some test commands
         for i in range(2):
             self.manager.save_command(name=f"cmd_{i}", code=f"code {i}", description=f"Cmd {i}")
@@ -148,7 +148,7 @@ class TestCustomCommandManager:
         assert "cmd_1" in lockfile_data["commands"]
 
     def test_update_lockfile(self):
-        """Test lockfile updating"""
+        """Test lockfile updating."""
         # Create a test command
         self.manager.save_command(name="test_cmd", code="test", description="Test")
 
@@ -162,7 +162,7 @@ class TestCustomCommandManager:
         assert "test_cmd" in lockfile["commands"]
 
     def test_load_lockfile(self):
-        """Test loading the lockfile"""
+        """Test loading the lockfile."""
         # Create a lockfile
         lockfile_data = {
             "version": "1.0",
@@ -181,7 +181,7 @@ class TestCustomCommandManager:
         assert "test_cmd" in loaded["commands"]
 
     def test_verify_lockfile_valid(self):
-        """Test lockfile verification when valid"""
+        """Test lockfile verification when valid."""
         # Create command and update lockfile
         self.manager.save_command(name="test_cmd", code="test", description="Test")
         self.manager.update_lockfile()
@@ -195,7 +195,7 @@ class TestCustomCommandManager:
         assert len(result["modified"]) == 0
 
     def test_verify_lockfile_missing(self):
-        """Test lockfile verification with missing commands"""
+        """Test lockfile verification with missing commands."""
         # Create command and lockfile
         self.manager.save_command(name="test_cmd", code="test", description="Test")
 
@@ -210,7 +210,7 @@ class TestCustomCommandManager:
         assert "test_cmd" in result["missing"]
 
     def test_verify_lockfile_extra(self):
-        """Test lockfile verification with extra commands"""
+        """Test lockfile verification with extra commands."""
         # Create a command
         self.manager.save_command(name="test_cmd", code="test", description="Test")
 
@@ -228,7 +228,7 @@ class TestCustomCommandManager:
         assert "test_cmd" in result["extra"]
 
     def test_export_commands(self):
-        """Test exporting commands"""
+        """Test exporting commands."""
         # Create some commands
         self.manager.save_command(name="cmd1", code="code1", description="Cmd 1")
         self.manager.save_command(name="cmd2", code="code2", description="Cmd 2")
@@ -247,7 +247,7 @@ class TestCustomCommandManager:
         assert len(exported) == 2
 
     def test_import_commands(self):
-        """Test importing commands"""
+        """Test importing commands."""
         # Create export file
         import_data = [
             {
@@ -269,7 +269,7 @@ class TestCustomCommandManager:
         assert (self.commands_dir / "imported_cmd.json").exists()
 
     def test_import_commands_no_overwrite(self):
-        """Test importing without overwriting existing commands"""
+        """Test importing without overwriting existing commands."""
         # Create existing command
         self.manager.save_command(name="existing_cmd", code="original", description="Original")
 
@@ -298,7 +298,7 @@ class TestCustomCommandManager:
         assert data["code"] == "original"
 
     def test_import_commands_with_overwrite(self):
-        """Test importing with overwriting existing commands"""
+        """Test importing with overwriting existing commands."""
         # Create existing command
         self.manager.save_command(name="existing_cmd", code="original", description="Original")
 
@@ -328,10 +328,10 @@ class TestCustomCommandManager:
 
 
 class TestGetCommandManager:
-    """Test get_command_manager singleton"""
+    """Test get_command_manager singleton."""
 
     def test_singleton(self):
-        """Test that get_command_manager returns the same instance"""
+        """Test that get_command_manager returns the same instance."""
         manager1 = get_command_manager()
         manager2 = get_command_manager()
 

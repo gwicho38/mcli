@@ -1,5 +1,5 @@
 """
-Integration tests for mcli.workflow.videos module
+Integration tests for mcli.workflow.videos module.
 
 NOTE: This module has been migrated to portable JSON commands.
 Tests are skipped as the Python module no longer exists.

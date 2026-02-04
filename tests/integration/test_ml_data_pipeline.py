@@ -196,10 +196,10 @@ class LSHDataPipeline:
 
 
 class TestDataPipelineConfig:
-    """Test suite for pipeline configuration"""
+    """Test suite for pipeline configuration."""
 
     def test_default_config(self):
-        """Test default configuration values"""
+        """Test default configuration values."""
         config = DataPipelineConfig()
 
         assert config.batch_size == 100
@@ -213,7 +213,7 @@ class TestDataPipelineConfig:
         assert config.retry_delay == 1
 
     def test_custom_config(self):
-        """Test custom configuration"""
+        """Test custom configuration."""
         config = DataPipelineConfig(
             batch_size=50,
             batch_timeout=60,
@@ -230,16 +230,16 @@ class TestDataPipelineConfig:
 
 
 class TestDataValidator:
-    """Test suite for data validation"""
+    """Test suite for data validation."""
 
     @pytest.fixture
     def validator(self):
-        """Create validator instance"""
+        """Create validator instance."""
         return DataValidator()
 
     @pytest.mark.asyncio
     async def test_validate_trading_record(self, validator):
-        """Test trading record validation"""
+        """Test trading record validation."""
         # Valid record
         valid_record = {
             "politician_name": "John Doe",
@@ -269,7 +269,7 @@ class TestDataValidator:
 
     @pytest.mark.asyncio
     async def test_validate_batch(self, validator):
-        """Test batch validation"""
+        """Test batch validation."""
         records = [
             {
                 "politician_name": "Jane Doe",
@@ -297,16 +297,16 @@ class TestDataValidator:
 
 
 class TestDataEnricher:
-    """Test suite for data enrichment"""
+    """Test suite for data enrichment."""
 
     @pytest.fixture
     def enricher(self):
-        """Create enricher instance"""
+        """Create enricher instance."""
         return DataEnricher()
 
     @pytest.mark.asyncio
     async def test_enrich_trading_record(self, enricher):
-        """Test trading record enrichment"""
+        """Test trading record enrichment."""
         record = {
             "politician_name": "Test Politician",
             "transaction_date": "2024-01-01T00:00:00Z",
@@ -326,7 +326,7 @@ class TestDataEnricher:
 
     @pytest.mark.asyncio
     async def test_amount_categorization(self, enricher):
-        """Test amount categorization logic"""
+        """Test amount categorization logic."""
         # Small amount
         small = await enricher.enrich_trading_record(
             {"politician_name": "Test", "transaction_amount": 5000}
@@ -350,7 +350,7 @@ class TestDataEnricher:
 
     @pytest.mark.asyncio
     async def test_batch_enrichment(self, enricher):
-        """Test batch enrichment"""
+        """Test batch enrichment."""
         records = [
             {"politician_name": "Alice", "transaction_amount": 1000},
             {"politician_name": "Bob", "transaction_amount": 50000},
@@ -366,18 +366,18 @@ class TestDataEnricher:
 
 
 class TestDataProcessor:
-    """Test suite for data processor"""
+    """Test suite for data processor."""
 
     @pytest.fixture
     def processor(self):
-        """Create processor instance"""
+        """Create processor instance."""
         config = DataPipelineConfig()
         config.output_dir = Path(tempfile.mkdtemp())
         return DataProcessor(config)
 
     @pytest.mark.asyncio
     async def test_add_to_batch(self, processor):
-        """Test adding records to batch"""
+        """Test adding records to batch."""
         record1 = {"id": "1", "value": "test1"}
         record2 = {"id": "2", "value": "test2"}
 
@@ -389,7 +389,7 @@ class TestDataProcessor:
 
     @pytest.mark.asyncio
     async def test_batch_flush_on_size(self, processor):
-        """Test batch flush when size limit reached"""
+        """Test batch flush when size limit reached."""
         processor.config.batch_size = 2
 
         with patch.object(processor, "_write_batch") as mock_write:
@@ -402,7 +402,7 @@ class TestDataProcessor:
     @pytest.mark.asyncio
     @pytest.mark.skip(reason="Timer implementation needs refinement")
     async def test_batch_flush_on_timeout(self, processor):
-        """Test batch flush on timeout"""
+        """Test batch flush on timeout."""
         processor.config.batch_timeout = 0.1  # 100ms timeout
 
         with patch.object(processor, "_write_batch") as mock_write:
@@ -419,7 +419,7 @@ class TestDataProcessor:
 
     @pytest.mark.asyncio
     async def test_process_trading_data(self, processor):
-        """Test processing trading data"""
+        """Test processing trading data."""
         records = [
             {
                 "politician_name": "Test Person",
@@ -442,7 +442,7 @@ class TestDataProcessor:
 
     @pytest.mark.asyncio
     async def test_deduplication(self, processor):
-        """Test deduplication of records"""
+        """Test deduplication of records."""
         processor.config.enable_deduplication = True
 
         # Add same record twice
@@ -459,7 +459,7 @@ class TestDataProcessor:
 
     @pytest.mark.asyncio
     async def test_write_batch_jsonl(self, processor):
-        """Test writing batch to JSONL file"""
+        """Test writing batch to JSONL file."""
         processor.config.output_format = "jsonl"
         processor.current_batch = [{"id": "1", "value": "test1"}, {"id": "2", "value": "test2"}]
 
@@ -478,7 +478,7 @@ class TestDataProcessor:
 
     @pytest.mark.asyncio
     async def test_write_batch_json(self, processor):
-        """Test writing batch to JSON file"""
+        """Test writing batch to JSON file."""
         processor.config.output_format = "json"
         processor.current_batch = [{"id": "1", "value": "test1"}, {"id": "2", "value": "test2"}]
 
@@ -496,7 +496,7 @@ class TestDataProcessor:
 
     @pytest.mark.asyncio
     async def test_write_batch_csv(self, processor):
-        """Test writing batch to CSV file"""
+        """Test writing batch to CSV file."""
         processor.config.output_format = "csv"
         processor.current_batch = [
             {"id": "1", "name": "test1", "value": 100},
@@ -521,11 +521,11 @@ class TestDataProcessor:
 
 
 class TestLSHDataPipeline:
-    """Test suite for complete data pipeline"""
+    """Test suite for complete data pipeline."""
 
     @pytest.fixture
     def pipeline(self):
-        """Create pipeline instance"""
+        """Create pipeline instance."""
         client = AsyncMock(spec=LSHClient)
         config = DataPipelineConfig()
         config.output_dir = Path(tempfile.mkdtemp())
@@ -533,7 +533,7 @@ class TestLSHDataPipeline:
 
     @pytest.mark.asyncio
     async def test_pipeline_initialization(self):
-        """Test pipeline initialization"""
+        """Test pipeline initialization."""
         client = AsyncMock(spec=LSHClient)
         config = DataPipelineConfig()
 
@@ -546,7 +546,7 @@ class TestLSHDataPipeline:
 
     @pytest.mark.asyncio
     async def test_start_stop_pipeline(self, pipeline):
-        """Test starting and stopping pipeline"""
+        """Test starting and stopping pipeline."""
         with patch.object(pipeline, "_process_events") as mock_process:
             # Mock to prevent actual processing
             mock_process.return_value = asyncio.Future()
@@ -571,7 +571,7 @@ class TestLSHDataPipeline:
 
     @pytest.mark.asyncio
     async def test_handle_job_completed(self, pipeline):
-        """Test handling job completed event"""
+        """Test handling job completed event."""
         event_data = {
             "type": "lsh.job.completed",
             "data": {
@@ -590,7 +590,7 @@ class TestLSHDataPipeline:
 
     @pytest.mark.asyncio
     async def test_handle_data_received(self, pipeline):
-        """Test handling data received event"""
+        """Test handling data received event."""
         event_data = {
             "type": "lsh.data.received",
             "data": {
@@ -610,7 +610,7 @@ class TestLSHDataPipeline:
 
     @pytest.mark.asyncio
     async def test_error_handling(self, pipeline):
-        """Test error handling in pipeline"""
+        """Test error handling in pipeline."""
         # Test job completed with invalid JSON
         event_data = {"type": "lsh.job.completed", "data": {"stdout": "invalid json"}}
 
@@ -625,7 +625,7 @@ class TestLSHDataPipeline:
 
     @pytest.mark.asyncio
     async def test_stats_tracking(self, pipeline):
-        """Test statistics tracking"""
+        """Test statistics tracking."""
         # Process some records
         records = [
             {"politician_name": "Test1", "transaction_amount": 5000},

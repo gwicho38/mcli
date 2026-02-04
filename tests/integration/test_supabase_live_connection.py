@@ -23,10 +23,10 @@ requires_supabase = pytest.mark.skipif(
 
 @requires_supabase
 class TestLiveSupabaseConnection:
-    """Integration tests with live Supabase database"""
+    """Integration tests with live Supabase database."""
 
     def test_connection_pooler_connectivity(self):
-        """Test that connection pooler works for basic queries"""
+        """Test that connection pooler works for basic queries."""
         from mcli.ml.database.session import get_session
 
         try:
@@ -43,7 +43,7 @@ class TestLiveSupabaseConnection:
             pytest.fail(f"Unexpected error: {e}")
 
     def test_session_transaction_handling(self):
-        """Test that transactions work correctly with pooler"""
+        """Test that transactions work correctly with pooler."""
         from mcli.ml.database.session import get_session
 
         try:
@@ -60,7 +60,7 @@ class TestLiveSupabaseConnection:
             pytest.fail(f"Transaction handling failed: {e}")
 
     def test_connection_pooler_timeout(self):
-        """Test that connection timeout is configured properly"""
+        """Test that connection timeout is configured properly."""
         from mcli.ml.database.session import engine
 
         # Check connection pool configuration
@@ -70,7 +70,7 @@ class TestLiveSupabaseConnection:
         print("✅ Connection timeout configuration: SUCCESS")
 
     def test_ipv4_only_connection(self):
-        """Test that connection uses IPv4, not IPv6"""
+        """Test that connection uses IPv4, not IPv6."""
         import socket
 
         from mcli.ml.database.session import engine
@@ -94,7 +94,7 @@ class TestLiveSupabaseConnection:
             pytest.skip("Not using connection pooler")
 
     def test_error_handling_on_bad_query(self):
-        """Test that error handling works correctly"""
+        """Test that error handling works correctly."""
         from mcli.ml.database.session import get_session
 
         try:
@@ -112,7 +112,7 @@ class TestLiveSupabaseConnection:
             print("✅ Error handling on bad query: SUCCESS")
 
     def test_connection_pooler_vs_direct_connection(self):
-        """Compare pooler connection with direct connection (if password available)"""
+        """Compare pooler connection with direct connection (if password available)."""
         database_url = os.getenv("DATABASE_URL", "")
 
         # Check if using pooler (placeholder password detected)
@@ -126,10 +126,10 @@ class TestLiveSupabaseConnection:
 
 @requires_supabase
 class TestSupabasePoolerModes:
-    """Test different Supabase connection pooler modes"""
+    """Test different Supabase connection pooler modes."""
 
     def test_session_mode_pooler(self):
-        """Test Session mode pooler (port 5432)"""
+        """Test Session mode pooler (port 5432)."""
         supabase_url = os.getenv("SUPABASE_URL", "")
         service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
@@ -153,7 +153,7 @@ class TestSupabasePoolerModes:
             pytest.skip(f"Session mode pooler connection failed: {e}")
 
     def test_transaction_mode_pooler(self):
-        """Test Transaction mode pooler (port 6543)"""
+        """Test Transaction mode pooler (port 6543)."""
         supabase_url = os.getenv("SUPABASE_URL", "")
         service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 
@@ -179,10 +179,10 @@ class TestSupabasePoolerModes:
 
 @requires_supabase
 class TestConnectionRecovery:
-    """Test connection recovery and retry logic"""
+    """Test connection recovery and retry logic."""
 
     def test_connection_recovery_after_timeout(self):
-        """Test that connections recover after timeout"""
+        """Test that connections recover after timeout."""
         from mcli.ml.database.session import get_session
 
         # First connection
@@ -198,7 +198,7 @@ class TestConnectionRecovery:
         print("✅ Connection recovery: SUCCESS")
 
     def test_pool_pre_ping_functionality(self):
-        """Test that pool pre-ping detects stale connections"""
+        """Test that pool pre-ping detects stale connections."""
         from mcli.ml.database.session import engine
 
         # Verify pre-ping is enabled

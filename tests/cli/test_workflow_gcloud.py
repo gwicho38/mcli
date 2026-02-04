@@ -1,6 +1,4 @@
-"""
-CLI tests for mcli.workflow.gcloud module
-"""
+"""CLI tests for mcli.workflow.gcloud module."""
 
 from unittest.mock import patch
 
@@ -8,21 +6,21 @@ from click.testing import CliRunner
 
 
 class TestGcloudCommands:
-    """Test suite for gcloud workflow commands"""
+    """Test suite for gcloud workflow commands."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_gcloud_group_exists(self):
-        """Test gcloud command group exists"""
+        """Test gcloud command group exists."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         assert gcloud is not None
         assert hasattr(gcloud, "commands") or callable(gcloud)
 
     def test_gcloud_group_help(self):
-        """Test gcloud command group help"""
+        """Test gcloud command group help."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         result = self.runner.invoke(gcloud, ["--help"])
@@ -33,7 +31,7 @@ class TestGcloudCommands:
     @patch("mcli.workflow.gcloud.gcloud.shell_exec")
     @patch("mcli.workflow.gcloud.gcloud.get_shell_script_path")
     def test_start_command(self, mock_get_path, mock_shell_exec):
-        """Test gcloud start command"""
+        """Test gcloud start command."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         mock_get_path.return_value = "/mock/path/script.sh"
@@ -48,7 +46,7 @@ class TestGcloudCommands:
     @patch("mcli.workflow.gcloud.gcloud.shell_exec")
     @patch("mcli.workflow.gcloud.gcloud.get_shell_script_path")
     def test_stop_command(self, mock_get_path, mock_shell_exec):
-        """Test gcloud stop command"""
+        """Test gcloud stop command."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         mock_get_path.return_value = "/mock/path/script.sh"
@@ -62,7 +60,7 @@ class TestGcloudCommands:
     @patch("mcli.workflow.gcloud.gcloud.shell_exec")
     @patch("mcli.workflow.gcloud.gcloud.get_shell_script_path")
     def test_describe_command(self, mock_get_path, mock_shell_exec):
-        """Test gcloud describe command"""
+        """Test gcloud describe command."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         mock_get_path.return_value = "/mock/path/script.sh"
@@ -76,7 +74,7 @@ class TestGcloudCommands:
     @patch("mcli.workflow.gcloud.gcloud.shell_exec")
     @patch("mcli.workflow.gcloud.gcloud.get_shell_script_path")
     def test_tunnel_command(self, mock_get_path, mock_shell_exec):
-        """Test gcloud tunnel command"""
+        """Test gcloud tunnel command."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         mock_get_path.return_value = "/mock/path/script.sh"
@@ -89,7 +87,7 @@ class TestGcloudCommands:
         assert result.exit_code in [0, 1, 2]
 
     def test_start_help(self):
-        """Test start command help"""
+        """Test start command help."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         result = self.runner.invoke(gcloud, ["start", "--help"])
@@ -97,7 +95,7 @@ class TestGcloudCommands:
         assert result.exit_code == 0
 
     def test_stop_help(self):
-        """Test stop command help"""
+        """Test stop command help."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         result = self.runner.invoke(gcloud, ["stop", "--help"])
@@ -105,7 +103,7 @@ class TestGcloudCommands:
         assert result.exit_code == 0
 
     def test_describe_help(self):
-        """Test describe command help"""
+        """Test describe command help."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         result = self.runner.invoke(gcloud, ["describe", "--help"])
@@ -113,7 +111,7 @@ class TestGcloudCommands:
         assert result.exit_code == 0
 
     def test_tunnel_help(self):
-        """Test tunnel command help"""
+        """Test tunnel command help."""
         from mcli.workflow.gcloud.gcloud import gcloud
 
         result = self.runner.invoke(gcloud, ["tunnel", "--help"])

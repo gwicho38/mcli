@@ -1,6 +1,4 @@
-"""
-Unit tests for mcli.workflow.scheduler.scheduler module
-"""
+"""Unit tests for mcli.workflow.scheduler.scheduler module."""
 
 import subprocess
 import tempfile
@@ -11,20 +9,20 @@ from mcli.workflow.scheduler.scheduler import JobExecutor, JobScheduler
 
 
 class TestJobExecutor:
-    """Test suite for JobExecutor"""
+    """Test suite for JobExecutor."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.executor = JobExecutor()
 
     def test_executor_initialization(self):
-        """Test executor initializes correctly"""
+        """Test executor initializes correctly."""
         assert self.executor.running_processes == {}
         assert self.executor.lock is not None
 
     @patch("subprocess.Popen")
     def test_execute_command_success(self, mock_popen):
-        """Test successful command execution"""
+        """Test successful command execution."""
         # Mock subprocess
         mock_process = MagicMock()
         mock_process.communicate.return_value = ("output", "")
@@ -47,7 +45,7 @@ class TestJobExecutor:
 
     @patch("subprocess.Popen")
     def test_execute_command_failure(self, mock_popen):
-        """Test command execution failure"""
+        """Test command execution failure."""
         mock_process = MagicMock()
         mock_process.communicate.return_value = ("", "error output")
         mock_process.returncode = 1
@@ -67,7 +65,7 @@ class TestJobExecutor:
 
     @patch("subprocess.Popen")
     def test_execute_command_with_timeout(self, mock_popen):
-        """Test command execution with timeout"""
+        """Test command execution with timeout."""
         mock_process = MagicMock()
         mock_process.communicate.side_effect = subprocess.TimeoutExpired("cmd", 5)
         mock_popen.return_value = mock_process
@@ -88,7 +86,7 @@ class TestJobExecutor:
 
     @patch("subprocess.Popen")
     def test_execute_command_with_environment(self, mock_popen):
-        """Test command execution with custom environment"""
+        """Test command execution with custom environment."""
         mock_process = MagicMock()
         mock_process.communicate.return_value = ("", "")
         mock_process.returncode = 0
@@ -112,7 +110,7 @@ class TestJobExecutor:
 
     @patch("subprocess.Popen")
     def test_execute_command_with_working_directory(self, mock_popen):
-        """Test command execution with working directory"""
+        """Test command execution with working directory."""
         mock_process = MagicMock()
         mock_process.communicate.return_value = ("", "")
         mock_process.returncode = 0
@@ -135,7 +133,7 @@ class TestJobExecutor:
 
     @patch("builtins.exec")
     def test_execute_python_code(self, mock_exec):
-        """Test Python code execution"""
+        """Test Python code execution."""
         job = ScheduledJob(
             name="python_job",
             cron_expression="* * * * *",
@@ -151,7 +149,7 @@ class TestJobExecutor:
 
     @patch("requests.request")
     def test_execute_api_call_success(self, mock_request):
-        """Test API call execution"""
+        """Test API call execution."""
         mock_response = MagicMock()
         mock_response.ok = True
         mock_response.status_code = 200
@@ -174,7 +172,7 @@ class TestJobExecutor:
 
     @patch("requests.request")
     def test_execute_api_call_failure(self, mock_request):
-        """Test API call execution failure"""
+        """Test API call execution failure."""
         mock_response = MagicMock()
         mock_response.ok = False
         mock_response.status_code = 404
@@ -194,7 +192,7 @@ class TestJobExecutor:
         assert result["exit_code"] == 1
 
     def test_execute_job_updates_status(self):
-        """Test that execute_job updates job status correctly"""
+        """Test that execute_job updates job status correctly."""
         with patch("subprocess.Popen") as mock_popen:
             mock_process = MagicMock()
             mock_process.communicate.return_value = ("success", "")
@@ -216,7 +214,7 @@ class TestJobExecutor:
             assert job.success_count > 0
 
     def test_execute_job_handles_exception(self):
-        """Test that execute_job handles exceptions gracefully"""
+        """Test that execute_job handles exceptions gracefully."""
         job = ScheduledJob(
             name="exception_test",
             cron_expression="* * * * *",
@@ -233,15 +231,15 @@ class TestJobExecutor:
 
 
 class TestJobScheduler:
-    """Test suite for JobScheduler"""
+    """Test suite for JobScheduler."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.temp_dir = tempfile.mkdtemp()
         self.scheduler = JobScheduler(storage_dir=self.temp_dir)
 
     def teardown_method(self):
-        """Cleanup test environment"""
+        """Cleanup test environment."""
         if self.scheduler.running:
             self.scheduler.stop()
         import shutil
@@ -249,7 +247,7 @@ class TestJobScheduler:
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_scheduler_initialization(self):
-        """Test scheduler initializes correctly"""
+        """Test scheduler initializes correctly."""
         assert self.scheduler.storage is not None
         assert self.scheduler.monitor is not None
         assert self.scheduler.executor is not None
@@ -257,7 +255,7 @@ class TestJobScheduler:
         assert not self.scheduler.running
 
     def test_add_job(self):
-        """Test adding a job"""
+        """Test adding a job."""
         job = ScheduledJob(
             name="test_job",
             cron_expression="0 * * * *",
@@ -271,7 +269,7 @@ class TestJobScheduler:
         assert self.scheduler.jobs[job.id] == job
 
     def test_add_multiple_jobs_with_same_name(self):
-        """Test adding multiple jobs with the same name"""
+        """Test adding multiple jobs with the same name."""
         job1 = ScheduledJob(
             name="duplicate",
             cron_expression="0 * * * *",
@@ -294,7 +292,7 @@ class TestJobScheduler:
         assert len(jobs_with_name) == 2
 
     def test_remove_job(self):
-        """Test removing a job"""
+        """Test removing a job."""
         job = ScheduledJob(
             name="removable",
             cron_expression="0 * * * *",
@@ -309,12 +307,12 @@ class TestJobScheduler:
         assert job.id not in self.scheduler.jobs
 
     def test_remove_nonexistent_job(self):
-        """Test removing a job that doesn't exist"""
+        """Test removing a job that doesn't exist."""
         # Should not raise an error
         self.scheduler.remove_job("nonexistent-id")
 
     def test_get_job(self):
-        """Test getting a job by ID"""
+        """Test getting a job by ID."""
         job = ScheduledJob(
             name="getable",
             cron_expression="0 * * * *",
@@ -328,12 +326,12 @@ class TestJobScheduler:
         assert retrieved == job
 
     def test_get_nonexistent_job(self):
-        """Test getting a job that doesn't exist"""
+        """Test getting a job that doesn't exist."""
         result = self.scheduler.get_job("nonexistent")
         assert result is None
 
     def test_list_jobs(self):
-        """Test listing all jobs"""
+        """Test listing all jobs."""
         job1 = ScheduledJob(
             name="job1", cron_expression="0 * * * *", job_type=JobType.COMMAND, command="echo 1"
         )
@@ -352,7 +350,7 @@ class TestJobScheduler:
         assert job2 in jobs
 
     def test_scheduler_persistence(self):
-        """Test that jobs are persisted to storage"""
+        """Test that jobs are persisted to storage."""
         job = ScheduledJob(
             name="persistent",
             cron_expression="0 * * * *",
@@ -369,7 +367,7 @@ class TestJobScheduler:
         assert job.id in new_scheduler.jobs
 
     def test_start_scheduler(self):
-        """Test starting the scheduler"""
+        """Test starting the scheduler."""
         assert not self.scheduler.running
 
         with patch.object(self.scheduler.monitor, "start_monitoring"):
@@ -379,7 +377,7 @@ class TestJobScheduler:
         assert self.scheduler.running
 
     def test_start_already_running(self):
-        """Test starting scheduler when already running"""
+        """Test starting scheduler when already running."""
         self.scheduler.running = True
 
         with patch.object(self.scheduler.monitor, "start_monitoring") as mock_start:
@@ -389,7 +387,7 @@ class TestJobScheduler:
             mock_start.assert_not_called()
 
     def test_stop_scheduler(self):
-        """Test stopping the scheduler"""
+        """Test stopping the scheduler."""
         self.scheduler.running = True
 
         with patch.object(self.scheduler.monitor, "stop_monitoring"):
@@ -398,7 +396,7 @@ class TestJobScheduler:
         assert not self.scheduler.running
 
     def test_get_job_status(self):
-        """Test getting job status"""
+        """Test getting job status."""
         job = ScheduledJob(
             name="status_job",
             cron_expression="0 * * * *",
@@ -417,12 +415,12 @@ class TestJobScheduler:
         assert "history" in status
 
     def test_get_status_nonexistent_job(self):
-        """Test getting status of nonexistent job"""
+        """Test getting status of nonexistent job."""
         status = self.scheduler.get_job_status("nonexistent")
         assert status is None
 
     def test_scheduler_cleanup(self):
-        """Test scheduler cleanup on stop"""
+        """Test scheduler cleanup on stop."""
         job = ScheduledJob(
             name="cleanup_test",
             cron_expression="0 * * * *",

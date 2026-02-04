@@ -1,6 +1,4 @@
-"""
-Unit tests for mcli.workflow.scheduler.persistence module
-"""
+"""Unit tests for mcli.workflow.scheduler.persistence module."""
 
 import json
 import tempfile
@@ -10,10 +8,10 @@ from unittest.mock import patch
 
 
 class TestJobStorage:
-    """Test suite for JobStorage class"""
+    """Test suite for JobStorage class."""
 
     def test_job_storage_init_with_custom_dir(self):
-        """Test JobStorage initialization with custom directory"""
+        """Test JobStorage initialization with custom directory."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -25,7 +23,7 @@ class TestJobStorage:
             assert storage.lock is not None
 
     def test_job_storage_init_creates_directory(self):
-        """Test that JobStorage creates storage directory"""
+        """Test that JobStorage creates storage directory."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -36,7 +34,7 @@ class TestJobStorage:
             assert storage.storage_dir.is_dir()
 
     def test_job_storage_init_creates_files(self):
-        """Test that JobStorage creates initial JSON files"""
+        """Test that JobStorage creates initial JSON files."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -46,7 +44,7 @@ class TestJobStorage:
             assert storage.history_file.exists()
 
     def test_job_storage_default_directory(self):
-        """Test that default storage directory is in ~/.mcli/scheduler"""
+        """Test that default storage directory is in ~/.mcli/scheduler."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -57,7 +55,7 @@ class TestJobStorage:
                 assert storage.storage_dir == expected_dir
 
     def test_save_and_load_jobs(self):
-        """Test saving and loading jobs"""
+        """Test saving and loading jobs."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -91,7 +89,7 @@ class TestJobStorage:
             assert loaded_jobs[1].name == "job2"
 
     def test_save_jobs_empty_list(self):
-        """Test saving empty job list"""
+        """Test saving empty job list."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -104,7 +102,7 @@ class TestJobStorage:
             assert loaded_jobs == []
 
     def test_load_jobs_empty_file(self):
-        """Test loading jobs from empty file"""
+        """Test loading jobs from empty file."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -114,7 +112,7 @@ class TestJobStorage:
             assert jobs == []
 
     def test_save_single_job_new(self):
-        """Test saving a new single job"""
+        """Test saving a new single job."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -136,7 +134,7 @@ class TestJobStorage:
             assert loaded_jobs[0].name == "test_job"
 
     def test_save_single_job_update_existing(self):
-        """Test updating an existing job"""
+        """Test updating an existing job."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -163,7 +161,7 @@ class TestJobStorage:
             assert loaded_jobs[0].command == "updated command"
 
     def test_delete_job(self):
-        """Test deleting a job"""
+        """Test deleting a job."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -198,7 +196,7 @@ class TestJobStorage:
             assert loaded_jobs[0].name == "job2"
 
     def test_delete_nonexistent_job(self):
-        """Test deleting a job that doesn't exist returns False"""
+        """Test deleting a job that doesn't exist returns False."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -208,7 +206,7 @@ class TestJobStorage:
             assert result is False
 
     def test_get_job_by_id(self):
-        """Test getting a specific job by ID"""
+        """Test getting a specific job by ID."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -231,7 +229,7 @@ class TestJobStorage:
             assert retrieved_job.id == "test-id"
 
     def test_get_job_not_found(self):
-        """Test getting a job that doesn't exist returns None"""
+        """Test getting a job that doesn't exist returns None."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -241,7 +239,7 @@ class TestJobStorage:
             assert job is None
 
     def test_record_job_execution(self):
-        """Test recording job execution history"""
+        """Test recording job execution history."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -275,7 +273,7 @@ class TestJobStorage:
             assert history[0]["status"] == "completed"
 
     def test_record_job_execution_limits_output_size(self):
-        """Test that job execution records limit output size"""
+        """Test that job execution records limit output size."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -301,7 +299,7 @@ class TestJobStorage:
             assert len(history[0]["output"]) <= 1000
 
     def test_get_job_history_all(self):
-        """Test getting all job history"""
+        """Test getting all job history."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -325,7 +323,7 @@ class TestJobStorage:
             assert len(history) == 5
 
     def test_get_job_history_with_limit(self):
-        """Test getting job history with limit"""
+        """Test getting job history with limit."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -349,7 +347,7 @@ class TestJobStorage:
             assert len(history) == 3
 
     def test_get_job_history_for_specific_job(self):
-        """Test getting history for a specific job"""
+        """Test getting history for a specific job."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -383,7 +381,7 @@ class TestJobStorage:
             assert all(record["job_id"] == "id1" for record in history)
 
     def test_cleanup_old_history(self):
-        """Test cleaning up old history records"""
+        """Test cleaning up old history records."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -412,7 +410,7 @@ class TestJobStorage:
             assert history[0]["status"] == "recent"
 
     def test_export_jobs(self):
-        """Test exporting jobs to file"""
+        """Test exporting jobs to file."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -443,7 +441,7 @@ class TestJobStorage:
             assert export_data["jobs"][0]["name"] == "export_job"
 
     def test_import_jobs(self):
-        """Test importing jobs from file"""
+        """Test importing jobs from file."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -477,7 +475,7 @@ class TestJobStorage:
             assert jobs[0].name == "imported_job"
 
     def test_import_jobs_with_replace(self):
-        """Test importing jobs with replace=True"""
+        """Test importing jobs with replace=True."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -527,7 +525,7 @@ class TestJobStorage:
             assert jobs[0].name == "new_job"
 
     def test_import_jobs_skips_duplicates(self):
-        """Test that import skips duplicate job names"""
+        """Test that import skips duplicate job names."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -565,7 +563,7 @@ class TestJobStorage:
             assert len(jobs) == 1
 
     def test_get_storage_info(self):
-        """Test getting storage information"""
+        """Test getting storage information."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -589,7 +587,7 @@ class TestJobStorage:
             assert info["jobs_count"] == 1
 
     def test_read_json_file_handles_missing_file(self):
-        """Test that _read_json_file handles missing file gracefully"""
+        """Test that _read_json_file handles missing file gracefully."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -600,7 +598,7 @@ class TestJobStorage:
             assert result == {}
 
     def test_read_json_file_handles_corrupted_json(self):
-        """Test that _read_json_file handles corrupted JSON gracefully"""
+        """Test that _read_json_file handles corrupted JSON gracefully."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -615,7 +613,7 @@ class TestJobStorage:
             assert result == {}
 
     def test_write_json_file_atomic_operation(self):
-        """Test that _write_json_file uses atomic write"""
+        """Test that _write_json_file uses atomic write."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -638,7 +636,7 @@ class TestJobStorage:
             assert not temp_file.exists()
 
     def test_thread_safety_with_lock(self):
-        """Test that operations use locking for thread safety"""
+        """Test that operations use locking for thread safety."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -650,7 +648,7 @@ class TestJobStorage:
             assert hasattr(storage.lock, "release")
 
     def test_history_keeps_only_last_1000_records(self):
-        """Test that history is limited to 1000 records"""
+        """Test that history is limited to 1000 records."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.persistence import JobStorage
 
@@ -679,7 +677,7 @@ class TestJobStorage:
             assert len(history) <= 1000
 
     def test_load_jobs_handles_corrupted_job_data(self):
-        """Test that load_jobs skips corrupted job records"""
+        """Test that load_jobs skips corrupted job records."""
         from mcli.workflow.scheduler.persistence import JobStorage
 
         with tempfile.TemporaryDirectory() as tmpdir:

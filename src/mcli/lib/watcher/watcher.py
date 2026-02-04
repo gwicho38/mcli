@@ -180,5 +180,8 @@
 # #      watch()
 
 
-def watch(*args, **kwargs):
+from typing import Any
+
+
+def watch(*args: Any, **kwargs: Any) -> None:
     """Dummy watch function for CLI test pass."""

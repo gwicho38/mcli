@@ -1,5 +1,5 @@
 """
-Unit tests for mcli.workflow.file.file module
+Unit tests for mcli.workflow.file.file module.
 
 NOTE: This module has been migrated to portable JSON commands.
 Tests are skipped as the Python module no longer exists.

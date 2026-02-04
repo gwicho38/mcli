@@ -1,6 +1,4 @@
-"""
-CLI tests for mcli.workflow.registry module
-"""
+"""CLI tests for mcli.workflow.registry module."""
 
 from unittest.mock import MagicMock, patch
 
@@ -22,10 +20,10 @@ except ImportError:
 
 
 class TestDockerClient:
-    """Test suite for DockerClient class"""
+    """Test suite for DockerClient class."""
 
     def test_docker_client_init(self):
-        """Test DockerClient initialization"""
+        """Test DockerClient initialization."""
         from mcli.workflow.registry.registry import DockerClient
 
         client = DockerClient("https://registry.example.com")
@@ -34,7 +32,7 @@ class TestDockerClient:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_get_catalog_success(self, mock_get):
-        """Test getting catalog successfully"""
+        """Test getting catalog successfully."""
         from mcli.workflow.registry.registry import DockerClient
 
         mock_response = MagicMock()
@@ -50,7 +48,7 @@ class TestDockerClient:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_get_catalog_error(self, mock_get):
-        """Test catalog fetch with error"""
+        """Test catalog fetch with error."""
         from mcli.workflow.registry.registry import DockerClient
 
         mock_get.side_effect = Exception("Connection error")
@@ -62,7 +60,7 @@ class TestDockerClient:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_get_tags(self, mock_get):
-        """Test getting tags for a repository"""
+        """Test getting tags for a repository."""
         from mcli.workflow.registry.registry import DockerClient
 
         mock_response = MagicMock()
@@ -77,7 +75,7 @@ class TestDockerClient:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_search_repository(self, mock_get):
-        """Test searching for repositories"""
+        """Test searching for repositories."""
         from mcli.workflow.registry.registry import DockerClient
 
         mock_response = MagicMock()
@@ -93,7 +91,7 @@ class TestDockerClient:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_count_images(self, mock_get):
-        """Test counting images in repository"""
+        """Test counting images in repository."""
         from mcli.workflow.registry.registry import DockerClient
 
         mock_response = MagicMock()
@@ -108,7 +106,7 @@ class TestDockerClient:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_count_images_no_tags(self, mock_get):
-        """Test counting images when fetch fails"""
+        """Test counting images when fetch fails."""
         from mcli.workflow.registry.registry import DockerClient
 
         mock_get.side_effect = Exception("Error")
@@ -120,21 +118,21 @@ class TestDockerClient:
 
 
 class TestRegistryCommands:
-    """Test suite for registry CLI commands"""
+    """Test suite for registry CLI commands."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_registry_group_exists(self):
-        """Test registry command group exists"""
+        """Test registry command group exists."""
         from mcli.workflow.registry.registry import registry
 
         assert registry is not None
         assert hasattr(registry, "commands") or callable(registry)
 
     def test_registry_group_help(self):
-        """Test registry command group help"""
+        """Test registry command group help."""
         from mcli.workflow.registry.registry import registry
 
         result = self.runner.invoke(registry, ["--help"])
@@ -144,7 +142,7 @@ class TestRegistryCommands:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_catalog_command(self, mock_get):
-        """Test catalog command"""
+        """Test catalog command."""
         from mcli.workflow.registry.registry import registry
 
         mock_response = MagicMock()
@@ -161,7 +159,7 @@ class TestRegistryCommands:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_tags_command(self, mock_get):
-        """Test tags command"""
+        """Test tags command."""
         from mcli.workflow.registry.registry import registry
 
         mock_response = MagicMock()
@@ -177,7 +175,7 @@ class TestRegistryCommands:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_search_command(self, mock_get):
-        """Test search command"""
+        """Test search command."""
         from mcli.workflow.registry.registry import registry
 
         mock_response = MagicMock()
@@ -193,7 +191,7 @@ class TestRegistryCommands:
 
     @patch("mcli.workflow.registry.registry.requests.get")
     def test_count_command(self, mock_get):
-        """Test count command"""
+        """Test count command."""
         from mcli.workflow.registry.registry import registry
 
         mock_response = MagicMock()
@@ -209,7 +207,7 @@ class TestRegistryCommands:
         assert "2" in result.output or "Number" in result.output
 
     def test_catalog_help(self):
-        """Test catalog command help"""
+        """Test catalog command help."""
         from mcli.workflow.registry.registry import registry
 
         result = self.runner.invoke(registry, ["catalog", "--help"])
@@ -217,7 +215,7 @@ class TestRegistryCommands:
         assert result.exit_code == 0
 
     def test_tags_help(self):
-        """Test tags command help"""
+        """Test tags command help."""
         from mcli.workflow.registry.registry import registry
 
         result = self.runner.invoke(registry, ["tags", "--help"])
@@ -225,7 +223,7 @@ class TestRegistryCommands:
         assert result.exit_code == 0
 
     def test_search_help(self):
-        """Test search command help"""
+        """Test search command help."""
         from mcli.workflow.registry.registry import registry
 
         result = self.runner.invoke(registry, ["search", "--help"])

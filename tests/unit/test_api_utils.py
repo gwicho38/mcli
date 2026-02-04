@@ -1,16 +1,14 @@
-"""
-Unit tests for mcli.lib.api utility functions
-"""
+"""Unit tests for mcli.lib.api utility functions."""
 
 import os
 from unittest.mock import MagicMock, patch
 
 
 class TestApiUtils:
-    """Test suite for API utility functions"""
+    """Test suite for API utility functions."""
 
     def test_find_free_port(self):
-        """Test finding a free port"""
+        """Test finding a free port."""
         from mcli.lib.api.api import find_free_port
 
         port = find_free_port()
@@ -19,7 +17,7 @@ class TestApiUtils:
         assert 1024 <= port <= 65535
 
     def test_find_free_port_with_start_port(self):
-        """Test finding free port from specific start port"""
+        """Test finding free port from specific start port."""
         from mcli.lib.api.api import find_free_port
 
         port = find_free_port(start_port=9000)
@@ -28,7 +26,7 @@ class TestApiUtils:
         assert port >= 9000
 
     def test_find_free_port_fallback_to_random(self):
-        """Test fallback to random port when no port available"""
+        """Test fallback to random port when no port available."""
         from mcli.lib.api.api import find_free_port
 
         with patch("socket.socket") as mock_socket:
@@ -42,7 +40,7 @@ class TestApiUtils:
             assert 49152 <= port <= 65535
 
     def test_get_api_config_defaults(self):
-        """Test getting default API config"""
+        """Test getting default API config."""
         from mcli.lib.api.api import get_api_config
 
         with patch("mcli.lib.api.api.read_from_toml", return_value=None):
@@ -54,7 +52,7 @@ class TestApiUtils:
                 assert config["use_random_port"] is True
 
     def test_get_api_config_from_env(self):
-        """Test getting API config from environment variables"""
+        """Test getting API config from environment variables."""
         from mcli.lib.api.api import get_api_config
 
         env = {"MCLI_API_SERVER": "true", "MCLI_API_HOST": "127.0.0.1", "MCLI_API_PORT": "9000"}
@@ -69,7 +67,7 @@ class TestApiUtils:
                 assert config["use_random_port"] is False
 
     def test_get_api_config_from_toml(self):
-        """Test getting API config from TOML file"""
+        """Test getting API config from TOML file."""
         from mcli.lib.api.api import get_api_config
 
         toml_config = {"enabled": True, "port": 8080, "debug": True}
@@ -84,7 +82,7 @@ class TestApiUtils:
                     assert config["debug"] is True
 
     def test_get_api_config_env_overrides_toml(self):
-        """Test that environment variables override TOML config"""
+        """Test that environment variables override TOML config."""
         from mcli.lib.api.api import get_api_config
 
         toml_config = {"enabled": False, "port": 8080}

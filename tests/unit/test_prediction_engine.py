@@ -1,4 +1,4 @@
-"""Unit tests for Politician Trading Prediction Engine"""
+"""Unit tests for Politician Trading Prediction Engine."""
 
 import os
 import sys
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def predictor():
-    """Create a predictor instance for testing"""
+    """Create a predictor instance for testing."""
     from mcli.ml.predictions import PoliticianTradingPredictor
 
     return PoliticianTradingPredictor()
@@ -26,7 +26,7 @@ def predictor():
 
 @pytest.fixture
 def sample_disclosures():
-    """Create sample trading disclosure data"""
+    """Create sample trading disclosure data."""
     base_date = datetime.now() - timedelta(days=30)
 
     return pd.DataFrame(
@@ -101,13 +101,13 @@ def sample_disclosures():
 
 @pytest.fixture
 def empty_disclosures():
-    """Create empty DataFrame"""
+    """Create empty DataFrame."""
     return pd.DataFrame()
 
 
 @pytest.fixture
 def old_disclosures():
-    """Create old disclosures outside the 90-day window"""
+    """Create old disclosures outside the 90-day window."""
     old_date = datetime.now() - timedelta(days=120)
 
     return pd.DataFrame(
@@ -129,7 +129,7 @@ def old_disclosures():
 
 
 def test_predictor_initialization(predictor):
-    """Test predictor initializes with correct defaults"""
+    """Test predictor initializes with correct defaults."""
     logger.info("Testing predictor initialization...")
 
     assert predictor.min_trades_threshold == 2, "Default min_trades_threshold should be 2"
@@ -139,7 +139,7 @@ def test_predictor_initialization(predictor):
 
 
 def test_empty_disclosures(predictor, empty_disclosures):
-    """Test that empty disclosures return empty predictions"""
+    """Test that empty disclosures return empty predictions."""
     logger.info("Testing empty disclosures handling...")
 
     predictions = predictor.generate_predictions(empty_disclosures)
@@ -150,7 +150,7 @@ def test_empty_disclosures(predictor, empty_disclosures):
 
 
 def test_missing_ticker_column(predictor):
-    """Test handling of data without required ticker_symbol column"""
+    """Test handling of data without required ticker_symbol column."""
     logger.info("Testing missing ticker_symbol column...")
 
     bad_data = pd.DataFrame([{"transaction_type": "purchase", "amount": "$50,000"}])
@@ -163,7 +163,7 @@ def test_missing_ticker_column(predictor):
 
 
 def test_minimum_trades_filter(predictor, sample_disclosures):
-    """Test that tickers with fewer than minimum trades are filtered"""
+    """Test that tickers with fewer than minimum trades are filtered."""
     logger.info("Testing minimum trades filter...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -180,7 +180,7 @@ def test_minimum_trades_filter(predictor, sample_disclosures):
 
 
 def test_buy_signal_detection(predictor, sample_disclosures):
-    """Test that strong buy signals are detected correctly"""
+    """Test that strong buy signals are detected correctly."""
     logger.info("Testing buy signal detection...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -201,7 +201,7 @@ def test_buy_signal_detection(predictor, sample_disclosures):
 
 
 def test_sell_signal_detection(predictor, sample_disclosures):
-    """Test that strong sell signals are detected correctly"""
+    """Test that strong sell signals are detected correctly."""
     logger.info("Testing sell signal detection...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -222,7 +222,7 @@ def test_sell_signal_detection(predictor, sample_disclosures):
 
 
 def test_mixed_signal_detection(predictor, sample_disclosures):
-    """Test that mixed signals are handled correctly"""
+    """Test that mixed signals are handled correctly."""
     logger.info("Testing mixed signal detection...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -241,7 +241,7 @@ def test_mixed_signal_detection(predictor, sample_disclosures):
 
 
 def test_confidence_scoring(predictor, sample_disclosures):
-    """Test confidence scoring logic"""
+    """Test confidence scoring logic."""
     logger.info("Testing confidence scoring...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -263,7 +263,7 @@ def test_confidence_scoring(predictor, sample_disclosures):
 
 
 def test_risk_scoring(predictor, sample_disclosures):
-    """Test risk scoring logic"""
+    """Test risk scoring logic."""
     logger.info("Testing risk scoring...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -285,7 +285,7 @@ def test_risk_scoring(predictor, sample_disclosures):
 
 
 def test_signal_strength(predictor, sample_disclosures):
-    """Test signal strength calculation"""
+    """Test signal strength calculation."""
     logger.info("Testing signal strength...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -302,7 +302,7 @@ def test_signal_strength(predictor, sample_disclosures):
 
 
 def test_old_disclosures_filter(predictor, old_disclosures):
-    """Test that old disclosures outside the time window are filtered"""
+    """Test that old disclosures outside the time window are filtered."""
     logger.info("Testing old disclosures filter...")
 
     predictions = predictor.generate_predictions(old_disclosures)
@@ -314,7 +314,7 @@ def test_old_disclosures_filter(predictor, old_disclosures):
 
 
 def test_recency_adjustment(predictor):
-    """Test that recency affects confidence scoring"""
+    """Test that recency affects confidence scoring."""
     logger.info("Testing recency adjustment...")
 
     # Recent trades
@@ -362,7 +362,7 @@ def test_recency_adjustment(predictor):
 
 
 def test_get_top_picks(predictor, sample_disclosures):
-    """Test get_top_picks method"""
+    """Test get_top_picks method."""
     logger.info("Testing get_top_picks...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -383,7 +383,7 @@ def test_get_top_picks(predictor, sample_disclosures):
 
 
 def test_get_buy_recommendations(predictor, sample_disclosures):
-    """Test get_buy_recommendations method"""
+    """Test get_buy_recommendations method."""
     logger.info("Testing get_buy_recommendations...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -407,7 +407,7 @@ def test_get_buy_recommendations(predictor, sample_disclosures):
 
 
 def test_get_sell_recommendations(predictor, sample_disclosures):
-    """Test get_sell_recommendations method"""
+    """Test get_sell_recommendations method."""
     logger.info("Testing get_sell_recommendations...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -431,7 +431,7 @@ def test_get_sell_recommendations(predictor, sample_disclosures):
 
 
 def test_output_columns(predictor, sample_disclosures):
-    """Test that output DataFrame has all expected columns"""
+    """Test that output DataFrame has all expected columns."""
     logger.info("Testing output columns...")
 
     predictions = predictor.generate_predictions(sample_disclosures)
@@ -456,7 +456,7 @@ def test_output_columns(predictor, sample_disclosures):
 
 
 def test_prediction_limit(predictor):
-    """Test that predictions are limited to top 50"""
+    """Test that predictions are limited to top 50."""
     logger.info("Testing prediction limit...")
 
     # Create data with 60 different tickers
@@ -490,7 +490,7 @@ def test_prediction_limit(predictor):
 
 
 def test_null_ticker_filter(predictor):
-    """Test that null/empty tickers are filtered"""
+    """Test that null/empty tickers are filtered."""
     logger.info("Testing null ticker filter...")
 
     base_date = datetime.now() - timedelta(days=30)
@@ -517,7 +517,7 @@ def test_null_ticker_filter(predictor):
 
 
 def test_no_date_column_handling(predictor):
-    """Test handling when disclosure_date column is missing"""
+    """Test handling when disclosure_date column is missing."""
     logger.info("Testing no date column handling...")
 
     data_no_dates = pd.DataFrame(
@@ -537,7 +537,7 @@ def test_no_date_column_handling(predictor):
 
 
 def main():
-    """Run all tests"""
+    """Run all tests."""
     logger.info("=" * 60)
     logger.info("STARTING PREDICTION ENGINE TEST SUITE")
     logger.info("=" * 60)

@@ -1,6 +1,4 @@
-"""
-Unit tests for command store management functionality
-"""
+"""Unit tests for command store management functionality."""
 
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -13,7 +11,7 @@ from mcli.self.store_cmd import _get_store_path, store
 
 @pytest.fixture
 def mock_paths(tmp_path):
-    """Mock store and commands paths"""
+    """Mock store and commands paths."""
     store_path = tmp_path / "mcli-commands"
     commands_path = tmp_path / ".mcli" / "commands"
     config_file = tmp_path / ".mcli" / "store.conf"
@@ -30,15 +28,15 @@ def mock_paths(tmp_path):
 
 @pytest.fixture
 def runner():
-    """CLI test runner"""
+    """CLI test runner."""
     return CliRunner()
 
 
 class TestGetStorePath:
-    """Test _get_store_path helper function"""
+    """Test _get_store_path helper function."""
 
     def test_get_store_path_from_config(self, tmp_path):
-        """Test reading store path from config file"""
+        """Test reading store path from config file."""
         # Create .mcli directory structure
         mcli_dir = tmp_path / ".mcli"
         mcli_dir.mkdir(parents=True)
@@ -53,14 +51,14 @@ class TestGetStorePath:
             assert result == store_path
 
     def test_get_store_path_default(self, tmp_path):
-        """Test default store path when config doesn't exist"""
+        """Test default store path when config doesn't exist."""
         with patch("mcli.self.store_cmd.Path.home", return_value=tmp_path):
             with patch("mcli.self.store_cmd.DEFAULT_STORE_PATH", tmp_path / "default"):
                 result = _get_store_path()
                 assert result == tmp_path / "default"
 
     def test_get_store_path_nonexistent(self, tmp_path):
-        """Test behavior when configured path doesn't exist"""
+        """Test behavior when configured path doesn't exist."""
         config_file = tmp_path / "store.conf"
         config_file.write_text("/nonexistent/path")
 
@@ -72,12 +70,12 @@ class TestGetStorePath:
 
 
 class TestStoreInit:
-    """Test store init command"""
+    """Test store init command."""
 
     @patch("mcli.self.store_cmd.subprocess.run")
     @patch("mcli.self.store_cmd.Path.home")
     def test_init_creates_directory(self, mock_home, mock_run, runner, tmp_path):
-        """Test init creates store directory"""
+        """Test init creates store directory."""
         mock_home.return_value = tmp_path
         tmp_path / "repos" / "mcli-commands"
 
@@ -89,7 +87,7 @@ class TestStoreInit:
     @patch("mcli.self.store_cmd.subprocess.run")
     @patch("mcli.self.store_cmd.Path.home")
     def test_init_creates_gitignore(self, mock_home, mock_run, runner, tmp_path):
-        """Test init creates .gitignore"""
+        """Test init creates .gitignore."""
         mock_home.return_value = tmp_path
         store_path = tmp_path / "repos" / "mcli-commands"
 
@@ -105,7 +103,7 @@ class TestStoreInit:
     @patch("mcli.self.store_cmd.subprocess.run")
     @patch("mcli.self.store_cmd.Path.home")
     def test_init_creates_readme(self, mock_home, mock_run, runner, tmp_path):
-        """Test init creates README.md"""
+        """Test init creates README.md."""
         mock_home.return_value = tmp_path
         store_path = tmp_path / "repos" / "mcli-commands"
 
@@ -120,7 +118,7 @@ class TestStoreInit:
     @patch("mcli.self.store_cmd.subprocess.run")
     @patch("mcli.self.store_cmd.Path.home")
     def test_init_with_remote(self, mock_home, mock_run, runner, tmp_path):
-        """Test init with remote URL"""
+        """Test init with remote URL."""
         mock_home.return_value = tmp_path
 
         result = runner.invoke(store, ["init", "--remote", "git@github.com:user/repo.git"])
@@ -132,7 +130,7 @@ class TestStoreInit:
     @patch("mcli.self.store_cmd.subprocess.run")
     @patch("mcli.self.store_cmd.Path.home")
     def test_init_already_exists(self, mock_home, mock_run, runner, tmp_path):
-        """Test init when git repo already exists"""
+        """Test init when git repo already exists."""
         mock_home.return_value = tmp_path
         store_path = tmp_path / "repos" / "mcli-commands"
         store_path.mkdir(parents=True)
@@ -147,7 +145,7 @@ class TestStoreInit:
 
 
 class TestStorePush:
-    """Test store push command"""
+    """Test store push command."""
 
     @patch("mcli.self.store_cmd._get_store_path")
     @patch("mcli.self.store_cmd.COMMANDS_PATH")
@@ -155,7 +153,7 @@ class TestStorePush:
     def test_push_copies_commands(
         self, mock_run, mock_commands_path, mock_get_store, runner, tmp_path
     ):
-        """Test push copies commands to store"""
+        """Test push copies commands to store."""
         store_path = tmp_path / "store"
         commands_path = tmp_path / "commands"
 
@@ -179,7 +177,7 @@ class TestStorePush:
     @patch("mcli.self.store_cmd._get_store_path")
     @patch("mcli.self.store_cmd.subprocess.run")
     def test_push_skips_backups_by_default(self, mock_run, mock_get_store, runner, tmp_path):
-        """Test push skips .backup files unless --all specified"""
+        """Test push skips .backup files unless --all specified."""
         store_path = tmp_path / "store"
         commands_path = tmp_path / "commands"
 
@@ -201,12 +199,12 @@ class TestStorePush:
 
 
 class TestStorePull:
-    """Test store pull command"""
+    """Test store pull command."""
 
     @patch("mcli.self.store_cmd._get_store_path")
     @patch("mcli.self.store_cmd.subprocess.run")
     def test_pull_copies_from_store(self, mock_run, mock_get_store, runner, tmp_path):
-        """Test pull copies commands from store"""
+        """Test pull copies commands from store."""
         store_path = tmp_path / "store"
         commands_path = tmp_path / "commands"
 
@@ -227,7 +225,7 @@ class TestStorePull:
     @patch("mcli.self.store_cmd._get_store_path")
     @patch("mcli.self.store_cmd.subprocess.run")
     def test_pull_creates_backup(self, mock_run, mock_get_store, runner, tmp_path):
-        """Test pull creates backup of existing commands"""
+        """Test pull creates backup of existing commands."""
         store_path = tmp_path / "store"
         commands_path = tmp_path / "commands"
 
@@ -250,7 +248,7 @@ class TestStorePull:
     @patch("mcli.self.store_cmd._get_store_path")
     @patch("mcli.self.store_cmd.subprocess.run")
     def test_pull_skips_git_files(self, mock_run, mock_get_store, runner, tmp_path):
-        """Test pull skips .git, README.md, .gitignore"""
+        """Test pull skips .git, README.md, .gitignore."""
         store_path = tmp_path / "store"
         commands_path = tmp_path / "commands"
 
@@ -276,12 +274,12 @@ class TestStorePull:
 
 
 class TestStoreSync:
-    """Test store sync command"""
+    """Test store sync command."""
 
     @patch("mcli.self.store_cmd._get_store_path")
     @patch("mcli.self.store_cmd.subprocess.run")
     def test_sync_pulls_then_pushes(self, mock_run, mock_get_store, runner, tmp_path):
-        """Test sync pulls then pushes if changes exist"""
+        """Test sync pulls then pushes if changes exist."""
         store_path = tmp_path / "store"
         commands_path = tmp_path / "commands"
 
@@ -300,11 +298,11 @@ class TestStoreSync:
 
 
 class TestStoreList:
-    """Test store list command"""
+    """Test store list command."""
 
     @patch("mcli.self.store_cmd._get_store_path")
     def test_list_local_commands(self, mock_get_store, runner, tmp_path):
-        """Test listing local commands"""
+        """Test listing local commands."""
         commands_path = tmp_path / "commands"
         commands_path.mkdir()
 
@@ -322,7 +320,7 @@ class TestStoreList:
     @pytest.mark.skip(reason="CLI interface changed: --store-dir flag no longer exists")
     @patch("mcli.self.store_cmd._get_store_path")
     def test_list_store_commands(self, mock_get_store, runner, tmp_path):
-        """Test listing store commands"""
+        """Test listing store commands."""
         store_path = tmp_path / "store"
         store_path.mkdir()
 
@@ -340,12 +338,12 @@ class TestStoreList:
 
 
 class TestStoreStatus:
-    """Test store status command"""
+    """Test store status command."""
 
     @patch("mcli.self.store_cmd._get_store_path")
     @patch("mcli.self.store_cmd.subprocess.run")
     def test_status_shows_git_status(self, mock_run, mock_get_store, runner, tmp_path):
-        """Test status shows git repository status"""
+        """Test status shows git repository status."""
         store_path = tmp_path / "store"
         store_path.mkdir()
 
@@ -359,11 +357,11 @@ class TestStoreStatus:
 
 
 class TestStoreShow:
-    """Test store show command"""
+    """Test store show command."""
 
     @patch("mcli.self.store_cmd._get_store_path")
     def test_show_local_command(self, mock_get_store, runner, tmp_path):
-        """Test showing local command file"""
+        """Test showing local command file."""
         commands_path = tmp_path / "commands"
         commands_path.mkdir()
 
@@ -380,7 +378,7 @@ class TestStoreShow:
     @pytest.mark.skip(reason="CLI interface changed: --store flag behavior updated")
     @patch("mcli.self.store_cmd._get_store_path")
     def test_show_store_command(self, mock_get_store, runner, tmp_path):
-        """Test showing store command file"""
+        """Test showing store command file."""
         store_path = tmp_path / "store"
         store_path.mkdir()
 
@@ -397,7 +395,7 @@ class TestStoreShow:
 
     @patch("mcli.self.store_cmd._get_store_path")
     def test_show_nonexistent_command(self, mock_get_store, runner, tmp_path):
-        """Test showing nonexistent command"""
+        """Test showing nonexistent command."""
         commands_path = tmp_path / "commands"
         commands_path.mkdir()
 
@@ -409,12 +407,12 @@ class TestStoreShow:
 
 
 class TestStoreConfig:
-    """Test store config command"""
+    """Test store config command."""
 
     @patch("mcli.self.store_cmd._get_store_path")
     @patch("mcli.self.store_cmd.Path.home")
     def test_config_set_path(self, mock_home, mock_get_store, runner, tmp_path):
-        """Test setting store path"""
+        """Test setting store path."""
         # Create .mcli directory for config file
         mcli_dir = tmp_path / ".mcli"
         mcli_dir.mkdir(parents=True)
@@ -430,7 +428,7 @@ class TestStoreConfig:
     @patch("mcli.self.store_cmd._get_store_path")
     @patch("mcli.self.store_cmd.subprocess.run")
     def test_config_set_remote(self, mock_run, mock_get_store, runner, tmp_path):
-        """Test setting git remote"""
+        """Test setting git remote."""
         store_path = tmp_path / "store"
         store_path.mkdir()
 

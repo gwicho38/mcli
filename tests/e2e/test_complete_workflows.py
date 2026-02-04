@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""
-End-to-End LSH -> mcli Integration Test
+"""End-to-End LSH -> mcli Integration Test.
 
 NOTE: This test depends on LSH services integration which may not be available.
 Tests are skipped pending service dependency verification.
@@ -28,7 +26,7 @@ from mcli.lib.services.lsh_client import LSHClient
 
 
 class EndToEndTestRunner:
-    """Manages the complete end-to-end integration test"""
+    """Manages the complete end-to-end integration test."""
 
     def __init__(self):
         self.test_results = []
@@ -38,7 +36,7 @@ class EndToEndTestRunner:
         self.test_job_id = None
 
     async def setup(self):
-        """Setup test environment"""
+        """Setup test environment."""
         print("🔧 Setting up end-to-end test environment...")
 
         # Configure pipeline for testing
@@ -73,10 +71,10 @@ class EndToEndTestRunner:
         print("✅ Test environment setup complete")
 
     def _setup_test_handlers(self):
-        """Setup custom event handlers for testing"""
+        """Setup custom event handlers for testing."""
 
-        async def handle_job_completed(event_data: Dict[str, Any]):
-            """Handle job completion specifically for our test"""
+        async def handle_job_completed(event_data: dict[str, Any]):
+            """Handle job completion specifically for our test."""
             job_data = event_data.get("data", {})
             job_id = job_data.get("id")
             job_name = job_data.get("name", "")
@@ -90,8 +88,8 @@ class EndToEndTestRunner:
                 if stdout.strip():
                     await self._process_test_output(stdout)
 
-        async def handle_trading_data_processed(event_data: Dict[str, Any]):
-            """Handle processed trading data"""
+        async def handle_trading_data_processed(event_data: dict[str, Any]):
+            """Handle processed trading data."""
             records = event_data.get("records", [])
             self.processed_records.extend(records)
             print(f"📊 Received {len(records)} processed trading records")
@@ -101,7 +99,7 @@ class EndToEndTestRunner:
         self.lsh_client.on("trading.data.processed", handle_trading_data_processed)
 
     async def _process_test_output(self, output: str):
-        """Process job output through mcli pipeline"""
+        """Process job output through mcli pipeline."""
         try:
             print("🏭 Processing job output through mcli pipeline...")
 
@@ -138,7 +136,7 @@ class EndToEndTestRunner:
             print(f"❌ Error processing test output: {e}")
 
     async def create_test_job(self):
-        """Create a test job that simulates politician trading data collection"""
+        """Create a test job that simulates politician trading data collection."""
         print("🛠️  Creating politician trading test job...")
 
         # Create a script that outputs realistic politician trading data
@@ -195,7 +193,7 @@ for i in range(3):
             raise
 
     async def trigger_test_job(self):
-        """Trigger the test job and wait for completion"""
+        """Trigger the test job and wait for completion."""
         if not self.test_job_id:
             raise Exception("No test job created")
 
@@ -232,7 +230,7 @@ for i in range(3):
             raise
 
     async def start_event_listener(self):
-        """Start listening for LSH events"""
+        """Start listening for LSH events."""
         print("👂 Starting LSH event listener...")
 
         try:
@@ -250,7 +248,7 @@ for i in range(3):
             raise
 
     async def validate_results(self):
-        """Validate the end-to-end processing results"""
+        """Validate the end-to-end processing results."""
         print("🔍 Validating end-to-end test results...")
 
         validation_results = {
@@ -290,7 +288,7 @@ for i in range(3):
             print(f"✅ {len(output_files)} output files created")
 
             # Show sample of saved data
-            with open(output_files[0], "r") as f:
+            with open(output_files[0]) as f:
                 sample_line = f.readline()
                 if sample_line:
                     saved_record = json.loads(sample_line)
@@ -299,7 +297,7 @@ for i in range(3):
         return validation_results
 
     async def cleanup(self):
-        """Clean up test resources"""
+        """Clean up test resources."""
         print("🧹 Cleaning up test resources...")
 
         try:
@@ -325,7 +323,7 @@ for i in range(3):
             print(f"⚠️  Cleanup error: {e}")
 
     async def run_complete_test(self):
-        """Run the complete end-to-end integration test"""
+        """Run the complete end-to-end integration test."""
         print("🚀 Starting Complete End-to-End LSH -> mcli Integration Test")
         print("=" * 70)
 
@@ -382,7 +380,7 @@ for i in range(3):
 
 
 async def main():
-    """Main test execution"""
+    """Main test execution."""
     print("🧪 mcli-LSH End-to-End Integration Test")
     print("This test demonstrates complete data flow from LSH to mcli")
     print()

@@ -1,6 +1,4 @@
-"""
-Unit tests for mcli.workflow.scheduler.monitor module
-"""
+"""Unit tests for mcli.workflow.scheduler.monitor module."""
 
 import threading
 import time
@@ -9,21 +7,21 @@ from unittest.mock import MagicMock, patch
 
 
 class TestJobMonitor:
-    """Test suite for JobMonitor class"""
+    """Test suite for JobMonitor class."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         # Import here to avoid issues if module doesn't exist
         from mcli.workflow.scheduler.monitor import JobMonitor
 
         self.JobMonitor = JobMonitor
 
     def teardown_method(self):
-        """Cleanup after each test"""
+        """Cleanup after each test."""
         # Make sure monitoring is stopped
 
     def test_job_monitor_init_without_callback(self):
-        """Test JobMonitor initialization without callback"""
+        """Test JobMonitor initialization without callback."""
         monitor = self.JobMonitor()
 
         assert monitor.running_jobs == {}
@@ -34,14 +32,14 @@ class TestJobMonitor:
         assert monitor.lock is not None
 
     def test_job_monitor_init_with_callback(self):
-        """Test JobMonitor initialization with callback"""
+        """Test JobMonitor initialization with callback."""
         callback = MagicMock()
         monitor = self.JobMonitor(status_callback=callback)
 
         assert monitor.status_callback == callback
 
     def test_start_monitoring_starts_thread(self):
-        """Test that start_monitoring starts the monitor thread"""
+        """Test that start_monitoring starts the monitor thread."""
         monitor = self.JobMonitor()
 
         monitor.start_monitoring()
@@ -55,7 +53,7 @@ class TestJobMonitor:
         monitor.stop_monitoring()
 
     def test_start_monitoring_idempotent(self):
-        """Test that calling start_monitoring multiple times is safe"""
+        """Test that calling start_monitoring multiple times is safe."""
         monitor = self.JobMonitor()
 
         monitor.start_monitoring()
@@ -71,7 +69,7 @@ class TestJobMonitor:
         monitor.stop_monitoring()
 
     def test_stop_monitoring_stops_thread(self):
-        """Test that stop_monitoring stops the monitor thread"""
+        """Test that stop_monitoring stops the monitor thread."""
         monitor = self.JobMonitor()
 
         monitor.start_monitoring()
@@ -84,7 +82,7 @@ class TestJobMonitor:
         time.sleep(0.2)  # Give thread time to finish
 
     def test_stop_monitoring_when_not_started(self):
-        """Test that stop_monitoring works even if monitoring never started"""
+        """Test that stop_monitoring works even if monitoring never started."""
         monitor = self.JobMonitor()
 
         # Should not raise exception
@@ -93,7 +91,7 @@ class TestJobMonitor:
         assert monitor.monitoring is False
 
     def test_add_job_to_monitor(self):
-        """Test adding a job to monitor"""
+        """Test adding a job to monitor."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -116,7 +114,7 @@ class TestJobMonitor:
         thread.join()
 
     def test_get_running_jobs_returns_job_ids(self):
-        """Test get_running_jobs returns list of job IDs"""
+        """Test get_running_jobs returns list of job IDs."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -148,7 +146,7 @@ class TestJobMonitor:
         thread2.join()
 
     def test_get_running_jobs_empty_list(self):
-        """Test get_running_jobs returns empty list when no jobs"""
+        """Test get_running_jobs returns empty list when no jobs."""
         monitor = self.JobMonitor()
 
         running_jobs = monitor.get_running_jobs()
@@ -156,7 +154,7 @@ class TestJobMonitor:
         assert running_jobs == []
 
     def test_is_job_running_returns_true_for_running_job(self):
-        """Test is_job_running returns True for running job"""
+        """Test is_job_running returns True for running job."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -176,13 +174,13 @@ class TestJobMonitor:
         thread.join()
 
     def test_is_job_running_returns_false_for_unknown_job(self):
-        """Test is_job_running returns False for unknown job"""
+        """Test is_job_running returns False for unknown job."""
         monitor = self.JobMonitor()
 
         assert monitor.is_job_running("unknown-job-id") is False
 
     def test_get_job_runtime(self):
-        """Test getting runtime for a running job"""
+        """Test getting runtime for a running job."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -209,7 +207,7 @@ class TestJobMonitor:
         thread.join()
 
     def test_get_job_runtime_returns_none_for_unknown_job(self):
-        """Test get_job_runtime returns None for unknown job"""
+        """Test get_job_runtime returns None for unknown job."""
         monitor = self.JobMonitor()
 
         runtime = monitor.get_job_runtime("unknown-job-id")
@@ -217,7 +215,7 @@ class TestJobMonitor:
         assert runtime is None
 
     def test_kill_job_returns_false_for_alive_thread(self):
-        """Test kill_job returns False for alive thread (Python limitation)"""
+        """Test kill_job returns False for alive thread (Python limitation)."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -240,7 +238,7 @@ class TestJobMonitor:
         thread.join()
 
     def test_kill_job_returns_true_for_unknown_job(self):
-        """Test kill_job returns True for unknown job"""
+        """Test kill_job returns True for unknown job."""
         monitor = self.JobMonitor()
 
         result = monitor.kill_job("unknown-job-id")
@@ -248,7 +246,7 @@ class TestJobMonitor:
         assert result is True
 
     def test_get_monitor_stats_basic(self):
-        """Test get_monitor_stats returns basic statistics"""
+        """Test get_monitor_stats returns basic statistics."""
         monitor = self.JobMonitor()
 
         stats = monitor.get_monitor_stats()
@@ -266,7 +264,7 @@ class TestJobMonitor:
         assert stats["job_runtimes"] == {}
 
     def test_get_monitor_stats_with_running_jobs(self):
-        """Test get_monitor_stats with running jobs"""
+        """Test get_monitor_stats with running jobs."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -298,7 +296,7 @@ class TestJobMonitor:
         thread.join()
 
     def test_remove_job_from_monitor(self):
-        """Test _remove_job removes job from tracking"""
+        """Test _remove_job removes job from tracking."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -323,14 +321,14 @@ class TestJobMonitor:
         thread.join()
 
     def test_remove_job_nonexistent_job_no_error(self):
-        """Test _remove_job doesn't error on nonexistent job"""
+        """Test _remove_job doesn't error on nonexistent job."""
         monitor = self.JobMonitor()
 
         # Should not raise exception
         monitor._remove_job("nonexistent-id")
 
     def test_monitor_loop_removes_completed_jobs(self):
-        """Test that monitor loop removes completed jobs"""
+        """Test that monitor loop removes completed jobs."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -357,7 +355,7 @@ class TestJobMonitor:
         assert job.id not in monitor.running_jobs
 
     def test_check_running_jobs_with_multiple_jobs(self):
-        """Test _check_running_jobs with multiple jobs"""
+        """Test _check_running_jobs with multiple jobs."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -393,7 +391,7 @@ class TestJobMonitor:
         thread2.join()
 
     def test_monitor_loop_handles_exceptions(self):
-        """Test that monitor loop handles exceptions gracefully"""
+        """Test that monitor loop handles exceptions gracefully."""
         monitor = self.JobMonitor()
 
         # Patch _check_running_jobs to raise exception
@@ -408,7 +406,7 @@ class TestJobMonitor:
             monitor.stop_monitoring()
 
     def test_thread_safety_with_concurrent_operations(self):
-        """Test thread safety with concurrent add/remove operations"""
+        """Test thread safety with concurrent add/remove operations."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -450,7 +448,7 @@ class TestJobMonitor:
         monitor.stop_monitoring()
 
     def test_monitor_stats_job_runtimes_accuracy(self):
-        """Test that job runtime calculations are reasonably accurate"""
+        """Test that job runtime calculations are reasonably accurate."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()
@@ -477,7 +475,7 @@ class TestJobMonitor:
         thread.join()
 
     def test_monitor_with_status_callback(self):
-        """Test monitor with status callback function"""
+        """Test monitor with status callback function."""
         callback = MagicMock()
         monitor = self.JobMonitor(status_callback=callback)
 
@@ -488,7 +486,7 @@ class TestJobMonitor:
         # This tests that the callback is properly initialized
 
     def test_kill_job_with_finished_thread(self):
-        """Test kill_job with already finished thread"""
+        """Test kill_job with already finished thread."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         monitor = self.JobMonitor()

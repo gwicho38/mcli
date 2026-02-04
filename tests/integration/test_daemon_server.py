@@ -1,5 +1,5 @@
 """
-Integration tests for mcli.workflow.daemon module
+Integration tests for mcli.workflow.daemon module.
 
 NOTE: Daemon CLI commands have been migrated to portable JSON format.
 Some daemon classes referenced in these tests (like CommandDatabase) were removed.
@@ -93,10 +93,10 @@ daemon = DaemonService()
 
 
 class TestCommand:
-    """Test the Command dataclass"""
+    """Test the Command dataclass."""
 
     def test_command_creation(self):
-        """Test creating a command with all fields"""
+        """Test creating a command with all fields."""
         cmd = Command(
             id="test-id",
             name="test-command",
@@ -120,7 +120,7 @@ class TestCommand:
         assert isinstance(cmd.updated_at, datetime)
 
     def test_command_defaults(self):
-        """Test command creation with defaults"""
+        """Test command creation with defaults."""
         cmd = Command(
             id="test-id",
             name="test-command",
@@ -137,11 +137,11 @@ class TestCommand:
 
 
 class TestCommandDatabase:
-    """Test the CommandDatabase class"""
+    """Test the CommandDatabase class."""
 
     @pytest.fixture
     def temp_db(self):
-        """Create a temporary database for testing"""
+        """Create a temporary database for testing."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             db_path = f.name
 
@@ -152,7 +152,7 @@ class TestCommandDatabase:
             os.unlink(db_path)
 
     def test_database_initialization(self, temp_db):
-        """Test database initialization"""
+        """Test database initialization."""
         CommandDatabase(temp_db)
 
         # Check if tables were created
@@ -174,7 +174,7 @@ class TestCommandDatabase:
         conn.close()
 
     def test_add_command(self, temp_db):
-        """Test adding a command to the database"""
+        """Test adding a command to the database."""
         db = CommandDatabase(temp_db)
 
         command = Command(
@@ -201,14 +201,14 @@ class TestCommandDatabase:
         assert retrieved.tags == ["test", "python"]
 
     def test_get_command_not_found(self, temp_db):
-        """Test getting a non-existent command"""
+        """Test getting a non-existent command."""
         db = CommandDatabase(temp_db)
 
         command = db.get_command("non-existent")
         assert command is None
 
     def test_get_all_commands(self, temp_db):
-        """Test getting all commands"""
+        """Test getting all commands."""
         db = CommandDatabase(temp_db)
 
         # Add multiple commands
@@ -229,7 +229,7 @@ class TestCommandDatabase:
             assert cmd.is_active is True
 
     def test_search_commands(self, temp_db):
-        """Test searching commands"""
+        """Test searching commands."""
         db = CommandDatabase(temp_db)
 
         # Add commands with different content
@@ -276,7 +276,7 @@ class TestCommandDatabase:
         assert results[0].language == "node"
 
     def test_update_command(self, temp_db):
-        """Test updating a command"""
+        """Test updating a command."""
         db = CommandDatabase(temp_db)
 
         # Add a command
@@ -303,7 +303,7 @@ class TestCommandDatabase:
         assert updated.tags == ["updated", "tags"]
 
     def test_delete_command(self, temp_db):
-        """Test deleting a command (soft delete)"""
+        """Test deleting a command (soft delete)."""
         db = CommandDatabase(temp_db)
 
         # Add a command
@@ -329,7 +329,7 @@ class TestCommandDatabase:
         assert len(all_commands) == 0
 
     def test_record_execution(self, temp_db):
-        """Test recording command execution"""
+        """Test recording command execution."""
         db = CommandDatabase(temp_db)
 
         # Add a command
@@ -368,16 +368,16 @@ class TestCommandDatabase:
 
 
 class TestCommandExecutor:
-    """Test the CommandExecutor class"""
+    """Test the CommandExecutor class."""
 
     @pytest.fixture
     def temp_dir(self):
-        """Create a temporary directory for testing"""
+        """Create a temporary directory for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             yield temp_dir
 
     def test_executor_initialization(self, temp_dir):
-        """Test executor initialization"""
+        """Test executor initialization."""
         executor = CommandExecutor(temp_dir)
 
         assert executor.temp_dir == Path(temp_dir)
@@ -388,7 +388,7 @@ class TestCommandExecutor:
         assert "shell" in executor.language_handlers
 
     def test_execute_python_command(self, temp_dir):
-        """Test executing a Python command"""
+        """Test executing a Python command."""
         executor = CommandExecutor(temp_dir)
 
         command = Command(
@@ -408,7 +408,7 @@ class TestCommandExecutor:
         assert result["execution_time_ms"] > 0
 
     def test_execute_python_command_with_args(self, temp_dir):
-        """Test executing a Python command with arguments"""
+        """Test executing a Python command with arguments."""
         executor = CommandExecutor(temp_dir)
 
         command = Command(
@@ -428,7 +428,7 @@ print(f"Arguments: {sys.argv[1:]}")
         assert "Arguments: ['arg1', 'arg2']" in result["output"]
 
     def test_execute_python_command_with_error(self, temp_dir):
-        """Test executing a Python command that raises an error"""
+        """Test executing a Python command that raises an error."""
         executor = CommandExecutor(temp_dir)
 
         command = Command(
@@ -446,7 +446,7 @@ print(f"Arguments: {sys.argv[1:]}")
         assert result["status"] == "failed"
 
     def test_execute_unsupported_language(self, temp_dir):
-        """Test executing a command with unsupported language"""
+        """Test executing a command with unsupported language."""
         executor = CommandExecutor(temp_dir)
 
         command = Command(
@@ -464,7 +464,7 @@ print(f"Arguments: {sys.argv[1:]}")
 
     @pytest.mark.skipif(not os.path.exists("/usr/bin/node"), reason="Node.js not available")
     def test_execute_node_command(self, temp_dir):
-        """Test executing a Node.js command"""
+        """Test executing a Node.js command."""
         executor = CommandExecutor(temp_dir)
 
         command = Command(
@@ -482,7 +482,7 @@ print(f"Arguments: {sys.argv[1:]}")
 
     @pytest.mark.skipif(not os.path.exists("/usr/bin/lua"), reason="Lua not available")
     def test_execute_lua_command(self, temp_dir):
-        """Test executing a Lua command"""
+        """Test executing a Lua command."""
         executor = CommandExecutor(temp_dir)
 
         command = Command(
@@ -499,7 +499,7 @@ print(f"Arguments: {sys.argv[1:]}")
         assert "Hello from Lua!" in result["output"]
 
     def test_execute_shell_command(self, temp_dir):
-        """Test executing a shell command"""
+        """Test executing a shell command."""
         executor = CommandExecutor(temp_dir)
 
         command = Command(
@@ -517,11 +517,11 @@ print(f"Arguments: {sys.argv[1:]}")
 
 
 class TestDaemonService:
-    """Test the DaemonService class"""
+    """Test the DaemonService class."""
 
     @pytest.fixture
     def temp_daemon_dir(self):
-        """Create a temporary daemon directory for testing"""
+        """Create a temporary daemon directory for testing."""
         with tempfile.TemporaryDirectory() as temp_dir:
             daemon_dir = Path(temp_dir) / "daemon"
             daemon_dir.mkdir()
@@ -529,7 +529,7 @@ class TestDaemonService:
 
     @patch("src.mcli.workflow.daemon.commands.Path.home")
     def test_daemon_service_initialization(self, mock_home, temp_daemon_dir):
-        """Test daemon service initialization"""
+        """Test daemon service initialization."""
         mock_home.return_value = temp_daemon_dir.parent
 
         service = DaemonService()
@@ -543,7 +543,7 @@ class TestDaemonService:
 
     @patch("src.mcli.workflow.daemon.commands.Path.home")
     def test_daemon_status_not_running(self, mock_home, temp_daemon_dir):
-        """Test daemon status when not running"""
+        """Test daemon status when not running."""
         mock_home.return_value = temp_daemon_dir.parent
 
         service = DaemonService()
@@ -557,7 +557,7 @@ class TestDaemonService:
     @patch("src.mcli.workflow.daemon.commands.Path.home")
     @patch("src.mcli.workflow.daemon.commands.psutil.pid_exists")
     def test_daemon_status_running(self, mock_pid_exists, mock_home, temp_daemon_dir):
-        """Test daemon status when running"""
+        """Test daemon status when running."""
         mock_home.return_value = temp_daemon_dir.parent
         mock_pid_exists.return_value = True
 
@@ -576,101 +576,101 @@ class TestDaemonService:
 
 
 class TestDaemonCLI:
-    """Test the daemon CLI commands"""
+    """Test the daemon CLI commands."""
 
     def test_daemon_group_help(self):
-        """Test daemon group help"""
+        """Test daemon group help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["--help"])
         assert result.exit_code == 0
         assert "Daemon service for command management" in result.output
 
     def test_daemon_start_help(self):
-        """Test daemon start help"""
+        """Test daemon start help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["start", "--help"])
         assert result.exit_code == 0
         assert "Start the daemon service" in result.output
 
     def test_daemon_stop_help(self):
-        """Test daemon stop help"""
+        """Test daemon stop help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["stop", "--help"])
         assert result.exit_code == 0
         assert "Stop the daemon service" in result.output
 
     def test_daemon_status_help(self):
-        """Test daemon status help"""
+        """Test daemon status help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["status", "--help"])
         assert result.exit_code == 0
         assert "Show daemon status" in result.output
 
     def test_daemon_add_file_help(self):
-        """Test daemon add-file help"""
+        """Test daemon add-file help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["add-file", "--help"])
         assert result.exit_code == 0
         assert "Add a command from a file" in result.output
 
     def test_daemon_add_stdin_help(self):
-        """Test daemon add-stdin help"""
+        """Test daemon add-stdin help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["add-stdin", "--help"])
         assert result.exit_code == 0
         assert "Add a command from stdin" in result.output
 
     def test_daemon_add_interactive_help(self):
-        """Test daemon add-interactive help"""
+        """Test daemon add-interactive help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["add-interactive", "--help"])
         assert result.exit_code == 0
         assert "Add a command interactively" in result.output
 
     def test_daemon_execute_help(self):
-        """Test daemon execute help"""
+        """Test daemon execute help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["execute", "--help"])
         assert result.exit_code == 0
         assert "Execute a command" in result.output
 
     def test_daemon_search_help(self):
-        """Test daemon search help"""
+        """Test daemon search help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["search", "--help"])
         assert result.exit_code == 0
         assert "Search for commands" in result.output
 
     def test_daemon_list_help(self):
-        """Test daemon list help"""
+        """Test daemon list help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["list", "--help"])
         assert result.exit_code == 0
         assert "List all commands" in result.output
 
     def test_daemon_show_help(self):
-        """Test daemon show help"""
+        """Test daemon show help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["show", "--help"])
         assert result.exit_code == 0
         assert "Show command details" in result.output
 
     def test_daemon_delete_help(self):
-        """Test daemon delete help"""
+        """Test daemon delete help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["delete", "--help"])
         assert result.exit_code == 0
         assert "Delete a command" in result.output
 
     def test_daemon_edit_help(self):
-        """Test daemon edit help"""
+        """Test daemon edit help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["edit", "--help"])
         assert result.exit_code == 0
         assert "Edit a command" in result.output
 
     def test_daemon_groups_help(self):
-        """Test daemon groups help"""
+        """Test daemon groups help."""
         runner = CliRunner()
         result = runner.invoke(daemon, ["groups", "--help"])
         assert result.exit_code == 0
@@ -678,11 +678,11 @@ class TestDaemonCLI:
 
 
 class TestDaemonIntegration:
-    """Integration tests for the daemon functionality"""
+    """Integration tests for the daemon functionality."""
 
     @pytest.fixture
     def temp_db(self):
-        """Create a temporary database for integration tests"""
+        """Create a temporary database for integration tests."""
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             db_path = f.name
 
@@ -693,7 +693,7 @@ class TestDaemonIntegration:
             os.unlink(db_path)
 
     def test_add_and_execute_command(self, temp_db):
-        """Test adding a command and then executing it"""
+        """Test adding a command and then executing it."""
         db = CommandDatabase(temp_db)
         executor = CommandExecutor()
 
@@ -732,7 +732,7 @@ class TestDaemonIntegration:
         assert updated_command.last_executed is not None
 
     def test_search_and_similarity(self, temp_db):
-        """Test search and similarity functionality"""
+        """Test search and similarity functionality."""
         db = CommandDatabase(temp_db)
 
         # Add commands with similar content
@@ -779,7 +779,7 @@ class TestDaemonIntegration:
             assert 0 <= similarity <= 1
 
     def test_command_lifecycle(self, temp_db):
-        """Test the complete command lifecycle"""
+        """Test the complete command lifecycle."""
         db = CommandDatabase(temp_db)
 
         # 1. Add command

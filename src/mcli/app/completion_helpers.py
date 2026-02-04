@@ -92,7 +92,6 @@ LAZY_COMMAND_COMPLETIONS: dict[str, Any] = {
         ]
     },
     "cron-test": {"options": ["--quick", "--cleanup", "--verbose"]},
-    "visual": {"subcommands": ["demo", "spinner-test"]},
     "redis": {"subcommands": ["start", "stop", "status", "flush"]},
     "logs": {"subcommands": ["tail", "view", "clear"]},
     "completion": {

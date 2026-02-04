@@ -7,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def mock_openai_client():
-    """Provide a mock OpenAI client for testing"""
+    """Provide a mock OpenAI client for testing."""
     client = Mock()
     client.chat = Mock()
     client.chat.completions = Mock()
@@ -27,7 +27,7 @@ def mock_openai_client():
 
 @pytest.fixture
 def mock_anthropic_client():
-    """Provide a mock Anthropic client for testing"""
+    """Provide a mock Anthropic client for testing."""
     client = Mock()
     client.messages = Mock()
     client.messages.create = Mock(
@@ -42,7 +42,7 @@ def mock_anthropic_client():
 
 @pytest.fixture
 def mock_ollama_client():
-    """Provide a mock Ollama client for testing"""
+    """Provide a mock Ollama client for testing."""
     client = Mock()
     client.chat = Mock(
         return_value=Mock(
@@ -56,7 +56,7 @@ def mock_ollama_client():
 
 @pytest.fixture
 def sample_chat_history():
-    """Provide sample chat history for testing"""
+    """Provide sample chat history for testing."""
     return [
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "Hello, how are you?"},
@@ -71,7 +71,7 @@ def sample_chat_history():
 
 @pytest.fixture
 def mock_chat_config():
-    """Provide mock chat configuration"""
+    """Provide mock chat configuration."""
     return {
         "provider": "openai",
         "model": "gpt-4",

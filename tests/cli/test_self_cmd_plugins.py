@@ -1,30 +1,36 @@
-"""
-CLI tests for mcli.self.self_cmd plugin management
+"""CLI tests for mcli.self.self_cmd plugin management.
+
+NOTE: Plugin commands were removed in the CLI simplification refactor.
+These tests are preserved but skipped for reference.
 """
 
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from click.testing import CliRunner
+
+# Skip all tests in this module - plugin commands were removed
+pytestmark = pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
 
 
 class TestPluginCommands:
-    """Test suite for plugin CLI commands"""
+    """Test suite for plugin CLI commands."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_plugin_group_exists(self):
-        """Test plugin command group exists"""
+        """Test plugin command group exists."""
         from mcli.self.self_cmd import plugin
 
         assert plugin is not None
         assert hasattr(plugin, "commands")
 
     def test_plugin_group_help(self):
-        """Test plugin command group help"""
+        """Test plugin command group help."""
         from mcli.self.self_cmd import self_app
 
         result = self.runner.invoke(self_app, ["plugin", "--help"])
@@ -34,7 +40,7 @@ class TestPluginCommands:
 
     @patch.dict("os.environ", {}, clear=True)
     def test_plugin_add_no_config(self):
-        """Test adding plugin when no config exists"""
+        """Test adding plugin when no config exists."""
         from mcli.self.self_cmd import self_app
 
         result = self.runner.invoke(self_app, ["plugin", "add", "test_plugin"])
@@ -45,7 +51,7 @@ class TestPluginCommands:
     @patch.dict("os.environ", {}, clear=True)
     @patch("subprocess.run")
     def test_plugin_add_with_url(self, mock_subprocess):
-        """Test adding plugin with repository URL"""
+        """Test adding plugin with repository URL."""
         from mcli.self.self_cmd import self_app
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -70,7 +76,7 @@ class TestPluginCommands:
 
     @patch.dict("os.environ", {}, clear=True)
     def test_plugin_add_without_url(self):
-        """Test adding plugin without repository URL"""
+        """Test adding plugin without repository URL."""
         from mcli.self.self_cmd import self_app
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -90,7 +96,7 @@ class TestPluginCommands:
 
     @patch.dict("os.environ", {}, clear=True)
     def test_plugin_add_already_exists(self):
-        """Test adding plugin that already exists in config"""
+        """Test adding plugin that already exists in config."""
         from mcli.self.self_cmd import self_app
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -108,7 +114,7 @@ class TestPluginCommands:
     @patch.dict("os.environ", {}, clear=True)
     @patch("subprocess.run")
     def test_plugin_add_git_clone_failure(self, mock_subprocess):
-        """Test adding plugin when git clone fails"""
+        """Test adding plugin when git clone fails."""
         from mcli.self.self_cmd import self_app
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -130,7 +136,7 @@ class TestPluginCommands:
 
     @patch.dict("os.environ", {}, clear=True)
     def test_plugin_remove_no_config(self):
-        """Test removing plugin when no config exists"""
+        """Test removing plugin when no config exists."""
         from mcli.self.self_cmd import self_app
 
         result = self.runner.invoke(self_app, ["plugin", "remove", "test_plugin"])
@@ -140,7 +146,7 @@ class TestPluginCommands:
 
     @patch.dict("os.environ", {}, clear=True)
     def test_plugin_remove_not_exists(self):
-        """Test removing plugin that doesn't exist"""
+        """Test removing plugin that doesn't exist."""
         from mcli.self.self_cmd import self_app
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -160,7 +166,7 @@ class TestPluginCommands:
 
     @patch.dict("os.environ", {}, clear=True)
     def test_plugin_remove_success(self):
-        """Test successfully removing a plugin"""
+        """Test successfully removing a plugin."""
         from mcli.self.self_cmd import self_app
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -185,7 +191,7 @@ class TestPluginCommands:
 
     @patch.dict("os.environ", {}, clear=True)
     def test_plugin_remove_failure(self):
-        """Test plugin removal failure"""
+        """Test plugin removal failure."""
         from mcli.self.self_cmd import self_app
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -211,7 +217,7 @@ class TestPluginCommands:
 
     @patch.dict("os.environ", {}, clear=True)
     def test_plugin_update_no_config(self):
-        """Test updating plugin when no config exists"""
+        """Test updating plugin when no config exists."""
         from mcli.self.self_cmd import self_app
 
         result = self.runner.invoke(self_app, ["plugin", "update", "test_plugin"])
@@ -221,7 +227,7 @@ class TestPluginCommands:
 
     @patch.dict("os.environ", {}, clear=True)
     def test_plugin_update_not_exists(self):
-        """Test updating plugin that doesn't exist"""
+        """Test updating plugin that doesn't exist."""
         from mcli.self.self_cmd import self_app
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -240,7 +246,7 @@ class TestPluginCommands:
                 )
 
     def test_plugin_add_help(self):
-        """Test plugin add command help"""
+        """Test plugin add command help."""
         from mcli.self.self_cmd import self_app
 
         result = self.runner.invoke(self_app, ["plugin", "add", "--help"])
@@ -249,7 +255,7 @@ class TestPluginCommands:
         assert "add" in result.output.lower()
 
     def test_plugin_remove_help(self):
-        """Test plugin remove command help"""
+        """Test plugin remove command help."""
         from mcli.self.self_cmd import self_app
 
         result = self.runner.invoke(self_app, ["plugin", "remove", "--help"])
@@ -258,7 +264,7 @@ class TestPluginCommands:
         assert "remove" in result.output.lower()
 
     def test_plugin_update_help(self):
-        """Test plugin update command help"""
+        """Test plugin update command help."""
         from mcli.self.self_cmd import self_app
 
         result = self.runner.invoke(self_app, ["plugin", "update", "--help"])

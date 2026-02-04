@@ -9,10 +9,10 @@ import pytest
 
 
 class TestOptionalRedisImport:
-    """Test that redis import is handled gracefully when not available"""
+    """Test that redis import is handled gracefully when not available."""
 
     def test_cached_vectorizer_imports_without_redis(self):
-        """Verify cached_vectorizer module can be imported without redis"""
+        """Verify cached_vectorizer module can be imported without redis."""
         try:
             from mcli.lib.search import cached_vectorizer
 
@@ -24,7 +24,7 @@ class TestOptionalRedisImport:
             raise
 
     def test_redis_available_flag_set_correctly(self):
-        """Verify REDIS_AVAILABLE flag reflects actual availability"""
+        """Verify REDIS_AVAILABLE flag reflects actual availability."""
         from mcli.lib.search import cached_vectorizer
 
         # Check that REDIS_AVAILABLE is a boolean
@@ -39,7 +39,7 @@ class TestOptionalRedisImport:
 
     @pytest.mark.asyncio
     async def test_cached_vectorizer_works_without_redis(self):
-        """Verify CachedTfIdfVectorizer can initialize without redis"""
+        """Verify CachedTfIdfVectorizer can initialize without redis."""
         from mcli.lib.search.cached_vectorizer import REDIS_AVAILABLE, CachedTfIdfVectorizer
 
         # Should be able to create instance even without redis

@@ -32,28 +32,30 @@ class McliLogger:
     _system_trace_level: int = 0  # 0=off, 1=basic, 2=detailed
 
     @classmethod
-    def get_logger(cls, name="mcli.out"):
+    def get_logger(cls, name: str = "mcli.out") -> logging.Logger:
         """Get or create the singleton logger instance."""
         if cls._instance is None:
             cls._instance = cls(name)
         return cls._instance.logger
 
     @classmethod
-    def get_trace_logger(cls):
+    def get_trace_logger(cls) -> logging.Logger:
         """Get the trace logger instance for interpreter trace events."""
         if cls._instance is None:
             cls._instance = cls("mcli.out")
         return cls._instance.trace_logger
 
     @classmethod
-    def get_system_trace_logger(cls):
+    def get_system_trace_logger(cls) -> logging.Logger:
         """Get the system trace logger instance for OS process monitoring."""
         if cls._instance is None:
             cls._instance = cls("mcli.out")
         return cls._instance.system_trace_logger
 
     @classmethod
-    def enable_runtime_tracing(cls, level: int = 1, excluded_modules: Optional[List[str]] = None):
+    def enable_runtime_tracing(
+        cls, level: int = 1, excluded_modules: Optional[List[str]] = None
+    ) -> None:
         """
         Enable Python interpreter runtime tracing.
 
@@ -106,7 +108,7 @@ class McliLogger:
             cls._instance.trace_logger.info("Python interpreter tracing disabled")
 
     @classmethod
-    def enable_system_tracing(cls, level: int = 1, interval: int = 5):
+    def enable_system_tracing(cls, level: int = 1, interval: int = 5) -> None:
         """
         Enable OS-level system tracing for process monitoring.
 
@@ -141,7 +143,7 @@ class McliLogger:
                 cls._instance.system_trace_logger.info("System process tracing disabled")
 
     @classmethod
-    def disable_system_tracing(cls):
+    def disable_system_tracing(cls) -> None:
         """Disable OS-level system tracing."""
         cls.enable_system_tracing(level=0)
 
@@ -169,7 +171,7 @@ class McliLogger:
         return 0
 
     @classmethod
-    def unregister_process(cls, pid: int):
+    def unregister_process(cls, pid: int) -> None:
         """Remove a process from monitoring."""
         if cls._instance is None:
             return
@@ -179,11 +181,11 @@ class McliLogger:
             cls._instance.system_trace_logger.info(f"Unregistered process ID {pid} from monitoring")
 
     @classmethod
-    def disable_runtime_tracing(cls):
+    def disable_runtime_tracing(cls) -> None:
         """Disable Python interpreter runtime tracing."""
         cls.enable_runtime_tracing(level=0)
 
-    def __init__(self, name="mcli.out"):
+    def __init__(self, name: str = "mcli.out") -> None:
         self.name = name
         self.logger = logging.getLogger(name)
         self.trace_logger = logging.getLogger(f"{name}.trace")
@@ -368,7 +370,7 @@ class McliLogger:
 
         return "\n".join(lines)
 
-    def _system_trace_worker(self):
+    def _system_trace_worker(self) -> None:
         """Worker thread that periodically collects and logs process information."""
         while self._system_tracing_enabled:
             try:
@@ -518,7 +520,7 @@ class McliLogger:
 
 
 # Singleton instance accessor function
-def get_logger(name="mcli.out"):
+def get_logger(name: str = "mcli.out") -> logging.Logger:
     """
     Get the mcli logger instance.
 
@@ -531,7 +533,7 @@ def get_logger(name="mcli.out"):
     return McliLogger.get_logger(name)
 
 
-def get_system_trace_logger():
+def get_system_trace_logger() -> logging.Logger:
     """
     Get the system trace logger instance.
 
@@ -541,7 +543,7 @@ def get_system_trace_logger():
     return McliLogger.get_system_trace_logger()
 
 
-def enable_runtime_tracing(level: int = 1, excluded_modules: Optional[List[str]] = None):
+def enable_runtime_tracing(level: int = 1, excluded_modules: Optional[List[str]] = None) -> None:
     """
     Enable Python interpreter runtime tracing.
 
@@ -552,12 +554,12 @@ def enable_runtime_tracing(level: int = 1, excluded_modules: Optional[List[str]]
     McliLogger.enable_runtime_tracing(level, excluded_modules)
 
 
-def disable_runtime_tracing():
+def disable_runtime_tracing() -> None:
     """Disable Python interpreter runtime tracing."""
     McliLogger.disable_runtime_tracing()
 
 
-def enable_system_tracing(level: int = 1, interval: int = 5):
+def enable_system_tracing(level: int = 1, interval: int = 5) -> None:
     """
     Enable OS-level system tracing for process monitoring.
 
@@ -568,7 +570,7 @@ def enable_system_tracing(level: int = 1, interval: int = 5):
     McliLogger.enable_system_tracing(level, interval)
 
 
-def disable_system_tracing():
+def disable_system_tracing() -> None:
     """Disable OS-level system tracing."""
     McliLogger.disable_system_tracing()
 
@@ -599,7 +601,7 @@ def register_subprocess(proc: subprocess.Popen) -> int:
     return McliLogger.register_subprocess(proc)
 
 
-def unregister_process(pid: int):
+def unregister_process(pid: int) -> None:
     """
     Remove a process from monitoring.
 

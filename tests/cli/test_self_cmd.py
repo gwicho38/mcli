@@ -16,8 +16,10 @@ def test_self_group_help():
 
 # NOTE: search command has been moved to mcli.app.commands_cmd
 # NOTE: add-command functionality was removed
+# NOTE: plugin commands were removed in CLI simplification
 
 
+@pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
 def test_plugin_help():
     runner = CliRunner()
     result = runner.invoke(self_app, ["plugin", "--help"])
@@ -25,6 +27,7 @@ def test_plugin_help():
     assert "Manage plugins for mcli" in result.output
 
 
+@pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
 def test_plugin_add_help():
     runner = CliRunner()
     result = runner.invoke(self_app, ["plugin", "add", "--help"])
@@ -32,6 +35,7 @@ def test_plugin_add_help():
     assert "PLUGIN_NAME" in result.output
 
 
+@pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
 def test_plugin_add_missing_required():
     runner = CliRunner()
     result = runner.invoke(self_app, ["plugin", "add"])
@@ -39,6 +43,7 @@ def test_plugin_add_missing_required():
     assert "Missing argument" in result.output
 
 
+@pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
 def test_plugin_remove_help():
     runner = CliRunner()
     result = runner.invoke(self_app, ["plugin", "remove", "--help"])
@@ -46,6 +51,7 @@ def test_plugin_remove_help():
     assert "PLUGIN_NAME" in result.output
 
 
+@pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
 def test_plugin_remove_missing_required():
     runner = CliRunner()
     result = runner.invoke(self_app, ["plugin", "remove"])
@@ -53,6 +59,7 @@ def test_plugin_remove_missing_required():
     assert "Missing argument" in result.output
 
 
+@pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
 def test_plugin_update_help():
     runner = CliRunner()
     result = runner.invoke(self_app, ["plugin", "update", "--help"])
@@ -60,6 +67,7 @@ def test_plugin_update_help():
     assert "PLUGIN_NAME" in result.output
 
 
+@pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
 def test_plugin_update_missing_required():
     runner = CliRunner()
     result = runner.invoke(self_app, ["plugin", "update"])
@@ -68,7 +76,7 @@ def test_plugin_update_missing_required():
 
 
 def test_logs_help():
-    """Test that logs command shows help text"""
+    """Test that logs command shows help text."""
     runner = CliRunner()
     result = runner.invoke(self_app, ["logs", "--help"])
     assert result.exit_code == 0
@@ -76,7 +84,7 @@ def test_logs_help():
 
 
 def test_logs_uses_correct_directory():
-    """Test that logs command uses get_logs_dir() from mcli.lib.paths"""
+    """Test that logs command uses get_logs_dir() from mcli.lib.paths."""
 
     from mcli.lib.paths import get_logs_dir
 
@@ -100,7 +108,7 @@ def test_logs_uses_correct_directory():
 
 
 def test_update_help():
-    """Test that update command shows help text"""
+    """Test that update command shows help text."""
     runner = CliRunner()
     result = runner.invoke(self_app, ["update", "--help"])
     assert result.exit_code == 0
@@ -112,7 +120,7 @@ def test_update_help():
 
 @pytest.fixture
 def mock_pypi_response():
-    """Mock PyPI API response"""
+    """Mock PyPI API response."""
     return {
         "info": {
             "version": "7.0.5",
@@ -123,7 +131,7 @@ def mock_pypi_response():
 
 
 def test_update_check_already_latest(mock_pypi_response):
-    """Test update --check when already on latest version"""
+    """Test update --check when already on latest version."""
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -147,7 +155,7 @@ def test_update_check_already_latest(mock_pypi_response):
 
 
 def test_update_check_update_available(mock_pypi_response):
-    """Test update --check when update is available"""
+    """Test update --check when update is available."""
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -172,7 +180,7 @@ def test_update_check_update_available(mock_pypi_response):
 
 
 def test_update_install_with_yes_flag(mock_pypi_response):
-    """Test update installation with --yes flag"""
+    """Test update installation with --yes flag."""
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -211,7 +219,7 @@ def test_update_install_with_yes_flag(mock_pypi_response):
 
 
 def test_update_cancelled_by_user(mock_pypi_response):
-    """Test update when user cancels at confirmation"""
+    """Test update when user cancels at confirmation."""
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -243,7 +251,7 @@ def test_update_cancelled_by_user(mock_pypi_response):
 
 
 def test_update_ci_check_failing(mock_pypi_response):
-    """Test update blocked when CI is failing"""
+    """Test update blocked when CI is failing."""
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -274,7 +282,7 @@ def test_update_ci_check_failing(mock_pypi_response):
 
 
 def test_update_skip_ci_check(mock_pypi_response):
-    """Test update with --skip-ci-check flag"""
+    """Test update with --skip-ci-check flag."""
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -310,7 +318,7 @@ def test_update_skip_ci_check(mock_pypi_response):
 
 
 def test_update_pypi_connection_error(mock_pypi_response):
-    """Test update when PyPI connection fails"""
+    """Test update when PyPI connection fails."""
     from unittest.mock import patch
 
     import requests
@@ -331,7 +339,7 @@ def test_update_pypi_connection_error(mock_pypi_response):
 
 
 def test_update_installation_failure(mock_pypi_response):
-    """Test update when pip installation fails"""
+    """Test update when pip installation fails."""
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -369,7 +377,7 @@ def test_update_installation_failure(mock_pypi_response):
 
 
 def test_update_uses_uv_tool_when_detected(mock_pypi_response):
-    """Test update uses 'uv tool install' when running from uv tool environment"""
+    """Test update uses 'uv tool install' when running from uv tool environment."""
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -416,7 +424,7 @@ def test_update_uses_uv_tool_when_detected(mock_pypi_response):
 
 
 def test_update_uses_pip_when_not_uv_tool(mock_pypi_response):
-    """Test update uses pip when not running from uv tool environment"""
+    """Test update uses pip when not running from uv tool environment."""
     from unittest.mock import Mock, patch
 
     runner = CliRunner()
@@ -466,21 +474,21 @@ def test_update_uses_pip_when_not_uv_tool(mock_pypi_response):
 
 
 class TestHelloCommand:
-    """Test suite for hello command"""
+    """Test suite for hello command."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_hello_default(self):
-        """Test hello command with default name"""
+        """Test hello command with default name."""
         result = self.runner.invoke(self_app, ["hello"])
 
         assert result.exit_code == 0
         assert "World" in result.output
 
     def test_hello_with_name(self):
-        """Test hello command with custom name"""
+        """Test hello command with custom name."""
         result = self.runner.invoke(self_app, ["hello", "Alice"])
 
         assert result.exit_code == 0
@@ -491,27 +499,28 @@ class TestHelloCommand:
 # Tests for logs functionality are in tests/cli/test_app_logs_cmd.py and tests/cli/test_logs_cmd.py
 
 
+@pytest.mark.skip(reason="Performance command removed in CLI simplification")
 class TestPerformanceCommand:
-    """Test suite for performance command"""
+    """Test suite for performance command."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_performance_basic(self):
-        """Test performance command basic execution"""
+        """Test performance command basic execution."""
         result = self.runner.invoke(self_app, ["performance"])
 
         assert result.exit_code == 0
 
     def test_performance_with_detailed_flag(self):
-        """Test performance command with --detailed flag"""
+        """Test performance command with --detailed flag."""
         result = self.runner.invoke(self_app, ["performance", "--detailed"])
 
         assert result.exit_code == 0
 
     def test_performance_with_benchmark_flag(self):
-        """Test performance command with --benchmark flag"""
+        """Test performance command with --benchmark flag."""
         result = self.runner.invoke(self_app, ["performance", "--benchmark"])
 
         assert result.exit_code == 0
@@ -520,22 +529,23 @@ class TestPerformanceCommand:
 # NOTE: TestCommandStateCommands removed - command state commands have been moved to mcli.app.commands_cmd
 
 
+@pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
 class TestPluginCommands:
-    """Test suite for plugin management commands"""
+    """Test suite for plugin management commands."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_plugin_add_without_repo(self):
-        """Test plugin add without repository URL"""
+        """Test plugin add without repository URL."""
         result = self.runner.invoke(self_app, ["plugin", "add", "test-plugin"])
 
         # Should fail or show error about missing repo
         assert result.exit_code in [0, 1]
 
     def test_plugin_remove(self):
-        """Test plugin remove command"""
+        """Test plugin remove command."""
         with self.runner.isolated_filesystem():
             from pathlib import Path
 
@@ -549,7 +559,7 @@ class TestPluginCommands:
             assert result.exit_code in [0, 1]
 
     def test_plugin_update(self):
-        """Test plugin update command"""
+        """Test plugin update command."""
         with self.runner.isolated_filesystem():
             from pathlib import Path
 
@@ -569,10 +579,10 @@ class TestPluginCommands:
 
 
 class TestTemplateGeneration:
-    """Test suite for template generation functions"""
+    """Test suite for template generation functions."""
 
     def test_get_command_template_simple(self):
-        """Test command template generation for simple command"""
+        """Test command template generation for simple command."""
         from mcli.self.self_cmd import get_command_template
 
         template = get_command_template("test-cmd")
@@ -582,7 +592,7 @@ class TestTemplateGeneration:
         assert "click" in template
 
     def test_get_command_template_with_group(self):
-        """Test command template generation with group"""
+        """Test command template generation with group."""
         from mcli.self.self_cmd import get_command_template
 
         template = get_command_template("test-cmd", group="mygroup")
@@ -599,14 +609,14 @@ class TestTemplateGeneration:
 
 
 class TestUpdateCommandImplementation:
-    """Test suite for update command implementation details"""
+    """Test suite for update command implementation details."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_update_check_only_mode(self):
-        """Test update command with --check flag"""
+        """Test update command with --check flag."""
         with patch("requests.get") as mock_get:
             mock_response = Mock()
             mock_response.json.return_value = {"info": {"version": "7.0.7"}, "releases": {}}
@@ -617,7 +627,7 @@ class TestUpdateCommandImplementation:
             assert result.exit_code == 0
 
     def test_update_with_pre_release_flag(self):
-        """Test update command with --pre flag for pre-releases"""
+        """Test update command with --pre flag for pre-releases."""
         with patch("requests.get") as mock_get:
             mock_response = Mock()
             mock_response.json.return_value = {"info": {"version": "7.1.0a1"}, "releases": {}}
@@ -629,10 +639,10 @@ class TestUpdateCommandImplementation:
 
 
 class TestUtilityFunctions:
-    """Test suite for utility functions"""
+    """Test suite for utility functions."""
 
     def test_hash_command_state(self):
-        """Test hash_command_state function with proper format"""
+        """Test hash_command_state function with proper format."""
         from mcli.self.self_cmd import hash_command_state
 
         # Commands should be a list of dicts with proper structure
@@ -643,7 +653,7 @@ class TestUtilityFunctions:
         assert len(hash_value) > 0
 
     def test_hash_command_state_consistency(self):
-        """Test hash is consistent for same commands"""
+        """Test hash is consistent for same commands."""
         from mcli.self.self_cmd import hash_command_state
 
         commands = [
@@ -657,7 +667,7 @@ class TestUtilityFunctions:
         assert hash1 == hash2
 
     def test_load_lockfile_nonexistent(self):
-        """Test load_lockfile when file doesn't exist"""
+        """Test load_lockfile when file doesn't exist."""
         import tempfile
 
         from mcli.self.self_cmd import load_lockfile
@@ -670,7 +680,7 @@ class TestUtilityFunctions:
                 assert result == []
 
     def test_append_lockfile_to_empty(self):
-        """Test append_lockfile creates new file"""
+        """Test append_lockfile creates new file."""
         import tempfile
 
         from mcli.self.self_cmd import append_lockfile, load_lockfile
@@ -689,7 +699,7 @@ class TestUtilityFunctions:
                 assert states[0]["hash"] == "test123"
 
     def test_find_state_by_hash_found(self):
-        """Test find_state_by_hash when state exists"""
+        """Test find_state_by_hash when state exists."""
         import json
         import tempfile
 
@@ -709,7 +719,7 @@ class TestUtilityFunctions:
                 assert state["hash"] == "def456"
 
     def test_find_state_by_hash_not_found(self):
-        """Test find_state_by_hash when state doesn't exist"""
+        """Test find_state_by_hash when state doesn't exist."""
         import json
         import tempfile
 
@@ -727,7 +737,7 @@ class TestUtilityFunctions:
                 assert state is None
 
     def test_restore_command_state_success(self):
-        """Test restore_command_state with valid hash"""
+        """Test restore_command_state with valid hash."""
         import json
         import tempfile
 
@@ -747,7 +757,7 @@ class TestUtilityFunctions:
                     mock_print.assert_called_once()
 
     def test_restore_command_state_failure(self):
-        """Test restore_command_state with invalid hash"""
+        """Test restore_command_state with invalid hash."""
         import json
         import tempfile
 
@@ -765,7 +775,7 @@ class TestUtilityFunctions:
                 assert result is False
 
     def test_get_current_command_state(self):
-        """Test get_current_command_state returns list"""
+        """Test get_current_command_state returns list."""
         from mcli.self.self_cmd import get_current_command_state
 
         # Mock collect_commands to avoid complex setup

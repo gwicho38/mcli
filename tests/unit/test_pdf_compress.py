@@ -1,6 +1,4 @@
-"""
-Unit tests for PDF compression functionality
-"""
+"""Unit tests for PDF compression functionality."""
 
 from unittest.mock import MagicMock, patch
 
@@ -9,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def mock_fitz():
-    """Mock PyMuPDF (fitz) library"""
+    """Mock PyMuPDF (fitz) library."""
     with patch("fitz") as mock:
         # Mock document
         mock_doc = MagicMock()
@@ -39,43 +37,43 @@ def mock_fitz():
 
 
 class TestPageRangeParsing:
-    """Test parse_page_range function"""
+    """Test parse_page_range function."""
 
     def test_parse_single_page(self):
-        """Test parsing single page number"""
+        """Test parsing single page number."""
         # This would need to import the actual function from the PDF workflow
         # For now, we're testing the logic
         result = self._parse_page_range("3")
         assert result == [3]
 
     def test_parse_multiple_pages(self):
-        """Test parsing multiple page numbers"""
+        """Test parsing multiple page numbers."""
         result = self._parse_page_range("3,4,7")
         assert result == [3, 4, 7]
 
     def test_parse_page_range(self):
-        """Test parsing page range"""
+        """Test parsing page range."""
         result = self._parse_page_range("3-5")
         assert result == [3, 4, 5]
 
     def test_parse_mixed_format(self):
-        """Test parsing mixed format"""
+        """Test parsing mixed format."""
         result = self._parse_page_range("1,3-5,8")
         assert result == [1, 3, 4, 5, 8]
 
     def test_parse_empty_string(self):
-        """Test parsing empty string"""
+        """Test parsing empty string."""
         result = self._parse_page_range("")
         assert result == []
 
     def test_parse_none(self):
-        """Test parsing None"""
+        """Test parsing None."""
         result = self._parse_page_range(None)
         assert result == []
 
     @staticmethod
     def _parse_page_range(page_range_str):
-        """Helper method to parse page range (implementation from compress command)"""
+        """Helper method to parse page range (implementation from compress command)."""
         pages = set()
         if not page_range_str:
             return []
@@ -92,46 +90,46 @@ class TestPageRangeParsing:
 
 
 class TestCompressionSettings:
-    """Test compression settings for different levels"""
+    """Test compression settings for different levels."""
 
     def test_light_compression_settings(self):
-        """Test light compression level settings"""
+        """Test light compression level settings."""
         settings = self._get_compression_settings("light")
         assert settings["color_quality"] == 90
         assert settings["gray_quality"] == 85
 
     def test_medium_compression_settings(self):
-        """Test medium compression level settings"""
+        """Test medium compression level settings."""
         settings = self._get_compression_settings("medium")
         assert settings["color_quality"] == 80
         assert settings["gray_quality"] == 70
 
     def test_aggressive_compression_settings(self):
-        """Test aggressive compression level settings"""
+        """Test aggressive compression level settings."""
         settings = self._get_compression_settings("aggressive")
         assert settings["color_quality"] == 65
         assert settings["gray_quality"] == 45
 
     def test_ultra_compression_settings(self):
-        """Test ultra compression level settings"""
+        """Test ultra compression level settings."""
         settings = self._get_compression_settings("ultra")
         assert settings["color_quality"] == 55
         assert settings["gray_quality"] == 35
 
     def test_smart_compression_settings(self):
-        """Test smart compression level settings (default)"""
+        """Test smart compression level settings (default)."""
         settings = self._get_compression_settings("smart")
         assert settings["color_quality"] == 85
         assert settings["gray_quality"] == 65
 
     def test_invalid_level_defaults_to_smart(self):
-        """Test invalid compression level defaults to smart"""
+        """Test invalid compression level defaults to smart."""
         settings = self._get_compression_settings("invalid")
         assert settings == self._get_compression_settings("smart")
 
     @staticmethod
     def _get_compression_settings(level):
-        """Helper method to get compression settings (implementation from compress command)"""
+        """Helper method to get compression settings (implementation from compress command)."""
         settings = {
             "light": {
                 "color_quality": 90,
@@ -163,16 +161,16 @@ class TestCompressionSettings:
 
 
 class TestPDFCompression:
-    """Test PDF compression functionality"""
+    """Test PDF compression functionality."""
 
     def test_compress_without_pymupdf(self):
-        """Test compression fails gracefully without PyMuPDF"""
+        """Test compression fails gracefully without PyMuPDF."""
         # Test that appropriate error message is returned
         # when PyMuPDF is not available
         # This is tested through the actual workflow command
 
     def test_compress_with_color_pages(self):
-        """Test compression preserves specified color pages"""
+        """Test compression preserves specified color pages."""
         # Test that color pages are identified correctly
         color_pages = [3, 4]
         assert 3 in color_pages
@@ -180,26 +178,26 @@ class TestPDFCompression:
         assert 5 not in color_pages
 
     def test_compress_dpi_scaling(self):
-        """Test DPI scaling calculation"""
+        """Test DPI scaling calculation."""
         dpi = 150
         scaling_factor = dpi / 72  # 72 is default DPI
         assert scaling_factor == pytest.approx(2.083, rel=0.01)
 
     def test_compression_quality_for_color_page(self):
-        """Test JPEG quality for color pages"""
+        """Test JPEG quality for color pages."""
         settings = self._get_compression_settings("smart")
         color_quality = settings["color_quality"]
         assert color_quality == 85
 
     def test_compression_quality_for_gray_page(self):
-        """Test JPEG quality for grayscale pages"""
+        """Test JPEG quality for grayscale pages."""
         settings = self._get_compression_settings("smart")
         gray_quality = settings["gray_quality"]
         assert gray_quality == 65
 
     @staticmethod
     def _get_compression_settings(level):
-        """Helper method (same as TestCompressionSettings)"""
+        """Helper method (same as TestCompressionSettings)."""
         settings = {
             "smart": {
                 "color_quality": 85,
@@ -211,23 +209,23 @@ class TestPDFCompression:
 
 
 class TestCompressionResults:
-    """Test compression result metrics"""
+    """Test compression result metrics."""
 
     def test_size_reduction_calculation(self):
-        """Test size reduction percentage calculation"""
+        """Test size reduction percentage calculation."""
         original_size = 10_000_000  # 10 MB
         compressed_size = 1_000_000  # 1 MB
         reduction = ((original_size - compressed_size) / original_size) * 100
         assert reduction == 90.0
 
     def test_mb_conversion(self):
-        """Test bytes to MB conversion"""
+        """Test bytes to MB conversion."""
         size_bytes = 1_048_576  # 1 MB in bytes
         size_mb = size_bytes / (1024 * 1024)
         assert size_mb == 1.0
 
     def test_savings_calculation(self):
-        """Test space savings calculation"""
+        """Test space savings calculation."""
         original_mb = 10.73
         compressed_mb = 0.81
         savings = original_mb - compressed_mb
@@ -236,22 +234,22 @@ class TestCompressionResults:
 
 @pytest.mark.integration
 class TestPDFCompressionIntegration:
-    """Integration tests for PDF compression (requires PyMuPDF)"""
+    """Integration tests for PDF compression (requires PyMuPDF)."""
 
     def test_compress_command_available(self):
-        """Test that compress command is available in PDF workflow"""
+        """Test that compress command is available in PDF workflow."""
         # This would test the actual CLI command
 
     def test_compress_with_real_pdf(self, tmp_path):
-        """Test compression with a real PDF file"""
+        """Test compression with a real PDF file."""
         # This would require a test PDF file
 
     def test_selective_color_preservation(self, tmp_path):
-        """Test that specified pages remain in color"""
+        """Test that specified pages remain in color."""
         # This would verify color preservation in output
 
     def test_target_size_iteration(self, tmp_path):
-        """Test that target size triggers aggressive compression"""
+        """Test that target size triggers aggressive compression."""
         # This would test the retry logic
 
 

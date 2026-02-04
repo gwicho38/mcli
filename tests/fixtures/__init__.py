@@ -1,5 +1,5 @@
 """
-Shared test fixtures for mcli-framework
+Shared test fixtures for mcli-framework.
 
 This package contains reusable fixtures organized by category:
 
@@ -17,6 +17,7 @@ Or configure in conftest.py to make them globally available.
 
 from .chat_fixtures import *  # noqa: F403
 from .cli_fixtures import *  # noqa: F403
+from .command_fixtures import *  # noqa: F403
 from .data_fixtures import *  # noqa: F403
 from .db_fixtures import *  # noqa: F403
 
@@ -42,6 +43,21 @@ __all__ = [  # noqa: F405
     "mock_config_file",
     "mock_env_vars",
     "sample_cli_output",
+    # Command fixtures
+    "MockCommandResponse",
+    "mock_command_success",
+    "mock_command_failure",
+    "mock_command_timeout",
+    "mock_command_not_found",
+    "mock_subprocess_run",
+    "mock_subprocess_popen",
+    "mock_shell_exec",
+    "mock_execute_os_command",
+    "mock_execute_command_safe",
+    "command_response_factory",
+    "mock_git_commands",
+    "mock_cli_command",
+    "capture_commands",
     # Data fixtures
     "sample_json_data",
     "sample_csv_data",

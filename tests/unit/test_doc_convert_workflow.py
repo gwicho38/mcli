@@ -12,54 +12,54 @@ from mcli.workflow.doc_convert import FORMAT_ALIASES, convert, doc_convert, init
 
 
 class TestFormatAliases:
-    """Test suite for format alias mapping"""
+    """Test suite for format alias mapping."""
 
     def test_markdown_aliases(self):
-        """Test markdown format aliases"""
+        """Test markdown format aliases."""
         assert FORMAT_ALIASES["md"] == "markdown"
         assert FORMAT_ALIASES["markdown"] == "markdown"
         assert FORMAT_ALIASES["gfm"] == "gfm"
 
     def test_document_aliases(self):
-        """Test document format aliases"""
+        """Test document format aliases."""
         assert FORMAT_ALIASES["docx"] == "docx"
         assert FORMAT_ALIASES["doc"] == "docx"
         assert FORMAT_ALIASES["odt"] == "odt"
 
     def test_html_aliases(self):
-        """Test HTML format aliases"""
+        """Test HTML format aliases."""
         assert FORMAT_ALIASES["html"] == "html"
         assert FORMAT_ALIASES["htm"] == "html"
 
     def test_jupyter_aliases(self):
-        """Test Jupyter notebook aliases"""
+        """Test Jupyter notebook aliases."""
         assert FORMAT_ALIASES["ipynb"] == "ipynb"
         assert FORMAT_ALIASES["notebook"] == "ipynb"
 
 
 class TestDocConvertGroup:
-    """Test suite for doc-convert command group"""
+    """Test suite for doc-convert command group."""
 
     def test_group_exists(self):
-        """Test that doc-convert group is properly defined"""
+        """Test that doc-convert group is properly defined."""
         assert doc_convert is not None
         assert doc_convert.name == "doc-convert"
 
     def test_has_init_command(self):
-        """Test that init command is registered"""
+        """Test that init command is registered."""
         assert "init" in [cmd.name for cmd in doc_convert.commands.values()]
 
     def test_has_convert_command(self):
-        """Test that convert command is registered"""
+        """Test that convert command is registered."""
         assert "convert" in [cmd.name for cmd in doc_convert.commands.values()]
 
 
 class TestInitCommand:
-    """Test suite for init command"""
+    """Test suite for init command."""
 
     @patch("subprocess.run")
     def test_init_checks_homebrew(self, mock_run):
-        """Test that init checks for Homebrew"""
+        """Test that init checks for Homebrew."""
         mock_run.side_effect = FileNotFoundError()
 
         runner = CliRunner()
@@ -71,7 +71,7 @@ class TestInitCommand:
 
     @patch("subprocess.run")
     def test_init_installs_pandoc(self, mock_run):
-        """Test that init attempts to install pandoc"""
+        """Test that init attempts to install pandoc."""
         # Mock successful Homebrew check
         mock_run.side_effect = [
             Mock(returncode=0, stdout="Homebrew 4.0.0"),  # brew --version
@@ -89,7 +89,7 @@ class TestInitCommand:
 
     @patch("subprocess.run")
     def test_init_handles_already_installed(self, mock_run):
-        """Test that init gracefully handles already installed packages"""
+        """Test that init gracefully handles already installed packages."""
         mock_run.side_effect = [
             Mock(returncode=0, stdout="Homebrew 4.0.0"),  # brew --version
             Mock(returncode=1, stderr="pandoc already installed"),  # brew install pandoc
@@ -103,11 +103,11 @@ class TestInitCommand:
 
 
 class TestConvertCommand:
-    """Test suite for convert command"""
+    """Test suite for convert command."""
 
     @patch("subprocess.run")
     def test_convert_checks_pandoc_installed(self, mock_run):
-        """Test that convert checks if pandoc is installed"""
+        """Test that convert checks if pandoc is installed."""
         mock_run.side_effect = FileNotFoundError()
 
         runner = CliRunner()
@@ -120,7 +120,7 @@ class TestConvertCommand:
     @patch("subprocess.run")
     @patch("pathlib.Path.exists")
     def test_convert_single_file(self, mock_exists, mock_run):
-        """Test converting a single file"""
+        """Test converting a single file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.md"
             test_file.write_text("# Test")
@@ -139,7 +139,7 @@ class TestConvertCommand:
     @patch("subprocess.run")
     @patch("mcli.workflow.doc_convert.file_glob")
     def test_convert_glob_pattern(self, mock_glob, mock_run):
-        """Test converting files with glob pattern"""
+        """Test converting files with glob pattern."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create test files
             file1 = Path(tmpdir) / "test1.md"
@@ -163,7 +163,7 @@ class TestConvertCommand:
     @patch("subprocess.run")
     @patch("pathlib.Path.exists")
     def test_convert_format_mapping(self, mock_exists, mock_run):
-        """Test that format aliases are properly mapped"""
+        """Test that format aliases are properly mapped."""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.md"
             test_file.write_text("# Test")
@@ -184,7 +184,7 @@ class TestConvertCommand:
 
     @patch("subprocess.run")
     def test_convert_with_output_dir(self, mock_run):
-        """Test converting with custom output directory"""
+        """Test converting with custom output directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.md"
             output_dir = Path(tmpdir) / "output"
@@ -204,7 +204,7 @@ class TestConvertCommand:
 
     @patch("subprocess.run")
     def test_convert_with_pandoc_args(self, mock_run):
-        """Test converting with additional pandoc arguments"""
+        """Test converting with additional pandoc arguments."""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.md"
             test_file.write_text("# Test")
@@ -224,7 +224,7 @@ class TestConvertCommand:
     @patch("subprocess.run")
     @patch("mcli.workflow.doc_convert.file_glob")
     def test_convert_no_files_found(self, mock_glob, mock_run):
-        """Test behavior when no files match glob pattern"""
+        """Test behavior when no files match glob pattern."""
         mock_glob.return_value = []
         mock_run.return_value = Mock(returncode=0)  # pandoc --version
 
@@ -236,7 +236,7 @@ class TestConvertCommand:
 
     @patch("subprocess.run")
     def test_convert_handles_pandoc_error(self, mock_run):
-        """Test that convert handles pandoc errors gracefully"""
+        """Test that convert handles pandoc errors gracefully."""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.md"
             test_file.write_text("# Test")
@@ -256,4 +256,4 @@ class TestConvertCommand:
 
 @pytest.mark.integration
 class TestDocConvertIntegration:
-    """Integration tests for doc-convert (requires pandoc)"""
+    """Integration tests for doc-convert (requires pandoc)."""

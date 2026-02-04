@@ -1,5 +1,5 @@
 """
-Unit tests for mcli.workflow.git_commit.commands module
+Unit tests for mcli.workflow.git_commit.commands module.
 
 NOTE: This module has been migrated to portable JSON commands.
 Tests are skipped as the Python module no longer exists.
@@ -32,10 +32,10 @@ class GitCommitWorkflow:
 
 
 class TestGitCommitWorkflow:
-    """Test suite for GitCommitWorkflow"""
+    """Test suite for GitCommitWorkflow."""
 
     def test_init_with_valid_repo(self):
-        """Test initialization with valid git repository"""
+        """Test initialization with valid git repository."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a git repo
             repo_path = Path(tmpdir)
@@ -48,13 +48,13 @@ class TestGitCommitWorkflow:
             assert workflow.ai_service is None
 
     def test_init_with_invalid_repo(self):
-        """Test initialization with invalid git repository"""
+        """Test initialization with invalid git repository."""
         with tempfile.TemporaryDirectory() as tmpdir:
             with pytest.raises(ValueError, match="Not a git repository"):
                 GitCommitWorkflow(repo_path=tmpdir, use_ai=False)
 
     def test_init_with_ai_enabled(self):
-        """Test initialization with AI service enabled"""
+        """Test initialization with AI service enabled."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -66,7 +66,7 @@ class TestGitCommitWorkflow:
                 assert workflow.ai_service is not None
 
     def test_init_uses_current_dir_when_no_path(self):
-        """Test that initialization uses current directory when no path provided"""
+        """Test that initialization uses current directory when no path provided."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -78,7 +78,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_get_git_status_with_changes(self, mock_run):
-        """Test getting git status with changes"""
+        """Test getting git status with changes."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -101,7 +101,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_get_git_status_no_changes(self, mock_run):
-        """Test getting git status with no changes"""
+        """Test getting git status with no changes."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -118,7 +118,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_get_git_status_error(self, mock_run):
-        """Test handling git status error"""
+        """Test handling git status error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -133,7 +133,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_get_git_diff(self, mock_run):
-        """Test getting git diff"""
+        """Test getting git diff."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -155,7 +155,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_get_git_diff_error(self, mock_run):
-        """Test handling git diff error"""
+        """Test handling git diff error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -170,7 +170,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_generate_commit_message_without_ai(self, mock_run):
-        """Test generating commit message without AI"""
+        """Test generating commit message without AI."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -200,7 +200,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_generate_commit_message_with_ai(self, mock_run):
-        """Test generating commit message with AI"""
+        """Test generating commit message with AI."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -235,7 +235,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_create_commit(self, mock_run):
-        """Test creating a commit"""
+        """Test creating a commit."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -255,7 +255,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_create_commit_failure(self, mock_run):
-        """Test handling commit failure"""
+        """Test handling commit failure."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -271,7 +271,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_stage_all_changes(self, mock_run):
-        """Test staging all changes"""
+        """Test staging all changes."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -290,7 +290,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_stage_all_changes_failure(self, mock_run):
-        """Test staging all changes failure"""
+        """Test staging all changes failure."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -305,7 +305,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_parse_git_status_with_renamed_files(self, mock_run):
-        """Test parsing git status with renamed files"""
+        """Test parsing git status with renamed files."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()
@@ -320,7 +320,7 @@ class TestGitCommitWorkflow:
 
     @patch("subprocess.run")
     def test_parse_git_status_with_mixed_changes(self, mock_run):
-        """Test parsing git status with multiple types of changes"""
+        """Test parsing git status with multiple types of changes."""
         with tempfile.TemporaryDirectory() as tmpdir:
             repo_path = Path(tmpdir)
             (repo_path / ".git").mkdir()

@@ -305,7 +305,9 @@ class TestIsExecutableAvailable:
     def test_python_executable(self):
         """Test returns True for python."""
         # Python should be available since we're running Python
-        assert is_executable_available("python") is True or is_executable_available("python3") is True
+        assert (
+            is_executable_available("python") is True or is_executable_available("python3") is True
+        )
 
 
 class TestSignalHandling:

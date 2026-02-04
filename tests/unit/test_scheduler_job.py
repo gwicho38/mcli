@@ -1,16 +1,14 @@
-"""
-Unit tests for mcli.workflow.scheduler.job module
-"""
+"""Unit tests for mcli.workflow.scheduler.job module."""
 
 import json
 from datetime import datetime, timedelta
 
 
 class TestJobStatus:
-    """Test suite for JobStatus enum"""
+    """Test suite for JobStatus enum."""
 
     def test_job_status_enum_values(self):
-        """Test JobStatus enum has all expected values"""
+        """Test JobStatus enum has all expected values."""
         from mcli.workflow.scheduler.job import JobStatus
 
         assert JobStatus.PENDING.value == "pending"
@@ -21,17 +19,17 @@ class TestJobStatus:
         assert JobStatus.SKIPPED.value == "skipped"
 
     def test_job_status_enum_count(self):
-        """Test JobStatus has exactly 6 statuses"""
+        """Test JobStatus has exactly 6 statuses."""
         from mcli.workflow.scheduler.job import JobStatus
 
         assert len(list(JobStatus)) == 6
 
 
 class TestJobType:
-    """Test suite for JobType enum"""
+    """Test suite for JobType enum."""
 
     def test_job_type_enum_values(self):
-        """Test JobType enum has all expected values"""
+        """Test JobType enum has all expected values."""
         from mcli.workflow.scheduler.job import JobType
 
         assert JobType.COMMAND.value == "command"
@@ -42,17 +40,17 @@ class TestJobType:
         assert JobType.CUSTOM.value == "custom"
 
     def test_job_type_enum_count(self):
-        """Test JobType has exactly 6 types"""
+        """Test JobType has exactly 6 types."""
         from mcli.workflow.scheduler.job import JobType
 
         assert len(list(JobType)) == 6
 
 
 class TestScheduledJob:
-    """Test suite for ScheduledJob class"""
+    """Test suite for ScheduledJob class."""
 
     def test_scheduled_job_init_minimal(self):
-        """Test ScheduledJob initialization with minimal parameters"""
+        """Test ScheduledJob initialization with minimal parameters."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -77,7 +75,7 @@ class TestScheduledJob:
         assert job.notifications == {}
 
     def test_scheduled_job_init_full_parameters(self):
-        """Test ScheduledJob initialization with all parameters"""
+        """Test ScheduledJob initialization with all parameters."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         env = {"PATH": "/usr/bin", "USER": "testuser"}
@@ -113,7 +111,7 @@ class TestScheduledJob:
         assert job.notifications == notifications
 
     def test_scheduled_job_auto_generates_id(self):
-        """Test that job auto-generates UUID if not provided"""
+        """Test that job auto-generates UUID if not provided."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job1 = ScheduledJob(
@@ -128,7 +126,7 @@ class TestScheduledJob:
         assert len(job1.id) == 36  # UUID format
 
     def test_scheduled_job_runtime_tracking_initialization(self):
-        """Test that runtime tracking fields are initialized correctly"""
+        """Test that runtime tracking fields are initialized correctly."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -148,7 +146,7 @@ class TestScheduledJob:
         assert job.current_retry == 0
 
     def test_to_dict_serialization(self):
-        """Test job serialization to dictionary"""
+        """Test job serialization to dictionary."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -175,7 +173,7 @@ class TestScheduledJob:
         assert job_dict["next_run"] is None
 
     def test_from_dict_deserialization(self):
-        """Test job deserialization from dictionary"""
+        """Test job deserialization from dictionary."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         data = {
@@ -231,7 +229,7 @@ class TestScheduledJob:
         assert job.failure_count == 1
 
     def test_from_dict_minimal_data(self):
-        """Test deserialization with minimal required fields"""
+        """Test deserialization with minimal required fields."""
         from mcli.workflow.scheduler.job import ScheduledJob
 
         data = {
@@ -251,7 +249,7 @@ class TestScheduledJob:
         assert job.retry_count == 0
 
     def test_update_status_to_running(self):
-        """Test updating job status to RUNNING"""
+        """Test updating job status to RUNNING."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -268,7 +266,7 @@ class TestScheduledJob:
         assert isinstance(job.last_run, datetime)
 
     def test_update_status_to_completed(self):
-        """Test updating job status to COMPLETED"""
+        """Test updating job status to COMPLETED."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -286,7 +284,7 @@ class TestScheduledJob:
         assert job.current_retry == 0  # Reset on success
 
     def test_update_status_to_failed(self):
-        """Test updating job status to FAILED"""
+        """Test updating job status to FAILED."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -302,7 +300,7 @@ class TestScheduledJob:
         assert job.failure_count == initial_failure_count + 1
 
     def test_should_retry_when_retry_available(self):
-        """Test should_retry returns True when retries available"""
+        """Test should_retry returns True when retries available."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -319,7 +317,7 @@ class TestScheduledJob:
         assert job.should_retry() is True
 
     def test_should_retry_when_max_retries_reached(self):
-        """Test should_retry returns False when max retries reached"""
+        """Test should_retry returns False when max retries reached."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -336,7 +334,7 @@ class TestScheduledJob:
         assert job.should_retry() is False
 
     def test_should_retry_when_not_failed(self):
-        """Test should_retry returns False when job not failed"""
+        """Test should_retry returns False when job not failed."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -353,7 +351,7 @@ class TestScheduledJob:
         assert job.should_retry() is False
 
     def test_get_next_retry_time(self):
-        """Test calculation of next retry time"""
+        """Test calculation of next retry time."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -375,7 +373,7 @@ class TestScheduledJob:
         assert expected_min <= retry_time <= expected_max
 
     def test_to_json_serialization(self):
-        """Test JSON string serialization"""
+        """Test JSON string serialization."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -395,7 +393,7 @@ class TestScheduledJob:
         assert parsed["job_type"] == "command"
 
     def test_str_representation(self):
-        """Test string representation of job"""
+        """Test string representation of job."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -414,7 +412,7 @@ class TestScheduledJob:
         assert "pending" in str_repr
 
     def test_repr_representation(self):
-        """Test repr representation of job"""
+        """Test repr representation of job."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         job = ScheduledJob(
@@ -433,7 +431,7 @@ class TestScheduledJob:
         assert "0 12 * * *" in repr_str
 
     def test_round_trip_serialization(self):
-        """Test serialization and deserialization preserves data"""
+        """Test serialization and deserialization preserves data."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         original = ScheduledJob(
@@ -473,7 +471,7 @@ class TestScheduledJob:
         assert restored.notifications == original.notifications
 
     def test_job_type_conversion_in_serialization(self):
-        """Test JobType enum is properly converted in serialization"""
+        """Test JobType enum is properly converted in serialization."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
 
         for job_type in JobType:
@@ -491,7 +489,7 @@ class TestScheduledJob:
             assert restored.job_type == job_type
 
     def test_status_conversion_in_serialization(self):
-        """Test JobStatus enum is properly converted in serialization"""
+        """Test JobStatus enum is properly converted in serialization."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
 
         job = ScheduledJob(

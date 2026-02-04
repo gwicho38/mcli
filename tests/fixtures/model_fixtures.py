@@ -1,4 +1,4 @@
-"""Shared fixtures for model testing"""
+"""Shared fixtures for model testing."""
 
 from pathlib import Path
 from unittest.mock import Mock
@@ -8,7 +8,7 @@ import pytest
 
 @pytest.fixture
 def mock_model_server():
-    """Provide a mock LightweightModelServer for testing"""
+    """Provide a mock LightweightModelServer for testing."""
     from mcli.workflow.model_service.lightweight_model_server import LightweightModelServer
 
     server = Mock(spec=LightweightModelServer)
@@ -29,7 +29,7 @@ def mock_model_server():
 
 @pytest.fixture
 def mock_pypi_response():
-    """Mock PyPI API response for version checking"""
+    """Mock PyPI API response for version checking."""
     return {
         "info": {
             "version": "7.0.6",
@@ -41,7 +41,7 @@ def mock_pypi_response():
 
 @pytest.fixture
 def sample_model_list():
-    """Provide sample model list for testing"""
+    """Provide sample model list for testing."""
     return {
         "distilbert-base-uncased": {
             "name": "DistilBERT Base Uncased",
@@ -60,7 +60,7 @@ def sample_model_list():
 
 @pytest.fixture
 def temp_models_dir(tmp_path):
-    """Create a temporary models directory"""
+    """Create a temporary models directory."""
     models_dir = tmp_path / "models"
     models_dir.mkdir()
     return models_dir

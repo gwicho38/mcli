@@ -1,4 +1,4 @@
-"""Unit tests for mcli logs commands"""
+"""Unit tests for mcli logs commands."""
 
 import os
 import sys
@@ -16,7 +16,7 @@ from mcli.self.logs_cmd import logs_group
 
 @pytest.fixture
 def temp_logs_dir():
-    """Create a temporary logs directory with sample log files"""
+    """Create a temporary logs directory with sample log files."""
     with tempfile.TemporaryDirectory() as tmpdir:
         logs_dir = Path(tmpdir)
 
@@ -50,19 +50,19 @@ def temp_logs_dir():
 
 @pytest.fixture
 def runner():
-    """Create a Click CLI runner"""
+    """Create a Click CLI runner."""
     return CliRunner()
 
 
 def test_logs_location(runner):
-    """Test logs location command"""
+    """Test logs location command."""
     result = runner.invoke(logs_group, ["location"])
     assert result.exit_code == 0
     assert "Logs directory:" in result.output
 
 
 def test_logs_list(runner, temp_logs_dir):
-    """Test logs list command"""
+    """Test logs list command."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         result = runner.invoke(logs_group, ["list"])
         assert result.exit_code == 0
@@ -72,7 +72,7 @@ def test_logs_list(runner, temp_logs_dir):
 
 
 def test_logs_tail_basic(runner, temp_logs_dir):
-    """Test basic tail command without follow"""
+    """Test basic tail command without follow."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -86,7 +86,7 @@ def test_logs_tail_basic(runner, temp_logs_dir):
 
 
 def test_logs_tail_with_lines_option(runner, temp_logs_dir):
-    """Test tail command with custom line count"""
+    """Test tail command with custom line count."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -101,7 +101,7 @@ def test_logs_tail_with_lines_option(runner, temp_logs_dir):
 
 
 def test_logs_tail_trace_log(runner, temp_logs_dir):
-    """Test tail command on trace log"""
+    """Test tail command on trace log."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -113,7 +113,7 @@ def test_logs_tail_trace_log(runner, temp_logs_dir):
 
 
 def test_logs_tail_system_log(runner, temp_logs_dir):
-    """Test tail command on system log"""
+    """Test tail command on system log."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -125,7 +125,7 @@ def test_logs_tail_system_log(runner, temp_logs_dir):
 
 
 def test_logs_tail_nonexistent_file(runner, temp_logs_dir):
-    """Test tail command with nonexistent log file"""
+    """Test tail command with nonexistent log file."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20991231"  # Future date
@@ -136,7 +136,7 @@ def test_logs_tail_nonexistent_file(runner, temp_logs_dir):
 
 
 def test_logs_tail_with_date_option(runner, temp_logs_dir):
-    """Test tail command with specific date"""
+    """Test tail command with specific date."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         result = runner.invoke(logs_group, ["tail", "main", "-d", "20251006"])
         assert result.exit_code == 0
@@ -144,7 +144,7 @@ def test_logs_tail_with_date_option(runner, temp_logs_dir):
 
 
 def test_logs_tail_follow_flag_exists(runner):
-    """Test that --follow/-f flag is available"""
+    """Test that --follow/-f flag is available."""
     result = runner.invoke(logs_group, ["tail", "--help"])
     assert result.exit_code == 0
     assert "--follow" in result.output or "-f" in result.output
@@ -152,7 +152,7 @@ def test_logs_tail_follow_flag_exists(runner):
 
 
 def test_logs_tail_follow_mode_subprocess_called(runner, temp_logs_dir):
-    """Test that follow mode calls subprocess.Popen with tail -f"""
+    """Test that follow mode calls subprocess.Popen with tail -f."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -178,7 +178,7 @@ def test_logs_tail_follow_mode_subprocess_called(runner, temp_logs_dir):
 
 
 def test_logs_tail_follow_short_flag(runner, temp_logs_dir):
-    """Test that -f short flag works"""
+    """Test that -f short flag works."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -196,7 +196,7 @@ def test_logs_tail_follow_short_flag(runner, temp_logs_dir):
 
 
 def test_logs_tail_follow_with_custom_lines(runner, temp_logs_dir):
-    """Test that follow mode respects -n/--lines option"""
+    """Test that follow mode respects -n/--lines option."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -219,7 +219,7 @@ def test_logs_tail_follow_with_custom_lines(runner, temp_logs_dir):
 
 
 def test_logs_tail_without_follow_doesnt_use_subprocess(runner, temp_logs_dir):
-    """Test that without --follow, we don't use subprocess"""
+    """Test that without --follow, we don't use subprocess."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -234,7 +234,7 @@ def test_logs_tail_without_follow_doesnt_use_subprocess(runner, temp_logs_dir):
 
 
 def test_logs_grep_basic(runner, temp_logs_dir):
-    """Test basic grep functionality"""
+    """Test basic grep functionality."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -245,7 +245,7 @@ def test_logs_grep_basic(runner, temp_logs_dir):
 
 
 def test_logs_stream_help(runner):
-    """Test that stream command has help"""
+    """Test that stream command has help."""
     result = runner.invoke(logs_group, ["stream", "--help"])
     assert result.exit_code == 0
     assert "--follow" in result.output
@@ -253,14 +253,14 @@ def test_logs_stream_help(runner):
 
 
 def test_logs_clear_help(runner):
-    """Test that clear command has help"""
+    """Test that clear command has help."""
     result = runner.invoke(logs_group, ["clear", "--help"])
     assert result.exit_code == 0
     assert "--older-than" in result.output
 
 
 def test_logs_tail_follow_keyboard_interrupt_handling(runner, temp_logs_dir):
-    """Test that KeyboardInterrupt is handled gracefully in follow mode"""
+    """Test that KeyboardInterrupt is handled gracefully in follow mode."""
     with patch("mcli.self.logs_cmd.get_logs_dir", return_value=temp_logs_dir):
         with patch("mcli.self.logs_cmd.datetime") as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "20251006"
@@ -279,7 +279,7 @@ def test_logs_tail_follow_keyboard_interrupt_handling(runner, temp_logs_dir):
 
 
 def main():
-    """Run all tests"""
+    """Run all tests."""
     pytest.main([__file__, "-v", "--tb=short"])
 
 

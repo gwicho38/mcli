@@ -1,6 +1,4 @@
-"""
-CLI tests for mcli.workflow.file module
-"""
+"""CLI tests for mcli.workflow.file module."""
 
 import tempfile
 from pathlib import Path
@@ -24,15 +22,15 @@ except ImportError:
 
 
 class TestFileCommands:
-    """Test suite for file workflow commands"""
+    """Test suite for file workflow commands."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     @pytest.mark.skipif(not HAS_FITZ, reason="PyMuPDF not installed")
     def test_file_group_exists(self):
-        """Test file command group exists"""
+        """Test file command group exists."""
         from mcli.workflow.file.file import file
 
         assert file is not None
@@ -40,7 +38,7 @@ class TestFileCommands:
 
     @pytest.mark.skipif(not HAS_FITZ, reason="PyMuPDF not installed")
     def test_file_group_help(self):
-        """Test file command group help"""
+        """Test file command group help."""
         from mcli.workflow.file.file import file
 
         result = self.runner.invoke(file, ["--help"])
@@ -51,7 +49,7 @@ class TestFileCommands:
     @pytest.mark.skipif(not HAS_FITZ, reason="PyMuPDF not installed")
     @patch("mcli.workflow.file.file.fitz")
     def test_oxps_to_pdf_command(self, mock_fitz):
-        """Test oxps_to_pdf command"""
+        """Test oxps_to_pdf command."""
         from mcli.workflow.file.file import file
 
         # Mock the PyMuPDF operations
@@ -78,7 +76,7 @@ class TestFileCommands:
 
     @pytest.mark.skipif(not HAS_FITZ, reason="PyMuPDF not installed")
     def test_oxps_to_pdf_nonexistent_file(self):
-        """Test oxps_to_pdf with non-existent input file"""
+        """Test oxps_to_pdf with non-existent input file."""
         from mcli.workflow.file.file import file
 
         result = self.runner.invoke(
@@ -91,7 +89,7 @@ class TestFileCommands:
     @pytest.mark.skipif(not HAS_FITZ, reason="PyMuPDF not installed")
     @patch("mcli.workflow.file.file.subprocess.run")
     def test_search_command_success(self, mock_subprocess):
-        """Test search command with successful results"""
+        """Test search command with successful results."""
         from mcli.workflow.file.file import file
 
         # Mock ripgrep output
@@ -116,7 +114,7 @@ class TestFileCommands:
     @pytest.mark.skipif(not HAS_FITZ, reason="PyMuPDF not installed")
     @patch("mcli.workflow.file.file.subprocess.run")
     def test_search_command_no_matches(self, mock_subprocess):
-        """Test search command with no matches"""
+        """Test search command with no matches."""
         from mcli.workflow.file.file import file
 
         # Mock ripgrep with no matches
@@ -130,7 +128,7 @@ class TestFileCommands:
 
     @pytest.mark.skipif(not HAS_FITZ, reason="PyMuPDF not installed")
     def test_search_help(self):
-        """Test search command help"""
+        """Test search command help."""
         from mcli.workflow.file.file import file
 
         result = self.runner.invoke(file, ["search", "--help"])

@@ -20,6 +20,7 @@ pytest_plugins = [
     "fixtures.cli_fixtures",
     "fixtures.data_fixtures",
     "fixtures.db_fixtures",
+    "fixtures.command_fixtures",
 ]
 
 # Add src directory to Python path

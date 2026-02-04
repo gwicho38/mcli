@@ -1,4 +1,4 @@
-"""Simple test for preprocessing pipeline functionality"""
+"""Simple test for preprocessing pipeline functionality."""
 
 import os
 import sys
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_basic_functionality():
-    """Test basic data preprocessing functionality"""
+    """Test basic data preprocessing functionality."""
     logger.info("Testing basic preprocessing functionality...")
 
     # Test data cleaning functions
@@ -74,7 +74,7 @@ def test_basic_functionality():
 
 
 def test_feature_extraction():
-    """Test feature extraction"""
+    """Test feature extraction."""
     logger.info("Testing feature extraction...")
 
     from mcli.ml.preprocessing.feature_extractors import PoliticianFeatureExtractor
@@ -122,7 +122,7 @@ def test_feature_extraction():
 
 
 def main():
-    """Run all tests"""
+    """Run all tests."""
     logger.info("Starting preprocessing pipeline validation...")
 
     try:

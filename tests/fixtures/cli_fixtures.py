@@ -1,4 +1,4 @@
-"""Shared fixtures for CLI testing"""
+"""Shared fixtures for CLI testing."""
 
 import shutil
 
@@ -8,13 +8,13 @@ from click.testing import CliRunner
 
 @pytest.fixture
 def cli_runner():
-    """Provide a Click CLI runner for testing"""
+    """Provide a Click CLI runner for testing."""
     return CliRunner()
 
 
 @pytest.fixture
 def isolated_cli_runner():
-    """Provide a CLI runner with isolated filesystem"""
+    """Provide a CLI runner with isolated filesystem."""
     runner = CliRunner()
     with runner.isolated_filesystem():
         yield runner
@@ -22,7 +22,7 @@ def isolated_cli_runner():
 
 @pytest.fixture
 def temp_workspace(tmp_path):
-    """Create a temporary workspace directory for testing"""
+    """Create a temporary workspace directory for testing."""
     workspace = tmp_path / "workspace"
     workspace.mkdir()
 
@@ -40,7 +40,7 @@ def temp_workspace(tmp_path):
 
 @pytest.fixture
 def mock_config_file(tmp_path):
-    """Create a mock configuration file"""
+    """Create a mock configuration file."""
     config_dir = tmp_path / ".mcli"
     config_dir.mkdir()
 
@@ -67,7 +67,7 @@ cache_dir = "~/.mcli/cache"
 
 @pytest.fixture
 def mock_env_vars(monkeypatch):
-    """Set up mock environment variables"""
+    """Set up mock environment variables."""
     test_env = {
         "OPENAI_API_KEY": "test-openai-key",
         "ANTHROPIC_API_KEY": "test-anthropic-key",
@@ -83,7 +83,7 @@ def mock_env_vars(monkeypatch):
 
 @pytest.fixture
 def sample_cli_output():
-    """Provide sample CLI output for parsing tests"""
+    """Provide sample CLI output for parsing tests."""
     return {
         "success": "✅ Operation completed successfully\n",
         "error": "❌ Error: Something went wrong\n",

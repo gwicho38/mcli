@@ -1,4 +1,4 @@
-"""Unit tests for Supabase pagination fix
+"""Unit tests for Supabase pagination fix.
 
 Tests to validate that get_disclosures_data() correctly fetches ALL records
 when for_training=True, overcoming Supabase's default 1000 record limit.
@@ -23,11 +23,11 @@ logger = logging.getLogger(__name__)
 
 
 class TestSupabasePaginationFix:
-    """Test that Supabase pagination correctly fetches all records"""
+    """Test that Supabase pagination correctly fetches all records."""
 
     @pytest.fixture
     def mock_supabase_client(self):
-        """Create a mock Supabase client"""
+        """Create a mock Supabase client."""
         client = MagicMock()
 
         # Mock the count response
@@ -88,7 +88,7 @@ class TestSupabasePaginationFix:
         return client
 
     def test_for_training_true_fetches_all_records(self, mock_supabase_client):
-        """Test that for_training=True fetches ALL 7633 records, not just 1000"""
+        """Test that for_training=True fetches ALL 7633 records, not just 1000."""
         logger.info("Testing for_training=True fetches all records...")
 
         # Import the dashboard module
@@ -131,7 +131,7 @@ class TestSupabasePaginationFix:
         logger.info("✅ Test passed: for_training=True fetches all 7633 records")
 
     def test_for_training_false_respects_pagination(self, mock_supabase_client):
-        """Test that for_training=False uses pagination (limit=1000, offset=0)"""
+        """Test that for_training=False uses pagination (limit=1000, offset=0)."""
         logger.info("Testing for_training=False respects pagination...")
 
         try:
@@ -169,7 +169,7 @@ class TestSupabasePaginationFix:
         logger.info("✅ Test passed: for_training=False respects pagination")
 
     def test_pagination_with_offset(self, mock_supabase_client):
-        """Test pagination with offset (e.g., page 2)"""
+        """Test pagination with offset (e.g., page 2)."""
         logger.info("Testing pagination with offset...")
 
         try:
@@ -200,7 +200,7 @@ class TestSupabasePaginationFix:
         logger.info("✅ Test passed: pagination with offset works correctly")
 
     def test_supabase_unavailable_returns_demo_data(self):
-        """Test that demo data is returned when Supabase is unavailable"""
+        """Test that demo data is returned when Supabase is unavailable."""
         logger.info("Testing Supabase unavailable fallback...")
 
         try:

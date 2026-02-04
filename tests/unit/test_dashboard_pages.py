@@ -1,4 +1,4 @@
-"""Unit tests for Streamlit dashboard pages
+"""Unit tests for Streamlit dashboard pages.
 
 NOTE: Dashboard page tests require streamlit and dashboard modules.
 Tests are conditional on dependencies being available.
@@ -40,13 +40,13 @@ logger = logging.getLogger(__name__)
 
 
 class TestCICDPage:
-    """Test suite for pages/cicd.py"""
+    """Test suite for pages/cicd.py."""
 
     @patch("streamlit.title")
     @patch("streamlit.tabs")
     @patch("requests.get")
     def test_cicd_page_loads(self, mock_get, mock_tabs, mock_title):
-        """Test that CI/CD page loads without errors"""
+        """Test that CI/CD page loads without errors."""
         logger.info("Testing CI/CD page load...")
 
         try:
@@ -74,7 +74,7 @@ class TestCICDPage:
 
     @patch("requests.get")
     def test_cicd_fetch_builds_success(self, mock_get):
-        """Test fetching builds from API successfully"""
+        """Test fetching builds from API successfully."""
         logger.info("Testing CI/CD builds fetch...")
 
         try:
@@ -101,7 +101,7 @@ class TestCICDPage:
 
     @patch("requests.get", side_effect=Exception("API Error"))
     def test_cicd_fetch_builds_failure(self, mock_get):
-        """Test CI/CD page handles API errors gracefully"""
+        """Test CI/CD page handles API errors gracefully."""
         logger.info("Testing CI/CD API error handling...")
 
         try:
@@ -117,7 +117,7 @@ class TestCICDPage:
         logger.info("✅ CI/CD error handling test passed!")
 
     def test_cicd_mock_data_generation(self):
-        """Test mock data generation for CI/CD page"""
+        """Test mock data generation for CI/CD page."""
         logger.info("Testing CI/CD mock data generation...")
 
         try:
@@ -141,13 +141,13 @@ class TestCICDPage:
 
 
 class TestWorkflowsPage:
-    """Test suite for pages/workflows.py"""
+    """Test suite for pages/workflows.py."""
 
     @patch("streamlit.title")
     @patch("streamlit.tabs")
     @patch("requests.get")
     def test_workflows_page_loads(self, mock_get, mock_tabs, mock_title):
-        """Test that Workflows page loads without errors"""
+        """Test that Workflows page loads without errors."""
         logger.info("Testing Workflows page load...")
 
         try:
@@ -175,7 +175,7 @@ class TestWorkflowsPage:
 
     @patch("requests.get")
     def test_workflows_fetch_success(self, mock_get):
-        """Test fetching workflows from API successfully"""
+        """Test fetching workflows from API successfully."""
         logger.info("Testing workflows fetch...")
 
         try:
@@ -201,7 +201,7 @@ class TestWorkflowsPage:
         logger.info("✅ Workflows fetch test passed!")
 
     def test_workflows_mock_data_generation(self):
-        """Test mock data generation for Workflows page"""
+        """Test mock data generation for Workflows page."""
         logger.info("Testing workflows mock data generation...")
 
         try:
@@ -221,7 +221,7 @@ class TestWorkflowsPage:
         logger.info("✅ Workflows mock data test passed!")
 
     def test_workflow_execution_mock_data(self):
-        """Test workflow execution mock data generation"""
+        """Test workflow execution mock data generation."""
         logger.info("Testing workflow execution mock data...")
 
         try:
@@ -243,12 +243,12 @@ class TestWorkflowsPage:
 
 @pytest.mark.skip(reason="Dashboard page tests require Streamlit runtime and LSH framework")
 class TestPredictionsEnhancedPage:
-    """Test suite for pages/predictions_enhanced.py"""
+    """Test suite for pages/predictions_enhanced.py."""
 
     @patch("streamlit.title")
     @patch("streamlit.tabs")
     def test_predictions_page_loads(self, mock_tabs, mock_title):
-        """Test that Predictions Enhanced page loads without errors"""
+        """Test that Predictions Enhanced page loads without errors."""
         logger.info("Testing Predictions Enhanced page load...")
 
         try:
@@ -275,7 +275,7 @@ class TestPredictionsEnhancedPage:
     @patch("mcli.ml.dashboard.pages.predictions_enhanced.get_disclosures_data")
     @patch("mcli.ml.dashboard.pages.predictions_enhanced.run_ml_pipeline")
     def test_predictions_real_data_integration(self, mock_pipeline, mock_disclosures):
-        """Test predictions page uses real data from ML pipeline"""
+        """Test predictions page uses real data from ML pipeline."""
         logger.info("Testing predictions real data integration...")
 
         try:
@@ -318,7 +318,7 @@ class TestPredictionsEnhancedPage:
         logger.info("✅ Predictions real data integration test passed!")
 
     def test_predictions_data_source_indicator(self):
-        """Test that predictions page shows data source indicator"""
+        """Test that predictions page shows data source indicator."""
         logger.info("Testing predictions data source indicator...")
 
         try:
@@ -344,7 +344,7 @@ class TestPredictionsEnhancedPage:
 
     @patch("mcli.ml.dashboard.pages.predictions_enhanced.get_politician_names")
     def test_predictions_politician_selector(self, mock_get_politicians):
-        """Test politician selector uses real data"""
+        """Test politician selector uses real data."""
         logger.info("Testing politician selector...")
 
         try:
@@ -364,7 +364,7 @@ class TestPredictionsEnhancedPage:
 
     @patch("mcli.ml.dashboard.pages.predictions_enhanced.get_politician_trading_history")
     def test_predictions_trading_history(self, mock_get_history):
-        """Test trading history uses real data"""
+        """Test trading history uses real data."""
         logger.info("Testing trading history...")
 
         try:
@@ -392,7 +392,7 @@ class TestPredictionsEnhancedPage:
     @patch("mcli.ml.dashboard.pages.predictions_enhanced.engineer_features")
     @patch("mcli.ml.dashboard.pages.predictions_enhanced.generate_production_prediction")
     def test_predictions_ml_model_integration(self, mock_predict, mock_features):
-        """Test predictions page integrates with real ML model"""
+        """Test predictions page integrates with real ML model."""
         logger.info("Testing ML model integration...")
 
         try:
@@ -424,10 +424,10 @@ class TestPredictionsEnhancedPage:
 
 
 class TestPageIntegration:
-    """Integration tests for dashboard pages"""
+    """Integration tests for dashboard pages."""
 
     def test_all_pages_importable(self):
-        """Test that all pages can be imported"""
+        """Test that all pages can be imported."""
         logger.info("Testing page imports...")
 
         try:
@@ -444,7 +444,7 @@ class TestPageIntegration:
         logger.info("✅ Page imports test passed!")
 
     def test_pages_handle_missing_api(self):
-        """Test that pages handle missing API gracefully"""
+        """Test that pages handle missing API gracefully."""
         logger.info("Testing pages with missing API...")
 
         try:
@@ -480,7 +480,7 @@ class TestPageIntegration:
         logger.info("✅ Missing API handling test passed!")
 
     def test_pages_use_real_data_not_mock(self):
-        """Critical test: Verify pages prioritize real data over mock data"""
+        """Critical test: Verify pages prioritize real data over mock data."""
         logger.info("Testing pages use real data...")
 
         try:
@@ -509,7 +509,7 @@ class TestPageIntegration:
 
 
 def main():
-    """Run all page tests"""
+    """Run all page tests."""
     logger.info("=" * 60)
     logger.info("STARTING DASHBOARD PAGES TEST SUITE")
     logger.info("=" * 60)

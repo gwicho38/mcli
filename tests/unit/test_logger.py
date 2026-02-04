@@ -1,15 +1,13 @@
-"""
-Unit tests for mcli.lib.logger module
-"""
+"""Unit tests for mcli.lib.logger module."""
 
 import logging
 
 
 class TestMcliLogger:
-    """Test suite for McliLogger"""
+    """Test suite for McliLogger."""
 
     def test_get_logger(self):
-        """Test getting logger instance"""
+        """Test getting logger instance."""
         from mcli.lib.logger.logger import get_logger
 
         logger = get_logger(__name__)
@@ -21,7 +19,7 @@ class TestMcliLogger:
         assert hasattr(logger, "debug")
 
     def test_get_logger_singleton(self):
-        """Test that get_logger returns same instance"""
+        """Test that get_logger returns same instance."""
         from mcli.lib.logger.logger import McliLogger
 
         logger1 = McliLogger.get_logger()
@@ -30,7 +28,7 @@ class TestMcliLogger:
         assert logger1 is logger2
 
     def test_get_logger_with_name(self):
-        """Test getting logger with custom name"""
+        """Test getting logger with custom name."""
         from mcli.lib.logger.logger import get_logger
 
         logger = get_logger("custom.module")
@@ -38,7 +36,7 @@ class TestMcliLogger:
         assert logger is not None
 
     def test_logger_info(self):
-        """Test logging at INFO level"""
+        """Test logging at INFO level."""
         from mcli.lib.logger.logger import get_logger
 
         logger = get_logger(__name__)
@@ -48,7 +46,7 @@ class TestMcliLogger:
         logger.info("Test with %s formatting", "params")
 
     def test_logger_error(self):
-        """Test logging at ERROR level"""
+        """Test logging at ERROR level."""
         from mcli.lib.logger.logger import get_logger
 
         logger = get_logger(__name__)
@@ -57,7 +55,7 @@ class TestMcliLogger:
         logger.error("Error with %d code", 500)
 
     def test_logger_warning(self):
-        """Test logging at WARNING level"""
+        """Test logging at WARNING level."""
         from mcli.lib.logger.logger import get_logger
 
         logger = get_logger(__name__)
@@ -65,7 +63,7 @@ class TestMcliLogger:
         logger.warning("Test warning message")
 
     def test_logger_debug(self):
-        """Test logging at DEBUG level"""
+        """Test logging at DEBUG level."""
         from mcli.lib.logger.logger import get_logger
 
         logger = get_logger(__name__)
@@ -73,7 +71,7 @@ class TestMcliLogger:
         logger.debug("Test debug message")
 
     def test_enable_runtime_tracing(self):
-        """Test enabling runtime tracing"""
+        """Test enabling runtime tracing."""
         from mcli.lib.logger.logger import McliLogger
 
         # Enable tracing
@@ -84,7 +82,7 @@ class TestMcliLogger:
         assert McliLogger._trace_level == 1
 
     def test_enable_runtime_tracing_with_level(self):
-        """Test enabling tracing with different levels"""
+        """Test enabling tracing with different levels."""
         from mcli.lib.logger.logger import McliLogger
 
         McliLogger.enable_runtime_tracing(level=2)
@@ -94,7 +92,7 @@ class TestMcliLogger:
         assert McliLogger._trace_level == 3
 
     def test_enable_runtime_tracing_invalid_level(self):
-        """Test tracing level is clamped to valid range"""
+        """Test tracing level is clamped to valid range."""
         from mcli.lib.logger.logger import McliLogger
 
         McliLogger.enable_runtime_tracing(level=10)
@@ -104,7 +102,7 @@ class TestMcliLogger:
         assert McliLogger._trace_level == 0  # Clamped to min
 
     def test_disable_runtime_tracing(self):
-        """Test disabling runtime tracing"""
+        """Test disabling runtime tracing."""
         from mcli.lib.logger.logger import McliLogger
 
         # Enable first
@@ -116,7 +114,7 @@ class TestMcliLogger:
         assert McliLogger._runtime_tracing_enabled is False
 
     def test_enable_tracing_with_excluded_modules(self):
-        """Test enabling tracing with module exclusions"""
+        """Test enabling tracing with module exclusions."""
         from mcli.lib.logger.logger import McliLogger
 
         excluded = ["test_module", "another_module"]
@@ -126,7 +124,7 @@ class TestMcliLogger:
         assert "another_module" in McliLogger._excluded_modules
 
     def test_get_trace_logger(self):
-        """Test getting trace logger instance"""
+        """Test getting trace logger instance."""
         from mcli.lib.logger.logger import McliLogger
 
         trace_logger = McliLogger.get_trace_logger()
@@ -134,7 +132,7 @@ class TestMcliLogger:
         assert trace_logger is not None
 
     def test_get_system_trace_logger(self):
-        """Test getting system trace logger"""
+        """Test getting system trace logger."""
         from mcli.lib.logger.logger import McliLogger
 
         sys_logger = McliLogger.get_system_trace_logger()
@@ -142,7 +140,7 @@ class TestMcliLogger:
         assert sys_logger is not None
 
     def test_enable_system_tracing(self):
-        """Test enabling system process tracing"""
+        """Test enabling system process tracing."""
         from mcli.lib.logger.logger import McliLogger
 
         McliLogger.enable_system_tracing(level=1)
@@ -151,7 +149,7 @@ class TestMcliLogger:
         assert McliLogger._system_trace_level == 1
 
     def test_enable_system_tracing_with_interval(self):
-        """Test system tracing with custom interval"""
+        """Test system tracing with custom interval."""
         from mcli.lib.logger.logger import McliLogger
 
         McliLogger.enable_system_tracing(level=1, interval=10)
@@ -159,7 +157,7 @@ class TestMcliLogger:
         assert McliLogger._system_trace_interval == 10
 
     def test_disable_system_tracing(self):
-        """Test disabling system tracing"""
+        """Test disabling system tracing."""
         from mcli.lib.logger.logger import McliLogger
 
         # Enable first
@@ -171,7 +169,7 @@ class TestMcliLogger:
         assert McliLogger._system_tracing_enabled is False
 
     def test_logger_instance_isolation(self):
-        """Test that loggers are properly isolated"""
+        """Test that loggers are properly isolated."""
         from mcli.lib.logger.logger import get_logger
 
         logger1 = get_logger("module1")
@@ -182,7 +180,7 @@ class TestMcliLogger:
         assert logger2 is not None
 
     def test_logger_handles_exceptions(self):
-        """Test logger handles exceptions in messages"""
+        """Test logger handles exceptions in messages."""
         from mcli.lib.logger.logger import get_logger
 
         logger = get_logger(__name__)
@@ -195,7 +193,7 @@ class TestMcliLogger:
             logger.exception("Full traceback:")
 
     def test_logger_formatting(self):
-        """Test logger message formatting"""
+        """Test logger message formatting."""
         from mcli.lib.logger.logger import get_logger
 
         logger = get_logger(__name__)
@@ -207,7 +205,7 @@ class TestMcliLogger:
         logger.info("Dict: %s", {"key": "value"})
 
     def test_get_logger_function_standalone(self):
-        """Test standalone get_logger function"""
+        """Test standalone get_logger function."""
         from mcli.lib.logger.logger import get_logger
 
         logger = get_logger()

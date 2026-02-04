@@ -1,11 +1,16 @@
-"""
-CLI tests for mcli.self.redis_cmd module
+"""CLI tests for mcli.self.redis_cmd module.
+
+NOTE: Redis commands module was removed in the CLI simplification refactor.
+These tests are preserved but skipped for reference.
 """
 
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from click.testing import CliRunner
+
+# Skip all tests - redis_cmd module was removed in CLI simplification
+pytestmark = pytest.mark.skip(reason="Redis commands removed in CLI simplification")
 
 # Check if redis is available
 try:
@@ -16,23 +21,22 @@ except ImportError:
     HAS_REDIS = False
 
 
-@pytest.mark.skipif(not HAS_REDIS, reason="redis module not installed")
 class TestRedisCommands:
-    """Test suite for Redis CLI commands"""
+    """Test suite for Redis CLI commands."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_redis_group_exists(self):
-        """Test redis command group exists"""
+        """Test redis command group exists."""
         from mcli.self.redis_cmd import redis_group
 
         assert redis_group is not None
         assert hasattr(redis_group, "commands")
 
     def test_redis_group_help(self):
-        """Test redis command group help"""
+        """Test redis command group help."""
         from mcli.self.redis_cmd import redis_group
 
         result = self.runner.invoke(redis_group, ["--help"])
@@ -42,7 +46,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_start_redis_not_running(self, mock_get_service):
-        """Test starting Redis when not running"""
+        """Test starting Redis when not running."""
         from mcli.self.redis_cmd import redis_group
 
         # Create mock service
@@ -67,7 +71,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_start_redis_already_running(self, mock_get_service):
-        """Test starting Redis when already running"""
+        """Test starting Redis when already running."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -82,7 +86,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_start_redis_failure(self, mock_get_service):
-        """Test starting Redis with failure"""
+        """Test starting Redis with failure."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -97,7 +101,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_stop_redis_running(self, mock_get_service):
-        """Test stopping Redis when running"""
+        """Test stopping Redis when running."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -112,7 +116,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_stop_redis_not_running(self, mock_get_service):
-        """Test stopping Redis when not running"""
+        """Test stopping Redis when not running."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -126,7 +130,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_restart_redis_success(self, mock_get_service):
-        """Test restarting Redis successfully"""
+        """Test restarting Redis successfully."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -142,7 +146,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_restart_redis_failure(self, mock_get_service):
-        """Test restarting Redis with failure"""
+        """Test restarting Redis with failure."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -156,7 +160,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_redis_status_running(self, mock_get_service):
-        """Test Redis status when running"""
+        """Test Redis status when running."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -184,7 +188,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_redis_status_not_running(self, mock_get_service):
-        """Test Redis status when not running"""
+        """Test Redis status when not running."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -204,7 +208,7 @@ class TestRedisCommands:
     @pytest.mark.skip(reason="Redis test requires external Redis service")
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_test_redis_connection_success(self, mock_get_service):
-        """Test Redis connection test success"""
+        """Test Redis connection test success."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -219,7 +223,7 @@ class TestRedisCommands:
 
     @patch("mcli.self.redis_cmd.get_redis_service")
     def test_test_redis_not_running(self, mock_get_service):
-        """Test Redis connection test when not running"""
+        """Test Redis connection test when not running."""
         from mcli.self.redis_cmd import redis_group
 
         mock_service = AsyncMock()
@@ -232,7 +236,7 @@ class TestRedisCommands:
         assert "not running" in result.output.lower()
 
     def test_redis_start_help(self):
-        """Test start command help"""
+        """Test start command help."""
         from mcli.self.redis_cmd import redis_group
 
         result = self.runner.invoke(redis_group, ["start", "--help"])
@@ -240,7 +244,7 @@ class TestRedisCommands:
         assert result.exit_code == 0
 
     def test_redis_stop_help(self):
-        """Test stop command help"""
+        """Test stop command help."""
         from mcli.self.redis_cmd import redis_group
 
         result = self.runner.invoke(redis_group, ["stop", "--help"])
@@ -248,7 +252,7 @@ class TestRedisCommands:
         assert result.exit_code == 0
 
     def test_redis_restart_help(self):
-        """Test restart command help"""
+        """Test restart command help."""
         from mcli.self.redis_cmd import redis_group
 
         result = self.runner.invoke(redis_group, ["restart", "--help"])
@@ -256,7 +260,7 @@ class TestRedisCommands:
         assert result.exit_code == 0
 
     def test_redis_status_help(self):
-        """Test status command help"""
+        """Test status command help."""
         from mcli.self.redis_cmd import redis_group
 
         result = self.runner.invoke(redis_group, ["status", "--help"])
@@ -264,7 +268,7 @@ class TestRedisCommands:
         assert result.exit_code == 0
 
     def test_redis_test_help(self):
-        """Test test command help"""
+        """Test test command help."""
         from mcli.self.redis_cmd import redis_group
 
         result = self.runner.invoke(redis_group, ["test", "--help"])

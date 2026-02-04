@@ -1,4 +1,4 @@
-"""Shared fixtures for test data generation"""
+"""Shared fixtures for test data generation."""
 
 import json
 
@@ -7,7 +7,7 @@ import pytest
 
 @pytest.fixture
 def sample_json_data():
-    """Provide sample JSON data for testing"""
+    """Provide sample JSON data for testing."""
     return {
         "users": [
             {"id": 1, "name": "Alice", "email": "alice@example.com"},
@@ -22,7 +22,7 @@ def sample_json_data():
 
 @pytest.fixture
 def sample_csv_data():
-    """Provide sample CSV data for testing"""
+    """Provide sample CSV data for testing."""
     return """name,age,city
 Alice,30,New York
 Bob,25,San Francisco
@@ -32,7 +32,7 @@ Charlie,35,Seattle
 
 @pytest.fixture
 def temp_json_file(tmp_path, sample_json_data):
-    """Create a temporary JSON file"""
+    """Create a temporary JSON file."""
     json_file = tmp_path / "test_data.json"
     json_file.write_text(json.dumps(sample_json_data, indent=2))
     return json_file
@@ -40,7 +40,7 @@ def temp_json_file(tmp_path, sample_json_data):
 
 @pytest.fixture
 def temp_csv_file(tmp_path, sample_csv_data):
-    """Create a temporary CSV file"""
+    """Create a temporary CSV file."""
     csv_file = tmp_path / "test_data.csv"
     csv_file.write_text(sample_csv_data)
     return csv_file
@@ -48,7 +48,7 @@ def temp_csv_file(tmp_path, sample_csv_data):
 
 @pytest.fixture
 def sample_log_entries():
-    """Provide sample log entries for testing"""
+    """Provide sample log entries for testing."""
     return [
         "2025-10-02 10:00:00 INFO Starting application",
         "2025-10-02 10:00:01 DEBUG Loading configuration",
@@ -62,7 +62,7 @@ def sample_log_entries():
 
 @pytest.fixture
 def temp_log_file(tmp_path, sample_log_entries):
-    """Create a temporary log file"""
+    """Create a temporary log file."""
     log_file = tmp_path / "test.log"
     log_file.write_text("\n".join(sample_log_entries))
     return log_file
@@ -70,7 +70,7 @@ def temp_log_file(tmp_path, sample_log_entries):
 
 @pytest.fixture
 def sample_ml_dataset():
-    """Provide sample ML dataset for testing"""
+    """Provide sample ML dataset for testing."""
     import numpy as np
 
     return {
@@ -82,7 +82,7 @@ def sample_ml_dataset():
 
 @pytest.fixture
 def sample_time_series():
-    """Provide sample time series data"""
+    """Provide sample time series data."""
     import random
     from datetime import datetime, timedelta
 

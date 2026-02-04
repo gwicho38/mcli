@@ -1,5 +1,5 @@
 """
-Unit tests for mcli.workflow.daemon.async_process_manager module
+Unit tests for mcli.workflow.daemon.async_process_manager module.
 
 NOTE: This module requires aiosqlite and other async dependencies.
 Tests are conditional on dependencies being available.
@@ -38,10 +38,10 @@ if not HAS_ASYNC_DEPS:
 
 
 class TestProcessStatus:
-    """Test ProcessStatus enum"""
+    """Test ProcessStatus enum."""
 
     def test_process_status_values(self):
-        """Test ProcessStatus enum values"""
+        """Test ProcessStatus enum values."""
         assert ProcessStatus.CREATED.value == "created"
         assert ProcessStatus.RUNNING.value == "running"
         assert ProcessStatus.EXITED.value == "exited"
@@ -51,10 +51,10 @@ class TestProcessStatus:
 
 
 class TestProcessInfo:
-    """Test ProcessInfo dataclass"""
+    """Test ProcessInfo dataclass."""
 
     def test_process_info_initialization(self):
-        """Test ProcessInfo initialization"""
+        """Test ProcessInfo initialization."""
         proc_info = ProcessInfo(
             id="test-123",
             name="test_process",
@@ -75,7 +75,7 @@ class TestProcessInfo:
         assert proc_info.stderr_lines == []  # Auto-set in __post_init__
 
     def test_process_info_with_optional_fields(self):
-        """Test ProcessInfo with optional fields"""
+        """Test ProcessInfo with optional fields."""
         env = {"TEST_VAR": "value"}
         proc_info = ProcessInfo(
             id="test-456",
@@ -95,11 +95,11 @@ class TestProcessInfo:
 
 @pytest.mark.asyncio
 class TestAsyncProcessContainer:
-    """Test AsyncProcessContainer"""
+    """Test AsyncProcessContainer."""
 
     @pytest.fixture
     def process_info(self):
-        """Create a test ProcessInfo"""
+        """Create a test ProcessInfo."""
         return ProcessInfo(
             id="test-container-1",
             name="test_process",
@@ -109,7 +109,7 @@ class TestAsyncProcessContainer:
         )
 
     def test_container_initialization(self, process_info):
-        """Test container initialization"""
+        """Test container initialization."""
         container = AsyncProcessContainer(process_info)
 
         assert container.info == process_info
@@ -123,7 +123,7 @@ class TestAsyncProcessContainer:
 
     @pytest.mark.asyncio
     async def test_start_process_success(self, process_info):
-        """Test starting a process successfully"""
+        """Test starting a process successfully."""
         container = AsyncProcessContainer(process_info)
 
         with patch("asyncio.create_subprocess_exec") as mock_exec:
@@ -146,7 +146,7 @@ class TestAsyncProcessContainer:
 
     @pytest.mark.asyncio
     async def test_start_process_already_running(self, process_info):
-        """Test starting a process that's already running"""
+        """Test starting a process that's already running."""
         container = AsyncProcessContainer(process_info)
 
         with patch("asyncio.create_subprocess_exec") as mock_exec:
@@ -168,7 +168,7 @@ class TestAsyncProcessContainer:
 
     @pytest.mark.asyncio
     async def test_start_process_failure(self, process_info):
-        """Test handling start process failure"""
+        """Test handling start process failure."""
         container = AsyncProcessContainer(process_info)
 
         with patch("asyncio.create_subprocess_exec", side_effect=Exception("Start failed")):
@@ -180,7 +180,7 @@ class TestAsyncProcessContainer:
     @pytest.mark.skip(reason="Complex async mocking issues")
     @pytest.mark.asyncio
     async def test_stop_process_success(self, process_info):
-        """Test stopping a process successfully"""
+        """Test stopping a process successfully."""
         container = AsyncProcessContainer(process_info)
 
         with patch("asyncio.create_subprocess_exec") as mock_exec:
@@ -211,7 +211,7 @@ class TestAsyncProcessContainer:
     @pytest.mark.skip(reason="Complex async mocking issues")
     @pytest.mark.asyncio
     async def test_stop_process_timeout(self, process_info):
-        """Test stopping a process with timeout"""
+        """Test stopping a process with timeout."""
         container = AsyncProcessContainer(process_info)
 
         with patch("asyncio.create_subprocess_exec") as mock_exec:
@@ -238,7 +238,7 @@ class TestAsyncProcessContainer:
     @pytest.mark.skip(reason="Complex async mocking issues")
     @pytest.mark.asyncio
     async def test_kill_process(self, process_info):
-        """Test force killing a process"""
+        """Test force killing a process."""
         container = AsyncProcessContainer(process_info)
 
         with patch("asyncio.create_subprocess_exec") as mock_exec:
@@ -265,7 +265,7 @@ class TestAsyncProcessContainer:
 
     @pytest.mark.asyncio
     async def test_wait_for_process(self, process_info):
-        """Test waiting for process completion"""
+        """Test waiting for process completion."""
         container = AsyncProcessContainer(process_info)
 
         with patch("asyncio.create_subprocess_exec") as mock_exec:
@@ -292,7 +292,7 @@ class TestAsyncProcessContainer:
 
     @pytest.mark.asyncio
     async def test_wait_for_process_with_timeout(self, process_info):
-        """Test waiting for process with timeout"""
+        """Test waiting for process with timeout."""
         container = AsyncProcessContainer(process_info)
 
         with patch("asyncio.create_subprocess_exec") as mock_exec:
@@ -317,11 +317,11 @@ class TestAsyncProcessContainer:
 
 @pytest.mark.asyncio
 class TestAsyncProcessManager:
-    """Test AsyncProcessManager"""
+    """Test AsyncProcessManager."""
 
     @pytest.fixture
     async def manager(self):
-        """Create a test AsyncProcessManager"""
+        """Create a test AsyncProcessManager."""
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test_processes.db"
             mgr = AsyncProcessManager(db_path=str(db_path), redis_url="redis://localhost:6379")
@@ -337,7 +337,7 @@ class TestAsyncProcessManager:
 
     @pytest.mark.asyncio
     async def test_manager_initialization(self):
-        """Test manager initialization"""
+        """Test manager initialization."""
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test_processes.db"
             manager = AsyncProcessManager(db_path=str(db_path))
@@ -352,7 +352,7 @@ class TestAsyncProcessManager:
 
     @pytest.mark.asyncio
     async def test_start_process_success(self, manager):
-        """Test starting a process successfully"""
+        """Test starting a process successfully."""
         with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_process = AsyncMock()
             mock_process.pid = 12345
@@ -371,14 +371,14 @@ class TestAsyncProcessManager:
 
     @pytest.mark.asyncio
     async def test_start_process_failure(self, manager):
-        """Test handling start process failure"""
+        """Test handling start process failure."""
         with patch("asyncio.create_subprocess_exec", side_effect=Exception("Failed to start")):
             with pytest.raises(RuntimeError, match="Failed to start process"):
                 await manager.start_process("failing_proc", "invalid_command", [])
 
     @pytest.mark.asyncio
     async def test_stop_process_success(self, manager):
-        """Test stopping a process"""
+        """Test stopping a process."""
         with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_process = AsyncMock()
             mock_process.pid = 12345
@@ -403,14 +403,14 @@ class TestAsyncProcessManager:
 
     @pytest.mark.asyncio
     async def test_stop_nonexistent_process(self, manager):
-        """Test stopping a process that doesn't exist"""
+        """Test stopping a process that doesn't exist."""
         with pytest.raises(KeyError, match="Process not found"):
             await manager.stop_process("nonexistent-id")
 
     @pytest.mark.skip(reason="Complex async mocking issues")
     @pytest.mark.asyncio
     async def test_kill_process_success(self, manager):
-        """Test killing a process"""
+        """Test killing a process."""
         with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_process = AsyncMock()
             mock_process.pid = 12345
@@ -435,7 +435,7 @@ class TestAsyncProcessManager:
 
     @pytest.mark.asyncio
     async def test_get_process_info_active(self, manager):
-        """Test getting info for an active process"""
+        """Test getting info for an active process."""
         with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_process = AsyncMock()
             mock_process.pid = 12345
@@ -457,13 +457,13 @@ class TestAsyncProcessManager:
 
     @pytest.mark.asyncio
     async def test_get_process_info_nonexistent(self, manager):
-        """Test getting info for nonexistent process"""
+        """Test getting info for nonexistent process."""
         with pytest.raises(KeyError, match="Process not found"):
             await manager.get_process_info("nonexistent-id")
 
     @pytest.mark.asyncio
     async def test_list_processes_all(self, manager):
-        """Test listing all processes"""
+        """Test listing all processes."""
         with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_process = AsyncMock()
             mock_process.pid = 12345
@@ -486,7 +486,7 @@ class TestAsyncProcessManager:
 
     @pytest.mark.asyncio
     async def test_list_processes_with_filter(self, manager):
-        """Test listing processes with status filter"""
+        """Test listing processes with status filter."""
         with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_process = AsyncMock()
             mock_process.pid = 12345
@@ -509,7 +509,7 @@ class TestAsyncProcessManager:
     @pytest.mark.skip(reason="Complex async mocking issues")
     @pytest.mark.asyncio
     async def test_cleanup_finished_processes(self, manager):
-        """Test cleanup of finished processes"""
+        """Test cleanup of finished processes."""
         with patch("asyncio.create_subprocess_exec") as mock_exec:
             mock_process = AsyncMock()
             mock_process.pid = 12345
@@ -534,7 +534,7 @@ class TestAsyncProcessManager:
 
     @pytest.mark.asyncio
     async def test_database_persistence(self):
-        """Test process info persistence to database"""
+        """Test process info persistence to database."""
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test_processes.db"
 

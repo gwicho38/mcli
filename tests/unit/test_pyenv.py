@@ -1,5 +1,5 @@
 """
-Unit tests for mcli.lib.pyenv module
+Unit tests for mcli.lib.pyenv module.
 
 Tests Python virtual environment management for workflow execution.
 """
@@ -14,10 +14,10 @@ import pytest
 
 
 class TestVenvManager:
-    """Test suite for VenvManager class"""
+    """Test suite for VenvManager class."""
 
     def test_find_local_venv_with_dot_venv(self):
-        """Test finding .venv directory"""
+        """Test finding .venv directory."""
         from mcli.lib.pyenv import VenvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -42,7 +42,7 @@ class TestVenvManager:
             assert result == venv_dir
 
     def test_find_local_venv_with_venv(self):
-        """Test finding venv directory"""
+        """Test finding venv directory."""
         from mcli.lib.pyenv import VenvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -67,7 +67,7 @@ class TestVenvManager:
             assert result == venv_dir
 
     def test_find_local_venv_none_found(self):
-        """Test when no venv is found"""
+        """Test when no venv is found."""
         from mcli.lib.pyenv import VenvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -79,7 +79,7 @@ class TestVenvManager:
             assert result is None
 
     def test_find_local_venv_invalid_venv_structure(self):
-        """Test that invalid venv structure is not detected"""
+        """Test that invalid venv structure is not detected."""
         from mcli.lib.pyenv import VenvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -94,7 +94,7 @@ class TestVenvManager:
             assert result is None
 
     def test_get_global_venv_path(self):
-        """Test global venv path resolution"""
+        """Test global venv path resolution."""
         from mcli.lib.pyenv import VenvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -107,7 +107,7 @@ class TestVenvManager:
                 assert result == mcli_home / "venv"
 
     def test_get_python_from_venv_unix(self):
-        """Test getting Python path from venv on Unix"""
+        """Test getting Python path from venv on Unix."""
         from mcli.lib.pyenv import VenvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -120,7 +120,7 @@ class TestVenvManager:
             assert result == venv_path / "bin" / "python"
 
     def test_get_python_from_venv_windows(self):
-        """Test getting Python path from venv on Windows"""
+        """Test getting Python path from venv on Windows."""
         from mcli.lib.pyenv import VenvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -133,7 +133,7 @@ class TestVenvManager:
             assert result == venv_path / "Scripts" / "python.exe"
 
     def test_is_uv_available(self):
-        """Test uv availability check"""
+        """Test uv availability check."""
         from mcli.lib.pyenv import VenvManager
 
         # This test just verifies the method runs without error
@@ -142,7 +142,7 @@ class TestVenvManager:
         assert isinstance(result, bool)
 
     def test_get_venv_env_vars(self):
-        """Test environment variables for venv activation"""
+        """Test environment variables for venv activation."""
         from mcli.lib.pyenv import VenvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -159,10 +159,10 @@ class TestVenvManager:
 
 
 class TestDependencyChecker:
-    """Test suite for DependencyChecker class"""
+    """Test suite for DependencyChecker class."""
 
     def test_parse_requires_simple(self):
-        """Test parsing simple requirements"""
+        """Test parsing simple requirements."""
         from mcli.lib.pyenv import DependencyChecker
 
         checker = DependencyChecker(Path(sys.executable))
@@ -171,7 +171,7 @@ class TestDependencyChecker:
         assert result == ["pandas", "numpy"]
 
     def test_parse_requires_comma_separated(self):
-        """Test parsing comma-separated requirements"""
+        """Test parsing comma-separated requirements."""
         from mcli.lib.pyenv import DependencyChecker
 
         checker = DependencyChecker(Path(sys.executable))
@@ -180,7 +180,7 @@ class TestDependencyChecker:
         assert result == ["pandas", "numpy", "requests"]
 
     def test_parse_requires_with_whitespace(self):
-        """Test parsing requirements with extra whitespace"""
+        """Test parsing requirements with extra whitespace."""
         from mcli.lib.pyenv import DependencyChecker
 
         checker = DependencyChecker(Path(sys.executable))
@@ -189,7 +189,7 @@ class TestDependencyChecker:
         assert result == ["pandas", "numpy", "requests"]
 
     def test_extract_package_name(self):
-        """Test extracting package name from spec"""
+        """Test extracting package name from spec."""
         from mcli.lib.pyenv import DependencyChecker
 
         checker = DependencyChecker(Path(sys.executable))
@@ -200,7 +200,7 @@ class TestDependencyChecker:
         assert checker._extract_package_name("scikit-learn>=0.24") == "scikit-learn"
 
     def test_normalize_package_name(self):
-        """Test package name normalization"""
+        """Test package name normalization."""
         from mcli.lib.pyenv import DependencyChecker
 
         checker = DependencyChecker(Path(sys.executable))
@@ -211,7 +211,7 @@ class TestDependencyChecker:
         assert checker._normalize_package_name("NUMPY") == "numpy"
 
     def test_check_version_constraint_exact(self):
-        """Test exact version constraint checking"""
+        """Test exact version constraint checking."""
         from mcli.lib.pyenv import DependencyChecker
 
         checker = DependencyChecker(Path(sys.executable))
@@ -220,7 +220,7 @@ class TestDependencyChecker:
         assert checker._check_version_constraint("pandas==1.0.0", "2.0.0") is False
 
     def test_check_version_constraint_other(self):
-        """Test non-exact version constraints (should pass if installed)"""
+        """Test non-exact version constraints (should pass if installed)."""
         from mcli.lib.pyenv import DependencyChecker
 
         checker = DependencyChecker(Path(sys.executable))
@@ -231,10 +231,10 @@ class TestDependencyChecker:
 
 
 class TestPyEnvManager:
-    """Test suite for PyEnvManager class"""
+    """Test suite for PyEnvManager class."""
 
     def test_resolve_environment_local_venv(self):
-        """Test resolving environment with local venv"""
+        """Test resolving environment with local venv."""
         from mcli.lib.pyenv import PyEnvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -260,7 +260,7 @@ class TestPyEnvManager:
             assert venv_path == venv_dir
 
     def test_resolve_environment_global_fallback(self):
-        """Test resolving environment falls back to global"""
+        """Test resolving environment falls back to global."""
         from mcli.lib.pyenv import PyEnvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -281,7 +281,7 @@ class TestPyEnvManager:
                 assert venv_path == mcli_home / "venv"
 
     def test_resolve_environment_system_python(self):
-        """Test resolving environment with system Python override"""
+        """Test resolving environment with system Python override."""
         from mcli.lib.pyenv import PyEnvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -295,7 +295,7 @@ class TestPyEnvManager:
                 assert venv_path is None
 
     def test_resolve_environment_override(self):
-        """Test resolving environment with explicit override"""
+        """Test resolving environment with explicit override."""
         from mcli.lib.pyenv import PyEnvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -311,7 +311,7 @@ class TestPyEnvManager:
                 assert venv_path == override_venv
 
     def test_get_python_executable_system(self):
-        """Test getting Python executable when using system Python"""
+        """Test getting Python executable when using system Python."""
         from mcli.lib.pyenv import PyEnvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -324,7 +324,7 @@ class TestPyEnvManager:
                 assert result == Path(sys.executable)
 
     def test_get_status(self):
-        """Test getting environment status"""
+        """Test getting environment status."""
         from mcli.lib.pyenv import PyEnvManager
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -340,10 +340,10 @@ class TestPyEnvManager:
 
 
 class TestPyEnvIntegration:
-    """Integration tests for pyenv module"""
+    """Integration tests for pyenv module."""
 
     def test_imports_work(self):
-        """Test that all public imports work"""
+        """Test that all public imports work."""
         from mcli.lib.pyenv import DependencyChecker, PyEnvManager, VenvManager
 
         assert PyEnvManager is not None
@@ -351,7 +351,7 @@ class TestPyEnvIntegration:
         assert DependencyChecker is not None
 
     def test_constants_available(self):
-        """Test that related constants are available"""
+        """Test that related constants are available."""
         from mcli.lib.constants import EnvVars, VenvMessages, VenvPaths
 
         assert hasattr(EnvVars, "MCLI_AUTO_INSTALL_DEPS")

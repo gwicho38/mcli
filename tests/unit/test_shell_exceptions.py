@@ -393,9 +393,7 @@ class TestExceptionHierarchy:
             CommandError("base"),
             CommandNotFoundError("cmd"),
             CommandTimeoutError(10, "cmd"),
-            CommandFailedError(
-                CommandResult(returncode=1, stdout="", stderr="", command="cmd")
-            ),
+            CommandFailedError(CommandResult(returncode=1, stdout="", stderr="", command="cmd")),
             CommandValidationError("test"),
             CommandSecurityError("test", "cmd"),
             CommandInterruptedError(9, "cmd"),

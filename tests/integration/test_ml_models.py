@@ -1,4 +1,4 @@
-"""Test suite for ML models
+"""Test suite for ML models.
 
 NOTE: ML model tests require torch and model modules.
 Tests are conditional on torch installation.
@@ -40,11 +40,11 @@ if not HAS_MODELS:
 @pytest.mark.skip(reason="ML model tests require complex setup and dependencies")
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestBaseModels:
-    """Test base model abstractions"""
+    """Test base model abstractions."""
 
     @pytest.fixture
     def sample_data(self):
-        """Generate sample data for testing"""
+        """Generate sample data for testing."""
         batch_size = 32
         input_dim = 100
         sequence_length = 30
@@ -57,7 +57,7 @@ class TestBaseModels:
         }
 
     def test_mlp_base_model(self, sample_data):
-        """Test MLP base model"""
+        """Test MLP base model."""
         model = MLPBaseModel(input_dim=100, hidden_dims=[64, 32], output_dim=1)
 
         # Test forward pass
@@ -70,7 +70,7 @@ class TestBaseModels:
         assert output_multi.shape == (32, 3)
 
     def test_resnet_model(self, sample_data):
-        """Test ResNet model"""
+        """Test ResNet model."""
         model = ResNetModel(input_dim=100, hidden_dims=[64, 64], output_dim=1)
 
         output = model(sample_data["X"])
@@ -80,7 +80,7 @@ class TestBaseModels:
         assert model.layers is not None
 
     def test_model_metrics_calculation(self):
-        """Test metrics calculation"""
+        """Test metrics calculation."""
         model = MLPBaseModel(input_dim=10, hidden_dims=[5], output_dim=1)
 
         y_true = np.array([1.0, 2.0, 3.0, 4.0])
@@ -97,11 +97,11 @@ class TestBaseModels:
 @pytest.mark.skip(reason="ML model tests require complex setup and dependencies")
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestEnsembleModels:
-    """Test ensemble and advanced models"""
+    """Test ensemble and advanced models."""
 
     @pytest.fixture
     def sequence_data(self):
-        """Generate sequence data for testing"""
+        """Generate sequence data for testing."""
         batch_size = 16
         sequence_length = 30
         input_dim = 50
@@ -109,28 +109,28 @@ class TestEnsembleModels:
         return torch.randn(batch_size, sequence_length, input_dim)
 
     def test_attention_model(self, sequence_data):
-        """Test attention-based model"""
+        """Test attention-based model."""
         model = AttentionStockPredictor(input_dim=50, hidden_dim=64, num_heads=4)
 
         output = model(sequence_data)
         assert output.shape == (16, 1)
 
     def test_transformer_model(self, sequence_data):
-        """Test transformer model"""
+        """Test transformer model."""
         model = TransformerStockModel(input_dim=50, hidden_dim=64, num_heads=4, num_layers=2)
 
         output = model(sequence_data)
         assert output.shape == (16, 1)
 
     def test_lstm_model(self, sequence_data):
-        """Test LSTM model"""
+        """Test LSTM model."""
         model = LSTMStockPredictor(input_dim=50, hidden_dim=64, num_layers=2)
 
         output = model(sequence_data)
         assert output.shape == (16, 1)
 
     def test_deep_ensemble(self, sequence_data):
-        """Test deep ensemble model"""
+        """Test deep ensemble model."""
         models = [
             AttentionStockPredictor(50, 32, 2),
             LSTMStockPredictor(50, 32, 1),
@@ -152,11 +152,11 @@ class TestEnsembleModels:
 @pytest.mark.skip(reason="ML model tests require complex setup and dependencies")
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestRecommendationModel:
-    """Test stock recommendation model"""
+    """Test stock recommendation model."""
 
     @pytest.fixture
     def mock_data(self):
-        """Create mock data for testing"""
+        """Create mock data for testing."""
         batch_size = 10
         input_dim = 100
 
@@ -171,7 +171,7 @@ class TestRecommendationModel:
         }
 
     def test_recommendation_generation(self, mock_data):
-        """Test generating recommendations"""
+        """Test generating recommendations."""
         model = StockRecommendationModel(input_dim=100, hidden_dims=[64, 32])
 
         # Set to eval mode to avoid dropout randomness
@@ -187,7 +187,7 @@ class TestRecommendationModel:
         assert all(hasattr(r, "confidence") for r in recommendations)
 
     def test_multi_task_learning(self, mock_data):
-        """Test multi-task learning outputs"""
+        """Test multi-task learning outputs."""
         model = StockRecommendationModel(input_dim=100, hidden_dims=[64, 32], use_multi_task=True)
 
         returns, risks, confidence = model.forward_multi_task(mock_data["X"])
@@ -197,7 +197,7 @@ class TestRecommendationModel:
         assert confidence.shape == (10, 1)
 
     def test_portfolio_optimization(self, mock_data):
-        """Test portfolio optimization integration"""
+        """Test portfolio optimization integration."""
         model = StockRecommendationModel(input_dim=100, hidden_dims=[64, 32])
 
         model.eval()
@@ -218,11 +218,11 @@ class TestRecommendationModel:
 
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestModelTraining:
-    """Test model training functionality"""
+    """Test model training functionality."""
 
     @pytest.fixture
     def training_setup(self):
-        """Setup for training tests"""
+        """Setup for training tests."""
         model = MLPBaseModel(input_dim=10, hidden_dims=[8, 4], output_dim=1)
 
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -231,7 +231,7 @@ class TestModelTraining:
         return model, optimizer, criterion
 
     def test_training_step(self, training_setup):
-        """Test single training step"""
+        """Test single training step."""
         model, optimizer, criterion = training_setup
 
         # Generate batch
@@ -251,7 +251,7 @@ class TestModelTraining:
         assert loss.item() > 0
 
     def test_model_save_load(self, training_setup, tmp_path):
-        """Test model saving and loading"""
+        """Test model saving and loading."""
         model, _, _ = training_setup
 
         # Save model
@@ -270,10 +270,10 @@ class TestModelTraining:
 @pytest.mark.skip(reason="ML model tests require complex setup and dependencies")
 @pytest.mark.skipif(not HAS_TORCH, reason="torch module not installed")
 class TestModelValidation:
-    """Test model validation and evaluation"""
+    """Test model validation and evaluation."""
 
     def test_prediction_bounds(self):
-        """Test that predictions are within reasonable bounds"""
+        """Test that predictions are within reasonable bounds."""
         model = StockRecommendationModel(input_dim=50, hidden_dims=[32, 16])
 
         model.eval()
@@ -286,7 +286,7 @@ class TestModelValidation:
         assert torch.all(torch.isfinite(predictions))
 
     def test_ensemble_consistency(self):
-        """Test ensemble predictions are consistent"""
+        """Test ensemble predictions are consistent."""
         models = [MLPBaseModel(50, [32], 1), MLPBaseModel(50, [32], 1)]
 
         ensemble = DeepEnsembleModel(
@@ -314,7 +314,7 @@ class TestModelValidation:
     ],
 )
 def test_model_architectures(input_dim, hidden_dims, output_dim):
-    """Parameterized test for different architectures"""
+    """Parameterized test for different architectures."""
     model = MLPBaseModel(input_dim=input_dim, hidden_dims=hidden_dims, output_dim=output_dim)
 
     X = torch.randn(8, input_dim)

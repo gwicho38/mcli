@@ -249,8 +249,12 @@ class IPFSSync:
                     raise requests.exceptions.RequestException("Rate limited")
                 elif response.status_code >= 500:
                     # Server error - should retry
-                    logger.warning(f"Gateway {gateway_template} server error: {response.status_code}")
-                    raise requests.exceptions.RequestException(f"Server error {response.status_code}")
+                    logger.warning(
+                        f"Gateway {gateway_template} server error: {response.status_code}"
+                    )
+                    raise requests.exceptions.RequestException(
+                        f"Server error {response.status_code}"
+                    )
                 else:
                     # Client error (4xx except 429) - don't retry, try next gateway
                     logger.warning(f"Gateway {gateway_template} failed: {response.status_code}")
@@ -378,6 +382,9 @@ class IPFSSync:
 
 
 # Commented out alternative storage backends for future use
+# NOTE: This block is intentionally kept as dead code for future reference
+# fmt: off
+# flake8: noqa
 """
 # PostgreSQL/Supabase backend (requires configuration)
 class SupabaseSync:
@@ -421,3 +428,4 @@ class ArweaveSync:
         # Download from Arweave
         pass
 """
+# fmt: on

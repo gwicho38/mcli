@@ -1,6 +1,4 @@
-"""
-Tests for mcli.self.self_cmd utility functions
-"""
+"""Tests for mcli.self.self_cmd utility functions."""
 
 import json
 import tempfile
@@ -9,10 +7,10 @@ from unittest.mock import MagicMock, patch
 
 
 class TestLockfileUtilities:
-    """Test suite for lockfile utility functions"""
+    """Test suite for lockfile utility functions."""
 
     def test_hash_command_state(self):
-        """Test hashing command state"""
+        """Test hashing command state."""
         from mcli.self.self_cmd import hash_command_state
 
         commands = [{"name": "cmd1", "group": "group1"}, {"name": "cmd2", "group": "group2"}]
@@ -27,7 +25,7 @@ class TestLockfileUtilities:
         assert hash1 == hash2
 
     def test_hash_command_state_order_independent(self):
-        """Test that command order doesn't affect hash"""
+        """Test that command order doesn't affect hash."""
         from mcli.self.self_cmd import hash_command_state
 
         commands1 = [{"name": "cmd1", "group": "group1"}, {"name": "cmd2", "group": "group2"}]
@@ -41,7 +39,7 @@ class TestLockfileUtilities:
         assert hash1 == hash2
 
     def test_hash_command_state_different_commands(self):
-        """Test that different commands produce different hashes"""
+        """Test that different commands produce different hashes."""
         from mcli.self.self_cmd import hash_command_state
 
         commands1 = [{"name": "cmd1", "group": "group1"}]
@@ -54,7 +52,7 @@ class TestLockfileUtilities:
 
     @patch("mcli.self.self_cmd.LOCKFILE_PATH")
     def test_load_lockfile_exists(self, mock_lockfile_path):
-        """Test loading existing lockfile"""
+        """Test loading existing lockfile."""
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             test_data = [{"hash": "abc123", "timestamp": "2025-01-01T00:00:00Z", "commands": []}]
@@ -81,7 +79,7 @@ class TestLockfileUtilities:
 
     @patch("mcli.self.self_cmd.LOCKFILE_PATH")
     def test_load_lockfile_not_exists(self, mock_lockfile_path):
-        """Test loading lockfile when it doesn't exist"""
+        """Test loading lockfile when it doesn't exist."""
         from mcli.self.self_cmd import load_lockfile
 
         mock_lockfile_path.exists.return_value = False
@@ -92,7 +90,7 @@ class TestLockfileUtilities:
 
     @patch("mcli.self.self_cmd.LOCKFILE_PATH")
     def test_save_lockfile(self, mock_lockfile_path):
-        """Test saving lockfile"""
+        """Test saving lockfile."""
         from mcli.self.self_cmd import save_lockfile
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -117,7 +115,7 @@ class TestLockfileUtilities:
     @patch("mcli.self.self_cmd.load_lockfile")
     @patch("mcli.self.self_cmd.save_lockfile")
     def test_append_lockfile(self, mock_save, mock_load):
-        """Test appending to lockfile"""
+        """Test appending to lockfile."""
         from mcli.self.self_cmd import append_lockfile
 
         existing_states = [{"hash": "abc123", "timestamp": "2025-01-01T00:00:00Z", "commands": []}]
@@ -135,7 +133,7 @@ class TestLockfileUtilities:
 
     @patch("mcli.self.self_cmd.load_lockfile")
     def test_find_state_by_hash_found(self, mock_load):
-        """Test finding state by hash when it exists"""
+        """Test finding state by hash when it exists."""
         from mcli.self.self_cmd import find_state_by_hash
 
         states = [
@@ -151,7 +149,7 @@ class TestLockfileUtilities:
 
     @patch("mcli.self.self_cmd.load_lockfile")
     def test_find_state_by_hash_not_found(self, mock_load):
-        """Test finding state by hash when it doesn't exist"""
+        """Test finding state by hash when it doesn't exist."""
         from mcli.self.self_cmd import find_state_by_hash
 
         states = [{"hash": "abc123", "timestamp": "2025-01-01T00:00:00Z", "commands": []}]
@@ -164,7 +162,7 @@ class TestLockfileUtilities:
     @patch("mcli.self.self_cmd.find_state_by_hash")
     @patch("builtins.print")
     def test_restore_command_state_found(self, mock_print, mock_find):
-        """Test restoring command state when hash found"""
+        """Test restoring command state when hash found."""
         from mcli.self.self_cmd import restore_command_state
 
         state = {
@@ -181,7 +179,7 @@ class TestLockfileUtilities:
 
     @patch("mcli.self.self_cmd.find_state_by_hash")
     def test_restore_command_state_not_found(self, mock_find):
-        """Test restoring command state when hash not found"""
+        """Test restoring command state when hash not found."""
         from mcli.self.self_cmd import restore_command_state
 
         mock_find.return_value = None
@@ -192,7 +190,7 @@ class TestLockfileUtilities:
 
     @patch("mcli.self.self_cmd.get_current_command_state")
     def test_get_current_command_state(self, mock_get_state):
-        """Test getting current command state"""
+        """Test getting current command state."""
         from mcli.self.self_cmd import get_current_command_state
 
         expected_commands = [{"name": "cmd1", "group": "group1"}]
@@ -204,10 +202,10 @@ class TestLockfileUtilities:
 
 
 class TestGetCommandTemplate:
-    """Test suite for get_command_template function"""
+    """Test suite for get_command_template function."""
 
     def test_get_command_template_no_group(self):
-        """Test generating command template without group"""
+        """Test generating command template without group."""
         from mcli.self.self_cmd import get_command_template
 
         template = get_command_template("mycommand")
@@ -217,7 +215,7 @@ class TestGetCommandTemplate:
         assert "def " in template or "@" in template
 
     def test_get_command_template_with_group(self):
-        """Test generating command template with group"""
+        """Test generating command template with group."""
         from mcli.self.self_cmd import get_command_template
 
         template = get_command_template("mycommand", group="mygroup")

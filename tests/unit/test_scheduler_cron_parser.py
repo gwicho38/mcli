@@ -1,6 +1,4 @@
-"""
-Unit tests for mcli.workflow.scheduler.cron_parser module
-"""
+"""Unit tests for mcli.workflow.scheduler.cron_parser module."""
 
 from datetime import datetime
 
@@ -8,10 +6,10 @@ import pytest
 
 
 class TestCronParseError:
-    """Test suite for CronParseError exception"""
+    """Test suite for CronParseError exception."""
 
     def test_cron_parse_error_is_exception(self):
-        """Test that CronParseError is an Exception"""
+        """Test that CronParseError is an Exception."""
         from mcli.workflow.scheduler.cron_parser import CronParseError
 
         error = CronParseError("test error")
@@ -20,10 +18,10 @@ class TestCronParseError:
 
 
 class TestCronExpression:
-    """Test suite for CronExpression class"""
+    """Test suite for CronExpression class."""
 
     def test_cron_expression_shortcuts(self):
-        """Test that SHORTCUTS dictionary has expected entries"""
+        """Test that SHORTCUTS dictionary has expected entries."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         assert "@yearly" in CronExpression.SHORTCUTS
@@ -34,7 +32,7 @@ class TestCronExpression:
         assert "@reboot" in CronExpression.SHORTCUTS
 
     def test_parse_standard_cron_expression(self):
-        """Test parsing standard cron expression"""
+        """Test parsing standard cron expression."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 0 * * *")
@@ -44,7 +42,7 @@ class TestCronExpression:
         assert len(cron.fields) == 5
 
     def test_parse_every_5_minutes(self):
-        """Test parsing */5 * * * * (every 5 minutes)"""
+        """Test parsing */5 * * * * (every 5 minutes)."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("*/5 * * * *")
@@ -56,7 +54,7 @@ class TestCronExpression:
         assert 55 in cron.fields[0]
 
     def test_parse_cron_with_ranges(self):
-        """Test parsing cron with ranges (1-5 * * * *)"""
+        """Test parsing cron with ranges (1-5 * * * *)."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("1-5 * * * *")
@@ -71,7 +69,7 @@ class TestCronExpression:
         assert 6 not in minute_field
 
     def test_parse_cron_with_lists(self):
-        """Test parsing cron with comma-separated lists"""
+        """Test parsing cron with comma-separated lists."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0,15,30,45 * * * *")
@@ -84,7 +82,7 @@ class TestCronExpression:
         assert len(minute_field) == 4
 
     def test_parse_cron_with_step_values(self):
-        """Test parsing cron with step values (*/2)"""
+        """Test parsing cron with step values (*/2)."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("*/2 * * * *")
@@ -97,7 +95,7 @@ class TestCronExpression:
         assert 3 not in minute_field
 
     def test_parse_cron_with_range_and_step(self):
-        """Test parsing cron with range and step (10-20/2)"""
+        """Test parsing cron with range and step (10-20/2)."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("10-20/2 * * * *")
@@ -113,7 +111,7 @@ class TestCronExpression:
         assert 9 not in minute_field
 
     def test_parse_shortcut_yearly(self):
-        """Test parsing @yearly shortcut"""
+        """Test parsing @yearly shortcut."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@yearly")
@@ -122,7 +120,7 @@ class TestCronExpression:
         assert cron.expression == "0 0 1 1 *"
 
     def test_parse_shortcut_monthly(self):
-        """Test parsing @monthly shortcut"""
+        """Test parsing @monthly shortcut."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@monthly")
@@ -130,7 +128,7 @@ class TestCronExpression:
         assert cron.expression == "0 0 1 * *"
 
     def test_parse_shortcut_weekly(self):
-        """Test parsing @weekly shortcut"""
+        """Test parsing @weekly shortcut."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@weekly")
@@ -138,7 +136,7 @@ class TestCronExpression:
         assert cron.expression == "0 0 * * 0"
 
     def test_parse_shortcut_daily(self):
-        """Test parsing @daily shortcut"""
+        """Test parsing @daily shortcut."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@daily")
@@ -146,7 +144,7 @@ class TestCronExpression:
         assert cron.expression == "0 0 * * *"
 
     def test_parse_shortcut_hourly(self):
-        """Test parsing @hourly shortcut"""
+        """Test parsing @hourly shortcut."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@hourly")
@@ -154,7 +152,7 @@ class TestCronExpression:
         assert cron.expression == "0 * * * *"
 
     def test_parse_shortcut_reboot(self):
-        """Test parsing @reboot shortcut"""
+        """Test parsing @reboot shortcut."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@reboot")
@@ -164,28 +162,28 @@ class TestCronExpression:
         assert cron.expression == "@reboot"
 
     def test_invalid_cron_expression_wrong_field_count(self):
-        """Test that invalid cron expression raises error"""
+        """Test that invalid cron expression raises error."""
         from mcli.workflow.scheduler.cron_parser import CronExpression, CronParseError
 
         with pytest.raises(CronParseError, match="expected 5 fields"):
             CronExpression("* * *")
 
     def test_invalid_cron_value_out_of_range(self):
-        """Test that value out of range raises error"""
+        """Test that value out of range raises error."""
         from mcli.workflow.scheduler.cron_parser import CronExpression, CronParseError
 
         with pytest.raises(CronParseError, match="out of range"):
             CronExpression("60 * * * *")  # minute > 59
 
     def test_invalid_hour_out_of_range(self):
-        """Test that hour value out of range raises error"""
+        """Test that hour value out of range raises error."""
         from mcli.workflow.scheduler.cron_parser import CronExpression, CronParseError
 
         with pytest.raises(CronParseError, match="out of range"):
             CronExpression("0 24 * * *")  # hour > 23
 
     def test_wildcard_field(self):
-        """Test that wildcard * generates full range"""
+        """Test that wildcard * generates full range."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("* * * * *")
@@ -199,7 +197,7 @@ class TestCronExpression:
         assert len(cron.fields[1]) == 24
 
     def test_get_next_run_time_basic(self):
-        """Test getting next run time for simple expression"""
+        """Test getting next run time for simple expression."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 0 * * *")  # Daily at midnight
@@ -215,7 +213,7 @@ class TestCronExpression:
         assert next_run.day == 2
 
     def test_get_next_run_time_hourly(self):
-        """Test getting next run time for hourly expression"""
+        """Test getting next run time for hourly expression."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 * * * *")  # Every hour
@@ -228,7 +226,7 @@ class TestCronExpression:
         assert next_run.hour == 13  # Next hour
 
     def test_get_next_run_time_for_reboot(self):
-        """Test that @reboot returns None for next_run_time"""
+        """Test that @reboot returns None for next_run_time."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@reboot")
@@ -238,7 +236,7 @@ class TestCronExpression:
         assert next_run is None
 
     def test_get_next_run_time_defaults_to_now(self):
-        """Test that get_next_run_time defaults to current time"""
+        """Test that get_next_run_time defaults to current time."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 * * * *")
@@ -249,7 +247,7 @@ class TestCronExpression:
         assert next_run > datetime.now()
 
     def test_matches_time_basic(self):
-        """Test _matches_time for specific datetime"""
+        """Test _matches_time for specific datetime."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("30 14 * * *")  # 2:30 PM daily
@@ -263,7 +261,7 @@ class TestCronExpression:
         assert cron._matches_time(no_match_time) is False
 
     def test_matches_now(self):
-        """Test matches_now checks current time"""
+        """Test matches_now checks current time."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         # Create expression that matches current minute and hour
@@ -276,7 +274,7 @@ class TestCronExpression:
         assert isinstance(result, bool)
 
     def test_get_description_daily(self):
-        """Test get_description for daily cron"""
+        """Test get_description for daily cron."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 0 * * *")
@@ -287,7 +285,7 @@ class TestCronExpression:
         assert "midnight" in description.lower()
 
     def test_get_description_hourly(self):
-        """Test get_description for hourly cron"""
+        """Test get_description for hourly cron."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 * * * *")
@@ -297,7 +295,7 @@ class TestCronExpression:
         assert "hour" in description.lower()
 
     def test_get_description_every_5_minutes(self):
-        """Test get_description for every 5 minutes"""
+        """Test get_description for every 5 minutes."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("*/5 * * * *")
@@ -307,7 +305,7 @@ class TestCronExpression:
         assert "5 minutes" in description.lower()
 
     def test_get_description_weekly(self):
-        """Test get_description for weekly cron"""
+        """Test get_description for weekly cron."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 0 * * 0")
@@ -317,7 +315,7 @@ class TestCronExpression:
         assert "weekly" in description.lower()
 
     def test_get_description_monthly(self):
-        """Test get_description for monthly cron"""
+        """Test get_description for monthly cron."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 0 1 * *")
@@ -327,7 +325,7 @@ class TestCronExpression:
         assert "monthly" in description.lower()
 
     def test_get_description_yearly(self):
-        """Test get_description for yearly cron"""
+        """Test get_description for yearly cron."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 0 1 1 *")
@@ -337,7 +335,7 @@ class TestCronExpression:
         assert "yearly" in description.lower()
 
     def test_get_description_reboot(self):
-        """Test get_description for @reboot"""
+        """Test get_description for @reboot."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@reboot")
@@ -347,7 +345,7 @@ class TestCronExpression:
         assert "startup" in description.lower()
 
     def test_get_description_custom(self):
-        """Test get_description for custom expression"""
+        """Test get_description for custom expression."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("15 10 * * 1")
@@ -357,7 +355,7 @@ class TestCronExpression:
         assert "custom" in description.lower()
 
     def test_is_valid_for_valid_expression(self):
-        """Test is_valid returns True for valid expression"""
+        """Test is_valid returns True for valid expression."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 0 * * *")
@@ -365,7 +363,7 @@ class TestCronExpression:
         assert cron.is_valid() is True
 
     def test_is_valid_for_reboot(self):
-        """Test is_valid returns True for @reboot"""
+        """Test is_valid returns True for @reboot."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@reboot")
@@ -373,7 +371,7 @@ class TestCronExpression:
         assert cron.is_valid() is True
 
     def test_str_representation(self):
-        """Test __str__ returns original expression"""
+        """Test __str__ returns original expression."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("@daily")
@@ -381,7 +379,7 @@ class TestCronExpression:
         assert str(cron) == "@daily"
 
     def test_repr_representation(self):
-        """Test __repr__ returns proper representation"""
+        """Test __repr__ returns proper representation."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0 0 * * *")
@@ -392,7 +390,7 @@ class TestCronExpression:
         assert "0 0 * * *" in repr_str
 
     def test_normalize_expression_case_insensitive(self):
-        """Test that expression normalization is case insensitive"""
+        """Test that expression normalization is case insensitive."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron1 = CronExpression("@DAILY")
@@ -402,7 +400,7 @@ class TestCronExpression:
         assert cron1.expression == cron2.expression == cron3.expression
 
     def test_normalize_expression_strips_whitespace(self):
-        """Test that expression is stripped of whitespace"""
+        """Test that expression is stripped of whitespace."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("  0 0 * * *  ")
@@ -410,7 +408,7 @@ class TestCronExpression:
         assert cron.expression == "0 0 * * *"
 
     def test_parse_field_single_value(self):
-        """Test _parse_field with single value"""
+        """Test _parse_field with single value."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("15 * * * *")
@@ -419,7 +417,7 @@ class TestCronExpression:
         assert minute_field == {15}
 
     def test_complex_expression_with_multiple_features(self):
-        """Test complex expression with lists, ranges, and steps"""
+        """Test complex expression with lists, ranges, and steps."""
         from mcli.workflow.scheduler.cron_parser import CronExpression
 
         cron = CronExpression("0,30 9-17/2 * * 1-5")
@@ -438,32 +436,32 @@ class TestCronExpression:
 
 
 class TestValidateCronExpression:
-    """Test suite for validate_cron_expression utility function"""
+    """Test suite for validate_cron_expression utility function."""
 
     def test_validate_valid_expression(self):
-        """Test validate_cron_expression with valid expression"""
+        """Test validate_cron_expression with valid expression."""
         from mcli.workflow.scheduler.cron_parser import validate_cron_expression
 
         assert validate_cron_expression("0 0 * * *") is True
 
     def test_validate_invalid_expression(self):
-        """Test validate_cron_expression with invalid expression"""
+        """Test validate_cron_expression with invalid expression."""
         from mcli.workflow.scheduler.cron_parser import validate_cron_expression
 
         assert validate_cron_expression("invalid") is False
 
     def test_validate_shortcut(self):
-        """Test validate_cron_expression with shortcut"""
+        """Test validate_cron_expression with shortcut."""
         from mcli.workflow.scheduler.cron_parser import validate_cron_expression
 
         assert validate_cron_expression("@daily") is True
 
 
 class TestGetNextRunTimes:
-    """Test suite for get_next_run_times utility function"""
+    """Test suite for get_next_run_times utility function."""
 
     def test_get_next_run_times_basic(self):
-        """Test getting next 5 run times"""
+        """Test getting next 5 run times."""
         from mcli.workflow.scheduler.cron_parser import get_next_run_times
 
         times = get_next_run_times("0 * * * *", count=5)  # Every hour
@@ -475,7 +473,7 @@ class TestGetNextRunTimes:
             assert abs(diff - 3600) < 60  # Allow some variance
 
     def test_get_next_run_times_for_reboot(self):
-        """Test get_next_run_times for @reboot returns empty list"""
+        """Test get_next_run_times for @reboot returns empty list."""
         from mcli.workflow.scheduler.cron_parser import get_next_run_times
 
         times = get_next_run_times("@reboot", count=5)
@@ -483,7 +481,7 @@ class TestGetNextRunTimes:
         assert times == []
 
     def test_get_next_run_times_invalid_expression(self):
-        """Test get_next_run_times with invalid expression returns empty list"""
+        """Test get_next_run_times with invalid expression returns empty list."""
         from mcli.workflow.scheduler.cron_parser import get_next_run_times
 
         times = get_next_run_times("invalid cron", count=5)
@@ -491,7 +489,7 @@ class TestGetNextRunTimes:
         assert times == []
 
     def test_get_next_run_times_custom_count(self):
-        """Test getting custom count of next run times"""
+        """Test getting custom count of next run times."""
         from mcli.workflow.scheduler.cron_parser import get_next_run_times
 
         times = get_next_run_times("0 0 * * *", count=3)  # Daily at midnight
@@ -499,7 +497,7 @@ class TestGetNextRunTimes:
         assert len(times) == 3
 
     def test_get_next_run_times_daily(self):
-        """Test getting next run times for daily schedule"""
+        """Test getting next run times for daily schedule."""
         from mcli.workflow.scheduler.cron_parser import get_next_run_times
 
         times = get_next_run_times("0 0 * * *", count=7)

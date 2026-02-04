@@ -115,7 +115,7 @@ import click
 
 @click.command()
 def sample_script():
-    '''Sample script for testing'''
+    '''Sample script for testing.'''
     click.echo('Sample script executed')
 """,
             },
@@ -396,12 +396,14 @@ class TestSelfCommands:
         assert result.exit_code == 0
         assert "TestUser" in result.output
 
+    @pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
     def test_self_plugin_help(self, cli_runner, mcli_app):
         """Test mcli self plugin --help."""
         result = cli_runner.invoke(mcli_app, ["self", "plugin", "--help"])
         assert result.exit_code == 0
         assert "Manage plugins" in result.output
 
+    @pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
     def test_self_plugin_subcommands(self, cli_runner, mcli_app):
         """Test mcli self plugin shows available subcommands."""
         result = cli_runner.invoke(mcli_app, ["self", "plugin", "--help"])
@@ -411,24 +413,28 @@ class TestSelfCommands:
         assert "remove" in result.output
         assert "update" in result.output
 
+    @pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
     def test_self_plugin_add_help(self, cli_runner, mcli_app):
         """Test mcli self plugin add --help."""
         result = cli_runner.invoke(mcli_app, ["self", "plugin", "add", "--help"])
         assert result.exit_code == 0
         assert "PLUGIN_NAME" in result.output
 
+    @pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
     def test_self_plugin_add_missing_arg(self, cli_runner, mcli_app):
         """Test mcli self plugin add without argument."""
         result = cli_runner.invoke(mcli_app, ["self", "plugin", "add"])
         assert result.exit_code != 0
         assert "Missing argument" in result.output
 
+    @pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
     def test_self_plugin_remove_help(self, cli_runner, mcli_app):
         """Test mcli self plugin remove --help."""
         result = cli_runner.invoke(mcli_app, ["self", "plugin", "remove", "--help"])
         assert result.exit_code == 0
         assert "PLUGIN_NAME" in result.output
 
+    @pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
     def test_self_plugin_update_help(self, cli_runner, mcli_app):
         """Test mcli self plugin update --help."""
         result = cli_runner.invoke(mcli_app, ["self", "plugin", "update", "--help"])
@@ -494,16 +500,19 @@ class TestSelfCommands:
         result = cli_runner.invoke(mcli_app, ["self", "update", "--check"])
         assert result.exit_code == 0
 
+    @pytest.mark.skip(reason="Performance command removed in CLI simplification")
     def test_self_performance(self, cli_runner, mcli_app):
         """Test mcli self performance."""
         result = cli_runner.invoke(mcli_app, ["self", "performance"])
         assert result.exit_code == 0
 
+    @pytest.mark.skip(reason="Performance command removed in CLI simplification")
     def test_self_performance_detailed(self, cli_runner, mcli_app):
         """Test mcli self performance --detailed."""
         result = cli_runner.invoke(mcli_app, ["self", "performance", "--detailed"])
         assert result.exit_code == 0
 
+    @pytest.mark.skip(reason="Performance command removed in CLI simplification")
     def test_self_performance_benchmark(self, cli_runner, mcli_app):
         """Test mcli self performance --benchmark."""
         result = cli_runner.invoke(mcli_app, ["self", "performance", "--benchmark"])
@@ -629,10 +638,6 @@ class TestMockEnvironmentIntegration:
         result = cli_runner.invoke(mcli_app, ["self", "hello"])
         assert result.exit_code == 0
 
-        # Performance
-        result = cli_runner.invoke(mcli_app, ["self", "performance"])
-        assert result.exit_code == 0
-
     def test_run_with_scope(self, cli_runner, mcli_app, env_setup):
         """Test run command with different scopes."""
         # Default help
@@ -678,14 +683,13 @@ class TestCommandRegistration:
         if self_cmd and hasattr(self_cmd, "commands"):
             subcommands = list(self_cmd.commands.keys())
 
+            # Updated for CLI simplification - plugin and performance removed
             expected_subcommands = [
                 "version",
                 "hello",
-                "plugin",
                 "logs",
                 "completion",
                 "update",
-                "performance",
             ]
 
             for subcmd in expected_subcommands:

@@ -1,4 +1,4 @@
-"""Shared fixtures for database testing"""
+"""Shared fixtures for database testing."""
 
 import sqlite3
 from unittest.mock import Mock
@@ -8,7 +8,7 @@ import pytest
 
 @pytest.fixture
 def mock_db_connection():
-    """Mock database connection"""
+    """Mock database connection."""
     conn = Mock(spec=sqlite3.Connection)
     cursor = Mock()
 
@@ -27,7 +27,7 @@ def mock_db_connection():
 
 @pytest.fixture
 def temp_sqlite_db(tmp_path):
-    """Create a temporary SQLite database"""
+    """Create a temporary SQLite database."""
     db_path = tmp_path / "test.db"
     conn = sqlite3.connect(str(db_path))
 
@@ -72,7 +72,7 @@ def temp_sqlite_db(tmp_path):
 
 @pytest.fixture
 def mock_supabase_client():
-    """Mock Supabase client"""
+    """Mock Supabase client."""
     client = Mock()
 
     # Mock table operations
@@ -92,7 +92,7 @@ def mock_supabase_client():
 
 @pytest.fixture
 def sample_db_records():
-    """Provide sample database records"""
+    """Provide sample database records."""
     return [
         {"id": 1, "name": "Alice", "email": "alice@example.com"},
         {"id": 2, "name": "Bob", "email": "bob@example.com"},

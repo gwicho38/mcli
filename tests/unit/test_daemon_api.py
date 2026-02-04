@@ -1,6 +1,4 @@
-"""
-Unit tests for mcli.workflow.daemon.daemon_api module
-"""
+"""Unit tests for mcli.workflow.daemon.daemon_api module."""
 
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -18,11 +16,11 @@ except ImportError:
 
 @pytest.mark.skipif(not HAS_WATCHDOG, reason="watchdog module not installed")
 class TestDaemonAPI:
-    """Test suite for daemon API endpoints"""
+    """Test suite for daemon API endpoints."""
 
     @patch("mcli.workflow.daemon.daemon_api.service")
     def test_list_commands_basic(self, mock_service):
-        """Test listing commands"""
+        """Test listing commands."""
         from fastapi.testclient import TestClient
 
         from mcli.workflow.daemon.daemon_api import app
@@ -55,7 +53,7 @@ class TestDaemonAPI:
 
     @patch("mcli.workflow.daemon.daemon_api.service")
     def test_list_commands_empty(self, mock_service):
-        """Test listing commands when none exist"""
+        """Test listing commands when none exist."""
         from fastapi.testclient import TestClient
 
         from mcli.workflow.daemon.daemon_api import app
@@ -70,7 +68,7 @@ class TestDaemonAPI:
 
     @patch("mcli.workflow.daemon.daemon_api.service")
     def test_list_commands_with_all_parameter(self, mock_service):
-        """Test listing all commands including inactive"""
+        """Test listing all commands including inactive."""
         from fastapi.testclient import TestClient
 
         from mcli.workflow.daemon.daemon_api import app
@@ -115,7 +113,7 @@ class TestDaemonAPI:
 
     @patch("mcli.workflow.daemon.daemon_api.service")
     def test_execute_command_success(self, mock_service):
-        """Test executing a command successfully"""
+        """Test executing a command successfully."""
         from fastapi.testclient import TestClient
 
         from mcli.workflow.daemon.daemon_api import app
@@ -148,7 +146,7 @@ class TestDaemonAPI:
 
     @patch("mcli.workflow.daemon.daemon_api.service")
     def test_execute_command_not_found(self, mock_service):
-        """Test executing a non-existent command"""
+        """Test executing a non-existent command."""
         from fastapi.testclient import TestClient
 
         from mcli.workflow.daemon.daemon_api import app
@@ -163,7 +161,7 @@ class TestDaemonAPI:
 
     @patch("mcli.workflow.daemon.daemon_api.service")
     def test_execute_command_no_args(self, mock_service):
-        """Test executing a command without arguments"""
+        """Test executing a command without arguments."""
         from fastapi.testclient import TestClient
 
         from mcli.workflow.daemon.daemon_api import app
@@ -189,7 +187,7 @@ class TestDaemonAPI:
 
     @patch("mcli.workflow.daemon.daemon_api.service")
     def test_list_commands_with_optional_fields(self, mock_service):
-        """Test listing commands with None values for optional fields"""
+        """Test listing commands with None values for optional fields."""
         from fastapi.testclient import TestClient
 
         from mcli.workflow.daemon.daemon_api import app
@@ -222,14 +220,14 @@ class TestDaemonAPI:
         assert data[0]["created_at"] is None
 
     def test_api_root_exists(self):
-        """Test that API application exists"""
+        """Test that API application exists."""
         from mcli.workflow.daemon.daemon_api import app
 
         assert app is not None
         assert app.title == "MCLI Daemon API"
 
     def test_command_out_model(self):
-        """Test CommandOut pydantic model"""
+        """Test CommandOut pydantic model."""
         from mcli.workflow.daemon.daemon_api import CommandOut
 
         cmd_out = CommandOut(
@@ -250,7 +248,7 @@ class TestDaemonAPI:
         assert cmd_out.execution_count == 10
 
     def test_execute_request_model(self):
-        """Test ExecuteRequest pydantic model"""
+        """Test ExecuteRequest pydantic model."""
         from mcli.workflow.daemon.daemon_api import ExecuteRequest
 
         req = ExecuteRequest(command_name="test", args=["arg1", "arg2"])
@@ -259,7 +257,7 @@ class TestDaemonAPI:
         assert req.args == ["arg1", "arg2"]
 
     def test_execute_request_model_no_args(self):
-        """Test ExecuteRequest with default args"""
+        """Test ExecuteRequest with default args."""
         from mcli.workflow.daemon.daemon_api import ExecuteRequest
 
         req = ExecuteRequest(command_name="test")

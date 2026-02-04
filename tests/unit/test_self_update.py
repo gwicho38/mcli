@@ -1,4 +1,4 @@
-"""Unit tests for mcli self update command"""
+"""Unit tests for mcli self update command."""
 
 import os
 import sys
@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 
 def test_uv_tool_detection_unix_path():
-    """Test that uv tool is correctly detected on Unix systems"""
+    """Test that uv tool is correctly detected on Unix systems."""
     # Simulate a uv tool installation path
     uv_path = "/Users/lefv/.local/share/uv/tools/mcli-framework/bin/python"
 
@@ -25,7 +25,7 @@ def test_uv_tool_detection_unix_path():
 
 
 def test_uv_tool_detection_windows_path():
-    """Test that uv tool is correctly detected on Windows systems"""
+    """Test that uv tool is correctly detected on Windows systems."""
     # Simulate a Windows uv tool installation path
     uv_path = "C:\\Users\\User\\AppData\\Local\\uv\\tools\\mcli-framework\\Scripts\\python.exe"
 
@@ -41,7 +41,7 @@ def test_uv_tool_detection_windows_path():
 
 
 def test_uv_tool_detection_alternative_unix():
-    """Test detection with alternative Unix path"""
+    """Test detection with alternative Unix path."""
     uv_path = "/home/user/uv/tools/mcli/bin/python"
 
     executable_path = str(uv_path).replace("\\", "/")
@@ -55,7 +55,7 @@ def test_uv_tool_detection_alternative_unix():
 
 
 def test_pip_installation_detection():
-    """Test that regular pip installations are NOT detected as uv tool"""
+    """Test that regular pip installations are NOT detected as uv tool."""
     # Simulate a regular pip installation path
     pip_paths = [
         "/usr/local/bin/python",
@@ -76,7 +76,7 @@ def test_pip_installation_detection():
 
 
 def test_uv_tool_normalized_path():
-    """Test that path normalization works correctly"""
+    """Test that path normalization works correctly."""
     # Test with mixed separators (should be normalized)
     uv_path = "/Users/lefv/.local/share/uv/tools/mcli-framework/bin/python"
 
@@ -88,7 +88,7 @@ def test_uv_tool_normalized_path():
 
 
 def test_uv_tool_update_command_selection():
-    """Test that the correct update command is selected based on installation type"""
+    """Test that the correct update command is selected based on installation type."""
     # Mock the update command selection logic
 
     # Test uv tool path
@@ -192,7 +192,7 @@ def test_regression_uv_tool_no_pip_error():
 
 
 def main():
-    """Run all tests"""
+    """Run all tests."""
     pytest.main([__file__, "-v", "--tb=short"])
 
 

@@ -1,6 +1,4 @@
-"""
-Unit tests for mcli.app.model_cmd module
-"""
+"""Unit tests for mcli.app.model_cmd module."""
 
 from unittest.mock import Mock, patch
 
@@ -16,26 +14,26 @@ pytestmark = pytest.mark.skip(
 
 
 class TestModelCommands:
-    """Test suite for model command functionality"""
+    """Test suite for model command functionality."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_model_group_exists(self):
-        """Test that model command group is properly defined"""
+        """Test that model command group is properly defined."""
         assert model is not None
         assert hasattr(model, "commands")
         assert model.name == "model"
 
     def test_list_command_exists(self):
-        """Test that list command is properly defined"""
+        """Test that list command is properly defined."""
         assert list is not None
         assert list.name == "list"
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_list_command_basic(self, mock_server_class):
-        """Test list command basic functionality"""
+        """Test list command basic functionality."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.downloader.get_downloaded_models.return_value = []
@@ -53,7 +51,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_download_command_success(self, mock_server_class):
-        """Test download command with successful download"""
+        """Test download command with successful download."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.download_and_load_model.return_value = True
@@ -66,7 +64,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_download_command_failure(self, mock_server_class):
-        """Test download command with failed download"""
+        """Test download command with failed download."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.download_and_load_model.return_value = False
@@ -77,7 +75,7 @@ class TestModelCommands:
         assert "Failed to download" in result.output
 
     def test_download_command_invalid_model(self):
-        """Test download command with invalid model name"""
+        """Test download command with invalid model name."""
         result = self.runner.invoke(model, ["download", "invalid-model-name"])
 
         assert result.exit_code == 1
@@ -85,7 +83,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_pull_command_success(self, mock_server_class):
-        """Test pull command with successful pull"""
+        """Test pull command with successful pull."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.download_and_load_model.return_value = True
@@ -98,7 +96,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_pull_command_failure(self, mock_server_class):
-        """Test pull command with failed pull"""
+        """Test pull command with failed pull."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.download_and_load_model.return_value = False
@@ -109,7 +107,7 @@ class TestModelCommands:
         assert "Failed to pull" in result.output
 
     def test_pull_command_invalid_model(self):
-        """Test pull command with invalid model name"""
+        """Test pull command with invalid model name."""
         result = self.runner.invoke(model, ["pull", "invalid-model-name"])
 
         assert result.exit_code == 1
@@ -117,7 +115,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_delete_command_success_with_force(self, mock_server_class):
-        """Test delete command with successful deletion using force flag"""
+        """Test delete command with successful deletion using force flag."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.downloader.get_downloaded_models.return_value = ["distilbert-base-uncased"]
@@ -131,7 +129,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_delete_command_failure(self, mock_server_class):
-        """Test delete command with failed deletion"""
+        """Test delete command with failed deletion."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.downloader.get_downloaded_models.return_value = ["distilbert-base-uncased"]
@@ -144,7 +142,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_delete_command_model_not_found(self, mock_server_class):
-        """Test delete command with model not found"""
+        """Test delete command with model not found."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.downloader.get_downloaded_models.return_value = []
@@ -156,7 +154,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_delete_command_with_confirmation(self, mock_server_class):
-        """Test delete command with user confirmation"""
+        """Test delete command with user confirmation."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.downloader.get_downloaded_models.return_value = ["distilbert-base-uncased"]
@@ -170,7 +168,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_delete_command_cancelled(self, mock_server_class):
-        """Test delete command when user cancels"""
+        """Test delete command when user cancels."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.downloader.get_downloaded_models.return_value = ["distilbert-base-uncased"]
@@ -183,7 +181,7 @@ class TestModelCommands:
         mock_server.delete_model.assert_not_called()
 
     def test_stop_command_success(self):
-        """Test stop command with successful stop"""
+        """Test stop command with successful stop."""
         with patch("requests.get") as mock_get, patch("psutil.process_iter") as mock_proc_iter:
 
             mock_response = Mock()
@@ -210,7 +208,7 @@ class TestModelCommands:
             )
 
     def test_stop_command_no_server(self):
-        """Test stop command when no server is running"""
+        """Test stop command when no server is running."""
         import requests
 
         with patch("requests.get") as mock_get:
@@ -222,7 +220,7 @@ class TestModelCommands:
             assert "No server running" in result.output
 
     def test_status_command_server_running(self):
-        """Test status command when server is running"""
+        """Test status command when server is running."""
         with patch("requests.get") as mock_get:
             mock_health_response = Mock()
             mock_health_response.status_code = 200
@@ -241,7 +239,7 @@ class TestModelCommands:
             assert "Server is running" in result.output
 
     def test_status_command_server_not_running(self):
-        """Test status command when server is not running"""
+        """Test status command when server is not running."""
         import requests
 
         with patch("requests.get") as mock_get:
@@ -254,7 +252,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_recommend_command(self, mock_server_class):
-        """Test recommend command"""
+        """Test recommend command."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.recommend_model.return_value = "distilbert-base-uncased"
@@ -272,7 +270,7 @@ class TestModelCommands:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_start_command_with_auto_download(self, mock_server_class):
-        """Test start command with auto-download"""
+        """Test start command with auto-download."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.recommend_model.return_value = "distilbert-base-uncased"
@@ -302,15 +300,15 @@ class TestModelCommands:
 
 
 class TestModelCommandEdgeCases:
-    """Test suite for model command edge cases and error paths"""
+    """Test suite for model command edge cases and error paths."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_list_with_system_info_flag(self, mock_server_class):
-        """Test list command with --system-info flag"""
+        """Test list command with --system-info flag."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.get_system_info.return_value = {
@@ -331,7 +329,7 @@ class TestModelCommandEdgeCases:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_list_with_list_downloaded_flag(self, mock_server_class):
-        """Test list command with --list-downloaded flag"""
+        """Test list command with --list-downloaded flag."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.downloader.get_downloaded_models.return_value = ["distilbert-base-uncased"]
@@ -344,7 +342,7 @@ class TestModelCommandEdgeCases:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_list_with_no_downloaded_models(self, mock_server_class):
-        """Test list command when no models are downloaded"""
+        """Test list command when no models are downloaded."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.downloader.get_downloaded_models.return_value = []
@@ -356,7 +354,7 @@ class TestModelCommandEdgeCases:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_recommend_model_not_downloaded(self, mock_server_class):
-        """Test recommend command when model is not downloaded"""
+        """Test recommend command when model is not downloaded."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.recommend_model.return_value = "distilbert-base-uncased"
@@ -374,7 +372,7 @@ class TestModelCommandEdgeCases:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_recommend_model_already_downloaded(self, mock_server_class):
-        """Test recommend command when model is already downloaded"""
+        """Test recommend command when model is already downloaded."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.recommend_model.return_value = "distilbert-base-uncased"
@@ -392,7 +390,7 @@ class TestModelCommandEdgeCases:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_start_with_invalid_model(self, mock_server_class):
-        """Test start command with invalid model name"""
+        """Test start command with invalid model name."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
 
@@ -403,7 +401,7 @@ class TestModelCommandEdgeCases:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_start_without_auto_download_and_model_not_downloaded(self, mock_server_class):
-        """Test start command when model not downloaded and auto-download disabled"""
+        """Test start command when model not downloaded and auto-download disabled."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.recommend_model.return_value = "distilbert-base-uncased"
@@ -416,7 +414,7 @@ class TestModelCommandEdgeCases:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_start_with_explicit_port(self, mock_server_class):
-        """Test start command with explicit port option"""
+        """Test start command with explicit port option."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.recommend_model.return_value = "distilbert-base-uncased"
@@ -445,7 +443,7 @@ class TestModelCommandEdgeCases:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_start_model_load_failure(self, mock_server_class):
-        """Test start command when model loading fails"""
+        """Test start command when model loading fails."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.recommend_model.return_value = "distilbert-base-uncased"
@@ -458,7 +456,7 @@ class TestModelCommandEdgeCases:
         assert "Failed to load" in result.output
 
     def test_status_with_timeout(self):
-        """Test status command when server times out"""
+        """Test status command when server times out."""
         import requests
 
         with patch("requests.get") as mock_get:
@@ -470,7 +468,7 @@ class TestModelCommandEdgeCases:
             assert "not responding" in result.output
 
     def test_status_with_exception(self):
-        """Test status command with unexpected exception"""
+        """Test status command with unexpected exception."""
         with patch("requests.get") as mock_get:
             mock_get.side_effect = Exception("Unexpected error")
 
@@ -480,7 +478,7 @@ class TestModelCommandEdgeCases:
             assert "Error checking server" in result.output
 
     def test_status_with_no_models_loaded(self):
-        """Test status command when server has no models loaded"""
+        """Test status command when server has no models loaded."""
         with patch("requests.get") as mock_get:
             mock_health = Mock()
             mock_health.status_code = 200
@@ -497,7 +495,7 @@ class TestModelCommandEdgeCases:
             assert "No models currently loaded" in result.output
 
     def test_status_with_non_200_response(self):
-        """Test status command when server returns non-200 status"""
+        """Test status command when server returns non-200 status."""
         with patch("requests.get") as mock_get:
             mock_response = Mock()
             mock_response.status_code = 500
@@ -510,7 +508,7 @@ class TestModelCommandEdgeCases:
             assert "responded with status 500" in result.output
 
     def test_stop_with_explicit_port(self):
-        """Test stop command with explicit port option"""
+        """Test stop command with explicit port option."""
         import requests
 
         with patch("requests.get") as mock_get:
@@ -523,7 +521,7 @@ class TestModelCommandEdgeCases:
             assert any("9999" in str(call) for call in mock_get.call_args_list)
 
     def test_stop_with_server_exception(self):
-        """Test stop command with unexpected exception"""
+        """Test stop command with unexpected exception."""
         with patch("requests.get") as mock_get:
             mock_get.side_effect = Exception("Unexpected error")
 
@@ -534,7 +532,7 @@ class TestModelCommandEdgeCases:
 
     @patch("mcli.app.model_cmd.LightweightModelServer")
     def test_delete_with_no_downloaded_models(self, mock_server_class):
-        """Test delete command when no models are downloaded"""
+        """Test delete command when no models are downloaded."""
         mock_server = Mock()
         mock_server_class.return_value = mock_server
         mock_server.downloader.get_downloaded_models.return_value = []
@@ -547,70 +545,70 @@ class TestModelCommandEdgeCases:
 
 
 class TestModelCommandHelp:
-    """Test suite for model command help text"""
+    """Test suite for model command help text."""
 
     def setup_method(self):
-        """Setup test environment"""
+        """Setup test environment."""
         self.runner = CliRunner()
 
     def test_model_help(self):
-        """Test model command help text"""
+        """Test model command help text."""
         result = self.runner.invoke(model, ["--help"])
 
         assert result.exit_code == 0
         assert "Model management commands" in result.output
 
     def test_list_help(self):
-        """Test list command help text"""
+        """Test list command help text."""
         result = self.runner.invoke(model, ["list", "--help"])
 
         assert result.exit_code == 0
         assert "List available and downloaded models" in result.output
 
     def test_download_help(self):
-        """Test download command help text"""
+        """Test download command help text."""
         result = self.runner.invoke(model, ["download", "--help"])
 
         assert result.exit_code == 0
         assert "Download a specific lightweight model" in result.output
 
     def test_pull_help(self):
-        """Test pull command help text"""
+        """Test pull command help text."""
         result = self.runner.invoke(model, ["pull", "--help"])
 
         assert result.exit_code == 0
         assert "Pull" in result.output or "download" in result.output
 
     def test_delete_help(self):
-        """Test delete command help text"""
+        """Test delete command help text."""
         result = self.runner.invoke(model, ["delete", "--help"])
 
         assert result.exit_code == 0
         assert "Delete a downloaded lightweight model" in result.output
 
     def test_stop_help(self):
-        """Test stop command help text"""
+        """Test stop command help text."""
         result = self.runner.invoke(model, ["stop", "--help"])
 
         assert result.exit_code == 0
         assert "Stop the lightweight model server" in result.output
 
     def test_start_help(self):
-        """Test start command help text"""
+        """Test start command help text."""
         result = self.runner.invoke(model, ["start", "--help"])
 
         assert result.exit_code == 0
         assert "Start the lightweight model server" in result.output
 
     def test_status_help(self):
-        """Test status command help text"""
+        """Test status command help text."""
         result = self.runner.invoke(model, ["status", "--help"])
 
         assert result.exit_code == 0
         assert "Check status of the lightweight model server" in result.output
 
     def test_recommend_help(self):
-        """Test recommend command help text"""
+        """Test recommend command help text."""
         result = self.runner.invoke(model, ["recommend", "--help"])
 
         assert result.exit_code == 0

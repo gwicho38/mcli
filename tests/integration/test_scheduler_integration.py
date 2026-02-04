@@ -1,6 +1,4 @@
-"""
-Integration tests for mcli.workflow.scheduler.scheduler module
-"""
+"""Integration tests for mcli.workflow.scheduler.scheduler module."""
 
 import tempfile
 import time
@@ -9,10 +7,10 @@ from unittest.mock import MagicMock, patch
 
 
 class TestJobExecutor:
-    """Test suite for JobExecutor class"""
+    """Test suite for JobExecutor class."""
 
     def test_job_executor_init(self):
-        """Test JobExecutor initialization"""
+        """Test JobExecutor initialization."""
         from mcli.workflow.scheduler.scheduler import JobExecutor
 
         executor = JobExecutor()
@@ -22,7 +20,7 @@ class TestJobExecutor:
 
     @patch("mcli.workflow.scheduler.scheduler.subprocess.Popen")
     def test_execute_command_job_success(self, mock_popen):
-        """Test executing a command job successfully"""
+        """Test executing a command job successfully."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobExecutor
 
@@ -50,7 +48,7 @@ class TestJobExecutor:
 
     @patch("mcli.workflow.scheduler.scheduler.subprocess.Popen")
     def test_execute_command_job_failure(self, mock_popen):
-        """Test executing a command job that fails"""
+        """Test executing a command job that fails."""
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobExecutor
 
@@ -77,7 +75,7 @@ class TestJobExecutor:
 
     @patch("mcli.workflow.scheduler.scheduler.subprocess.Popen")
     def test_execute_command_with_timeout(self, mock_popen):
-        """Test command execution with timeout"""
+        """Test command execution with timeout."""
         import subprocess
 
         from mcli.workflow.scheduler.job import JobStatus, JobType, ScheduledJob
@@ -106,10 +104,10 @@ class TestJobExecutor:
 
 
 class TestJobScheduler:
-    """Test suite for JobScheduler class"""
+    """Test suite for JobScheduler class."""
 
     def test_job_scheduler_init(self):
-        """Test JobScheduler initialization"""
+        """Test JobScheduler initialization."""
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -123,7 +121,7 @@ class TestJobScheduler:
             assert scheduler.scheduler_thread is None
 
     def test_add_job_to_scheduler(self):
-        """Test adding a job to scheduler"""
+        """Test adding a job to scheduler."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
@@ -144,7 +142,7 @@ class TestJobScheduler:
             assert scheduler.jobs[job.id].name == "test_job"
 
     def test_remove_job_from_scheduler(self):
-        """Test removing a job from scheduler"""
+        """Test removing a job from scheduler."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
@@ -165,7 +163,7 @@ class TestJobScheduler:
             assert job.id not in scheduler.jobs
 
     def test_remove_nonexistent_job(self):
-        """Test removing a job that doesn't exist"""
+        """Test removing a job that doesn't exist."""
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -176,7 +174,7 @@ class TestJobScheduler:
             assert result is False
 
     def test_get_job_by_id(self):
-        """Test getting a job by ID"""
+        """Test getting a job by ID."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
@@ -198,7 +196,7 @@ class TestJobScheduler:
             assert retrieved_job.name == "test_job"
 
     def test_get_all_jobs(self):
-        """Test getting all jobs"""
+        """Test getting all jobs."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
@@ -226,7 +224,7 @@ class TestJobScheduler:
             assert any(j.name == "job2" for j in all_jobs)
 
     def test_get_job_status(self):
-        """Test getting job status"""
+        """Test getting job status."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
@@ -251,7 +249,7 @@ class TestJobScheduler:
             assert status["job"]["name"] == "test_job"
 
     def test_get_job_status_nonexistent(self):
-        """Test getting status for nonexistent job returns None"""
+        """Test getting status for nonexistent job returns None."""
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -262,7 +260,7 @@ class TestJobScheduler:
             assert status is None
 
     def test_get_scheduler_stats(self):
-        """Test getting scheduler statistics"""
+        """Test getting scheduler statistics."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
@@ -290,7 +288,7 @@ class TestJobScheduler:
             assert stats["enabled_jobs"] == 1
 
     def test_start_scheduler(self):
-        """Test starting the scheduler"""
+        """Test starting the scheduler."""
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -306,7 +304,7 @@ class TestJobScheduler:
             scheduler.stop()
 
     def test_stop_scheduler(self):
-        """Test stopping the scheduler"""
+        """Test stopping the scheduler."""
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -320,7 +318,7 @@ class TestJobScheduler:
             assert scheduler.running is False
 
     def test_start_scheduler_idempotent(self):
-        """Test that starting scheduler multiple times is safe"""
+        """Test that starting scheduler multiple times is safe."""
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -340,7 +338,7 @@ class TestJobScheduler:
             scheduler.stop()
 
     def test_jobs_persist_across_restart(self):
-        """Test that jobs persist when scheduler restarts"""
+        """Test that jobs persist when scheduler restarts."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
@@ -366,7 +364,7 @@ class TestJobScheduler:
             assert scheduler2.jobs[job_id].name == "persistent_job"
 
     def test_create_json_response(self):
-        """Test creating JSON response for frontend"""
+        """Test creating JSON response for frontend."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
@@ -391,7 +389,7 @@ class TestJobScheduler:
             assert "is_running" in response["jobs"][0]
 
     def test_update_next_run_times(self):
-        """Test that next run times are updated"""
+        """Test that next run times are updated."""
         from mcli.workflow.scheduler.job import JobType, ScheduledJob
         from mcli.workflow.scheduler.scheduler import JobScheduler
 
@@ -416,10 +414,10 @@ class TestJobScheduler:
 
 
 class TestConvenienceFunctions:
-    """Test suite for convenience job creation functions"""
+    """Test suite for convenience job creation functions."""
 
     def test_create_desktop_cleanup_job(self):
-        """Test creating desktop cleanup job"""
+        """Test creating desktop cleanup job."""
         from mcli.workflow.scheduler.job import JobType
         from mcli.workflow.scheduler.scheduler import create_desktop_cleanup_job
 
@@ -431,7 +429,7 @@ class TestConvenienceFunctions:
         assert "organize_desktop" in job.command
 
     def test_create_desktop_cleanup_job_custom(self):
-        """Test creating desktop cleanup job with custom params"""
+        """Test creating desktop cleanup job with custom params."""
         from mcli.workflow.scheduler.scheduler import create_desktop_cleanup_job
 
         job = create_desktop_cleanup_job(
@@ -443,7 +441,7 @@ class TestConvenienceFunctions:
         assert job.enabled is False
 
     def test_create_temp_cleanup_job(self):
-        """Test creating temp file cleanup job"""
+        """Test creating temp file cleanup job."""
         from mcli.workflow.scheduler.job import JobType
         from mcli.workflow.scheduler.scheduler import create_temp_cleanup_job
 
@@ -455,7 +453,7 @@ class TestConvenienceFunctions:
         assert "/tmp" in job.command
 
     def test_create_temp_cleanup_job_custom_path(self):
-        """Test creating temp cleanup job with custom path"""
+        """Test creating temp cleanup job with custom path."""
         from mcli.workflow.scheduler.scheduler import create_temp_cleanup_job
 
         job = create_temp_cleanup_job(temp_path="/var/tmp", days=14)
@@ -464,7 +462,7 @@ class TestConvenienceFunctions:
         assert "14" in job.command
 
     def test_create_system_backup_job(self):
-        """Test creating system backup job"""
+        """Test creating system backup job."""
         from mcli.workflow.scheduler.job import JobType
         from mcli.workflow.scheduler.scheduler import create_system_backup_job
 
@@ -475,7 +473,7 @@ class TestConvenienceFunctions:
         assert job.max_runtime == 7200
 
     def test_create_system_backup_job_custom_command(self):
-        """Test creating system backup job with custom command"""
+        """Test creating system backup job with custom command."""
         from mcli.workflow.scheduler.scheduler import create_system_backup_job
 
         job = create_system_backup_job(backup_command="tar -czf /backup/backup.tar.gz /data")

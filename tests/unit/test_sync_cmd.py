@@ -11,12 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from mcli.app.sync_cmd import (
-    _ipfs_daemon_running,
-    _ipfs_initialized,
-    _ipfs_installed,
-    sync_group,
-)
+from mcli.app.sync_cmd import _ipfs_daemon_running, _ipfs_initialized, _ipfs_installed, sync_group
 
 
 class TestIPFSHelpers:
@@ -97,11 +92,13 @@ class TestSyncStatusCommand:
         workflows_dir = tmp_path / "workflows"
         workflows_dir.mkdir()
         test_script = workflows_dir / "test_cmd.py"
-        test_script.write_text("""#!/usr/bin/env python3
+        test_script.write_text(
+            """#!/usr/bin/env python3
 # @description: Test command
 # @version: 1.0.0
 print("Hello")
-""")
+"""
+        )
 
         with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
             result = runner.invoke(sync_group, ["status"])
@@ -147,11 +144,13 @@ class TestSyncUpdateCommand:
         workflows_dir = tmp_path / "workflows"
         workflows_dir.mkdir()
         test_script = workflows_dir / "my_cmd.py"
-        test_script.write_text("""#!/usr/bin/env python3
+        test_script.write_text(
+            """#!/usr/bin/env python3
 # @description: My test command
 # @version: 2.0.0
 print("Test")
-""")
+"""
+        )
 
         with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
             result = runner.invoke(sync_group, ["update"])
@@ -209,10 +208,7 @@ class TestSyncVerifyCommand:
         workflows_dir = tmp_path / "workflows"
         workflows_dir.mkdir()
         lockfile = workflows_dir / "mcli.lock.json"
-        lockfile.write_text(json.dumps({
-            "version": "1.0",
-            "commands": {}
-        }))
+        lockfile.write_text(json.dumps({"version": "1.0", "commands": {}}))
 
         with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
             result = runner.invoke(sync_group, ["verify"])

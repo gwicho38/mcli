@@ -1,4 +1,7 @@
-def read_from_toml(file_path: str, key: str):
+from typing import Any, Optional
+
+
+def read_from_toml(file_path: str, key: str) -> Optional[Any]:
     """
     Reads a TOML file and returns the value associated with the provided key.
 

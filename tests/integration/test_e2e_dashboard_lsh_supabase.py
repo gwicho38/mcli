@@ -1,5 +1,5 @@
 """
-End-to-End Integration Tests: Streamlit Dashboard ↔ LSH Daemon ↔ Supabase
+End-to-End Integration Tests: Streamlit Dashboard ↔ LSH Daemon ↔ Supabase.
 
 NOTE: This test suite requires external services (Supabase, LSH daemon).
 Tests are skipped pending service dependency configuration.
@@ -41,21 +41,21 @@ except ImportError:
 
 
 class TestInfrastructureConnectivity:
-    """Test basic connectivity to all infrastructure components"""
+    """Test basic connectivity to all infrastructure components."""
 
     @pytest.fixture(scope="class")
     def lsh_url(self):
-        """LSH daemon URL from environment"""
+        """LSH daemon URL from environment."""
         return os.getenv("LSH_API_URL", "https://mcli-lsh-daemon.fly.dev")
 
     @pytest.fixture(scope="class")
     def lsh_api_key(self):
-        """LSH API key from environment"""
+        """LSH API key from environment."""
         return os.getenv("LSH_API_KEY")
 
     @pytest.fixture(scope="class")
     def supabase_client(self) -> Client:
-        """Supabase client fixture"""
+        """Supabase client fixture."""
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_KEY")
 
@@ -65,7 +65,7 @@ class TestInfrastructureConnectivity:
         return create_client(url, key)
 
     def test_lsh_daemon_health(self, lsh_url):
-        """Test LSH daemon is healthy and responding"""
+        """Test LSH daemon is healthy and responding."""
         response = requests.get(f"{lsh_url}/health", timeout=10)
 
         assert response.status_code == 200, f"LSH health check failed: {response.status_code}"
@@ -80,7 +80,7 @@ class TestInfrastructureConnectivity:
         print(f"  Version: {data['version']}")
 
     def test_lsh_daemon_status(self, lsh_url):
-        """Test LSH daemon status endpoint"""
+        """Test LSH daemon status endpoint."""
         response = requests.get(f"{lsh_url}/api/status", timeout=10)
 
         assert response.status_code == 200, "LSH status endpoint failed"
@@ -95,7 +95,7 @@ class TestInfrastructureConnectivity:
         print(f"  Memory: {data['memoryUsage']['heapUsed'] / 1024 / 1024:.2f} MB")
 
     def test_lsh_daemon_jobs_endpoint(self, lsh_url):
-        """Test LSH daemon jobs endpoint is accessible"""
+        """Test LSH daemon jobs endpoint is accessible."""
         response = requests.get(f"{lsh_url}/api/jobs", timeout=10)
 
         assert response.status_code == 200, "LSH jobs endpoint failed"
@@ -108,7 +108,7 @@ class TestInfrastructureConnectivity:
         print(f"  Total jobs: {data['total']}")
 
     def test_supabase_connection(self, supabase_client):
-        """Test Supabase database connection"""
+        """Test Supabase database connection."""
         try:
             # Try to fetch from politicians table
             response = supabase_client.table("politicians").select("id").limit(1).execute()
@@ -122,7 +122,7 @@ class TestInfrastructureConnectivity:
             pytest.fail(f"Supabase connection failed: {e}")
 
     def test_supabase_politicians_table(self, supabase_client):
-        """Test Supabase politicians table exists and has data"""
+        """Test Supabase politicians table exists and has data."""
         response = supabase_client.table("politicians").select("*").limit(10).execute()
 
         assert response.data is not None, "Politicians table query failed"
@@ -138,7 +138,7 @@ class TestInfrastructureConnectivity:
         print(f"  Sample: {politician['first_name']} {politician['last_name']}")
 
     def test_supabase_trading_disclosures_table(self, supabase_client):
-        """Test Supabase trading_disclosures table exists and has data"""
+        """Test Supabase trading_disclosures table exists and has data."""
         response = supabase_client.table("trading_disclosures").select("*").limit(10).execute()
 
         assert response.data is not None, "Trading disclosures query failed"
@@ -158,11 +158,11 @@ class TestInfrastructureConnectivity:
 
 
 class TestDataFlow:
-    """Test data flow between components"""
+    """Test data flow between components."""
 
     @pytest.fixture(scope="class")
     def supabase_client(self) -> Client:
-        """Supabase client fixture"""
+        """Supabase client fixture."""
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_KEY")
 
@@ -173,7 +173,7 @@ class TestDataFlow:
 
     @pytest.fixture(scope="class")
     def sample_politician(self, supabase_client):
-        """Get a sample politician from Supabase"""
+        """Get a sample politician from Supabase."""
         response = supabase_client.table("politicians").select("*").limit(1).execute()
 
         if not response.data or len(response.data) == 0:
@@ -182,7 +182,7 @@ class TestDataFlow:
         return response.data[0]
 
     def test_fetch_politicians_for_dashboard(self, supabase_client):
-        """Test fetching politicians list for dashboard dropdown"""
+        """Test fetching politicians list for dashboard dropdown."""
         response = (
             supabase_client.table("politicians").select("id, first_name, last_name").execute()
         )
@@ -202,7 +202,7 @@ class TestDataFlow:
         print(f"  Sample: {names[0] if names else 'None'}")
 
     def test_fetch_trading_history_for_politician(self, supabase_client, sample_politician):
-        """Test fetching trading history for a specific politician"""
+        """Test fetching trading history for a specific politician."""
         politician_id = sample_politician["id"]
 
         response = (
@@ -234,7 +234,7 @@ class TestDataFlow:
             )
 
     def test_fetch_recent_disclosures(self, supabase_client):
-        """Test fetching recent trading disclosures (last 90 days)"""
+        """Test fetching recent trading disclosures (last 90 days)."""
         cutoff_date = (datetime.now() - timedelta(days=90)).isoformat()
 
         response = (
@@ -255,7 +255,7 @@ class TestDataFlow:
             print("⚠ No recent disclosures (last 90 days)")
 
     def test_politician_statistics_calculation(self, supabase_client, sample_politician):
-        """Test calculating politician trading statistics"""
+        """Test calculating politician trading statistics."""
         politician_id = sample_politician["id"]
 
         response = (
@@ -294,11 +294,11 @@ class TestDataFlow:
 
 
 class TestMLPredictionPipeline:
-    """Test ML prediction pipeline with real data"""
+    """Test ML prediction pipeline with real data."""
 
     @pytest.fixture(scope="class")
     def supabase_client(self) -> Client:
-        """Supabase client fixture"""
+        """Supabase client fixture."""
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_KEY")
 
@@ -309,7 +309,7 @@ class TestMLPredictionPipeline:
 
     @pytest.fixture(scope="class")
     def sample_trading_data(self, supabase_client):
-        """Get sample trading data for predictions"""
+        """Get sample trading data for predictions."""
         response = supabase_client.table("trading_disclosures").select("*").limit(100).execute()
 
         if not response.data or len(response.data) == 0:
@@ -318,7 +318,7 @@ class TestMLPredictionPipeline:
         return pd.DataFrame(response.data)
 
     def test_feature_engineering_from_data(self, sample_trading_data, supabase_client):
-        """Test feature engineering pipeline using real Supabase data"""
+        """Test feature engineering pipeline using real Supabase data."""
         # Get a sample disclosure
         if len(sample_trading_data) == 0:
             pytest.skip("No trading data available")
@@ -377,7 +377,7 @@ class TestMLPredictionPipeline:
         print(f"  Sample features: {list(features.keys())[:5]}")
 
     def test_model_loading(self):
-        """Test loading trained model from models directory"""
+        """Test loading trained model from models directory."""
         models_dir = os.path.join(os.path.dirname(__file__), "../../models")
 
         if not os.path.exists(models_dir):
@@ -415,7 +415,7 @@ class TestMLPredictionPipeline:
         print(f"  Created: {metadata['created_at']}")
 
     def test_prediction_generation(self, sample_trading_data):
-        """Test generating prediction from features"""
+        """Test generating prediction from features."""
         if len(sample_trading_data) == 0:
             pytest.skip("No trading data available")
 
@@ -480,23 +480,23 @@ class TestMLPredictionPipeline:
 
 
 class TestLSHIntegration:
-    """Test LSH daemon integration with dashboard"""
+    """Test LSH daemon integration with dashboard."""
 
     @pytest.fixture(scope="class")
     def lsh_url(self):
-        """LSH daemon URL"""
+        """LSH daemon URL."""
         return os.getenv("LSH_API_URL", "https://mcli-lsh-daemon.fly.dev")
 
     @pytest.fixture(scope="class")
     def lsh_headers(self):
-        """LSH API headers"""
+        """LSH API headers."""
         api_key = os.getenv("LSH_API_KEY")
         if api_key:
             return {"x-api-key": api_key}
         return {}
 
     def test_lsh_api_accessibility(self, lsh_url):
-        """Test LSH API is accessible from test environment"""
+        """Test LSH API is accessible from test environment."""
         response = requests.get(f"{lsh_url}/", timeout=10)
 
         assert response.status_code == 200, "LSH API not accessible"
@@ -509,7 +509,7 @@ class TestLSHIntegration:
         print(f"  Endpoints: {', '.join(data['endpoints'])}")
 
     def test_lsh_job_listing(self, lsh_url, lsh_headers):
-        """Test listing jobs from LSH daemon"""
+        """Test listing jobs from LSH daemon."""
         response = requests.get(f"{lsh_url}/api/jobs", headers=lsh_headers, timeout=10)
 
         assert response.status_code == 200, "Failed to list jobs"
@@ -523,11 +523,11 @@ class TestLSHIntegration:
 
 
 class TestEndToEndWorkflow:
-    """Test complete end-to-end workflow"""
+    """Test complete end-to-end workflow."""
 
     @pytest.fixture(scope="class")
     def supabase_client(self) -> Client:
-        """Supabase client fixture"""
+        """Supabase client fixture."""
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_KEY")
 
@@ -538,11 +538,11 @@ class TestEndToEndWorkflow:
 
     @pytest.fixture(scope="class")
     def lsh_url(self):
-        """LSH daemon URL"""
+        """LSH daemon URL."""
         return os.getenv("LSH_API_URL", "https://mcli-lsh-daemon.fly.dev")
 
     def test_complete_prediction_workflow(self, supabase_client, lsh_url):
-        """Test complete prediction workflow: Supabase → Features → Prediction"""
+        """Test complete prediction workflow: Supabase → Features → Prediction."""
 
         # Step 1: Fetch politician from Supabase
         print("\n→ Step 1: Fetching politician from Supabase...")
@@ -645,7 +645,7 @@ class TestEndToEndWorkflow:
         print("   Supabase → Features → Prediction → LSH verification")
 
     def test_dashboard_data_pipeline(self, supabase_client):
-        """Test dashboard's complete data pipeline"""
+        """Test dashboard's complete data pipeline."""
 
         print("\n→ Testing dashboard data pipeline...")
 

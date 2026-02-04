@@ -67,9 +67,7 @@ def shell_exec(script_path: str, function_name: str, *args) -> Optional[Dict[str
 
     try:
         # Run the shell script with the function name and arguments
-        proc = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         # Register the process for system monitoring
         register_subprocess(proc)
