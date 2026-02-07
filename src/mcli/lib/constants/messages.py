@@ -58,6 +58,7 @@ class WarningMessages:
     PARTIAL_SUCCESS = "Partially successful: {details}"
     RATE_LIMIT_WARNING = "Approaching rate limit for {service}"
     LARGE_FILE_WARNING = "Large file detected: {path} ({size})"
+    AMBIGUOUS_COMMAND = "Multiple versions of '{name}' found. Specify language: {options}"
 
 
 class InfoMessages:
@@ -977,6 +978,48 @@ class MoveMessages:
     MOVE_AS_OP = " as '{to_name}'"
 
 
+class ServiceMessages:
+    """Service management message constants."""
+
+    # Status
+    SERVICE_STARTED = "[green]Service '{name}' started (PID {pid})[/green]"
+    SERVICE_STOPPED = "[green]Service '{name}' stopped[/green]"
+    SERVICE_RESTARTED = "[green]Service '{name}' restarted (PID {pid})[/green]"
+    SERVICE_ALREADY_RUNNING = "[yellow]Service '{name}' is already running (PID {pid})[/yellow]"
+    SERVICE_NOT_RUNNING = "[yellow]Service '{name}' is not running[/yellow]"
+    SERVICE_NOT_FOUND = "[red]Service '{name}' not found[/red]"
+    SERVICE_FAILED_START = "[red]Failed to start service '{name}': {error}[/red]"
+    SERVICE_FAILED_STOP = "[red]Failed to stop service '{name}': {error}[/red]"
+    SERVICE_FORCE_KILLED = "[yellow]Service '{name}' force-killed after timeout[/yellow]"
+
+    # Health
+    HEALTH_HEALTHY = "[green]healthy[/green]"
+    HEALTH_UNHEALTHY = "[red]unhealthy[/red]"
+    HEALTH_UNKNOWN = "[dim]unknown[/dim]"
+    HEALTH_CHECK_PASSED = "[green]Health check passed for '{name}'[/green]"
+    HEALTH_CHECK_FAILED = "[red]Health check failed for '{name}'[/red]"
+
+    # Supervisor
+    SUPERVISOR_RESTARTING = "[yellow]Supervisor restarting service '{name}' (attempt {attempt}/{max})[/yellow]"
+    SUPERVISOR_MAX_RESTARTS = "[red]Service '{name}' exceeded max restarts ({max}) in {window}s window[/red]"
+    SUPERVISOR_STARTED = "[dim]Supervisor started for '{name}' (policy: {policy})[/dim]"
+    SUPERVISOR_STOPPED = "[dim]Supervisor stopped for '{name}'[/dim]"
+
+    # List / Info
+    NO_SERVICES = "[dim]No services registered[/dim]"
+    NO_RUNNING_SERVICES = "[dim]No services are currently running[/dim]"
+    CLEANUP_COMPLETE = "[green]Cleaned up {count} stale service(s)[/green]"
+    CLEANUP_NONE = "[dim]No stale services to clean up[/dim]"
+
+    # Logs
+    LOG_FILE_NOT_FOUND = "[yellow]No log file found for service '{name}'[/yellow]"
+    FOLLOWING_LOGS = "[dim]Following logs for '{name}' (Ctrl+C to stop)...[/dim]"
+
+    # Run (foreground)
+    RUNNING_FOREGROUND = "[cyan]Running '{name}' in foreground (Ctrl+C to stop)...[/cyan]"
+    FOREGROUND_STOPPED = "[dim]Service '{name}' stopped[/dim]"
+
+
 class VenvMessages:
     """Virtual environment related messages."""
 
@@ -1020,5 +1063,6 @@ __all__ = [
     "EditMessages",
     "SyncMessages",
     "MoveMessages",
+    "ServiceMessages",
     "VenvMessages",
 ]

@@ -38,6 +38,10 @@ class DirNames:
     LIB = "Lib"
     SITE_PACKAGES = "site-packages"
     GLOBAL_VENV = "venv"  # Global venv directory name under ~/.mcli/
+    SERVICES = "services"
+    SERVICES_PIDS = "pids"
+    SERVICES_LOGS = "logs"
+    SERVICES_STATE = "state"
 
 
 class FileNames:

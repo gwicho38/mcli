@@ -84,6 +84,34 @@ def get_cache_dir() -> Path:
     return cache_dir
 
 
+def get_services_dir() -> Path:
+    """Get the services directory for mcli."""
+    services_dir = get_mcli_home() / "services"
+    services_dir.mkdir(parents=True, exist_ok=True)
+    return services_dir
+
+
+def get_services_pids_dir() -> Path:
+    """Get the services PID files directory."""
+    pids_dir = get_services_dir() / "pids"
+    pids_dir.mkdir(parents=True, exist_ok=True)
+    return pids_dir
+
+
+def get_services_logs_dir() -> Path:
+    """Get the services log files directory."""
+    logs_dir = get_services_dir() / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    return logs_dir
+
+
+def get_services_state_dir() -> Path:
+    """Get the services state directory."""
+    state_dir = get_services_dir() / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    return state_dir
+
+
 def is_git_repository(path: Optional[Path] = None) -> bool:
     """
     Check if the current directory (or specified path) is inside a git repository.
