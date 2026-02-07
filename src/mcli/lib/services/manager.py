@@ -91,7 +91,6 @@ class ServiceManager:
                 stderr=stderr_handle,
                 cwd=config.working_dir,
                 env=env,
-                preexec_fn=os.setsid,
                 start_new_session=True,
             )
 
