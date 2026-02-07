@@ -37,7 +37,10 @@ def _get_config_from_state(name: str) -> ServiceConfig:
     )
 
 
-@click.group("services", help="Manage long-running services (start/stop/restart, health, logs).")
+@click.group(
+    "services",
+    help="\U0001f6e0\ufe0f Manage long-running services (start/stop/restart, health, logs).",
+)
 def services():
     """Service lifecycle management."""
     pass
