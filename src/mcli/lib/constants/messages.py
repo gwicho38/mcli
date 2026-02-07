@@ -1000,8 +1000,12 @@ class ServiceMessages:
     HEALTH_CHECK_FAILED = "[red]Health check failed for '{name}'[/red]"
 
     # Supervisor
-    SUPERVISOR_RESTARTING = "[yellow]Supervisor restarting service '{name}' (attempt {attempt}/{max})[/yellow]"
-    SUPERVISOR_MAX_RESTARTS = "[red]Service '{name}' exceeded max restarts ({max}) in {window}s window[/red]"
+    SUPERVISOR_RESTARTING = (
+        "[yellow]Supervisor restarting service '{name}' (attempt {attempt}/{max})[/yellow]"
+    )
+    SUPERVISOR_MAX_RESTARTS = (
+        "[red]Service '{name}' exceeded max restarts ({max}) in {window}s window[/red]"
+    )
     SUPERVISOR_STARTED = "[dim]Supervisor started for '{name}' (policy: {policy})[/dim]"
     SUPERVISOR_STOPPED = "[dim]Supervisor stopped for '{name}'[/dim]"
 
