@@ -111,6 +111,20 @@ class Encoding:
     LATIN1 = "latin-1"
 
 
+class ServiceDefaults:
+    """Service management default values."""
+
+    GRACEFUL_TIMEOUT = 10
+    HEALTH_CHECK_INTERVAL = 30
+    HEALTH_CHECK_TIMEOUT = 5
+    RESTART_DELAY = 2
+    MAX_RESTART_ATTEMPTS = 5
+    RESTART_WINDOW = 300
+    LOG_TAIL_LINES = 50
+    DEFAULT_HOST = "127.0.0.1"
+    DEFAULT_PORT = 8000
+
+
 __all__ = [
     "Editors",
     "Shells",
@@ -121,4 +135,5 @@ __all__ = [
     "Timeouts",
     "DateFormats",
     "Encoding",
+    "ServiceDefaults",
 ]

@@ -21,6 +21,7 @@ COMMAND_ORDER = [
     "run",
     "context",
     "health",
+    "services",
     "sync",
     "self",
 ]
@@ -456,6 +457,15 @@ def _add_lazy_commands(app: click.Group):
         logger.debug("Added health command")
     except ImportError as e:
         logger.debug(f"Could not load health command: {e}")
+
+    # mcli services - Service lifecycle management
+    try:
+        from mcli.app.services_cmd import services
+
+        app.add_command(services, name="services")
+        logger.debug("Added services command")
+    except ImportError as e:
+        logger.debug(f"Could not load services command: {e}")
 
     # mcli self - Self management (version, update, plugin, completion)
     try:
