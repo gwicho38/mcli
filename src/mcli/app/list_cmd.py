@@ -111,6 +111,25 @@ def _list_workspaces(as_json: bool):
     console.print(f"\n[dim]Total: {len(workspaces)} workspace(s)[/dim]")
 
 
+def _apply_display_names(workflows: list[dict]) -> None:
+    """Add 'display_name' key to workflows, using suffixed names for duplicate stems.
+
+    When multiple workflows share the same base name (e.g. backup.py and backup.sh),
+    their display names become 'backup:py' and 'backup:sh'. Unique names stay bare.
+    """
+    from collections import Counter
+
+    from mcli.lib.script_loader import LANGUAGE_TO_SUFFIX
+
+    stem_counts = Counter(wf["name"] for wf in workflows)
+    for wf in workflows:
+        if stem_counts[wf["name"]] > 1:
+            suffix = LANGUAGE_TO_SUFFIX.get(wf.get("language", ""), "?")
+            wf["display_name"] = f"{wf['name']}:{suffix}"
+        else:
+            wf["display_name"] = wf["name"]
+
+
 def _list_all_workflows(as_json: bool):
     """List workflows from all registered workspaces."""
     from rich.panel import Panel
@@ -122,6 +141,7 @@ def _list_all_workflows(as_json: bool):
         # Flatten for JSON output
         flat_workflows = []
         for workspace_name, workflows in all_workflows.items():
+            _apply_display_names(workflows)
             for wf in workflows:
                 wf["workspace"] = workspace_name
                 flat_workflows.append(wf)
@@ -142,6 +162,8 @@ def _list_all_workflows(as_json: bool):
         if not workflows:
             continue
 
+        _apply_display_names(workflows)
+
         table = Table(show_header=True, header_style="bold")
         table.add_column("Name", style="cyan")
         table.add_column("Description", style="white")
@@ -153,7 +175,7 @@ def _list_all_workflows(as_json: bool):
             if len(desc) > 50:
                 desc = desc[:47] + "..."
             table.add_row(
-                wf["name"],
+                wf["display_name"],
                 desc,
                 wf.get("language", "?"),
                 wf.get("version", "1.0.0"),
@@ -202,6 +224,8 @@ def _list_scope_workflows(is_global: bool, as_json: bool):
         except Exception as e:
             logger.debug(f"Failed to get info for {script_path}: {e}")
 
+    _apply_display_names(workflows)
+
     if as_json:
         click.echo(json.dumps({"workflows": workflows, "total": len(workflows)}, indent=2))
         return
@@ -226,7 +250,7 @@ def _list_scope_workflows(is_global: bool, as_json: bool):
         if len(desc) > 50:
             desc = desc[:47] + "..."
         table.add_row(
-            wf["name"],
+            wf["display_name"],
             desc,
             wf.get("language", "?"),
             wf.get("version", "1.0.0"),

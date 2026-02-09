@@ -69,7 +69,7 @@ class TestLockfileUtilities:
                 json.dumps(test_data).splitlines()
             )
 
-            with open(temp_path, "r") as f:
+            with open(temp_path) as f:
                 result = json.load(f)
 
         assert result == test_data

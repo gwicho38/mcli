@@ -39,7 +39,7 @@ logger = get_logger(__name__)
 MAX_COMMAND_LENGTH = 100000
 
 
-def shell_exec(script_path: str, function_name: str, *args) -> Optional[Dict[str, Any]]:
+def shell_exec(script_path: str, function_name: str, *args) -> Optional[dict[str, Any]]:
     """Execute a shell script function with security checks and better error handling.
 
     Args:
@@ -176,7 +176,7 @@ def fatal_error(msg: str) -> None:
 
 
 def execute_os_command(
-    command: Union[str, List[str]],
+    command: Union[str, list[str]],
     fail_on_error: bool = True,
     stdin: Optional[str] = None,
     timeout: Optional[int] = None,
@@ -294,12 +294,12 @@ def execute_os_command(
 
 
 def execute_command_safe(
-    args: List[str],
+    args: list[str],
     fail_on_error: bool = True,
     stdin: Optional[str] = None,
     timeout: Optional[int] = None,
     cwd: Optional[str] = None,
-    env: Optional[Dict[str, str]] = None,
+    env: Optional[dict[str, str]] = None,
     check_executable: bool = True,
 ) -> str:
     """Execute a command safely without shell interpolation.
@@ -414,11 +414,11 @@ def execute_command_safe(
 
 
 def execute_command_with_result(
-    args: List[str],
+    args: list[str],
     stdin: Optional[str] = None,
     timeout: Optional[int] = None,
     cwd: Optional[str] = None,
-    env: Optional[Dict[str, str]] = None,
+    env: Optional[dict[str, str]] = None,
 ) -> CommandResult:
     """Execute a command and return structured result (never raises on non-zero exit).
 

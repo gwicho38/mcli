@@ -63,7 +63,7 @@ class TestCustomCommandManager:
         assert path.name == "test_cmd.json"
 
         # Verify content
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
 
         assert data["name"] == "test_cmd"
@@ -156,7 +156,7 @@ class TestCustomCommandManager:
         assert self.manager.lockfile_path.exists()
 
         # Load and verify
-        with open(self.manager.lockfile_path, "r") as f:
+        with open(self.manager.lockfile_path) as f:
             lockfile = json.load(f)
 
         assert "test_cmd" in lockfile["commands"]
@@ -241,7 +241,7 @@ class TestCustomCommandManager:
         assert export_path.exists()
 
         # Verify exported data
-        with open(export_path, "r") as f:
+        with open(export_path) as f:
             exported = json.load(f)
 
         assert len(exported) == 2
@@ -293,7 +293,7 @@ class TestCustomCommandManager:
         assert results["existing_cmd"] is False
 
         # Verify original code is unchanged
-        with open(self.commands_dir / "existing_cmd.json", "r") as f:
+        with open(self.commands_dir / "existing_cmd.json") as f:
             data = json.load(f)
         assert data["code"] == "original"
 
@@ -322,7 +322,7 @@ class TestCustomCommandManager:
         assert results["existing_cmd"] is True
 
         # Verify code is updated
-        with open(self.commands_dir / "existing_cmd.json", "r") as f:
+        with open(self.commands_dir / "existing_cmd.json") as f:
             data = json.load(f)
         assert data["code"] == "new code"
 

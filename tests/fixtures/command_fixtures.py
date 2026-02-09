@@ -29,7 +29,7 @@ class MockCommandResponse:
     duration_ms: float = 10.0
     exception: Optional[Exception] = None
 
-    def to_result(self, command: Optional[List[str]] = None) -> CommandResult:
+    def to_result(self, command: Optional[list[str]] = None) -> CommandResult:
         """Convert to a CommandResult object."""
         return CommandResult(
             returncode=self.returncode,
@@ -299,7 +299,7 @@ def capture_commands():
 
     class CommandCapture:
         def __init__(self):
-            self.commands: List[List[str]] = []
+            self.commands: list[list[str]] = []
             self._patches = []
 
         def _capture(self, args, **kwargs):
