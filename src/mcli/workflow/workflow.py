@@ -40,10 +40,17 @@ class ScopedWorkflowsGroup(click.Group):
         return get_custom_commands_dir(global_mode=is_global)
 
     def list_commands(self, ctx):
-        """List available commands based on scope."""
+        """List available commands based on scope.
+
+        When multiple scripts share a stem (e.g. backup.py and backup.sh),
+        emits suffixed names like backup:py and backup:sh so that tab completion
+        offers distinct entries for each language variant.
+        """
+
+        from collections import Counter
 
         from mcli.lib.logger.logger import get_logger
-        from mcli.lib.script_loader import ScriptLoader
+        from mcli.lib.script_loader import LANGUAGE_TO_SUFFIX, ScriptLoader
 
         logger = get_logger()
 
@@ -60,17 +67,26 @@ class ScopedWorkflowsGroup(click.Group):
 
         # Load native script commands
         script_commands = []
+        script_stems = set()
         if workflows_dir.exists():
             loader = ScriptLoader(workflows_dir)
             scripts = loader.discover_scripts()
 
+            # Count how many scripts share each stem
+            stem_counts = Counter(sp.stem for sp in scripts)
+
             for script_path in scripts:
                 name = script_path.stem
-                # Validate the command can be loaded
                 try:
                     command = loader.load_command(script_path)
                     if command:
-                        script_commands.append(name)
+                        if stem_counts[name] > 1:
+                            lang = loader.detect_language(script_path)
+                            suffix = LANGUAGE_TO_SUFFIX.get(lang, script_path.suffix.lstrip("."))
+                            script_commands.append(f"{name}:{suffix}")
+                        else:
+                            script_commands.append(name)
+                        script_stems.add(name)
                     else:
                         logger.debug(f"Script '{name}' could not be loaded as a command")
                 except Exception as e:
@@ -91,7 +107,7 @@ class ScopedWorkflowsGroup(click.Group):
 
                 cmd_name = cmd_data.get("name")
                 # Skip if already loaded as native script
-                if cmd_name in script_commands:
+                if cmd_name in script_stems:
                     continue
 
                 # Validate the command can be loaded
@@ -112,14 +128,18 @@ class ScopedWorkflowsGroup(click.Group):
             logger.debug(f"Could not load legacy JSON commands: {e}")
 
         # Only return user-defined workflows (scripts + legacy JSON)
-        # This matches the behavior of `mcli list`.
-
         return sorted(set(script_commands + legacy_commands))
 
     def get_command(self, ctx, cmd_name):
-        """Get a command by name, loading from appropriate scope."""
+        """Get a command by name, loading from appropriate scope.
+
+        Supports language suffix disambiguation: 'backup:py' loads the Python
+        version, 'backup:sh' loads the shell version. Bare names work when
+        unambiguous; when ambiguous, a warning is shown and the first match runs.
+        """
+        from mcli.lib.constants.messages import WarningMessages
         from mcli.lib.logger.logger import get_logger
-        from mcli.lib.script_loader import ScriptLoader
+        from mcli.lib.script_loader import LANGUAGE_TO_SUFFIX, ScriptLoader, parse_command_name
 
         logger = get_logger()
 
@@ -134,24 +154,43 @@ class ScopedWorkflowsGroup(click.Group):
             logger.warning(f"Workspace not found: {workspace}")
             return None
 
+        # Parse language suffix (e.g. "backup:py" → base="backup", lang="python")
+        base_name, lang_filter = parse_command_name(cmd_name)
+
         # Try to load as native script first
         if workflows_dir.exists():
             loader = ScriptLoader(workflows_dir)
-            scripts = loader.discover_scripts()
+            matches = loader.find_scripts_by_stem(base_name)
 
-            # Find matching script
-            for script_path in scripts:
-                if script_path.stem == cmd_name:
-                    try:
-                        command = loader.load_command(script_path)
-                        if command:
-                            logger.debug(f"Loaded native script command: {cmd_name}")
-                            return command
-                    except Exception as e:
-                        logger.debug(f"Failed to load script '{cmd_name}': {e}")
-                    break
+            if lang_filter:
+                # Filter to requested language
+                matches = [p for p in matches if loader.detect_language(p) == lang_filter]
 
-        # Fall back to legacy JSON commands
+            if len(matches) == 1:
+                try:
+                    command = loader.load_command(matches[0])
+                    if command:
+                        logger.debug(f"Loaded native script command: {cmd_name}")
+                        return command
+                except Exception as e:
+                    logger.debug(f"Failed to load script '{cmd_name}': {e}")
+            elif len(matches) > 1 and not lang_filter:
+                # Ambiguous — show hint, pick first
+                from mcli.lib.ui.styling import warning
+
+                suffixes = [LANGUAGE_TO_SUFFIX.get(loader.detect_language(p), "?") for p in matches]
+                options = ", ".join(f"{base_name}:{s}" for s in suffixes)
+                warning(WarningMessages.AMBIGUOUS_COMMAND.format(name=base_name, options=options))
+                try:
+                    command = loader.load_command(matches[0])
+                    if command:
+                        logger.debug(f"Loaded first match for ambiguous command: {base_name}")
+                        return command
+                except Exception as e:
+                    logger.debug(f"Failed to load script '{base_name}': {e}")
+
+        # Fall back to legacy JSON commands (use base_name for lookup)
+        lookup_name = base_name if lang_filter else cmd_name
         try:
             from mcli.lib.custom_commands import get_command_manager
 
@@ -161,7 +200,7 @@ class ScopedWorkflowsGroup(click.Group):
             # Find the workflow command
             for command_data in commands:
                 # Accept both "workflow" and "workflows" for backward compatibility
-                if command_data.get("name") == cmd_name and command_data.get("group") in [
+                if command_data.get("name") == lookup_name and command_data.get("group") in [
                     "workflow",
                     "workflows",
                 ]:
@@ -174,9 +213,9 @@ class ScopedWorkflowsGroup(click.Group):
                     else:
                         manager.register_command_with_click(command_data, temp_group)
 
-                    cmd = temp_group.commands.get(cmd_name)
+                    cmd = temp_group.commands.get(lookup_name)
                     if cmd:
-                        logger.debug(f"Loaded legacy JSON command: {cmd_name}")
+                        logger.debug(f"Loaded legacy JSON command: {lookup_name}")
                         return cmd
         except Exception as e:
             logger.debug(f"Could not load legacy command '{cmd_name}': {e}")

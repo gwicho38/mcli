@@ -25,9 +25,9 @@ class McliLogger:
     _runtime_tracing_enabled: bool = False
     _system_tracing_enabled: bool = False
     _system_trace_interval: int = 5  # Default to check every 5 seconds
-    _system_trace_process_ids: Set[int] = set()  # Process IDs to monitor
+    _system_trace_process_ids: set[int] = set()  # Process IDs to monitor
     _system_trace_thread: Optional[threading.Thread] = None
-    _excluded_modules: Set[str] = set()
+    _excluded_modules: set[str] = set()
     _trace_level: int = 0  # 0=off, 1=function calls, 2=line by line, 3=verbose
     _system_trace_level: int = 0  # 0=off, 1=basic, 2=detailed
 
@@ -54,7 +54,7 @@ class McliLogger:
 
     @classmethod
     def enable_runtime_tracing(
-        cls, level: int = 1, excluded_modules: Optional[List[str]] = None
+        cls, level: int = 1, excluded_modules: Optional[list[str]] = None
     ) -> None:
         """
         Enable Python interpreter runtime tracing.
@@ -279,7 +279,7 @@ class McliLogger:
 
         return True
 
-    def _get_process_info(self, pid: int, detailed: bool = False) -> Dict[str, Any]:
+    def _get_process_info(self, pid: int, detailed: bool = False) -> dict[str, Any]:
         """Get information about a process given its PID."""
         try:
             # Check if process exists
@@ -339,7 +339,7 @@ class McliLogger:
         except Exception as e:
             return {"pid": pid, "status": "ERROR", "error": str(e)}
 
-    def _format_process_info(self, info: Dict[str, Any]) -> str:
+    def _format_process_info(self, info: dict[str, Any]) -> str:
         """Format process information for logging."""
         if info.get("status") == "NOT_FOUND":
             return f"Process {info['pid']} no longer exists"
@@ -475,7 +475,7 @@ class McliLogger:
                 if self._trace_level >= 3:
                     # Include source line in verbose mode
                     try:
-                        with open(filename, "r") as f:
+                        with open(filename) as f:
                             lines = f.readlines()
                             source = (
                                 lines[lineno - 1].strip()
@@ -543,7 +543,7 @@ def get_system_trace_logger() -> logging.Logger:
     return McliLogger.get_system_trace_logger()
 
 
-def enable_runtime_tracing(level: int = 1, excluded_modules: Optional[List[str]] = None) -> None:
+def enable_runtime_tracing(level: int = 1, excluded_modules: Optional[list[str]] = None) -> None:
     """
     Enable Python interpreter runtime tracing.
 

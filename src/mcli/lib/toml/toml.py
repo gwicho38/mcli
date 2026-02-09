@@ -26,7 +26,7 @@ def read_from_toml(file_path: str, key: str) -> Optional[Any]:
         # Fall back to the third-party 'toml' package for earlier Python versions.
         import toml
 
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, encoding="utf-8") as file:
             config_data = toml.load(file)
 
     # Return the value for the provided key, or None if the key is not found.

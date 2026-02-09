@@ -360,7 +360,7 @@ gh run watch <run-id>              # Watch run in real-time
 8. Push tags: `git push origin vX.Y.Z`
 9. GitHub Actions will automatically build and publish
 
-**Release Notes Template**: See [docs/releases/7.10.2.md](docs/releases/7.10.2.md) for the expected format
+**Release Notes Template**: See [docs/releases/8.0.8.md](docs/releases/8.0.8.md) for the expected format
 
 ## Entry Points
 
@@ -371,5 +371,3 @@ Defined in `pyproject.toml [project.scripts]`:
 - `mcli-backtest`: Backtesting (`mcli.ml.backtesting.run:main`)
 - `mcli-optimize`: Portfolio optimization (`mcli.ml.optimization.optimize:main`)
 - `mcli-dashboard`: Dashboard launcher (`mcli.ml.dashboard:main`)
-- For lsh, always test by running ls always match
-- For lsh, always test by running ls always match

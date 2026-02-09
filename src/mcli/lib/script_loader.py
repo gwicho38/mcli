@@ -43,6 +43,54 @@ SUPPORTED_EXTENSIONS: dict[str, str] = {
     ".ipynb": "ipynb",
 }
 
+# Maps user-facing suffixes to canonical language names
+LANGUAGE_SUFFIXES: dict[str, str] = {
+    "py": "python",
+    "python": "python",
+    "sh": "shell",
+    "shell": "shell",
+    "bash": "shell",
+    "js": "javascript",
+    "javascript": "javascript",
+    "ts": "typescript",
+    "typescript": "typescript",
+    "ipynb": "ipynb",
+}
+
+# Reverse map: canonical language name → short suffix for display
+LANGUAGE_TO_SUFFIX: dict[str, str] = {
+    "python": "py",
+    "shell": "sh",
+    "javascript": "js",
+    "typescript": "ts",
+    "ipynb": "ipynb",
+}
+
+
+def parse_command_name(cmd_name: str) -> tuple[str, Optional[str]]:
+    """Parse 'name:suffix' into (base_name, language_or_None).
+
+    Uses rsplit so that names containing colons still work correctly.
+    Unknown suffixes are treated as part of the base name (no language filter).
+
+    Examples:
+        >>> parse_command_name("backup:py")
+        ("backup", "python")
+        >>> parse_command_name("backup")
+        ("backup", None)
+        >>> parse_command_name("my:cmd:sh")
+        ("my:cmd", "shell")
+        >>> parse_command_name("backup:xyz")
+        ("backup:xyz", None)
+    """
+    if ":" in cmd_name:
+        base, suffix = cmd_name.rsplit(":", 1)
+        language = LANGUAGE_SUFFIXES.get(suffix.lower())
+        if language:
+            return base, language
+    return cmd_name, None
+
+
 # Shebang patterns for language detection
 SHEBANG_PATTERNS: dict[str, re.Pattern] = {
     "python": re.compile(r"#!/.*python"),
@@ -135,6 +183,17 @@ class ScriptLoader:
             scripts.append(script_path)
 
         return sorted(scripts, key=lambda p: p.stem)
+
+    def find_scripts_by_stem(self, stem: str) -> list[Path]:
+        """Return all discovered scripts whose stem matches the given name.
+
+        Args:
+            stem: The base name (without extension) to search for
+
+        Returns:
+            List of matching script paths, sorted by name
+        """
+        return [p for p in self.discover_scripts() if p.stem == stem]
 
     def detect_language(self, script_path: Path) -> str:
         """
