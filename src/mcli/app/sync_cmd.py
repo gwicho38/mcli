@@ -16,7 +16,16 @@ from typing import Optional
 import click
 from rich.table import Table
 
-from mcli.lib.constants import SyncMessages
+from mcli.lib.constants import IpfsMessages, SyncMessages
+from mcli.lib.ipfs_utils import (
+    ipfs_daemon_running as _ipfs_daemon_running,
+)
+from mcli.lib.ipfs_utils import (
+    ipfs_initialized as _ipfs_initialized,
+)
+from mcli.lib.ipfs_utils import (
+    ipfs_installed as _ipfs_installed,
+)
 from mcli.lib.paths import get_custom_commands_dir
 from mcli.lib.script_loader import ScriptLoader
 from mcli.lib.ui.styling import console, error, info, success, warning
@@ -44,33 +53,6 @@ def sync_group():
         now      Update lockfile and push to IPFS in one command
     """
     pass
-
-
-# ============================================================
-# IPFS Setup Commands
-# ============================================================
-
-
-def _ipfs_installed() -> bool:
-    """Check if IPFS is installed."""
-    return shutil.which("ipfs") is not None
-
-
-def _ipfs_initialized() -> bool:
-    """Check if IPFS is initialized (~/.ipfs exists)."""
-    ipfs_dir = Path.home() / ".ipfs"
-    return ipfs_dir.exists() and (ipfs_dir / "config").exists()
-
-
-def _ipfs_daemon_running() -> bool:
-    """Check if IPFS daemon is running."""
-    try:
-        import requests
-
-        response = requests.post("http://127.0.0.1:5001/api/v0/id", timeout=2)
-        return response.status_code == 200
-    except Exception:
-        return False
 
 
 @sync_group.command(name="init")
@@ -116,6 +98,8 @@ def sync_init(install: bool, foreground: bool):
             console.print("  [dim]Windows:[/dim] See https://docs.ipfs.tech/install/command-line/")
             console.print()
             console.print("[dim]Or run: mcli sync init --install[/dim]")
+            console.print()
+            console.print(IpfsMessages.SETUP_HINT)
             return 1
 
     success("IPFS is installed")

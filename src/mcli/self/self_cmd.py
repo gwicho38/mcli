@@ -781,6 +781,14 @@ try:
 except ImportError as e:
     logger.debug(f"Could not load env command: {e}")
 
+try:
+    from mcli.self.ipfs_cmd import ipfs
+
+    self_app.add_command(ipfs, name="ipfs")
+    logger.debug("Added ipfs command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load ipfs command: {e}")
+
 # NOTE: store command has been moved to mcli.app.commands_cmd for better organization
 
 # This part is important to make the command available to the CLI

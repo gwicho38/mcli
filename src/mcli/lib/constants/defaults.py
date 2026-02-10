@@ -125,6 +125,25 @@ class ServiceDefaults:
     DEFAULT_PORT = 8000
 
 
+class IpfsDefaults:
+    """IPFS daemon and setup default values."""
+
+    API_PORT = 5001
+    GATEWAY_PORT = 8080
+    SWARM_PORT = 4001
+    API_ADDRESS = "http://127.0.0.1:5001"
+    GATEWAY_ADDRESS = "http://127.0.0.1:8080"
+    DAEMON_POLL_TIMEOUT = 10
+    DAEMON_POLL_INTERVAL = 0.5
+    INSTALL_COMMANDS = {
+        "brew": ["brew", "install", "ipfs"],
+        "apt-get": ["sudo", "apt-get", "install", "-y", "kubo"],
+        "dnf": ["sudo", "dnf", "install", "-y", "kubo"],
+        "winget": ["winget", "install", "IPFS.IPFS"],
+        "choco": ["choco", "install", "ipfs", "-y"],
+    }
+
+
 __all__ = [
     "Editors",
     "Shells",
@@ -136,4 +155,5 @@ __all__ = [
     "DateFormats",
     "Encoding",
     "ServiceDefaults",
+    "IpfsDefaults",
 ]

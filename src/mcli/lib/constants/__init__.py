@@ -25,6 +25,7 @@ from .defaults import (
     Editors,
     Encoding,
     HTTPMethods,
+    IpfsDefaults,
     Languages,
     LogLevels,
     ServiceDefaults,
@@ -39,6 +40,7 @@ from .messages import (
     EditMessages,
     ErrorMessages,
     InfoMessages,
+    IpfsMessages,
     ModelServiceMessages,
     MoveMessages,
     PromptMessages,
@@ -94,6 +96,7 @@ __all__ = [
     "SystemIntegrationMessages",
     "SyncMessages",
     "ServiceMessages",
+    "IpfsMessages",
     "VenvMessages",
     # Defaults
     "Editors",
@@ -106,6 +109,7 @@ __all__ = [
     "DateFormats",
     "Encoding",
     "ServiceDefaults",
+    "IpfsDefaults",
     # Commands
     "CommandKeys",
     "CommandGroups",
