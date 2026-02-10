@@ -17,15 +17,9 @@ import click
 from rich.table import Table
 
 from mcli.lib.constants import IpfsMessages, SyncMessages
-from mcli.lib.ipfs_utils import (
-    ipfs_daemon_running as _ipfs_daemon_running,
-)
-from mcli.lib.ipfs_utils import (
-    ipfs_initialized as _ipfs_initialized,
-)
-from mcli.lib.ipfs_utils import (
-    ipfs_installed as _ipfs_installed,
-)
+from mcli.lib.ipfs_utils import ipfs_daemon_running as _ipfs_daemon_running
+from mcli.lib.ipfs_utils import ipfs_initialized as _ipfs_initialized
+from mcli.lib.ipfs_utils import ipfs_installed as _ipfs_installed
 from mcli.lib.paths import get_custom_commands_dir
 from mcli.lib.script_loader import ScriptLoader
 from mcli.lib.ui.styling import console, error, info, success, warning
