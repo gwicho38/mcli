@@ -1024,6 +1024,72 @@ class ServiceMessages:
     FOREGROUND_STOPPED = "[dim]Service '{name}' stopped[/dim]"
 
 
+class IpfsMessages:
+    """IPFS setup, status, and doctor command messages."""
+
+    # General
+    IPFS_NOT_INSTALLED = "[red]IPFS (Kubo) is not installed[/red]"
+    IPFS_INSTALLED = "[green]IPFS is installed[/green]"
+    IPFS_NOT_INITIALIZED = "[yellow]IPFS repository not initialized[/yellow]"
+    IPFS_INITIALIZED = "[green]IPFS repository initialized[/green]"
+    IPFS_DAEMON_NOT_RUNNING = "[yellow]IPFS daemon is not running[/yellow]"
+    IPFS_DAEMON_RUNNING = "[green]IPFS daemon is running[/green]"
+
+    # Setup
+    SETUP_HEADER = "[bold cyan]IPFS Setup[/bold cyan]"
+    SETUP_COMPLETE = "[green]IPFS setup complete! Ready for workflow sync.[/green]"
+    SETUP_ALREADY_COMPLETE = "[green]IPFS is already fully set up and running.[/green]"
+    SETUP_INSTALLING = "Installing IPFS via {manager}..."
+    SETUP_INSTALL_FAILED = "[red]Failed to install IPFS via {manager}[/red]"
+    SETUP_INSTALL_SUCCESS = "[green]IPFS installed successfully![/green]"
+    SETUP_NO_PKG_MANAGER = "[yellow]No supported package manager found[/yellow]"
+    SETUP_MANUAL_INSTALL = "Install IPFS manually from: https://docs.ipfs.tech/install/"
+    SETUP_MANUAL_INSTRUCTIONS = "[dim]Platform-specific instructions:[/dim]"
+    SETUP_MACOS_INSTALL = "  [dim]macOS:[/dim]   brew install ipfs"
+    SETUP_LINUX_APT_INSTALL = "  [dim]Linux (apt):[/dim]  sudo apt-get install -y kubo"
+    SETUP_LINUX_DNF_INSTALL = "  [dim]Linux (dnf):[/dim]  sudo dnf install -y kubo"
+    SETUP_WINDOWS_WINGET = "  [dim]Windows:[/dim] winget install IPFS.IPFS"
+    SETUP_WINDOWS_CHOCO = "  [dim]Windows:[/dim] choco install ipfs -y"
+    SETUP_INITIALIZING = "Initializing IPFS repository..."
+    SETUP_INIT_FAILED = "[red]Failed to initialize IPFS: {error}[/red]"
+    SETUP_INIT_SUCCESS = "[green]IPFS repository initialized![/green]"
+    SETUP_STARTING_DAEMON = "Starting IPFS daemon in background..."
+    SETUP_DAEMON_STARTED = "[green]IPFS daemon started (PID {pid})[/green]"
+    SETUP_DAEMON_FAILED = "[yellow]Daemon started but may still be initializing[/yellow]"
+    SETUP_DAEMON_HINT = "[dim]Check status with: mcli self ipfs status[/dim]"
+    SETUP_SKIP_INSTALL = "[dim]Skipping installation (--no-install)[/dim]"
+    SETUP_HINT = "[dim]Run 'mcli self ipfs setup' for guided IPFS installation[/dim]"
+
+    # Status
+    STATUS_HEADER = "[bold cyan]IPFS Status[/bold cyan]"
+    STATUS_NOT_INSTALLED_HINT = "[dim]Install with: mcli self ipfs setup[/dim]"
+    STATUS_NOT_INITIALIZED_HINT = "[dim]Initialize with: mcli self ipfs setup[/dim]"
+    STATUS_DAEMON_HINT = "[dim]Start daemon with: mcli self ipfs setup[/dim]"
+
+    # Doctor
+    DOCTOR_HEADER = "[bold cyan]IPFS Doctor[/bold cyan]"
+    DOCTOR_RUNNING = "Running IPFS diagnostics..."
+    DOCTOR_CHECK_BINARY = "IPFS binary in PATH"
+    DOCTOR_CHECK_INIT = "Repository initialized"
+    DOCTOR_CHECK_CONFIG = "Config file valid"
+    DOCTOR_CHECK_PORT_API = "API port ({port}) available"
+    DOCTOR_CHECK_PORT_GATEWAY = "Gateway port ({port}) available"
+    DOCTOR_CHECK_PORT_SWARM = "Swarm port ({port}) available"
+    DOCTOR_CHECK_DAEMON = "Daemon responsive"
+    DOCTOR_CHECK_PEERS = "Peer connectivity"
+    DOCTOR_OK = "[green]OK[/green]"
+    DOCTOR_WARN = "[yellow]WARN[/yellow]"
+    DOCTOR_FAIL = "[red]FAIL[/red]"
+    DOCTOR_FIX_INSTALL = "[dim]Fix: mcli self ipfs setup[/dim]"
+    DOCTOR_FIX_INIT = "[dim]Fix: ipfs init[/dim]"
+    DOCTOR_FIX_CONFIG = "[dim]Fix: Remove ~/.ipfs/config and run 'ipfs init'[/dim]"
+    DOCTOR_FIX_PORT = "[dim]Fix: Check what is using port {port} (lsof -i :{port})[/dim]"
+    DOCTOR_FIX_DAEMON = "[dim]Fix: ipfs daemon &[/dim]"
+    DOCTOR_FIX_PEERS = "[dim]May take a few minutes after daemon starts[/dim]"
+    DOCTOR_ALL_PASSED = "[green]All checks passed![/green]"
+    DOCTOR_ISSUES_FOUND = "[yellow]{count} issue(s) found — see suggestions above[/yellow]"
+
+
 class VenvMessages:
     """Virtual environment related messages."""
 
@@ -1068,5 +1134,6 @@ __all__ = [
     "SyncMessages",
     "MoveMessages",
     "ServiceMessages",
+    "IpfsMessages",
     "VenvMessages",
 ]
