@@ -13,6 +13,7 @@ from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_traci
 COMMAND_ORDER = [
     "init",
     "new",
+    "import",
     "edit",
     "mv",
     "rm",
@@ -394,6 +395,15 @@ def _add_lazy_commands(app: click.Group):
         logger.debug("Added new command")
     except ImportError as e:
         logger.debug(f"Could not load new command: {e}")
+
+    # mcli import - Import external scripts
+    try:
+        from mcli.app.import_cmd import import_cmd
+
+        app.add_command(import_cmd, name="import")
+        logger.debug("Added import command")
+    except ImportError as e:
+        logger.debug(f"Could not load import command: {e}")
 
     # mcli edit - Edit a command
     try:

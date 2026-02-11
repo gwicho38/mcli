@@ -144,6 +144,52 @@ class IpfsDefaults:
     }
 
 
+class ImportDefaults:
+    """Import command default values."""
+
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+    DEFAULT_GROUP = "imported"
+    BINARY_CHECK_SIZE = 8192
+    REJECTED_EXTENSIONS = frozenset(
+        {
+            ".md",
+            ".txt",
+            ".csv",
+            ".json",
+            ".yaml",
+            ".yml",
+            ".xml",
+            ".html",
+            ".css",
+            ".svg",
+            ".png",
+            ".jpg",
+            ".gif",
+            ".pdf",
+            ".zip",
+            ".tar",
+            ".gz",
+            ".lock",
+            ".toml",
+            ".ini",
+            ".cfg",
+            ".conf",
+            ".log",
+            ".env",
+        }
+    )
+    WRAPPER_INTERPRETERS = {
+        ".rb": "ruby",
+        ".pl": "perl",
+        ".lua": "lua",
+        ".r": "Rscript",
+        ".R": "Rscript",
+        ".php": "php",
+        ".swift": "swift",
+        ".go": "go run",
+    }
+
+
 __all__ = [
     "Editors",
     "Shells",
@@ -156,4 +202,5 @@ __all__ = [
     "Encoding",
     "ServiceDefaults",
     "IpfsDefaults",
+    "ImportDefaults",
 ]
