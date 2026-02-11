@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 
 def _resolve_local_workflows(workspace_path: Path) -> Optional[Path]:
     """Find the workflows dir in a workspace, checking new and legacy paths."""
-    for dir_name in [DirNames.LOCAL_MCLI, DirNames.LEGACY_LOCAL_MCLI]:
+    for dir_name in [DirNames.LOCAL_MCLI, DirNames.DOT_LOCAL_MCLI]:
         workflows_dir = workspace_path / dir_name / "workflows"
         if workflows_dir.exists():
             return workflows_dir
