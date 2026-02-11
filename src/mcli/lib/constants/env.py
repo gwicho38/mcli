@@ -68,5 +68,8 @@ class EnvVars:
     MCLI_USE_SYSTEM_PYTHON = "MCLI_USE_SYSTEM_PYTHON"  # Skip venv detection
     MCLI_VENV_PATH = "MCLI_VENV_PATH"  # Override venv path
 
+    # Local workspace directory override
+    MCLI_LOCAL_DIR = "MCLI_LOCAL_DIR"  # Override local workspace dir name
+
 
 __all__ = ["EnvVars"]
