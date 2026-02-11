@@ -218,10 +218,8 @@ class TestLocalMcliDir:
 
         assert result == tmp_path / "mcli"
 
-    def test_get_local_mcli_dir_falls_back_to_legacy(self, tmp_path):
+    def test_get_local_mcli_dir_falls_back_to_dotmcli(self, tmp_path):
         """Test that .mcli/ is used when mcli/ doesn't exist."""
-        import warnings
-
         from mcli.lib.paths import get_local_mcli_dir
 
         (tmp_path / ".git").mkdir()
@@ -230,13 +228,9 @@ class TestLocalMcliDir:
         with patch("mcli.lib.paths.get_git_root", return_value=tmp_path):
             with patch.dict(os.environ, {}, clear=False):
                 os.environ.pop("MCLI_LOCAL_DIR", None)
-                with warnings.catch_warnings(record=True) as w:
-                    warnings.simplefilter("always")
-                    result = get_local_mcli_dir()
+                result = get_local_mcli_dir()
 
-                    assert result == tmp_path / ".mcli"
-                    assert len(w) == 1
-                    assert "legacy" in str(w[0].message).lower()
+        assert result == tmp_path / ".mcli"
 
     def test_get_local_mcli_dir_defaults_to_new(self, tmp_path):
         """Test that mcli/ is returned for fresh repos with no existing dir."""
