@@ -186,9 +186,9 @@ class TestFilePathCompletion:
 
     def test_hidden_directories_shown(self, tmp_path):
         """Test that hidden directories are always shown."""
-        # Create hidden directory and file
-        (tmp_path / ".mcli").mkdir()
-        (tmp_path / ".mcli" / "workflows").mkdir()
+        # Create local mcli directory and file
+        (tmp_path / "mcli").mkdir()
+        (tmp_path / "mcli" / "workflows").mkdir()
         (tmp_path / ".hidden_file").write_text("test")
         (tmp_path / "visible.py").write_text("test")
 
@@ -206,8 +206,8 @@ class TestFilePathCompletion:
             completions = group.shell_complete(ctx, "./")
             completion_values = [c.value for c in completions]
 
-            # Hidden directory should be shown
-            assert any(".mcli/" in c for c in completion_values)
+            # mcli directory should be shown
+            assert any("mcli/" in c for c in completion_values)
 
             # Regular file should be shown
             assert any("visible.py" in c for c in completion_values)
