@@ -1120,6 +1120,40 @@ class VenvMessages:
     DEP_CHECK_FAILED = "Failed to check dependencies: {error}"
 
 
+class ImportMessages:
+    """Import command message constants."""
+
+    # Info
+    SCANNING_DIR = "[dim]Scanning directory: {path}[/dim]"
+    IMPORTING_FILE = "[dim]Importing: {path}[/dim]"
+    DRY_RUN_HEADER = "[bold yellow]Dry run — no files will be modified[/bold yellow]"
+    CREATING_WRAPPER = "[dim]Creating wrapper for: {path}[/dim]"
+
+    # Success
+    IMPORTED_FILE = "[green]Imported: {name}[/green]"
+    WRAPPED_FILE = "[green]Wrapped: {name}[/green] [dim](wrapper → {original})[/dim]"
+    LINKED_FILE = "[green]Linked: {name}[/green] [dim](symlink → {original})[/dim]"
+    MOVED_FILE = "[green]Moved: {name}[/green]"
+
+    # Warning
+    SKIPPED_BINARY = "[yellow]Skipped (binary): {path}[/yellow]"
+    SKIPPED_TOO_LARGE = "[yellow]Skipped (>{max_mb}MB): {path}[/yellow]"
+    SKIPPED_HIDDEN = "[yellow]Skipped (hidden): {path}[/yellow]"
+    SKIPPED_REJECTED_EXT = "[yellow]Skipped (non-script): {path}[/yellow]"
+    SKIPPED_NO_SHEBANG = "[yellow]Skipped (no shebang/ext): {path}[/yellow]"
+    SKIPPED_EXISTS = "[yellow]Skipped (exists): {name} — use --force to overwrite[/yellow]"
+    SKIPPED_PERMISSION = "[yellow]Skipped (permission denied): {path}[/yellow]"
+    MOVE_CONFIRM = "Move will relocate source files. Continue?"
+    NO_IMPORTABLE = "[dim]No importable files found in {path}[/dim]"
+
+    # Summary table headers
+    SUMMARY_HEADER = "[bold]Import Summary[/bold]"
+    COL_FILE = "File"
+    COL_ACTION = "Action"
+    COL_NAME = "Command Name"
+    COL_STATUS = "Status"
+
+
 __all__ = [
     "ErrorMessages",
     "SuccessMessages",
@@ -1136,4 +1170,5 @@ __all__ = [
     "ServiceMessages",
     "IpfsMessages",
     "VenvMessages",
+    "ImportMessages",
 ]
