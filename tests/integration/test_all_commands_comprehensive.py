@@ -42,8 +42,8 @@ def mock_repo(tmp_path):
     repo_dir = tmp_path / "mock_repo"
     repo_dir.mkdir()
 
-    # Create mcli directory structure (local workspace)
-    mcli_dir = repo_dir / "mcli"
+    # Create .mcli directory structure
+    mcli_dir = repo_dir / ".mcli"
     mcli_dir.mkdir()
 
     commands_dir = mcli_dir / "commands"

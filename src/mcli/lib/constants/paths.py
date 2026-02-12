@@ -8,9 +8,7 @@ Using these constants ensures consistency across the codebase.
 class DirNames:
     """Directory name constants."""
 
-    MCLI = ".mcli"  # Global home (~/.mcli)
-    LOCAL_MCLI = "mcli"  # Preferred local workspace dir (visible in IDE/ls)
-    DOT_LOCAL_MCLI = ".mcli"  # Also supported as local workspace dir
+    MCLI = ".mcli"
     GIT = ".git"
     LOGS = "logs"
     CONFIG = "config"

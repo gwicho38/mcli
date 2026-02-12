@@ -30,11 +30,11 @@ def init(is_global, git, force):
     """🚀 Initialize workflows directory structure.
 
     Creates the necessary directories and configuration files for managing
-    custom workflows. By default, creates a local mcli/workflows/ directory
+    custom workflows. By default, creates a local .mcli/workflows/ directory
     in the current directory.
 
     Examples:
-        mcli init              # Initialize local mcli/workflows/ in current directory
+        mcli init              # Initialize local .mcli/workflows/ in current directory
         mcli init --global     # Initialize global ~/.mcli/workflows/
         mcli init --git        # Also initialize git repository
     """
@@ -50,13 +50,11 @@ def init(is_global, git, force):
         workflows_dir = get_mcli_home() / "workflows"
         is_local = False
     else:
-        # Local: mcli/workflows in current directory (default behavior)
+        # Local: .mcli/workflows in current directory (default behavior)
         from pathlib import Path
 
-        from mcli.lib.constants.paths import DirNames
-
         cwd = Path.cwd()
-        workflows_dir = cwd / DirNames.LOCAL_MCLI / "workflows"
+        workflows_dir = cwd / ".mcli" / "workflows"
         is_local = True
 
     lockfile_path = workflows_dir / "commands.lock.json"

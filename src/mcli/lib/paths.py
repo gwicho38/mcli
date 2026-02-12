@@ -158,41 +158,16 @@ def get_git_root(path: Optional[Path] = None) -> Optional[Path]:
 
 def get_local_mcli_dir() -> Optional[Path]:
     """
-    Get the local mcli workspace directory for the current git repository.
-
-    Resolution order:
-    1. MCLI_LOCAL_DIR env var override
-    2. 'mcli/' directory (preferred — visible in IDE/ls)
-    3. '.mcli/' directory (also supported)
-    4. Default to 'mcli/' path (for fresh init)
-
-    Both mcli/ and .mcli/ are fully supported. The -w flag on individual
-    commands always takes precedence over this resolution chain.
+    Get the local .mcli directory for the current git repository.
 
     Returns:
-        Path to local mcli directory in git root, or None if not in a git repository
+        Path to .mcli directory in git root, or None if not in a git repository
     """
     git_root = get_git_root()
-    if not git_root:
-        return None
-
-    # 1. Check MCLI_LOCAL_DIR env var override
-    custom_dir = os.environ.get("MCLI_LOCAL_DIR")
-    if custom_dir:
-        return git_root / custom_dir
-
-    # 2. Prefer "mcli/" (visible in IDE/ls)
-    new_dir = git_root / DirNames.LOCAL_MCLI
-    if new_dir.exists():
-        return new_dir
-
-    # 3. Also support ".mcli/"
-    legacy_dir = git_root / DirNames.DOT_LOCAL_MCLI
-    if legacy_dir.exists():
-        return legacy_dir
-
-    # 4. Neither exists — default to mcli/ for fresh init
-    return git_root / DirNames.LOCAL_MCLI
+    if git_root:
+        local_mcli = git_root / DirNames.MCLI
+        return local_mcli
+    return None
 
 
 def get_local_commands_dir() -> Optional[Path]:
@@ -282,7 +257,7 @@ def resolve_workspace(workspace_path: str) -> Optional[Path]:
     Resolve a workspace path to a workflows directory.
 
     Accepts either:
-    - A directory path (uses <dir>/mcli/workflows/ or <dir>/.mcli/workflows/)
+    - A directory path (uses <dir>/.mcli/workflows/)
     - A config file path (parses for workflows location)
 
     Args:
@@ -296,19 +271,20 @@ def resolve_workspace(workspace_path: str) -> Optional[Path]:
     if not path.exists():
         return None
 
-    # If it's a directory, look for mcli/workflows/ or .mcli/workflows/ inside it
+    # If it's a directory, look for .mcli/workflows/ inside it
     if path.is_dir():
-        # Check new mcli/ first, then legacy .mcli/
-        for dir_name in [DirNames.LOCAL_MCLI, DirNames.DOT_LOCAL_MCLI]:
-            workflows_dir = path / dir_name / "workflows"
-            if workflows_dir.exists():
-                return workflows_dir
-            commands_dir = path / dir_name / "commands"
-            if commands_dir.exists():
-                return commands_dir
+        # Check for .mcli/workflows/
+        workflows_dir = path / DirNames.MCLI / "workflows"
+        if workflows_dir.exists():
+            return workflows_dir
 
-        # If neither exists, return the expected new path
-        return path / DirNames.LOCAL_MCLI / "workflows"
+        # Check for legacy .mcli/commands/
+        commands_dir = path / DirNames.MCLI / "commands"
+        if commands_dir.exists():
+            return commands_dir
+
+        # If neither exists, return the expected workflows path
+        return workflows_dir
 
     # If it's a file, try to parse it as a config file
     if path.is_file():
