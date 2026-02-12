@@ -175,17 +175,8 @@ def env_command(
     # Get workflows directory for this workspace
     _workflows_dir = get_custom_commands_dir(global_mode=False)  # noqa: F841
     if workspace_dir and is_git_repository():
-        from mcli.lib.constants.paths import DirNames
-
-        # Check both new mcli/ and legacy .mcli/ local dir
-        local_workflows = None
-        for dir_name in [DirNames.LOCAL_MCLI, DirNames.LEGACY_LOCAL_MCLI]:
-            candidate = workspace_dir / dir_name / "workflows"
-            if candidate.exists():
-                local_workflows = candidate
-                break
-
-        if local_workflows is not None:
+        local_workflows = workspace_dir / ".mcli" / "workflows"
+        if local_workflows.exists():
             env_info["workflows_dir"] = str(local_workflows)
             # Count workflow scripts
             script_count = sum(

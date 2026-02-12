@@ -194,11 +194,6 @@ def get_migration_status() -> dict:
             local_old = git_root / DirNames.MCLI / "commands"
             local_new = git_root / DirNames.MCLI / "workflows"
 
-            # Check if local dir needs rename (.mcli/ → mcli/)
-            legacy_local = git_root / DirNames.LEGACY_LOCAL_MCLI
-            new_local = git_root / DirNames.LOCAL_MCLI
-            needs_dir_rename = legacy_local.exists() and not new_local.exists()
-
             local_status: dict = {
                 "git_root": str(git_root),
                 "old_dir_exists": local_old.exists(),
@@ -208,7 +203,6 @@ def get_migration_status() -> dict:
                 "needs_migration": False,
                 "files_to_migrate": [],
                 "migration_done": False,
-                "needs_dir_rename": needs_dir_rename,
             }
             status["local"] = local_status
 
@@ -417,11 +411,6 @@ def migrate_commands_to_workflows(
     is_flag=True,
     help="Remove JSON files after successful conversion (use with --json-to-scripts)",
 )
-@click.option(
-    "--rename-dir",
-    is_flag=True,
-    help="Rename local '.mcli/' directories to 'mcli/' in current git repo",
-)
 def migrate_command(
     dry_run: bool,
     force: bool,
@@ -431,7 +420,6 @@ def migrate_command(
     description: str,
     json_to_scripts: bool,
     remove_json: bool,
-    rename_dir: bool,
 ):
     """
     Migrate mcli configuration and data to new structure.
@@ -439,7 +427,6 @@ def migrate_command(
     Currently handles:
     - Moving ~/.mcli/commands to ~/.mcli/workflows (global)
     - Moving .mcli/commands to .mcli/workflows (local, in git repos)
-    - Renaming local .mcli/ to mcli/ for visibility (--rename-dir)
     - Converting JSON workflow files to native scripts (--json-to-scripts)
     - Optionally pushing to IPFS for decentralized backup
 
@@ -450,7 +437,6 @@ def migrate_command(
         mcli self migrate --scope global     # Migrate only global
         mcli self migrate --scope local      # Migrate only local (current repo)
         mcli self migrate --force            # Force migration (overwrite existing)
-        mcli self migrate --rename-dir       # Rename .mcli/ to mcli/ in current repo
         mcli self migrate --json-to-scripts  # Convert JSON workflows to scripts
         mcli self migrate --to-ipfs -d "Migrated workflows v1.0"  # Push to IPFS after
     """
@@ -495,12 +481,6 @@ def migrate_command(
             else:
                 console.print("  [green]✓ No migration needed[/green]")
 
-            if local_status.get("needs_dir_rename"):
-                console.print(
-                    "  [yellow]⚠ Directory rename needed: "
-                    ".mcli/ → mcli/ (run --rename-dir)[/yellow]"
-                )
-
         # Show files to migrate if any
         all_files = global_status.get("files_to_migrate", [])
         if migration_status["local"]:
@@ -522,43 +502,6 @@ def migrate_command(
             console.print(table)
             console.print("\n[dim]Run 'mcli self migrate' to perform migration[/dim]")
 
-        return
-
-    # Handle --rename-dir: rename local .mcli/ → mcli/
-    if rename_dir:
-        from mcli.lib.paths import get_git_root, is_git_repository
-
-        if not is_git_repository():
-            error("Not in a git repository")
-            return
-
-        git_root = get_git_root()
-        if not git_root:
-            error("Could not determine git root")
-            return
-
-        old_dir = git_root / DirNames.LEGACY_LOCAL_MCLI  # .mcli
-        new_dir = git_root / DirNames.LOCAL_MCLI  # mcli
-
-        if new_dir.exists() and not old_dir.exists():
-            info("Already using 'mcli/' directory — no migration needed")
-            return
-
-        if not old_dir.exists():
-            info("No '.mcli/' directory found — nothing to migrate")
-            return
-
-        if new_dir.exists() and old_dir.exists():
-            error("Both 'mcli/' and '.mcli/' exist. Resolve manually.")
-            return
-
-        if dry_run:
-            console.print(f"[yellow]Would rename:[/yellow] {old_dir} → {new_dir}")
-            return
-
-        shutil.move(str(old_dir), str(new_dir))
-        success(f"Renamed '{old_dir.name}/' → '{new_dir.name}/'")
-        console.print("[dim]Tip: Update your .gitignore if it references .mcli/[/dim]")
         return
 
     # Handle --json-to-scripts conversion

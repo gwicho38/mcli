@@ -1,7 +1,7 @@
 """Unit tests for mcli init and mv commands.
 
 Tests the new behaviors added in v8.0.26:
-- mcli init defaults to local mcli/workflows in current directory
+- mcli init defaults to local .mcli/workflows in current directory
 - mcli mv auto-detects directory paths as workspace destinations
 """
 
@@ -31,13 +31,13 @@ class TestInitCommand:
         return tmp_path
 
     def test_init_defaults_to_local(self, cli_runner, temp_dir):
-        """Test that mcli init creates local mcli/workflows by default."""
+        """Test that mcli init creates local .mcli/workflows by default."""
         with cli_runner.isolated_filesystem(temp_dir=temp_dir):
             result = cli_runner.invoke(init, [])
 
             assert result.exit_code == 0
-            assert Path("mcli/workflows").exists()
-            assert Path("mcli/workflows/commands.lock.json").exists()
+            assert Path(".mcli/workflows").exists()
+            assert Path(".mcli/workflows/commands.lock.json").exists()
             assert "Local (directory-specific)" in result.output
 
     def test_init_global_flag_uses_home(self, cli_runner, temp_dir):
@@ -59,7 +59,7 @@ class TestInitCommand:
 
             assert result.exit_code == 0
 
-            lockfile_path = Path("mcli/workflows/commands.lock.json")
+            lockfile_path = Path(".mcli/workflows/commands.lock.json")
             with open(lockfile_path) as f:
                 lockfile = json.load(f)
 
@@ -87,7 +87,7 @@ class TestInitCommand:
             result = cli_runner.invoke(init, [])
 
             assert result.exit_code == 0
-            assert Path("mcli/workflows/README.md").exists()
+            assert Path(".mcli/workflows/README.md").exists()
 
     def test_init_creates_gitignore(self, cli_runner, temp_dir):
         """Test that init creates a .gitignore file."""
@@ -95,7 +95,7 @@ class TestInitCommand:
             result = cli_runner.invoke(init, [])
 
             assert result.exit_code == 0
-            assert Path("mcli/workflows/.gitignore").exists()
+            assert Path(".mcli/workflows/.gitignore").exists()
 
     def test_init_force_reinitializes(self, cli_runner, temp_dir):
         """Test that --force flag allows reinitialization."""
@@ -134,7 +134,7 @@ class TestMvCommand:
     def setup_workflows(self, tmp_path):
         """Create a mock workflow setup for testing."""
         # Create source workflows directory with a test command
-        workflows_dir = tmp_path / "mcli" / "workflows"
+        workflows_dir = tmp_path / ".mcli" / "workflows"
         workflows_dir.mkdir(parents=True)
 
         # Create a test command file
@@ -152,7 +152,7 @@ class TestMvCommand:
         # Setup source
         source_dir = tmp_path / "source"
         source_dir.mkdir()
-        source_workflows = source_dir / "mcli" / "workflows"
+        source_workflows = source_dir / ".mcli" / "workflows"
         source_workflows.mkdir(parents=True)
 
         test_cmd = source_workflows / "my-cmd.py"
@@ -172,7 +172,7 @@ class TestMvCommand:
             result = cli_runner.invoke(mv, ["my-cmd", str(dest_dir) + "/"], input="y\n")
 
             # Should recognize it's a directory and try to move there
-            # The command may fail because dest doesn't have mcli/workflows but
+            # The command may fail because dest doesn't have .mcli/workflows but
             # the important thing is it recognized the directory path
             assert "destination" in result.output.lower() or "workspace" in result.output.lower()
 
@@ -181,7 +181,7 @@ class TestMvCommand:
         # This tests the path detection logic
         source_dir = tmp_path / "source"
         source_dir.mkdir()
-        source_workflows = source_dir / "mcli" / "workflows"
+        source_workflows = source_dir / ".mcli" / "workflows"
         source_workflows.mkdir(parents=True)
 
         test_cmd = source_workflows / "my-cmd.py"
@@ -204,7 +204,7 @@ class TestMvCommand:
         """Test that providing both directory path and -w option fails."""
         source_dir = tmp_path / "source"
         source_dir.mkdir()
-        source_workflows = source_dir / "mcli" / "workflows"
+        source_workflows = source_dir / ".mcli" / "workflows"
         source_workflows.mkdir(parents=True)
 
         test_cmd = source_workflows / "my-cmd.py"
@@ -236,7 +236,7 @@ class TestMvCommand:
         # Setup source
         source_dir = tmp_path / "source"
         source_dir.mkdir()
-        source_workflows = source_dir / "mcli" / "workflows"
+        source_workflows = source_dir / ".mcli" / "workflows"
         source_workflows.mkdir(parents=True)
 
         test_cmd = source_workflows / "original-name.py"
@@ -245,10 +245,10 @@ class TestMvCommand:
         lockfile = source_workflows / "commands.lock.json"
         lockfile.write_text(json.dumps({"version": "1.0", "scope": "local", "commands": {}}))
 
-        # Setup destination with mcli/workflows
+        # Setup destination with .mcli/workflows
         dest_dir = tmp_path / "destination"
         dest_dir.mkdir()
-        dest_workflows = dest_dir / "mcli" / "workflows"
+        dest_workflows = dest_dir / ".mcli" / "workflows"
         dest_workflows.mkdir(parents=True)
 
         dest_lockfile = dest_workflows / "commands.lock.json"
@@ -275,7 +275,7 @@ class TestMvCommandRename:
 
     def test_mv_same_source_dest_no_change(self, cli_runner, tmp_path):
         """Test that mv with same source and dest does nothing."""
-        workflows_dir = tmp_path / "mcli" / "workflows"
+        workflows_dir = tmp_path / ".mcli" / "workflows"
         workflows_dir.mkdir(parents=True)
 
         test_cmd = workflows_dir / "my-cmd.py"

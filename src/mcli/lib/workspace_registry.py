@@ -12,29 +12,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from mcli.lib.constants.paths import DirNames
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.paths import get_git_root, get_mcli_home, is_git_repository
 from mcli.lib.script_loader import ScriptLoader
 
 logger = get_logger(__name__)
-
-
-def _resolve_local_workflows(workspace_path: Path) -> Optional[Path]:
-    """Find the workflows dir in a workspace, checking new and legacy paths."""
-    for dir_name in [DirNames.LOCAL_MCLI, DirNames.LEGACY_LOCAL_MCLI]:
-        workflows_dir = workspace_path / dir_name / "workflows"
-        if workflows_dir.exists():
-            return workflows_dir
-        commands_dir = workspace_path / dir_name / "commands"
-        if commands_dir.exists():
-            return commands_dir
-    return None
-
-
-def _local_workflows_exist(workspace_path: Path) -> bool:
-    """Check if any local workflows directory exists in a workspace."""
-    return _resolve_local_workflows(workspace_path) is not None
 
 
 def get_registry_path() -> Path:
@@ -123,11 +105,15 @@ def register_workspace(
 
     workspace_path = workspace_path.resolve()
 
-    # Check if workflows directory exists (new mcli/ or legacy .mcli/)
-    if not _local_workflows_exist(workspace_path):
-        logger.warning(f"No workflows found at {workspace_path}")
-        logger.info("Initialize with: mcli init")
-        return None
+    # Check if workflows directory exists
+    workflows_dir = workspace_path / ".mcli" / "workflows"
+    if not workflows_dir.exists():
+        # Also check for legacy commands directory
+        legacy_dir = workspace_path / ".mcli" / "commands"
+        if not legacy_dir.exists():
+            logger.warning(f"No workflows found at {workspace_path}")
+            logger.info("Initialize with: mcli init")
+            return None
 
     # Load registry
     registry = load_registry()
@@ -205,7 +191,9 @@ def list_registered_workspaces() -> List[Dict[str, Any]]:
         workspace_path = Path(workspace_data["path"])
 
         # Check if workspace still exists
-        exists = _local_workflows_exist(workspace_path)
+        workflows_dir = workspace_path / ".mcli" / "workflows"
+        legacy_dir = workspace_path / ".mcli" / "commands"
+        exists = workflows_dir.exists() or legacy_dir.exists()
 
         workspaces.append(
             {
@@ -254,9 +242,12 @@ def get_all_workflows() -> Dict[str, List[Dict[str, Any]]]:
         workspace_path = Path(workspace_data["path"])
         workspace_name = workspace_data.get("name", workspace_path.name)
 
-        # Determine workflows directory (check new mcli/ then legacy .mcli/)
-        workflows_dir = _resolve_local_workflows(workspace_path)
-        if workflows_dir is None:
+        # Determine workflows directory
+        workflows_dir = workspace_path / ".mcli" / "workflows"
+        if not workflows_dir.exists():
+            workflows_dir = workspace_path / ".mcli" / "commands"
+
+        if not workflows_dir.exists():
             continue
 
         loader = ScriptLoader(workflows_dir)
@@ -299,8 +290,11 @@ def auto_register_current() -> Optional[str]:
     if workspace_id in registry.get("workspaces", {}):
         return workspace_id
 
-    # Check if has workflows (new mcli/ or legacy .mcli/)
-    if _local_workflows_exist(git_root):
+    # Check if has workflows
+    workflows_dir = git_root / ".mcli" / "workflows"
+    legacy_dir = git_root / ".mcli" / "commands"
+
+    if workflows_dir.exists() or legacy_dir.exists():
         return register_workspace(git_root)
 
     return None
