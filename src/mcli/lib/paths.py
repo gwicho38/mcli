@@ -162,12 +162,9 @@ def get_local_mcli_dir() -> Optional[Path]:
 
     Resolution order:
     1. MCLI_LOCAL_DIR env var override
-    2. 'mcli/' directory (preferred — visible in IDE/ls)
-    3. '.mcli/' directory (also supported)
-    4. Default to 'mcli/' path (for fresh init)
-
-    Both mcli/ and .mcli/ are fully supported. The -w flag on individual
-    commands always takes precedence over this resolution chain.
+    2. New 'mcli/' directory (visible in IDE/ls)
+    3. Legacy '.mcli/' directory (with deprecation warning)
+    4. Default to new 'mcli/' path (for fresh init)
 
     Returns:
         Path to local mcli directory in git root, or None if not in a git repository
@@ -181,17 +178,24 @@ def get_local_mcli_dir() -> Optional[Path]:
     if custom_dir:
         return git_root / custom_dir
 
-    # 2. Prefer "mcli/" (visible in IDE/ls)
+    # 2. Check new "mcli/" directory
     new_dir = git_root / DirNames.LOCAL_MCLI
     if new_dir.exists():
         return new_dir
 
-    # 3. Also support ".mcli/"
-    legacy_dir = git_root / DirNames.DOT_LOCAL_MCLI
+    # 3. Fall back to legacy ".mcli/"
+    legacy_dir = git_root / DirNames.LEGACY_LOCAL_MCLI
     if legacy_dir.exists():
+        import warnings
+
+        warnings.warn(
+            "Using legacy '.mcli/' directory. " "Run 'mcli self migrate --rename-dir' to upgrade.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return legacy_dir
 
-    # 4. Neither exists — default to mcli/ for fresh init
+    # 4. Neither exists — return new path (for fresh init)
     return git_root / DirNames.LOCAL_MCLI
 
 
@@ -299,7 +303,7 @@ def resolve_workspace(workspace_path: str) -> Optional[Path]:
     # If it's a directory, look for mcli/workflows/ or .mcli/workflows/ inside it
     if path.is_dir():
         # Check new mcli/ first, then legacy .mcli/
-        for dir_name in [DirNames.LOCAL_MCLI, DirNames.DOT_LOCAL_MCLI]:
+        for dir_name in [DirNames.LOCAL_MCLI, DirNames.LEGACY_LOCAL_MCLI]:
             workflows_dir = path / dir_name / "workflows"
             if workflows_dir.exists():
                 return workflows_dir

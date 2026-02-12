@@ -59,6 +59,10 @@ class WarningMessages:
     RATE_LIMIT_WARNING = "Approaching rate limit for {service}"
     LARGE_FILE_WARNING = "Large file detected: {path} ({size})"
     AMBIGUOUS_COMMAND = "Multiple versions of '{name}' found. Specify language: {options}"
+    DEPRECATED_LOCAL_DIR = (
+        "[yellow]Using legacy '.mcli/' directory. "
+        "Run 'mcli self migrate --rename-dir' to upgrade to 'mcli/'.[/yellow]"
+    )
 
 
 class InfoMessages:

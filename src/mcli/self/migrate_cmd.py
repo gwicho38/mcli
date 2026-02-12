@@ -195,7 +195,7 @@ def get_migration_status() -> dict:
             local_new = git_root / DirNames.MCLI / "workflows"
 
             # Check if local dir needs rename (.mcli/ → mcli/)
-            legacy_local = git_root / DirNames.DOT_LOCAL_MCLI
+            legacy_local = git_root / DirNames.LEGACY_LOCAL_MCLI
             new_local = git_root / DirNames.LOCAL_MCLI
             needs_dir_rename = legacy_local.exists() and not new_local.exists()
 
@@ -496,7 +496,10 @@ def migrate_command(
                 console.print("  [green]✓ No migration needed[/green]")
 
             if local_status.get("needs_dir_rename"):
-                console.print("  [dim]Using .mcli/ — run --rename-dir to switch to mcli/[/dim]")
+                console.print(
+                    "  [yellow]⚠ Directory rename needed: "
+                    ".mcli/ → mcli/ (run --rename-dir)[/yellow]"
+                )
 
         # Show files to migrate if any
         all_files = global_status.get("files_to_migrate", [])
@@ -534,7 +537,7 @@ def migrate_command(
             error("Could not determine git root")
             return
 
-        old_dir = git_root / DirNames.DOT_LOCAL_MCLI  # .mcli
+        old_dir = git_root / DirNames.LEGACY_LOCAL_MCLI  # .mcli
         new_dir = git_root / DirNames.LOCAL_MCLI  # mcli
 
         if new_dir.exists() and not old_dir.exists():

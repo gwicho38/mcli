@@ -179,7 +179,7 @@ def env_command(
 
         # Check both new mcli/ and legacy .mcli/ local dir
         local_workflows = None
-        for dir_name in [DirNames.LOCAL_MCLI, DirNames.DOT_LOCAL_MCLI]:
+        for dir_name in [DirNames.LOCAL_MCLI, DirNames.LEGACY_LOCAL_MCLI]:
             candidate = workspace_dir / dir_name / "workflows"
             if candidate.exists():
                 local_workflows = candidate
