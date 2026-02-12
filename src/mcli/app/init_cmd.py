@@ -252,7 +252,12 @@ Thumbs.db
     if git_root:
         table.add_row("Git Repository", str(git_root))
     table.add_row("Lockfile", str(lockfile_path))
-    table.add_row("Git Initialized", "Yes" if git and (workflows_dir / ".git").exists() else "No")
+    table.add_row("Git Tracked", "Yes" if in_git_repo else "No")
+    if git:
+        table.add_row(
+            "Workflows Git",
+            "Yes" if (workflows_dir / ".git").exists() else "No",
+        )
 
     console.print(table)
     console.print()
