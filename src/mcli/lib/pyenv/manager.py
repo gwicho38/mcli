@@ -182,6 +182,9 @@ class PyEnvManager:
     ) -> subprocess.CompletedProcess:
         """Execute a Python script in the resolved virtual environment.
 
+        When running in a TTY, stdio is inherited so interactive/TUI apps
+        (e.g. Textual, curses) work correctly. Otherwise output is captured.
+
         Args:
             script_path: Path to the Python script.
             args: Command line arguments for the script.
@@ -203,13 +206,16 @@ class PyEnvManager:
             exec_env.update(env)
 
         python_exe = self.get_python_executable()
+        cmd = [str(python_exe), str(script_path)] + args
 
-        return subprocess.run(
-            [str(python_exe), str(script_path)] + args,
-            env=exec_env,
-            capture_output=True,
-            text=True,
-        )
+        if sys.stdout.isatty():
+            # Interactive: inherit stdio so TUI frameworks work
+            return subprocess.run(cmd, env=exec_env)
+        else:
+            # Non-interactive: capture output for piping
+            return subprocess.run(
+                cmd, env=exec_env, capture_output=True, text=True,
+            )
 
     def get_status(self) -> Dict[str, str]:
         """Get the current environment status for display.

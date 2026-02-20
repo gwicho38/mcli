@@ -518,7 +518,7 @@ class ScriptLoader:
                     ctx.exit(1)
                     return
 
-                # Execute in venv
+                # Execute in venv (inherits stdio when TTY, captures otherwise)
                 logger.info(f"Executing Python command in venv: {name}")
                 result = env_manager.execute_in_venv(
                     script_path,
@@ -526,6 +526,7 @@ class ScriptLoader:
                     env={"MCLI_COMMAND": name},
                 )
 
+                # Only echo captured output (non-TTY mode)
                 if result.stdout:
                     click.echo(result.stdout, nl=False)
                 if result.stderr:
