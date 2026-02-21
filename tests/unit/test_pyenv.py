@@ -339,6 +339,68 @@ class TestPyEnvManager:
                 assert status["source"] == "system"
 
 
+class TestCheckAndInstallDeps:
+    """Tests for PyEnvManager.check_and_install_deps non-interactive behavior."""
+
+    def test_auto_installs_when_stdin_not_tty(self):
+        """Auto-install deps when stdin is not a TTY (non-interactive)."""
+        from mcli.lib.pyenv import PyEnvManager
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workspace = Path(tmpdir)
+
+            with patch.dict(os.environ, {"MCLI_USE_SYSTEM_PYTHON": "true"}):
+                manager = PyEnvManager(workspace_dir=workspace)
+
+                with (
+                    patch.object(manager, "resolve_environment", return_value=(None, "system")),
+                    patch.object(
+                        manager, "get_python_executable", return_value=Path(sys.executable)
+                    ),
+                    patch("mcli.lib.pyenv.manager.DependencyChecker") as mock_checker_cls,
+                    patch("sys.stdin") as mock_stdin,
+                ):
+                    mock_stdin.isatty.return_value = False
+                    mock_checker = mock_checker_cls.return_value
+                    mock_checker.parse_requires.return_value = ["fake-pkg"]
+                    mock_checker.check_installed.return_value = ([], ["fake-pkg"])
+                    mock_checker.install_packages.return_value = None
+
+                    result = manager.check_and_install_deps(["fake-pkg"], "test_script")
+
+                    assert result is True
+                    mock_checker.install_packages.assert_called_once()
+
+    def test_prompts_when_stdin_is_tty(self):
+        """Prompt user when stdin IS a TTY (interactive)."""
+        from mcli.lib.pyenv import PyEnvManager
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workspace = Path(tmpdir)
+
+            with patch.dict(os.environ, {"MCLI_USE_SYSTEM_PYTHON": "true"}):
+                manager = PyEnvManager(workspace_dir=workspace)
+
+                with (
+                    patch.object(manager, "resolve_environment", return_value=(None, "system")),
+                    patch.object(
+                        manager, "get_python_executable", return_value=Path(sys.executable)
+                    ),
+                    patch("mcli.lib.pyenv.manager.DependencyChecker") as mock_checker_cls,
+                    patch("sys.stdin") as mock_stdin,
+                    patch("click.confirm", return_value=False) as mock_confirm,
+                ):
+                    mock_stdin.isatty.return_value = True
+                    mock_checker = mock_checker_cls.return_value
+                    mock_checker.parse_requires.return_value = ["fake-pkg"]
+                    mock_checker.check_installed.return_value = ([], ["fake-pkg"])
+
+                    result = manager.check_and_install_deps(["fake-pkg"], "test_script")
+
+                    assert result is False
+                    mock_confirm.assert_called_once()
+
+
 class TestPyEnvIntegration:
     """Integration tests for pyenv module."""
 

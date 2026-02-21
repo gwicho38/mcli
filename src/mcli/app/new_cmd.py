@@ -12,8 +12,9 @@ Example:
 import json
 import os
 import re
+import shutil
 import stat
-import subprocess
+import subprocess  # nosec B404
 import sys
 import tempfile
 from pathlib import Path
@@ -269,7 +270,7 @@ def restructure_file_as_command(
         click.ClickException: If file cannot be read
     """
     try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, encoding="utf-8", errors="ignore") as f:
             content = f.read()
     except OSError as e:
         logger.error(f"Failed to read file {file_path}: {e}")
@@ -329,9 +330,12 @@ def _get_python_template(t: ScriptTemplate) -> str:
 import click
 from typing import Optional, List
 from pathlib import Path
-from mcli.lib.logger.logger import get_logger
 
-logger = get_logger()
+try:
+    from mcli.lib.logger.logger import get_logger
+    logger = get_logger()
+except ImportError:
+    logger = None
 
 
 @click.group(name="{t.name}")
@@ -346,8 +350,13 @@ def app():
 @click.argument("name", default="World")
 def hello(name: str):
     """Example subcommand."""
-    logger.info(f"Hello, {{name}}!")
+    if logger:
+        logger.info(f"Hello, {{name}}!")
     click.echo(f"Hello, {{name}}!")
+
+
+if __name__ == "__main__":
+    app()
 '''
     else:
         return f'''#!/usr/bin/env python3
@@ -361,9 +370,12 @@ def hello(name: str):
 import click
 from typing import Optional, List
 from pathlib import Path
-from mcli.lib.logger.logger import get_logger
 
-logger = get_logger()
+try:
+    from mcli.lib.logger.logger import get_logger
+    logger = get_logger()
+except ImportError:
+    logger = None
 
 
 @click.command(name="{t.name}")
@@ -372,8 +384,13 @@ def {t.name}_command(name: str):
     """
     {t.description}
     """
-    logger.info(f"Hello, {{name}}! This is the {t.name} command.")
+    if logger:
+        logger.info(f"Hello, {{name}}! This is the {t.name} command.")
     click.echo(f"Hello, {{name}}! This is the {t.name} command.")
+
+
+if __name__ == "__main__":
+    {t.name}_command()
 '''
 
 
@@ -505,7 +522,7 @@ if (args.length > 0) {{
 
 def _get_ipynb_template(t: ScriptTemplate) -> str:
     """Generate Jupyter notebook template."""
-    notebook: Dict[str, Any] = {
+    notebook: dict[str, Any] = {
         "cells": [
             {
                 "cell_type": "markdown",
@@ -609,13 +626,13 @@ def open_editor_for_script(
         click.echo("Write your code and save the file to continue.")
         click.echo("Press Ctrl+C to cancel.")
 
-        result = subprocess.run([editor, temp_file_path], check=False)
+        result = subprocess.run([editor, temp_file_path], check=False)  # nosec B603
 
         if result.returncode != 0:
             click.echo("Editor exited with error. Command creation cancelled.")
             return None
 
-        with open(temp_file_path, "r") as f:
+        with open(temp_file_path) as f:
             edited_code = f.read()
 
         if not edited_code.strip():
@@ -642,8 +659,7 @@ def _find_editor() -> Optional[str]:
         return editor
 
     for common_editor in ["vim", "nano", "code", "subl", "atom", "emacs"]:
-        result = subprocess.run(["which", common_editor], capture_output=True)
-        if result.returncode == 0:
+        if shutil.which(common_editor):
             return common_editor
 
     return None
@@ -783,7 +799,7 @@ def new(
             description=description,
             cmd_version=cmd_version,
             template=template,
-            shell=shell,
+            shell=shell,  # nosec B604
             is_global=is_global,
             source_file=source_file,
         )
@@ -892,7 +908,7 @@ def _execute_new_command(
             cmd_version=cmd_version,
             language=language,
             command_type=command_type,
-            shell=shell,
+            shell=shell,  # nosec B604
             template=template,
             script_path=script_path,
         )
@@ -913,7 +929,7 @@ def _execute_new_command(
     _display_success_message(
         command_name=command_name,
         language=language,
-        shell=shell,
+        shell=shell,  # nosec B604
         saved_path=saved_path,
         command_group=command_group,
         is_global=is_global,
@@ -948,7 +964,7 @@ def _generate_or_edit_code(
         version=cmd_version,
         language=language,
         command_type=command_type,
-        shell=shell,
+        shell=shell,  # nosec B604
     )
 
     try:
