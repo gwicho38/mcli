@@ -1095,18 +1095,24 @@ class VenvMessages:
 
     # Info
     DETECTING_VENV = "Detecting Python environment..."
+    USING_OVERRIDE_VENV = "Using override venv: {path}"
     USING_LOCAL_VENV = "Using local venv: {path}"
-    USING_GLOBAL_VENV = "Using global MCLI venv: {path}"
+    USING_GLOBAL_VENV = "Using global venv: {path}"
     USING_SYSTEM_PYTHON = "Using system Python: {path}"
+    USING_SYSTEM_PYTHON_ENV_SET = "Using system Python (MCLI_USE_SYSTEM_PYTHON set)"
     CREATING_GLOBAL_VENV = "Creating global MCLI venv at {path}..."
     GLOBAL_VENV_CREATED = "Created global MCLI venv at {path}"
 
     # Dependency messages
+    NO_DEPS_SPECIFIED = "No dependencies specified"
     CHECKING_DEPS = "Checking dependencies for {script}..."
     DEPS_SATISFIED = "All dependencies satisfied"
     MISSING_DEPS = "Missing dependencies: {packages}"
     INSTALLING_DEPS = "Installing dependencies: {packages}"
     DEPS_INSTALLED = "Dependencies installed successfully"
+
+    # Non-interactive
+    NON_INTERACTIVE_AUTO_INSTALL = "Non-interactive mode detected, auto-installing dependencies"
 
     # Prompts
     PROMPT_INSTALL_DEPS = "Install missing dependencies to {venv}? [{packages}]"

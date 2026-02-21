@@ -984,7 +984,7 @@ ALLOWED_PATTERNS = [
     # Only dev context pattern
     r'^Only "dev" context is supported',
     # No context exists pattern
-    r'^No context exists with the name:',
+    r"^No context exists with the name:",
     # kubernetes package missing
     r"^kubernetes package is missing",
     # Failed to uninstall/install
@@ -1031,7 +1031,7 @@ ALLOWED_PATTERNS = [
     r" MB of storage$",
     r" items\)$",
     # osascript pattern
-    r'^osascript -e \'',
+    r"^osascript -e \'",
     # Windows start pattern
     r'^start "" "',
     # save front document
@@ -1109,7 +1109,7 @@ ALLOWED_PATTERNS = [
     r"^\s+\(Score:",
     # Name/didn't find patterns
     r'^\s+String: "(name|I didn\'t find)',
-    r'^\\n🔍 \*\*Commands matching',
+    r"^\\n🔍 \*\*Commands matching",
     # Help suggestion pattern
     r"^You can get more help with:",
     # Show status pattern
@@ -1494,10 +1494,10 @@ ALLOWED_PATTERNS = [
     # More "Failed to" patterns
     r"^Failed to (clean|cancel|cache|auto-load|assess|access|apply|attach|close|collect|confirm|connect|construct|copy|count|create|decode)",
     # Command template docstrings (boilerplate code)
-    r'^\\n\\n# Your command implementation',
+    r"^\\n\\n# Your command implementation",
     r"^\\s+command\\.\\\\n",
-    r'^\\s+command (group|with name)',
-    r'^\\s+command for mcli\\.',
+    r"^\\s+command (group|with name)",
+    r"^\\s+command for mcli\\.",
     r"^\\s+command\\.$",
     # Unknown data type
     r"^Unknown (data type|format|command|error|model|status)[ :]",
@@ -1520,9 +1520,9 @@ ALLOWED_PATTERNS = [
     # Command template docstrings (more patterns for boilerplate code)
     r'^command\\.\n    """\n    logger',
     r'^command group\\."""\n    pass',
-    r'^# Your command implementation goes here',
+    r"^# Your command implementation goes here",
     r'^command for mcli\\.\n"""\nimport click',
-    r'^command with name:',
+    r"^command with name:",
     # Settings/Config labels
     r"^Settings:\n",
     r"^MLflow URI:",
@@ -1810,6 +1810,23 @@ ALLOWED_PATTERNS = [
     # Autoload patterns
     r"^\nautoload -U mcli-quick",
     r"^\nautoload -U compinit && compinit",
+    # Template code generation patterns (new_cmd.py generates script templates)
+    r"^\n",  # Multi-line template continuations (start with newline)
+    r".*\n$",  # Template code lines (end with newline)
+    r"^print\(f?['\"]",  # Template print statements
+    r"^    print\(",  # Indented template print statements
+    r"^name = ",  # Template variable assignments
+    r"^# Parameters cell",  # Notebook template cell markers
+    r"^# Main logic",  # Template section comments
+    r"^if verbose:",  # Template conditional code
+    r"^verbose = ",  # Template variable defaults
+    r"^Parameters can be passed",  # Notebook template help text
+    r"^This notebook can be executed",  # Notebook template description
+    # new_cmd.py user-facing message fragments (used in f-strings)
+    r"^File already has mcli metadata",  # Import validation message
+    r"^Write your code and save the file",  # Editor instruction
+    r"^ template for command: ",  # Template info fragment
+    r"^Using ",  # Info message prefix
 ]
 
 # File patterns to exclude from checking (glob patterns)
@@ -1950,11 +1967,15 @@ COMMON_ACCEPTABLE_STRINGS = {
     " ms",
     # Common prefixes/suffixes (often used in console output)
     " to ",
+    " to edit ",
     " of ",
     " in ",
     " for ",
     " not found",
     " commands",
+    " command",
+    " command: ",
+    " script...",
     " items",
     " files",
     " -> ",
@@ -2034,7 +2055,7 @@ COMMON_ACCEPTABLE_STRINGS = {
     # Config example patterns
     '  provider = "',
     '  openai_api_key = "',
-    '  ollama serve',
+    "  ollama serve",
     # Common instruction patterns
     "Copy the generated code",
     "Save it in the appropriate",

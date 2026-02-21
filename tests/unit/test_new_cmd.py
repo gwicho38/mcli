@@ -328,6 +328,35 @@ class TestGetTemplate:
         assert "def mycommand_command" in result
         assert "@click.command" in result
 
+    def test_python_template_standalone_has_main_guard(self):
+        """Standalone template includes if __name__ == '__main__' for subprocess compat."""
+        template = ScriptTemplate(
+            name="mycommand",
+            description="My command",
+            group="utils",
+            version="1.0.0",
+            language=ScriptLanguages.PYTHON,
+            command_type=CommandTypes.COMMAND,
+        )
+        result = get_template(template)
+        assert 'if __name__ == "__main__":' in result
+        assert "mycommand_command()" in result
+
+    def test_python_template_standalone_safe_logger_import(self):
+        """Standalone template uses try/except for mcli logger import."""
+        template = ScriptTemplate(
+            name="mycommand",
+            description="My command",
+            group="utils",
+            version="1.0.0",
+            language=ScriptLanguages.PYTHON,
+            command_type=CommandTypes.COMMAND,
+        )
+        result = get_template(template)
+        assert "try:" in result
+        assert "except ImportError:" in result
+        assert "from mcli.lib.logger.logger import get_logger" in result
+
     def test_python_template_group(self):
         """Generate Python command group template."""
         template = ScriptTemplate(
@@ -344,6 +373,34 @@ class TestGetTemplate:
         assert "@click.group" in result
         assert "def app():" in result
         assert "@app.command" in result
+
+    def test_python_template_group_has_main_guard(self):
+        """Group template includes if __name__ == '__main__' for subprocess compat."""
+        template = ScriptTemplate(
+            name="mygroup",
+            description="My group",
+            group="utils",
+            version="1.0.0",
+            language=ScriptLanguages.PYTHON,
+            command_type=CommandTypes.GROUP,
+        )
+        result = get_template(template)
+        assert 'if __name__ == "__main__":' in result
+        assert "app()" in result
+
+    def test_python_template_group_safe_logger_import(self):
+        """Group template uses try/except for mcli logger import."""
+        template = ScriptTemplate(
+            name="mygroup",
+            description="My group",
+            group="utils",
+            version="1.0.0",
+            language=ScriptLanguages.PYTHON,
+            command_type=CommandTypes.GROUP,
+        )
+        result = get_template(template)
+        assert "try:" in result
+        assert "except ImportError:" in result
 
     def test_shell_template(self):
         """Generate shell template."""

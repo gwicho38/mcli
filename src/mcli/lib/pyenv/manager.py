@@ -5,7 +5,7 @@ including environment detection, dependency checking, and script execution.
 """
 
 import os
-import subprocess
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -42,7 +42,7 @@ class PyEnvManager:
         self._resolved_venv: Optional[Path] = None
         self._resolved_source: Optional[str] = None
 
-    def resolve_environment(self) -> Tuple[Optional[Path], str]:
+    def resolve_environment(self) -> tuple[Optional[Path], str]:
         """Resolve which virtual environment to use.
 
         Resolution order:
@@ -65,14 +65,14 @@ class PyEnvManager:
             if venv_path.is_dir():
                 self._resolved_venv = venv_path
                 self._resolved_source = "override"
-                logger.debug(f"Using override venv: {venv_path}")
+                logger.debug(VenvMessages.USING_OVERRIDE_VENV.format(path=venv_path))
                 return venv_path, "override"
 
         # Check if user wants system Python
         if os.getenv(EnvVars.MCLI_USE_SYSTEM_PYTHON, "").lower() in ("true", "1", "yes"):
             self._resolved_venv = None
             self._resolved_source = "system"
-            logger.debug("Using system Python (MCLI_USE_SYSTEM_PYTHON set)")
+            logger.debug(VenvMessages.USING_SYSTEM_PYTHON_ENV_SET)
             return None, "system"
 
         # Try to find local venv
@@ -80,14 +80,14 @@ class PyEnvManager:
         if local_venv:
             self._resolved_venv = local_venv
             self._resolved_source = "local"
-            logger.debug(f"Using local venv: {local_venv}")
+            logger.debug(VenvMessages.USING_LOCAL_VENV.format(path=local_venv))
             return local_venv, "local"
 
         # Fall back to global venv
         global_venv = self.venv_manager.get_global_venv_path()
         self._resolved_venv = global_venv
         self._resolved_source = "global"
-        logger.debug(f"Using global venv: {global_venv}")
+        logger.debug(VenvMessages.USING_GLOBAL_VENV.format(path=global_venv))
         return global_venv, "global"
 
     def get_python_executable(self) -> Path:
@@ -105,7 +105,7 @@ class PyEnvManager:
 
     def check_and_install_deps(
         self,
-        requires: List[str],
+        requires: list[str],
         script_name: str,
         auto_install: bool = False,
     ) -> bool:
@@ -120,7 +120,7 @@ class PyEnvManager:
             True if all dependencies are satisfied or installed.
         """
         if not requires:
-            logger.debug("No dependencies specified")
+            logger.debug(VenvMessages.NO_DEPS_SPECIFIED)
             return True
 
         venv_path, source = self.resolve_environment()
@@ -155,6 +155,10 @@ class PyEnvManager:
 
         if auto_install or env_auto_install:
             should_install = True
+        elif not sys.stdin.isatty():
+            # Non-interactive context (piped input, CI, subprocess) — auto-install
+            logger.info(VenvMessages.NON_INTERACTIVE_AUTO_INSTALL)
+            should_install = True
         else:
             # Prompt user
             venv_display = str(venv_path) if venv_path else "system"
@@ -177,8 +181,8 @@ class PyEnvManager:
     def execute_in_venv(
         self,
         script_path: Path,
-        args: List[str],
-        env: Optional[Dict[str, str]] = None,
+        args: list[str],
+        env: Optional[dict[str, str]] = None,
     ) -> subprocess.CompletedProcess:
         """Execute a Python script in the resolved virtual environment.
 
@@ -210,14 +214,17 @@ class PyEnvManager:
 
         if sys.stdout.isatty():
             # Interactive: inherit stdio so TUI frameworks work
-            return subprocess.run(cmd, env=exec_env)
+            return subprocess.run(cmd, env=exec_env)  # nosec B603
         else:
             # Non-interactive: capture output for piping
-            return subprocess.run(
-                cmd, env=exec_env, capture_output=True, text=True,
+            return subprocess.run(  # nosec B603
+                cmd,
+                env=exec_env,
+                capture_output=True,
+                text=True,
             )
 
-    def get_status(self) -> Dict[str, str]:
+    def get_status(self) -> dict[str, str]:
         """Get the current environment status for display.
 
         Returns:
