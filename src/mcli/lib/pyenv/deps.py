@@ -122,7 +122,7 @@ class DependencyChecker:
         """
         try:
             result = subprocess.run(
-                [str(self.python_executable), "-m", "pip", "list", "--format=freeze"],
+                ["uv", "pip", "list", "--format=freeze", "--python", str(self.python_executable)],
                 capture_output=True,
                 text=True,
                 timeout=30,
