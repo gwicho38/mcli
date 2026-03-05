@@ -40,17 +40,6 @@ class TestModuleImports:
 
         assert main is not None
 
-    @pytest.mark.skip(reason="Requires complex dependencies")
-    def test_import_ml_preprocessing(self):
-        """Test importing ML preprocessing modules."""
-        try:
-            from mcli.ml.preprocessing import data_cleaners, feature_extractors
-
-            assert data_cleaners is not None
-            assert feature_extractors is not None
-        except ImportError:
-            pytest.skip("ML dependencies not available")
-
 
 class TestWorkflowCommands:
     """Test workflow command initialization."""
