@@ -11,6 +11,7 @@ from mcli.lib.logger.logger import disable_runtime_tracing, enable_runtime_traci
 
 # Desired command order for help display
 COMMAND_ORDER = [
+    "setup",
     "init",
     "new",
     "import",
@@ -20,6 +21,7 @@ COMMAND_ORDER = [
     "search",
     "list",
     "run",
+    "source",
     "context",
     "health",
     "services",
@@ -441,6 +443,15 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load sync group: {e}")
 
+    # mcli setup - Onboarding wizard for new users
+    try:
+        from mcli.app.setup_cmd import setup
+
+        app.add_command(setup, name="setup")
+        logger.debug("Added setup command")
+    except ImportError as e:
+        logger.debug(f"Could not load setup command: {e}")
+
     # mcli init - Top-level shortcut to initialize workflows directory
     try:
         from mcli.app.init_cmd import init
@@ -467,6 +478,15 @@ def _add_lazy_commands(app: click.Group):
         logger.debug("Added health command")
     except ImportError as e:
         logger.debug(f"Could not load health command: {e}")
+
+    # mcli source - Python source file sync
+    try:
+        from mcli.app.source_sync_cmd import source_group
+
+        app.add_command(source_group, name="source")
+        logger.debug("Added source sync command")
+    except ImportError as e:
+        logger.debug(f"Could not load source sync command: {e}")
 
     # mcli services - Service lifecycle management
     try:
