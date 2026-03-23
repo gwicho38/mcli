@@ -23,9 +23,7 @@ from pathlib import Path
 VERSION_PATTERN = re.compile(r"(?:mcli[-_]framework|mcli)[=~><=!]+(\d+\.\d+\.\d+)")
 
 # Pattern to find python code blocks in markdown
-PYTHON_CODE_BLOCK = re.compile(
-    r"```(?:python|py)\s*\n(.*?)```", re.DOTALL
-)
+PYTHON_CODE_BLOCK = re.compile(r"```(?:python|py)\s*\n(.*?)```", re.DOTALL)
 
 
 def get_pyproject_version() -> str:
@@ -134,9 +132,7 @@ def check_python_syntax(files: list[Path], verbose: bool) -> list[str]:
                 # Skip fragments (unexpected indent means it's a snippet from inside a block)
                 is_fragment = e.msg == "unexpected indent"
                 if is_complete_block and not is_fragment:
-                    errors.append(
-                        f"  {filepath}: code block #{i + 1}: {e.msg} (line {e.lineno})"
-                    )
+                    errors.append(f"  {filepath}: code block #{i + 1}: {e.msg} (line {e.lineno})")
 
     return errors
 

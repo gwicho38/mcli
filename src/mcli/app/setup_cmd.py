@@ -100,9 +100,7 @@ def _run_interactive_setup():
     if openai_key:
         env_overrides["OPENAI_API_KEY"] = openai_key
 
-    anthropic_key = Prompt.ask(
-        "[cyan]Anthropic API key[/cyan]", default="", show_default=False
-    )
+    anthropic_key = Prompt.ask("[cyan]Anthropic API key[/cyan]", default="", show_default=False)
     if anthropic_key:
         env_overrides["ANTHROPIC_API_KEY"] = anthropic_key
 
@@ -121,9 +119,7 @@ def _run_interactive_setup():
 
     # Write config files
     env_dict = settings.to_env_dict()
-    env_dict.update(
-        {k: v for k, v in env_overrides.items() if k not in env_dict and v}
-    )
+    env_dict.update({k: v for k, v in env_overrides.items() if k not in env_dict and v})
 
     if env_dict:
         env_path = Path.cwd() / ".env"

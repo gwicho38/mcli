@@ -44,21 +44,15 @@ class MCLISettings(BaseSettings):
     mcli_trace_level: int = Field(default=0, alias="MCLI_TRACE_LEVEL")
     mcli_auto_optimize: bool = Field(default=False, alias="MCLI_AUTO_OPTIMIZE")
     mcli_plugin_path: Optional[str] = Field(default=None, alias="MCLI_PLUGIN_PATH")
-    mcli_include_test_commands: bool = Field(
-        default=False, alias="MCLI_INCLUDE_TEST_COMMANDS"
-    )
+    mcli_include_test_commands: bool = Field(default=False, alias="MCLI_INCLUDE_TEST_COMMANDS")
     mcli_show_performance_summary: bool = Field(
         default=False, alias="MCLI_SHOW_PERFORMANCE_SUMMARY"
     )
     mcli_notebook_execute: bool = Field(default=False, alias="MCLI_NOTEBOOK_EXECUTE")
 
     # --- Python Environment ---
-    mcli_auto_install_deps: bool = Field(
-        default=False, alias="MCLI_AUTO_INSTALL_DEPS"
-    )
-    mcli_use_system_python: bool = Field(
-        default=False, alias="MCLI_USE_SYSTEM_PYTHON"
-    )
+    mcli_auto_install_deps: bool = Field(default=False, alias="MCLI_AUTO_INSTALL_DEPS")
+    mcli_use_system_python: bool = Field(default=False, alias="MCLI_USE_SYSTEM_PYTHON")
     mcli_venv_path: Optional[str] = Field(default=None, alias="MCLI_VENV_PATH")
 
     # --- API Keys ---

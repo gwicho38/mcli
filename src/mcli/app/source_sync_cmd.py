@@ -61,9 +61,7 @@ def _resolve_workflows_dir(global_mode: bool) -> Path:
     return Path.cwd() / ".mcli" / "workflows"
 
 
-def sync_source_to_command(
-    source_path: Path, command_name: str, workflows_dir: Path
-) -> bool:
+def sync_source_to_command(source_path: Path, command_name: str, workflows_dir: Path) -> bool:
     """Sync a Python source file to a JSON command definition.
 
     Reads the source file, extracts metadata, and writes/updates

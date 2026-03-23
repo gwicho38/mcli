@@ -87,9 +87,7 @@ class ReleaseNotes:
 
 def _run_git(args: list[str]) -> str:
     """Run a git command and return stdout."""
-    result = subprocess.run(
-        ["git"] + args, capture_output=True, text=True, check=True
-    )
+    result = subprocess.run(["git"] + args, capture_output=True, text=True, check=True)
     return result.stdout.strip()
 
 
@@ -224,20 +222,22 @@ def render_markdown(notes: ReleaseNotes, repo_url: str = "") -> str:
         lines.append("")
 
     lines.append("---")
-    lines.append(
-        f"*{notes.total_commits} commits in this release*"
-    )
+    lines.append(f"*{notes.total_commits} commits in this release*")
     lines.append("")
 
     return "\n".join(lines)
 
 
 @click.command("release-notes")
-@click.option("--version", "-v", "ver", default=None, help="Version string (default: from pyproject.toml)")
+@click.option(
+    "--version", "-v", "ver", default=None, help="Version string (default: from pyproject.toml)"
+)
 @click.option("--from", "from_ref", default=None, help="Start ref (default: latest tag)")
 @click.option("--to", "to_ref", default="HEAD", help="End ref (default: HEAD)")
 @click.option("--output", "-o", "output_path", default=None, help="Write to file (default: stdout)")
-@click.option("--repo-url", default="https://github.com/gwicho38/mcli", help="Repository URL for PR links")
+@click.option(
+    "--repo-url", default="https://github.com/gwicho38/mcli", help="Repository URL for PR links"
+)
 def release_notes(ver, from_ref, to_ref, output_path, repo_url):
     """Generate release notes from conventional commits.
 
