@@ -86,7 +86,7 @@ repos:
 
   # YAML formatting
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+    rev: v3.3.3
     hooks:
       - id: prettier
         types: [yaml]

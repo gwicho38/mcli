@@ -198,10 +198,10 @@ class ClickToAPIDecorator:
         # Add CORS middleware
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=os.environ.get("MCLI_CORS_ORIGINS", "http://localhost:3000").split(","),
             allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
+            allow_methods=["GET", "POST", "PUT", "DELETE"],
+            allow_headers=["Content-Type", "Authorization"],
         )
 
         # Add health check endpoint

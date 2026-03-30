@@ -1,9 +1,23 @@
+import io
 import os
 import pickle
 from pathlib import Path
 from typing import Callable, Generic, Type, TypeVar
 
 T = TypeVar("T")
+
+
+class RestrictedUnpickler(pickle.Unpickler):
+    """Unpickler that only allows deserializing a specific class."""
+
+    def __init__(self, file: io.BufferedIOBase, allowed_class: Type):
+        super().__init__(file)
+        self.allowed_class = allowed_class
+
+    def find_class(self, module: str, name: str) -> Type:
+        if name == self.allowed_class.__name__:
+            return self.allowed_class
+        raise pickle.UnpicklingError(f"Forbidden class: {module}.{name}")
 
 
 class ObjectCache(Generic[T]):
@@ -23,7 +37,7 @@ class ObjectCache(Generic[T]):
         if cache_path.exists():
             try:
                 with open(cache_path, "rb") as f:
-                    obj = pickle.load(f)
+                    obj = RestrictedUnpickler(f, self.class_type).load()
                     if isinstance(obj, self.class_type):
                         return obj
             except (pickle.UnpicklingError, EOFError):

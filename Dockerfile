@@ -1,7 +1,7 @@
-# Multi-stage Dockerfile for ML System
+# Multi-stage Dockerfile for MCLI
 
 # Stage 1: Base image with Python dependencies
-FROM python:3.10-slim as base
+FROM python:3.11-slim AS base
 
 WORKDIR /app
 
@@ -13,30 +13,28 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install from pyproject.toml
+COPY pyproject.toml README.md ./
+COPY src/ src/
+RUN pip install --no-cache-dir .
 
 # Stage 2: API Server
-FROM base as api-server
+FROM base AS api-server
 
 WORKDIR /app
-
-# Copy source code
-COPY src/mcli /app/mcli
 
 # Set Python path
 ENV PYTHONPATH=/app
 
 # Expose port
-EXPOSE 8000 9090
+EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run API server
-CMD ["python", "-m", "uvicorn", "mcli.ml.mlops.model_serving:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run MCLI daemon API
+CMD ["python", "-m", "uvicorn", "mcli.workflow.daemon.daemon_api:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Stage 3: Training image
 FROM base as training

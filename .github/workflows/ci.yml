@@ -14,7 +14,6 @@ jobs:
   lint-and-format:
     name: Lint and Format Check
     runs-on: ubuntu-latest
-    continue-on-error: true  # Non-blocking: ML modules have pre-existing formatting issues
 
     steps:
     - name: Checkout code
@@ -93,7 +92,7 @@ jobs:
   test-python:
     name: Test Python Package
     runs-on: ${{ matrix.os }}
-    continue-on-error: true  # Non-blocking: Some tests have import errors (email-validator) - fixing in progress
+    continue-on-error: true  # Some tests require optional deps (pandas, pydot) not in [dev]
     strategy:
       fail-fast: false
       matrix:
@@ -157,7 +156,7 @@ jobs:
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
-    continue-on-error: true  # Non-blocking: Rust-Python integration has known issues on CI
+    continue-on-error: true  # Non-blocking: Rust-Python integration depends on optional extensions
     if: always()  # Run even if test-python or test-rust fail
     needs: [test-python, test-rust]
 

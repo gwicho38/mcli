@@ -112,6 +112,10 @@ def discover_modules(base_path: Path, config_path: Optional[Path] = None) -> lis
                 config = tomli.load(f)
                 logger.debug(f"Config loaded: {config}")
             logger.debug(f"Using config from {config_path}")
+            KNOWN_CONFIG_KEYS = {"paths", "settings", "plugins", "commands", "services"}
+            unknown_keys = set(config.keys()) - KNOWN_CONFIG_KEYS
+            if unknown_keys:
+                logger.warning(f"Unknown keys in config.toml: {unknown_keys}. Check for typos.")
         except Exception as e:
             logger.warning(f"Error reading config file {config_path}: {e}")
             config = {"paths": {"included_dirs": ["app", "self", "workflow", "public"]}}

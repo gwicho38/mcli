@@ -316,6 +316,10 @@ class IPFSSync:
                         "command_count": len(command_data.get("commands", {})),
                     }
                 )
+                # Prune old entries to prevent unbounded growth
+                MAX_HISTORY = 100
+                if len(self.sync_history) > MAX_HISTORY:
+                    self.sync_history = self.sync_history[-MAX_HISTORY:]
                 self._save_sync_history()
 
             return cid

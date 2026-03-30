@@ -11,6 +11,7 @@ Example:
     >>> loader.register_all_commands(app)  # Register with Click group
 """
 
+import fcntl
 import hashlib
 import importlib.util
 import json
@@ -583,6 +584,7 @@ class ScriptLoader:
 
                 if is_tty:
                     # Interactive mode: inherit stdio for real-time output
+                    # Intentionally no timeout — user-invoked scripts may be long-running
                     process = subprocess.Popen(
                         [str(script_path)] + list(args),
                         env={**os.environ, "MCLI_COMMAND": name},
@@ -591,6 +593,7 @@ class ScriptLoader:
                     returncode = process.wait()
                 else:
                     # Non-interactive: capture and print output
+                    # Intentionally no timeout — user-invoked scripts may be long-running
                     process = subprocess.Popen(
                         [str(script_path)] + list(args),
                         stdout=subprocess.PIPE,
@@ -658,6 +661,7 @@ class ScriptLoader:
 
             try:
                 logger.info(f"Executing {language} command with Bun: {name}")
+                # Intentionally no timeout — user-invoked scripts may be long-running
                 process = subprocess.Popen(
                     [bun_path, "run", str(script_path)] + list(args),
                     stdout=subprocess.PIPE,
@@ -860,7 +864,11 @@ class ScriptLoader:
         try:
             lockfile_data = self.generate_lockfile()
             with open(self.lockfile_path, "w") as f:
-                json.dump(lockfile_data, f, indent=2)
+                fcntl.flock(f, fcntl.LOCK_EX)
+                try:
+                    json.dump(lockfile_data, f, indent=2)
+                finally:
+                    fcntl.flock(f, fcntl.LOCK_UN)
             logger.info(f"Saved lockfile: {self.lockfile_path}")
             return True
         except Exception as e:
@@ -879,7 +887,15 @@ class ScriptLoader:
 
         try:
             with open(self.lockfile_path) as f:
-                return json.load(f)
+                fcntl.flock(f, fcntl.LOCK_SH)
+                try:
+                    data = json.load(f)
+                finally:
+                    fcntl.flock(f, fcntl.LOCK_UN)
+            if not isinstance(data, dict) or "commands" not in data:
+                logger.warning(f"Invalid lockfile format, regenerating: {self.lockfile_path}")
+                return None
+            return data
         except Exception as e:
             logger.error(f"Failed to load lockfile: {e}")
             return None

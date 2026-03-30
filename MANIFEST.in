@@ -17,12 +17,8 @@ recursive-include src/mcli *.toml
 graft mcli_rust/src
 include mcli_rust/Cargo.toml
 
-# Include GitHub workflows and configuration
-recursive-include .github *.yml *.yaml
-
-# Include tests (optional, for development)
-recursive-include tests *.py
-include tests/*.ini
+# Exclude CI/test files from distribution (not needed for end users)
+# GitHub workflows and test files are available in the source repository
 
 # Exclude build artifacts
 prune build/
