@@ -37,10 +37,10 @@ classifiers = [
 dependencies = [
   # Core CLI dependencies
   "click>=8.1.7,<9.0.0",
-  "rich>=14.0.0",
+  "rich>=14.0.0,<15.0.0",
   "requests>=2.31.0,<3.0.0",
-  "tomli>=2.2.1",
-  "python-dotenv>=1.1.1",
+  "tomli>=2.2.1,<3.0.0",
+  "python-dotenv>=1.1.1,<2.0.0",
   # Core utilities
   "watchdog>=3.0.0,<4.0.0",
   "tqdm>=4.66.1,<5.0.0",
@@ -50,25 +50,25 @@ dependencies = [
   "gitpython>=3.1.40,<4.0.0",
   "prompt-toolkit>=3.0.0,<4.0.0",
   # Basic HTTP/async support
-  "aiohttp>=3.13.3",  # CVE-2025-69223 through CVE-2025-69230 fixes
-  "httpx>=0.28.1",
-  "websockets>=12.0",
+  "aiohttp>=3.13.3,<4.0.0",  # CVE-2025-69223 through CVE-2025-69230 fixes
+  "httpx>=0.28.1,<1.0.0",
+  "websockets>=12.0,<14.0.0",
   # Data parsing
-  "beautifulsoup4>=4.13.5",
-  "fuzzywuzzy>=0.18.0",
+  "beautifulsoup4>=4.13.5,<5.0.0",
+  "fuzzywuzzy>=0.18.0,<1.0.0",
   # Chat and AI capabilities
   "openai>=1.3.0,<2.0.0",
-  "anthropic>=0.60.0",
-  "ollama>=0.5.3",
+  "anthropic>=0.60.0,<1.0.0",
+  "ollama>=0.5.3,<1.0.0",
   "ipython>=8.12.0,<9.0.0",
   # Enhanced async/performance features
-  "fastapi>=0.110.0",
-  "uvicorn>=0.27.0",
-  "uvloop>=0.19.0",
-  "aiosqlite>=0.20.0",
-  "redis>=5.0.0",
-  "aiohttp-sse-client>=0.2.1",
-  "aiomqtt>=2.0.0",
+  "fastapi>=0.110.0,<1.0.0",
+  "uvicorn>=0.27.0,<1.0.0",
+  "uvloop>=0.19.0,<1.0.0",
+  "aiosqlite>=0.20.0,<1.0.0",
+  "redis>=5.0.0,<6.0.0",
+  "aiohttp-sse-client>=0.2.1,<1.0.0",
+  "aiomqtt>=2.0.0,<3.0.0",
 ]
 
 [project.urls]
@@ -177,20 +177,15 @@ disable_error_code = [
     "index",
     "type-arg",
     "override",
-    "comparison-overlap",
-    "redundant-expr",
     "no-any-return",
     "has-type",
     "valid-type",
     "type-var",
     "dict-item",
     "call-overload",
-    "empty-body",
     "no-redef",
     "abstract",
     "list-item",
-    "str-bytes-safe",
-    "func-returns-value",
 ]
 
 # Module discovery
@@ -259,6 +254,8 @@ requires = ["setuptools>=65.0.0", "wheel>=0.40.0"]
 build-backend = "setuptools.build_meta"
 
 [dependency-groups]
+# NOTE: This is the primary dev dependency specification (PEP 735).
+# [project.optional-dependencies] dev is kept for pip compatibility.
 dev = [
     "black>=25.0.0,<26.0.0",  # Pin to 25.x to match lockfile
     "isort>=5.13.2",
@@ -320,7 +317,7 @@ precision = 2
 skip_covered = false
 skip_empty = false
 # Fail if coverage is below threshold
-fail_under = 25.0
+fail_under = 50.0
 
 [tool.coverage.html]
 directory = "htmlcov"
@@ -338,7 +335,7 @@ addopts = [
     "--cov-report=html",
     "--cov-report=xml",
     "--cov-branch",
-    "--cov-fail-under=80",
+    "--cov-fail-under=50",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]

@@ -5,10 +5,8 @@ This stub exists for backwards compatibility with tests and imports.
 The actual model command implementation is now in ~/.mcli/workflows/model.json
 """
 
-import json
 import sys
 from pathlib import Path
-from typing import Any
 
 from mcli.lib.constants.paths import DirNames
 
@@ -21,38 +19,16 @@ try:
         model_json_path = Path.home() / DirNames.MCLI / "commands" / "model.json"
 
     if model_json_path.exists():
-        # Load the command from the JSON file
-        with open(model_json_path) as f:
-            command_data = json.load(f)
+        # SECURITY: Do not execute arbitrary code from JSON files (fixes #165)
+        # The model command should be registered through the workflow system instead
+        import logging
 
-        # Execute the code to get the app (model command group)
-        code = command_data.get("code", "")
-        namespace: dict[str, Any] = {}
-        exec(code, namespace)
-
-        # Extract the app (model command group) and individual commands
-        app = namespace.get("app")
-        if app:
-            # The model group command
-            model = app
-
-            # Extract individual subcommands from the model group
-            if hasattr(model, "commands"):
-                commands = model.commands
-                list = commands.get("list")
-                download = commands.get("download")
-                start = commands.get("start")
-                recommend = commands.get("recommend")
-                status = commands.get("status")
-                stop = commands.get("stop")
-                pull = commands.get("pull")
-                delete = commands.get("delete")
-            else:
-                # Fallback if commands aren't available
-                list = download = start = recommend = status = stop = pull = delete = None
-        else:
-            # If app is not found, create empty placeholders
-            model = list = download = start = recommend = status = stop = pull = delete = None
+        _logger = logging.getLogger(__name__)
+        _logger.warning(
+            "model.json contains executable code - skipping exec() for security. "
+            "Use workflow system instead."
+        )
+        model = list = download = start = recommend = status = stop = pull = delete = None
     else:
         # If the JSON file doesn't exist, create empty placeholders
         print(f"Warning: {model_json_path} not found", file=sys.stderr)

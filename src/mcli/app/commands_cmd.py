@@ -353,7 +353,9 @@ def init_store(path, remote):
         # Initialize git if not already initialized
         git_dir = store_path / ".git"
         if not git_dir.exists():
-            subprocess.run(["git", "init"], cwd=store_path, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "init"], cwd=store_path, check=True, capture_output=True, timeout=60
+            )
             success(f"Initialized git repository at {store_path}")
 
             # Create .gitignore
@@ -395,7 +397,10 @@ Last updated: {datetime.now().isoformat()}
             # Add remote if provided
             if remote:
                 subprocess.run(
-                    ["git", "remote", "add", "origin", remote], cwd=store_path, check=True
+                    ["git", "remote", "add", "origin", remote],
+                    cwd=store_path,
+                    check=True,
+                    timeout=60,
                 )
                 success(f"Added remote: {remote}")
         else:
@@ -455,11 +460,15 @@ def push_commands(message, all, is_global):
         success(f"Copied {copied_count} items to store")
 
         # Git add, commit, push
-        subprocess.run(["git", "add", "."], cwd=store_path, check=True)
+        subprocess.run(["git", "add", "."], cwd=store_path, check=True, timeout=60)
 
         # Check if there are changes
         result = subprocess.run(
-            ["git", "status", "--porcelain"], cwd=store_path, capture_output=True, text=True
+            ["git", "status", "--porcelain"],
+            cwd=store_path,
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
 
         if not result.stdout.strip():
@@ -468,12 +477,14 @@ def push_commands(message, all, is_global):
 
         # Commit with message
         commit_msg = message or f"Update commands {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True)
+        subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True, timeout=60)
         success(f"Committed changes: {commit_msg}")
 
         # Push to remote if configured
         try:
-            subprocess.run(["git", "push"], cwd=store_path, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "push"], cwd=store_path, check=True, capture_output=True, timeout=60
+            )
             success("Pushed to remote")
         except subprocess.CalledProcessError:
             warning("No remote configured or push failed. Commands committed locally.")
@@ -502,7 +513,7 @@ def pull_commands(force, is_global):
 
         # Pull from remote
         try:
-            subprocess.run(["git", "pull"], cwd=store_path, check=True)
+            subprocess.run(["git", "pull"], cwd=store_path, check=True, timeout=60)
             success("Pulled latest changes from remote")
         except subprocess.CalledProcessError:
             warning("No remote configured or pull failed. Using local store.")
@@ -561,7 +572,9 @@ def sync_commands(message, is_global):
         # First pull
         info("Pulling latest changes...")
         try:
-            subprocess.run(["git", "pull"], cwd=store_path, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "pull"], cwd=store_path, check=True, capture_output=True, timeout=60
+            )
             success("Pulled from remote")
         except subprocess.CalledProcessError:
             warning("No remote or pull failed")
@@ -581,7 +594,11 @@ def sync_commands(message, is_global):
 
         # Check for changes
         result = subprocess.run(
-            ["git", "status", "--porcelain"], cwd=store_path, capture_output=True, text=True
+            ["git", "status", "--porcelain"],
+            cwd=store_path,
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
 
         if not result.stdout.strip():
@@ -589,12 +606,14 @@ def sync_commands(message, is_global):
             return
 
         # Commit and push
-        subprocess.run(["git", "add", "."], cwd=store_path, check=True)
+        subprocess.run(["git", "add", "."], cwd=store_path, check=True, timeout=60)
         commit_msg = message or f"Sync commands {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True)
+        subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True, timeout=60)
 
         try:
-            subprocess.run(["git", "push"], cwd=store_path, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "push"], cwd=store_path, check=True, capture_output=True, timeout=60
+            )
             success("Synced and pushed to remote")
         except subprocess.CalledProcessError:
             success("Synced locally (no remote configured)")
@@ -614,7 +633,11 @@ def store_status():
 
         # Git status
         result = subprocess.run(
-            ["git", "status", "--short", "--branch"], cwd=store_path, capture_output=True, text=True
+            ["git", "status", "--short", "--branch"],
+            cwd=store_path,
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
 
         if result.stdout:
@@ -622,7 +645,7 @@ def store_status():
 
         # Show remote
         result = subprocess.run(
-            ["git", "remote", "-v"], cwd=store_path, capture_output=True, text=True
+            ["git", "remote", "-v"], cwd=store_path, capture_output=True, text=True, timeout=60
         )
 
         if result.stdout:
@@ -656,17 +679,23 @@ def configure_store(remote, path):
         if remote:
             # Check if remote exists
             result = subprocess.run(
-                ["git", "remote"], cwd=store_path, capture_output=True, text=True
+                ["git", "remote"], cwd=store_path, capture_output=True, text=True, timeout=60
             )
 
             if "origin" in result.stdout:
                 subprocess.run(
-                    ["git", "remote", "set-url", "origin", remote], cwd=store_path, check=True
+                    ["git", "remote", "set-url", "origin", remote],
+                    cwd=store_path,
+                    check=True,
+                    timeout=60,
                 )
                 success(f"Updated remote URL: {remote}")
             else:
                 subprocess.run(
-                    ["git", "remote", "add", "origin", remote], cwd=store_path, check=True
+                    ["git", "remote", "add", "origin", remote],
+                    cwd=store_path,
+                    check=True,
+                    timeout=60,
                 )
                 success(f"Added remote URL: {remote}")
 
@@ -1391,9 +1420,7 @@ def add_command(command_name, group, description, template, language, shell, is_
         if language != "ipynb":
             import stat
 
-            script_path.chmod(
-                script_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-            )
+            script_path.chmod(script_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP)
 
         logger.info(f"Created script: {script_path}")
     except Exception as e:

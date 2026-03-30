@@ -34,6 +34,7 @@ class SecretsManager:
     def _get_cipher_suite(self) -> Fernet:
         """Get or create encryption key."""
         key_file = self.secrets_dir / ".key"
+        salt_file = self.secrets_dir / ".salt"
 
         if key_file.exists():
             with open(key_file, "rb") as f:
@@ -43,16 +44,24 @@ class SecretsManager:
             password = click.prompt("Enter a password for secrets encryption", hide_input=True)
             password_bytes = password.encode()
 
+            # Generate a random salt for PBKDF2
+            salt = os.urandom(16)
+
             # Use PBKDF2 to derive a key from the password
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
-                salt=b"mcli-secrets-salt",  # In production, use a random salt
-                iterations=100000,
+                salt=salt,
+                iterations=210000,  # NIST recommendation
             )
             key = base64.urlsafe_b64encode(kdf.derive(password_bytes))
 
-            # Save the key (in production, this should be stored more securely)
+            # Save the salt
+            with open(salt_file, "wb") as f:
+                f.write(salt)
+            os.chmod(salt_file, 0o600)
+
+            # Save the key
             with open(key_file, "wb") as f:
                 f.write(key)
 

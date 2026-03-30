@@ -1,0 +1,11 @@
+# Default owner for all files
+* @gwicho38
+
+# Core library
+src/mcli/lib/ @gwicho38
+
+# App commands
+src/mcli/app/ @gwicho38
+
+# CI/CD
+.github/ @gwicho38

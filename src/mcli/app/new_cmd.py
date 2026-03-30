@@ -696,9 +696,9 @@ def save_script(
     with open(script_path, "w") as f:
         f.write(code)
 
-    # Make executable for shell/python scripts
+    # Make executable for shell/python scripts (owner + group, not world)
     if language in (ScriptLanguages.PYTHON, ScriptLanguages.SHELL):
-        script_path.chmod(script_path.stat().st_mode | stat.S_IXUSR)
+        script_path.chmod(script_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP)
 
     return script_path
 

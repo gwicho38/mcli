@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import requests
+from requests.exceptions import ConnectionError, Timeout
 
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
@@ -97,6 +98,14 @@ class APIDaemonClient:
                 response.raise_for_status()
                 return response.json()
             except requests.exceptions.RequestException as e:
+                # Only retry on transient errors (connection issues, timeouts, server errors)
+                is_transient = isinstance(e, (ConnectionError, Timeout)) or (
+                    hasattr(e, "response")
+                    and e.response is not None
+                    and e.response.status_code >= 500
+                )
+                if not is_transient:
+                    raise Exception(f"Failed to connect to API daemon at {url}: {e}")
                 if attempt == self.config.retry_attempts - 1:
                     raise Exception(f"Failed to connect to API daemon at {url}: {e}")
                 logger.warning(

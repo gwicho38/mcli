@@ -142,13 +142,23 @@ def sync_init(install: bool, foreground: bool):
             start_new_session=True,
         )
 
-        # Wait a moment for daemon to start
+        # Save PID for tracking
+        pid_file = Path.home() / ".mcli" / "data" / "ipfs-daemon.pid"
+        pid_file.parent.mkdir(parents=True, exist_ok=True)
+        pid_file.write_text(str(process.pid))
+
+        # Wait for daemon to start with health check
         import time
 
+        import requests as _requests
+
         for _ in range(10):
-            time.sleep(0.5)
-            if _ipfs_daemon_running():
-                break
+            try:
+                response = _requests.get("http://127.0.0.1:5001/api/v0/id", timeout=2)
+                if response.ok:
+                    break
+            except Exception:
+                time.sleep(1)
 
         if _ipfs_daemon_running():
             success("IPFS daemon started!")
