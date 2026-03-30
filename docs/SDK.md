@@ -1168,11 +1168,13 @@ from mcli.lib.optional_deps import (
 if check_optional_dependency("redis"):
     import redis
     # Use Redis
+    pass
 
 # Import with fallback
 torch = import_optional("torch", fallback=None)
 if torch:
     # Use PyTorch
+    pass
 
 # Get list of missing optional dependencies
 missing = get_missing_dependencies(["redis", "torch", "opencv"])

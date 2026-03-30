@@ -789,6 +789,14 @@ try:
 except ImportError as e:
     logger.debug(f"Could not load ipfs command: {e}")
 
+try:
+    from mcli.self.release_notes_cmd import release_notes
+
+    self_app.add_command(release_notes, name="release-notes")
+    logger.debug("Added release-notes command to self group")
+except ImportError as e:
+    logger.debug(f"Could not load release-notes command: {e}")
+
 # NOTE: store command has been moved to mcli.app.commands_cmd for better organization
 
 # This part is important to make the command available to the CLI

@@ -1,4 +1,14 @@
-"""Config module for MCLI."""
+"""Config module for MCLI.
+
+Provides both legacy config constants and the new Pydantic-validated settings system.
+
+Usage (new):
+    from mcli.lib.config import get_settings
+    settings = get_settings()
+
+Usage (legacy, preserved for backward compatibility):
+    from mcli.lib.config import USER_CONFIG_ROOT
+"""
 
 from .config import (
     DEV_SECRETS_ROOT,
@@ -13,8 +23,14 @@ from .config import (
     get_config_for_file,
     get_mcli_rc,
 )
+from .settings import MCLISettings, get_settings, reset_settings
 
 __all__ = [
+    # New Pydantic settings
+    "MCLISettings",
+    "get_settings",
+    "reset_settings",
+    # Legacy exports (backward compat)
     "DEV_SECRETS_ROOT",
     "ENDPOINT",
     "PACKAGES_TO_SYNC",
