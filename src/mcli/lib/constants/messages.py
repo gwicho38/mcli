@@ -947,7 +947,9 @@ class SyncMessages:
     IPNS_RESOLVED = "Resolved IPNS to CID: {cid}"
     IPNS_RESOLVE_FAILED = "Could not resolve via IPNS"
     IPNS_NO_SYNC_KEY = "MCLI_SYNC_KEY not set — cannot use IPNS auto-resolve"
-    IPNS_SYNC_KEY_HINT = "[dim]Set MCLI_SYNC_KEY to enable IPNS. Share same key with teammates.[/dim]"
+    IPNS_SYNC_KEY_HINT = (
+        "[dim]Set MCLI_SYNC_KEY to enable IPNS. Share same key with teammates.[/dim]"
+    )
     IPNS_PULL_HINT = "[dim]Or pull with explicit CID: mcli sync pull <CID>[/dim]"
 
     # Auto-daemon messages
