@@ -460,7 +460,9 @@ def sync_push_command(global_mode: bool, description: str):
 @click.option("--output", "-o", type=click.Path(path_type=Path), help="Output file path")
 @click.option("--no-verify", is_flag=True, help="Skip hash verification")
 @click.option("--repo", "-r", help="Override repo name for IPNS resolution (cross-repo pull)")
-def sync_pull_command(cid: Optional[str], output: Optional[Path], no_verify: bool, repo: Optional[str]):
+def sync_pull_command(
+    cid: Optional[str], output: Optional[Path], no_verify: bool, repo: Optional[str]
+):
     """⬇️ Pull workflow state from IPFS.
 
     If CID is provided, retrieves that exact version. If CID is omitted and
