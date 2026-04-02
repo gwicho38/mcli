@@ -34,6 +34,14 @@ from typing import Optional
 import requests
 
 from mcli.lib.constants import FileNames, SyncMessages
+from mcli.lib.ipns_manager import (
+    derive_key_info,
+    ensure_key_imported,
+    get_repo_name,
+    get_sync_key,
+    publish_to_ipns,
+    resolve_ipns,
+)
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.paths import get_data_dir
 
@@ -322,6 +330,15 @@ class IPFSSync:
                     self.sync_history = self.sync_history[-MAX_HISTORY:]
                 self._save_sync_history()
 
+                # Publish to IPNS if sync key is configured
+                sync_key = get_sync_key()
+                if sync_key:
+                    repo = get_repo_name()
+                    key_info = derive_key_info(sync_key, repo, "global")
+                    ipns_name = ensure_key_imported(key_info)
+                    if ipns_name:
+                        publish_to_ipns(cid, key_info.key_name)
+
             return cid
 
         except Exception as e:
@@ -358,6 +375,47 @@ class IPFSSync:
                 return None
 
         return data.get("commands", {})
+
+    def pull_latest(
+        self,
+        scope: str = "global",
+        repo_name: Optional[str] = None,
+        verify: bool = True,
+    ) -> Optional[dict]:
+        """Pull the latest workflow state by resolving via IPNS.
+
+        Requires MCLI_SYNC_KEY to be set. Uses deterministic IPNS key
+        derivation to find the latest CID without explicit CID sharing.
+
+        Args:
+            scope: Sync scope (e.g. "global" or "local")
+            repo_name: Override auto-detected repo name (for cross-repo pull)
+            verify: Whether to verify hash integrity
+
+        Returns:
+            Command data if successful, None otherwise
+        """
+        sync_key = get_sync_key()
+        if not sync_key:
+            logger.warning("MCLI_SYNC_KEY not set — cannot resolve via IPNS")
+            return None
+
+        repo = repo_name or get_repo_name()
+        key_info = derive_key_info(sync_key, repo, scope)
+
+        # Ensure key is in Kubo so we can resolve
+        ipns_name = ensure_key_imported(key_info)
+        if not ipns_name:
+            logger.error("Failed to import IPNS key into Kubo")
+            return None
+
+        # Resolve IPNS to CID
+        cid = resolve_ipns(ipns_name)
+        if not cid:
+            logger.error("IPNS resolution failed — no workflows published yet?")
+            return None
+
+        return self.pull(cid, verify=verify)
 
     def get_history(self, limit: int = 10) -> list[dict]:
         """

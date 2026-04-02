@@ -409,7 +409,8 @@ def sync_push_command(global_mode: bool, description: str):
 
     Uploads your current command lockfile to IPFS and returns an immutable
     CID (Content Identifier) that anyone can use to retrieve the exact same
-    workflow state.
+    workflow state. If MCLI_SYNC_KEY is set, also publishes to IPNS for
+    automatic resolution by teammates.
 
     Examples:
         mcli sync push
@@ -417,6 +418,8 @@ def sync_push_command(global_mode: bool, description: str):
         mcli sync push --global
     """
     from mcli.lib.ipfs_sync import IPFSSync
+    from mcli.lib.ipfs_utils import ensure_daemon_running
+    from mcli.lib.ipns_manager import get_sync_key
 
     workflows_dir = get_custom_commands_dir(global_mode=global_mode)
     lockfile_path = workflows_dir / "commands.lock.json"
@@ -426,22 +429,14 @@ def sync_push_command(global_mode: bool, description: str):
         info(SyncMessages.RUN_UPDATE_LOCKFILE)
         return
 
-    ipfs = IPFSSync()
-
-    # Check if IPFS is available
-    if not ipfs._check_local_ipfs():
-        error(SyncMessages.NO_LOCAL_IPFS_DAEMON)
-        console.print()
-        console.print(SyncMessages.IPFS_SETUP_HEADER)
-        console.print(SyncMessages.IPFS_SETUP_STEP_1)
-        console.print(SyncMessages.IPFS_SETUP_STEP_1_ALT)
-        console.print(SyncMessages.IPFS_SETUP_STEP_2)
-        console.print(SyncMessages.IPFS_SETUP_STEP_3)
-        console.print(SyncMessages.IPFS_SETUP_STEP_4)
+    # Auto-ensure daemon is running
+    if not ensure_daemon_running():
+        error(SyncMessages.DAEMON_START_FAILED)
         return
 
     info(SyncMessages.UPLOADING_TO_IPFS)
 
+    ipfs = IPFSSync()
     cid = ipfs.push(lockfile_path, description=description or "")
 
     if cid:
@@ -451,33 +446,65 @@ def sync_push_command(global_mode: bool, description: str):
         console.print(SyncMessages.RETRIEVE_COMMAND.format(cid=cid))
         console.print(SyncMessages.VIEW_BROWSER_HINT)
         console.print(SyncMessages.IPFS_GATEWAY_URL.format(cid=cid))
+
+        # Show IPNS info if published
+        if get_sync_key():
+            console.print()
+            info("Teammates can pull latest with: mcli sync pull")
     else:
         error(SyncMessages.FAILED_PUSH_IPFS)
 
 
 @sync_group.command(name="pull")
-@click.argument("cid")
+@click.argument("cid", required=False)
 @click.option("--output", "-o", type=click.Path(path_type=Path), help="Output file path")
 @click.option("--no-verify", is_flag=True, help="Skip hash verification")
-def sync_pull_command(cid: str, output: Optional[Path], no_verify: bool):
-    """⬇️ Pull workflow state from IPFS by CID.
+@click.option("--repo", "-r", help="Override repo name for IPNS resolution (cross-repo pull)")
+def sync_pull_command(
+    cid: Optional[str], output: Optional[Path], no_verify: bool, repo: Optional[str]
+):
+    """⬇️ Pull workflow state from IPFS.
 
-    Retrieves a command lockfile from IPFS using its Content Identifier (CID).
-    The CID guarantees you get the exact same content that was uploaded.
+    If CID is provided, retrieves that exact version. If CID is omitted and
+    MCLI_SYNC_KEY is set, automatically resolves the latest via IPNS.
 
     Examples:
-        mcli sync pull QmXyZ123...
-        mcli sync pull QmXyZ123... -o my-commands.json
-        mcli sync pull QmXyZ123... --no-verify
+        mcli sync pull                           # Auto-resolve via IPNS
+        mcli sync pull QmXyZ123...               # Pull specific CID
+        mcli sync pull --repo other-project      # Pull from different repo
+        mcli sync pull QmXyZ123... -o my-cmds.json
     """
     import json
 
     from mcli.lib.ipfs_sync import IPFSSync
-
-    info(SyncMessages.RETRIEVING_FROM_IPFS.format(cid=cid))
+    from mcli.lib.ipfs_utils import ensure_daemon_running
 
     ipfs = IPFSSync()
-    data = ipfs.pull(cid, verify=not no_verify)
+
+    if cid:
+        # Explicit CID — just retrieve it
+        info(SyncMessages.RETRIEVING_FROM_IPFS.format(cid=cid))
+        data = ipfs.pull(cid, verify=not no_verify)
+    else:
+        # No CID — resolve via IPNS
+        if not ensure_daemon_running():
+            error(SyncMessages.DAEMON_START_FAILED)
+            return
+
+        info(SyncMessages.IPNS_RESOLVING)
+        data = ipfs.pull_latest(scope="global", repo_name=repo)
+
+        if data is None:
+            from mcli.lib.ipns_manager import get_sync_key
+
+            if not get_sync_key():
+                error(SyncMessages.IPNS_NO_SYNC_KEY)
+                console.print(SyncMessages.IPNS_SYNC_KEY_HINT)
+                console.print(SyncMessages.IPNS_PULL_HINT)
+            else:
+                error(SyncMessages.IPNS_RESOLVE_FAILED)
+                console.print(SyncMessages.IPNS_PULL_HINT)
+            return
 
     if data:
         success(SyncMessages.RETRIEVED_FROM_IPFS)
@@ -486,7 +513,7 @@ def sync_pull_command(cid: str, output: Optional[Path], no_verify: bool):
         if output:
             output_path = output
         else:
-            output_path = Path(f"commands_{cid[:8]}.json")
+            output_path = Path(f"commands_{(cid or 'latest')[:8]}.json")
 
         # Write to file
         with open(output_path, "w") as f:
@@ -500,7 +527,6 @@ def sync_pull_command(cid: str, output: Optional[Path], no_verify: bool):
 
         if "version" in data:
             console.print(SyncMessages.VERSION_LABEL.format(version=data["version"]))
-
     else:
         error(SyncMessages.FAILED_RETRIEVE_IPFS)
         info(SyncMessages.CID_INVALID_OR_NOT_PROPAGATED)
@@ -579,8 +605,6 @@ def sync_now(is_global: bool, description: str):
         mcli sync now --global           # Sync global workflows
         mcli sync now -d "v1.0 release"  # Sync with description
     """
-    from mcli.lib.ipfs_sync import IPFSSync
-
     scope = "global" if is_global else "local"
     workflows_dir = get_custom_commands_dir(global_mode=is_global)
     loader = ScriptLoader(workflows_dir)
@@ -600,12 +624,16 @@ def sync_now(is_global: bool, description: str):
 
     # Step 3: Push to IPFS
     info("⬆️ Pushing to IPFS...")
-    ipfs = IPFSSync()
+    from mcli.lib.ipfs_utils import ensure_daemon_running
 
-    if not ipfs._check_local_ipfs():
-        warning("IPFS daemon not running. Lockfile updated but not pushed to IPFS.")
-        info("Start IPFS with: ipfs daemon")
+    if not ensure_daemon_running():
+        warning("IPFS daemon not available. Lockfile updated but not pushed to IPFS.")
         return 0
+
+    from mcli.lib.ipfs_sync import IPFSSync
+    from mcli.lib.ipns_manager import get_sync_key
+
+    ipfs = IPFSSync()
 
     lockfile_path = loader.lockfile_path
     cid = ipfs.push(lockfile_path, description=description or "")
@@ -614,6 +642,8 @@ def sync_now(is_global: bool, description: str):
         success("✅ Sync complete!")
         console.print(f"\n[bold cyan]CID:[/bold cyan] {cid}")
         console.print(f"[dim]Retrieve with: mcli sync pull {cid}[/dim]")
+        if get_sync_key():
+            console.print("[dim]Teammates can pull latest with: mcli sync pull[/dim]")
     else:
         error("Failed to push to IPFS.")
         return 1

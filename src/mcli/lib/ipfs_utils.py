@@ -14,6 +14,10 @@ from typing import Optional
 
 import requests
 
+from mcli.lib.logger.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 def ipfs_installed() -> bool:
     """Check if the ``ipfs`` binary is on PATH."""
@@ -145,3 +149,86 @@ def validate_ipfs_config() -> bool:
         return True
     except (json.JSONDecodeError, OSError):
         return False
+
+
+def ensure_daemon_running() -> bool:
+    """Ensure an IPFS daemon is running, starting one if needed.
+
+    Reuses any existing daemon on port 5001 (including one started by lsh).
+    If no daemon is running, attempts to install (with consent), initialize,
+    and start one.
+
+    Returns True if a daemon is available, False otherwise.
+    """
+    import sys
+    import time
+
+    from mcli.lib.constants import IpfsDefaults
+
+    # Already running? (Could be mcli's or lsh's daemon — doesn't matter)
+    if ipfs_daemon_running():
+        logger.info("Reusing existing IPFS daemon on port 5001")
+        return True
+
+    # Not installed?
+    if not ipfs_installed():
+        if not sys.stdin.isatty():
+            logger.warning("IPFS not installed and non-interactive — cannot auto-install")
+            return False
+
+        pm = which_package_manager()
+        if not pm:
+            logger.error("IPFS not installed and no package manager found")
+            return False
+
+        try:
+            answer = input("IPFS (Kubo) is required for sync. Install now? [Y/n] ")
+        except EOFError:
+            return False
+
+        if answer.strip().lower() in ("", "y", "yes"):
+            cmd = IpfsDefaults.INSTALL_COMMANDS.get(pm)
+            if cmd:
+                result = subprocess.run(cmd, capture_output=False)
+                if result.returncode != 0 or not ipfs_installed():
+                    logger.error("Failed to install IPFS")
+                    return False
+                logger.info("IPFS installed successfully")
+            else:
+                return False
+        else:
+            return False
+
+    # Initialize if needed
+    if not ipfs_initialized():
+        result = subprocess.run(
+            ["ipfs", "init"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            logger.error(f"Failed to initialize IPFS: {result.stderr.strip()}")
+            return False
+        logger.info("IPFS repository initialized")
+
+    # Start daemon
+    process = subprocess.Popen(
+        ["ipfs", "daemon"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+    # Poll until ready
+    timeout = IpfsDefaults.DAEMON_STARTUP_TIMEOUT
+    interval = IpfsDefaults.DAEMON_POLL_INTERVAL_MS / 1000.0
+    elapsed = 0.0
+    while elapsed < timeout:
+        time.sleep(interval)
+        elapsed += interval
+        if ipfs_daemon_running():
+            logger.info(f"IPFS daemon started (PID {process.pid})")
+            return True
+
+    logger.error("IPFS daemon failed to start within timeout")
+    return False

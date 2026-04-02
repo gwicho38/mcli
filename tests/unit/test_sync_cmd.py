@@ -177,14 +177,16 @@ class TestSyncPushCommand:
 class TestSyncPullCommand:
     """Tests for the sync pull command."""
 
-    def test_sync_pull_requires_cid(self):
-        """Test sync pull requires a CID argument."""
+    def test_sync_pull_no_cid_uses_ipns(self):
+        """Test sync pull with no CID attempts IPNS auto-resolve."""
         runner = CliRunner()
 
-        result = runner.invoke(sync_group, ["pull"])
+        with patch("mcli.lib.ipfs_utils.ensure_daemon_running", return_value=False):
+            result = runner.invoke(sync_group, ["pull"])
 
-        # Should fail or prompt for CID
-        assert result.exit_code != 0 or "cid" in result.output.lower()
+        # Should exit cleanly but report daemon failure or IPNS error
+        assert result.exit_code in [0, 1]
+        assert "daemon" in result.output.lower() or "ipns" in result.output.lower() or "sync" in result.output.lower()
 
     def test_sync_pull_invalid_cid(self):
         """Test sync pull with invalid CID format."""
