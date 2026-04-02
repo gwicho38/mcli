@@ -939,6 +939,25 @@ class SyncMessages:
     SYNCED_AT_LABEL = "[bold]Synced:[/bold] {timestamp}"
     DESCRIPTION_LABEL = "[bold]Description:[/bold] {description}"
 
+    # IPNS sync messages
+    IPNS_PUBLISHING = "Publishing to IPNS..."
+    IPNS_PUBLISHED = "Published to IPNS: {name}"
+    IPNS_PUBLISH_FAILED = "IPNS publish failed (workflows still on IPFS)"
+    IPNS_RESOLVING = "Resolving latest via IPNS..."
+    IPNS_RESOLVED = "Resolved IPNS to CID: {cid}"
+    IPNS_RESOLVE_FAILED = "Could not resolve via IPNS"
+    IPNS_NO_SYNC_KEY = "MCLI_SYNC_KEY not set — cannot use IPNS auto-resolve"
+    IPNS_SYNC_KEY_HINT = "[dim]Set MCLI_SYNC_KEY to enable IPNS. Share same key with teammates.[/dim]"
+    IPNS_PULL_HINT = "[dim]Or pull with explicit CID: mcli sync pull <CID>[/dim]"
+
+    # Auto-daemon messages
+    DAEMON_REUSING = "Reusing existing IPFS daemon on port 5001"
+    DAEMON_STARTING = "Starting IPFS daemon..."
+    DAEMON_STARTED = "IPFS daemon started (PID {pid})"
+    DAEMON_START_FAILED = "Failed to start IPFS daemon"
+    DAEMON_INSTALL_PROMPT = "IPFS (Kubo) is required for sync. Install now? [Y/n] "
+    DAEMON_INSTALL_SKIPPED = "IPFS not installed. Run: mcli self ipfs setup"
+
     # Directory errors
     DIR_NOT_EXIST = "Commands directory does not exist: {path}"
 

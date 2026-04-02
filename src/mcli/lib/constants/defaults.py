@@ -143,6 +143,16 @@ class IpfsDefaults:
         "choco": ["choco", "install", "ipfs", "-y"],
     }
 
+    # IPNS settings
+    IPNS_KEY_PREFIX = "mcli-"
+    IPNS_KEY_DERIVATION_CONTEXT = "mcli-ipns-v1"
+    IPNS_PUBLISH_TIMEOUT = 120
+    IPNS_RESOLVE_TIMEOUT = 30
+    IPNS_LIFETIME = "87600h"
+    KUBO_API_URL = "http://127.0.0.1:5001/api/v0"
+    DAEMON_STARTUP_TIMEOUT = 15
+    DAEMON_POLL_INTERVAL_MS = 500
+
 
 class ImportDefaults:
     """Import command default values."""
