@@ -460,19 +460,32 @@ def sync_push_command(global_mode: bool, description: str):
 @click.option("--output", "-o", type=click.Path(path_type=Path), help="Output file path")
 @click.option("--no-verify", is_flag=True, help="Skip hash verification")
 @click.option("--repo", "-r", help="Override repo name for IPNS resolution (cross-repo pull)")
+@click.option(
+    "--workflows-dir",
+    "-w",
+    type=click.Path(path_type=Path, file_okay=False),
+    help="Reconstruct script files into this directory (per-script CIDs in manifest)",
+)
 def sync_pull_command(
-    cid: Optional[str], output: Optional[Path], no_verify: bool, repo: Optional[str]
+    cid: Optional[str],
+    output: Optional[Path],
+    no_verify: bool,
+    repo: Optional[str],
+    workflows_dir: Optional[Path],
 ):
     """⬇️ Pull workflow state from IPFS.
 
     If CID is provided, retrieves that exact version. If CID is omitted and
-    MCLI_SYNC_KEY is set, automatically resolves the latest via IPNS.
+    MCLI_SYNC_KEY is set, automatically resolves the latest via IPNS. With
+    --workflows-dir, also reconstructs each command's script file from its
+    per-script CID embedded in the manifest.
 
     Examples:
-        mcli sync pull                           # Auto-resolve via IPNS
-        mcli sync pull QmXyZ123...               # Pull specific CID
-        mcli sync pull --repo other-project      # Pull from different repo
+        mcli sync pull                                 # Auto-resolve via IPNS
+        mcli sync pull QmXyZ123...                     # Pull specific CID
+        mcli sync pull --repo other-project            # Pull from different repo
         mcli sync pull QmXyZ123... -o my-cmds.json
+        mcli sync pull QmXyZ123... -w ./.mcli/workflows
     """
     import json
 
@@ -527,6 +540,22 @@ def sync_pull_command(
 
         if "version" in data:
             console.print(SyncMessages.VERSION_LABEL.format(version=data["version"]))
+
+        # Optional: reconstruct script files from per-script CIDs
+        if workflows_dir and cid:
+            try:
+                written = ipfs.pull_workflows(cid, workflows_dir, verify=not no_verify)
+            except ValueError as exc:
+                error(f"Hash verification failed: {exc}")
+                return
+            if written:
+                success(f"Restored {len(written)} script file(s) to {workflows_dir}")
+                for path in written:
+                    console.print(f"  [dim]{path}[/dim]")
+            else:
+                console.print(
+                    "[dim]No script files restored — manifest predates per-script CIDs.[/dim]"
+                )
     else:
         error(SyncMessages.FAILED_RETRIEVE_IPFS)
         info(SyncMessages.CID_INVALID_OR_NOT_PROPAGATED)
