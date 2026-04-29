@@ -174,8 +174,23 @@ def resolve_ipns(ipns_name: str) -> Optional[str]:
 
 
 def get_sync_key() -> Optional[str]:
-    """Return the MCLI_SYNC_KEY environment variable, or None if unset."""
-    return os.environ.get(EnvVars.MCLI_SYNC_KEY) or None
+    """Return the active sync key.
+
+    Resolution order:
+        1. ``MCLI_SYNC_KEY`` environment variable (lets users override per-shell).
+        2. The persistent on-disk store at ``$MCLI_HOME/sync_key.json``.
+
+    Returns ``None`` when neither source has a value.
+    """
+    env_key = os.environ.get(EnvVars.MCLI_SYNC_KEY)
+    if env_key:
+        return env_key
+
+    # Lazy import to avoid a hard dependency cycle if the store module is
+    # ever extended to read IPNS state.
+    from mcli.lib.sync_key_store import SyncKeyStore
+
+    return SyncKeyStore().get()
 
 
 def get_repo_name() -> str:

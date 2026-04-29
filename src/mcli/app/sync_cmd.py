@@ -7,6 +7,7 @@ Provides:
 """
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -832,3 +833,111 @@ def sync_info(is_global: bool):
     else:
         console.print("  Installed: No")
         console.print("  [dim]Install with: brew install ipfs[/dim]")
+
+
+@sync_group.group(name="key")
+def sync_key_group():
+    """🔑 Manage the persistent IPNS sync key.
+
+    Generates / shows / sets / clears the shared secret used to derive
+    a deterministic IPNS name for cross-host workflow sync. The
+    ``MCLI_SYNC_KEY`` environment variable, if set, always wins over
+    the on-disk value.
+    """
+
+
+def _mask_key(key: str) -> str:
+    if len(key) <= 12:
+        return "*" * len(key)
+    return f"{key[:4]}...{key[-4:]}"
+
+
+@sync_key_group.command(name="gen")
+@click.option("--force", "-f", is_flag=True, help="Overwrite an existing key")
+@click.option("--show", is_flag=True, help="Print the full key (default masks it)")
+def sync_key_gen(force: bool, show: bool):
+    """Generate and persist a new 64-char hex sync key.
+
+    Examples:
+        mcli sync key gen
+        mcli sync key gen --show
+        mcli sync key gen --force --show
+    """
+    from mcli.lib.sync_key_store import SyncKeyStore
+
+    store = SyncKeyStore()
+    try:
+        key = store.generate(force=force)
+    except FileExistsError:
+        error("A sync key is already configured.")
+        info("Use --force to overwrite, or 'mcli sync key show' to view it.")
+        return 1
+
+    success(f"Generated sync key at {store.path}")
+    if show:
+        console.print(f"[bold cyan]{key}[/bold cyan]")
+    else:
+        console.print(f"[dim]Key: {_mask_key(key)} (use --show to print full)[/dim]")
+    console.print(
+        "[dim]Share this key with teammates / your other hosts. "
+        "Then run `mcli sync key set <key>` on each peer.[/dim]"
+    )
+    return 0
+
+
+@sync_key_group.command(name="set")
+@click.argument("key")
+def sync_key_set(key: str):
+    """Persist an existing 64-char hex sync key.
+
+    Use this on a second host after copying the key generated on the
+    first.
+    """
+    from mcli.lib.sync_key_store import SyncKeyStore
+
+    try:
+        SyncKeyStore().set(key.strip())
+    except ValueError as exc:
+        error(str(exc))
+        return 1
+    success("Sync key stored.")
+    return 0
+
+
+@sync_key_group.command(name="show")
+@click.option("--reveal", is_flag=True, help="Print the full key (default masks it)")
+def sync_key_show(reveal: bool):
+    """Show the currently configured sync key (masked unless --reveal)."""
+    from mcli.lib.sync_key_store import SyncKeyStore
+
+    env_value = os.environ.get("MCLI_SYNC_KEY")
+    stored = SyncKeyStore().get()
+
+    if not env_value and not stored:
+        info("No sync key configured.")
+        console.print("[dim]Generate one with: mcli sync key gen[/dim]")
+        return 1
+
+    if env_value:
+        label = "MCLI_SYNC_KEY env var (overrides on-disk value)"
+        value = env_value
+    else:
+        label = "stored at " + str(SyncKeyStore().path)
+        value = stored
+
+    console.print(f"[bold]Source:[/bold] {label}")
+    console.print(f"[bold]Key:[/bold] [cyan]{value if reveal else _mask_key(value)}[/cyan]")
+    if not reveal:
+        console.print("[dim]Use --reveal to print the full key.[/dim]")
+    return 0
+
+
+@sync_key_group.command(name="clear")
+@click.confirmation_option(prompt="Remove the stored sync key?")
+def sync_key_clear():
+    """Delete the persisted sync key (env var, if set, is untouched)."""
+    from mcli.lib.sync_key_store import SyncKeyStore
+
+    SyncKeyStore().clear()
+    success("Stored sync key removed.")
+    return 0
