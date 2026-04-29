@@ -58,6 +58,7 @@ class IPFSSync:
 
     # Local IPFS daemon endpoint (default port)
     LOCAL_IPFS_API = "http://127.0.0.1:5001/api/v0/add"
+    LOCAL_IPFS_CAT = "http://127.0.0.1:5001/api/v0/cat"
 
     # Public IPFS gateways for retrieval
     RETRIEVE_GATEWAY = "https://ipfs.io/ipfs/{cid}"
@@ -280,6 +281,96 @@ class IPFSSync:
         logger.error(f"Failed to retrieve from all gateways: {cid}")
         return None
 
+    def add_file_to_ipfs(self, file_path: Path, max_retries: int = 3) -> Optional[str]:
+        """Add a single file to the local IPFS daemon and return its CID.
+
+        Used by push() to upload each workflow script body alongside the
+        manifest, so consumers can reconstruct the full workflows directory
+        on pull.
+        """
+        if not self._check_local_ipfs():
+            logger.error("Cannot add file to IPFS: local daemon unavailable")
+            return None
+
+        path = Path(file_path)
+        if not path.is_file():
+            logger.warning(f"Skipping IPFS add — file does not exist: {path}")
+            return None
+
+        def attempt_upload():
+            with open(path, "rb") as fh:
+                files = {"file": (path.name, fh.read())}
+            response = requests.post(self.LOCAL_IPFS_API, files=files, timeout=30)
+            if response.status_code == 200:
+                cid = response.json().get("Hash")
+                logger.info(f"Added {path.name} to IPFS: {cid}")
+                return (True, cid)
+            logger.warning(f"IPFS add failed for {path.name}: {response.status_code}")
+            return (False, None)
+
+        return self._retry_with_backoff(attempt_upload, max_retries=max_retries)
+
+    def fetch_file_from_ipfs(self, cid: str, timeout: int = 30) -> Optional[bytes]:
+        """Fetch raw bytes for a CID via the local daemon, falling back to gateways.
+
+        Used by pull_workflows() to reconstruct script files referenced by
+        per-script CIDs in the manifest.
+        """
+        # Local daemon first
+        if self._check_local_ipfs():
+            try:
+                response = requests.post(
+                    self.LOCAL_IPFS_CAT,
+                    params={"arg": cid},
+                    timeout=timeout,
+                )
+                if response.status_code == 200:
+                    return response.content
+                logger.warning(f"Local daemon cat failed for {cid}: {response.status_code}")
+            except Exception as e:
+                logger.warning(f"Local daemon cat error for {cid}: {e}")
+
+        # Public gateway fallback
+        for gateway_template in [self.RETRIEVE_GATEWAY] + self.ALT_GATEWAYS:
+            url = gateway_template.format(cid=cid)
+            try:
+                response = requests.get(url, timeout=timeout)
+                if response.status_code == 200:
+                    return response.content
+                logger.warning(
+                    f"Gateway {gateway_template} returned {response.status_code} for {cid}"
+                )
+            except Exception as e:
+                logger.warning(f"Gateway {gateway_template} error for {cid}: {e}")
+        return None
+
+    def _embed_script_cids(self, command_data: dict, workflows_dir: Path) -> dict:
+        """Augment a lockfile dict in-memory with per-script IPFS CIDs.
+
+        Reads each command's ``file`` from ``workflows_dir``, adds it to IPFS,
+        and stores the resulting CID as ``script_cid`` on the entry. Bumps
+        the manifest version to "2.1" to signal that script bodies are
+        retrievable.
+        """
+        commands = command_data.get("commands", {})
+        any_uploaded = False
+        for name, entry in commands.items():
+            script_filename = entry.get("file")
+            if not script_filename:
+                continue
+            script_path = workflows_dir / script_filename
+            if not script_path.is_file():
+                logger.warning(f"Skipping '{name}' — script file missing: {script_path}")
+                continue
+            cid = self.add_file_to_ipfs(script_path)
+            if cid:
+                entry["script_cid"] = cid
+                any_uploaded = True
+
+        if any_uploaded:
+            command_data["version"] = "2.1"
+        return command_data
+
     def push(self, command_lock_path: Path, description: str = "") -> Optional[str]:
         """
         Push command state to IPFS.
@@ -295,6 +386,12 @@ class IPFSSync:
             # Load command state
             with open(command_lock_path) as f:
                 command_data = json.load(f)
+
+            # Add each workflow script to IPFS so consumers can reconstruct
+            # the full workflows directory on pull. Operates on the in-memory
+            # copy so the on-disk lockfile stays untouched.
+            workflows_dir = Path(command_lock_path).parent
+            command_data = self._embed_script_cids(command_data, workflows_dir)
 
             # Add sync metadata
             sync_data = {
@@ -375,6 +472,74 @@ class IPFSSync:
                 return None
 
         return data.get("commands", {})
+
+    def pull_workflows(
+        self,
+        cid: str,
+        workflows_dir: Path,
+        verify: bool = True,
+    ) -> list[Path]:
+        """Pull a manifest and reconstruct the workflow script files on disk.
+
+        Walks each command entry in the retrieved manifest, fetches its
+        ``script_cid`` (if present) from IPFS, verifies the recorded
+        ``content_hash``, and writes the file to ``workflows_dir``.
+
+        Returns the list of files written. If the manifest predates per-script
+        CIDs (lockfile schema < 2.1), the manifest is still pulled but no
+        files are written and a warning is logged.
+
+        Raises:
+            ValueError: when a fetched script's SHA-256 does not match the
+                ``content_hash`` recorded in the lockfile.
+        """
+        manifest = self.pull(cid, verify=verify)
+        if not manifest:
+            return []
+
+        commands = manifest.get("commands", {})
+        # `pull()` strips the outer envelope, so commands maps directly.
+        # Some callers still get the v2.x nested shape — handle both.
+        if (
+            isinstance(commands, dict)
+            and "commands" in commands
+            and isinstance(commands["commands"], dict)
+        ):
+            commands = commands["commands"]
+
+        if not commands:
+            return []
+
+        workflows_dir = Path(workflows_dir)
+        workflows_dir.mkdir(parents=True, exist_ok=True)
+
+        written: list[Path] = []
+        for name, entry in commands.items():
+            script_filename = entry.get("file")
+            script_cid = entry.get("script_cid")
+            if not script_filename or not script_cid:
+                logger.warning(f"Skipping '{name}': manifest predates per-script CID sync")
+                continue
+
+            payload = self.fetch_file_from_ipfs(script_cid)
+            if payload is None:
+                logger.error(f"Failed to fetch script for '{name}' (cid={script_cid})")
+                continue
+
+            expected_hash = entry.get("content_hash")
+            if expected_hash:
+                expected_value = expected_hash.split(":", 1)[-1]
+                actual = hashlib.sha256(payload).hexdigest()
+                if actual != expected_value:
+                    raise ValueError(
+                        f"hash mismatch for '{name}': expected {expected_value}, got {actual}"
+                    )
+
+            target = workflows_dir / script_filename
+            target.write_bytes(payload)
+            written.append(target)
+
+        return written
 
     def pull_latest(
         self,
