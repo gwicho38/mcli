@@ -495,20 +495,17 @@ def sync_pull_command(
 
     ipfs = IPFSSync()
 
-    if cid:
-        # Explicit CID — just retrieve it
-        info(SyncMessages.RETRIEVING_FROM_IPFS.format(cid=cid))
-        data = ipfs.pull(cid, verify=not no_verify)
-    else:
-        # No CID — resolve via IPNS
+    if not cid:
+        # No CID — resolve via IPNS, then fall through to the explicit-CID flow
+        # so that --workflows-dir extraction also works for IPNS-resolved pulls.
         if not ensure_daemon_running():
             error(SyncMessages.DAEMON_START_FAILED)
             return
 
         info(SyncMessages.IPNS_RESOLVING)
-        data = ipfs.pull_latest(scope="global", repo_name=repo)
+        cid = ipfs.resolve_latest_cid(scope="global", repo_name=repo)
 
-        if data is None:
+        if not cid:
             from mcli.lib.ipns_manager import get_sync_key
 
             if not get_sync_key():
@@ -519,6 +516,10 @@ def sync_pull_command(
                 error(SyncMessages.IPNS_RESOLVE_FAILED)
                 console.print(SyncMessages.IPNS_PULL_HINT)
             return
+
+    # Explicit or just-resolved CID — retrieve it
+    info(SyncMessages.RETRIEVING_FROM_IPFS.format(cid=cid))
+    data = ipfs.pull(cid, verify=not no_verify)
 
     if data:
         success(SyncMessages.RETRIEVED_FROM_IPFS)
@@ -543,7 +544,7 @@ def sync_pull_command(
             console.print(SyncMessages.VERSION_LABEL.format(version=data["version"]))
 
         # Optional: reconstruct script files from per-script CIDs
-        if workflows_dir and cid:
+        if workflows_dir:
             try:
                 written = ipfs.pull_workflows(cid, workflows_dir, verify=not no_verify)
             except ValueError as exc:
