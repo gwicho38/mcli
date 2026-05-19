@@ -30,10 +30,10 @@ jobs:
     name: Run Tests
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest]  # self-hosted linux
         python-version: ['3.10', '3.11', '3.12']
     
-    runs-on: ${{ matrix.platform }}
+    runs-on: [self-hosted, linux, x64]
     
     steps:
     - name: Checkout code
@@ -84,7 +84,7 @@ jobs:
         
   code-quality:
     name: Code Quality Checks
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     
     steps:
     - name: Checkout code
@@ -126,7 +126,7 @@ jobs:
   test-summary:
     name: Test Summary
     needs: [test, code-quality]
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     if: always()
     
     steps:
