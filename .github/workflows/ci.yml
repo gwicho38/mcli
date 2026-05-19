@@ -13,7 +13,7 @@ env:
 jobs:
   lint-and-format:
     name: Lint and Format Check
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
 
     steps:
     - name: Checkout code
@@ -52,12 +52,12 @@ jobs:
 
   test-rust:
     name: Test Rust Extensions
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, linux, x64]
     continue-on-error: true  # Non-blocking: macOS has LLVM version mismatch, tests pass on Ubuntu
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]  # self-hosted linux
 
     steps:
     - name: Checkout code
@@ -91,12 +91,12 @@ jobs:
 
   test-python:
     name: Test Python Package
-    runs-on: ${{ matrix.os }}
+    runs-on: [self-hosted, linux, x64]
     continue-on-error: true  # Some tests require optional deps (pandas, pydot) not in [dev]
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]  # self-hosted linux
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
@@ -155,7 +155,7 @@ jobs:
 
   integration-test:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     continue-on-error: true  # Non-blocking: Rust-Python integration depends on optional extensions
     if: always()  # Run even if test-python or test-rust fail
     needs: [test-python, test-rust]
@@ -234,7 +234,7 @@ jobs:
 
   build-package:
     name: Build Distribution Package
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     if: always()  # Run even if tests fail
     needs: [lint-and-format, test-python, test-rust, integration-test]
 
