@@ -106,3 +106,35 @@ class TestStripTriggers:
         wf.write_text(SELFHOSTED_WF)
         assert transform_file(wf) is False
         assert "pull_request:" in wf.read_text()  # untouched
+
+
+from mcli.workflow.ci.workflow_transform import (
+    render_self_hosted_workflow, write_self_hosted_workflow, SELF_HOSTED_FILENAME,
+)
+
+
+class TestSelfHostedWorkflow:
+    def test_render_includes_dispatch_always(self):
+        out = render_self_hosted_workflow("make test", with_pull_request=False)
+        assert "workflow_dispatch:" in out
+        assert "pull_request:" not in out
+        assert "runs-on: [self-hosted, Linux, X64]" in out
+        assert "make test" in out
+
+    def test_render_adds_pr_when_runner_present(self):
+        out = render_self_hosted_workflow("pytest", with_pull_request=True)
+        assert "pull_request:" in out
+        assert "${{ github.ref }}" in out  # concurrency expression intact
+
+    def test_write_creates_file(self, tmp_path):
+        wfdir = tmp_path / ".github" / "workflows"
+        wfdir.mkdir(parents=True)
+        created = write_self_hosted_workflow(wfdir, "make test", with_pull_request=True)
+        assert created is True
+        assert (wfdir / SELF_HOSTED_FILENAME).exists()
+
+    def test_write_is_idempotent(self, tmp_path):
+        wfdir = tmp_path / ".github" / "workflows"
+        wfdir.mkdir(parents=True)
+        write_self_hosted_workflow(wfdir, "make test", with_pull_request=True)
+        assert write_self_hosted_workflow(wfdir, "make test", with_pull_request=True) is False

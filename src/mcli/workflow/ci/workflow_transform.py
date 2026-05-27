@@ -101,3 +101,40 @@ def transform_file(path: Path) -> bool:
     yaml.dump(doc, buf)
     path.write_text(buf.getvalue())
     return True
+
+
+def render_self_hosted_workflow(test_command: str, with_pull_request: bool) -> str:
+    """Render the dormant self-hosted fallback workflow as YAML text."""
+    triggers = "  workflow_dispatch:\n"
+    if with_pull_request:
+        triggers += "  pull_request:\n"
+    ref = "${{ github.ref }}"
+    return (
+        f"# {MARKER}\n"
+        "name: self-hosted-ci\n"
+        "on:\n"
+        f"{triggers}"
+        "concurrency:\n"
+        f"  group: self-hosted-ci-{ref}\n"
+        "  cancel-in-progress: true\n"
+        "jobs:\n"
+        "  test:\n"
+        "    runs-on: [self-hosted, Linux, X64]\n"
+        "    timeout-minutes: 30\n"
+        "    steps:\n"
+        "      - uses: actions/checkout@v4\n"
+        "      - name: Run tests\n"
+        f"        run: {test_command}\n"
+    )
+
+
+def write_self_hosted_workflow(workflows_dir: Path, test_command: str,
+                               with_pull_request: bool) -> bool:
+    """Write self-hosted-ci.yml if absent. Returns True if created."""
+    workflows_dir = Path(workflows_dir)
+    target = workflows_dir / SELF_HOSTED_FILENAME
+    if target.exists():
+        return False
+    workflows_dir.mkdir(parents=True, exist_ok=True)
+    target.write_text(render_self_hosted_workflow(test_command, with_pull_request))
+    return True
