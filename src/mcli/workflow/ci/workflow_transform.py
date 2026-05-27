@@ -72,11 +72,12 @@ def strip_hosted_triggers(doc) -> bool:
             on["workflow_dispatch"] = None
             changed = True
     elif isinstance(on, list):
-        kept = [x for x in on if x not in ("push", "pull_request")]
-        if "workflow_dispatch" not in kept:
-            kept.append("workflow_dispatch")
-        if kept != list(on):
-            doc["on"] = kept
+        for key in ("push", "pull_request"):
+            while key in on:
+                on.remove(key)
+                changed = True
+        if "workflow_dispatch" not in on:
+            on.append("workflow_dispatch")
             changed = True
     elif isinstance(on, str):
         if on in ("push", "pull_request"):
@@ -95,6 +96,10 @@ def transform_file(path: Path) -> bool:
     doc = yaml.load(text)
     if not workflow_has_hosted_job(doc):
         return False
+    # `on:` is workflow-level. If a workflow mixes hosted and self-hosted jobs,
+    # stripping push/pull_request also removes the self-hosted job's auto-trigger.
+    # Acceptable here: the separate self-hosted-ci.yml provides the runner PR path
+    # when a runner exists. Re-add triggers by hand if a single workflow needs both.
     strip_hosted_triggers(doc)
     doc.yaml_set_start_comment(f"{MARKER}\n")
     buf = StringIO()

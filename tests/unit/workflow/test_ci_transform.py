@@ -107,6 +107,37 @@ class TestStripTriggers:
         assert transform_file(wf) is False
         assert "pull_request:" in wf.read_text()  # untouched
 
+    def test_strip_list_form_on(self, tmp_path):
+        wf = tmp_path / "ci.yml"
+        wf.write_text(
+            "name: ci\n"
+            "on: [push, pull_request]\n"
+            "jobs:\n"
+            "  test:\n"
+            "    runs-on: ubuntu-latest\n"
+            "    steps:\n"
+            "      - run: echo hi\n"
+        )
+        assert transform_file(wf) is True
+        out = wf.read_text()
+        assert "push" not in out
+        assert "pull_request" not in out
+        assert "workflow_dispatch" in out
+
+    def test_strip_string_form_on(self, tmp_path):
+        wf = tmp_path / "ci.yml"
+        wf.write_text(
+            "name: ci\n"
+            "on: push\n"
+            "jobs:\n"
+            "  test:\n"
+            "    runs-on: ubuntu-latest\n"
+            "    steps:\n"
+            "      - run: echo hi\n"
+        )
+        assert transform_file(wf) is True
+        assert "workflow_dispatch" in wf.read_text()
+
 
 from mcli.workflow.ci.workflow_transform import (
     render_self_hosted_workflow, write_self_hosted_workflow, SELF_HOSTED_FILENAME,
