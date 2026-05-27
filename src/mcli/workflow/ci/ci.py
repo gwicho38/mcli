@@ -8,7 +8,7 @@ import click
 
 from mcli.workflow.ci.workflow_transform import transform_file, write_self_hosted_workflow
 from mcli.workflow.ci.runner_status import has_online_runner
-from mcli.workflow.ci.act_runner import PreflightResult, preflight
+from mcli.workflow.ci.act_runner import PreflightResult, preflight as preflight_fn
 
 
 def current_repo_slug() -> str | None:
@@ -83,3 +83,45 @@ def migrate(dry_run):
     if created:
         click.echo(f"  created: self-hosted-ci.yml (pull_request={has_runner})")
     click.echo(f"Done. {len(changed)} workflow(s) migrated.")
+
+
+@ci.command()
+@click.option("--event", default="pull_request", show_default=True,
+              help="act event to simulate.")
+def preflight(event):
+    """Run act as the PR gate. Exit 0=pass, 1=fail, 2=cannot validate, 3=use runner."""
+    slug = current_repo_slug()
+    result = preflight_fn(slug, event)
+    if result == PreflightResult.PASS:
+        click.echo("✅ act passed — OK to open PR.")
+        raise SystemExit(0)
+    if result == PreflightResult.FAIL:
+        click.echo("❌ act failed — fix before opening PR.")
+        raise SystemExit(1)
+    # UNREACHABLE
+    if slug and has_online_runner(slug):
+        click.echo("⚠️  act unreachable here; an online runner exists — "
+                   "push and let the self-hosted runner validate.")
+        raise SystemExit(3)
+    click.echo("⚠️  act unreachable and no online runner — cannot validate this PR.")
+    raise SystemExit(2)
+
+
+@ci.command()
+def pr():
+    """preflight, then `gh pr create --fill --base main` if it passed."""
+    slug = current_repo_slug()
+    result = preflight_fn(slug)
+    if result == PreflightResult.PASS:
+        subprocess.run(["gh", "pr", "create", "--fill", "--base", "main"], check=False)
+        return
+    if result == PreflightResult.FAIL:
+        click.echo("act failed; not opening PR.")
+        raise SystemExit(1)
+    if slug and has_online_runner(slug):
+        click.echo("act unreachable; pushing so the runner can validate.")
+        subprocess.run(["git", "push", "-u", "origin", "HEAD"], check=False)
+        subprocess.run(["gh", "pr", "create", "--fill", "--base", "main"], check=False)
+        return
+    click.echo("act unreachable and no runner; refusing to open an unvalidated PR.")
+    raise SystemExit(2)
