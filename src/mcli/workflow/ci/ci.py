@@ -1,6 +1,7 @@
 """`mcli ci` — act-first CI gate and hosted-trigger migration for private repos."""
 from __future__ import annotations
 
+import stat
 import subprocess
 from pathlib import Path
 
@@ -8,7 +9,12 @@ import click
 
 from mcli.workflow.ci.workflow_transform import transform_file, write_self_hosted_workflow
 from mcli.workflow.ci.runner_status import has_online_runner
-from mcli.workflow.ci.act_runner import PreflightResult, preflight as preflight_fn
+from mcli.workflow.ci.act_runner import (
+    PreflightResult,
+    act_available,
+    docker_running,
+    preflight as preflight_fn,
+)
 
 
 def current_repo_slug() -> str | None:
@@ -125,3 +131,34 @@ def pr():
         return
     click.echo("act unreachable and no runner; refusing to open an unvalidated PR.")
     raise SystemExit(2)
+
+
+PRE_PUSH_HOOK = """#!/usr/bin/env bash
+# mcli-ci pre-push gate: validate with act before pushing.
+exec mcli ci preflight
+"""
+
+
+@ci.command()
+def doctor():
+    """Show act/docker/runner status for this repo."""
+    click.echo(f"act installed:  {act_available()}")
+    click.echo(f"docker running: {docker_running()}")
+    slug = current_repo_slug()
+    click.echo(f"repo:           {slug or '(no origin)'}")
+    if slug:
+        click.echo(f"online runner:  {has_online_runner(slug)}")
+
+
+@ci.command(name="install-hook")
+def install_hook():
+    """Install an opt-in pre-push hook that runs `mcli ci preflight`."""
+    hooks = Path(".git") / "hooks"
+    if not hooks.exists():
+        click.echo("Not a git repo (.git/hooks missing).")
+        raise SystemExit(1)
+    hook = hooks / "pre-push"
+    hook.write_text(PRE_PUSH_HOOK)
+    mode = hook.stat().st_mode
+    hook.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    click.echo(f"Installed pre-push hook at {hook}")

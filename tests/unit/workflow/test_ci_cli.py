@@ -72,3 +72,26 @@ class TestPreflightCommand:
         res = self._run(PreflightResult.UNREACHABLE, True)
         assert res.exit_code == 3  # signals: push and let runner validate
         assert "runner" in res.output.lower()
+
+
+class TestDoctorAndHook:
+    def test_doctor_reports_status(self):
+        with patch("mcli.workflow.ci.ci.act_available", return_value=True), \
+             patch("mcli.workflow.ci.ci.docker_running", return_value=False), \
+             patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"), \
+             patch("mcli.workflow.ci.ci.has_online_runner", return_value=False):
+            res = CliRunner().invoke(ci, ["doctor"])
+        assert res.exit_code == 0
+        assert "act" in res.output.lower()
+        assert "docker" in res.output.lower()
+
+    def test_install_hook_writes_pre_push(self, tmp_path, monkeypatch):
+        hooks = tmp_path / ".git" / "hooks"
+        hooks.mkdir(parents=True)
+        monkeypatch.chdir(tmp_path)
+        res = CliRunner().invoke(ci, ["install-hook"])
+        assert res.exit_code == 0
+        hook = hooks / "pre-push"
+        assert hook.exists()
+        assert "mcli ci preflight" in hook.read_text()
+        assert hook.stat().st_mode & 0o111  # executable
