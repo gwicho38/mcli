@@ -50,3 +50,23 @@ class TestRunAct:
     def test_fail(self):
         with patch("subprocess.run", return_value=_cp(1)):
             assert run_act("pull_request") == PreflightResult.FAIL
+
+
+from mcli.workflow.ci.act_runner import preflight
+
+
+class TestPreflight:
+    def test_act_passes(self):
+        with patch("mcli.workflow.ci.act_runner.probe", return_value=True), \
+             patch("mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.PASS):
+            assert preflight("o/r") == PreflightResult.PASS
+
+    def test_act_fails_blocks(self):
+        with patch("mcli.workflow.ci.act_runner.probe", return_value=True), \
+             patch("mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.FAIL):
+            assert preflight("o/r") == PreflightResult.FAIL
+
+    def test_unreachable_with_runner_is_unreachable(self):
+        # Fallback to runner is handled by the CLI layer; preflight reports UNREACHABLE.
+        with patch("mcli.workflow.ci.act_runner.probe", return_value=False):
+            assert preflight("o/r") == PreflightResult.UNREACHABLE

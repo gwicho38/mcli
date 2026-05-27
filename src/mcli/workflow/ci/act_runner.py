@@ -47,3 +47,14 @@ def run_act(event: str = "pull_request") -> PreflightResult:
     """Run act for `event`. PASS on exit 0, else FAIL. (Probe gates UNREACHABLE upstream.)"""
     proc = subprocess.run(build_act_command(event))
     return PreflightResult.PASS if proc.returncode == 0 else PreflightResult.FAIL
+
+
+def preflight(repo_slug: str, event: str = "pull_request") -> PreflightResult:
+    """Primary gate. PASS/FAIL if act can run; UNREACHABLE if act can't start here.
+
+    `repo_slug` is accepted for symmetry and future use; the runner fallback is
+    orchestrated by the CLI layer based on runner_status.has_online_runner.
+    """
+    if not probe():
+        return PreflightResult.UNREACHABLE
+    return run_act(event)
