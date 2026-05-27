@@ -102,6 +102,10 @@ def transform_file(path: Path) -> bool:
     # when a runner exists. Re-add triggers by hand if a single workflow needs both.
     strip_hosted_triggers(doc)
     doc.yaml_set_start_comment(f"{MARKER}\n")
+    # Pinning version=(1,2) at load keeps `on` a string key (not YAML 1.1 bool True).
+    # Reset it before dumping so ruamel does not prepend a `%YAML 1.2` / `---` directive
+    # to the workflow file (the key is already a plain string in the loaded document).
+    yaml.version = None
     buf = StringIO()
     yaml.dump(doc, buf)
     path.write_text(buf.getvalue())

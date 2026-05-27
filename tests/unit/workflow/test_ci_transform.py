@@ -138,6 +138,16 @@ class TestStripTriggers:
         assert transform_file(wf) is True
         assert "workflow_dispatch" in wf.read_text()
 
+    def test_no_yaml_directive_in_output(self, tmp_path):
+        # Pinning ruamel to YAML 1.2 to keep `on` a string must NOT leak a
+        # `%YAML 1.2` / `---` directive into the workflow file.
+        wf = tmp_path / "ci.yml"
+        wf.write_text(HOSTED_WF)
+        transform_file(wf)
+        out = wf.read_text()
+        assert "%YAML" not in out
+        assert not out.lstrip().startswith("---")
+
 
 from mcli.workflow.ci.workflow_transform import (
     render_self_hosted_workflow, write_self_hosted_workflow, SELF_HOSTED_FILENAME,
