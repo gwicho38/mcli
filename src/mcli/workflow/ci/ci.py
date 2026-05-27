@@ -1,6 +1,7 @@
 """`mcli ci` — act-first CI gate and hosted-trigger migration for private repos."""
 from __future__ import annotations
 
+import re
 import stat
 import subprocess
 from pathlib import Path
@@ -17,8 +18,13 @@ from mcli.workflow.ci.act_runner import (
 )
 
 
+_GITHUB_REMOTE_RE = re.compile(
+    r"(?:git@github\.com:|https://github\.com/)([^/]+/[^/]+?)(?:\.git)?/?$"
+)
+
+
 def current_repo_slug() -> str | None:
-    """owner/name from the origin remote, or None."""
+    """owner/name from a github.com origin remote, or None (non-GitHub or no remote)."""
     try:
         url = subprocess.run(
             ["git", "remote", "get-url", "origin"],
@@ -28,15 +34,15 @@ def current_repo_slug() -> str | None:
         return None
     if not url:
         return None
-    url = url.removesuffix(".git")
-    url = url.replace("git@github.com:", "").replace("https://github.com/", "")
-    return url or None
+    match = _GITHUB_REMOTE_RE.match(url)
+    return match.group(1) if match else None
 
 
 def detect_test_command() -> str:
     """Best-effort test command for the self-hosted fallback workflow."""
-    if Path("Makefile").exists():
-        txt = Path("Makefile").read_text()
+    makefile = Path("Makefile")
+    if makefile.exists():
+        txt = makefile.read_text()
         if "\ntest:" in txt or txt.startswith("test:"):
             return "make test"
     if Path("pyproject.toml").exists() or Path("pytest.ini").exists():
@@ -119,6 +125,8 @@ def pr():
     slug = current_repo_slug()
     result = preflight_fn(slug)
     if result == PreflightResult.PASS:
+        # check=False on purpose: let gh/git stream their own errors to the terminal
+        # rather than raising CalledProcessError and hiding their output.
         subprocess.run(["gh", "pr", "create", "--fill", "--base", "main"], check=False)
         return
     if result == PreflightResult.FAIL:

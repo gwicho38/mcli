@@ -95,3 +95,58 @@ class TestDoctorAndHook:
         assert hook.exists()
         assert "mcli ci preflight" in hook.read_text()
         assert hook.stat().st_mode & 0o111  # executable
+
+
+from mcli.workflow.ci import ci as ci_mod
+
+
+class TestPrCommand:
+    def _invoke(self, result, has_runner):
+        with patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"), \
+             patch("mcli.workflow.ci.ci.preflight_fn", return_value=result), \
+             patch("mcli.workflow.ci.ci.has_online_runner", return_value=has_runner), \
+             patch("mcli.workflow.ci.ci.subprocess.run") as run:
+            res = CliRunner().invoke(ci, ["pr"])
+        return res, run
+
+    def test_pr_pass_creates_pr(self):
+        res, run = self._invoke(PreflightResult.PASS, False)
+        assert res.exit_code == 0, res.output
+        assert run.call_count == 1  # gh pr create
+
+    def test_pr_fail_exit_1_no_shell(self):
+        res, run = self._invoke(PreflightResult.FAIL, False)
+        assert res.exit_code == 1
+        run.assert_not_called()
+
+    def test_pr_unreachable_no_runner_exit_2(self):
+        res, run = self._invoke(PreflightResult.UNREACHABLE, False)
+        assert res.exit_code == 2
+        run.assert_not_called()
+
+    def test_pr_unreachable_with_runner_pushes_then_prs(self):
+        res, run = self._invoke(PreflightResult.UNREACHABLE, True)
+        assert res.exit_code == 0, res.output
+        assert run.call_count == 2  # git push + gh pr create
+
+
+class TestRepoSlug:
+    def _slug(self, url):
+        cp = type("CP", (), {"stdout": url, "returncode": 0})()
+        with patch("mcli.workflow.ci.ci.subprocess.run", return_value=cp):
+            return ci_mod.current_repo_slug()
+
+    def test_https_github(self):
+        assert self._slug("https://github.com/owner/repo.git\n") == "owner/repo"
+
+    def test_ssh_github(self):
+        assert self._slug("git@github.com:owner/repo.git") == "owner/repo"
+
+    def test_https_no_dotgit_trailing_slash(self):
+        assert self._slug("https://github.com/owner/repo/") == "owner/repo"
+
+    def test_non_github_returns_none(self):
+        assert self._slug("git@bitbucket.org:owner/repo.git") is None
+
+    def test_ghe_returns_none(self):
+        assert self._slug("https://github.example.com/owner/repo.git") is None
