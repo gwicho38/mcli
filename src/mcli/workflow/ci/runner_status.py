@@ -1,4 +1,5 @@
 """Query GitHub for self-hosted runner availability via the gh CLI."""
+
 from __future__ import annotations
 
 import json
@@ -10,7 +11,9 @@ def has_online_runner(repo_slug: str) -> bool:
     try:
         proc = subprocess.run(
             ["gh", "api", f"repos/{repo_slug}/actions/runners"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False

@@ -1,4 +1,5 @@
 """Run `act` locally and classify the outcome for the PR gate."""
+
 from __future__ import annotations
 
 import shutil

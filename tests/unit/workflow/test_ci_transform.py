@@ -1,14 +1,21 @@
 """Unit tests for ci.workflow_transform."""
+
 import pytest
-from mcli.workflow.ci.workflow_transform import runs_on_is_hosted, is_hosted_label
+
+from mcli.workflow.ci.workflow_transform import is_hosted_label, runs_on_is_hosted
 
 
 class TestRunsOnClassification:
-    @pytest.mark.parametrize("label,expected", [
-        ("ubuntu-latest", True), ("ubuntu-22.04", True),
-        ("macos-14", True), ("windows-latest", True),
-        ("self-hosted", False),
-    ])
+    @pytest.mark.parametrize(
+        "label,expected",
+        [
+            ("ubuntu-latest", True),
+            ("ubuntu-22.04", True),
+            ("macos-14", True),
+            ("windows-latest", True),
+            ("self-hosted", False),
+        ],
+    )
     def test_is_hosted_label(self, label, expected):
         assert is_hosted_label(label) is expected
 
@@ -35,9 +42,7 @@ class TestRunsOnClassification:
         assert runs_on_is_hosted(None) is False
 
 
-from mcli.workflow.ci.workflow_transform import (
-    workflow_has_hosted_job, transform_file, MARKER,
-)
+from mcli.workflow.ci.workflow_transform import MARKER, transform_file, workflow_has_hosted_job
 
 HOSTED_WF = """\
 name: ci
@@ -68,6 +73,7 @@ jobs:
 class TestStripTriggers:
     def _load(self, text):
         from ruamel.yaml import YAML
+
         y = YAML()
         y.version = (1, 2)  # keep 'on' a string key, not boolean True
         return y.load(text)
@@ -150,7 +156,9 @@ class TestStripTriggers:
 
 
 from mcli.workflow.ci.workflow_transform import (
-    render_self_hosted_workflow, write_self_hosted_workflow, SELF_HOSTED_FILENAME,
+    SELF_HOSTED_FILENAME,
+    render_self_hosted_workflow,
+    write_self_hosted_workflow,
 )
 
 

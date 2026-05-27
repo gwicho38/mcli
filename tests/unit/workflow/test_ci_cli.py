@@ -1,4 +1,5 @@
 """CliRunner tests for the `mcli ci` group."""
+
 from unittest.mock import patch
 
 from click.testing import CliRunner
@@ -24,8 +25,10 @@ class TestMigrate:
         wfdir.mkdir(parents=True)
         (wfdir / "ci.yml").write_text(HOSTED_WF)
         monkeypatch.chdir(tmp_path)
-        with patch("mcli.workflow.ci.ci.has_online_runner", return_value=False), \
-             patch("mcli.workflow.ci.ci.detect_test_command", return_value="make test"):
+        with (
+            patch("mcli.workflow.ci.ci.has_online_runner", return_value=False),
+            patch("mcli.workflow.ci.ci.detect_test_command", return_value="make test"),
+        ):
             res = CliRunner().invoke(ci, ["migrate"])
         assert res.exit_code == 0, res.output
         out = (wfdir / "ci.yml").read_text()
@@ -39,8 +42,10 @@ class TestMigrate:
         wfdir.mkdir(parents=True)
         (wfdir / "ci.yml").write_text(HOSTED_WF)
         monkeypatch.chdir(tmp_path)
-        with patch("mcli.workflow.ci.ci.has_online_runner", return_value=False), \
-             patch("mcli.workflow.ci.ci.detect_test_command", return_value="make test"):
+        with (
+            patch("mcli.workflow.ci.ci.has_online_runner", return_value=False),
+            patch("mcli.workflow.ci.ci.detect_test_command", return_value="make test"),
+        ):
             res = CliRunner().invoke(ci, ["migrate", "--dry-run"])
         assert res.exit_code == 0
         assert (wfdir / "ci.yml").read_text() == HOSTED_WF  # unchanged
@@ -52,9 +57,11 @@ from mcli.workflow.ci.act_runner import PreflightResult
 
 class TestPreflightCommand:
     def _run(self, result, has_runner):
-        with patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"), \
-             patch("mcli.workflow.ci.ci.preflight_fn", return_value=result), \
-             patch("mcli.workflow.ci.ci.has_online_runner", return_value=has_runner):
+        with (
+            patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"),
+            patch("mcli.workflow.ci.ci.preflight_fn", return_value=result),
+            patch("mcli.workflow.ci.ci.has_online_runner", return_value=has_runner),
+        ):
             return CliRunner().invoke(ci, ["preflight"])
 
     def test_pass_exit_0(self):
@@ -76,10 +83,12 @@ class TestPreflightCommand:
 
 class TestDoctorAndHook:
     def test_doctor_reports_status(self):
-        with patch("mcli.workflow.ci.ci.act_available", return_value=True), \
-             patch("mcli.workflow.ci.ci.docker_running", return_value=False), \
-             patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"), \
-             patch("mcli.workflow.ci.ci.has_online_runner", return_value=False):
+        with (
+            patch("mcli.workflow.ci.ci.act_available", return_value=True),
+            patch("mcli.workflow.ci.ci.docker_running", return_value=False),
+            patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"),
+            patch("mcli.workflow.ci.ci.has_online_runner", return_value=False),
+        ):
             res = CliRunner().invoke(ci, ["doctor"])
         assert res.exit_code == 0
         assert "act" in res.output.lower()
@@ -102,10 +111,12 @@ from mcli.workflow.ci import ci as ci_mod
 
 class TestPrCommand:
     def _invoke(self, result, has_runner):
-        with patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"), \
-             patch("mcli.workflow.ci.ci.preflight_fn", return_value=result), \
-             patch("mcli.workflow.ci.ci.has_online_runner", return_value=has_runner), \
-             patch("mcli.workflow.ci.ci.subprocess.run") as run:
+        with (
+            patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"),
+            patch("mcli.workflow.ci.ci.preflight_fn", return_value=result),
+            patch("mcli.workflow.ci.ci.has_online_runner", return_value=has_runner),
+            patch("mcli.workflow.ci.ci.subprocess.run") as run,
+        ):
             res = CliRunner().invoke(ci, ["pr"])
         return res, run
 

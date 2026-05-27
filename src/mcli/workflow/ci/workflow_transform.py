@@ -1,4 +1,5 @@
 """Transform GitHub Actions workflows for act-first CI on private repos."""
+
 from __future__ import annotations
 
 from io import StringIO
@@ -39,9 +40,9 @@ def runs_on_is_hosted(runs_on) -> bool:
 # round-tripping. Round-trip preservation is a hard requirement of this transform.
 def _yaml() -> YAML:
     y = YAML()
-    y.version = (1, 2)        # critical: keeps bare `on:` a string, not boolean True
+    y.version = (1, 2)  # critical: keeps bare `on:` a string, not boolean True
     y.preserve_quotes = True
-    y.width = 4096            # avoid reflowing long lines
+    y.width = 4096  # avoid reflowing long lines
     y.indent(mapping=2, sequence=4, offset=2)
     return y
 
@@ -137,8 +138,9 @@ def render_self_hosted_workflow(test_command: str, with_pull_request: bool) -> s
     )
 
 
-def write_self_hosted_workflow(workflows_dir: Path, test_command: str,
-                               with_pull_request: bool) -> bool:
+def write_self_hosted_workflow(
+    workflows_dir: Path, test_command: str, with_pull_request: bool
+) -> bool:
     """Write self-hosted-ci.yml if absent. Returns True if created."""
     workflows_dir = Path(workflows_dir)
     target = workflows_dir / SELF_HOSTED_FILENAME

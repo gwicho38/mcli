@@ -1,4 +1,5 @@
 """`mcli ci` — act-first CI gate and hosted-trigger migration for private repos."""
+
 from __future__ import annotations
 
 import re
@@ -8,15 +9,10 @@ from pathlib import Path
 
 import click
 
-from mcli.workflow.ci.workflow_transform import transform_file, write_self_hosted_workflow
+from mcli.workflow.ci.act_runner import PreflightResult, act_available, docker_running
+from mcli.workflow.ci.act_runner import preflight as preflight_fn
 from mcli.workflow.ci.runner_status import has_online_runner
-from mcli.workflow.ci.act_runner import (
-    PreflightResult,
-    act_available,
-    docker_running,
-    preflight as preflight_fn,
-)
-
+from mcli.workflow.ci.workflow_transform import transform_file, write_self_hosted_workflow
 
 _GITHUB_REMOTE_RE = re.compile(
     r"(?:git@github\.com:|https://github\.com/)([^/]+/[^/]+?)(?:\.git)?/?$"
@@ -28,7 +24,9 @@ def current_repo_slug() -> str | None:
     try:
         url = subprocess.run(
             ["git", "remote", "get-url", "origin"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         ).stdout.strip()
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return None
@@ -77,7 +75,8 @@ def migrate(dry_run):
 
     files = sorted(p for p in wfdir.glob("*.y*ml") if p.name != "self-hosted-ci.yml")
     if dry_run:
-        from mcli.workflow.ci.workflow_transform import workflow_has_hosted_job, MARKER, _yaml
+        from mcli.workflow.ci.workflow_transform import MARKER, _yaml, workflow_has_hosted_job
+
         for f in files:
             text = f.read_text()
             if MARKER in text:
@@ -98,8 +97,7 @@ def migrate(dry_run):
 
 
 @ci.command()
-@click.option("--event", default="pull_request", show_default=True,
-              help="act event to simulate.")
+@click.option("--event", default="pull_request", show_default=True, help="act event to simulate.")
 def preflight(event):
     """Run act as the PR gate. Exit 0=pass, 1=fail, 2=cannot validate, 3=use runner."""
     slug = current_repo_slug()
@@ -112,8 +110,10 @@ def preflight(event):
         raise SystemExit(1)
     # UNREACHABLE
     if slug and has_online_runner(slug):
-        click.echo("⚠️  act unreachable here; an online runner exists — "
-                   "push and let the self-hosted runner validate.")
+        click.echo(
+            "⚠️  act unreachable here; an online runner exists — "
+            "push and let the self-hosted runner validate."
+        )
         raise SystemExit(3)
     click.echo("⚠️  act unreachable and no online runner — cannot validate this PR.")
     raise SystemExit(2)

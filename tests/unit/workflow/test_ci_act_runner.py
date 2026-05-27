@@ -1,14 +1,15 @@
 """Unit tests for ci.act_runner."""
+
 import subprocess
 from unittest.mock import patch
 
-from mcli.workflow.ci.act_runner import (
-    PreflightResult, probe, run_act, build_act_command,
-)
+from mcli.workflow.ci.act_runner import PreflightResult, build_act_command, probe, run_act
 
 
 def _cp(returncode=0, stdout=""):
-    return subprocess.CompletedProcess(args=["act"], returncode=returncode, stdout=stdout, stderr="")
+    return subprocess.CompletedProcess(
+        args=["act"], returncode=returncode, stdout=stdout, stderr=""
+    )
 
 
 class TestProbe:
@@ -17,14 +18,18 @@ class TestProbe:
             assert probe() is False
 
     def test_probe_false_when_docker_down(self):
-        with patch("shutil.which", return_value="/usr/bin/act"), \
-             patch("mcli.workflow.ci.act_runner.docker_running", return_value=False):
+        with (
+            patch("shutil.which", return_value="/usr/bin/act"),
+            patch("mcli.workflow.ci.act_runner.docker_running", return_value=False),
+        ):
             assert probe() is False
 
     def test_probe_true_when_all_ok(self):
-        with patch("shutil.which", return_value="/usr/bin/act"), \
-             patch("mcli.workflow.ci.act_runner.docker_running", return_value=True), \
-             patch("subprocess.run", return_value=_cp(0)):
+        with (
+            patch("shutil.which", return_value="/usr/bin/act"),
+            patch("mcli.workflow.ci.act_runner.docker_running", return_value=True),
+            patch("subprocess.run", return_value=_cp(0)),
+        ):
             assert probe() is True
 
 
@@ -57,13 +62,17 @@ from mcli.workflow.ci.act_runner import preflight
 
 class TestPreflight:
     def test_act_passes(self):
-        with patch("mcli.workflow.ci.act_runner.probe", return_value=True), \
-             patch("mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.PASS):
+        with (
+            patch("mcli.workflow.ci.act_runner.probe", return_value=True),
+            patch("mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.PASS),
+        ):
             assert preflight("o/r") == PreflightResult.PASS
 
     def test_act_fails_blocks(self):
-        with patch("mcli.workflow.ci.act_runner.probe", return_value=True), \
-             patch("mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.FAIL):
+        with (
+            patch("mcli.workflow.ci.act_runner.probe", return_value=True),
+            patch("mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.FAIL),
+        ):
             assert preflight("o/r") == PreflightResult.FAIL
 
     def test_unreachable_with_runner_is_unreachable(self):

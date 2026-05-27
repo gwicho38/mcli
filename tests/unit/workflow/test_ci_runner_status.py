@@ -1,4 +1,5 @@
 """Unit tests for ci.runner_status."""
+
 import json
 import subprocess
 from unittest.mock import patch
