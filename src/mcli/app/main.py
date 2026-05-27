@@ -447,6 +447,15 @@ def _add_lazy_commands(app: click.Group):
     except ImportError as e:
         logger.debug(f"Could not load sync group: {e}")
 
+    # mcli ci - act-first CI gate + hosted-trigger migration
+    try:
+        from mcli.workflow.ci.ci import ci
+
+        app.add_command(ci, name="ci")
+        logger.debug("Added ci group")
+    except ImportError as e:
+        logger.debug(f"Could not load ci group: {e}")
+
     # mcli setup - Onboarding wizard for new users
     try:
         from mcli.app.setup_cmd import setup
