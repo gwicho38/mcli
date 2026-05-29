@@ -77,6 +77,8 @@ class IPFSSync:
         self.sync_history_path = self.data_dir / FileNames.IPFS_SYNC_HISTORY_JSON
         self.sync_history = self._load_sync_history()
         self._local_ipfs_available: Optional[bool] = None
+        # Set by push() to the IPNS name if (and only if) publish succeeded.
+        self.last_ipns_name: Optional[str] = None
 
     def _load_sync_history(self) -> list[dict]:
         """Load sync history from local storage."""
@@ -427,14 +429,17 @@ class IPFSSync:
                     self.sync_history = self.sync_history[-MAX_HISTORY:]
                 self._save_sync_history()
 
-                # Publish to IPNS if sync key is configured
+                # Publish to IPNS if sync key is configured. Record whether the
+                # publish actually succeeded so callers can report honestly
+                # instead of implying IPNS resolution works when it does not.
+                self.last_ipns_name = None
                 sync_key = get_sync_key()
                 if sync_key:
                     repo = get_repo_name()
                     key_info = derive_key_info(sync_key, repo, "global")
                     ipns_name = ensure_key_imported(key_info)
                     if ipns_name:
-                        publish_to_ipns(cid, key_info.key_name)
+                        self.last_ipns_name = publish_to_ipns(cid, key_info.key_name)
 
             return cid
 

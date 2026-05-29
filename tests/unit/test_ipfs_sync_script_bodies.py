@@ -299,3 +299,47 @@ class TestPullWorkflowsRejectsPathTraversal:
 
         assert (target / "demo" / "hello.py").read_text() == SAMPLE_SCRIPT
         assert written == [target / "demo" / "hello.py"]
+
+
+class TestGroupedScriptPushUploadsBody:
+    """push() must locate and upload bodies of scripts in group subdirectories.
+
+    Regression: ScriptLoader recorded only the basename in the lockfile
+    ``file`` field, so push() could not find scripts stored in group
+    subdirectories (the normal layout from ``mcli new -g <group>``) and never
+    uploaded their bodies. ScriptLoader now records the path relative to the
+    workflows dir. (The pull-side reconstruction is covered by
+    TestPullWorkflowsRejectsPathTraversal.test_pull_workflows_allows_legit_subdir.)
+    """
+
+    def test_loader_records_relative_path_and_push_uploads_subdir_script(self, tmp_path):
+        from mcli.lib.ipfs_sync import IPFSSync
+        from mcli.lib.script_loader import ScriptLoader
+
+        workflows_dir = tmp_path / "workflows"
+        (workflows_dir / "demo").mkdir(parents=True)
+        script = workflows_dir / "demo" / "hello.py"
+        script.write_text(SAMPLE_SCRIPT)
+
+        loader = ScriptLoader(workflows_dir)
+        assert loader.save_lockfile() is True
+
+        data = json.loads(loader.lockfile_path.read_text())
+        # The `file` field must preserve the subdir so push() can find the body.
+        assert data["commands"]["hello"]["file"] == "demo/hello.py"
+
+        sync = IPFSSync()
+        with (
+            patch.object(sync, "add_file_to_ipfs", return_value="QmScriptCid") as mock_add,
+            patch.object(sync, "upload_to_ipfs", return_value="QmManifestCid") as mock_upload,
+            patch("mcli.lib.ipfs_sync.get_sync_key", return_value=None),
+            patch.object(sync, "_save_sync_history"),
+        ):
+            cid = sync.push(loader.lockfile_path)
+
+        assert cid == "QmManifestCid"
+        mock_add.assert_called_once()
+        # push must read the body from the subdir, not the workflows root.
+        assert Path(mock_add.call_args[0][0]) == script
+        commands = mock_upload.call_args[0][0]["commands"]["commands"]
+        assert commands["hello"]["script_cid"] == "QmScriptCid"

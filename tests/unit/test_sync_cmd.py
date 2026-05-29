@@ -159,6 +159,71 @@ print("Test")
             # Note: Actual behavior depends on ScriptLoader implementation
             assert result.exit_code in [0, 1]  # May fail if no scripts match
 
+    def test_update_writes_lockfile_that_push_reads(self, tmp_path):
+        """Regression: `sync update` must write the SAME lockfile `sync push` reads.
+
+        Previously `update` wrote ``workflows.lock.json`` (via ScriptLoader)
+        while `push`/`pull` read ``commands.lock.json``, so every push after an
+        update failed with "Lockfile not found". The two commands MUST agree on
+        the lockfile filename.
+        """
+        from mcli.lib.constants import FileNames
+
+        runner = CliRunner()
+        workflows_dir = tmp_path / "workflows"
+        workflows_dir.mkdir()
+        (workflows_dir / "my_cmd.py").write_text(
+            "#!/usr/bin/env python3\n"
+            "# @description: My test command\n"
+            "# @version: 2.0.0\n"
+            'print("Test")\n'
+        )
+
+        with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
+            result = runner.invoke(sync_group, ["update"])
+
+        assert result.exit_code == 0, result.output
+        # `sync push` reads exactly this path (see sync_cmd.sync_push); it MUST
+        # exist after `update`, otherwise push reports LOCKFILE_NOT_FOUND.
+        push_lockfile = workflows_dir / FileNames.COMMANDS_LOCK_JSON
+        assert push_lockfile.exists(), (
+            f"update did not create the lockfile push reads "
+            f"({FileNames.COMMANDS_LOCK_JSON}); dir contains "
+            f"{sorted(p.name for p in workflows_dir.iterdir())}"
+        )
+
+    def test_push_finds_lockfile_after_update(self, tmp_path):
+        """Regression: `sync push` locates the lockfile produced by `sync update`.
+
+        End-to-end wiring check (IPFS mocked): after `update`, `push` must NOT
+        report LOCKFILE_NOT_FOUND and must hand the produced lockfile to
+        ``IPFSSync.push``.
+        """
+        runner = CliRunner()
+        workflows_dir = tmp_path / "workflows"
+        workflows_dir.mkdir()
+        (workflows_dir / "my_cmd.py").write_text(
+            "#!/usr/bin/env python3\n# @description: c\n# @version: 1.0.0\nprint('x')\n"
+        )
+
+        with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
+            update_result = runner.invoke(sync_group, ["update"])
+            assert update_result.exit_code == 0, update_result.output
+
+            with (
+                patch("mcli.lib.ipfs_utils.ensure_daemon_running", return_value=True),
+                patch("mcli.lib.ipfs_sync.IPFSSync") as mock_sync_cls,
+            ):
+                mock_sync_cls.return_value.push.return_value = "QmFakeCid"
+                result = runner.invoke(sync_group, ["push"])
+
+        assert "not found" not in result.output.lower(), result.output
+        mock_push = mock_sync_cls.return_value.push
+        mock_push.assert_called_once()
+        # push must receive the lockfile that `update` actually wrote.
+        called_path = Path(mock_push.call_args.args[0])
+        assert called_path.exists(), f"push received non-existent lockfile: {called_path}"
+
 
 class TestSyncPushCommand:
     """Tests for the sync push command."""
@@ -173,6 +238,60 @@ class TestSyncPushCommand:
             # Should indicate IPFS is not available
             assert result.exit_code in [0, 1]
 
+    def _setup_pushable_repo(self, tmp_path):
+        """Create a workflows dir with a lockfile that `push` can read."""
+        from click.testing import CliRunner
+
+        runner = CliRunner()
+        workflows_dir = tmp_path / "workflows"
+        workflows_dir.mkdir()
+        (workflows_dir / "c.py").write_text(
+            "#!/usr/bin/env python3\n# @description: c\n# @version: 1.0.0\nprint('x')\n"
+        )
+        with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
+            assert runner.invoke(sync_group, ["update"]).exit_code == 0
+        return workflows_dir
+
+    def test_push_warns_when_ipns_publish_fails(self, tmp_path):
+        """Regression: push must NOT claim teammates can pull when IPNS publish failed.
+
+        Previously the IPNS hint was printed whenever a sync key was present,
+        even if ``publish_to_ipns`` silently failed (e.g. daemon had no peers),
+        giving a false impression that auto-resolve would work.
+        """
+        runner = CliRunner()
+        workflows_dir = self._setup_pushable_repo(tmp_path)
+
+        with (
+            patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir),
+            patch("mcli.lib.ipfs_utils.ensure_daemon_running", return_value=True),
+            patch("mcli.lib.ipns_manager.get_sync_key", return_value="k" * 64),
+            patch("mcli.lib.ipfs_sync.IPFSSync") as mock_cls,
+        ):
+            mock_cls.return_value.push.return_value = "QmCid"
+            mock_cls.return_value.last_ipns_name = None  # publish failed
+            result = runner.invoke(sync_group, ["push"])
+
+        assert "teammates can pull latest" not in result.output.lower(), result.output
+        assert "ipns publish failed" in result.output.lower(), result.output
+
+    def test_push_reports_ipns_success_when_published(self, tmp_path):
+        """When IPNS publish succeeds, push surfaces the teammate pull hint."""
+        runner = CliRunner()
+        workflows_dir = self._setup_pushable_repo(tmp_path)
+
+        with (
+            patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir),
+            patch("mcli.lib.ipfs_utils.ensure_daemon_running", return_value=True),
+            patch("mcli.lib.ipns_manager.get_sync_key", return_value="k" * 64),
+            patch("mcli.lib.ipfs_sync.IPFSSync") as mock_cls,
+        ):
+            mock_cls.return_value.push.return_value = "QmCid"
+            mock_cls.return_value.last_ipns_name = "k51qzi5fakeipnsname"
+            result = runner.invoke(sync_group, ["push"])
+
+        assert "teammates can pull latest" in result.output.lower(), result.output
+
 
 class TestSyncPullCommand:
     """Tests for the sync pull command."""
@@ -186,7 +305,11 @@ class TestSyncPullCommand:
 
         # Should exit cleanly but report daemon failure or IPNS error
         assert result.exit_code in [0, 1]
-        assert "daemon" in result.output.lower() or "ipns" in result.output.lower() or "sync" in result.output.lower()
+        assert (
+            "daemon" in result.output.lower()
+            or "ipns" in result.output.lower()
+            or "sync" in result.output.lower()
+        )
 
     def test_sync_pull_invalid_cid(self):
         """Test sync pull with invalid CID format."""

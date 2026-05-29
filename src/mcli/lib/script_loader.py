@@ -28,6 +28,7 @@ from typing import Any, Optional
 
 import click
 
+from mcli.lib.constants import FileNames
 from mcli.lib.logger.logger import get_logger, register_subprocess
 from mcli.lib.pyenv import PyEnvManager
 
@@ -140,7 +141,10 @@ class ScriptLoader:
             workflows_dir: Directory containing workflow scripts
         """
         self.workflows_dir = Path(workflows_dir).expanduser()
-        self.lockfile_path = self.workflows_dir / "workflows.lock.json"
+        # Canonical lockfile name shared with the IPFS sync path (push/pull) and
+        # the rest of the codebase. Must match FileNames.COMMANDS_LOCK_JSON,
+        # otherwise `sync update` writes a lockfile `sync push` cannot find.
+        self.lockfile_path = self.workflows_dir / FileNames.COMMANDS_LOCK_JSON
         self.loaded_commands: dict[str, click.Command] = {}
 
     def discover_scripts(self) -> list[Path]:
@@ -383,8 +387,17 @@ class ScriptLoader:
         except Exception:
             mtime = datetime.utcnow().isoformat() + "Z"
 
+        # Record the path relative to the workflows dir (POSIX, forward slashes)
+        # so the IPFS sync path can locate and reconstruct scripts living in
+        # group subdirectories. Falls back to the bare name if the script is
+        # somehow outside the workflows dir.
+        try:
+            relative_file = script_path.relative_to(self.workflows_dir).as_posix()
+        except ValueError:
+            relative_file = script_path.name
+
         return {
-            "file": script_path.name,
+            "file": relative_file,
             "language": language,
             "content_hash": content_hash,
             "version": metadata.get("version", "1.0.0"),
