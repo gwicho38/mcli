@@ -1,0 +1,189 @@
+"""Unit tests for ci.workflow_transform."""
+
+import pytest
+
+from mcli.workflow.ci.workflow_transform import is_hosted_label, runs_on_is_hosted
+
+
+class TestRunsOnClassification:
+    @pytest.mark.parametrize(
+        "label,expected",
+        [
+            ("ubuntu-latest", True),
+            ("ubuntu-22.04", True),
+            ("macos-14", True),
+            ("windows-latest", True),
+            ("self-hosted", False),
+        ],
+    )
+    def test_is_hosted_label(self, label, expected):
+        assert is_hosted_label(label) is expected
+
+    def test_string_hosted(self):
+        assert runs_on_is_hosted("ubuntu-latest") is True
+
+    def test_string_self_hosted(self):
+        assert runs_on_is_hosted("self-hosted") is False
+
+    def test_list_with_self_hosted_is_not_hosted(self):
+        assert runs_on_is_hosted(["self-hosted", "Linux", "X64"]) is False
+
+    def test_list_hosted(self):
+        assert runs_on_is_hosted(["ubuntu-latest"]) is True
+
+    def test_matrix_expression_is_conservatively_hosted(self):
+        # Unknown expansion -> assume hosted so we err toward stopping cost.
+        assert runs_on_is_hosted("${{ matrix.os }}") is True
+
+    def test_expression_referencing_self_hosted_is_not_hosted(self):
+        assert runs_on_is_hosted("${{ inputs.x }}-self-hosted") is False
+
+    def test_none(self):
+        assert runs_on_is_hosted(None) is False
+
+
+from mcli.workflow.ci.workflow_transform import MARKER, transform_file, workflow_has_hosted_job
+
+HOSTED_WF = """\
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hi
+"""
+
+SELFHOSTED_WF = """\
+name: ci
+on:
+  pull_request:
+jobs:
+  test:
+    runs-on: [self-hosted, Linux, X64]
+    steps:
+      - run: echo hi
+"""
+
+
+class TestStripTriggers:
+    def _load(self, text):
+        from ruamel.yaml import YAML
+
+        y = YAML()
+        y.version = (1, 2)  # keep 'on' a string key, not boolean True
+        return y.load(text)
+
+    def test_detects_hosted_job(self):
+        assert workflow_has_hosted_job(self._load(HOSTED_WF)) is True
+
+    def test_detects_self_hosted_only(self):
+        assert workflow_has_hosted_job(self._load(SELFHOSTED_WF)) is False
+
+    def test_transform_strips_push_and_pr(self, tmp_path):
+        wf = tmp_path / "ci.yml"
+        wf.write_text(HOSTED_WF)
+        changed = transform_file(wf)
+        out = wf.read_text()
+        assert changed is True
+        assert MARKER in out
+        assert "push:" not in out
+        assert "pull_request:" not in out
+        assert "workflow_dispatch:" in out
+        # 'on:' must survive as a string key, not become 'true:'
+        assert "\non:" in out
+        assert "\ntrue:" not in out
+
+    def test_transform_idempotent(self, tmp_path):
+        wf = tmp_path / "ci.yml"
+        wf.write_text(HOSTED_WF)
+        transform_file(wf)
+        first = wf.read_text()
+        changed_again = transform_file(wf)
+        assert changed_again is False
+        assert wf.read_text() == first
+
+    def test_transform_skips_self_hosted_only(self, tmp_path):
+        wf = tmp_path / "ci.yml"
+        wf.write_text(SELFHOSTED_WF)
+        assert transform_file(wf) is False
+        assert "pull_request:" in wf.read_text()  # untouched
+
+    def test_strip_list_form_on(self, tmp_path):
+        wf = tmp_path / "ci.yml"
+        wf.write_text(
+            "name: ci\n"
+            "on: [push, pull_request]\n"
+            "jobs:\n"
+            "  test:\n"
+            "    runs-on: ubuntu-latest\n"
+            "    steps:\n"
+            "      - run: echo hi\n"
+        )
+        assert transform_file(wf) is True
+        out = wf.read_text()
+        assert "push" not in out
+        assert "pull_request" not in out
+        assert "workflow_dispatch" in out
+
+    def test_strip_string_form_on(self, tmp_path):
+        wf = tmp_path / "ci.yml"
+        wf.write_text(
+            "name: ci\n"
+            "on: push\n"
+            "jobs:\n"
+            "  test:\n"
+            "    runs-on: ubuntu-latest\n"
+            "    steps:\n"
+            "      - run: echo hi\n"
+        )
+        assert transform_file(wf) is True
+        assert "workflow_dispatch" in wf.read_text()
+
+    def test_no_yaml_directive_in_output(self, tmp_path):
+        # Pinning ruamel to YAML 1.2 to keep `on` a string must NOT leak a
+        # `%YAML 1.2` / `---` directive into the workflow file.
+        wf = tmp_path / "ci.yml"
+        wf.write_text(HOSTED_WF)
+        transform_file(wf)
+        out = wf.read_text()
+        assert "%YAML" not in out
+        assert not out.lstrip().startswith("---")
+
+
+from mcli.workflow.ci.workflow_transform import (
+    SELF_HOSTED_FILENAME,
+    render_self_hosted_workflow,
+    write_self_hosted_workflow,
+)
+
+
+class TestSelfHostedWorkflow:
+    def test_render_includes_dispatch_always(self):
+        out = render_self_hosted_workflow("make test", with_pull_request=False)
+        assert "workflow_dispatch:" in out
+        assert "pull_request:" not in out
+        assert "runs-on: [self-hosted, Linux, X64]" in out
+        assert "make test" in out
+
+    def test_render_adds_pr_when_runner_present(self):
+        out = render_self_hosted_workflow("pytest", with_pull_request=True)
+        assert "pull_request:" in out
+        assert "${{ github.ref }}" in out  # concurrency expression intact
+
+    def test_write_creates_file(self, tmp_path):
+        wfdir = tmp_path / ".github" / "workflows"
+        wfdir.mkdir(parents=True)
+        created = write_self_hosted_workflow(wfdir, "make test", with_pull_request=True)
+        assert created is True
+        assert (wfdir / SELF_HOSTED_FILENAME).exists()
+
+    def test_write_is_idempotent(self, tmp_path):
+        wfdir = tmp_path / ".github" / "workflows"
+        wfdir.mkdir(parents=True)
+        write_self_hosted_workflow(wfdir, "make test", with_pull_request=True)
+        assert write_self_hosted_workflow(wfdir, "make test", with_pull_request=True) is False

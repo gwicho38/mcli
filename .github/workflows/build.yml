@@ -22,9 +22,9 @@ jobs:
     name: Build Package
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest]  # self-hosted linux
     
-    runs-on: ${{ matrix.platform }}
+    runs-on: [self-hosted, linux, x64]
     
     steps:
     - name: Checkout code
@@ -82,7 +82,7 @@ jobs:
   build-summary:
     name: Build Summary
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     if: always()
     
     steps:

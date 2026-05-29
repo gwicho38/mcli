@@ -28,7 +28,7 @@ import hashlib
 import json
 import time
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Optional
 
 import requests
@@ -540,7 +540,17 @@ class IPFSSync:
                         f"hash mismatch for '{name}': expected {expected_value}, got {actual}"
                     )
 
-            target = workflows_dir / script_filename
+            # SECURITY: `script_filename` comes from a remote, untrusted manifest.
+            # Contain it inside workflows_dir so a crafted manifest cannot write
+            # outside the directory via '..' segments or an absolute path.
+            rel = PurePosixPath(script_filename)
+            if rel.is_absolute() or any(part == ".." for part in rel.parts):
+                raise ValueError(f"unsafe script path in manifest: {script_filename}")
+            base = Path(workflows_dir).resolve()
+            target = (base / Path(*rel.parts)).resolve()
+            if base != target and base not in target.parents:
+                raise ValueError(f"script path escapes workflows dir: {script_filename}")
+
             # Recreate group subdirectories (e.g. "demo/hello.py") on pull.
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(payload)

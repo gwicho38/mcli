@@ -203,14 +203,113 @@ class TestPullWorkflowsExtractsScripts:
         assert not (target / "hello.py").exists()
 
 
-class TestGroupedScriptRoundTrip:
-    """Scripts living in group subdirectories must round-trip their bodies.
+class TestPullWorkflowsRejectsPathTraversal:
+    """A malicious manifest must not be able to write outside the workflows dir."""
+
+    @pytest.mark.parametrize(
+        "evil_name",
+        [
+            "../escape.py",
+            "../../escape.py",
+            "sub/../../escape.py",
+            "foo/../../../escape.py",
+        ],
+    )
+    def test_pull_workflows_rejects_relative_traversal(self, tmp_path, evil_name):
+        from mcli.lib.ipfs_sync import IPFSSync
+
+        target = tmp_path / "out"
+        target.mkdir()
+        outside = tmp_path / "escape.py"
+
+        manifest = {
+            "version": "2.1",
+            "commands": {
+                "evil": {
+                    "file": evil_name,
+                    "content_hash": _sha256(SAMPLE_SCRIPT),
+                    "script_cid": "QmScriptCid",
+                }
+            },
+        }
+
+        sync = IPFSSync()
+        with (
+            patch.object(sync, "pull", return_value=manifest),
+            patch.object(sync, "fetch_file_from_ipfs", return_value=SAMPLE_SCRIPT.encode()),
+        ):
+            with pytest.raises(ValueError, match="escapes|unsafe"):
+                sync.pull_workflows("QmManifestCid", target)
+
+        # nothing escaped the target directory
+        assert not outside.exists()
+
+    def test_pull_workflows_rejects_absolute_path(self, tmp_path):
+        from mcli.lib.ipfs_sync import IPFSSync
+
+        target = tmp_path / "out"
+        target.mkdir()
+        abs_target = tmp_path / "abs_escape.py"
+
+        manifest = {
+            "version": "2.1",
+            "commands": {
+                "evil": {
+                    "file": str(abs_target),  # absolute path in manifest
+                    "content_hash": _sha256(SAMPLE_SCRIPT),
+                    "script_cid": "QmScriptCid",
+                }
+            },
+        }
+
+        sync = IPFSSync()
+        with (
+            patch.object(sync, "pull", return_value=manifest),
+            patch.object(sync, "fetch_file_from_ipfs", return_value=SAMPLE_SCRIPT.encode()),
+        ):
+            with pytest.raises(ValueError, match="escapes|unsafe"):
+                sync.pull_workflows("QmManifestCid", target)
+
+        assert not abs_target.exists()
+
+    def test_pull_workflows_allows_legit_subdir(self, tmp_path):
+        """Group subdirectories like 'demo/hello.py' must still work."""
+        from mcli.lib.ipfs_sync import IPFSSync
+
+        target = tmp_path / "out"
+        target.mkdir()
+
+        manifest = {
+            "version": "2.1",
+            "commands": {
+                "hello": {
+                    "file": "demo/hello.py",
+                    "content_hash": _sha256(SAMPLE_SCRIPT),
+                    "script_cid": "QmScriptCid",
+                }
+            },
+        }
+
+        sync = IPFSSync()
+        with (
+            patch.object(sync, "pull", return_value=manifest),
+            patch.object(sync, "fetch_file_from_ipfs", return_value=SAMPLE_SCRIPT.encode()),
+        ):
+            written = sync.pull_workflows("QmManifestCid", target)
+
+        assert (target / "demo" / "hello.py").read_text() == SAMPLE_SCRIPT
+        assert written == [target / "demo" / "hello.py"]
+
+
+class TestGroupedScriptPushUploadsBody:
+    """push() must locate and upload bodies of scripts in group subdirectories.
 
     Regression: ScriptLoader recorded only the basename in the lockfile
-    ``file`` field, so push() could not locate scripts stored in group
-    subdirectories (the normal layout produced by ``mcli new -g <group>``).
-    Their bodies were therefore never uploaded, and pull reported
-    "manifest predates per-script CIDs" even for a freshly-pushed manifest.
+    ``file`` field, so push() could not find scripts stored in group
+    subdirectories (the normal layout from ``mcli new -g <group>``) and never
+    uploaded their bodies. ScriptLoader now records the path relative to the
+    workflows dir. (The pull-side reconstruction is covered by
+    TestPullWorkflowsRejectsPathTraversal.test_pull_workflows_allows_legit_subdir.)
     """
 
     def test_loader_records_relative_path_and_push_uploads_subdir_script(self, tmp_path):
@@ -244,31 +343,3 @@ class TestGroupedScriptRoundTrip:
         assert Path(mock_add.call_args[0][0]) == script
         commands = mock_upload.call_args[0][0]["commands"]["commands"]
         assert commands["hello"]["script_cid"] == "QmScriptCid"
-
-    def test_pull_workflows_reconstructs_subdirectories(self, tmp_path):
-        from mcli.lib.ipfs_sync import IPFSSync
-
-        target = tmp_path / "out"
-        target.mkdir()
-
-        manifest = {
-            "version": "2.1",
-            "commands": {
-                "hello": {
-                    "file": "demo/hello.py",
-                    "content_hash": _sha256(SAMPLE_SCRIPT),
-                    "script_cid": "QmScriptCid",
-                }
-            },
-        }
-
-        sync = IPFSSync()
-        with (
-            patch.object(sync, "pull", return_value=manifest),
-            patch.object(sync, "fetch_file_from_ipfs", return_value=SAMPLE_SCRIPT.encode()),
-        ):
-            written = sync.pull_workflows("QmManifestCid", target)
-
-        # The group subdirectory must be recreated on disk.
-        assert (target / "demo" / "hello.py").read_text() == SAMPLE_SCRIPT
-        assert written == [target / "demo" / "hello.py"]
