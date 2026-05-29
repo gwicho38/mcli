@@ -4,14 +4,34 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
+import time
 from enum import Enum
 from pathlib import Path
+
+# Docker Hub returns these when the unauthenticated image-pull rate limit is hit.
+# act surfaces them while pulling the runner image — this is an environment
+# problem, NOT a test failure, so it must not hard-block a push.
+_RATE_LIMIT_MARKERS = (
+    "toomanyrequests",
+    "you have reached your unauthenticated pull rate limit",
+    "pull rate limit",
+)
+
+# Backoff (seconds) between docker rate-limit retries; the last value repeats.
+_RETRY_BACKOFF = (15, 45)
+_MAX_RETRIES = 2
 
 
 class PreflightResult(Enum):
     PASS = "pass"
     FAIL = "fail"
     UNREACHABLE = "unreachable"
+
+
+def _is_docker_rate_limited(output: str) -> bool:
+    low = (output or "").lower()
+    return any(marker in low for marker in _RATE_LIMIT_MARKERS)
 
 
 def act_available() -> bool:
@@ -44,10 +64,50 @@ def build_act_command(event: str) -> list[str]:
     return cmd
 
 
-def run_act(event: str = "pull_request") -> PreflightResult:
-    """Run act for `event`. PASS on exit 0, else FAIL. (Probe gates UNREACHABLE upstream.)"""
-    proc = subprocess.run(build_act_command(event))
-    return PreflightResult.PASS if proc.returncode == 0 else PreflightResult.FAIL
+def run_act(
+    event: str = "pull_request",
+    retries: int = _MAX_RETRIES,
+    backoff: tuple[int, ...] = _RETRY_BACKOFF,
+) -> PreflightResult:
+    """Run act for `event` and classify the outcome.
+
+    - exit 0 -> PASS.
+    - non-zero whose output shows a Docker Hub pull rate limit
+      (``toomanyrequests``) -> retry up to ``retries`` times with backoff;
+      if still rate-limited, return UNREACHABLE (cannot validate — an
+      environment problem, not a test failure, so the gate must not block).
+    - any other non-zero exit -> FAIL.
+
+    Output is captured (to detect the rate limit) and echoed so the user still
+    sees act's progress.
+    """
+    attempt = 0
+    while True:
+        proc = subprocess.run(build_act_command(event), capture_output=True, text=True)
+        output = (proc.stdout or "") + (proc.stderr or "")
+        if output:
+            sys.stdout.write(output if output.endswith("\n") else output + "\n")
+
+        if proc.returncode == 0:
+            return PreflightResult.PASS
+
+        if _is_docker_rate_limited(output):
+            if attempt < retries:
+                delay = backoff[min(attempt, len(backoff) - 1)]
+                sys.stdout.write(
+                    f"⚠️  Docker Hub rate limit (toomanyrequests); retrying in {delay}s "
+                    f"(attempt {attempt + 1}/{retries})…\n"
+                )
+                time.sleep(delay)
+                attempt += 1
+                continue
+            sys.stdout.write(
+                "⚠️  Docker Hub still rate-limited after retries — cannot validate "
+                "locally; allowing push (run `mcli ci preflight` again later).\n"
+            )
+            return PreflightResult.UNREACHABLE
+
+        return PreflightResult.FAIL
 
 
 def preflight(repo_slug: str, event: str = "pull_request") -> PreflightResult:

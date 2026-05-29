@@ -105,6 +105,24 @@ class TestDoctorAndHook:
         assert "mcli ci preflight" in hook.read_text()
         assert hook.stat().st_mode & 0o111  # executable
 
+    def test_pre_push_hook_blocks_only_on_real_failure(self, tmp_path, monkeypatch):
+        """Hook blocks on preflight exit 1, allows exit 0/2/3 (cannot-validate)."""
+        import subprocess as sp
+        from mcli.workflow.ci.ci import PRE_PUSH_HOOK
+
+        hook = tmp_path / "pre-push"
+        hook.write_text(PRE_PUSH_HOOK)
+        for code, should_block in [(0, False), (1, True), (2, False), (3, False)]:
+            # stub `mcli` on PATH that just exits with `code`
+            stub_dir = tmp_path / f"bin{code}"
+            stub_dir.mkdir()
+            (stub_dir / "mcli").write_text(f"#!/usr/bin/env bash\nexit {code}\n")
+            (stub_dir / "mcli").chmod(0o755)
+            env = {"PATH": f"{stub_dir}:/usr/bin:/bin"}
+            res = sp.run(["bash", str(hook)], env=env, capture_output=True, text=True)
+            blocked = res.returncode != 0
+            assert blocked is should_block, f"code={code} expected block={should_block}"
+
 
 from mcli.workflow.ci import ci as ci_mod
 
