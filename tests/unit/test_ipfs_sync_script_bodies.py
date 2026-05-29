@@ -201,3 +201,101 @@ class TestPullWorkflowsExtractsScripts:
 
         assert written == []
         assert not (target / "hello.py").exists()
+
+
+class TestPullWorkflowsRejectsPathTraversal:
+    """A malicious manifest must not be able to write outside the workflows dir."""
+
+    @pytest.mark.parametrize(
+        "evil_name",
+        [
+            "../escape.py",
+            "../../escape.py",
+            "sub/../../escape.py",
+            "foo/../../../escape.py",
+        ],
+    )
+    def test_pull_workflows_rejects_relative_traversal(self, tmp_path, evil_name):
+        from mcli.lib.ipfs_sync import IPFSSync
+
+        target = tmp_path / "out"
+        target.mkdir()
+        outside = tmp_path / "escape.py"
+
+        manifest = {
+            "version": "2.1",
+            "commands": {
+                "evil": {
+                    "file": evil_name,
+                    "content_hash": _sha256(SAMPLE_SCRIPT),
+                    "script_cid": "QmScriptCid",
+                }
+            },
+        }
+
+        sync = IPFSSync()
+        with (
+            patch.object(sync, "pull", return_value=manifest),
+            patch.object(sync, "fetch_file_from_ipfs", return_value=SAMPLE_SCRIPT.encode()),
+        ):
+            with pytest.raises(ValueError, match="escapes|unsafe"):
+                sync.pull_workflows("QmManifestCid", target)
+
+        # nothing escaped the target directory
+        assert not outside.exists()
+
+    def test_pull_workflows_rejects_absolute_path(self, tmp_path):
+        from mcli.lib.ipfs_sync import IPFSSync
+
+        target = tmp_path / "out"
+        target.mkdir()
+        abs_target = tmp_path / "abs_escape.py"
+
+        manifest = {
+            "version": "2.1",
+            "commands": {
+                "evil": {
+                    "file": str(abs_target),  # absolute path in manifest
+                    "content_hash": _sha256(SAMPLE_SCRIPT),
+                    "script_cid": "QmScriptCid",
+                }
+            },
+        }
+
+        sync = IPFSSync()
+        with (
+            patch.object(sync, "pull", return_value=manifest),
+            patch.object(sync, "fetch_file_from_ipfs", return_value=SAMPLE_SCRIPT.encode()),
+        ):
+            with pytest.raises(ValueError, match="escapes|unsafe"):
+                sync.pull_workflows("QmManifestCid", target)
+
+        assert not abs_target.exists()
+
+    def test_pull_workflows_allows_legit_subdir(self, tmp_path):
+        """Group subdirectories like 'demo/hello.py' must still work."""
+        from mcli.lib.ipfs_sync import IPFSSync
+
+        target = tmp_path / "out"
+        target.mkdir()
+
+        manifest = {
+            "version": "2.1",
+            "commands": {
+                "hello": {
+                    "file": "demo/hello.py",
+                    "content_hash": _sha256(SAMPLE_SCRIPT),
+                    "script_cid": "QmScriptCid",
+                }
+            },
+        }
+
+        sync = IPFSSync()
+        with (
+            patch.object(sync, "pull", return_value=manifest),
+            patch.object(sync, "fetch_file_from_ipfs", return_value=SAMPLE_SCRIPT.encode()),
+        ):
+            written = sync.pull_workflows("QmManifestCid", target)
+
+        assert (target / "demo" / "hello.py").read_text() == SAMPLE_SCRIPT
+        assert written == [target / "demo" / "hello.py"]
