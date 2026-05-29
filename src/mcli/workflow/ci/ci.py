@@ -143,7 +143,18 @@ def pr():
 
 PRE_PUSH_HOOK = """#!/usr/bin/env bash
 # mcli-ci pre-push gate: validate with act before pushing.
-exec mcli ci preflight
+# Blocks ONLY on a real act failure (exit 1). When act cannot validate locally
+# — e.g. Docker Hub rate-limit (toomanyrequests, retried first), no docker, or
+# an online runner will validate instead (exit 2/3) — the push is allowed so an
+# environment hiccup never wedges your workflow. Override a real failure with:
+#   git push --no-verify
+mcli ci preflight
+code=$?
+if [ "$code" -eq 1 ]; then
+  echo "mcli-ci: act reported failures — push blocked. Override: git push --no-verify" >&2
+  exit 1
+fi
+exit 0
 """
 
 

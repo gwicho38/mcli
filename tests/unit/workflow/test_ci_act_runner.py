@@ -57,6 +57,39 @@ class TestRunAct:
             assert run_act("pull_request") == PreflightResult.FAIL
 
 
+class TestRunActDockerRateLimit:
+    """Docker Hub rate limits are retried, then treated as cannot-validate."""
+
+    _RL = (
+        "Error response from daemon: toomanyrequests: You have reached your "
+        "unauthenticated pull rate limit. https://www.docker.com/increase-rate-limit"
+    )
+
+    def test_rate_limit_exhausted_is_unreachable(self):
+        # every attempt hits the rate limit -> UNREACHABLE (not FAIL), so the gate
+        # does not block the push.
+        with patch("subprocess.run", return_value=_cp(1, stdout=self._RL)) as m, patch(
+            "time.sleep"
+        ):
+            assert (
+                run_act("pull_request", retries=2, backoff=(0, 0))
+                == PreflightResult.UNREACHABLE
+            )
+        assert m.call_count == 3  # initial + 2 retries
+
+    def test_rate_limit_then_success_on_retry(self):
+        seq = [_cp(1, stdout=self._RL), _cp(0)]
+        with patch("subprocess.run", side_effect=seq), patch("time.sleep"):
+            assert run_act("pull_request", retries=2, backoff=(0, 0)) == PreflightResult.PASS
+
+    def test_real_failure_is_not_retried(self):
+        with patch(
+            "subprocess.run", return_value=_cp(1, stdout="3 tests failed")
+        ) as m, patch("time.sleep"):
+            assert run_act("pull_request") == PreflightResult.FAIL
+        assert m.call_count == 1
+
+
 from mcli.workflow.ci.act_runner import preflight
 
 
