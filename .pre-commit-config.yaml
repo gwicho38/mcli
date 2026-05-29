@@ -85,8 +85,11 @@ repos:
   # Removed safety/pip-audit pre-commit hook as it's redundant with CI
 
   # YAML formatting
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.3.3
+  # NOTE: pre-commit/mirrors-prettier is deprecated/archived and never tagged
+  # v3.3.3 (only v4.0.0-alpha.* exist), which broke `pre-commit run`. Use the
+  # maintained successor rbubley/mirrors-prettier with a real stable tag.
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.8.3
     hooks:
       - id: prettier
         types: [yaml]
