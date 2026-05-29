@@ -946,6 +946,7 @@ class SyncMessages:
     IPNS_RESOLVING = "Resolving latest via IPNS..."
     IPNS_RESOLVED = "Resolved IPNS to CID: {cid}"
     IPNS_RESOLVE_FAILED = "Could not resolve via IPNS"
+    IPNS_TEAMMATE_PULL_HINT = "Teammates can pull latest with: mcli sync pull"
     IPNS_NO_SYNC_KEY = "MCLI_SYNC_KEY not set — cannot use IPNS auto-resolve"
     IPNS_SYNC_KEY_HINT = (
         "[dim]Set MCLI_SYNC_KEY to enable IPNS. Share same key with teammates.[/dim]"

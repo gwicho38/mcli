@@ -17,7 +17,7 @@ from typing import Optional
 import click
 from rich.table import Table
 
-from mcli.lib.constants import IpfsMessages, SyncMessages
+from mcli.lib.constants import FileNames, IpfsMessages, SyncMessages
 from mcli.lib.ipfs_utils import ipfs_daemon_running as _ipfs_daemon_running
 from mcli.lib.ipfs_utils import ipfs_initialized as _ipfs_initialized
 from mcli.lib.ipfs_utils import ipfs_installed as _ipfs_installed
@@ -423,7 +423,7 @@ def sync_push_command(global_mode: bool, description: str):
     from mcli.lib.ipns_manager import get_sync_key
 
     workflows_dir = get_custom_commands_dir(global_mode=global_mode)
-    lockfile_path = workflows_dir / "commands.lock.json"
+    lockfile_path = workflows_dir / FileNames.COMMANDS_LOCK_JSON
 
     if not lockfile_path.exists():
         error(SyncMessages.LOCKFILE_NOT_FOUND.format(path=lockfile_path))
@@ -448,10 +448,16 @@ def sync_push_command(global_mode: bool, description: str):
         console.print(SyncMessages.VIEW_BROWSER_HINT)
         console.print(SyncMessages.IPFS_GATEWAY_URL.format(cid=cid))
 
-        # Show IPNS info if published
+        # Report IPNS status honestly: only claim teammates can auto-resolve
+        # when the publish actually succeeded.
         if get_sync_key():
             console.print()
-            info("Teammates can pull latest with: mcli sync pull")
+            if ipfs.last_ipns_name:
+                success(SyncMessages.IPNS_PUBLISHED.format(name=ipfs.last_ipns_name))
+                info(SyncMessages.IPNS_TEAMMATE_PULL_HINT)
+            else:
+                warning(SyncMessages.IPNS_PUBLISH_FAILED)
+                info(SyncMessages.RETRIEVE_COMMAND.format(cid=cid))
     else:
         error(SyncMessages.FAILED_PUSH_IPFS)
 
@@ -798,7 +804,7 @@ def sync_info(is_global: bool):
     workflows_dir = get_custom_commands_dir(global_mode=is_global)
     console.print(f"  Workflows directory: {workflows_dir}")
 
-    lockfile = workflows_dir / "commands.lock.json"
+    lockfile = workflows_dir / FileNames.COMMANDS_LOCK_JSON
     console.print(f"  Lockfile: {lockfile} ({'exists' if lockfile.exists() else 'missing'})")
     console.print()
 

@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from mcli.lib.constants.paths import DirNames
+from mcli.lib.constants.paths import DirNames, FileNames
 
 
 def get_mcli_home() -> Path:
@@ -248,8 +248,8 @@ def get_lockfile_path(global_mode: bool = False) -> Path:
         Path to the lockfile
     """
     workflows_dir = get_custom_commands_dir(global_mode=global_mode)
-    # Keep the old lockfile name for compatibility
-    return workflows_dir / "commands.lock.json"
+    # Canonical lockfile name, shared with ScriptLoader and the IPFS sync path.
+    return workflows_dir / FileNames.COMMANDS_LOCK_JSON
 
 
 def resolve_workspace(workspace_path: str) -> Optional[Path]:
