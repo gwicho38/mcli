@@ -860,12 +860,70 @@ class ScriptLoader:
             "commands": {},
         }
 
+        keys = self._assign_command_keys(scripts)
         for script_path in scripts:
-            name = script_path.stem
             info = self.get_script_info(script_path)
-            lockfile_data["commands"][name] = info
+            lockfile_data["commands"][keys[script_path]] = info
 
         return lockfile_data
+
+    def _assign_command_keys(self, scripts: list[Path]) -> dict[Path, str]:
+        """Assign a unique lockfile/command key to every discovered script.
+
+        Without this, scripts were keyed by bare ``stem`` and any two sharing a
+        stem (``commit.py`` + ``commit.sh``, or the same name in different group
+        subdirectories) collapsed to one entry — the later silently overwrote
+        the earlier, so ``mcli sync`` dropped the shadowed script entirely.
+
+        Keys follow the ``name:lang`` disambiguation convention already used by
+        ``mcli list`` / ``mcli run`` (see docs/features/LANGUAGE_SUFFIX.md):
+
+        - unique stem            -> bare ``stem``
+        - stem collision         -> ``stem:lang`` (e.g. ``commit:py``)
+        - stem+lang both collide -> ``stem:lang:<dir-slug>`` so identically
+          named/typed scripts in different directories are each preserved
+          (deterministic, derived from the relative parent path).
+        """
+        from collections import Counter
+
+        stem_counts = Counter(p.stem for p in scripts)
+
+        # First pass: bare stem when unique, else stem:lang.
+        provisional: dict[Path, str] = {}
+        for p in scripts:
+            if stem_counts[p.stem] > 1:
+                suffix = LANGUAGE_TO_SUFFIX.get(self.detect_language(p), "x")
+                provisional[p] = f"{p.stem}:{suffix}"
+            else:
+                provisional[p] = p.stem
+
+        # Second pass: resolve any residual collisions (same stem+lang across
+        # different directories) using a stable slug from the relative parent.
+        key_counts = Counter(provisional.values())
+        keys: dict[Path, str] = {}
+        for p in scripts:
+            key = provisional[p]
+            if key_counts[key] > 1:
+                try:
+                    parent = p.relative_to(self.workflows_dir).parent.as_posix()
+                except ValueError:
+                    parent = p.parent.name
+                slug = parent.strip("/").replace("/", "-") or "root"
+                key = f"{key}:{slug}"
+            keys[p] = key
+
+        # Final guard: never emit duplicate keys. If two scripts still map to the
+        # same key (pathological), append a deterministic numeric suffix instead
+        # of silently dropping one.
+        seen: dict[str, int] = {}
+        for p in sorted(scripts, key=lambda x: x.as_posix()):
+            base = keys[p]
+            if base in seen:
+                seen[base] += 1
+                keys[p] = f"{base}:{seen[base]}"
+            else:
+                seen[base] = 0
+        return keys
 
     def save_lockfile(self) -> bool:
         """
@@ -939,7 +997,11 @@ class ScriptLoader:
             return result
 
         locked_commands = lockfile.get("commands", {})
-        current_scripts = {p.stem: p for p in self.discover_scripts()}
+        # Key disk scripts with the SAME disambiguation scheme used to write the
+        # lockfile, otherwise colliding stems (commit.py/commit.sh) would be
+        # reported as false missing/extra drift.
+        discovered = self.discover_scripts()
+        current_scripts = {key: p for p, key in self._assign_command_keys(discovered).items()}
 
         # Check for missing scripts (in lockfile but not on disk)
         for name in locked_commands:

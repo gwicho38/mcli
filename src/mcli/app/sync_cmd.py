@@ -213,8 +213,12 @@ def sync_status(is_global: bool):
     table.add_column("Hash", style="dim")
     table.add_column("Status", style="yellow")
 
+    # Key scripts the same way the lockfile does, so colliding stems
+    # (commit.py/commit.sh) match their entries instead of showing "unlocked".
+    command_keys = loader._assign_command_keys(scripts)
+
     for script_path in scripts:
-        name = script_path.stem
+        name = command_keys[script_path]
         script_info = loader.get_script_info(script_path)
 
         # Check status against lockfile
@@ -331,8 +335,10 @@ def sync_diff(is_global: bool):
         for name in verification["hash_mismatch"]:
             if name in locked_commands:
                 old_version = locked_commands[name].get("version", "?")
-                # Get current version
-                scripts = {p.stem: p for p in loader.discover_scripts()}
+                # Get current version. verify_lockfile() reports canonical keys
+                # (name:lang on collision), so map disk scripts the same way.
+                discovered = loader.discover_scripts()
+                scripts = {k: p for p, k in loader._assign_command_keys(discovered).items()}
                 if name in scripts:
                     script_info = loader.get_script_info(scripts[name])
                     new_version = script_info.get("version", "?")
