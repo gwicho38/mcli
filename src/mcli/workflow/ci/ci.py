@@ -134,7 +134,7 @@ def pr():
         raise SystemExit(1)
     if slug and has_online_runner(slug):
         click.echo("act unreachable; pushing so the runner can validate.")
-        subprocess.run(["git", "push", "-u", "origin", "HEAD"], check=False)
+        subprocess.run(["git", "push", "-u", "origin", "HEAD"], check=False, timeout=120)
         subprocess.run(["gh", "pr", "create", "--fill", "--base", "main"], check=False)
         return
     click.echo("act unreachable and no runner; refusing to open an unvalidated PR.")

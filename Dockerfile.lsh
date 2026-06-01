@@ -64,10 +64,10 @@ USER lsh
 # - Provide job management API
 # - Stream events via Server-Sent Events
 # - Integrate with Supabase for data sync
-CMD ["python", "-m", "mcli.workflow.daemon.api_daemon", "start", "--host", "0.0.0.0", "--port", "3030"]
+CMD ["python", "-m", "mcli.workflow.daemon.daemon_api", "start", "--host", "0.0.0.0", "--port", "3030"]
 
 # Alternative: If using uvicorn directly
-# CMD ["uvicorn", "mcli.workflow.daemon.api_daemon:app", "--host", "0.0.0.0", "--port", "3030"]
+# CMD ["uvicorn", "mcli.workflow.daemon.daemon_api:app", "--host", "0.0.0.0", "--port", "3030"]
 
 # =============================================================================
 # Build & Run Instructions
@@ -103,7 +103,7 @@ CMD ["python", "-m", "mcli.workflow.daemon.api_daemon", "start", "--host", "0.0.
 # ENV PYTHONPATH=/app
 # ENV PORT=3030
 # EXPOSE 3030
-# CMD ["python", "-m", "mcli.workflow.daemon.api_daemon", "start", "--host", "0.0.0.0", "--port", "3030"]
+# CMD ["python", "-m", "mcli.workflow.daemon.daemon_api", "start", "--host", "0.0.0.0", "--port", "3030"]
 
 # =============================================================================
 # Environment Variables
@@ -145,7 +145,7 @@ CMD ["python", "-m", "mcli.workflow.daemon.api_daemon", "start", "--host", "0.0.
 # If container fails to start:
 # 1. Check logs:           docker logs <container_id>
 # 2. Inspect container:    docker inspect <container_id>
-# 3. Test locally first:   python -m mcli.workflow.daemon.api_daemon start
+# 3. Test locally first:   python -m mcli.workflow.daemon.daemon_api start
 # 4. Verify dependencies:  uv sync --frozen
 
 # If health checks fail:
@@ -156,7 +156,7 @@ CMD ["python", "-m", "mcli.workflow.daemon.api_daemon", "start", "--host", "0.0.
 
 # Debug mode:
 # docker run -it --entrypoint /bin/bash mcli-lsh-daemon
-# Then manually run: python -m mcli.workflow.daemon.api_daemon start --debug
+# Then manually run: python -m mcli.workflow.daemon.daemon_api start --debug
 
 # =============================================================================
 # Performance Tuning
@@ -169,5 +169,5 @@ CMD ["python", "-m", "mcli.workflow.daemon.api_daemon", "start", "--host", "0.0.
 # - Add Redis for caching (optional)
 
 # Example with workers:
-# CMD ["uvicorn", "mcli.workflow.daemon.api_daemon:app", \
+# CMD ["uvicorn", "mcli.workflow.daemon.daemon_api:app", \
 #      "--host", "0.0.0.0", "--port", "3030", "--workers", "4"]

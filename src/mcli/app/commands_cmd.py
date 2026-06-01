@@ -1135,7 +1135,10 @@ def open_editor_for_command(
     if not editor:
         # Try common editors in order of preference
         for common_editor in ["vim", "nano", "code", "subl", "atom", "emacs"]:
-            if subprocess.run(["which", common_editor], capture_output=True).returncode == 0:
+            if (
+                subprocess.run(["which", common_editor], capture_output=True, timeout=5).returncode
+                == 0
+            ):
                 editor = common_editor
                 break
 

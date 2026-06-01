@@ -217,11 +217,15 @@ Thumbs.db
     # Initialize git if requested
     if git and not (workflows_dir / ".git").exists():
         try:
-            subprocess.run(["git", "init"], cwd=workflows_dir, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "init"], cwd=workflows_dir, check=True, capture_output=True, timeout=30
+            )
             console.print("[green]✓[/green] Initialized git repository in workflows directory")
 
             # Create initial commit
-            subprocess.run(["git", "add", "."], cwd=workflows_dir, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "add", "."], cwd=workflows_dir, check=True, capture_output=True, timeout=30
+            )
             subprocess.run(
                 ["git", "commit", "-m", "Initial commit: Initialize workflows directory"],
                 cwd=workflows_dir,
