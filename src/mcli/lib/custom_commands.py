@@ -28,6 +28,7 @@ from typing import Any, Optional, Union
 
 import click
 
+from mcli.lib.constants import FileNames
 from mcli.lib.logger.logger import get_logger, register_subprocess
 from mcli.lib.paths import (
     get_custom_commands_dir,
@@ -37,6 +38,17 @@ from mcli.lib.paths import (
 )
 
 logger = get_logger()
+
+# Lockfile / cache filenames that live in the commands dir but are NOT
+# legacy JSON commands. Loaders must skip all of these so a stale straggler
+# (e.g. a pre-v8.0.49 workflows.lock.json) is never parsed as a command.
+LOCKFILE_NAMES = frozenset(
+    {
+        FileNames.COMMANDS_LOCK_JSON,
+        FileNames.WORKFLOWS_LOCK_JSON,
+        FileNames.SYNC_CACHE_JSON,
+    }
+)
 
 
 class CustomCommandManager:
@@ -178,8 +190,9 @@ class CustomCommandManager:
             if command_file.name.startswith("."):
                 continue
 
-            # Skip the lockfile
-            if command_file.name == "commands.lock.json":
+            # Skip lockfiles / sync cache (incl. stale pre-v8.0.49
+            # workflows.lock.json) so they are never parsed as commands.
+            if command_file.name in LOCKFILE_NAMES:
                 continue
 
             # Skip test commands unless explicitly included
@@ -681,7 +694,7 @@ def has_legacy_json_commands(global_mode: bool = False) -> bool:
 
     for json_file in commands_dir.glob("*.json"):
         # Skip lockfiles
-        if json_file.name in ("commands.lock.json", "workflows.lock.json", ".sync_cache.json"):
+        if json_file.name in LOCKFILE_NAMES:
             continue
         return True
     return False

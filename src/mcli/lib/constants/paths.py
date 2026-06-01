@@ -51,6 +51,10 @@ class FileNames:
     GITIGNORE = ".gitignore"
     STORE_CONF = "store.conf"
     COMMANDS_LOCK_JSON = "commands.lock.json"
+    # Legacy lockfile name (pre-v8.0.49); still skipped by loaders so a stale
+    # straggler is never parsed as a command.
+    WORKFLOWS_LOCK_JSON = "workflows.lock.json"
+    SYNC_CACHE_JSON = ".sync_cache.json"
     LSH_ENV = "lsh.env"
     README_MD = "README.md"
     ENV = ".env"
