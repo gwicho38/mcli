@@ -135,12 +135,20 @@ def sync_init(install: bool, foreground: bool):
     else:
         info("Starting IPFS daemon in background...")
 
+        # Detach the daemon from this process group. start_new_session is
+        # POSIX-only; on Windows use CREATE_NEW_PROCESS_GROUP instead so the
+        # call doesn't raise (#190).
+        if sys.platform == "win32":
+            _detach_kwargs = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+        else:
+            _detach_kwargs = {"start_new_session": True}
+
         # Start daemon in background
         process = subprocess.Popen(
             ["ipfs", "daemon"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            start_new_session=True,
+            **_detach_kwargs,
         )
 
         # Save PID for tracking

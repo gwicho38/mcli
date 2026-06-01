@@ -389,7 +389,7 @@ def ensure_api_app() -> Optional[FastAPI]:
         # Add CORS middleware
         _api_app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=os.environ.get("MCLI_CORS_ORIGINS", "http://localhost:3000").split(","),
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
@@ -455,7 +455,7 @@ def start_api_server(
         # Add CORS middleware
         _api_app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=os.environ.get("MCLI_CORS_ORIGINS", "http://localhost:3000").split(","),
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],

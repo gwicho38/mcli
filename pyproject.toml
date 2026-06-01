@@ -1,6 +1,6 @@
 [project]
 name = "mcli-framework"
-version = "8.0.54"
+version = "8.0.55"
 description = "Portable workflow framework - transform any script into a versioned, schedulable command. Store in ~/.mcli/workflows/, version with lockfile, run as daemon or cron job."
 readme = "README.md"
  requires-python = ">=3.10"
@@ -102,10 +102,20 @@ dev = [
 
   # Code quality
   "black>=25.0.0,<26.0.0",  # Pin to 25.x to match lockfile, avoid 26.x formatting changes
-  "isort>=5.12.0,<6.0.0",
-  "mypy>=1.7.1,<2.0.0",
+  "isort>=5.13.2,<6.0.0",
+  "mypy>=1.16.1,<2.0.0",
   "ruff>=0.1.0",                  # Fast linter
+  "pylint>=3.0.0",
+  "flake8>=7.0.0",
+  "flake8-docstrings>=1.7.0",
+  "flake8-bugbear>=24.1.0",
+  "flake8-comprehensions>=3.14.0",
+  "flake8-simplify>=0.21.0",
   "pre-commit>=4.5.1",            # Git hooks
+
+  # Security
+  "bandit>=1.7.0",
+  "safety>=3.0.0",
 
   # Build tools
   "build>=1.2.2.post1",
@@ -260,20 +270,39 @@ build-backend = "setuptools.build_meta"
 # NOTE: This is the primary dev dependency specification (PEP 735).
 # [project.optional-dependencies] dev is kept for pip compatibility.
 dev = [
-    "black>=25.0.0,<26.0.0",  # Pin to 25.x to match lockfile
-    "isort>=5.13.2",
-    "mypy>=1.16.1",
-    "pylint>=3.0.0",
+    # Testing
     "pytest>=8.4.1",
-    "pytest-cov>=4.1.0",
-    "pre-commit>=3.6.0",
+    "pytest-cov>=4.1.0,<5.0.0",
+    "pytest-mock>=3.14.1",
+    "pytest-asyncio>=1.1.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-timeout>=2.2.0",
+    "pytest-xdist>=3.5.0",
+    "pytest-html>=4.1.0",
+    "pytest-json-report>=1.5.0",
+    "hypothesis>=6.92.0",
+    "faker>=22.0.0",
+    "responses>=0.24.0",
+    "freezegun>=1.4.0",
+    # Linting / formatting / typing
+    "black>=25.0.0,<26.0.0",  # Pin to 25.x to match lockfile
+    "isort>=5.13.2,<6.0.0",
+    "mypy>=1.16.1,<2.0.0",
+    "ruff>=0.1.0",
+    "pylint>=3.0.0",
     "flake8>=7.0.0",
     "flake8-docstrings>=1.7.0",
     "flake8-bugbear>=24.1.0",
     "flake8-comprehensions>=3.14.0",
     "flake8-simplify>=0.21.0",
+    # Security
     "bandit>=1.7.0",
     "safety>=3.0.0",
+    # Pre-commit / build / publish
+    "pre-commit>=4.5.1",
+    "build>=1.2.2.post1",
+    "maturin>=1.9.3",
+    "twine>=4.0.0",
 ]
 
 [tool.setuptools]

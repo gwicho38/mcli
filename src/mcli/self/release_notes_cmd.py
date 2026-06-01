@@ -87,7 +87,7 @@ class ReleaseNotes:
 
 def _run_git(args: list[str]) -> str:
     """Run a git command and return stdout."""
-    result = subprocess.run(["git"] + args, capture_output=True, text=True, check=True)
+    result = subprocess.run(["git"] + args, capture_output=True, text=True, check=True, timeout=30)
     return result.stdout.strip()
 
 

@@ -349,7 +349,7 @@ def init():
 
     # Check if Homebrew is installed
     try:
-        subprocess.run(["brew", "--version"], capture_output=True, check=True)
+        subprocess.run(["brew", "--version"], capture_output=True, check=True, timeout=10)
         success("✅ Homebrew is installed")
     except (subprocess.CalledProcessError, FileNotFoundError):
         error("❌ Homebrew is not installed. Install it from https://brew.sh")
@@ -360,11 +360,13 @@ def init():
     # Install pandoc
     info("📥 Installing pandoc...")
     try:
-        result = subprocess.run(["brew", "install", "pandoc"], capture_output=True, text=True)
+        result = subprocess.run(
+            ["brew", "install", "pandoc"], capture_output=True, text=True, timeout=300
+        )
         if result.returncode == 0:
             success("   ✅ pandoc installed successfully")
         else:
-            check = subprocess.run(["which", "pandoc"], capture_output=True)
+            check = subprocess.run(["which", "pandoc"], capture_output=True, timeout=10)
             if check.returncode == 0:
                 info("   ℹ️  pandoc is already installed")
             else:
@@ -378,7 +380,9 @@ def init():
     info("📥 Installing Jupyter & nbconvert (for notebook conversion)...")
     try:
         # Check if already installed
-        check = subprocess.run(["jupyter", "nbconvert", "--version"], capture_output=True)
+        check = subprocess.run(
+            ["jupyter", "nbconvert", "--version"], capture_output=True, timeout=10
+        )
         if check.returncode == 0:
             info("   ℹ️  jupyter nbconvert is already installed")
         else:
@@ -425,7 +429,7 @@ def init():
             info("   sudo tlmgr install collection-fontsrecommended")
             info("   sudo mktexlsr")
         else:
-            check = subprocess.run(["which", "pdflatex"], capture_output=True)
+            check = subprocess.run(["which", "pdflatex"], capture_output=True, timeout=10)
             if check.returncode == 0:
                 info("   ℹ️  LaTeX is already installed")
             else:
@@ -512,7 +516,7 @@ def convert(from_format, to_format, path, output_dir, pandoc_args, no_fallback):
     # Check if pandoc is installed (primary tool)
     has_pandoc = False
     try:
-        subprocess.run(["pandoc", "--version"], capture_output=True, check=True)
+        subprocess.run(["pandoc", "--version"], capture_output=True, check=True, timeout=10)
         has_pandoc = True
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass
@@ -520,7 +524,9 @@ def convert(from_format, to_format, path, output_dir, pandoc_args, no_fallback):
     # Check if nbconvert is available
     has_nbconvert = False
     try:
-        subprocess.run(["jupyter", "nbconvert", "--version"], capture_output=True, check=True)
+        subprocess.run(
+            ["jupyter", "nbconvert", "--version"], capture_output=True, check=True, timeout=10
+        )
         has_nbconvert = True
     except (subprocess.CalledProcessError, FileNotFoundError):
         pass

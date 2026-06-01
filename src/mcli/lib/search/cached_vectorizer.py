@@ -19,6 +19,7 @@ except ImportError:
     redis = None  # type: ignore
 
 from mcli.lib.logger.logger import get_logger
+from mcli.lib.pickles.pickles import safe_loads
 
 logger = get_logger(__name__)
 
@@ -315,7 +316,9 @@ class CachedTfIdfVectorizer:
         try:
             cached_data = await self.redis_client.get(cache_key)
             if cached_data:
-                return pickle.loads(cached_data)
+                # Cache is shared/untrusted; restrict deserialization to a safe
+                # allowlist to prevent pickle-RCE from a poisoned entry (#170).
+                return safe_loads(cached_data)
         except Exception as e:
             logger.warning(f"Failed to get from cache: {e}")
 

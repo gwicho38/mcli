@@ -40,7 +40,9 @@ def init_store(path, remote):
         # Initialize git if not already initialized
         git_dir = store_path / ".git"
         if not git_dir.exists():
-            subprocess.run(["git", "init"], cwd=store_path, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "init"], cwd=store_path, check=True, capture_output=True, timeout=30
+            )
             success(f"Initialized git repository at {store_path}")
 
             # Create .gitignore
@@ -132,7 +134,7 @@ def push_commands(message, all):
         success(f"Copied {copied_count} items to store")
 
         # Git add, commit, push
-        subprocess.run(["git", "add", "."], cwd=store_path, check=True)
+        subprocess.run(["git", "add", "."], cwd=store_path, check=True, timeout=30)
 
         # Check if there are changes
         result = subprocess.run(
@@ -145,12 +147,14 @@ def push_commands(message, all):
 
         # Commit with message
         commit_msg = message or f"Update commands {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True)
+        subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True, timeout=30)
         success(f"Committed changes: {commit_msg}")
 
         # Push to remote if configured
         try:
-            subprocess.run(["git", "push"], cwd=store_path, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "push"], cwd=store_path, check=True, capture_output=True, timeout=60
+            )
             success("Pushed to remote")
         except subprocess.CalledProcessError:
             warning("No remote configured or push failed. Commands committed locally.")
@@ -169,7 +173,7 @@ def pull_commands(force):
 
         # Pull from remote
         try:
-            subprocess.run(["git", "pull"], cwd=store_path, check=True)
+            subprocess.run(["git", "pull"], cwd=store_path, check=True, timeout=60)
             success("Pulled latest changes from remote")
         except subprocess.CalledProcessError:
             warning("No remote configured or pull failed. Using local store.")
@@ -218,7 +222,9 @@ def sync_commands(message):
         # First pull
         info("Pulling latest changes...")
         try:
-            subprocess.run(["git", "pull"], cwd=store_path, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "pull"], cwd=store_path, check=True, capture_output=True, timeout=60
+            )
             success("Pulled from remote")
         except subprocess.CalledProcessError:
             warning("No remote or pull failed")
@@ -246,12 +252,14 @@ def sync_commands(message):
             return
 
         # Commit and push
-        subprocess.run(["git", "add", "."], cwd=store_path, check=True)
+        subprocess.run(["git", "add", "."], cwd=store_path, check=True, timeout=30)
         commit_msg = message or f"Sync commands {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-        subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True)
+        subprocess.run(["git", "commit", "-m", commit_msg], cwd=store_path, check=True, timeout=30)
 
         try:
-            subprocess.run(["git", "push"], cwd=store_path, check=True, capture_output=True)
+            subprocess.run(
+                ["git", "push"], cwd=store_path, check=True, capture_output=True, timeout=60
+            )
             success("Synced and pushed to remote")
         except subprocess.CalledProcessError:
             success("Synced locally (no remote configured)")

@@ -18,6 +18,11 @@ _RATE_LIMIT_MARKERS = (
     "pull rate limit",
 )
 
+# act emits this when no job matches the requested event (e.g. a
+# workflow_dispatch-only workflow queried for pull_request). That is a no-op,
+# not a failure, so the gate must treat it as PASS rather than block the push.
+_NO_STAGES_MARKERS = ("could not find any stages to run",)
+
 # Backoff (seconds) between docker rate-limit retries; the last value repeats.
 _RETRY_BACKOFF = (15, 45)
 _MAX_RETRIES = 2
@@ -32,6 +37,11 @@ class PreflightResult(Enum):
 def _is_docker_rate_limited(output: str) -> bool:
     low = (output or "").lower()
     return any(marker in low for marker in _RATE_LIMIT_MARKERS)
+
+
+def _has_no_stages(output: str) -> bool:
+    low = (output or "").lower()
+    return any(marker in low for marker in _NO_STAGES_MARKERS)
 
 
 def act_available() -> bool:
@@ -89,6 +99,15 @@ def run_act(
             sys.stdout.write(output if output.endswith("\n") else output + "\n")
 
         if proc.returncode == 0:
+            return PreflightResult.PASS
+
+        # No job matches this event (e.g. workflow_dispatch-only) — nothing to
+        # validate, so this is a pass, not a gate failure.
+        if _has_no_stages(output):
+            sys.stdout.write(
+                "ℹ️  No act stages for this event (workflow_dispatch-only?); "
+                "nothing to validate — treating as pass.\n"
+            )
             return PreflightResult.PASS
 
         if _is_docker_rate_limited(output):
