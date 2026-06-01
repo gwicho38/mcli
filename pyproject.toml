@@ -1,6 +1,6 @@
 [project]
 name = "mcli-framework"
-version = "8.0.55"
+version = "8.0.56"
 description = "Portable workflow framework - transform any script into a versioned, schedulable command. Store in ~/.mcli/workflows/, version with lockfile, run as daemon or cron job."
 readme = "README.md"
  requires-python = ">=3.10"
@@ -117,6 +117,10 @@ dev = [
   "bandit>=1.7.0",
   "safety>=3.0.0",
 
+  # Optional-feature deps exercised by the test suite (ERD/repo graphs) — kept
+  # in dev so CI can run those tests strictly instead of best-effort (#169).
+  "pandas>=2.0.0",
+  "pydot>=2.0.0",
   # Build tools
   "build>=1.2.2.post1",
   "maturin>=1.9.3",
@@ -298,6 +302,10 @@ dev = [
     # Security
     "bandit>=1.7.0",
     "safety>=3.0.0",
+    # Optional-feature deps exercised by the test suite (ERD/repo graphs) — kept
+    # in dev so CI can run those tests strictly instead of best-effort (#169).
+    "pandas>=2.0.0",
+    "pydot>=2.0.0",
     # Pre-commit / build / publish
     "pre-commit>=4.5.1",
     "build>=1.2.2.post1",

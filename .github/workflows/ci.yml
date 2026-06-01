@@ -92,7 +92,7 @@ jobs:
   test-python:
     name: Test Python Package
     runs-on: [self-hosted, linux, x64]
-    continue-on-error: true  # Some tests require optional deps (pandas, pydot) not in [dev]
+    # pandas/pydot are now in [dev], so this job gates on real failures (#169).
     strategy:
       fail-fast: false
       matrix:
