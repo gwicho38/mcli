@@ -157,9 +157,11 @@ jobs:
 
     - name: Test CLI functionality
       run: |
-        mcli self version
-        mcli --help
-        mcli self --help
+        # python -m: editable-install console script may not be on PATH on the
+        # self-hosted runner (pip --user fallback), but the module always is.
+        python -m mcli self version
+        python -m mcli --help
+        python -m mcli self --help
 
   integration-test:
     name: Integration Tests
