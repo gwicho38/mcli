@@ -121,6 +121,7 @@ dev = [
   # in dev so CI can run those tests strictly instead of best-effort (#169).
   "pandas>=2.0.0",
   "pydot>=2.0.0",
+  "openpyxl>=3.1.0",  # Excel engine for repo.py pd.ExcelWriter (#169)
   # Build tools
   "build>=1.2.2.post1",
   "maturin>=1.9.3",
@@ -306,6 +307,7 @@ dev = [
     # in dev so CI can run those tests strictly instead of best-effort (#169).
     "pandas>=2.0.0",
     "pydot>=2.0.0",
+    "openpyxl>=3.1.0",  # Excel engine for repo.py pd.ExcelWriter (#169)
     # Pre-commit / build / publish
     "pre-commit>=4.5.1",
     "build>=1.2.2.post1",
