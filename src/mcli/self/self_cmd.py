@@ -141,7 +141,7 @@ def restore_command_state(hash_value):
 
 
 # On CLI startup, check and update lockfile if needed
-# NOTE: The commands group has been moved to mcli.app.commands_cmd for better organization
+# NOTE: The commands group was removed in the v8.0.0 CLI simplification
 
 
 def check_and_update_command_lockfile():
@@ -217,7 +217,7 @@ def {name}_command(name: str = "World"):
     return template
 
 
-# NOTE: search command has been moved to mcli.app.commands_cmd for better organization
+# NOTE: search command was removed in the v8.0.0 CLI simplification
 
 
 def collect_commands() -> list[dict[str, Any]]:
@@ -471,7 +471,7 @@ logger = get_logger()
             pass
 
 
-# NOTE: extract-workflow-commands has been moved to mcli.app.commands_cmd for better organization
+# NOTE: extract-workflow-commands was removed in the v8.0.0 CLI simplification
 
 
 @self_app.command("version")
@@ -800,7 +800,7 @@ try:
 except ImportError as e:
     logger.debug(f"Could not load release-notes command: {e}")
 
-# NOTE: store command has been moved to mcli.app.commands_cmd for better organization
+# NOTE: store command was removed in the v8.0.0 CLI simplification
 
 # This part is important to make the command available to the CLI
 if __name__ == "__main__":
