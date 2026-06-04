@@ -14,7 +14,7 @@ def test_self_group_help():
     assert "Manage and extend the mcli application" in result.output
 
 
-# NOTE: search command has been moved to mcli.app.commands_cmd
+# NOTE: search command was removed in the v8.0.0 CLI simplification
 # NOTE: add-command functionality was removed
 # NOTE: plugin commands were removed in CLI simplification
 
@@ -470,7 +470,7 @@ def test_update_uses_pip_when_not_uv_tool(mock_pypi_response):
         assert "--upgrade" in call_args
 
 
-# NOTE: TestSearchCommand removed - search command has been moved to mcli.app.commands_cmd
+# NOTE: TestSearchCommand removed - search command was removed in the v8.0.0 CLI simplification
 
 
 class TestHelloCommand:
@@ -526,7 +526,7 @@ class TestPerformanceCommand:
         assert result.exit_code == 0
 
 
-# NOTE: TestCommandStateCommands removed - command state commands have been moved to mcli.app.commands_cmd
+# NOTE: TestCommandStateCommands removed - command state commands were removed in the v8.0.0 CLI simplification
 
 
 @pytest.mark.skip(reason="Plugin commands removed in CLI simplification")
