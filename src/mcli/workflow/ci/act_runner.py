@@ -57,6 +57,33 @@ def act_available() -> bool:
     return shutil.which("act") is not None
 
 
+# Preferred over act when present: a repo-defined `make ci-native` target runs
+# the same gates directly on the host toolchain. On Apple-silicon (and any host
+# without nested-virt) act's amd64 emulation under podman is flaky for heavy
+# jobs (container-vanish races, action-clone failures), so a native run is both
+# faster and more reliable. Repos opt in simply by defining the target.
+_NATIVE_GATE = "ci-native"
+
+
+def native_gate_available() -> bool:
+    """True if the repo defines a `make ci-native` target (preferred over act)."""
+    try:
+        proc = subprocess.run(
+            ["make", "-n", _NATIVE_GATE], capture_output=True, text=True, timeout=30
+        )
+        return proc.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def run_native() -> PreflightResult:
+    """Run the repo's native gate (`make ci-native`) on the host. PASS on exit 0,
+    FAIL otherwise. Output streams straight to the terminal (these runs are long;
+    no need to buffer)."""
+    proc = subprocess.run(["make", _NATIVE_GATE])
+    return PreflightResult.PASS if proc.returncode == 0 else PreflightResult.FAIL
+
+
 def docker_running() -> bool:
     try:
         proc = subprocess.run(["docker", "info"], capture_output=True, timeout=30)
@@ -203,7 +230,13 @@ def preflight(repo_slug: str, event: str = "pull_request") -> PreflightResult:
 
     `repo_slug` is accepted for symmetry and future use; the runner fallback is
     orchestrated by the CLI layer based on runner_status.has_online_runner.
+
+    Prefers a repo-defined native gate (`make ci-native`) over act: it runs the
+    same checks on the host toolchain, avoiding act's flaky container emulation.
     """
+    if native_gate_available():
+        sys.stdout.write("▶ Native CI gate found — running `make ci-native` (no act)…\n")
+        return run_native()
     if not probe():
         return PreflightResult.UNREACHABLE
     return run_act(event)

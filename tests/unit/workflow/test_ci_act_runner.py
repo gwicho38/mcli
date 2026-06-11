@@ -7,9 +7,11 @@ from mcli.workflow.ci.act_runner import (
     PreflightResult,
     build_act_command,
     default_container_arch,
+    native_gate_available,
     preflight,
     probe,
     run_act,
+    run_native,
 )
 
 
@@ -172,9 +174,60 @@ class TestRunActDockerRateLimit:
         assert m.call_count == 1
 
 
+class TestNativeGate:
+    def test_available_true_on_exit0(self):
+        with patch("subprocess.run", return_value=_cp(0)):
+            assert native_gate_available() is True
+
+    def test_available_false_when_target_missing(self):
+        # `make -n ci-native` exits 2 when the target doesn't exist.
+        with patch("subprocess.run", return_value=_cp(2)):
+            assert native_gate_available() is False
+
+    def test_available_false_when_make_missing(self):
+        with patch("subprocess.run", side_effect=FileNotFoundError()):
+            assert native_gate_available() is False
+
+    def test_run_native_pass(self):
+        with patch("subprocess.run", return_value=_cp(0)):
+            assert run_native() == PreflightResult.PASS
+
+    def test_run_native_fail(self):
+        with patch("subprocess.run", return_value=_cp(1)):
+            assert run_native() == PreflightResult.FAIL
+
+
 class TestPreflight:
+    def test_prefers_native_gate_over_act(self):
+        # When a native `make ci-native` exists, run it and SKIP act entirely.
+        with (
+            patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=True),
+            patch("mcli.workflow.ci.act_runner.run_native", return_value=PreflightResult.PASS),
+            patch("mcli.workflow.ci.act_runner.probe") as probe_m,
+            patch("mcli.workflow.ci.act_runner.run_act") as act_m,
+        ):
+            assert preflight("o/r") == PreflightResult.PASS
+            probe_m.assert_not_called()
+            act_m.assert_not_called()
+
+    def test_native_fail_blocks(self):
+        with (
+            patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=True),
+            patch("mcli.workflow.ci.act_runner.run_native", return_value=PreflightResult.FAIL),
+        ):
+            assert preflight("o/r") == PreflightResult.FAIL
+
+    def test_falls_back_to_act_without_native_gate(self):
+        with (
+            patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=False),
+            patch("mcli.workflow.ci.act_runner.probe", return_value=True),
+            patch("mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.PASS),
+        ):
+            assert preflight("o/r") == PreflightResult.PASS
+
     def test_act_passes(self):
         with (
+            patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=False),
             patch("mcli.workflow.ci.act_runner.probe", return_value=True),
             patch("mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.PASS),
         ):
@@ -182,6 +235,7 @@ class TestPreflight:
 
     def test_act_fails_blocks(self):
         with (
+            patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=False),
             patch("mcli.workflow.ci.act_runner.probe", return_value=True),
             patch("mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.FAIL),
         ):
@@ -189,5 +243,8 @@ class TestPreflight:
 
     def test_unreachable_with_runner_is_unreachable(self):
         # Fallback to runner is handled by the CLI layer; preflight reports UNREACHABLE.
-        with patch("mcli.workflow.ci.act_runner.probe", return_value=False):
+        with (
+            patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=False),
+            patch("mcli.workflow.ci.act_runner.probe", return_value=False),
+        ):
             assert preflight("o/r") == PreflightResult.UNREACHABLE
