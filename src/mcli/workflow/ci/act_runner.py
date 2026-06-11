@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import platform
 import shutil
 import subprocess
 import sys
@@ -26,6 +27,14 @@ _NO_STAGES_MARKERS = ("could not find any stages to run",)
 # Backoff (seconds) between docker rate-limit retries; the last value repeats.
 _RETRY_BACKOFF = (15, 45)
 _MAX_RETRIES = 2
+
+# Canonical CI entrypoint created by `mcli ci migrate`: ci.yml's `primary` job
+# runs on `workflow_dispatch` and calls the reusable `_ci-jobs.yml` with the
+# `runner_labels` input. The reusable workflow CANNOT run standalone (its
+# `runs-on: ${{ fromJSON(inputs.runner_labels) }}` has no value), so preflight
+# must drive it through this caller.
+_DISPATCH_WORKFLOW = Path(".github/workflows/ci.yml")
+_DISPATCH_JOB = "primary"
 
 
 class PreflightResult(Enum):
@@ -67,48 +76,63 @@ def probe() -> bool:
     return proc.returncode == 0
 
 
-def build_act_command(event: str) -> list[str]:
+def default_container_arch() -> str | None:
+    """`--container-architecture` value for the host, or None to let act decide.
+
+    act's runner images are amd64. On Apple-silicon (darwin/arm64) act warns and
+    misbehaves unless told to emulate amd64, so force it; native amd64 Linux
+    needs nothing.
+    """
+    if sys.platform == "darwin" and platform.machine() in ("arm64", "aarch64"):
+        return "linux/amd64"
+    return None
+
+
+def dispatch_entrypoint() -> tuple[str, str] | None:
+    """The canonical (workflow, job) to drive via `workflow_dispatch`, or None."""
+    if _DISPATCH_WORKFLOW.exists():
+        return (str(_DISPATCH_WORKFLOW), _DISPATCH_JOB)
+    return None
+
+
+def build_act_command(
+    event: str,
+    workflow: str | None = None,
+    job: str | None = None,
+    arch: str | None = None,
+) -> list[str]:
     cmd = ["act", event]
+    if workflow is not None:
+        cmd += ["-W", workflow]
+    if job is not None:
+        cmd += ["-j", job]
+    if arch is not None:
+        cmd += ["--container-architecture", arch]
     if Path(".secrets").exists():
         cmd += ["--secret-file", ".secrets"]
     return cmd
 
 
-def run_act(
-    event: str = "pull_request",
-    retries: int = _MAX_RETRIES,
-    backoff: tuple[int, ...] = _RETRY_BACKOFF,
-) -> PreflightResult:
-    """Run act for `event` and classify the outcome.
-
-    - exit 0 -> PASS.
-    - non-zero whose output shows a Docker Hub pull rate limit
-      (``toomanyrequests``) -> retry up to ``retries`` times with backoff;
-      if still rate-limited, return UNREACHABLE (cannot validate — an
-      environment problem, not a test failure, so the gate must not block).
-    - any other non-zero exit -> FAIL.
-
-    Output is captured (to detect the rate limit) and echoed so the user still
-    sees act's progress.
-    """
+def _run_with_retries(
+    cmd: list[str], retries: int, backoff: tuple[int, ...]
+) -> tuple[PreflightResult, str]:
+    """Run one act command, retrying on Docker Hub rate limits. Returns the
+    classified result plus the combined output (so the caller can detect the
+    'no stages' no-op and decide whether to fall back)."""
     attempt = 0
     while True:
-        proc = subprocess.run(build_act_command(event), capture_output=True, text=True)
+        proc = subprocess.run(cmd, capture_output=True, text=True)
         output = (proc.stdout or "") + (proc.stderr or "")
         if output:
             sys.stdout.write(output if output.endswith("\n") else output + "\n")
 
         if proc.returncode == 0:
-            return PreflightResult.PASS
+            return PreflightResult.PASS, output
 
-        # No job matches this event (e.g. workflow_dispatch-only) — nothing to
-        # validate, so this is a pass, not a gate failure.
+        # No job matches this event (e.g. workflow_dispatch-only). PASS here is
+        # provisional — run_act decides whether a dispatch fallback exists.
         if _has_no_stages(output):
-            sys.stdout.write(
-                "ℹ️  No act stages for this event (workflow_dispatch-only?); "
-                "nothing to validate — treating as pass.\n"
-            )
-            return PreflightResult.PASS
+            return PreflightResult.PASS, output
 
         if _is_docker_rate_limited(output):
             if attempt < retries:
@@ -124,9 +148,54 @@ def run_act(
                 "⚠️  Docker Hub still rate-limited after retries — cannot validate "
                 "locally; allowing push (run `mcli ci preflight` again later).\n"
             )
-            return PreflightResult.UNREACHABLE
+            return PreflightResult.UNREACHABLE, output
 
-        return PreflightResult.FAIL
+        return PreflightResult.FAIL, output
+
+
+def run_act(
+    event: str = "pull_request",
+    retries: int = _MAX_RETRIES,
+    backoff: tuple[int, ...] = _RETRY_BACKOFF,
+) -> PreflightResult:
+    """Run act for `event` and classify the outcome.
+
+    - exit 0 -> PASS.
+    - non-zero whose output shows a Docker Hub pull rate limit
+      (``toomanyrequests``) -> retried; if still limited, UNREACHABLE.
+    - any other non-zero exit -> FAIL.
+
+    Migrated repos are ``workflow_dispatch``-only, so the default
+    ``pull_request`` event matches no jobs. Rather than hollow-pass, fall back
+    to the canonical ``ci.yml`` ``primary`` job on ``workflow_dispatch`` (which
+    drives the reusable ``_ci-jobs.yml``) and validate for real.
+    """
+    arch = default_container_arch()
+    result, output = _run_with_retries(build_act_command(event, arch=arch), retries, backoff)
+
+    if result == PreflightResult.PASS and _has_no_stages(output):
+        entry = dispatch_entrypoint()
+        if entry is None:
+            sys.stdout.write(
+                "ℹ️  No act stages for this event and no ci.yml dispatch "
+                "entrypoint — nothing to validate; treating as pass.\n"
+            )
+            return PreflightResult.PASS
+        workflow, job = entry
+        sys.stdout.write(
+            f"ℹ️  No '{event}' stages (workflow_dispatch-only); running "
+            f"{workflow} -j {job} via workflow_dispatch…\n"
+        )
+        result, output = _run_with_retries(
+            build_act_command("workflow_dispatch", workflow=workflow, job=job, arch=arch),
+            retries,
+            backoff,
+        )
+        # If even the dispatch entrypoint has no stages, it's a genuine no-op.
+        if result == PreflightResult.PASS and _has_no_stages(output):
+            return PreflightResult.PASS
+
+    return result
 
 
 def preflight(repo_slug: str, event: str = "pull_request") -> PreflightResult:

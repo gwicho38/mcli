@@ -3,7 +3,14 @@
 import subprocess
 from unittest.mock import patch
 
-from mcli.workflow.ci.act_runner import PreflightResult, build_act_command, probe, run_act
+from mcli.workflow.ci.act_runner import (
+    PreflightResult,
+    build_act_command,
+    default_container_arch,
+    preflight,
+    probe,
+    run_act,
+)
 
 
 def _cp(returncode=0, stdout=""):
@@ -46,6 +53,35 @@ class TestBuildCommand:
         cmd = build_act_command("push")
         assert "--secret-file" not in cmd
 
+    def test_workflow_job_arch_flags(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        cmd = build_act_command(
+            "workflow_dispatch",
+            workflow=".github/workflows/ci.yml",
+            job="primary",
+            arch="linux/amd64",
+        )
+        assert cmd[:2] == ["act", "workflow_dispatch"]
+        assert cmd[cmd.index("-W") + 1] == ".github/workflows/ci.yml"
+        assert cmd[cmd.index("-j") + 1] == "primary"
+        assert cmd[cmd.index("--container-architecture") + 1] == "linux/amd64"
+
+
+class TestDefaultArch:
+    def test_amd64_on_macos_arm(self):
+        with (
+            patch("mcli.workflow.ci.act_runner.sys.platform", "darwin"),
+            patch("platform.machine", return_value="arm64"),
+        ):
+            assert default_container_arch() == "linux/amd64"
+
+    def test_none_on_linux(self):
+        with (
+            patch("mcli.workflow.ci.act_runner.sys.platform", "linux"),
+            patch("platform.machine", return_value="x86_64"),
+        ):
+            assert default_container_arch() is None
+
 
 class TestRunAct:
     def test_pass(self):
@@ -56,12 +92,51 @@ class TestRunAct:
         with patch("subprocess.run", return_value=_cp(1)):
             assert run_act("pull_request") == PreflightResult.FAIL
 
-    def test_no_stages_is_pass_not_fail(self):
-        """workflow_dispatch-only workflows have no pull_request stages; act
-        exits non-zero with 'Could not find any stages to run' — a no-op, not
-        a failure, so the gate must not block (#205)."""
+    def test_no_stages_without_entrypoint_is_pass(self, tmp_path, monkeypatch):
+        """No pull_request stages AND no ci.yml dispatch entrypoint -> genuine
+        no-op, so the gate must not block (#205)."""
+        monkeypatch.chdir(tmp_path)  # no .github/workflows/ci.yml here
         out = "Error: Could not find any stages to run. View the valid jobs with `act --list`."
         with patch("subprocess.run", return_value=_cp(1, stdout=out)):
+            assert run_act("pull_request") == PreflightResult.PASS
+
+
+class TestDispatchFallback:
+    """workflow_dispatch-only repos (migrated by `mcli ci migrate`) have no
+    pull_request stages. Rather than hollow-pass, preflight must run the
+    canonical ci.yml `primary` job via workflow_dispatch so it actually
+    validates the gates."""
+
+    _NO_STAGES = "Error: Could not find any stages to run."
+
+    def _with_ci_yml(self, tmp_path, monkeypatch):
+        wf = tmp_path / ".github" / "workflows"
+        wf.mkdir(parents=True)
+        (wf / "ci.yml").write_text("name: ci\non:\n  workflow_dispatch:\n")
+        monkeypatch.chdir(tmp_path)
+
+    def test_no_stages_then_dispatch_passes(self, tmp_path, monkeypatch):
+        self._with_ci_yml(tmp_path, monkeypatch)
+        # 1st call (pull_request) -> no stages; 2nd call (dispatch) -> exit 0.
+        seq = [_cp(1, stdout=self._NO_STAGES), _cp(0)]
+        with patch("subprocess.run", side_effect=seq) as m:
+            assert run_act("pull_request") == PreflightResult.PASS
+        assert m.call_count == 2
+        # 2nd invocation targets ci.yml primary on workflow_dispatch.
+        second = m.call_args_list[1].args[0]
+        assert "workflow_dispatch" in second
+        assert "-j" in second and "primary" in second
+
+    def test_no_stages_then_dispatch_fails(self, tmp_path, monkeypatch):
+        self._with_ci_yml(tmp_path, monkeypatch)
+        seq = [_cp(1, stdout=self._NO_STAGES), _cp(1, stdout="3 tests failed")]
+        with patch("subprocess.run", side_effect=seq):
+            assert run_act("pull_request") == PreflightResult.FAIL
+
+    def test_dispatch_also_no_stages_is_pass(self, tmp_path, monkeypatch):
+        self._with_ci_yml(tmp_path, monkeypatch)
+        seq = [_cp(1, stdout=self._NO_STAGES), _cp(1, stdout=self._NO_STAGES)]
+        with patch("subprocess.run", side_effect=seq):
             assert run_act("pull_request") == PreflightResult.PASS
 
 
@@ -95,9 +170,6 @@ class TestRunActDockerRateLimit:
         ):
             assert run_act("pull_request") == PreflightResult.FAIL
         assert m.call_count == 1
-
-
-from mcli.workflow.ci.act_runner import preflight
 
 
 class TestPreflight:
