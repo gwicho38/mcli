@@ -101,5 +101,11 @@ class VenvPaths:
     PYTHON_UNIX = "python"
     PYTHON_WINDOWS = "python.exe"
 
+    # Framework runtime primitives that mcli python workflows assume are
+    # importable. The generated script templates `import click` unconditionally,
+    # so an isolated (bare) global venv must be seeded with these even when a
+    # script omits them from its @requires metadata.
+    BASE_RUNTIME_PACKAGES = ["click"]
+
 
 __all__ = ["DirNames", "FileNames", "PathPatterns", "GitIgnorePatterns", "VenvPaths"]

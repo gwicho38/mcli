@@ -256,6 +256,26 @@ class TestDependencyChecker:
         assert checker._check_version_constraint("pandas>=1.0.0", "1.5.0") is True
         assert checker._check_version_constraint("pandas", "1.0.0") is True
 
+    def test_merge_base_runtime_adds_missing(self):
+        """merge_base_runtime appends base packages not already present."""
+        from mcli.lib.pyenv import DependencyChecker
+
+        checker = DependencyChecker(Path(sys.executable))
+
+        assert checker.merge_base_runtime([], ["click"]) == ["click"]
+        assert checker.merge_base_runtime(["rich"], ["click"]) == ["rich", "click"]
+
+    def test_merge_base_runtime_no_duplicate(self):
+        """Base packages already declared (any form) are not duplicated."""
+        from mcli.lib.pyenv import DependencyChecker
+
+        checker = DependencyChecker(Path(sys.executable))
+
+        # bare, version-pinned, and normalized-name variants all suppress the add
+        assert checker.merge_base_runtime(["click"], ["click"]) == ["click"]
+        assert checker.merge_base_runtime(["click>=8.0.0"], ["click"]) == ["click>=8.0.0"]
+        assert checker.merge_base_runtime(["Click"], ["click"]) == ["Click"]
+
 
 class TestPyEnvManager:
     """Test suite for PyEnvManager class."""
@@ -426,6 +446,43 @@ class TestCheckAndInstallDeps:
 
                     assert result is False
                     mock_confirm.assert_called_once()
+
+    def test_base_runtime_installed_when_no_requires(self):
+        """Even with no @requires, base runtime (click) must be ensured.
+
+        Regression: generated python workflow templates import click but do not
+        declare it; a bare global venv has no click, so `mcli run -g <cmd>`
+        crashed with ModuleNotFoundError: No module named 'click'. The empty
+        @requires must NOT short-circuit before base deps are installed.
+        """
+        from mcli.lib.pyenv import PyEnvManager
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workspace = Path(tmpdir)
+
+            with patch.dict(os.environ, {"MCLI_USE_SYSTEM_PYTHON": "true"}):
+                manager = PyEnvManager(workspace_dir=workspace)
+
+                with (
+                    patch.object(manager, "resolve_environment", return_value=(None, "system")),
+                    patch.object(
+                        manager, "get_python_executable", return_value=Path(sys.executable)
+                    ),
+                    patch("mcli.lib.pyenv.manager.DependencyChecker") as mock_checker_cls,
+                    patch("sys.stdin") as mock_stdin,
+                ):
+                    mock_stdin.isatty.return_value = False
+                    mock_checker = mock_checker_cls.return_value
+                    mock_checker.merge_base_runtime.return_value = ["click"]
+                    mock_checker.check_installed.return_value = ([], ["click"])
+                    mock_checker.install_packages.return_value = None
+
+                    result = manager.check_and_install_deps([], "test_script")
+
+                    assert result is True
+                    mock_checker.install_packages.assert_called_once()
+                    installed_arg = mock_checker.install_packages.call_args[0][0]
+                    assert "click" in installed_arg
 
 
 class TestPyEnvIntegration:

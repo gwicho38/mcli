@@ -75,6 +75,26 @@ class DependencyChecker:
 
         return installed, missing
 
+    def merge_base_runtime(self, packages: List[str], base: List[str]) -> List[str]:
+        """Append base runtime packages that are not already declared.
+
+        Comparison is by normalized package name, so a declared spec like
+        ``click>=8.0`` or ``Click`` suppresses adding the bare ``click`` base.
+
+        Args:
+            packages: Packages already requested (from @requires).
+            base: Base runtime packages to ensure are present.
+
+        Returns:
+            ``packages`` plus any base package whose normalized name is absent.
+        """
+        have = {self._normalize_package_name(self._extract_package_name(p)) for p in packages}
+        merged = list(packages)
+        for pkg in base:
+            if self._normalize_package_name(self._extract_package_name(pkg)) not in have:
+                merged.append(pkg)
+        return merged
+
     def install_packages(self, packages: List[str], venv_path: Path) -> bool:
         """Install packages using uv pip install.
 
