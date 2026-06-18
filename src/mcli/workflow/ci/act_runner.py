@@ -28,13 +28,14 @@ _NO_STAGES_MARKERS = ("could not find any stages to run",)
 _RETRY_BACKOFF = (15, 45)
 _MAX_RETRIES = 2
 
-# Canonical CI entrypoint created by `mcli ci migrate`: ci.yml's `primary` job
-# runs on `workflow_dispatch` and calls the reusable `_ci-jobs.yml` with the
-# `runner_labels` input. The reusable workflow CANNOT run standalone (its
-# `runs-on: ${{ fromJSON(inputs.runner_labels) }}` has no value), so preflight
-# must drive it through this caller.
+# Canonical CI entrypoint created by `mcli ci migrate`: ci.yml runs on
+# `workflow_dispatch`. The job id is NOT fixed (`mcli ci migrate` keeps the
+# repo's original job name, e.g. `test`) — so preflight discovers the real job
+# id(s) from `act --list` rather than assuming a hardcoded name.
 _DISPATCH_WORKFLOW = Path(".github/workflows/ci.yml")
-_DISPATCH_JOB = "primary"
+
+# Header label of the job-id column in `act --list` table output.
+_JOB_ID_HEADER = "Job ID"
 
 
 class PreflightResult(Enum):
@@ -115,11 +116,51 @@ def default_container_arch() -> str | None:
     return None
 
 
-def dispatch_entrypoint() -> tuple[str, str] | None:
-    """The canonical (workflow, job) to drive via `workflow_dispatch`, or None."""
+def dispatch_workflow() -> str | None:
+    """The canonical workflow file to drive via `workflow_dispatch`, or None."""
     if _DISPATCH_WORKFLOW.exists():
-        return (str(_DISPATCH_WORKFLOW), _DISPATCH_JOB)
+        return str(_DISPATCH_WORKFLOW)
     return None
+
+
+def list_jobs(event: str, workflow: str | None = None) -> list[str]:
+    """Real job ids act would run for `event`, parsed from the `act --list` table.
+
+    `act --list` prints a table whose first row is a header containing a `Job ID`
+    column; each subsequent row is a runnable job. Returns job ids in table order
+    (deduplicated). Returns ``[]`` when act lists no jobs for the event (including
+    the "could not find any stages" no-op) or when act can't be invoked — never
+    raises, so callers can treat an empty result as "nothing to run".
+    """
+    cmd = ["act", event, "--list"]
+    if workflow is not None:
+        cmd += ["-W", workflow]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return []
+    return _parse_job_ids(proc.stdout or "")
+
+
+def _parse_job_ids(listing: str) -> list[str]:
+    """Extract the `Job ID` column from `act --list` table output."""
+    lines = [ln for ln in listing.splitlines() if ln.strip()]
+    if not lines:
+        return []
+    header = lines[0]
+    if _JOB_ID_HEADER not in header:
+        return []
+    # Columns are whitespace-separated; the job id is the second field in act's
+    # fixed-order table (Stage, Job ID, Job name, ...).
+    col = header.split().index(_JOB_ID_HEADER.split()[1]) - 1
+    job_ids: list[str] = []
+    for row in lines[1:]:
+        fields = row.split()
+        if len(fields) > col:
+            jid = fields[col]
+            if jid not in job_ids:
+                job_ids.append(jid)
+    return job_ids
 
 
 def build_act_command(
@@ -194,35 +235,61 @@ def run_act(
 
     Migrated repos are ``workflow_dispatch``-only, so the default
     ``pull_request`` event matches no jobs. Rather than hollow-pass, fall back
-    to the canonical ``ci.yml`` ``primary`` job on ``workflow_dispatch`` (which
-    drives the reusable ``_ci-jobs.yml``) and validate for real.
+    to the canonical ``ci.yml`` on ``workflow_dispatch``: discover its real job
+    id(s) via ``act --list`` (the job name is NOT fixed — ``mcli ci migrate``
+    keeps the repo's original name) and run each so the gate validates for real.
+
+    A green result means act actually executed ≥1 job and every job passed. If
+    ``act --list`` shows jobs but a run reports "could not find any stages"
+    (i.e. act ran nothing), that is a FAILURE, not a no-op — never a hollow pass.
     """
     arch = default_container_arch()
-    result, output = _run_with_retries(build_act_command(event, arch=arch), retries, backoff)
+    result, output = _run_with_retries(
+        build_act_command(event, arch=arch), retries, backoff
+    )
 
-    if result == PreflightResult.PASS and _has_no_stages(output):
-        entry = dispatch_entrypoint()
-        if entry is None:
-            sys.stdout.write(
-                "ℹ️  No act stages for this event and no ci.yml dispatch "
-                "entrypoint — nothing to validate; treating as pass.\n"
-            )
-            return PreflightResult.PASS
-        workflow, job = entry
+    if not (result == PreflightResult.PASS and _has_no_stages(output)):
+        return result
+
+    # No stages for the requested event — try the workflow_dispatch entrypoint.
+    workflow = dispatch_workflow()
+    if workflow is None:
         sys.stdout.write(
-            f"ℹ️  No '{event}' stages (workflow_dispatch-only); running "
-            f"{workflow} -j {job} via workflow_dispatch…\n"
+            "ℹ️  No act stages for this event and no ci.yml dispatch "
+            "entrypoint — nothing to validate; treating as pass.\n"
         )
+        return PreflightResult.PASS
+
+    jobs = list_jobs("workflow_dispatch", workflow)
+    if not jobs:
+        # The dispatch entrypoint genuinely has no jobs — a real no-op.
+        sys.stdout.write(
+            f"ℹ️  {workflow} has no workflow_dispatch jobs — nothing to "
+            "validate; treating as pass.\n"
+        )
+        return PreflightResult.PASS
+
+    targets = f"{workflow} {jobs}"
+    sys.stdout.write(
+        f"ℹ️  No '{event}' stages (workflow_dispatch-only); running "
+        f"{targets} via workflow_dispatch…\n"
+    )
+    for job in jobs:
         result, output = _run_with_retries(
-            build_act_command("workflow_dispatch", workflow=workflow, job=job, arch=arch),
+            build_act_command(
+                "workflow_dispatch", workflow=workflow, job=job, arch=arch
+            ),
             retries,
             backoff,
         )
-        # If even the dispatch entrypoint has no stages, it's a genuine no-op.
-        if result == PreflightResult.PASS and _has_no_stages(output):
-            return PreflightResult.PASS
+        if result == PreflightResult.UNREACHABLE:
+            return PreflightResult.UNREACHABLE
+        # We KNOW this job exists (it came from `act --list`), so "no stages"
+        # here means act ran nothing — a failure, not a no-op. Do not pass.
+        if result != PreflightResult.PASS or _has_no_stages(output):
+            return PreflightResult.FAIL
 
-    return result
+    return PreflightResult.PASS
 
 
 def preflight(repo_slug: str, event: str = "pull_request") -> PreflightResult:
@@ -235,7 +302,9 @@ def preflight(repo_slug: str, event: str = "pull_request") -> PreflightResult:
     same checks on the host toolchain, avoiding act's flaky container emulation.
     """
     if native_gate_available():
-        sys.stdout.write("▶ Native CI gate found — running `make ci-native` (no act)…\n")
+        sys.stdout.write(
+            "▶ Native CI gate found — running `make ci-native` (no act)…\n"
+        )
         return run_native()
     if not probe():
         return PreflightResult.UNREACHABLE
