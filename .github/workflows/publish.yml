@@ -71,11 +71,32 @@ jobs:
           files: ./coverage.xml
           fail_ci_if_error: false
 
+  # Job 1b: Version guard — fail if pyproject version already exists on PyPI.
+  # Without this, publish uses skip-existing:true and silently no-ops when the
+  # version wasn't bumped, so downstream PyPI consumers never receive the change.
+  version-guard:
+    name: Version Guard
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Ensure version is bumped (not already on PyPI)
+        run: |
+          VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "//;s/"//')
+          echo "pyproject version: $VERSION"
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/mcli-framework/$VERSION/json")
+          if [ "$STATUS" = "200" ]; then
+            echo "::error::Version $VERSION is already published on PyPI. Bump 'version' in pyproject.toml before merging — publish uses skip-existing and would silently no-op."
+            exit 1
+          fi
+          echo "Version $VERSION is free on PyPI — OK to publish."
+
   # Job 2: Build package
   build:
     name: Build Distribution
     runs-on: [self-hosted, linux, x64]
-    needs: test
+    needs: [test, version-guard]
 
     steps:
       - name: Checkout code

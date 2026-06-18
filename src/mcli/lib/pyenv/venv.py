@@ -67,7 +67,7 @@ class VenvManager:
         venv_path = self.get_global_venv_path()
 
         if venv_path.is_dir() and self._is_valid_venv(venv_path):
-            logger.debug(f"Global venv already exists at {venv_path}")
+            logger.debug(VenvMessages.GLOBAL_VENV_ALREADY_EXISTS.format(path=venv_path))
             return venv_path
 
         logger.info(VenvMessages.CREATING_GLOBAL_VENV.format(path=venv_path))
@@ -95,8 +95,12 @@ class VenvManager:
         venv_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
+            # --clear recreates over an existing directory. ensure_global_venv()
+            # only calls this when no *valid* venv exists, so a directory present
+            # here is stale/partial (e.g. pyvenv.cfg but no bin/python). Without
+            # --clear, uv aborts with "A virtual environment already exists".
             result = subprocess.run(
-                ["uv", "venv", str(venv_path)],
+                ["uv", "venv", "--clear", str(venv_path)],
                 capture_output=True,
                 text=True,
                 timeout=60,

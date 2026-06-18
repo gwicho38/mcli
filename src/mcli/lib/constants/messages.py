@@ -1124,6 +1124,7 @@ class VenvMessages:
     USING_SYSTEM_PYTHON_ENV_SET = "Using system Python (MCLI_USE_SYSTEM_PYTHON set)"
     CREATING_GLOBAL_VENV = "Creating global MCLI venv at {path}..."
     GLOBAL_VENV_CREATED = "Created global MCLI venv at {path}"
+    GLOBAL_VENV_ALREADY_EXISTS = "Global venv already exists at {path}"
 
     # Dependency messages
     NO_DEPS_SPECIFIED = "No dependencies specified"
