@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Tuple
 
 import click
 
-from mcli.lib.constants import EnvVars, VenvMessages
+from mcli.lib.constants import EnvVars, VenvMessages, VenvPaths
 from mcli.lib.logger import get_logger
 
 from .deps import DependencyChecker
@@ -119,10 +119,6 @@ class PyEnvManager:
         Returns:
             True if all dependencies are satisfied or installed.
         """
-        if not requires:
-            logger.debug(VenvMessages.NO_DEPS_SPECIFIED)
-            return True
-
         venv_path, source = self.resolve_environment()
 
         # Ensure the venv exists (create global venv if needed)
@@ -132,8 +128,16 @@ class PyEnvManager:
         python_exe = self.get_python_executable()
         checker = DependencyChecker(python_exe)
 
-        # Parse and check dependencies
-        packages = checker.parse_requires(requires)
+        # Parse declared dependencies, then ensure framework runtime primitives
+        # (e.g. click) are present even when @requires is empty — an isolated
+        # global venv is created bare and mcli workflow scripts import click.
+        packages = checker.parse_requires(requires) if requires else []
+        packages = checker.merge_base_runtime(packages, VenvPaths.BASE_RUNTIME_PACKAGES)
+
+        if not packages:
+            logger.debug(VenvMessages.NO_DEPS_SPECIFIED)
+            return True
+
         logger.debug(VenvMessages.CHECKING_DEPS.format(script=script_name))
 
         installed, missing = checker.check_installed(packages)
