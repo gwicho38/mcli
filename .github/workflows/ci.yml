@@ -131,6 +131,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install maturin
+        # Self-hosted runners persist site-packages across runs. A stale,
+        # non-editable `mcli` left in the interpreter's site-packages shadows
+        # the editable install below (Python imports the real package dir before
+        # the .pth-based editable entry), so tests run against old code and fail
+        # to import newly-added symbols. Force-remove any prior install first so
+        # the editable checkout is the only `mcli` on sys.path.
+        pip uninstall -y mcli mcli-framework 2>/dev/null || true
         pip install -e .[dev]
         # Self-hosted runner: pip falls back to --user installs, whose console
         # scripts (maturin, mcli, pytest) land in user-base/bin, not on PATH.

@@ -7,6 +7,7 @@ from mcli.workflow.ci.act_runner import (
     PreflightResult,
     build_act_command,
     default_container_arch,
+    list_jobs,
     native_gate_available,
     preflight,
     probe,
@@ -103,11 +104,51 @@ class TestRunAct:
             assert run_act("pull_request") == PreflightResult.PASS
 
 
+# `act --list` table output. The job id lives under the `Job ID` column; it is
+# NOT always `primary` — for a typical migrated repo it's whatever the original
+# job was called (here, `test`). Preflight must discover it, not assume it.
+_ACT_LIST_TEST_JOB = (
+    "Stage  Job ID  Job name  Workflow name  Workflow file  Events\n"
+    "0      test    test      ci             ci.yml         workflow_dispatch\n"
+)
+_ACT_LIST_TWO_JOBS = (
+    "Stage  Job ID  Job name  Workflow name  Workflow file  Events\n"
+    "0      lint    lint      ci             ci.yml         workflow_dispatch\n"
+    "0      test    test      ci             ci.yml         workflow_dispatch\n"
+)
+_ACT_LIST_EMPTY = "Stage  Job ID  Job name  Workflow name  Workflow file  Events\n"
+
+
+class TestListJobs:
+    """`list_jobs` parses real job ids out of the `act --list` table so the
+    dispatch fallback never has to guess (`primary` was a wrong guess: defect 1)."""
+
+    def test_parses_single_job_id(self):
+        with patch("subprocess.run", return_value=_cp(0, stdout=_ACT_LIST_TEST_JOB)):
+            assert list_jobs("workflow_dispatch", ".github/workflows/ci.yml") == ["test"]
+
+    def test_parses_multiple_job_ids(self):
+        with patch("subprocess.run", return_value=_cp(0, stdout=_ACT_LIST_TWO_JOBS)):
+            assert list_jobs("workflow_dispatch", ".github/workflows/ci.yml") == [
+                "lint",
+                "test",
+            ]
+
+    def test_empty_table_is_no_jobs(self):
+        with patch("subprocess.run", return_value=_cp(0, stdout=_ACT_LIST_EMPTY)):
+            assert list_jobs("workflow_dispatch", ".github/workflows/ci.yml") == []
+
+    def test_no_stages_output_is_no_jobs(self):
+        out = "Error: Could not find any stages to run."
+        with patch("subprocess.run", return_value=_cp(1, stdout=out)):
+            assert list_jobs("workflow_dispatch", ".github/workflows/ci.yml") == []
+
+
 class TestDispatchFallback:
     """workflow_dispatch-only repos (migrated by `mcli ci migrate`) have no
-    pull_request stages. Rather than hollow-pass, preflight must run the
-    canonical ci.yml `primary` job via workflow_dispatch so it actually
-    validates the gates."""
+    pull_request stages. Rather than hollow-pass, preflight must discover the
+    real ci.yml job id(s) via `act --list` and run them via workflow_dispatch so
+    it actually validates the gates."""
 
     _NO_STAGES = "Error: Could not find any stages to run."
 
@@ -117,29 +158,72 @@ class TestDispatchFallback:
         (wf / "ci.yml").write_text("name: ci\non:\n  workflow_dispatch:\n")
         monkeypatch.chdir(tmp_path)
 
+    def test_dispatch_uses_discovered_job_not_primary(self, tmp_path, monkeypatch):
+        """Defect 1: the dispatch run must target the real job id from
+        `act --list` (`test`), never the hardcoded `primary`."""
+        self._with_ci_yml(tmp_path, monkeypatch)
+        with (
+            patch("mcli.workflow.ci.act_runner.list_jobs", return_value=["test"]) as list_m,
+            # 1st run: pull_request -> no stages; 2nd run: dispatch -> exit 0.
+            patch("subprocess.run", side_effect=[_cp(1, stdout=self._NO_STAGES), _cp(0)]) as run_m,
+        ):
+            assert run_act("pull_request") == PreflightResult.PASS
+        list_m.assert_called_once()
+        dispatch_cmd = run_m.call_args_list[1].args[0]
+        assert "workflow_dispatch" in dispatch_cmd
+        assert "-j" in dispatch_cmd and "test" in dispatch_cmd
+        assert "primary" not in dispatch_cmd
+
     def test_no_stages_then_dispatch_passes(self, tmp_path, monkeypatch):
         self._with_ci_yml(tmp_path, monkeypatch)
-        # 1st call (pull_request) -> no stages; 2nd call (dispatch) -> exit 0.
-        seq = [_cp(1, stdout=self._NO_STAGES), _cp(0)]
-        with patch("subprocess.run", side_effect=seq) as m:
+        with (
+            patch("mcli.workflow.ci.act_runner.list_jobs", return_value=["test"]),
+            patch("subprocess.run", side_effect=[_cp(1, stdout=self._NO_STAGES), _cp(0)]),
+        ):
             assert run_act("pull_request") == PreflightResult.PASS
-        assert m.call_count == 2
-        # 2nd invocation targets ci.yml primary on workflow_dispatch.
-        second = m.call_args_list[1].args[0]
-        assert "workflow_dispatch" in second
-        assert "-j" in second and "primary" in second
 
     def test_no_stages_then_dispatch_fails(self, tmp_path, monkeypatch):
         self._with_ci_yml(tmp_path, monkeypatch)
-        seq = [_cp(1, stdout=self._NO_STAGES), _cp(1, stdout="3 tests failed")]
-        with patch("subprocess.run", side_effect=seq):
+        with (
+            patch("mcli.workflow.ci.act_runner.list_jobs", return_value=["test"]),
+            patch(
+                "subprocess.run",
+                side_effect=[
+                    _cp(1, stdout=self._NO_STAGES),
+                    _cp(1, stdout="3 tests failed"),
+                ],
+            ),
+        ):
             assert run_act("pull_request") == PreflightResult.FAIL
 
-    def test_dispatch_also_no_stages_is_pass(self, tmp_path, monkeypatch):
+    def test_dispatch_no_stages_despite_listed_job_is_fail(self, tmp_path, monkeypatch):
+        """Defect 2: if `act --list` shows a job but the dispatch run still says
+        'could not find any stages' (e.g. wrong `-j` / act ran nothing), that is a
+        FAILURE, not a hollow pass. Green must mean a job actually executed."""
         self._with_ci_yml(tmp_path, monkeypatch)
-        seq = [_cp(1, stdout=self._NO_STAGES), _cp(1, stdout=self._NO_STAGES)]
-        with patch("subprocess.run", side_effect=seq):
+        with (
+            patch("mcli.workflow.ci.act_runner.list_jobs", return_value=["test"]),
+            patch(
+                "subprocess.run",
+                side_effect=[
+                    _cp(1, stdout=self._NO_STAGES),
+                    _cp(1, stdout=self._NO_STAGES),
+                ],
+            ),
+        ):
+            assert run_act("pull_request") == PreflightResult.FAIL
+
+    def test_genuinely_no_jobs_is_pass(self, tmp_path, monkeypatch):
+        """If `act --list` shows the dispatch entrypoint has NO jobs at all, it's a
+        real no-op and the gate passes without claiming a job ran."""
+        self._with_ci_yml(tmp_path, monkeypatch)
+        with (
+            patch("mcli.workflow.ci.act_runner.list_jobs", return_value=[]),
+            patch("subprocess.run", side_effect=[_cp(1, stdout=self._NO_STAGES)]) as run_m,
+        ):
             assert run_act("pull_request") == PreflightResult.PASS
+        # only the initial pull_request probe ran; no dispatch run attempted.
+        assert run_m.call_count == 1
 
 
 class TestRunActDockerRateLimit:
@@ -202,7 +286,10 @@ class TestPreflight:
         # When a native `make ci-native` exists, run it and SKIP act entirely.
         with (
             patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=True),
-            patch("mcli.workflow.ci.act_runner.run_native", return_value=PreflightResult.PASS),
+            patch(
+                "mcli.workflow.ci.act_runner.run_native",
+                return_value=PreflightResult.PASS,
+            ),
             patch("mcli.workflow.ci.act_runner.probe") as probe_m,
             patch("mcli.workflow.ci.act_runner.run_act") as act_m,
         ):
@@ -213,7 +300,10 @@ class TestPreflight:
     def test_native_fail_blocks(self):
         with (
             patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=True),
-            patch("mcli.workflow.ci.act_runner.run_native", return_value=PreflightResult.FAIL),
+            patch(
+                "mcli.workflow.ci.act_runner.run_native",
+                return_value=PreflightResult.FAIL,
+            ),
         ):
             assert preflight("o/r") == PreflightResult.FAIL
 
