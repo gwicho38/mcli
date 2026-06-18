@@ -244,9 +244,7 @@ def run_act(
     (i.e. act ran nothing), that is a FAILURE, not a no-op — never a hollow pass.
     """
     arch = default_container_arch()
-    result, output = _run_with_retries(
-        build_act_command(event, arch=arch), retries, backoff
-    )
+    result, output = _run_with_retries(build_act_command(event, arch=arch), retries, backoff)
 
     if not (result == PreflightResult.PASS and _has_no_stages(output)):
         return result
@@ -276,9 +274,7 @@ def run_act(
     )
     for job in jobs:
         result, output = _run_with_retries(
-            build_act_command(
-                "workflow_dispatch", workflow=workflow, job=job, arch=arch
-            ),
+            build_act_command("workflow_dispatch", workflow=workflow, job=job, arch=arch),
             retries,
             backoff,
         )
@@ -302,9 +298,7 @@ def preflight(repo_slug: str, event: str = "pull_request") -> PreflightResult:
     same checks on the host toolchain, avoiding act's flaky container emulation.
     """
     if native_gate_available():
-        sys.stdout.write(
-            "▶ Native CI gate found — running `make ci-native` (no act)…\n"
-        )
+        sys.stdout.write("▶ Native CI gate found — running `make ci-native` (no act)…\n")
         return run_native()
     if not probe():
         return PreflightResult.UNREACHABLE
