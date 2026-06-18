@@ -157,6 +157,33 @@ class TestVenvManager:
             assert str(venv_path / "bin") in result["PATH"]
             assert "PYTHONHOME" not in result
 
+    def test_create_venv_clears_existing_dir(self):
+        """create_venv must pass --clear so a partial/corrupt venv is recreated.
+
+        Regression: when ~/.mcli/venv exists with pyvenv.cfg but no bin/python,
+        `uv venv <path>` aborts with "A virtual environment already exists".
+        Passing --clear lets uv recreate over the existing directory.
+        """
+        from unittest.mock import MagicMock
+
+        from mcli.lib.pyenv import VenvManager
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            venv_path = Path(tmpdir) / "venv"
+
+            manager = VenvManager()
+
+            completed = MagicMock(returncode=0, stdout="", stderr="")
+            with patch.object(VenvManager, "is_uv_available", return_value=True):
+                with patch(
+                    "mcli.lib.pyenv.venv.subprocess.run", return_value=completed
+                ) as mock_run:
+                    assert manager.create_venv(venv_path) is True
+
+            cmd = mock_run.call_args[0][0]
+            assert cmd[:3] == ["uv", "venv", "--clear"], cmd
+            assert str(venv_path) in cmd
+
 
 class TestDependencyChecker:
     """Test suite for DependencyChecker class."""
