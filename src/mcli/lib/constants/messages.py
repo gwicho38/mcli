@@ -17,6 +17,7 @@ class ErrorMessages:
     )
     COMMAND_NOT_FOUND = "Command '{name}' not found"
     COMMAND_NOT_AVAILABLE = "Command {name} is not available"
+    WORKFLOW_CRASHED = "Workflow '{name}' crashed: {error}"
     GIT_COMMAND_FAILED = "Git command failed: {error}"
     FILE_NOT_FOUND = "File not found: {path}"
     DIRECTORY_NOT_FOUND = "Directory not found: {path}"
@@ -66,6 +67,9 @@ class InfoMessages:
 
     COPYING_COMMANDS = "Copying commands from {source} to {dest}..."
     NO_CHANGES_TO_COMMIT = "No changes to commit"
+    WORKFLOW_CRASH_LOCATION = "  in {location}"
+    WORKFLOW_CRASH_TRACE_HINT = "  Set MCLI_TRACE_LEVEL=1 (or MCLI_DEBUG=1) for the full traceback."
+    WORKFLOW_CRASH_REPORT = "  Report this: {url}"
     LOADING = "Loading {item}..."
     PROCESSING = "Processing {item}..."
     CONNECTING = "Connecting to {service}..."
