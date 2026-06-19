@@ -140,6 +140,7 @@ class ScopedWorkflowsGroup(click.Group):
         from mcli.lib.constants.messages import WarningMessages
         from mcli.lib.logger.logger import get_logger
         from mcli.lib.script_loader import LANGUAGE_TO_SUFFIX, ScriptLoader, parse_command_name
+        from mcli.lib.workflow_runtime import wrap_command_invoke
 
         logger = get_logger()
 
@@ -171,7 +172,7 @@ class ScopedWorkflowsGroup(click.Group):
                     command = loader.load_command(matches[0])
                     if command:
                         logger.debug(f"Loaded native script command: {cmd_name}")
-                        return command
+                        return wrap_command_invoke(command, matches[0])
                 except Exception as e:
                     logger.debug(f"Failed to load script '{cmd_name}': {e}")
             elif len(matches) > 1 and not lang_filter:
@@ -185,7 +186,7 @@ class ScopedWorkflowsGroup(click.Group):
                     command = loader.load_command(matches[0])
                     if command:
                         logger.debug(f"Loaded first match for ambiguous command: {base_name}")
-                        return command
+                        return wrap_command_invoke(command, matches[0])
                 except Exception as e:
                     logger.debug(f"Failed to load script '{base_name}': {e}")
 

@@ -39,6 +39,7 @@ class URLs:
     GITHUB_API = "https://api.github.com"
     GITHUB_API_MCLI = "https://api.github.com/repos/gwicho38/mcli"
     GITHUB_API_ACTIONS = "https://api.github.com/repos/gwicho38/mcli/actions/runs"
+    GITHUB_ISSUES_MCLI = "https://github.com/gwicho38/mcli/issues"
 
     # PyPI
     PYPI_API = "https://pypi.org/pypi"
