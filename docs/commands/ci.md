@@ -64,6 +64,9 @@ repo B: mcli ci preflight ── waits ─────────────�
   releases it when the holder exits — including on exception and on `SIGKILL`.
   The `pid=… repo=…` line written into the lockfile only feeds the "waiting for…"
   message; it is never consulted for correctness.
+- **Fails open.** If the lockfile cannot be created or opened at all, `preflight`
+  warns and runs `act` unserialised rather than raising — an exception there
+  would exit `1` and block the push in every repo.
 - **What is not locked**: the `make ci-native` gate (host-local, no container
   runtime — serialising it behind heavyweight act runs would only push fast,
   valid gates into the timeout) and the capability probe (so a dead Docker is
