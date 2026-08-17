@@ -10,6 +10,8 @@ import time
 from enum import Enum
 from pathlib import Path
 
+from mcli.workflow.ci.act_lock import LOCK_TIMEOUT_ENV, act_lock, resolve_timeout
+
 # Docker Hub returns these when the unauthenticated image-pull rate limit is hit.
 # act surfaces them while pulling the runner image — this is an environment
 # problem, NOT a test failure, so it must not hard-block a push.
@@ -288,7 +290,9 @@ def run_act(
     return PreflightResult.PASS
 
 
-def preflight(repo_slug: str, event: str = "pull_request") -> PreflightResult:
+def preflight(
+    repo_slug: str, event: str = "pull_request", lock_timeout: float | None = None
+) -> PreflightResult:
     """Primary gate. PASS/FAIL if act can run; UNREACHABLE if act can't start here.
 
     `repo_slug` is accepted for symmetry and future use; the runner fallback is
@@ -296,10 +300,28 @@ def preflight(repo_slug: str, event: str = "pull_request") -> PreflightResult:
 
     Prefers a repo-defined native gate (`make ci-native`) over act: it runs the
     same checks on the host toolchain, avoiding act's flaky container emulation.
+
+    The act run — and only the act run — is serialised machine-wide by
+    `act_lock`, because every repo's act run drives the same container runtime.
+    The native gate is host-local and stays unlocked, and `probe()` runs before
+    the wait so a dead docker is UNREACHABLE immediately instead of after
+    `lock_timeout` seconds. On lock timeout the gate reports UNREACHABLE (the
+    established "cannot validate" state) rather than starting the second
+    concurrent container run this lock exists to prevent.
     """
     if native_gate_available():
         sys.stdout.write("▶ Native CI gate found — running `make ci-native` (no act)…\n")
         return run_native()
     if not probe():
         return PreflightResult.UNREACHABLE
-    return run_act(event)
+    with act_lock(timeout=lock_timeout) as acquired:
+        if not acquired:
+            sys.stdout.write(
+                f"⚠️  Timed out after {resolve_timeout(lock_timeout):.0f}s waiting for the "
+                "machine-wide act lock — another `mcli ci preflight` is still running act. "
+                "Refusing to start a second concurrent container run; this push was NOT "
+                "validated locally (re-run `mcli ci preflight` when the machine is idle, "
+                f"or raise the wait with --lock-timeout / {LOCK_TIMEOUT_ENV}).\n"
+            )
+            return PreflightResult.UNREACHABLE
+        return run_act(event)
