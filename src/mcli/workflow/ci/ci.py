@@ -9,6 +9,7 @@ from pathlib import Path
 
 import click
 
+from mcli.workflow.ci.act_lock import DEFAULT_LOCK_TIMEOUT_SECONDS, LOCK_TIMEOUT_ENV
 from mcli.workflow.ci.act_runner import PreflightResult, act_available, docker_running
 from mcli.workflow.ci.act_runner import preflight as preflight_fn
 from mcli.workflow.ci.runner_status import has_online_runner
@@ -98,10 +99,21 @@ def migrate(dry_run):
 
 @ci.command()
 @click.option("--event", default="pull_request", show_default=True, help="act event to simulate.")
-def preflight(event):
+@click.option(
+    "--lock-timeout",
+    type=float,
+    default=None,
+    help=(
+        "Seconds to wait for the machine-wide act lock before giving up "
+        f"(default {DEFAULT_LOCK_TIMEOUT_SECONDS:.0f}s, or ${LOCK_TIMEOUT_ENV}). "
+        "act runs are serialised across repos so concurrent pushes cannot "
+        "starve the shared container runtime."
+    ),
+)
+def preflight(event, lock_timeout):
     """Run act as the PR gate. Exit 0=pass, 1=fail, 2=cannot validate, 3=use runner."""
     slug = current_repo_slug()
-    result = preflight_fn(slug, event)
+    result = preflight_fn(slug, event, lock_timeout=lock_timeout)
     if result == PreflightResult.PASS:
         click.echo("✅ act passed — OK to open PR.")
         raise SystemExit(0)
@@ -146,7 +158,10 @@ PRE_PUSH_HOOK = """#!/usr/bin/env bash
 # Blocks ONLY on a real act failure (exit 1). When act cannot validate locally
 # — e.g. Docker Hub rate-limit (toomanyrequests, retried first), no docker, or
 # an online runner will validate instead (exit 2/3) — the push is allowed so an
-# environment hiccup never wedges your workflow. Override a real failure with:
+# environment hiccup never wedges your workflow.
+# act runs are serialised machine-wide, so this may wait for another repo's
+# preflight to finish (bounded; see --lock-timeout / MCLI_CI_LOCK_TIMEOUT).
+# Override a real failure with:
 #   git push --no-verify
 mcli ci preflight
 code=$?

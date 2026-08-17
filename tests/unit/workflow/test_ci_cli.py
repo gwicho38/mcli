@@ -80,6 +80,30 @@ class TestPreflightCommand:
         assert res.exit_code == 3  # signals: push and let runner validate
         assert "runner" in res.output.lower()
 
+    def test_lock_timeout_flag_is_forwarded(self):
+        with (
+            patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"),
+            patch(
+                "mcli.workflow.ci.ci.preflight_fn", return_value=PreflightResult.PASS
+            ) as preflight_fn,
+            patch("mcli.workflow.ci.ci.has_online_runner", return_value=False),
+        ):
+            res = CliRunner().invoke(ci, ["preflight", "--lock-timeout", "5"])
+        assert res.exit_code == 0
+        assert preflight_fn.call_args.kwargs["lock_timeout"] == 5.0
+
+    def test_default_leaves_lock_timeout_unset(self):
+        """No flag -> None, so act_lock applies the env var or the 600s default."""
+        with (
+            patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"),
+            patch(
+                "mcli.workflow.ci.ci.preflight_fn", return_value=PreflightResult.PASS
+            ) as preflight_fn,
+            patch("mcli.workflow.ci.ci.has_online_runner", return_value=False),
+        ):
+            CliRunner().invoke(ci, ["preflight"])
+        assert preflight_fn.call_args.kwargs["lock_timeout"] is None
+
 
 class TestDoctorAndHook:
     def test_doctor_reports_status(self):
@@ -108,6 +132,7 @@ class TestDoctorAndHook:
     def test_pre_push_hook_blocks_only_on_real_failure(self, tmp_path, monkeypatch):
         """Hook blocks on preflight exit 1, allows exit 0/2/3 (cannot-validate)."""
         import subprocess as sp
+
         from mcli.workflow.ci.ci import PRE_PUSH_HOOK
 
         hook = tmp_path / "pre-push"
