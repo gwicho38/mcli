@@ -27,11 +27,11 @@ import fcntl
 import os
 import sys
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
-from collections.abc import Iterator
 
 from mcli.lib.paths import get_mcli_home
 
@@ -118,8 +118,21 @@ def act_lock(
     lockfile = path if path is not None else lock_path()
     emit = announce if announce is not None else sys.stdout.write
 
-    lockfile.parent.mkdir(parents=True, exist_ok=True)
-    handle = open(lockfile, "a+")
+    try:
+        lockfile.parent.mkdir(parents=True, exist_ok=True)
+        handle = open(lockfile, "a+")
+    except OSError as exc:
+        # Read-only home, a lockfile owned by another user, no space… none of
+        # that is a reason to fail a push. Degrade to the pre-lock behaviour
+        # (unserialised) and say so, rather than raising into the gate — an
+        # exception here would exit 1 and BLOCK the push in every repo.
+        emit(
+            f"⚠️  Cannot use the machine-wide act lock at {lockfile} ({exc}); "
+            "running act unserialised.\n"
+        )
+        yield True
+        return
+
     acquired = False
     try:
         deadline = time.monotonic() + wait_budget

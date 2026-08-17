@@ -165,6 +165,35 @@ class TestTimeout:
         assert resolve_timeout(None) == DEFAULT_LOCK_TIMEOUT_SECONDS
 
 
+class TestUnusableLockfile:
+    """An unusable lockfile must degrade to the old (unserialised) behaviour.
+
+    Raising here would surface as exit 1 from `mcli ci preflight` and BLOCK the
+    push in all sixteen repos — the one outcome worse than not serialising.
+    """
+
+    def test_unopenable_lockfile_proceeds_with_a_warning(self, tmp_path):
+        messages: list[str] = []
+        unusable = tmp_path / "no-such-dir" / "act.lock"
+        with patch("pathlib.Path.mkdir", side_effect=PermissionError("read-only home")):
+            with act_lock(timeout=1, path=unusable, announce=messages.append) as held:
+                assert held is True
+        assert messages and "cannot use" in messages[0].lower()
+
+    def test_preflight_still_runs_act_when_the_lock_is_unusable(self, tmp_path, monkeypatch):
+        monkeypatch.setenv(LOCK_PATH_ENV, str(tmp_path / "act.lock"))
+        with (
+            patch("pathlib.Path.mkdir", side_effect=PermissionError("read-only home")),
+            patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=False),
+            patch("mcli.workflow.ci.act_runner.probe", return_value=True),
+            patch(
+                "mcli.workflow.ci.act_runner.run_act", return_value=PreflightResult.PASS
+            ) as run_act,
+        ):
+            assert preflight("o/r") == PreflightResult.PASS
+        run_act.assert_called_once()
+
+
 class TestStaleness:
     def test_lock_released_after_exception(self, tmp_path):
         lock = tmp_path / "act.lock"
