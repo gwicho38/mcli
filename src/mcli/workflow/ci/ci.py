@@ -163,6 +163,20 @@ PRE_PUSH_HOOK = """#!/usr/bin/env bash
 # preflight to finish (bounded; see --lock-timeout / MCLI_CI_LOCK_TIMEOUT).
 # Override a real failure with:
 #   git push --no-verify
+#
+# A gate that cannot run must not pass. Git hooks inherit the environment of
+# whatever invoked `git`, which is not necessarily a login shell — an IDE, a
+# GUI client or a cron job can push with a PATH that never sourced your
+# profile. Without the check below, `mcli` would simply be "command not found"
+# (exit 127), the `-eq 1` test would not match, and the push would sail through
+# with nothing validated — indistinguishable from having no hook at all.
+if ! command -v mcli >/dev/null 2>&1; then
+  echo "mcli-ci: mcli is not on PATH, so nothing was validated — push blocked." >&2
+  echo "  This shell's PATH: $PATH" >&2
+  echo "  Fix the PATH (hooks do not source your shell profile), or override:" >&2
+  echo "    git push --no-verify" >&2
+  exit 1
+fi
 mcli ci preflight
 code=$?
 if [ "$code" -eq 1 ]; then

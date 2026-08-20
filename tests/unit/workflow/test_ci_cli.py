@@ -1,5 +1,6 @@
 """CliRunner tests for the `mcli ci` group."""
 
+import shutil
 from unittest.mock import patch
 
 from click.testing import CliRunner
@@ -147,6 +148,34 @@ class TestDoctorAndHook:
             res = sp.run(["bash", str(hook)], env=env, capture_output=True, text=True)
             blocked = res.returncode != 0
             assert blocked is should_block, f"code={code} expected block={should_block}"
+
+    def test_pre_push_hook_blocks_when_mcli_is_not_on_path(self, tmp_path):
+        """A gate that cannot run must not pass.
+
+        Git hooks inherit the environment of whatever invoked `git`, which is
+        not necessarily a login shell — an IDE, a GUI client or a cron job can
+        all push with a PATH that does not contain `mcli`. bash then exits 127
+        and, if the hook only treats exit 1 as failure, the push sails through
+        with nothing validated. That is indistinguishable from having no hook
+        installed at all, which is the whole point of installing one.
+        """
+        import subprocess as sp
+
+        from mcli.workflow.ci.ci import PRE_PUSH_HOOK
+
+        hook = tmp_path / "pre-push"
+        hook.write_text(PRE_PUSH_HOOK)
+        # A real PATH (bash itself must be findable) that has no `mcli` on it.
+        env = {"PATH": "/usr/bin:/bin"}
+        assert (
+            shutil.which("mcli", path=env["PATH"]) is None
+        ), "test precondition: mcli must not be on the stripped PATH"
+        res = sp.run(["bash", str(hook)], env=env, capture_output=True, text=True)
+        assert res.returncode != 0, (
+            "hook allowed the push while mcli was unreachable — the gate never "
+            f"ran. stdout={res.stdout!r} stderr={res.stderr!r}"
+        )
+        assert "mcli" in (res.stderr + res.stdout).lower()
 
 
 from mcli.workflow.ci import ci as ci_mod
