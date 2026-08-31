@@ -76,7 +76,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install Safety
-        run: pip install safety
+        run: pip install --upgrade "setuptools>=83" safety
 
       - name: Run Safety Check
         run: safety check --json > safety-report.json || safety check --ignore 59234,71691,71584,71578,71577,71692,71579,71587,71693,64459,64396
