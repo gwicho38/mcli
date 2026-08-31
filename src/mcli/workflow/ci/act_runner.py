@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import platform
 import shutil
 import subprocess
@@ -30,14 +31,18 @@ _NO_STAGES_MARKERS = ("could not find any stages to run",)
 _RETRY_BACKOFF = (15, 45)
 _MAX_RETRIES = 2
 
-# Canonical CI entrypoint created by `mcli ci migrate`: ci.yml runs on
-# `workflow_dispatch`. The job id is NOT fixed (`mcli ci migrate` keeps the
-# repo's original job name, e.g. `test`) — so preflight discovers the real job
-# id(s) from `act --list` rather than assuming a hardcoded name.
-_DISPATCH_WORKFLOW = Path(".github/workflows/ci.yml")
+# Dispatch-only workflows that are safe and expected to run as local gates.
+# Deploy, release, and audit workflows are intentionally not selected.
+_WORKFLOW_DIR = Path(".github/workflows")
+_DISPATCH_GATE_NAMES = {"ci", "secret-scan", "security-scan"}
 
 # Header label of the job-id column in `act --list` table output.
 _JOB_ID_HEADER = "Job ID"
+
+
+def _act_command(*args: str) -> list[str]:
+    """Build an act command without implicitly loading the repository .env."""
+    return ["act", *args, "--env-file", os.devnull]
 
 
 class PreflightResult(Enum):
@@ -100,7 +105,7 @@ def probe() -> bool:
     if not act_available() or not docker_running():
         return False
     try:
-        proc = subprocess.run(["act", "-l"], capture_output=True, text=True, timeout=60)
+        proc = subprocess.run(_act_command("-l"), capture_output=True, text=True, timeout=60)
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False
     return proc.returncode == 0
@@ -118,29 +123,48 @@ def default_container_arch() -> str | None:
     return None
 
 
-def dispatch_workflow() -> str | None:
-    """The canonical workflow file to drive via `workflow_dispatch`, or None."""
-    if _DISPATCH_WORKFLOW.exists():
-        return str(_DISPATCH_WORKFLOW)
-    return None
+def dispatch_workflows() -> list[str]:
+    """Return dispatch-only CI and security workflows safe to run locally.
+
+    The act-first migration historically preserved workflow filenames, so a
+    real gate may be ``elixir-ci.yml`` rather than the newer canonical
+    ``ci.yml``. Select those CI names plus explicit security scans, while
+    excluding the dormant self-hosted fallback and every deploy/release job.
+    """
+    if not _WORKFLOW_DIR.is_dir():
+        return []
+
+    workflows: list[str] = []
+    for path in sorted((*_WORKFLOW_DIR.glob("*.yml"), *_WORKFLOW_DIR.glob("*.yaml"))):
+        stem = path.stem.lower()
+        is_ci = stem == "ci" or stem.startswith("ci-") or stem.endswith("-ci")
+        if stem == "self-hosted-ci":
+            continue
+        if is_ci or stem in _DISPATCH_GATE_NAMES:
+            workflows.append(str(path))
+    return workflows
 
 
-def list_jobs(event: str, workflow: str | None = None) -> list[str]:
+def list_jobs(event: str, workflow: str | None = None) -> list[str] | None:
     """Real job ids act would run for `event`, parsed from the `act --list` table.
 
     `act --list` prints a table whose first row is a header containing a `Job ID`
     column; each subsequent row is a runnable job. Returns job ids in table order
     (deduplicated). Returns ``[]`` when act lists no jobs for the event (including
-    the "could not find any stages" no-op) or when act can't be invoked — never
-    raises, so callers can treat an empty result as "nothing to run".
+    the "could not find any stages" no-op). Returns ``None`` when act cannot be
+    invoked or listing fails, so callers cannot mistake an error for a green
+    workflow with no jobs.
     """
-    cmd = ["act", event, "--list"]
+    cmd = _act_command(event, "--list")
     if workflow is not None:
         cmd += ["-W", workflow]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     except (FileNotFoundError, subprocess.TimeoutExpired):
-        return []
+        return None
+    output = (proc.stdout or "") + (proc.stderr or "")
+    if proc.returncode != 0:
+        return [] if _has_no_stages(output) else None
     return _parse_job_ids(proc.stdout or "")
 
 
@@ -171,7 +195,7 @@ def build_act_command(
     job: str | None = None,
     arch: str | None = None,
 ) -> list[str]:
-    cmd = ["act", event]
+    cmd = _act_command(event)
     if workflow is not None:
         cmd += ["-W", workflow]
     if job is not None:
@@ -236,10 +260,9 @@ def run_act(
     - any other non-zero exit -> FAIL.
 
     Migrated repos are ``workflow_dispatch``-only, so the default
-    ``pull_request`` event matches no jobs. Rather than hollow-pass, fall back
-    to the canonical ``ci.yml`` on ``workflow_dispatch``: discover its real job
-    id(s) via ``act --list`` (the job name is NOT fixed — ``mcli ci migrate``
-    keeps the repo's original name) and run each so the gate validates for real.
+    ``pull_request`` event matches no jobs. Rather than hollow-pass, discover
+    CI and security gate workflows and run their real job ids via
+    ``workflow_dispatch``. Deploy and release workflows are never selected.
 
     A green result means act actually executed ≥1 job and every job passed. If
     ``act --list`` shows jobs but a run reports "could not find any stages"
@@ -251,41 +274,51 @@ def run_act(
     if not (result == PreflightResult.PASS and _has_no_stages(output)):
         return result
 
-    # No stages for the requested event — try the workflow_dispatch entrypoint.
-    workflow = dispatch_workflow()
-    if workflow is None:
+    # No stages for the requested event — try safe workflow_dispatch gates.
+    workflows = dispatch_workflows()
+    if not workflows:
         sys.stdout.write(
-            "ℹ️  No act stages for this event and no ci.yml dispatch "
+            "ℹ️  No act stages for this event and no CI/security dispatch "
             "entrypoint — nothing to validate; treating as pass.\n"
         )
         return PreflightResult.PASS
 
-    jobs = list_jobs("workflow_dispatch", workflow)
-    if not jobs:
-        # The dispatch entrypoint genuinely has no jobs — a real no-op.
-        sys.stdout.write(
-            f"ℹ️  {workflow} has no workflow_dispatch jobs — nothing to "
-            "validate; treating as pass.\n"
-        )
-        return PreflightResult.PASS
-
-    targets = f"{workflow} {jobs}"
-    sys.stdout.write(
-        f"ℹ️  No '{event}' stages (workflow_dispatch-only); running "
-        f"{targets} via workflow_dispatch…\n"
-    )
-    for job in jobs:
-        result, output = _run_with_retries(
-            build_act_command("workflow_dispatch", workflow=workflow, job=job, arch=arch),
-            retries,
-            backoff,
-        )
-        if result == PreflightResult.UNREACHABLE:
-            return PreflightResult.UNREACHABLE
-        # We KNOW this job exists (it came from `act --list`), so "no stages"
-        # here means act ran nothing — a failure, not a no-op. Do not pass.
-        if result != PreflightResult.PASS or _has_no_stages(output):
+    ran_job = False
+    for workflow in workflows:
+        jobs = list_jobs("workflow_dispatch", workflow)
+        if jobs is None:
+            sys.stdout.write(
+                f"❌ Failed to discover workflow_dispatch jobs for {workflow}; "
+                "the gate was not executed.\n"
+            )
             return PreflightResult.FAIL
+        if not jobs:
+            sys.stdout.write(f"ℹ️  {workflow} has no workflow_dispatch jobs — skipping.\n")
+            continue
+
+        sys.stdout.write(
+            f"ℹ️  No '{event}' stages (workflow_dispatch-only); running "
+            f"{workflow} {jobs} via workflow_dispatch…\n"
+        )
+        for job in jobs:
+            ran_job = True
+            result, output = _run_with_retries(
+                build_act_command("workflow_dispatch", workflow=workflow, job=job, arch=arch),
+                retries,
+                backoff,
+            )
+            if result == PreflightResult.UNREACHABLE:
+                return PreflightResult.UNREACHABLE
+            # We KNOW this job exists (it came from `act --list`), so "no stages"
+            # here means act ran nothing — a failure, not a no-op. Do not pass.
+            if result != PreflightResult.PASS or _has_no_stages(output):
+                return PreflightResult.FAIL
+
+    if not ran_job:
+        sys.stdout.write(
+            "ℹ️  CI/security dispatch workflows contain no runnable jobs — "
+            "nothing to validate; treating as pass.\n"
+        )
 
     return PreflightResult.PASS
 
