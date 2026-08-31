@@ -82,6 +82,13 @@ configuration out of local CI containers and avoids dotenv parsing failures for
 valid multiline values such as JSON credentials or certificates.
 Populate `.secrets` from your secrets manager.
 
+## Apple Silicon
+
+On Apple Silicon, mcli runs the local gate natively as `linux/arm64`, sets
+`RUNNER_ARCH=ARM64`, and maps `ubuntu-latest` to the multi-arch
+`catthehacker/ubuntu:act-20.04` runner image. This avoids QEMU instability and keeps
+architecture-aware setup actions aligned with the container.
+
 ## Migration notes
 
 - Migration is idempotent: a marker comment (`# mcli-ci: hosted-triggers-stripped`)

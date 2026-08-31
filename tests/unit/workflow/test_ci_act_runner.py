@@ -84,12 +84,15 @@ class TestBuildCommand:
             "workflow_dispatch",
             workflow=".github/workflows/ci.yml",
             job="primary",
-            arch="linux/amd64",
+            arch="linux/arm64",
         )
         assert cmd[:2] == ["act", "workflow_dispatch"]
         assert cmd[cmd.index("-W") + 1] == ".github/workflows/ci.yml"
         assert cmd[cmd.index("-j") + 1] == "primary"
-        assert cmd[cmd.index("--container-architecture") + 1] == "linux/amd64"
+        assert cmd[cmd.index("--container-architecture") + 1] == "linux/arm64"
+        env_values = [cmd[index + 1] for index, value in enumerate(cmd) if value == "--env"]
+        assert env_values == ["RUNNER_ARCH=ARM64"]
+        assert cmd[cmd.index("-P") + 1] == "ubuntu-latest=catthehacker/ubuntu:act-20.04"
 
 
 class TestDefaultArch:
@@ -98,7 +101,7 @@ class TestDefaultArch:
             patch("mcli.workflow.ci.act_runner.sys.platform", "darwin"),
             patch("platform.machine", return_value="arm64"),
         ):
-            assert default_container_arch() == "linux/amd64"
+            assert default_container_arch() == "linux/arm64"
 
     def test_none_on_linux(self):
         with (
