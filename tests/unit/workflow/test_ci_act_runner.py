@@ -193,6 +193,10 @@ class TestListJobs:
         with patch("subprocess.run", return_value=_cp(1, stdout=out)):
             assert list_jobs("workflow_dispatch", ".github/workflows/ci.yml") == []
 
+    def test_invocation_failure_is_distinct_from_no_jobs(self):
+        with patch("subprocess.run", return_value=_cp(1, stdout="daemon unavailable")):
+            assert list_jobs("workflow_dispatch", ".github/workflows/ci.yml") is None
+
 
 class TestDispatchFallback:
     """workflow_dispatch-only repos (migrated by `mcli ci migrate`) have no
@@ -274,6 +278,14 @@ class TestDispatchFallback:
             assert run_act("pull_request") == PreflightResult.PASS
         # only the initial pull_request probe ran; no dispatch run attempted.
         assert run_m.call_count == 1
+
+    def test_job_discovery_failure_cannot_hollow_pass(self, tmp_path, monkeypatch):
+        self._with_ci_yml(tmp_path, monkeypatch)
+        with (
+            patch("mcli.workflow.ci.act_runner.list_jobs", return_value=None),
+            patch("subprocess.run", side_effect=[_cp(1, stdout=self._NO_STAGES)]),
+        ):
+            assert run_act("pull_request") == PreflightResult.FAIL
 
 
 class TestRunActDockerRateLimit:

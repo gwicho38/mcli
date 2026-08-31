@@ -145,14 +145,15 @@ def dispatch_workflows() -> list[str]:
     return workflows
 
 
-def list_jobs(event: str, workflow: str | None = None) -> list[str]:
+def list_jobs(event: str, workflow: str | None = None) -> list[str] | None:
     """Real job ids act would run for `event`, parsed from the `act --list` table.
 
     `act --list` prints a table whose first row is a header containing a `Job ID`
     column; each subsequent row is a runnable job. Returns job ids in table order
     (deduplicated). Returns ``[]`` when act lists no jobs for the event (including
-    the "could not find any stages" no-op) or when act can't be invoked — never
-    raises, so callers can treat an empty result as "nothing to run".
+    the "could not find any stages" no-op). Returns ``None`` when act cannot be
+    invoked or listing fails, so callers cannot mistake an error for a green
+    workflow with no jobs.
     """
     cmd = _act_command(event, "--list")
     if workflow is not None:
@@ -160,7 +161,10 @@ def list_jobs(event: str, workflow: str | None = None) -> list[str]:
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     except (FileNotFoundError, subprocess.TimeoutExpired):
-        return []
+        return None
+    output = (proc.stdout or "") + (proc.stderr or "")
+    if proc.returncode != 0:
+        return [] if _has_no_stages(output) else None
     return _parse_job_ids(proc.stdout or "")
 
 
@@ -282,6 +286,12 @@ def run_act(
     ran_job = False
     for workflow in workflows:
         jobs = list_jobs("workflow_dispatch", workflow)
+        if jobs is None:
+            sys.stdout.write(
+                f"❌ Failed to discover workflow_dispatch jobs for {workflow}; "
+                "the gate was not executed.\n"
+            )
+            return PreflightResult.FAIL
         if not jobs:
             sys.stdout.write(f"ℹ️  {workflow} has no workflow_dispatch jobs — skipping.\n")
             continue
