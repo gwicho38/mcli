@@ -1,5 +1,6 @@
 """Unit tests for ci.act_runner."""
 
+import os
 import subprocess
 from unittest.mock import patch
 
@@ -7,6 +8,7 @@ from mcli.workflow.ci.act_runner import (
     PreflightResult,
     build_act_command,
     default_container_arch,
+    dispatch_workflows,
     list_jobs,
     native_gate_available,
     preflight,
@@ -42,8 +44,28 @@ class TestProbe:
         ):
             assert probe() is True
 
+    def test_probe_does_not_load_repository_env(self):
+        with (
+            patch("shutil.which", return_value="/usr/bin/act"),
+            patch("mcli.workflow.ci.act_runner.docker_running", return_value=True),
+            patch("subprocess.run", return_value=_cp(0)) as run_m,
+        ):
+            assert probe() is True
+
+        assert run_m.call_args.args[0] == ["act", "-l", "--env-file", os.devnull]
+
 
 class TestBuildCommand:
+    def test_uses_empty_explicit_env_file(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+
+        assert build_act_command("pull_request")[:4] == [
+            "act",
+            "pull_request",
+            "--env-file",
+            os.devnull,
+        ]
+
     def test_adds_secret_file_when_present(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         (tmp_path / ".secrets").write_text("X=1\n")
@@ -86,6 +108,26 @@ class TestDefaultArch:
             assert default_container_arch() is None
 
 
+class TestDispatchWorkflows:
+    def test_selects_ci_and_security_gates_without_deploys(self, tmp_path, monkeypatch):
+        workflow_dir = tmp_path / ".github" / "workflows"
+        workflow_dir.mkdir(parents=True)
+        for name in (
+            "elixir-ci.yml",
+            "secret-scan.yml",
+            "fly-deploy.yml",
+            "dashboard-audit.yml",
+            "self-hosted-ci.yml",
+        ):
+            (workflow_dir / name).write_text("name: test\n")
+        monkeypatch.chdir(tmp_path)
+
+        assert dispatch_workflows() == [
+            ".github/workflows/elixir-ci.yml",
+            ".github/workflows/secret-scan.yml",
+        ]
+
+
 class TestRunAct:
     def test_pass(self):
         with patch("subprocess.run", return_value=_cp(0)):
@@ -124,8 +166,16 @@ class TestListJobs:
     dispatch fallback never has to guess (`primary` was a wrong guess: defect 1)."""
 
     def test_parses_single_job_id(self):
-        with patch("subprocess.run", return_value=_cp(0, stdout=_ACT_LIST_TEST_JOB)):
+        with patch("subprocess.run", return_value=_cp(0, stdout=_ACT_LIST_TEST_JOB)) as run_m:
             assert list_jobs("workflow_dispatch", ".github/workflows/ci.yml") == ["test"]
+
+        assert run_m.call_args.args[0][:4] == [
+            "act",
+            "workflow_dispatch",
+            "--list",
+            "--env-file",
+        ]
+        assert run_m.call_args.args[0][4] == os.devnull
 
     def test_parses_multiple_job_ids(self):
         with patch("subprocess.run", return_value=_cp(0, stdout=_ACT_LIST_TWO_JOBS)):

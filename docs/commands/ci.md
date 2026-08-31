@@ -77,7 +77,10 @@ repo B: mcli ci preflight ── waits ─────────────�
 
 If a `.secrets` file exists in the repo root, `preflight` passes it to `act`
 (`--secret-file .secrets`). Keep `.secrets` out of git (add it to `.gitignore`);
-populate it from your secrets manager.
+the repository `.env` is never loaded implicitly. This keeps application
+configuration out of local CI containers and avoids dotenv parsing failures for
+valid multiline values such as JSON credentials or certificates.
+Populate `.secrets` from your secrets manager.
 
 ## Migration notes
 
