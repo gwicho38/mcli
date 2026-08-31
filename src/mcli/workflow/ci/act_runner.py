@@ -114,12 +114,11 @@ def probe() -> bool:
 def default_container_arch() -> str | None:
     """`--container-architecture` value for the host, or None to let act decide.
 
-    act's runner images are amd64. On Apple-silicon (darwin/arm64) act warns and
-    misbehaves unless told to emulate amd64, so force it; native amd64 Linux
-    needs nothing.
+    On Apple Silicon, select native arm64 together with the multi-arch runner
+    mapping added by build_act_command; native Linux needs no override.
     """
     if sys.platform == "darwin" and platform.machine() in ("arm64", "aarch64"):
-        return "linux/amd64"
+        return "linux/arm64"
     return None
 
 
@@ -202,6 +201,12 @@ def build_act_command(
         cmd += ["-j", job]
     if arch is not None:
         cmd += ["--container-architecture", arch]
+        if arch == "linux/arm64":
+            # Use act's full multi-arch runner on Apple Silicon. Emulating BEAM
+            # and Dialyzer under QEMU is resource-heavy and prone to
+            # compiler/PLT segfaults.
+            cmd += ["--env", "RUNNER_ARCH=ARM64"]
+            cmd += ["-P", "ubuntu-latest=catthehacker/ubuntu:act-20.04"]
     if Path(".secrets").exists():
         cmd += ["--secret-file", ".secrets"]
     return cmd
