@@ -22,7 +22,7 @@ import stat
 import subprocess
 import sys
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -67,6 +67,9 @@ LANGUAGE_TO_SUFFIX: dict[str, str] = {
     "typescript": "ts",
     "ipynb": "ipynb",
 }
+
+VOLATILE_COMMAND_FIELDS = frozenset({"last_modified"})
+LOCKFILE_SCHEMA_VERSION = "2.0"
 
 
 def parse_command_name(cmd_name: str) -> tuple[str, Optional[str]]:
@@ -187,7 +190,7 @@ class ScriptLoader:
 
             scripts.append(script_path)
 
-        return sorted(scripts, key=lambda p: p.stem)
+        return sorted(scripts, key=lambda path: path.relative_to(self.workflows_dir).as_posix())
 
     def find_scripts_by_stem(self, stem: str) -> list[Path]:
         """Return all discovered scripts whose stem matches the given name.
@@ -853,19 +856,69 @@ class ScriptLoader:
             Dictionary containing lockfile data with v2 schema
         """
         scripts = self.discover_scripts()
+        existing_lockfile = self.load_lockfile()
+        existing_commands_value = existing_lockfile.get("commands", {}) if existing_lockfile else {}
+        existing_commands = (
+            existing_commands_value if isinstance(existing_commands_value, dict) else {}
+        )
+        commands: dict[str, Any] = {}
+        can_reuse_entries = bool(
+            existing_lockfile
+            and existing_lockfile.get("version") == LOCKFILE_SCHEMA_VERSION
+            and isinstance(existing_commands_value, dict)
+        )
 
-        lockfile_data = {
-            "version": "2.0",
+        lockfile_data: dict[str, Any] = {
+            "version": LOCKFILE_SCHEMA_VERSION,
             "generated_at": datetime.utcnow().isoformat() + "Z",
-            "commands": {},
+            "commands": commands,
         }
 
         keys = self._assign_command_keys(scripts)
         for script_path in scripts:
             info = self.get_script_info(script_path)
-            lockfile_data["commands"][keys[script_path]] = info
+            command_key = keys[script_path]
+            existing_info = existing_commands.get(command_key)
+            if (
+                can_reuse_entries
+                and isinstance(existing_info, dict)
+                and self._is_valid_utc_timestamp(existing_info.get("last_modified"))
+                and self._semantic_command_info(existing_info) == self._semantic_command_info(info)
+            ):
+                commands[command_key] = existing_info
+            else:
+                commands[command_key] = info
+
+        if (
+            existing_lockfile
+            and existing_lockfile.get("version") == lockfile_data["version"]
+            and existing_commands == commands
+            and self._is_valid_utc_timestamp(existing_lockfile.get("generated_at"))
+        ):
+            lockfile_data["generated_at"] = existing_lockfile["generated_at"]
 
         return lockfile_data
+
+    @staticmethod
+    def _semantic_command_info(command_info: Any) -> Any:
+        """Return command metadata without filesystem-derived volatile fields."""
+        if not isinstance(command_info, dict):
+            return command_info
+        return {
+            key: value for key, value in command_info.items() if key not in VOLATILE_COMMAND_FIELDS
+        }
+
+    @staticmethod
+    def _is_valid_utc_timestamp(value: Any) -> bool:
+        """Return whether a value is an ISO timestamp with an explicit UTC offset."""
+        if not isinstance(value, str):
+            return False
+        try:
+            normalized = f"{value[:-1]}+00:00" if value.endswith("Z") else value
+            timestamp = datetime.fromisoformat(normalized)
+        except ValueError:
+            return False
+        return timestamp.tzinfo is not None and timestamp.utcoffset() == timedelta(0)
 
     def _assign_command_keys(self, scripts: list[Path]) -> dict[Path, str]:
         """Assign a unique lockfile/command key to every discovered script.
@@ -934,10 +987,17 @@ class ScriptLoader:
         """
         try:
             lockfile_data = self.generate_lockfile()
+            serialized_lockfile = json.dumps(lockfile_data, indent=2)
+            if (
+                self.lockfile_path.exists()
+                and self.lockfile_path.read_text() == serialized_lockfile
+            ):
+                logger.debug(f"Lockfile unchanged: {self.lockfile_path}")
+                return True
             with open(self.lockfile_path, "w") as f:
                 fcntl.flock(f, fcntl.LOCK_EX)
                 try:
-                    json.dump(lockfile_data, f, indent=2)
+                    f.write(serialized_lockfile)
                 finally:
                     fcntl.flock(f, fcntl.LOCK_UN)
             logger.info(f"Saved lockfile: {self.lockfile_path}")

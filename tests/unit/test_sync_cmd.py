@@ -4,6 +4,7 @@ Tests IPFS sync, lockfile management, and related utilities.
 """
 
 import json
+import os
 import shutil
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -158,6 +159,138 @@ print("Test")
             # Should succeed or indicate status
             # Note: Actual behavior depends on ScriptLoader implementation
             assert result.exit_code in [0, 1]  # May fail if no scripts match
+
+    def test_second_sync_update_is_byte_identical_when_scripts_are_unchanged(self, tmp_path):
+        """A no-op update must not churn lockfile bytes or generation metadata."""
+        runner = CliRunner()
+        workflows_dir = tmp_path / "workflows"
+        workflows_dir.mkdir()
+        (workflows_dir / "stable.py").write_text(
+            "#!/usr/bin/env python3\n# @description: stable\nprint('stable')\n"
+        )
+
+        with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
+            first_result = runner.invoke(sync_group, ["update"])
+            assert first_result.exit_code == 0, first_result.output
+            lockfile_path = workflows_dir / "commands.lock.json"
+            first_bytes = lockfile_path.read_bytes()
+
+            second_result = runner.invoke(sync_group, ["update"])
+
+        assert second_result.exit_code == 0, second_result.output
+        assert lockfile_path.read_bytes() == first_bytes
+
+    def test_changed_script_only_updates_its_entry_and_generation_metadata(self, tmp_path):
+        """Filesystem timestamp drift must not modify an unchanged command entry."""
+        runner = CliRunner()
+        workflows_dir = tmp_path / "workflows"
+        workflows_dir.mkdir()
+        stable_script = workflows_dir / "stable.py"
+        changed_script = workflows_dir / "changed.py"
+        stable_script.write_text(
+            "#!/usr/bin/env python3\n# @description: stable\nprint('stable')\n"
+        )
+        changed_script.write_text(
+            "#!/usr/bin/env python3\n# @description: changed\nprint('before')\n"
+        )
+
+        with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
+            first_result = runner.invoke(sync_group, ["update"])
+            assert first_result.exit_code == 0, first_result.output
+            lockfile_path = workflows_dir / "commands.lock.json"
+            before = json.loads(lockfile_path.read_text())
+
+            stable_mtime = stable_script.stat().st_mtime + 60
+            os.utime(stable_script, (stable_mtime, stable_mtime))
+            changed_script.write_text(
+                "#!/usr/bin/env python3\n# @description: changed\nprint('after')\n"
+            )
+            second_result = runner.invoke(sync_group, ["update"])
+
+        assert second_result.exit_code == 0, second_result.output
+        after = json.loads(lockfile_path.read_text())
+        assert after["commands"]["stable"] == before["commands"]["stable"]
+        assert after["commands"]["changed"] != before["commands"]["changed"]
+        assert after["generated_at"] != before["generated_at"]
+        assert set(after) == set(before)
+
+    @pytest.mark.parametrize("invalid_commands", [[], "invalid", None])
+    def test_sync_update_replaces_invalid_command_maps(self, tmp_path, invalid_commands):
+        """Invalid v2 command maps must be regenerated instead of crashing."""
+        runner = CliRunner()
+        workflows_dir = tmp_path / "workflows"
+        workflows_dir.mkdir()
+        (workflows_dir / "stable.py").write_text(
+            "#!/usr/bin/env python3\n# @description: stable\nprint('stable')\n"
+        )
+        lockfile_path = workflows_dir / "commands.lock.json"
+        lockfile_path.write_text(
+            json.dumps(
+                {
+                    "version": "2.0",
+                    "generated_at": "2026-09-01T12:00:00Z",
+                    "commands": invalid_commands,
+                }
+            )
+        )
+
+        with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
+            result = runner.invoke(sync_group, ["update"])
+
+        assert result.exit_code == 0, result.output
+        regenerated = json.loads(lockfile_path.read_text())
+        assert regenerated["commands"]["stable"]["file"] == "stable.py"
+
+    @pytest.mark.parametrize(
+        "invalid_generated_at",
+        [pytest.param("missing", id="missing"), None, "not-a-timestamp", 123],
+    )
+    def test_sync_update_replaces_invalid_generated_at(self, tmp_path, invalid_generated_at):
+        """Generation metadata is reusable only when it is a valid UTC ISO string."""
+        runner = CliRunner()
+        workflows_dir = tmp_path / "workflows"
+        workflows_dir.mkdir()
+        (workflows_dir / "stable.py").write_text(
+            "#!/usr/bin/env python3\n# @description: stable\nprint('stable')\n"
+        )
+        lockfile_path = workflows_dir / "commands.lock.json"
+
+        with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
+            assert runner.invoke(sync_group, ["update"]).exit_code == 0
+            lockfile = json.loads(lockfile_path.read_text())
+            if invalid_generated_at == "missing":
+                lockfile.pop("generated_at")
+            else:
+                lockfile["generated_at"] = invalid_generated_at
+            lockfile_path.write_text(json.dumps(lockfile, indent=2))
+            result = runner.invoke(sync_group, ["update"])
+
+        assert result.exit_code == 0, result.output
+        regenerated = json.loads(lockfile_path.read_text())
+        assert isinstance(regenerated["generated_at"], str)
+        assert regenerated["generated_at"].endswith("Z")
+        assert regenerated["generated_at"] != invalid_generated_at
+
+    def test_sync_update_regenerates_old_schema_version(self, tmp_path):
+        """An old schema can't lend its generation timestamp to a v2 lockfile."""
+        runner = CliRunner()
+        workflows_dir = tmp_path / "workflows"
+        workflows_dir.mkdir()
+        (workflows_dir / "stable.py").write_text("print('stable')\n")
+        lockfile_path = workflows_dir / "commands.lock.json"
+
+        with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
+            assert runner.invoke(sync_group, ["update"]).exit_code == 0
+            lockfile = json.loads(lockfile_path.read_text())
+            old_timestamp = lockfile["generated_at"]
+            lockfile["version"] = "1.0"
+            lockfile_path.write_text(json.dumps(lockfile, indent=2))
+            result = runner.invoke(sync_group, ["update"])
+
+        assert result.exit_code == 0, result.output
+        regenerated = json.loads(lockfile_path.read_text())
+        assert regenerated["version"] == "2.0"
+        assert regenerated["generated_at"] != old_timestamp
 
     def test_update_writes_lockfile_that_push_reads(self, tmp_path):
         """Regression: `sync update` must write the SAME lockfile `sync push` reads.
