@@ -65,6 +65,36 @@ def act_available() -> bool:
     return shutil.which("act") is not None
 
 
+# Git exports these to every hook (`git rev-parse --local-env-vars`). They point
+# at the repo being pushed, so a tool inside the gate that runs git on its own
+# checkout reads the wrong repo: Flutter computes its SDK version with
+# `git describe` and reports the pushed commit, which then fails any
+# `environment: flutter:` constraint. The gate runs from the repo root, so
+# git finds the right repo without them.
+_GIT_HOOK_ENV = (
+    "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    "GIT_CONFIG",
+    "GIT_CONFIG_PARAMETERS",
+    "GIT_CONFIG_COUNT",
+    "GIT_OBJECT_DIRECTORY",
+    "GIT_DIR",
+    "GIT_WORK_TREE",
+    "GIT_IMPLICIT_WORK_TREE",
+    "GIT_GRAFT_FILE",
+    "GIT_INDEX_FILE",
+    "GIT_NO_REPLACE_OBJECTS",
+    "GIT_REPLACE_REF_BASE",
+    "GIT_PREFIX",
+    "GIT_SHALLOW_FILE",
+    "GIT_COMMON_DIR",
+)
+
+
+def _gate_env() -> dict[str, str]:
+    """The current environment without the repo-local variables git sets for hooks."""
+    return {k: v for k, v in os.environ.items() if k not in _GIT_HOOK_ENV}
+
+
 # Preferred over act when present: a repo-defined `make ci-native` target runs
 # the same gates directly on the host toolchain. On Apple-silicon (and any host
 # without nested-virt) act's amd64 emulation under podman is flaky for heavy
@@ -88,7 +118,7 @@ def run_native() -> PreflightResult:
     """Run the repo's native gate (`make ci-native`) on the host. PASS on exit 0,
     FAIL otherwise. Output streams straight to the terminal (these runs are long;
     no need to buffer)."""
-    proc = subprocess.run(["make", _NATIVE_GATE])
+    proc = subprocess.run(["make", _NATIVE_GATE], env=_gate_env())
     return PreflightResult.PASS if proc.returncode == 0 else PreflightResult.FAIL
 
 
@@ -220,7 +250,7 @@ def _run_with_retries(
     'no stages' no-op and decide whether to fall back)."""
     attempt = 0
     while True:
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        proc = subprocess.run(cmd, capture_output=True, text=True, env=_gate_env())
         output = (proc.stdout or "") + (proc.stderr or "")
         if output:
             sys.stdout.write(output if output.endswith("\n") else output + "\n")

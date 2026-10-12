@@ -345,6 +345,28 @@ class TestNativeGate:
         with patch("subprocess.run", return_value=_cp(1)):
             assert run_native() == PreflightResult.FAIL
 
+    def test_run_native_drops_git_hook_env(self, monkeypatch):
+        # A pre-push hook runs with GIT_DIR pointing at the pushed repo. Tools
+        # inside the gate that shell out to git for their own checkout (Flutter
+        # computes its SDK version with `git describe`) must not inherit it.
+        monkeypatch.setenv("GIT_DIR", "/repo/.git")
+        monkeypatch.setenv("GIT_WORK_TREE", "/repo")
+        monkeypatch.setenv("GIT_INDEX_FILE", "/repo/.git/index")
+        monkeypatch.setenv("KEEP_ME", "1")
+        with patch("subprocess.run", return_value=_cp(0)) as run:
+            run_native()
+        env = run.call_args.kwargs["env"]
+        assert "GIT_DIR" not in env
+        assert "GIT_WORK_TREE" not in env
+        assert "GIT_INDEX_FILE" not in env
+        assert env["KEEP_ME"] == "1"
+
+    def test_run_act_drops_git_hook_env(self, monkeypatch):
+        monkeypatch.setenv("GIT_DIR", "/repo/.git")
+        with patch("subprocess.run", return_value=_cp(0, "ok")) as run:
+            run_act()
+        assert all("GIT_DIR" not in c.kwargs["env"] for c in run.call_args_list)
+
 
 class TestPreflight:
     def test_prefers_native_gate_over_act(self):
