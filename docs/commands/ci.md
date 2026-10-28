@@ -20,9 +20,10 @@ only where a self-hosted runner is online.
 
 | Exit | Meaning |
 |------|---------|
-| `0` | `act` ran and passed — OK to open the PR. |
+| `0` | `act` ran at least one job and every job passed — OK to open the PR. |
 | `1` | `act` ran and a job failed — fix before opening the PR. |
 | `2` | `act` could not run here (no Docker / no `act` / image pull failed / the machine-wide act lock never came free) **and** no online self-hosted runner exists — cannot validate. |
+| `2` | `act` ran, but no job matched: no workflow has a job for `--event`, and no check workflow has a `workflow_dispatch` job — **nothing was validated**. This is never reported as a pass. |
 | `3` | `act` could not run here, but an online self-hosted runner exists — push and let the runner validate. |
 
 "Could not run" is distinguished from "ran and failed" by a capability probe
@@ -33,12 +34,37 @@ only where a self-hosted runner is online.
 ```
 git push  (or: mcli ci pr)
    └─ mcli ci preflight
+        ├─ jobs for --event (default pull_request) → run them
+        ├─ no jobs for --event → workflow_dispatch fallback:
+        │    run every job of each check workflow (see below)
         ├─ act passed ............................ open PR              ($0)
         ├─ act failed ............................ blocked, fix it
+        ├─ no job ran at all ..................... nothing was validated (exit 2)
         └─ act unreachable
              ├─ repo has an online runner ........ push; runner validates
              └─ no runner ........................ cannot validate
 ```
+
+### `workflow_dispatch` fallback
+
+Migrated repos are `workflow_dispatch`-only, so `pull_request` usually matches no
+job. `preflight` then runs, via `workflow_dispatch`, every job of each **check
+workflow**: a file in `.github/workflows/` whose name (split on `-`, `_`, `.`)
+contains `ci`, `test`, `tests`, `lint`, `typecheck`, `check`, `checks`, `scan`,
+`security` or `quality` — e.g. `ci.yml`, `elixir-ci.yml`, `test.yml`, `lint.yml`,
+`secret-scan.yml`. A name that also contains `deploy`, `release`, `publish`,
+`build`, `audit`, `ops`, `upload`, `notify` or `sync` is never run, and neither is
+`self-hosted-ci.yml`. The log names each workflow and job it runs.
+
+If no job ran, `preflight` exits `2` ("nothing was validated"). It does not pass.
+
+### Pre-push hook
+
+The hook from `mcli ci install-hook` blocks the push only on exit `1`. On exit `2`
+or `3` it allows the push, so a Docker outage or a repo with no check workflow does
+not wedge pushes, but it prints `WARNING — this push was NOT validated`. Fix a repo
+that shows this warning on every push by giving it a check workflow with a
+`workflow_dispatch` trigger. `mcli ci pr` refuses to open a PR on exit `2`.
 
 ## One act run at a time (machine-wide lock)
 

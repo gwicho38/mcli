@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -23,8 +24,10 @@ _RATE_LIMIT_MARKERS = (
 )
 
 # act emits this when no job matches the requested event (e.g. a
-# workflow_dispatch-only workflow queried for pull_request). That is a no-op,
-# not a failure, so the gate must treat it as PASS rather than block the push.
+# workflow_dispatch-only workflow queried for pull_request). That is not a
+# failure (it must not block the push, #205), but it is not a pass either:
+# run_act falls back to workflow_dispatch gates, and reports NOT_VALIDATED when
+# no job ran at all (#242).
 _NO_STAGES_MARKERS = ("could not find any stages to run",)
 
 # Backoff (seconds) between docker rate-limit retries; the last value repeats.
@@ -32,9 +35,17 @@ _RETRY_BACKOFF = (15, 45)
 _MAX_RETRIES = 2
 
 # Dispatch-only workflows that are safe and expected to run as local gates.
-# Deploy, release, and audit workflows are intentionally not selected.
+# A workflow file is a gate when its stem (split on "-", "_", ".") has a gate
+# token and no side-effect token. Deploy, release, publish, build and audit
+# workflows are never selected; neither is the dormant self-hosted fallback.
 _WORKFLOW_DIR = Path(".github/workflows")
-_DISPATCH_GATE_NAMES = {"ci", "secret-scan", "security-scan"}
+_DISPATCH_GATE_TOKENS = frozenset(
+    {"ci", "test", "tests", "lint", "typecheck", "check", "checks", "scan", "security", "quality"}
+)
+_DISPATCH_SKIP_TOKENS = frozenset(
+    {"deploy", "release", "publish", "build", "audit", "ops", "upload", "notify", "sync"}
+)
+_DISPATCH_SKIP_STEMS = frozenset({"self-hosted-ci"})
 
 # Header label of the job-id column in `act --list` table output.
 _JOB_ID_HEADER = "Job ID"
@@ -46,9 +57,10 @@ def _act_command(*args: str) -> list[str]:
 
 
 class PreflightResult(Enum):
-    PASS = "pass"
+    PASS = "pass"  # act ran >=1 job and every job passed
     FAIL = "fail"
-    UNREACHABLE = "unreachable"
+    UNREACHABLE = "unreachable"  # act cannot run here
+    NOT_VALIDATED = "not_validated"  # act ran, but no job matched: nothing validated
 
 
 def _is_docker_rate_limited(output: str) -> bool:
@@ -152,26 +164,28 @@ def default_container_arch() -> str | None:
     return None
 
 
-def dispatch_workflows() -> list[str]:
-    """Return dispatch-only CI and security workflows safe to run locally.
+def _is_dispatch_gate(stem: str) -> bool:
+    """True if a workflow file stem names a check (ci/test/lint/scan…), not a
+    deploy/release/publish/build job."""
+    stem = stem.lower()
+    if stem in _DISPATCH_SKIP_STEMS:
+        return False
+    tokens = set(re.split(r"[-_.]", stem))
+    return bool(tokens & _DISPATCH_GATE_TOKENS) and not tokens & _DISPATCH_SKIP_TOKENS
 
-    The act-first migration historically preserved workflow filenames, so a
-    real gate may be ``elixir-ci.yml`` rather than the newer canonical
-    ``ci.yml``. Select those CI names plus explicit security scans, while
-    excluding the dormant self-hosted fallback and every deploy/release job.
+
+def dispatch_workflows() -> list[str]:
+    """Return dispatch-only check workflows safe to run locally, sorted by path.
+
+    The act-first migration preserved workflow filenames, so a real gate may be
+    ``elixir-ci.yml``, ``test.yml`` or ``lint.yml`` rather than ``ci.yml``.
+    Select by name token (see ``_DISPATCH_GATE_TOKENS``), and never select a
+    deploy/release/publish/build workflow or the dormant self-hosted fallback.
     """
     if not _WORKFLOW_DIR.is_dir():
         return []
-
-    workflows: list[str] = []
-    for path in sorted((*_WORKFLOW_DIR.glob("*.yml"), *_WORKFLOW_DIR.glob("*.yaml"))):
-        stem = path.stem.lower()
-        is_ci = stem == "ci" or stem.startswith("ci-") or stem.endswith("-ci")
-        if stem == "self-hosted-ci":
-            continue
-        if is_ci or stem in _DISPATCH_GATE_NAMES:
-            workflows.append(str(path))
-    return workflows
+    paths = sorted((*_WORKFLOW_DIR.glob("*.yml"), *_WORKFLOW_DIR.glob("*.yaml")))
+    return [str(path) for path in paths if _is_dispatch_gate(path.stem)]
 
 
 def list_jobs(event: str, workflow: str | None = None) -> list[str] | None:
@@ -296,12 +310,14 @@ def run_act(
 
     Migrated repos are ``workflow_dispatch``-only, so the default
     ``pull_request`` event matches no jobs. Rather than hollow-pass, discover
-    CI and security gate workflows and run their real job ids via
-    ``workflow_dispatch``. Deploy and release workflows are never selected.
+    check workflows (ci/test/lint/scan…, see ``dispatch_workflows``) and run
+    their real job ids via ``workflow_dispatch``. Deploy, release, publish and
+    build workflows are never selected.
 
     A green result means act actually executed ≥1 job and every job passed. If
     ``act --list`` shows jobs but a run reports "could not find any stages"
-    (i.e. act ran nothing), that is a FAILURE, not a no-op — never a hollow pass.
+    (i.e. act ran nothing), that is a FAILURE. If no job matched the event and
+    no dispatch gate has a job, the result is NOT_VALIDATED — never PASS (#242).
     """
     arch = default_container_arch()
     result, output = _run_with_retries(build_act_command(event, arch=arch), retries, backoff)
@@ -313,10 +329,10 @@ def run_act(
     workflows = dispatch_workflows()
     if not workflows:
         sys.stdout.write(
-            "ℹ️  No act stages for this event and no CI/security dispatch "
-            "entrypoint — nothing to validate; treating as pass.\n"
+            f"⚠️  No '{event}' jobs and no ci/test/lint/scan workflow_dispatch "
+            "workflow — nothing was validated.\n"
         )
-        return PreflightResult.PASS
+        return PreflightResult.NOT_VALIDATED
 
     ran_job = False
     for workflow in workflows:
@@ -351,9 +367,10 @@ def run_act(
 
     if not ran_job:
         sys.stdout.write(
-            "ℹ️  CI/security dispatch workflows contain no runnable jobs — "
-            "nothing to validate; treating as pass.\n"
+            f"⚠️  No '{event}' jobs, and {', '.join(workflows)} "
+            "have no workflow_dispatch jobs — nothing was validated.\n"
         )
+        return PreflightResult.NOT_VALIDATED
 
     return PreflightResult.PASS
 
@@ -361,7 +378,8 @@ def run_act(
 def preflight(
     repo_slug: str, event: str = "pull_request", lock_timeout: float | None = None
 ) -> PreflightResult:
-    """Primary gate. PASS/FAIL if act can run; UNREACHABLE if act can't start here.
+    """Primary gate. PASS/FAIL if act can run; UNREACHABLE if act can't start here;
+    NOT_VALIDATED if act ran but no job matched (nothing was validated).
 
     `repo_slug` is accepted for symmetry and future use; the runner fallback is
     orchestrated by the CLI layer based on runner_status.has_online_runner.
