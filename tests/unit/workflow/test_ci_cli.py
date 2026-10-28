@@ -81,6 +81,13 @@ class TestPreflightCommand:
         assert res.exit_code == 3  # signals: push and let runner validate
         assert "runner" in res.output.lower()
 
+    def test_not_validated_exit_2_even_with_runner(self):
+        """#242: act ran no job. Exit 2 (cannot validate), never 0, and an
+        online runner does not turn it into exit 3."""
+        res = self._run(PreflightResult.NOT_VALIDATED, True)
+        assert res.exit_code == 2, res.output
+        assert "nothing was validated" in res.output.lower()
+
     def test_lock_timeout_flag_is_forwarded(self):
         with (
             patch("mcli.workflow.ci.ci.current_repo_slug", return_value="o/r"),
@@ -149,6 +156,26 @@ class TestDoctorAndHook:
             blocked = res.returncode != 0
             assert blocked is should_block, f"code={code} expected block={should_block}"
 
+    def test_pre_push_hook_warns_when_nothing_was_validated(self, tmp_path):
+        """#242: exit 2/3 still allow the push (an environment problem or a repo
+        with no gate must not wedge pushes), but never silently: the hook says
+        that nothing was validated."""
+        import subprocess as sp
+
+        from mcli.workflow.ci.ci import PRE_PUSH_HOOK
+
+        hook = tmp_path / "pre-push"
+        hook.write_text(PRE_PUSH_HOOK)
+        for code in (2, 3):
+            stub_dir = tmp_path / f"warn{code}"
+            stub_dir.mkdir()
+            (stub_dir / "mcli").write_text(f"#!/usr/bin/env bash\nexit {code}\n")
+            (stub_dir / "mcli").chmod(0o755)
+            env = {"PATH": f"{stub_dir}:/usr/bin:/bin"}
+            res = sp.run(["bash", str(hook)], env=env, capture_output=True, text=True)
+            assert res.returncode == 0, f"code={code} should not block"
+            assert "not validated" in res.stderr.lower(), f"code={code}: {res.stderr!r}"
+
     def test_pre_push_hook_blocks_when_mcli_is_not_on_path(self, tmp_path):
         """A gate that cannot run must not pass.
 
@@ -205,6 +232,11 @@ class TestPrCommand:
     def test_pr_unreachable_no_runner_exit_2(self):
         res, run = self._invoke(PreflightResult.UNREACHABLE, False)
         assert res.exit_code == 2
+        run.assert_not_called()
+
+    def test_pr_not_validated_exit_2_no_shell(self):
+        res, run = self._invoke(PreflightResult.NOT_VALIDATED, True)
+        assert res.exit_code == 2, res.output
         run.assert_not_called()
 
     def test_pr_unreachable_with_runner_pushes_then_prs(self):

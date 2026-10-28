@@ -130,6 +130,38 @@ class TestDispatchWorkflows:
             ".github/workflows/secret-scan.yml",
         ]
 
+    def test_selects_test_lint_and_check_gates(self, tmp_path, monkeypatch):
+        """#242: a dispatch-only `test.yml` is a gate too. Selection is by name
+        token, and deploy/release/publish/build workflows are never selected."""
+        workflow_dir = tmp_path / ".github" / "workflows"
+        workflow_dir.mkdir(parents=True)
+        for name in (
+            "test.yml",
+            "lint.yml",
+            "typecheck.yml",
+            "quality-and-test.yml",
+            "e2e-tests.yaml",
+            "fastlane-ci.yml",
+            "deploy.yml",
+            "release.yml",
+            "publish.yml",
+            "ios-build.yml",
+            "play-release-ops.yml",
+            "test-deploy.yml",
+            "self-hosted-ci.yml",
+        ):
+            (workflow_dir / name).write_text("name: test\n")
+        monkeypatch.chdir(tmp_path)
+
+        assert dispatch_workflows() == [
+            ".github/workflows/e2e-tests.yaml",
+            ".github/workflows/fastlane-ci.yml",
+            ".github/workflows/lint.yml",
+            ".github/workflows/quality-and-test.yml",
+            ".github/workflows/test.yml",
+            ".github/workflows/typecheck.yml",
+        ]
+
 
 class TestRunAct:
     def test_pass(self):
@@ -140,13 +172,15 @@ class TestRunAct:
         with patch("subprocess.run", return_value=_cp(1)):
             assert run_act("pull_request") == PreflightResult.FAIL
 
-    def test_no_stages_without_entrypoint_is_pass(self, tmp_path, monkeypatch):
-        """No pull_request stages AND no ci.yml dispatch entrypoint -> genuine
-        no-op, so the gate must not block (#205)."""
-        monkeypatch.chdir(tmp_path)  # no .github/workflows/ci.yml here
+    def test_no_stages_without_entrypoint_is_not_validated(self, tmp_path, monkeypatch):
+        """No pull_request stages AND no dispatch gate -> act ran nothing. That
+        must not block the push (#205), but it is not a pass either (#242)."""
+        monkeypatch.chdir(tmp_path)  # no .github/workflows here
         out = "Error: Could not find any stages to run. View the valid jobs with `act --list`."
         with patch("subprocess.run", return_value=_cp(1, stdout=out)):
-            assert run_act("pull_request") == PreflightResult.PASS
+            result = run_act("pull_request")
+        assert result is not PreflightResult.PASS, "act ran no job but preflight passed"
+        assert result == PreflightResult.NOT_VALIDATED
 
 
 # `act --list` table output. The job id lives under the `Job ID` column; it is
@@ -270,15 +304,17 @@ class TestDispatchFallback:
         ):
             assert run_act("pull_request") == PreflightResult.FAIL
 
-    def test_genuinely_no_jobs_is_pass(self, tmp_path, monkeypatch):
-        """If `act --list` shows the dispatch entrypoint has NO jobs at all, it's a
-        real no-op and the gate passes without claiming a job ran."""
+    def test_genuinely_no_jobs_is_not_validated(self, tmp_path, monkeypatch):
+        """If `act --list` shows the dispatch entrypoint has NO jobs at all, no
+        job ran, so the gate must not claim a pass (#242)."""
         self._with_ci_yml(tmp_path, monkeypatch)
         with (
             patch("mcli.workflow.ci.act_runner.list_jobs", return_value=[]),
             patch("subprocess.run", side_effect=[_cp(1, stdout=self._NO_STAGES)]) as run_m,
         ):
-            assert run_act("pull_request") == PreflightResult.PASS
+            result = run_act("pull_request")
+        assert result is not PreflightResult.PASS, "act ran no job but preflight passed"
+        assert result == PreflightResult.NOT_VALIDATED
         # only the initial pull_request probe ran; no dispatch run attempted.
         assert run_m.call_count == 1
 
@@ -289,6 +325,68 @@ class TestDispatchFallback:
             patch("subprocess.run", side_effect=[_cp(1, stdout=self._NO_STAGES)]),
         ):
             assert run_act("pull_request") == PreflightResult.FAIL
+
+
+class TestDispatchOnlyTestWorkflow:
+    """#242 reproduction: a repo whose only workflow is a workflow_dispatch-only
+    `test.yml` (legal-plugins). act itself is mocked at subprocess.run, in call
+    order: pull_request run, `act workflow_dispatch --list -W`, dispatch run."""
+
+    _NO_STAGES = "Error: Could not find any stages to run."
+    _TEST_YML = (
+        "name: test\non: workflow_dispatch\njobs:\n  test:\n"
+        "    runs-on: ubuntu-latest\n    steps:\n      - run: make test\n"
+    )
+    _LIST = (
+        "Stage  Job ID  Job name  Workflow name  Workflow file  Events\n"
+        "0      test    test      test           test.yml       workflow_dispatch\n"
+    )
+
+    def _repo(self, tmp_path, monkeypatch):
+        wf = tmp_path / ".github" / "workflows"
+        wf.mkdir(parents=True)
+        (wf / "test.yml").write_text(self._TEST_YML)
+        monkeypatch.chdir(tmp_path)
+
+    def test_runs_the_dispatch_job_and_passes(self, tmp_path, monkeypatch, capsys):
+        self._repo(tmp_path, monkeypatch)
+        with patch(
+            "subprocess.run",
+            side_effect=[_cp(1, stdout=self._NO_STAGES), _cp(0, stdout=self._LIST), _cp(0)],
+        ) as run_m:
+            assert run_act("pull_request") == PreflightResult.PASS
+        assert run_m.call_count == 3, "the dispatch job was never run"
+        dispatch_cmd = run_m.call_args_list[2].args[0]
+        assert dispatch_cmd[:2] == ["act", "workflow_dispatch"]
+        assert ".github/workflows/test.yml" in dispatch_cmd
+        assert dispatch_cmd[dispatch_cmd.index("-j") + 1] == "test"
+        assert "workflow_dispatch" in capsys.readouterr().out  # says which event ran
+
+    def test_dispatch_job_failure_blocks(self, tmp_path, monkeypatch):
+        self._repo(tmp_path, monkeypatch)
+        with patch(
+            "subprocess.run",
+            side_effect=[
+                _cp(1, stdout=self._NO_STAGES),
+                _cp(0, stdout=self._LIST),
+                _cp(1, stdout="FAILED tests/test_x.py::test_y"),
+            ],
+        ):
+            assert run_act("pull_request") == PreflightResult.FAIL
+
+    def test_only_deploy_workflows_is_not_validated(self, tmp_path, monkeypatch, capsys):
+        """A deploy workflow is never run as a gate; with nothing else, no job
+        ran, so the result is NOT_VALIDATED — never PASS."""
+        wf = tmp_path / ".github" / "workflows"
+        wf.mkdir(parents=True)
+        (wf / "fly-deploy.yml").write_text("name: deploy\non: workflow_dispatch\n")
+        monkeypatch.chdir(tmp_path)
+        with patch("subprocess.run", side_effect=[_cp(1, stdout=self._NO_STAGES)]) as run_m:
+            result = run_act("pull_request")
+        assert result is not PreflightResult.PASS, "act ran no job but preflight passed"
+        assert result == PreflightResult.NOT_VALIDATED
+        assert run_m.call_count == 1  # the deploy workflow was not touched
+        assert "nothing was validated" in capsys.readouterr().out.lower()
 
 
 class TestRunActDockerRateLimit:

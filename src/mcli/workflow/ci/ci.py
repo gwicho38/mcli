@@ -120,6 +120,13 @@ def preflight(event, lock_timeout):
     if result == PreflightResult.FAIL:
         click.echo("❌ act failed — fix before opening PR.")
         raise SystemExit(1)
+    if result == PreflightResult.NOT_VALIDATED:
+        click.echo(
+            "⚠️  act ran no job — nothing was validated (this is NOT a pass). Add a "
+            "ci/test/lint workflow with a workflow_dispatch trigger, or validate "
+            "this PR by other means."
+        )
+        raise SystemExit(2)
     # UNREACHABLE
     if slug and has_online_runner(slug):
         click.echo(
@@ -144,6 +151,9 @@ def pr():
     if result == PreflightResult.FAIL:
         click.echo("act failed; not opening PR.")
         raise SystemExit(1)
+    if result == PreflightResult.NOT_VALIDATED:
+        click.echo("act ran no job; refusing to open an unvalidated PR.")
+        raise SystemExit(2)
     if slug and has_online_runner(slug):
         click.echo("act unreachable; pushing so the runner can validate.")
         subprocess.run(["git", "push", "-u", "origin", "HEAD"], check=False, timeout=120)
@@ -156,9 +166,11 @@ def pr():
 PRE_PUSH_HOOK = """#!/usr/bin/env bash
 # mcli-ci pre-push gate: validate with act before pushing.
 # Blocks ONLY on a real act failure (exit 1). When act cannot validate locally
-# — e.g. Docker Hub rate-limit (toomanyrequests, retried first), no docker, or
-# an online runner will validate instead (exit 2/3) — the push is allowed so an
-# environment hiccup never wedges your workflow.
+# — e.g. Docker Hub rate-limit (toomanyrequests, retried first), no docker, an
+# online runner will validate instead, or the repo has no workflow job act can
+# run (exit 2/3) — the push is allowed so an environment hiccup or a repo with
+# no gate never wedges your workflow, but the hook says loudly that the push
+# was NOT validated. It never reports such a push as green.
 # act runs are serialised machine-wide, so this may wait for another repo's
 # preflight to finish (bounded; see --lock-timeout / MCLI_CI_LOCK_TIMEOUT).
 # Override a real failure with:
@@ -182,6 +194,9 @@ code=$?
 if [ "$code" -eq 1 ]; then
   echo "mcli-ci: act reported failures — push blocked. Override: git push --no-verify" >&2
   exit 1
+fi
+if [ "$code" -ne 0 ]; then
+  echo "mcli-ci: WARNING — this push was NOT validated (preflight exit $code). Push allowed." >&2
 fi
 exit 0
 """
