@@ -58,7 +58,7 @@ class Command:
     code: str
     language: str  # 'python', 'node', 'lua', 'shell'
     group: Optional[str] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     execution_count: int = 0
@@ -96,7 +96,7 @@ class CommandFileWatcher(FileSystemEventHandler):
     def _reload_command_file(self, file_path):
         # Example: expects each file to be a JSON with command fields
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 data = json.load(f)
             cmd = Command(
                 id=data["id"],
@@ -239,8 +239,8 @@ def start_command_file_watcher(db, watch_dir: str = None):
         try:
             cursor.execute(
                 """
-                INSERT INTO commands 
-                (id, name, description, code, language, group_name, tags, 
+                INSERT INTO commands
+                (id, name, description, code, language, group_name, tags,
                  created_at, updated_at, execution_count, last_executed, is_active)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -294,7 +294,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
         finally:
             conn.close()
 
-    def get_all_commands(self, include_inactive: bool = False) -> List[Command]:
+    def get_all_commands(self, include_inactive: bool = False) -> list[Command]:
         """Get all commands, optionally including inactive ones."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -321,7 +321,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
         finally:
             conn.close()
 
-    def search_commands(self, query: str, limit: int = 10) -> List[Command]:
+    def search_commands(self, query: str, limit: int = 10) -> list[Command]:
         """Search commands by name, description, or tags."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -333,8 +333,8 @@ def start_command_file_watcher(db, watch_dir: str = None):
                 """
                 SELECT id, name, description, code, language, group_name, tags,
                        created_at, updated_at, execution_count, last_executed, is_active
-                FROM commands 
-                WHERE is_active = 1 
+                FROM commands
+                WHERE is_active = 1
                 AND (name LIKE ? OR description LIKE ? OR tags LIKE ?)
                 ORDER BY name
                 LIMIT ?
@@ -347,7 +347,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
         finally:
             conn.close()
 
-    def find_similar_commands(self, query: str, limit: int = 5) -> List[tuple]:
+    def find_similar_commands(self, query: str, limit: int = 5) -> list[tuple]:
         """Find similar commands using cosine similarity."""
         commands = self.get_all_commands()
         if not commands:
@@ -395,8 +395,8 @@ def start_command_file_watcher(db, watch_dir: str = None):
         try:
             cursor.execute(
                 """
-                UPDATE commands 
-                SET name = ?, description = ?, code = ?, language = ?, 
+                UPDATE commands
+                SET name = ?, description = ?, code = ?, language = ?,
                     group_name = ?, tags = ?, updated_at = ?, is_active = ?
                 WHERE id = ?
             """,
@@ -465,7 +465,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
             execution_id = str(uuid.uuid4())
             cursor.execute(
                 """
-                INSERT INTO executions 
+                INSERT INTO executions
                 (id, command_id, executed_at, status, output, error, execution_time_ms)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
@@ -483,8 +483,8 @@ def start_command_file_watcher(db, watch_dir: str = None):
             # Update command stats
             cursor.execute(
                 """
-                UPDATE commands 
-                SET execution_count = execution_count + 1, 
+                UPDATE commands
+                SET execution_count = execution_count + 1,
                     last_executed = ?
                 WHERE id = ?
             """,
@@ -532,7 +532,7 @@ class CommandExecutor:
             "shell": self._execute_shell,
         }
 
-    def execute_command(self, command: Command, args: List[str] = None) -> Dict[str, Any]:
+    def execute_command(self, command: Command, args: list[str] = None) -> dict[str, Any]:
         """Execute a command safely."""
         start_time = time.time()
 
@@ -565,7 +565,7 @@ class CommandExecutor:
                 "status": "failed",
             }
 
-    def _execute_python(self, command: Command, args: List[str]) -> Dict[str, str]:
+    def _execute_python(self, command: Command, args: list[str]) -> dict[str, str]:
         """Execute Python code safely.
 
         Uses the resolved Python executable from PyEnvManager, which prefers
@@ -599,7 +599,7 @@ class CommandExecutor:
             if script_file.exists():
                 script_file.unlink()
 
-    def _execute_node(self, command: Command, args: List[str]) -> Dict[str, str]:
+    def _execute_node(self, command: Command, args: list[str]) -> dict[str, str]:
         """Execute Node.js code safely."""
         script_file = self.temp_dir / f"{command.id}_{int(time.time())}.js"
 
@@ -621,7 +621,7 @@ class CommandExecutor:
             if script_file.exists():
                 script_file.unlink()
 
-    def _execute_lua(self, command: Command, args: List[str]) -> Dict[str, str]:
+    def _execute_lua(self, command: Command, args: list[str]) -> dict[str, str]:
         """Execute Lua code safely."""
         script_file = self.temp_dir / f"{command.id}_{int(time.time())}.lua"
 
@@ -643,7 +643,7 @@ class CommandExecutor:
             if script_file.exists():
                 script_file.unlink()
 
-    def _execute_shell(self, command: Command, args: List[str]) -> Dict[str, str]:
+    def _execute_shell(self, command: Command, args: list[str]) -> dict[str, str]:
         """Execute shell commands safely."""
         script_file = self.temp_dir / f"{command.id}_{int(time.time())}.sh"
 
@@ -717,7 +717,7 @@ class DaemonService:
         # Check if already running
         if self.pid_file.exists():
             try:
-                with open(self.pid_file, "r") as f:
+                with open(self.pid_file) as f:
                     pid = int(f.read().strip())
                 if psutil.pid_exists(pid):
                     logger.info(f"Daemon already running with PID {pid}")
@@ -780,14 +780,14 @@ class DaemonService:
                 logger.error(f"Error in main loop: {e}")
                 time.sleep(5)
 
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get daemon status."""
         is_running = False
         pid = None
 
         if self.pid_file.exists():
             try:
-                with open(self.pid_file, "r") as f:
+                with open(self.pid_file) as f:
                     pid = int(f.read().strip())
                 is_running = psutil.pid_exists(pid)
             except Exception:
@@ -825,7 +825,7 @@ def stop():
         return
 
     try:
-        with open(pid_file, "r") as f:
+        with open(pid_file) as f:
             pid = int(f.read().strip())
 
         # Send SIGTERM

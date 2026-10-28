@@ -16,9 +16,10 @@ Metadata comments (@-prefixed) are extracted by the script loader and used
 for documentation, grouping, and command registration.
 """
 
-import click
 from pathlib import Path
 from typing import Optional
+
+import click
 
 
 @click.command(name="example_python")

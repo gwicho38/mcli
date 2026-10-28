@@ -17,7 +17,7 @@ class ServiceRegistry:
     """Discovers @service-decorated Click commands."""
 
     @staticmethod
-    def discover(app: click.Group) -> Dict[str, ServiceConfig]:
+    def discover(app: click.Group) -> dict[str, ServiceConfig]:
         """Walk the Click command tree and find commands with service config.
 
         Args:
@@ -26,12 +26,12 @@ class ServiceRegistry:
         Returns:
             Dict mapping service name to ServiceConfig.
         """
-        services: Dict[str, ServiceConfig] = {}
+        services: dict[str, ServiceConfig] = {}
         ServiceRegistry._walk_commands(app, services)
         return services
 
     @staticmethod
-    def _walk_commands(group: click.Group, services: Dict[str, ServiceConfig]) -> None:
+    def _walk_commands(group: click.Group, services: dict[str, ServiceConfig]) -> None:
         """Recursively walk Click command tree looking for @service decorators."""
         try:
             commands = group.commands if hasattr(group, "commands") else {}

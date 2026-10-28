@@ -36,7 +36,7 @@ class DataValidator:
     def __init__(self):
         self.logger = get_logger(f"{__name__}.validator")
 
-    async def validate_trading_record(self, record: Dict[str, Any]) -> bool:
+    async def validate_trading_record(self, record: dict[str, Any]) -> bool:
         """Validate politician trading record."""
         required_fields = [
             "politician_name",
@@ -68,7 +68,7 @@ class DataValidator:
 
         return True
 
-    async def validate_supabase_record(self, table: str, record: Dict[str, Any]) -> bool:
+    async def validate_supabase_record(self, table: str, record: dict[str, Any]) -> bool:
         """Validate Supabase record based on table schema."""
         if not record:
             return False
@@ -87,7 +87,7 @@ class DataEnricher:
     def __init__(self):
         self.logger = get_logger(f"{__name__}.enricher")
 
-    async def enrich_trading_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
+    async def enrich_trading_record(self, record: dict[str, Any]) -> dict[str, Any]:
         """Enrich trading record with additional data."""
         enriched = record.copy()
 
@@ -144,7 +144,7 @@ class DataEnricher:
         else:
             return "1M+"
 
-    async def _get_politician_metadata(self, politician_name: str) -> Dict[str, Any]:
+    async def _get_politician_metadata(self, politician_name: str) -> dict[str, Any]:
         """Get politician metadata (placeholder for external API)."""
         # This would typically call an external API
         return {
@@ -153,7 +153,7 @@ class DataEnricher:
             "name_normalized": politician_name.title(),
         }
 
-    async def _get_market_context(self, asset_name: str, transaction_date: str) -> Dict[str, Any]:
+    async def _get_market_context(self, asset_name: str, transaction_date: str) -> dict[str, Any]:
         """Get market context for the transaction (placeholder)."""
         # This would typically call financial APIs
         return {
@@ -171,14 +171,14 @@ class DataProcessor:
         self.logger = get_logger(f"{__name__}.processor")
         self.validator = DataValidator()
         self.enricher = DataEnricher()
-        self.batch_buffer: List[Dict[str, Any]] = []
+        self.batch_buffer: list[dict[str, Any]] = []
         self.last_batch_time = time.time()
         self._processing_lock = asyncio.Lock()
 
         # Ensure output directory exists
         self.config.output_dir.mkdir(parents=True, exist_ok=True)
 
-    async def process_trading_data(self, records: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def process_trading_data(self, records: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Process politician trading data."""
         processed_records = []
 
@@ -212,8 +212,8 @@ class DataProcessor:
         return processed_records
 
     async def process_supabase_sync(
-        self, table: str, operation: str, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, table: str, operation: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Process Supabase sync data."""
         try:
             # Validate
@@ -237,8 +237,8 @@ class DataProcessor:
             return {}
 
     async def _transform_supabase_data(
-        self, table: str, operation: str, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, table: str, operation: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Transform Supabase data based on table schema."""
         transformed = data.copy()
 
@@ -250,7 +250,7 @@ class DataProcessor:
 
         return transformed
 
-    async def _transform_politician_table(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _transform_politician_table(self, data: dict[str, Any]) -> dict[str, Any]:
         """Transform politician table data."""
         # Normalize names
         if "name" in data:
@@ -262,7 +262,7 @@ class DataProcessor:
 
         return data
 
-    async def _transform_trading_table(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _transform_trading_table(self, data: dict[str, Any]) -> dict[str, Any]:
         """Transform trading table data."""
         # Normalize asset names
         if "asset_name" in data:
@@ -277,7 +277,7 @@ class DataProcessor:
 
         return data
 
-    async def add_to_batch(self, record: Dict[str, Any]):
+    async def add_to_batch(self, record: dict[str, Any]):
         """Add record to batch for processing."""
         async with self._processing_lock:
             self.batch_buffer.append(record)
@@ -318,7 +318,7 @@ class DataProcessor:
             # Re-add to buffer for retry (simplified)
             self.batch_buffer.extend(batch)
 
-    async def _save_batch(self, batch: List[Dict[str, Any]]):
+    async def _save_batch(self, batch: list[dict[str, Any]]):
         """Save processed batch to file."""
         if not batch:
             return
@@ -337,7 +337,7 @@ class DataProcessor:
         except Exception as e:
             self.logger.error(f"Failed to save batch: {e}")
 
-    async def _emit_batch_completed(self, batch: List[Dict[str, Any]]):
+    async def _emit_batch_completed(self, batch: list[dict[str, Any]]):
         """Emit batch completion event."""
         self.logger.info(f"Batch processing completed: {len(batch)} records")
 
@@ -368,7 +368,7 @@ class LSHDataPipeline:
         self.lsh_client.on("lsh.supabase.sync", self._handle_supabase_sync)
         self.lsh_client.on("trading.data.processed", self._handle_trading_data)
 
-    async def _handle_job_completed(self, event_data: Dict[str, Any]):
+    async def _handle_job_completed(self, event_data: dict[str, Any]):
         """Handle LSH job completion."""
         job_name = event_data.get("job_name", "")
         job_id = event_data.get("job_id", "")
@@ -381,7 +381,7 @@ class LSHDataPipeline:
             if stdout.strip():
                 await self._process_job_output(job_id, stdout)
 
-    async def _handle_supabase_sync(self, event_data: Dict[str, Any]):
+    async def _handle_supabase_sync(self, event_data: dict[str, Any]):
         """Handle Supabase sync event."""
         table = event_data.get("table", "")
         operation = event_data.get("operation", "")
@@ -393,7 +393,7 @@ class LSHDataPipeline:
         if processed_data:
             await self.processor.add_to_batch(processed_data)
 
-    async def _handle_trading_data(self, event_data: Dict[str, Any]):
+    async def _handle_trading_data(self, event_data: dict[str, Any]):
         """Handle processed trading data."""
         records = event_data.get("records", [])
 
@@ -453,7 +453,7 @@ class LSHDataPipeline:
         # Flush any remaining batches
         await self.processor.flush_batch()
 
-    async def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> dict[str, Any]:
         """Get pipeline statistics."""
         return {
             "is_running": self._is_running,

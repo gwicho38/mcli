@@ -24,7 +24,7 @@ class CommandResult:
     returncode: int
     stdout: str
     stderr: str
-    command: Union[str, List[str]]
+    command: Union[str, list[str]]
     timed_out: bool = False
     duration_ms: Optional[float] = None
 
@@ -43,7 +43,7 @@ class CommandResult:
             parts.append(self.stderr)
         return "\n".join(parts)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "returncode": self.returncode,
@@ -71,7 +71,7 @@ class CommandError(Exception):
     def __init__(
         self,
         message: str,
-        command: Optional[Union[str, List[str]]] = None,
+        command: Optional[Union[str, list[str]]] = None,
         result: Optional[CommandResult] = None,
     ):
         self.message = message
@@ -100,7 +100,7 @@ class CommandError(Exception):
 
         return "\n".join(parts)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert exception to dictionary for structured logging."""
         return {
             "error_type": self.__class__.__name__,
@@ -128,7 +128,7 @@ class CommandTimeoutError(CommandError):
     def __init__(
         self,
         timeout_seconds: float,
-        command: Union[str, List[str]],
+        command: Union[str, list[str]],
         result: Optional[CommandResult] = None,
     ):
         self.timeout_seconds = timeout_seconds
@@ -167,7 +167,7 @@ class CommandFailedError(CommandError):
 class CommandValidationError(CommandError):
     """Raised when command validation fails before execution."""
 
-    def __init__(self, message: str, command: Optional[Union[str, List[str]]] = None):
+    def __init__(self, message: str, command: Optional[Union[str, list[str]]] = None):
         super().__init__(message, command=command)
 
 
@@ -177,7 +177,7 @@ class CommandSecurityError(CommandValidationError):
     def __init__(
         self,
         message: str,
-        command: Union[str, List[str]],
+        command: Union[str, list[str]],
         dangerous_pattern: Optional[str] = None,
     ):
         self.dangerous_pattern = dangerous_pattern
@@ -192,7 +192,7 @@ class CommandInterruptedError(CommandError):
     def __init__(
         self,
         signal_num: int,
-        command: Union[str, List[str]],
+        command: Union[str, list[str]],
         result: Optional[CommandResult] = None,
     ):
         self.signal_num = signal_num
@@ -214,7 +214,7 @@ class CommandResourceError(CommandError):
         self,
         resource_type: str,
         details: str,
-        command: Optional[Union[str, List[str]]] = None,
+        command: Optional[Union[str, list[str]]] = None,
     ):
         self.resource_type = resource_type
         message = f"Resource error ({resource_type}): {details}"

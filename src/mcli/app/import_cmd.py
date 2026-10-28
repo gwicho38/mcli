@@ -78,7 +78,7 @@ def _is_binary(file_path: Path) -> bool:
 
 def _is_importable(
     file_path: Path,
-) -> Tuple[bool, Optional[str], Optional[bool], Optional[str]]:
+) -> tuple[bool, Optional[str], Optional[bool], Optional[str]]:
     """Classify a file as importable, wrappable, or rejected.
 
     Returns:
@@ -124,7 +124,7 @@ def _is_importable(
 
     # Check for shebang
     try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as fh:
+        with open(file_path, encoding="utf-8", errors="ignore") as fh:
             first_line = fh.readline(256)
         if first_line.startswith("#!"):
             return (True, None, True, None)
@@ -157,7 +157,7 @@ def _detect_wrapper_interpreter(file_path: Path) -> str:
 
     # Try shebang
     try:
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as fh:
+        with open(file_path, encoding="utf-8", errors="ignore") as fh:
             first_line = fh.readline(256).strip()
         if first_line.startswith("#!"):
             # e.g.  #!/usr/bin/env ruby  ->  ruby
@@ -209,8 +209,8 @@ def _derive_command_name(file_path: Path) -> str:
 
 
 def _resolve_name_conflicts(
-    files: List[Tuple[Path, str, bool]],
-) -> List[Tuple[Path, str, bool, str]]:
+    files: list[tuple[Path, str, bool]],
+) -> list[tuple[Path, str, bool, str]]:
     """Resolve duplicate command names for directory imports.
 
     For conflicts, prefix with parent directory name:
@@ -219,17 +219,17 @@ def _resolve_name_conflicts(
     Returns list of ``(path, language_or_None, needs_wrapper, command_name)``.
     """
     # First pass: derive names
-    entries: List[Tuple[Path, str, bool, str]] = []
+    entries: list[tuple[Path, str, bool, str]] = []
     for fpath, lang, wrap in files:
         entries.append((fpath, lang, wrap, _derive_command_name(fpath)))
 
     # Find duplicates
-    name_counts: Dict[str, int] = {}
+    name_counts: dict[str, int] = {}
     for _, _, _, cname in entries:
         name_counts[cname] = name_counts.get(cname, 0) + 1
 
     # Resolve duplicates
-    resolved: List[Tuple[Path, str, bool, str]] = []
+    resolved: list[tuple[Path, str, bool, str]] = []
     for fpath, lang, wrap, cname in entries:
         if name_counts[cname] > 1:
             parent = fpath.parent.name.lower().replace("-", "_")
@@ -256,13 +256,13 @@ def _resolve_name_conflicts(
 def _scan_source(
     source: Path,
     recursive: bool,
-) -> List[Tuple[Path, Optional[str], bool]]:
+) -> list[tuple[Path, Optional[str], bool]]:
     """Scan *source* and return importable files.
 
     Returns list of ``(path, language_or_None, needs_wrapper)``.
     Skipped files are logged but not returned.
     """
-    candidates: List[Tuple[Path, Optional[str], bool]] = []
+    candidates: list[tuple[Path, Optional[str], bool]] = []
 
     if source.is_file():
         ok, lang, wrap, reason = _is_importable(source)
@@ -327,7 +327,7 @@ def _import_single_file(
     force: bool = False,
     wrap: bool = True,
     dry_run: bool = False,
-) -> Tuple[str, str, str]:
+) -> tuple[str, str, str]:
     """Import a single file into the workflows directory.
 
     Returns ``(command_name, action_label, status)``.
@@ -382,7 +382,7 @@ def _import_single_file(
             version=version,
             language=language,
         )
-        saved = save_script(workflows_dir, command_name, code, language)
+        save_script(workflows_dir, command_name, code, language)
         # Remove original after successful save
         file_path.unlink()
         return (command_name, "move", STATUS_MOVED)
@@ -405,7 +405,7 @@ def _import_single_file(
 # =============================================================================
 
 
-def _display_summary(results: List[Tuple[str, str, str]], verbose: bool) -> None:
+def _display_summary(results: list[tuple[str, str, str]], verbose: bool) -> None:
     """Show a Rich table summarising the import results."""
     if not results:
         return
@@ -566,7 +566,7 @@ def import_cmd(
     named = _resolve_name_conflicts(candidates)
 
     # Import each file
-    results: List[Tuple[str, str, str]] = []
+    results: list[tuple[str, str, str]] = []
     for fpath, lang, needs_wrapper, cmd_name in named:
         if verbose and not dry_run:
             console.print(ImportMessages.IMPORTING_FILE.format(path=fpath))

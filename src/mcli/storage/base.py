@@ -48,7 +48,7 @@ class StorageBackend(ABC):
 
     # Data operations
     @abstractmethod
-    async def store(self, key: str, data: bytes, metadata: Optional[Dict[str, Any]] = None) -> str:
+    async def store(self, key: str, data: bytes, metadata: Optional[dict[str, Any]] = None) -> str:
         """
         Store data and return storage ID (CID/UUID/etc).
 
@@ -91,8 +91,8 @@ class StorageBackend(ABC):
     # Query operations (for structured data)
     @abstractmethod
     async def query(
-        self, filters: Dict[str, Any], limit: int = 100, offset: int = 0
-    ) -> List[Dict[str, Any]]:
+        self, filters: dict[str, Any], limit: int = 100, offset: int = 0
+    ) -> list[dict[str, Any]]:
         """
         Query structured data with filters.
 
@@ -108,7 +108,7 @@ class StorageBackend(ABC):
 
     # Metadata operations
     @abstractmethod
-    async def get_metadata(self, storage_id: str) -> Optional[Dict[str, Any]]:
+    async def get_metadata(self, storage_id: str) -> Optional[dict[str, Any]]:
         """
         Get metadata for storage ID.
 
@@ -121,7 +121,7 @@ class StorageBackend(ABC):
         pass
 
     @abstractmethod
-    async def list_all(self, prefix: Optional[str] = None, limit: int = 100) -> List[str]:
+    async def list_all(self, prefix: Optional[str] = None, limit: int = 100) -> list[str]:
         """
         List all storage IDs, optionally filtered by prefix.
 
@@ -163,7 +163,7 @@ class EncryptedStorageBackend(StorageBackend):
         self.encryption_key = encryption_key
         self._connected = False
 
-    async def store(self, key: str, data: bytes, metadata: Optional[Dict[str, Any]] = None) -> str:
+    async def store(self, key: str, data: bytes, metadata: Optional[dict[str, Any]] = None) -> str:
         """
         Encrypt data before storing.
 
@@ -214,7 +214,7 @@ class EncryptedStorageBackend(StorageBackend):
 
     @abstractmethod
     async def _store_encrypted(
-        self, key: str, encrypted_data: bytes, metadata: Dict[str, Any]
+        self, key: str, encrypted_data: bytes, metadata: dict[str, Any]
     ) -> str:
         """
         Backend-specific encrypted storage implementation.

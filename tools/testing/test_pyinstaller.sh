@@ -25,7 +25,7 @@ if [ $BUILD_RESULT -eq 0 ]; then
     echo "Testing the binary..."
     make test-binary
     TEST_RESULT=$?
-    
+
     if [ $TEST_RESULT -eq 0 ]; then
         echo "Binary test completed successfully!"
         echo "OVERALL RESULT: SUCCESS ✅"

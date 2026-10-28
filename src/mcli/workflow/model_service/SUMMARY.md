@@ -187,9 +187,9 @@ model_id = client.load_model(
 
 # Translate text
 result = client.translate_text(
-    model_id, 
-    "Hello, how are you?", 
-    source_lang="en", 
+    model_id,
+    "Hello, how are you?",
+    source_lang="en",
     target_lang="fr"
 )
 print(result['translated_text'])
@@ -466,4 +466,4 @@ The MCLI Model Service provides a complete solution for hosting and serving lang
 - **Electron friendly**: Seamless integration with Electron apps
 - **Well documented**: Comprehensive documentation and examples
 
-The system is ready for immediate use and provides a solid foundation for building AI-powered applications with local model hosting capabilities. 
+The system is ready for immediate use and provides a solid foundation for building AI-powered applications with local model hosting capabilities.

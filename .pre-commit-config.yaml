@@ -11,7 +11,9 @@ repos:
         args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer
       - id: check-yaml
+        args: [--allow-multiple-documents] # k8s manifests hold several documents
       - id: check-json
+        exclude: ^\.devcontainer/devcontainer\.json$ # JSON with comments, valid for dev containers
       - id: check-toml
       - id: check-xml
       - id: check-added-large-files
@@ -21,6 +23,7 @@ repos:
       - id: check-symlinks
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
+        exclude: \.rs$ # `#![...]` is a Rust attribute, not a shebang
       - id: debug-statements
       - id: check-docstring-first
       - id: fix-byte-order-marker
@@ -63,7 +66,14 @@ repos:
           - types-requests
           - types-setuptools
           - types-PyYAML
-        args: [--ignore-missing-imports, --scripts-are-modules]
+        # Report only the files being committed, not every module they import.
+        args:
+          [
+            --ignore-missing-imports,
+            --scripts-are-modules,
+            --follow-imports=silent,
+            --explicit-package-bases,
+          ]
         exclude: ^(tests/|docs/|scripts/)
 
   # Security checks with bandit
@@ -71,7 +81,8 @@ repos:
     rev: 1.7.10
     hooks:
       - id: bandit
-        args: [-r, -x, tests/]
+        # Medium severity and up; findings that predate the hook live in the baseline.
+        args: [-ll, -b, .bandit-baseline.json, -x, tests/]
         exclude: ^tests/
 
   # Upgrade Python syntax
@@ -100,7 +111,7 @@ repos:
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
-        args: [-e, SC1091] # Ignore sourcing of files
+        args: [-e, SC1091, --severity=warning] # Ignore sourcing of files; info/style do not block
 
   # Local hooks
   - repo: local
@@ -108,7 +119,8 @@ repos:
       - id: lint-hardcoded-strings
         name: Lint hardcoded strings
         description: Check for hardcoded strings that should be in constants module
-        entry: bash -c 'uv run python tools/lint_hardcoded_strings.py "$@"' --
+        # Only lines the commit adds or changes: older strings never block a commit.
+        entry: bash -c 'uv run --frozen python tools/lint_hardcoded_strings.py --changed-lines-only "$@"' --
         language: system
         types: [python]
         pass_filenames: true

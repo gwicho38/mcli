@@ -23,9 +23,9 @@ class ServiceSupervisor:
 
     def __init__(self, manager):
         self._manager = manager
-        self._threads: Dict[str, threading.Thread] = {}
-        self._stop_events: Dict[str, threading.Event] = {}
-        self._restart_times: Dict[str, list] = defaultdict(list)
+        self._threads: dict[str, threading.Thread] = {}
+        self._stop_events: dict[str, threading.Event] = {}
+        self._restart_times: dict[str, list] = defaultdict(list)
 
     def start_supervisor(self, config: ServiceConfig) -> None:
         """Start a supervisor thread for a service."""

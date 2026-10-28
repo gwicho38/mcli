@@ -21,9 +21,9 @@ SELECT cron.schedule(
 );
 
 -- View scheduled cron jobs
-SELECT 
+SELECT
     jobid,
-    schedule, 
+    schedule,
     command,
     nodename,
     nodeport,
@@ -31,11 +31,11 @@ SELECT
     username,
     active,
     jobname
-FROM cron.job 
+FROM cron.job
 WHERE jobname = 'politician-trading-collection';
 
 -- View cron job run history (last 10 runs)
-SELECT 
+SELECT
     runid,
     jobid,
     database,
@@ -45,11 +45,11 @@ SELECT
     return_message,
     start_time,
     end_time
-FROM cron.job_run_details 
+FROM cron.job_run_details
 WHERE jobid IN (
     SELECT jobid FROM cron.job WHERE jobname = 'politician-trading-collection'
 )
-ORDER BY start_time DESC 
+ORDER BY start_time DESC
 LIMIT 10;
 
 -- To unschedule the job (if needed):

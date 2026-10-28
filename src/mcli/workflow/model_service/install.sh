@@ -34,7 +34,7 @@ print_error() {
 # Check if Python is installed
 check_python() {
     print_status "Checking Python installation..."
-    
+
     if command -v python3 &> /dev/null; then
         PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
         print_success "Python $PYTHON_VERSION found"
@@ -47,11 +47,11 @@ check_python() {
         print_error "Python is not installed. Please install Python 3.8+ first."
         exit 1
     fi
-    
+
     # Check Python version
     PYTHON_MAJOR=$($PYTHON_CMD -c "import sys; print(sys.version_info.major)")
     PYTHON_MINOR=$($PYTHON_CMD -c "import sys; print(sys.version_info.minor)")
-    
+
     if [ "$PYTHON_MAJOR" -lt 3 ] || ([ "$PYTHON_MAJOR" -eq 3 ] && [ "$PYTHON_MINOR" -lt 8 ]); then
         print_error "Python 3.8+ is required. Found Python $PYTHON_VERSION"
         exit 1
@@ -61,24 +61,24 @@ check_python() {
 # Check if pip is installed
 check_pip() {
     print_status "Checking pip installation..."
-    
+
     if ! command -v pip3 &> /dev/null && ! command -v pip &> /dev/null; then
         print_error "pip is not installed. Please install pip first."
         exit 1
     fi
-    
+
     print_success "pip found"
 }
 
 # Create virtual environment
 create_venv() {
     print_status "Creating virtual environment..."
-    
+
     if [ -d "venv" ]; then
         print_warning "Virtual environment already exists. Removing..."
         rm -rf venv
     fi
-    
+
     $PYTHON_CMD -m venv venv
     print_success "Virtual environment created"
 }
@@ -93,29 +93,29 @@ activate_venv() {
 # Install dependencies
 install_dependencies() {
     print_status "Installing dependencies..."
-    
+
     # Upgrade pip
     pip install --upgrade pip
-    
+
     # Install core dependencies
     pip install fastapi uvicorn pydantic requests click
-    
+
     # Install machine learning dependencies
     pip install torch transformers accelerate sentencepiece protobuf
-    
+
     # Install data processing dependencies
     pip install numpy Pillow psutil
-    
+
     # Install development dependencies
     pip install pytest pytest-asyncio httpx
-    
+
     print_success "Dependencies installed"
 }
 
 # Create configuration
 create_config() {
     print_status "Creating configuration..."
-    
+
     cat > config.toml << EOF
 [model_service]
 host = "0.0.0.0"
@@ -129,25 +129,25 @@ enable_cors = true
 cors_origins = ["*"]
 log_level = "INFO"
 EOF
-    
+
     print_success "Configuration file created (config.toml)"
 }
 
 # Create directories
 create_directories() {
     print_status "Creating directories..."
-    
+
     mkdir -p models
     mkdir -p temp
     mkdir -p logs
-    
+
     print_success "Directories created"
 }
 
 # Create startup script
 create_startup_script() {
     print_status "Creating startup script..."
-    
+
     cat > start_service.sh << 'EOF'
 #!/bin/bash
 
@@ -159,7 +159,7 @@ source venv/bin/activate
 # Start the model service
 python model_service.py start "$@"
 EOF
-    
+
     chmod +x start_service.sh
     print_success "Startup script created (start_service.sh)"
 }
@@ -168,10 +168,10 @@ EOF
 create_systemd_service() {
     if command -v systemctl &> /dev/null; then
         print_status "Creating systemd service..."
-        
+
         SERVICE_USER=$(whoami)
         SERVICE_PATH=$(pwd)
-        
+
         sudo tee /etc/systemd/system/mcli-model-service.service > /dev/null << EOF
 [Unit]
 Description=MCLI Model Service
@@ -188,7 +188,7 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 EOF
-        
+
         print_success "Systemd service created"
         print_status "To enable the service, run:"
         echo "  sudo systemctl enable mcli-model-service"
@@ -201,7 +201,7 @@ EOF
 # Test installation
 test_installation() {
     print_status "Testing installation..."
-    
+
     # Test Python imports
     python -c "import fastapi, uvicorn, torch, transformers" 2>/dev/null
     if [ $? -eq 0 ]; then
@@ -210,7 +210,7 @@ test_installation() {
         print_error "Some packages are missing. Please check the installation."
         exit 1
     fi
-    
+
     # Test model service
     if [ -f "model_service.py" ]; then
         print_success "Model service script found"
@@ -223,7 +223,7 @@ test_installation() {
 # Create example usage script
 create_example_script() {
     print_status "Creating example usage script..."
-    
+
     cat > example_usage.py << 'EOF'
 #!/usr/bin/env python3
 """
@@ -236,7 +236,7 @@ import json
 def test_service():
     """Test the model service"""
     base_url = "http://localhost:8000"
-    
+
     try:
         # Check if service is running
         response = requests.get(f"{base_url}/health")
@@ -246,7 +246,7 @@ def test_service():
         else:
             print("❌ Model service is not responding")
             return
-            
+
         # List models
         response = requests.get(f"{base_url}/models")
         if response.status_code == 200:
@@ -257,7 +257,7 @@ def test_service():
                 print(f"  {status} {model['name']} ({model['model_type']})")
         else:
             print("❌ Failed to list models")
-            
+
     except requests.exceptions.ConnectionError:
         print("❌ Could not connect to model service")
         print("Make sure the service is running:")
@@ -268,7 +268,7 @@ def test_service():
 if __name__ == "__main__":
     test_service()
 EOF
-    
+
     chmod +x example_usage.py
     print_success "Example usage script created (example_usage.py)"
 }
@@ -278,26 +278,26 @@ main() {
     echo "=========================================="
     echo "MCLI Model Service Installation"
     echo "=========================================="
-    
+
     # Check prerequisites
     check_python
     check_pip
-    
+
     # Create environment
     create_venv
     activate_venv
     install_dependencies
-    
+
     # Setup configuration
     create_config
     create_directories
     create_startup_script
     create_systemd_service
     create_example_script
-    
+
     # Test installation
     test_installation
-    
+
     echo ""
     echo "=========================================="
     print_success "Installation completed successfully!"
@@ -325,4 +325,4 @@ main() {
 }
 
 # Run installation
-main "$@" 
+main "$@"

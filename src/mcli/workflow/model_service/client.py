@@ -19,7 +19,7 @@ class ModelServiceClient:
             {"Content-Type": "application/json", "Accept": "application/json"}
         )
 
-    def _make_request(self, method: str, endpoint: str, data: Optional[Dict] = None) -> Dict:
+    def _make_request(self, method: str, endpoint: str, data: Optional[dict] = None) -> dict:
         """Make a request to the model service."""
         url = f"{self.base_url}{endpoint}"
 
@@ -49,15 +49,15 @@ class ModelServiceClient:
         except Exception as e:
             raise RuntimeError(f"Request failed: {e}")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get service status."""
         return self._make_request("GET", "/")
 
-    def get_health(self) -> Dict[str, Any]:
+    def get_health(self) -> dict[str, Any]:
         """Get service health."""
         return self._make_request("GET", "/health")
 
-    def list_models(self) -> List[Dict[str, Any]]:
+    def list_models(self) -> list[dict[str, Any]]:
         """List all available models."""
         return self._make_request("GET", "/models")
 
@@ -97,7 +97,7 @@ class ModelServiceClient:
         except ValueError:
             return False
 
-    def update_model(self, model_id: str, updates: Dict[str, Any]) -> bool:
+    def update_model(self, model_id: str, updates: dict[str, Any]) -> bool:
         """Update model configuration."""
         try:
             self._make_request("PUT", f"/models/{model_id}", updates)
@@ -121,7 +121,7 @@ class ModelServiceClient:
         temperature: Optional[float] = None,
         top_p: Optional[float] = None,
         top_k: Optional[int] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate text using a model."""
         data = {
             "prompt": prompt,
@@ -136,14 +136,14 @@ class ModelServiceClient:
 
         return self._make_request("POST", f"/models/{model_id}/generate", data)
 
-    def classify_text(self, model_id: str, text: str) -> Dict[str, Any]:
+    def classify_text(self, model_id: str, text: str) -> dict[str, Any]:
         """Classify text using a model."""
         data = {"text": text}
         return self._make_request("POST", f"/models/{model_id}/classify", data)
 
     def translate_text(
         self, model_id: str, text: str, source_lang: str = "en", target_lang: str = "fr"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Translate text using a model."""
         data = {"text": text, "source_lang": source_lang, "target_lang": target_lang}
         return self._make_request("POST", f"/models/{model_id}/translate", data)
@@ -525,7 +525,7 @@ def batch_test(
 
         if file:
             # Read prompts from file
-            with open(file, "r") as f:
+            with open(file) as f:
                 prompts = [line.strip() for line in f if line.strip()]
         else:
             # Use default test prompts

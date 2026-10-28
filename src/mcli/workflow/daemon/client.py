@@ -37,11 +37,11 @@ class DaemonClient:
         description: Optional[str] = None,
         language: str = "python",
         group: Optional[str] = None,
-        tags: Optional[List[str]] = None,
+        tags: Optional[list[str]] = None,
     ) -> str:
         """Add a command from a file."""
         # Read the file
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             code = f.read()
 
         # Detect language from file extension if not specified
@@ -76,7 +76,7 @@ class DaemonClient:
         description: Optional[str] = None,
         language: str = "python",
         group: Optional[str] = None,
-        tags: Optional[List[str]] = None,
+        tags: Optional[list[str]] = None,
     ) -> str:
         """Add a command from stdin."""
         click.echo("Enter your code (Ctrl+D when done):")
@@ -176,7 +176,7 @@ class DaemonClient:
             # Add to database
             return self.db.add_command(command)
 
-    def execute_command(self, command_id: str, args: List[str] = None) -> Dict[str, Any]:
+    def execute_command(self, command_id: str, args: list[str] = None) -> dict[str, Any]:
         """Execute a command."""
         command = self.db.get_command(command_id)
         if not command:
@@ -196,15 +196,15 @@ class DaemonClient:
 
         return result
 
-    def search_commands(self, query: str, limit: int = 10) -> List[Command]:
+    def search_commands(self, query: str, limit: int = 10) -> list[Command]:
         """Search for commands."""
         return self.db.search_commands(query, limit)
 
-    def find_similar_commands(self, query: str, limit: int = 5) -> List[tuple]:
+    def find_similar_commands(self, query: str, limit: int = 5) -> list[tuple]:
         """Find similar commands using cosine similarity."""
         return self.db.find_similar_commands(query, limit)
 
-    def get_all_commands(self) -> List[Command]:
+    def get_all_commands(self) -> list[Command]:
         """Get all commands."""
         return self.db.get_all_commands()
 
@@ -300,7 +300,7 @@ def add_interactive():
 @client.command()
 @click.argument("command_id")
 @click.argument("args", nargs=-1)
-def execute(command_id: str, args: List[str]):
+def execute(command_id: str, args: list[str]):
     """Execute a command."""
     client = DaemonClient()
 

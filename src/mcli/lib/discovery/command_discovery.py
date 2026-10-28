@@ -23,7 +23,7 @@ class DiscoveredCommand:
     description: str
     callback: callable
     is_group: bool = False
-    subcommands: List[str] = None
+    subcommands: list[str] = None
 
 
 class ClickCommandDiscovery:
@@ -31,9 +31,9 @@ class ClickCommandDiscovery:
 
     def __init__(self, base_path: Optional[Path] = None):
         self.base_path = base_path or Path(__file__).parent.parent.parent
-        self.discovered_commands: Dict[str, DiscoveredCommand] = {}
+        self.discovered_commands: dict[str, DiscoveredCommand] = {}
 
-    def discover_all_commands(self) -> List[DiscoveredCommand]:
+    def discover_all_commands(self) -> list[DiscoveredCommand]:
         """Discover all Click commands in the application."""
         self.discovered_commands.clear()
 
@@ -191,7 +191,7 @@ class ClickCommandDiscovery:
             if isinstance(cmd, click.Group):
                 self._register_group_recursive(cmd, cmd_full_name, module_name)
 
-    def get_commands(self, include_groups: bool = True) -> List[Dict[str, Any]]:
+    def get_commands(self, include_groups: bool = True) -> list[dict[str, Any]]:
         """Get all discovered commands as dictionaries."""
         commands = []
 
@@ -223,7 +223,7 @@ class ClickCommandDiscovery:
 
         return sorted(commands, key=lambda x: x["full_name"])
 
-    def search_commands(self, query: str) -> List[Dict[str, Any]]:
+    def search_commands(self, query: str) -> list[dict[str, Any]]:
         """Search commands by name, description, or module."""
         query = query.lower()
         all_commands = self.get_commands()

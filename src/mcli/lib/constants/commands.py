@@ -77,13 +77,13 @@ class ConfigKeys:
 class DefaultIncludedDirs:
     """Default directories to scan for commands."""
 
-    DIRS: Set[str] = {"app", "self", "workflow", "public"}
+    DIRS: set[str] = {"app", "self", "workflow", "public"}
 
 
 class DefaultExcludedDirs:
     """Default directories to exclude from command scanning."""
 
-    DIRS: Set[str] = {
+    DIRS: set[str] = {
         "resources",
         "models",
         "scripts",
@@ -104,7 +104,7 @@ class DefaultExcludedDirs:
 class DefaultExcludedFiles:
     """Default files to exclude from command scanning."""
 
-    FILES: Set[str] = {
+    FILES: set[str] = {
         "setup.py",
         "__init__.py",
         "conftest.py",

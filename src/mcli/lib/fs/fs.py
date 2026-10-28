@@ -102,7 +102,7 @@ def save_global_value(value):
 def load_global_value():
     """Load a global configuration value."""
     try:
-        with open(CONFIG_FILE, "r") as f:
+        with open(CONFIG_FILE) as f:
             return json.load(f).get("GLOBAL_VALUE")
     except FileNotFoundError:
         return None

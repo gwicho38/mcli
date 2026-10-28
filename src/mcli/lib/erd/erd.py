@@ -24,11 +24,11 @@ class TypeSystem(Protocol):
         """Get a type by name."""
         ...
 
-    def get_all_types(self) -> List[str]:
+    def get_all_types(self) -> list[str]:
         """Get all available type names."""
         ...
 
-    def get_package_types(self, package_name: str) -> List[str]:
+    def get_package_types(self, package_name: str) -> list[str]:
         """Get all types in a specific package."""
         ...
 
@@ -44,15 +44,15 @@ class TypeMetadata(Protocol):
         """Get the type name."""
         ...
 
-    def get_fields(self) -> Dict[str, Any]:
+    def get_fields(self) -> dict[str, Any]:
         """Get field definitions."""
         ...
 
-    def get_methods(self) -> List[str]:
+    def get_methods(self) -> list[str]:
         """Get method names."""
         ...
 
-    def get_related_types(self) -> Set[str]:
+    def get_related_types(self) -> set[str]:
         """Get names of related types."""
         ...
 
@@ -74,7 +74,7 @@ class MCLITypeSystem:
         else:
             return getattr(self.mcli_obj, name)
 
-    def get_all_types(self) -> List[str]:
+    def get_all_types(self) -> list[str]:
         """Get all available type names from MCLI namespace."""
         type_names = []
         for attr_name in dir(self.mcli_obj):
@@ -87,7 +87,7 @@ class MCLITypeSystem:
                     pass
         return type_names
 
-    def get_package_types(self, package_name: str) -> List[str]:
+    def get_package_types(self, package_name: str) -> list[str]:
         """Get all types in a specific package from MCLI namespace."""
         type_names = []
         try:
@@ -121,7 +121,7 @@ class MCLITypeMetadata:
         """Get the type name."""
         return getattr(self.mcli_type, "name", lambda: str(self.mcli_type))()
 
-    def get_fields(self) -> Dict[str, Any]:
+    def get_fields(self) -> dict[str, Any]:
         """Get field definitions from MCLI type metadata."""
         fields = {}
         fts = self._meta.fieldTypesByName()
@@ -130,7 +130,7 @@ class MCLITypeMetadata:
                 fields[name] = ft
         return fields
 
-    def get_methods(self) -> List[str]:
+    def get_methods(self) -> list[str]:
         """Get method names from MCLI type."""
         methods = []
         for name in dir(self.mcli_type):
@@ -141,7 +141,7 @@ class MCLITypeMetadata:
                 methods.append(name)
         return sorted(methods)
 
-    def get_related_types(self) -> Set[str]:
+    def get_related_types(self) -> set[str]:
         """Get names of related types from MCLI type metadata."""
         related_types = set()
         fts = self._meta.fieldTypesByName()
@@ -209,12 +209,12 @@ class ERD:
     ]
 
     @staticmethod
-    def get_relevant_types(type_metadata: TypeMetadata) -> Set[str]:
+    def get_relevant_types(type_metadata: TypeMetadata) -> set[str]:
         """Get relevant reference types from type metadata."""
         return type_metadata.get_related_types()
 
     @staticmethod
-    def get_pkg_types(type_system: TypeSystem, pkg_name: Optional[str] = None) -> Set[str]:
+    def get_pkg_types(type_system: TypeSystem, pkg_name: Optional[str] = None) -> set[str]:
         """Get all types from a package or root namespace."""
         if pkg_name:
             return set(type_system.get_package_types(pkg_name))
@@ -222,12 +222,12 @@ class ERD:
             return set(type_system.get_all_types())
 
     @staticmethod
-    def get_entity_methods(type_metadata: TypeMetadata) -> List[str]:
+    def get_entity_methods(type_metadata: TypeMetadata) -> list[str]:
         """Get methods of a type."""
         return type_metadata.get_methods()
 
     @staticmethod
-    def add_entity(entities: Dict[str, Dict], type_name: str, type_system: TypeSystem):
+    def add_entity(entities: dict[str, dict], type_name: str, type_system: TypeSystem):
         """Add entity to the ERD using generic type system."""
         try:
             type_obj = type_system.get_type(type_name)
@@ -738,14 +738,14 @@ def do_erd(max_depth=1, type_system: Optional[TypeSystem] = None):
 
 
 def create_merged_erd(
-    types: List[str],
+    types: list[str],
     type_system: Optional[TypeSystem] = None,
     mcli=None,
     env_url: str = None,
     max_depth: int = 2,
     output_prefix: str = "MergedERD",
     include_methods: bool = False,
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     """
     Create a merged ERD from multiple root types.
 
@@ -822,10 +822,10 @@ def create_merged_erd(
 
 
 def process_types_to_depth(
-    to_process: List[Tuple[str, object, int]],
-    processed_types: Set[str],
-    type_depth: Dict[str, int],
-    entities: Dict[str, Dict],
+    to_process: list[tuple[str, object, int]],
+    processed_types: set[str],
+    type_depth: dict[str, int],
+    entities: dict[str, dict],
     type_system: TypeSystem,
     max_depth: int,
 ) -> None:
@@ -876,9 +876,9 @@ def process_types_to_depth(
 
 
 def create_merged_graph(
-    entities: Dict[str, Dict],
-    type_depth: Dict[str, int],
-    root_types: List[Tuple[str, object]],
+    entities: dict[str, dict],
+    type_depth: dict[str, int],
+    root_types: list[tuple[str, object]],
     include_methods: bool = False,
 ) -> pydot.Dot:
     """
@@ -1008,7 +1008,7 @@ def create_merged_graph(
     return graph
 
 
-def build_relationship_map(entities: Dict[str, Dict]) -> Dict[str, Set[str]]:
+def build_relationship_map(entities: dict[str, dict]) -> dict[str, set[str]]:
     """
     Build a map of relationships between entities based on field types.
 
@@ -1054,12 +1054,12 @@ def build_relationship_map(entities: Dict[str, Dict]) -> Dict[str, Set[str]]:
 
 
 def generate_merged_erd_for_types(
-    type_names: List[str],
+    type_names: list[str],
     env_url: str = None,
     type_system: Optional[TypeSystem] = None,
     max_depth: int = 2,
     output_prefix: str = "MergedERD",
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     """
     Generate a merged ERD for multiple MCLI types.
 
@@ -1081,7 +1081,7 @@ def generate_merged_erd_for_types(
     )
 
 
-def find_top_nodes_in_graph(graph_data: Dict, top_n: int = 5) -> List[Tuple[str, int]]:
+def find_top_nodes_in_graph(graph_data: dict, top_n: int = 5) -> list[tuple[str, int]]:
     """
     Find the top N nodes in a graph that would serve as good roots for a hierarchical export.
     Nodes are ranked by the number of descendants they have (size of reachable subgraph).
@@ -1134,7 +1134,7 @@ def find_top_nodes_in_graph(graph_data: Dict, top_n: int = 5) -> List[Tuple[str,
 
 def generate_erd_for_top_nodes(
     graph_file_path: str, max_depth: int = 2, top_n: int = 50
-) -> List[Tuple[str, str, int]]:
+) -> list[tuple[str, str, int]]:
     """
     Generate ERDs for the top N nodes in a graph.
 
@@ -1155,7 +1155,7 @@ def generate_erd_for_top_nodes(
 
         # Load the graph data
         try:
-            with open(graph_file_path, "r") as f:
+            with open(graph_file_path) as f:
                 graph_data = json.load(f)
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in graph file: {e}")
@@ -1244,7 +1244,7 @@ def generate_erd_for_top_nodes(
         raise
 
 
-def analyze_graph_for_hierarchical_exports(graph_file_path: str, top_n: int = 5) -> List[Dict]:
+def analyze_graph_for_hierarchical_exports(graph_file_path: str, top_n: int = 5) -> list[dict]:
     """
     Analyze a graph to identify the top N nodes that would serve as good roots for
     hierarchical exports, based on the number of descendants each node has.
@@ -1267,7 +1267,7 @@ def analyze_graph_for_hierarchical_exports(graph_file_path: str, top_n: int = 5)
 
         # Load the graph data
         try:
-            with open(graph_file_path, "r") as f:
+            with open(graph_file_path) as f:
                 graph_data = json.load(f)
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in graph file: {e}")

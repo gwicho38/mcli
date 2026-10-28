@@ -19,14 +19,14 @@ class TraceLogs:
     MAX_BYTES = 50 * 1024 * 1024
     BACKUP_COUNT = 2
     RETENTION_DAYS = 7
-    PRUNE_GLOBS: List[str] = ["mcli_trace_*.log*", "mcli_system_*.log*"]
+    PRUNE_GLOBS: list[str] = ["mcli_trace_*.log*", "mcli_system_*.log*"]
 
 
 class Editors:
     """Editor-related constants."""
 
     DEFAULT = "vim"
-    FALLBACK_LIST: List[str] = ["vim", "nano", "code", "subl", "atom", "emacs"]
+    FALLBACK_LIST: list[str] = ["vim", "nano", "code", "subl", "atom", "emacs"]
 
 
 class Shells:
@@ -34,7 +34,7 @@ class Shells:
 
     DEFAULT = "bash"
     DEFAULT_PATH = "/bin/bash"
-    SUPPORTED: List[str] = ["bash", "zsh", "fish", "sh"]
+    SUPPORTED: list[str] = ["bash", "zsh", "fish", "sh"]
 
 
 class URLs:

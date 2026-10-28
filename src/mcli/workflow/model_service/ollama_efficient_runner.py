@@ -147,7 +147,7 @@ def get_system_info():
     }
 
 
-def recommend_model(system_info: Dict) -> str:
+def recommend_model(system_info: dict) -> str:
     """Recommend the best model based on system capabilities."""
     print("🔍 Analyzing system capabilities...")
     print(f"  CPU Cores: {system_info['cpu_count']}")
@@ -279,7 +279,7 @@ class OllamaMCLIBridge:
     def __init__(self, ollama_model: str, mcli_api_url: str = "http://localhost:8000"):
         self.ollama_model = ollama_model
         self.mcli_api_url = mcli_api_url
-        
+
     def generate_text(self, prompt: str, max_length: int = 512, temperature: float = 0.7) -> str:
         """Generate text using Ollama model"""
         try:
@@ -296,16 +296,16 @@ class OllamaMCLIBridge:
                 }},
                 timeout=30
             )
-            
+
             if response.status_code == 200:
                 result = response.json()
                 return result.get('response', '')
             else:
                 raise Exception(f"Ollama API error: {{response.status_code}}")
-                
+
         except Exception as e:
             raise Exception(f"Error generating text: {{e}}")
-    
+
     def test_model(self):
         """Test the model with sample prompts"""
         test_prompts = [
@@ -313,20 +313,20 @@ class OllamaMCLIBridge:
             "Write a Python function to calculate fibonacci numbers.",
             "What are the benefits of renewable energy?"
         ]
-        
+
         print(f"🧪 Testing {{self.ollama_model}}...")
-        
+
         for i, prompt in enumerate(test_prompts, 1):
             print(f"\\n📝 Test {{i}}: {{prompt}}")
-            
+
             try:
                 start_time = time.time()
                 response = self.generate_text(prompt)
                 execution_time = time.time() - start_time
-                
+
                 print(f"⏱️  Response time: {{execution_time:.2f}} seconds")
                 print(f"🤖 Response: {{response[:200]}}{{'...' if len(response) > 200 else ''}}")
-                
+
             except Exception as e:
                 print(f"❌ Error: {{e}}")
 

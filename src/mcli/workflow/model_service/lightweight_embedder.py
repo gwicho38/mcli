@@ -46,7 +46,7 @@ class LightweightEmbedder:
         else:
             return "simple_hash"
 
-    def embed_text(self, text: str, method: Optional[str] = None) -> Dict[str, Any]:
+    def embed_text(self, text: str, method: Optional[str] = None) -> dict[str, Any]:
         """Embed text using the specified or best available method."""
         if not method:
             method = self.get_embedding_method()
@@ -63,7 +63,7 @@ class LightweightEmbedder:
             # Fallback to simple hash
             return self._embed_with_simple_hash(text)
 
-    def _embed_with_sentence_transformers(self, text: str) -> Dict[str, Any]:
+    def _embed_with_sentence_transformers(self, text: str) -> dict[str, Any]:
         """Embed text using sentence-transformers."""
         try:
             from sentence_transformers import SentenceTransformer
@@ -87,7 +87,7 @@ class LightweightEmbedder:
             logger.error(f"Sentence transformers embedding failed: {e}")
             raise
 
-    def _embed_with_tfidf(self, text: str) -> Dict[str, Any]:
+    def _embed_with_tfidf(self, text: str) -> dict[str, Any]:
         """Embed text using TF-IDF."""
         try:
 
@@ -115,7 +115,7 @@ class LightweightEmbedder:
             logger.error(f"TF-IDF embedding failed: {e}")
             raise
 
-    def _embed_with_simple_hash(self, text: str) -> Dict[str, Any]:
+    def _embed_with_simple_hash(self, text: str) -> dict[str, Any]:
         """Embed text using simple hash-based method."""
         try:
             # Create a simple hash-based embedding
@@ -154,7 +154,7 @@ class LightweightEmbedder:
             logger.error(f"Simple hash embedding failed: {e}")
             raise
 
-    def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> List[str]:
+    def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
         """Split text into overlapping chunks."""
         chunks = []
         start = 0
@@ -170,7 +170,7 @@ class LightweightEmbedder:
 
         return chunks
 
-    def embed_document(self, text: str, chunk_size: int = 1000) -> Dict[str, Any]:
+    def embed_document(self, text: str, chunk_size: int = 1000) -> dict[str, Any]:
         """Embed a document by chunking and embedding each chunk."""
         try:
             # Split text into chunks
@@ -211,7 +211,7 @@ class LightweightEmbedder:
             logger.error(f"Error embedding document: {e}")
             return {"success": False, "error": str(e)}
 
-    def search_similar(self, query: str, embeddings: List[Dict], top_k: int = 5) -> List[Dict]:
+    def search_similar(self, query: str, embeddings: list[dict], top_k: int = 5) -> list[dict]:
         """Search for similar documents using embeddings."""
         try:
             # Embed the query
@@ -252,7 +252,7 @@ class LightweightEmbedder:
             logger.error(f"Error searching similar documents: {e}")
             return []
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get the status of the embedder."""
         return {
             "available_methods": {

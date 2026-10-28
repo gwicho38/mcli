@@ -21,9 +21,9 @@ class MockTypeMetadata:
     def __init__(
         self,
         name: str,
-        fields: Dict[str, str],
-        methods: List[str] = None,
-        related_types: Set[str] = None,
+        fields: dict[str, str],
+        methods: list[str] = None,
+        related_types: set[str] = None,
     ):
         self.name = name
         self.fields = fields
@@ -33,13 +33,13 @@ class MockTypeMetadata:
     def get_name(self) -> str:
         return self.name
 
-    def get_fields(self) -> Dict[str, Any]:
+    def get_fields(self) -> dict[str, Any]:
         return self.fields
 
-    def get_methods(self) -> List[str]:
+    def get_methods(self) -> list[str]:
         return self.methods
 
-    def get_related_types(self) -> Set[str]:
+    def get_related_types(self) -> set[str]:
         return self.related_types
 
 
@@ -113,10 +113,10 @@ class MockTypeSystem:
             raise ValueError(f"Type '{name}' not found")
         return self.types[name]
 
-    def get_all_types(self) -> List[str]:
+    def get_all_types(self) -> list[str]:
         return list(self.types.keys())
 
-    def get_package_types(self, package_name: str) -> List[str]:
+    def get_package_types(self, package_name: str) -> list[str]:
         # For this mock, we'll return types that start with the package name
         return [name for name in self.types.keys() if name.startswith(package_name)]
 
@@ -186,7 +186,7 @@ def demonstrate_extensibility():
     class PythonTypeSystem:
         """Example of extending the system to work with Python classes."""
 
-        def __init__(self, classes: Dict[str, type]):
+        def __init__(self, classes: dict[str, type]):
             self.classes = classes
 
         def get_type(self, name: str) -> Any:
@@ -194,10 +194,10 @@ def demonstrate_extensibility():
                 raise ValueError(f"Class '{name}' not found")
             return self.classes[name]
 
-        def get_all_types(self) -> List[str]:
+        def get_all_types(self) -> list[str]:
             return list(self.classes.keys())
 
-        def get_package_types(self, package_name: str) -> List[str]:
+        def get_package_types(self, package_name: str) -> list[str]:
             return [name for name in self.classes.keys() if name.startswith(package_name)]
 
         def create_type_metadata(self, type_obj: Any) -> TypeMetadata:
@@ -209,18 +209,18 @@ def demonstrate_extensibility():
                 def get_name(self) -> str:
                     return self.cls.__name__
 
-                def get_fields(self) -> Dict[str, Any]:
+                def get_fields(self) -> dict[str, Any]:
                     # In a real implementation, you'd inspect the class annotations
                     return {"example_field": "string"}
 
-                def get_methods(self) -> List[str]:
+                def get_methods(self) -> list[str]:
                     return [
                         name
                         for name in dir(self.cls)
                         if callable(getattr(self.cls, name)) and not name.startswith("_")
                     ]
 
-                def get_related_types(self) -> Set[str]:
+                def get_related_types(self) -> set[str]:
                     # In a real implementation, you'd analyze type annotations
                     return set()
 

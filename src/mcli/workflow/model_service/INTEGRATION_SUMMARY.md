@@ -184,7 +184,7 @@ The lightweight model server integration is now complete and ready for use. It p
 - **Robust error handling** and testing
 - **Multiple deployment options** (integrated or standalone)
 
-The integration successfully bridges the gap between heavy model serving and lightweight, efficient model serving, providing users with options for different use cases and system capabilities. 
+The integration successfully bridges the gap between heavy model serving and lightweight, efficient model serving, providing users with options for different use cases and system capabilities.
 
 ## Summary
 
@@ -268,4 +268,4 @@ mcli workflow model-service process-pdf document.pdf --extract-only
 mcli workflow model-service start-pdf-service --port 8080
 ```
 
-The integration provides a powerful, AI-enhanced PDF processing experience while maintaining backward compatibility with your existing myAi workflow. The system automatically detects when MCLI is available and falls back gracefully to local processing when needed. 
+The integration provides a powerful, AI-enhanced PDF processing experience while maintaining backward compatibility with your existing myAi workflow. The system automatically detects when MCLI is available and falls back gracefully to local processing when needed.

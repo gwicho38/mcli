@@ -485,4 +485,4 @@ mcli workflow model-service update-model MODEL_ID \
   --max-length 1024
 ```
 
-This guide provides comprehensive coverage of model management with the MCLI Model Service using `uv` for dependency management. Start with Phi-2 for optimal performance and low resource usage, then expand based on your specific needs. 
+This guide provides comprehensive coverage of model management with the MCLI Model Service using `uv` for dependency management. Start with Phi-2 for optimal performance and low resource usage, then expand based on your specific needs.

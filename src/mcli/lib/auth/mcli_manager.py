@@ -16,7 +16,7 @@ class MCLIManager:
 
     def create_mcli_basic_auth_token(self):
         """Create a basic auth token for MCLI authentication."""
-        basic_content_bytes = "BA:BA".encode("ASCII")
+        basic_content_bytes = b"BA:BA"
         basic_token_b64 = base64.b64encode(basic_content_bytes).decode("ASCII")
         return basic_token_b64
 

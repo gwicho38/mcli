@@ -72,7 +72,7 @@ def remove_state(name: str) -> bool:
         return False
 
 
-def list_states() -> List[ServiceState]:
+def list_states() -> list[ServiceState]:
     """List all persisted service states."""
     states = []
     state_dir = get_services_state_dir()

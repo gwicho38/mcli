@@ -7,8 +7,9 @@ Provides OpenAI-compatible endpoints for tools like aider.
 import json
 import time
 import uuid
+from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.responses import StreamingResponse
@@ -31,12 +32,12 @@ class ChatCompletionRequest(BaseModel):
     """OpenAI chat completion request."""
 
     model: str
-    messages: List[Message]
+    messages: list[Message]
     temperature: Optional[float] = 0.7
     top_p: Optional[float] = 0.9
     n: Optional[int] = 1
     stream: Optional[bool] = False
-    stop: Optional[List[str]] = None
+    stop: Optional[list[str]] = None
     max_tokens: Optional[int] = 2048
     presence_penalty: Optional[float] = 0.0
     frequency_penalty: Optional[float] = 0.0
@@ -66,7 +67,7 @@ class ChatCompletionResponse(BaseModel):
     object: str = "chat.completion"
     created: int
     model: str
-    choices: List[ChatCompletionChoice]
+    choices: list[ChatCompletionChoice]
     usage: Usage
 
 
@@ -83,16 +84,16 @@ class ModelListResponse(BaseModel):
     """Model list response."""
 
     object: str = "list"
-    data: List[ModelInfo]
+    data: list[ModelInfo]
 
 
 class APIKeyManager:
     """Manages API key authentication."""
 
     def __init__(self):
-        self.valid_keys: Dict[str, Dict[str, Any]] = {}
+        self.valid_keys: dict[str, dict[str, Any]] = {}
 
-    def add_key(self, key: str, name: str = "default", metadata: Optional[Dict] = None):
+    def add_key(self, key: str, name: str = "default", metadata: Optional[dict] = None):
         """Add a valid API key."""
         self.valid_keys[key] = {
             "name": name,
@@ -113,7 +114,7 @@ class APIKeyManager:
         if key in self.valid_keys:
             del self.valid_keys[key]
 
-    def list_keys(self) -> List[Dict[str, Any]]:
+    def list_keys(self) -> list[dict[str, Any]]:
         """List all API keys (without showing the actual key)."""
         return [
             {
@@ -218,7 +219,7 @@ class OpenAIAdapter:
                 logger.error(f"Error in chat completion: {e}")
                 raise HTTPException(status_code=500, detail=str(e))
 
-    def _messages_to_prompt(self, messages: List[Message]) -> str:
+    def _messages_to_prompt(self, messages: list[Message]) -> str:
         """Convert OpenAI messages format to a simple prompt."""
         prompt_parts = []
 

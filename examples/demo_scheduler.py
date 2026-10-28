@@ -6,8 +6,8 @@ Demo script showing MCLI scheduler capabilities
 import time
 from datetime import datetime
 
-from src.mcli.workflow.scheduler.job import JobType, ScheduledJob
-from src.mcli.workflow.scheduler.scheduler import (
+from mcli.workflow.scheduler.job import JobType, ScheduledJob
+from mcli.workflow.scheduler.scheduler import (
     JobScheduler,
     create_desktop_cleanup_job,
     create_temp_cleanup_job,

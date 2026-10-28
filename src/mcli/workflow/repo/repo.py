@@ -87,7 +87,7 @@ def _analyze(path: str):
                     if file.endswith(ext_name):
                         sloc_count[ext]["files"] += 1
                         file_path = os.path.join(root, file)
-                        with open(file_path, "r", errors="ignore") as f:
+                        with open(file_path, errors="ignore") as f:
                             sloc = sum(1 for line in f if line.strip() and line.strip() != "\n")
                             sloc_count[ext]["sloc"] += sloc
                             sloc_count[ext]["details"].append(

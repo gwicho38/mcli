@@ -60,7 +60,7 @@ def merge_txt_files(folder_path, file_type=".mcli", output_file="merged_output.t
                 outfile.write(f"\n--- Content from {filename} ---\n")
 
                 # Read and write content from the file
-                with open(filepath, "r", encoding="utf-8") as infile:
+                with open(filepath, encoding="utf-8") as infile:
                     outfile.write(infile.read())
                     outfile.write("\n")  # Add a newline between files
             except Exception as e:

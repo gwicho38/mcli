@@ -19,7 +19,7 @@ class VideoProcessor:
         os.makedirs(temp_dir, exist_ok=True)
         os.makedirs(CONFIG["output_dir"], exist_ok=True)
 
-    def extract_frames(self, video_path: str, fps: int = 8) -> List[str]:
+    def extract_frames(self, video_path: str, fps: int = 8) -> list[str]:
         """
         Extract frames from video at specified FPS.
 
@@ -76,7 +76,7 @@ class VideoProcessor:
 
         return frame_paths
 
-    def extract_motion_vectors(self, video_path: str) -> Dict[str, Any]:
+    def extract_motion_vectors(self, video_path: str) -> dict[str, Any]:
         """
         Extract motion vectors from video for temporal consistency.
         This is a simplified placeholder for actual motion vector extraction.
@@ -139,7 +139,7 @@ class VideoProcessor:
         return motion_data
 
     def frames_to_video(
-        self, frame_paths: List[str], output_path: str, fps: Optional[float] = None
+        self, frame_paths: list[str], output_path: str, fps: Optional[float] = None
     ) -> str:
         """
         Convert frames back to video.
@@ -187,8 +187,8 @@ class VideoProcessor:
         return output_path
 
     def apply_temporal_consistency(
-        self, processed_frames: List[str], motion_data: Dict[str, Any]
-    ) -> List[str]:
+        self, processed_frames: list[str], motion_data: dict[str, Any]
+    ) -> list[str]:
         """
         Apply temporal consistency to processed frames using motion data.
         This is a simplified implementation.
@@ -337,7 +337,7 @@ class OverlayRemover:
 
     def remove_overlay_from_frame(
         self, frame: np.ndarray, debug: bool = False
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Complete overlay removal pipeline for a single frame.
 
@@ -381,8 +381,8 @@ class EnhancedVideoProcessor(VideoProcessor):
         os.makedirs(self.cleaned_dir, exist_ok=True)
 
     def process_frames_remove_overlay(
-        self, frame_paths: List[str], save_debug: bool = False
-    ) -> List[str]:
+        self, frame_paths: list[str], save_debug: bool = False
+    ) -> list[str]:
         """
         Process all frames to remove green overlays.
 
@@ -420,7 +420,7 @@ class EnhancedVideoProcessor(VideoProcessor):
         click.echo(f"Processed {len(cleaned_frame_paths)} frames.")
         return cleaned_frame_paths
 
-    def analyze_overlay_consistency(self, frame_paths: List[str]) -> Dict[str, Any]:
+    def analyze_overlay_consistency(self, frame_paths: list[str]) -> dict[str, Any]:
         """
         Analyze overlay patterns across frames for better temporal consistency.
 
@@ -448,7 +448,7 @@ class EnhancedVideoProcessor(VideoProcessor):
 
         return overlay_stats
 
-    def _calculate_centroid(self, mask: np.ndarray) -> Tuple[float, float]:
+    def _calculate_centroid(self, mask: np.ndarray) -> tuple[float, float]:
         """Calculate centroid of overlay mask."""
         if np.sum(mask) == 0:
             return (0.0, 0.0)
@@ -602,8 +602,8 @@ class AdvancedOverlayRemover:
         self,
         frame: "np.ndarray[Any, Any]",
         mask: "np.ndarray[Any, Any]",
-        target_point: Tuple[int, int],
-    ) -> List[Any]:
+        target_point: tuple[int, int],
+    ) -> list[Any]:
         """Find similar patches in the frame for exemplar-based inpainting."""
         y, x = target_point
         h, w = frame.shape[:2]
@@ -616,8 +616,8 @@ class AdvancedOverlayRemover:
         target_patch = frame[y_start:y_end, x_start:x_end]
         target_mask = mask[y_start:y_end, x_start:x_end]
 
-        best_patches: List[Any] = []
-        best_scores: List[float] = []
+        best_patches: list[Any] = []
+        best_scores: list[float] = []
 
         # Search for similar patches in valid areas
         search_y_start = max(0, y - self.search_radius)
@@ -704,9 +704,9 @@ class AdvancedOverlayRemover:
     def temporal_reference_inpainting(
         self,
         current_frame: np.ndarray,
-        reference_frames: List[np.ndarray],
+        reference_frames: list[np.ndarray],
         mask: np.ndarray,
-        motion_vectors: Optional[Dict] = None,
+        motion_vectors: Optional[dict] = None,
     ) -> np.ndarray:
         """Use multiple reference frames for better content reconstruction."""
         if not reference_frames:
@@ -791,8 +791,8 @@ class AdvancedOverlayRemover:
     def remove_overlay_with_context(
         self,
         frame: "np.ndarray[Any, Any]",
-        reference_frames: Optional[List["np.ndarray[Any, Any]"]] = None,
-    ) -> Tuple["np.ndarray[Any, Any]", "np.ndarray[Any, Any]"]:
+        reference_frames: Optional[list["np.ndarray[Any, Any]"]] = None,
+    ) -> tuple["np.ndarray[Any, Any]", "np.ndarray[Any, Any]"]:
         """
         Remove overlay with intelligent content reconstruction using context.
 
@@ -838,7 +838,7 @@ class IntelligentVideoProcessor(VideoProcessor):
 
     def extract_motion_vectors_highspeed(
         self, video_path: str, sample_rate: int = 10
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Optimized motion vector extraction for high-speed videos.
         Sample every Nth frame to reduce computation while maintaining accuracy.
@@ -905,8 +905,8 @@ class IntelligentVideoProcessor(VideoProcessor):
         return motion_data
 
     def process_with_temporal_context(
-        self, frame_paths: List[str], context_window: int = 3
-    ) -> List[str]:
+        self, frame_paths: list[str], context_window: int = 3
+    ) -> list[str]:
         """
         Process frames with temporal context for better reconstruction.
 

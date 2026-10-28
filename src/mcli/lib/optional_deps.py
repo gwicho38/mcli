@@ -90,7 +90,7 @@ class OptionalDependency:
 
 def optional_import(
     module_name: str, import_name: Optional[str] = None, install_hint: Optional[str] = None
-) -> Tuple[Optional[Any], bool]:
+) -> tuple[Optional[Any], bool]:
     """
     Try to import an optional dependency.
 
@@ -182,7 +182,7 @@ def requires(*dependencies: str, install_all_hint: Optional[str] = None):
 
 
 # Common optional dependencies registry
-OPTIONAL_DEPS: Dict[str, OptionalDependency] = {}
+OPTIONAL_DEPS: dict[str, OptionalDependency] = {}
 
 
 def register_optional_dependency(
@@ -204,7 +204,7 @@ def register_optional_dependency(
     return OPTIONAL_DEPS[module_name]
 
 
-def check_dependencies(*module_names: str) -> Dict[str, bool]:
+def check_dependencies(*module_names: str) -> dict[str, bool]:
     """
     Check availability of multiple dependencies.
 

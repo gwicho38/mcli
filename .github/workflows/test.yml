@@ -32,18 +32,18 @@ jobs:
       matrix:
         platform: [ubuntu-latest]  # self-hosted linux
         python-version: ['3.10', '3.11', '3.12']
-    
+
     runs-on: [self-hosted, linux, x64]
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        
+
     - name: Install UV and setup
       run: |
         if [[ "${{ matrix.platform }}" == "ubuntu-latest" ]]; then
@@ -53,7 +53,7 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         fi
-        
+
     - name: Install package
       run: |
         if command -v uv >/dev/null 2>&1; then
@@ -62,7 +62,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
         fi
-      
+
     - name: Run basic tests
       run: |
         if command -v uv >/dev/null 2>&1; then
@@ -71,7 +71,7 @@ jobs:
           python -c "import mcli; print('✅ Package imports successfully')"
           python -m mcli --help
         fi
-        
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -81,35 +81,35 @@ jobs:
           tests/*.xml
           tests/*.log
         retention-days: 30
-        
+
   code-quality:
     name: Code Quality Checks
     runs-on: [self-hosted, linux, x64]
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        
+
     - name: Install UV
       uses: astral-sh/setup-uv@v3
       with:
         version: ${{ env.UV_VERSION }}
-        
+
     - name: Set up environment
       run: make setup
-      
+
     - name: Install dev dependencies
       run: uv pip install -e ".[dev]"
-      
+
     - name: Check import structure
       run: |
         .venv/bin/python -c "import mcli; print('✅ Package imports successfully')"
-        
+
     - name: Check CLI functionality
       run: |
         .venv/bin/mcli --help
@@ -122,13 +122,13 @@ jobs:
     - name: Validate dependencies
       run: |
         uv pip check
-        
+
   test-summary:
     name: Test Summary
     needs: [test, code-quality]
     runs-on: [self-hosted, linux, x64]
     if: always()
-    
+
     steps:
     - name: Test Results Summary
       run: |
@@ -146,7 +146,7 @@ jobs:
         echo "| macOS | 3.12 | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Code Quality: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
-        
+
         if [ "${{ needs.test.result }}" = "success" ] && [ "${{ needs.code-quality.result }}" = "success" ]; then
           echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
         else

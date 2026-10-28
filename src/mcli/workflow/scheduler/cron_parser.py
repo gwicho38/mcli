@@ -52,7 +52,7 @@ class CronExpression:
 
         return expression
 
-    def _parse_expression(self) -> List[Set[int]]:
+    def _parse_expression(self) -> list[set[int]]:
         """Parse cron expression into field sets."""
         if self.is_reboot:
             return []
@@ -76,7 +76,7 @@ class CronExpression:
 
         return fields
 
-    def _parse_field(self, field: str, min_val: int, max_val: int) -> Set[int]:
+    def _parse_field(self, field: str, min_val: int, max_val: int) -> set[int]:
         """Parse a single cron field."""
         if field == "*":
             return set(range(min_val, max_val + 1))
@@ -212,7 +212,7 @@ def validate_cron_expression(expression: str) -> bool:
         return False
 
 
-def get_next_run_times(expression: str, count: int = 5) -> List[datetime]:
+def get_next_run_times(expression: str, count: int = 5) -> list[datetime]:
     """Get the next N run times for a cron expression."""
     try:
         cron = CronExpression(expression)

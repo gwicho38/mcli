@@ -28,8 +28,9 @@ Usage:
 import contextvars
 import functools
 import uuid
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Callable, Generator, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 # Context variable for correlation ID - thread-safe and async-safe
 _correlation_id: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(

@@ -23,18 +23,18 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest]  # self-hosted linux
-    
+
     runs-on: [self-hosted, linux, x64]
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        
+
     - name: Install UV
       run: |
         if [[ "${{ matrix.platform }}" == "ubuntu-latest" ]]; then
@@ -44,7 +44,7 @@ jobs:
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
         fi
-        
+
     - name: Set up environment
       run: |
         if command -v uv >/dev/null 2>&1; then
@@ -53,7 +53,7 @@ jobs:
           python -m pip install --upgrade pip build
           pip install -e .
         fi
-      
+
     - name: Build wheel
       run: |
         if command -v uv >/dev/null 2>&1; then
@@ -61,7 +61,7 @@ jobs:
         else
           python -m build --wheel
         fi
-      
+
     - name: Test basic functionality
       run: |
         if command -v uv >/dev/null 2>&1; then
@@ -70,21 +70,21 @@ jobs:
           python -c "import mcli; print('✅ Package imports successfully')"
           python -m mcli --help
         fi
-      
+
     - name: Upload wheel artifact
       uses: actions/upload-artifact@v4
       with:
         name: mcli-wheel-${{ matrix.platform }}
         path: dist/*.whl
         retention-days: 30
-        
-      
+
+
   build-summary:
     name: Build Summary
     needs: build
     runs-on: [self-hosted, linux, x64]
     if: always()
-    
+
     steps:
     - name: Build Status Summary
       run: |
@@ -94,7 +94,7 @@ jobs:
         echo "| Ubuntu | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
         echo "| macOS | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Windows | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-        
+
         if [ "${{ needs.build.result }}" = "success" ]; then
           echo "✅ All builds completed successfully!" >> $GITHUB_STEP_SUMMARY
         else

@@ -11,11 +11,11 @@ from mcli.lib.logger.logger import get_logger
 
 logger = get_logger(__name__)
 
-"""_summary_
-    ssh -o GatewayPorts=yes -o ServerAliveInterval=60 -o ProxyCommand="ssh -W %h:%p myuser@my-proxy-server" -L80::80 -L443::443 myuser@localhost
-Returns:
-    _type_: _description_
-    """
+# _summary_
+#     ssh -o GatewayPorts=yes -o ServerAliveInterval=60 -o ProxyCommand="ssh -W %h:%p myuser@my-proxy-server" -L80::80 -L443::443 myuser@localhost
+# Returns:
+#     _type_: _description_
+#
 
 
 class DockerClient:

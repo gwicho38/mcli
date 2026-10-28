@@ -35,7 +35,7 @@ class VideoProcessor:
         os.makedirs(temp_dir, exist_ok=True)
         os.makedirs(CONFIG["output_dir"], exist_ok=True)
 
-    def extract_frames(self, video_path: str, fps: int = 8) -> List[str]:
+    def extract_frames(self, video_path: str, fps: int = 8) -> list[str]:
         """
         Extract frames from video at specified FPS.
 
@@ -92,7 +92,7 @@ class VideoProcessor:
 
         return frame_paths
 
-    def extract_motion_vectors(self, video_path: str) -> Dict[str, Any]:
+    def extract_motion_vectors(self, video_path: str) -> dict[str, Any]:
         """
         Extract motion vectors from video for temporal consistency.
         This is a simplified placeholder for actual motion vector extraction.
@@ -155,7 +155,7 @@ class VideoProcessor:
         return motion_data
 
     def frames_to_video(
-        self, frame_paths: List[str], output_path: str, fps: Optional[float] = None
+        self, frame_paths: list[str], output_path: str, fps: Optional[float] = None
     ) -> str:
         """
         Convert frames back to video.
@@ -203,8 +203,8 @@ class VideoProcessor:
         return output_path
 
     def apply_temporal_consistency(
-        self, processed_frames: List[str], motion_data: Dict[str, Any]
-    ) -> List[str]:
+        self, processed_frames: list[str], motion_data: dict[str, Any]
+    ) -> list[str]:
         """
         Apply temporal consistency to processed frames using motion data.
         This is a simplified implementation.
@@ -272,7 +272,7 @@ class ComfyUIClient:
         self.client_id = str(uuid.uuid4())
         self.session = requests.Session()
 
-    def queue_prompt(self, prompt: Dict[str, Any]) -> str:
+    def queue_prompt(self, prompt: dict[str, Any]) -> str:
         """
         Queue a prompt in ComfyUI.
 
@@ -302,7 +302,7 @@ class ComfyUIClient:
         response = self.session.get(f"{self.api_url}/view", params=data)
         return Image.open(response.raw)
 
-    def upload_image(self, image_path: str) -> Tuple[str, str]:
+    def upload_image(self, image_path: str) -> tuple[str, str]:
         """
         Upload an image to ComfyUI.
 
@@ -327,7 +327,7 @@ class ComfyUIClient:
         self.session.post(f"{self.api_url}/upload/image", json=data)
         return filename, "v2v_input"
 
-    def wait_for_prompt(self, prompt_id: str) -> Dict[str, Any]:
+    def wait_for_prompt(self, prompt_id: str) -> dict[str, Any]:
         """
         Wait for prompt to complete.
 
@@ -350,7 +350,7 @@ class ComfyUIClient:
                         if "outputs" in data[prompt_id]:
                             # Complete
                             bar.update(100 - progress)
-                            return cast(Dict[str, Any], data[prompt_id])
+                            return cast(dict[str, Any], data[prompt_id])
                         # Update progress based on execution state
                         if "executed" in data[prompt_id]:
                             executed_nodes = len(data[prompt_id]["executed"])
@@ -367,7 +367,7 @@ class ComfyUIClient:
             if response.status_code == 200:
                 data = response.json()
                 if prompt_id in data:
-                    return cast(Dict[str, Any], data[prompt_id])
+                    return cast(dict[str, Any], data[prompt_id])
 
             raise ValueError(f"Processing failed for prompt {prompt_id}")
 
@@ -449,7 +449,7 @@ class ComfyUIClient:
         guidance_scale: float,
         use_controlnet: bool,
         use_lora: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Build a ComfyUI workflow for frame processing.
 
@@ -524,9 +524,9 @@ class ComfyUIClient:
                 "class_type": "LoraLoader",
             }
             # Update model and clip reference
-            workflow_4 = cast(Dict[str, Any], workflow["4"])
-            workflow_2 = cast(Dict[str, Any], workflow["2"])
-            workflow_3 = cast(Dict[str, Any], workflow["3"])
+            workflow_4 = cast(dict[str, Any], workflow["4"])
+            workflow_2 = cast(dict[str, Any], workflow["2"])
+            workflow_3 = cast(dict[str, Any], workflow["3"])
             workflow_4["inputs"]["model"] = ["11", 0]
             workflow_2["inputs"]["clip"] = ["11", 1]
             workflow_3["inputs"]["clip"] = ["11", 1]
@@ -542,8 +542,8 @@ class ComfyUIClient:
                 "class_type": "ControlNetApply",
             }
             # Update model with ControlNet
-            workflow_13 = cast(Dict[str, Any], workflow["13"])
-            workflow_4 = cast(Dict[str, Any], workflow["4"])
+            workflow_13 = cast(dict[str, Any], workflow["13"])
+            workflow_4 = cast(dict[str, Any], workflow["4"])
             if use_lora:
                 workflow_13["inputs"]["model"] = ["11", 0]
                 workflow_4["inputs"]["model"] = ["13", 0]
@@ -651,7 +651,7 @@ class VideoToVideoGenerator:
 
     def process_frames(
         self,
-        frame_paths: List[str],
+        frame_paths: list[str],
         prompt: str,
         negative_prompt: str = "",
         strength: float = 0.75,
@@ -659,7 +659,7 @@ class VideoToVideoGenerator:
         use_controlnet: bool = True,
         use_lora: bool = True,
         batch_size: int = 1,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Process frames using ComfyUI.
 
@@ -704,7 +704,7 @@ class VideoToVideoGenerator:
                 )
 
                 # Use threading to process batch in parallel
-                threads: List[threading.Thread] = []
+                threads: list[threading.Thread] = []
                 results_queue: "queue.Queue[Tuple[int, str]]" = queue.Queue()
 
                 for j, frame_path in enumerate(batch):
@@ -883,7 +883,7 @@ def config(config_file, output):
     if os.path.exists(config_file):
         # Load and modify existing config
         click.echo(f"Loading existing config from {config_file}...")
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             existing_config = json.load(f)
 
         # Update the existing config with current CONFIG values
@@ -922,7 +922,7 @@ def config(config_file, output):
 @click.option("--path", "-p", default="./models", help="Path to search for models")
 def list_models(path):
     """List available models that can be used with the workflow."""
-    models: Dict[str, List[str]] = {
+    models: dict[str, list[str]] = {
         "Video Models": [],
         "VAE Models": [],
         "LoRA Models": [],

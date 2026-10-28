@@ -6,7 +6,7 @@ Enhanced scrapers are successfully extracting real politician names (Greg Abbott
 ## Expected Behavior
 When scrapers extract real politician names like:
 - "Greg Abbott" (Texas Governor)
-- "Kathy Hochul" (New York Governor) 
+- "Kathy Hochul" (New York Governor)
 - "Ron DeSantis" (Florida Governor)
 - "J.B. Pritzker" (Illinois Governor)
 
@@ -15,7 +15,7 @@ These names should be stored in the `politicians` table and displayed in the dis
 ## Actual Behavior
 Database contains generic entries like:
 - "Texas State Official (texas_ethics_commission)"
-- "Florida State Official (florida_ethics_commission)" 
+- "Florida State Official (florida_ethics_commission)"
 - "New York State Official (new_york_jcope)"
 
 ## Evidence
@@ -25,7 +25,7 @@ Test output shows real names being extracted:
 ```
 🧪 Testing Enhanced US States Scrapers
   1. Greg Abbott (Texas)
-  2. Dan Patrick (Texas) 
+  2. Dan Patrick (Texas)
   3. Kathy Hochul (New York)
   4. Ron DeSantis (Florida)
   5. J.B. Pritzker (Illinois)

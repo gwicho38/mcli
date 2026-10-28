@@ -18,8 +18,8 @@ class JobMonitor:
     """Monitors running jobs and handles timeouts, retries, and status updates."""
 
     def __init__(self, status_callback: Optional[Callable] = None):
-        self.running_jobs: Dict[str, threading.Thread] = {}
-        self.job_start_times: Dict[str, datetime] = {}
+        self.running_jobs: dict[str, threading.Thread] = {}
+        self.job_start_times: dict[str, datetime] = {}
         self.status_callback = status_callback
         self.monitor_thread: Optional[threading.Thread] = None
         self.monitoring = False
@@ -87,7 +87,7 @@ class JobMonitor:
         self.running_jobs.pop(job_id, None)
         self.job_start_times.pop(job_id, None)
 
-    def get_running_jobs(self) -> List[str]:
+    def get_running_jobs(self) -> list[str]:
         """Get list of currently running job IDs."""
         with self.lock:
             return list(self.running_jobs.keys())

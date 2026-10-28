@@ -25,7 +25,9 @@ class TestIPNSPush:
             patch("mcli.lib.ipfs_sync.get_repo_name", return_value="my-repo"),
             patch("mcli.lib.ipfs_sync.derive_key_info") as mock_derive,
             patch("mcli.lib.ipfs_sync.ensure_key_imported", return_value="12D3KooW..."),
-            patch("mcli.lib.ipfs_sync.publish_to_ipns", return_value="/ipns/12D3KooW...") as mock_pub,
+            patch(
+                "mcli.lib.ipfs_sync.publish_to_ipns", return_value="/ipns/12D3KooW..."
+            ) as mock_pub,
             patch.object(sync, "_save_sync_history"),
         ):
             mock_derive.return_value = MagicMock(key_name="mcli-abc123")

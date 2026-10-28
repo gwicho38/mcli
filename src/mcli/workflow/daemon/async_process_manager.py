@@ -33,7 +33,7 @@ class ProcessInfo:
     id: str
     name: str
     command: str
-    args: List[str]
+    args: list[str]
     status: ProcessStatus
     pid: Optional[int] = None
     exit_code: Optional[int] = None
@@ -41,9 +41,9 @@ class ProcessInfo:
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     working_dir: Optional[str] = None
-    environment: Optional[Dict[str, str]] = None
-    stdout_lines: List[str] = None
-    stderr_lines: List[str] = None
+    environment: Optional[dict[str, str]] = None
+    stdout_lines: list[str] = None
+    stderr_lines: list[str] = None
 
     def __post_init__(self):
         if self.created_at is None:
@@ -313,13 +313,13 @@ class AsyncProcessManager:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
-        self.processes: Dict[str, AsyncProcessContainer] = {}
+        self.processes: dict[str, AsyncProcessContainer] = {}
         self.redis_url = redis_url or "redis://localhost:6379"
         self.redis_client: Optional[redis.Redis] = None
 
         # Connection pool for SQLite
         self._db_pool_size = 10
-        self._db_pool: List[aiosqlite.Connection] = []
+        self._db_pool: list[aiosqlite.Connection] = []
         self._db_pool_lock = asyncio.Lock()
 
     async def initialize(self):
@@ -408,9 +408,9 @@ class AsyncProcessManager:
         self,
         name: str,
         command: str,
-        args: List[str],
+        args: list[str],
         working_dir: Optional[str] = None,
-        environment: Optional[Dict[str, str]] = None,
+        environment: Optional[dict[str, str]] = None,
         timeout: Optional[float] = None,
     ) -> str:
         """Start a new async process."""
@@ -479,7 +479,7 @@ class AsyncProcessManager:
 
         raise KeyError(f"Process not found: {process_id}")
 
-    async def list_processes(self, status_filter: Optional[str] = None) -> List[ProcessInfo]:
+    async def list_processes(self, status_filter: Optional[str] = None) -> list[ProcessInfo]:
         """List all processes with optional status filter."""
         processes = []
 
@@ -508,7 +508,7 @@ class AsyncProcessManager:
 
         return processes
 
-    async def cleanup_finished(self) -> List[str]:
+    async def cleanup_finished(self) -> list[str]:
         """Remove finished processes from memory."""
         finished_ids = []
 
@@ -529,8 +529,8 @@ class AsyncProcessManager:
         async with self._get_db_connection() as db:
             await db.execute(
                 """
-                INSERT OR REPLACE INTO processes 
-                (id, name, command, args, status, pid, exit_code, created_at, 
+                INSERT OR REPLACE INTO processes
+                (id, name, command, args, status, pid, exit_code, created_at,
                  started_at, finished_at, working_dir, environment, stdout_lines, stderr_lines)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,

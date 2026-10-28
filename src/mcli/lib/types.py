@@ -60,8 +60,8 @@ class CommandMetadata(TypedDict, total=False):
     version: str
     group: str
     author: str
-    requires: List[str]
-    tags: List[str]
+    requires: list[str]
+    tags: list[str]
     shell: str
     language: str
     path: str
@@ -77,8 +77,8 @@ class CommandMetadataDefaults(TypedDict):
     version: str
     author: str
     group: str
-    requires: List[str]
-    tags: List[str]
+    requires: list[str]
+    tags: list[str]
     shell: str
 
 
@@ -126,7 +126,7 @@ class ScriptInfo:
     path: Path
     name: str
     language: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     content_hash: Optional[str] = None
     is_valid: bool = True
 
@@ -194,8 +194,8 @@ class LockfileEntry(TypedDict, total=False):
     description: str
     version: str
     group: str
-    requires: List[str]
-    tags: List[str]
+    requires: list[str]
+    tags: list[str]
     updated_at: str
 
 
@@ -210,7 +210,7 @@ class LockfileSchema(TypedDict):
 
     version: str
     generated_at: str
-    scripts: Dict[str, LockfileEntry]
+    scripts: dict[str, LockfileEntry]
 
 
 # =============================================================================

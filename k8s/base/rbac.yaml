@@ -11,15 +11,15 @@ metadata:
   name: ml-role
   namespace: ml-system
 rules:
-- apiGroups: [""]
-  resources: ["pods", "services", "configmaps", "secrets"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["apps"]
-  resources: ["deployments", "statefulsets"]
-  verbs: ["get", "list"]
-- apiGroups: ["batch"]
-  resources: ["jobs", "cronjobs"]
-  verbs: ["get", "list", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "create", "delete"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -28,9 +28,9 @@ metadata:
   name: ml-role-binding
   namespace: ml-system
 subjects:
-- kind: ServiceAccount
-  name: ml-service-account
-  namespace: ml-system
+  - kind: ServiceAccount
+    name: ml-service-account
+    namespace: ml-system
 roleRef:
   kind: Role
   name: ml-role

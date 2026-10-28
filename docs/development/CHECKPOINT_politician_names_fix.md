@@ -66,7 +66,7 @@ Successfully fixed the politician trading data collection system to extract, sto
 ### After Fix:
 ```
 │ Greg Abbott              │ Texas State Investment    │ 🟢 Buy │ $10,000-$49,999 │
-│ Ron DeSantis             │ Florida Real Estate       │ 🟢 Buy │ $25,000-$99,999 │ 
+│ Ron DeSantis             │ Florida Real Estate       │ 🟢 Buy │ $25,000-$99,999 │
 │ Kathy Hochul             │ New York Municipal Bond   │ 🔴 Sell │ $5,000-$24,999  │
 │ J.B. Pritzker            │ Illinois State Fund       │ 🟢 Buy │ $1,000-$4,999   │
 ```
@@ -102,7 +102,7 @@ politician_name = disclosure.raw_data.get("politician_name", "")
 # workflow.py:667-673
 state_politician = Politician(
     first_name=first_name,
-    last_name=last_name, 
+    last_name=last_name,
     full_name=politician_name.strip(),  # REAL name
     role=politician_role,
     state_or_country=state,
@@ -131,16 +131,16 @@ mcli workflow politician-trading disclosures --limit 15
 
 1. **`/src/mcli/workflow/politician_trading/commands.py`**
    - Fixed table column widths and character limits
-   
+
 2. **`/src/mcli/workflow/politician_trading/workflow.py`**  
    - Fixed name validation regex bug
    - Updated US states workflow logic
    - Updated UK Parliament workflow logic
    - Updated main workflow logic
-   
+
 3. **Enhanced Scrapers (Previous Work):**
    - `/src/mcli/workflow/politician_trading/scrapers_us_states.py`
-   - `/src/mcli/workflow/politician_trading/scrapers_uk.py` 
+   - `/src/mcli/workflow/politician_trading/scrapers_uk.py`
    - `/src/mcli/workflow/politician_trading/scrapers_california.py`
 
 ## 🎉 Impact

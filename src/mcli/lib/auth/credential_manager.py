@@ -51,7 +51,7 @@ class CredentialManager:
         except Exception as e:
             raise Exception(f"Failed to create config directory: {str(e)}")
 
-    def read_config(self) -> Dict[str, Any]:
+    def read_config(self) -> dict[str, Any]:
         """
         Read configuration from file.
 
@@ -63,7 +63,7 @@ class CredentialManager:
             if not self.config_file.exists():
                 return {}
 
-            with open(self.config_file, "r", encoding="utf-8") as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 config = json.load(f)
                 return config if isinstance(config, dict) else {}
         except json.JSONDecodeError:
@@ -75,7 +75,7 @@ class CredentialManager:
             logger.info(f"Warning: Error reading config file: {str(e)}")
             return {}
 
-    def write_config(self, config: Dict[str, Any]):
+    def write_config(self, config: dict[str, Any]):
         """
         Write configuration to file with secure permissions.
 

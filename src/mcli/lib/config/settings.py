@@ -66,7 +66,7 @@ class MCLISettings(BaseSettings):
     shell: str = Field(default="/bin/bash", alias="SHELL")
 
     # --- Paths (derived) ---
-    included_dirs: List[str] = Field(
+    included_dirs: list[str] = Field(
         default=["app", "self", "workflow", "public"],
     )
 

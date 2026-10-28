@@ -410,4 +410,4 @@ For support with the lightweight model server integration:
 
 ---
 
-**Note**: The lightweight model server is designed for resource-constrained environments and provides a simplified API compared to the full model service. For production use with larger models, consider using the main model service with full-featured capabilities. 
+**Note**: The lightweight model server is designed for resource-constrained environments and provides a simplified API compared to the full model service. For production use with larger models, consider using the main model service with full-featured capabilities.

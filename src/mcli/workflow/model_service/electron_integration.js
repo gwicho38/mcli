@@ -1,6 +1,6 @@
 /**
  * Electron Integration Example for MCLI Model Service
- * 
+ *
  * This file demonstrates how to integrate the model service
  * with an Electron frontend application.
  */
@@ -121,7 +121,7 @@ class ModelServiceClient {
     async listModels() {
         try {
             const response = await fetch(`${this.baseUrl}/models`);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -145,7 +145,7 @@ class ModelServiceClient {
     async getStatus() {
         try {
             const response = await fetch(`${this.baseUrl}/health`);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -425,7 +425,7 @@ function ModelServiceComponent() {
     return (
         <div className="model-service">
             <h2>Model Service</h2>
-            
+
             <div className="models-list">
                 <h3>Available Models</h3>
                 {loading ? (
@@ -450,13 +450,13 @@ function ModelServiceComponent() {
                     placeholder="Enter your prompt..."
                     rows={4}
                 />
-                <button 
+                <button
                     onClick={() => generateText(models[0]?.id)}
                     disabled={loading || !models.length}
                 >
                     {loading ? 'Generating...' : 'Generate Text'}
                 </button>
-                
+
                 {generatedText && (
                     <div className="generated-text">
                         <h4>Generated Text:</h4>
@@ -476,4 +476,4 @@ if (typeof module !== 'undefined' && module.exports) {
         setupModelServiceHandlers,
         exampleUsage
     };
-} 
+}

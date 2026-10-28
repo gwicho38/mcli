@@ -24,7 +24,7 @@ def get_registry_path() -> Path:
     return get_mcli_home() / "workspaces.json"
 
 
-def load_registry() -> Dict[str, Any]:
+def load_registry() -> dict[str, Any]:
     """
     Load the workspace registry from disk.
 
@@ -37,14 +37,14 @@ def load_registry() -> Dict[str, Any]:
         return {"version": "1.0", "workspaces": {}}
 
     try:
-        with open(registry_path, "r") as f:
+        with open(registry_path) as f:
             return json.load(f)
     except Exception as e:
         logger.warning(f"Failed to load workspace registry: {e}")
         return {"version": "1.0", "workspaces": {}}
 
 
-def save_registry(registry: Dict[str, Any]) -> bool:
+def save_registry(registry: dict[str, Any]) -> bool:
     """
     Save the workspace registry to disk.
 
@@ -177,7 +177,7 @@ def unregister_workspace(workspace_path: Optional[Path] = None) -> bool:
     return False
 
 
-def list_registered_workspaces() -> List[Dict[str, Any]]:
+def list_registered_workspaces() -> list[dict[str, Any]]:
     """
     List all registered workspaces.
 
@@ -208,7 +208,7 @@ def list_registered_workspaces() -> List[Dict[str, Any]]:
     return workspaces
 
 
-def get_all_workflows() -> Dict[str, List[Dict[str, Any]]]:
+def get_all_workflows() -> dict[str, list[dict[str, Any]]]:
     """
     Get all workflows from all registered workspaces.
 
@@ -216,7 +216,7 @@ def get_all_workflows() -> Dict[str, List[Dict[str, Any]]]:
         Dictionary mapping workspace name to list of workflow info
     """
     registry = load_registry()
-    all_workflows: Dict[str, List[Dict[str, Any]]] = {}
+    all_workflows: dict[str, list[dict[str, Any]]] = {}
 
     # Always include global workflows
     global_workflows_dir = get_mcli_home() / "workflows"

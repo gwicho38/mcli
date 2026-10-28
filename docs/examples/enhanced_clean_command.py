@@ -228,7 +228,7 @@ def cleanup_development_tools():
         try:
             run_command(command)
             logger.info(f"  ✅ Cleaned {tool_name}")
-        except Exception as e:
+        except Exception:
             logger.warning(f"  ⚠️  {tool_name} cleanup failed")
 
     current_space = get_disk_space()
@@ -307,7 +307,7 @@ def git_cleanup():
             try:
                 run_command(f"cd '{repo}' && git gc --prune=now --aggressive 2>/dev/null")
                 logger.info(f"  ✅ Cleaned {repo.name}")
-            except Exception as e:
+            except Exception:
                 logger.warning(f"  ⚠️  Failed to clean {repo.name}")
 
 

@@ -12,7 +12,7 @@ def test_find_top_nodes():
     """Test that find_top_nodes_in_graph returns correct results."""
     try:
         # Load the graph data
-        with open("realGraph.json", "r") as f:
+        with open("realGraph.json") as f:
             graph_data = json.load(f)
 
         # Find top nodes

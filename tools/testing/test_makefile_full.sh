@@ -50,20 +50,20 @@ run_test() {
   local target="$1"
   local skip_reason="$2"
   local timeout_seconds="${3:-180}"  # Default 3 minute timeout
-  
+
   log_test "$target"
-  
+
   if [ -n "$skip_reason" ]; then
     log_skip "$target - $skip_reason"
     return
   fi
-  
+
   # First try a dry run
   if ! make "$target" -n > /dev/null 2>&1; then
     log_fail "$target (dry-run verification failed)"
     return
   fi
-  
+
   # Run the make target with a timeout
   if timeout $timeout_seconds make "$target" > "target_$target.log" 2>&1; then
     log_pass "$target"
@@ -82,7 +82,7 @@ run_test() {
 # Pre-test setup
 check_dependencies() {
   log "Checking dependencies..."
-  
+
   # Check for required tools
   for cmd in make python uv timeout; do
     if command -v "$cmd" > /dev/null 2>&1; then
@@ -92,7 +92,7 @@ check_dependencies() {
       return 1
     fi
   done
-  
+
   # Check Python version
   python_version=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null || echo "3.9")
   min_python="3.9"
@@ -102,11 +102,11 @@ check_dependencies() {
   else
     log "✓ Python $python_version meets minimum requirement"
   fi
-  
+
   # Check UV version
   uv_version=$(uv --version 2>/dev/null || echo "Not installed")
   log "✓ UV version: $uv_version"
-  
+
   return 0
 }
 
@@ -149,10 +149,10 @@ mkdir -p dist
 if [ -d "dist" ] && [ "$(ls -A dist/*.whl 2>/dev/null | wc -l)" -gt 0 ]; then
   # Run the test target before portable to ensure package works
   run_test "test" "" 300  # Allow 5 minutes for test
-  
+
   # Run portable build
   run_test "portable" "" 600  # Allow 10 minutes for portable build
-  
+
   # Test binary if it was created
   if [ -d "bin" ] && [ "$(find bin -type f | wc -l)" -gt 0 ]; then
     run_test "test-binary" ""
@@ -166,13 +166,13 @@ else
 fi
 
 # Skip longer running or more complex tests
-run_test "nuitka-app" "Skipped due to long build time (run manually)" 
+run_test "nuitka-app" "Skipped due to long build time (run manually)"
 run_test "nuitka-binary" "Skipped due to long build time (run manually)"
 run_test "portable-py" "Skipped (requires Docker, run manually)"
 run_test "linux-portable" "Skipped (requires Docker, run manually)"
 
 # Cleanup
-run_test "clean-all" "" 
+run_test "clean-all" ""
 
 # Print summary
 log "\n-------------------------------------------"

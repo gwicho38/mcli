@@ -31,7 +31,7 @@ class ProcessInfo:
     id: str
     name: str
     command: str
-    args: List[str]
+    args: list[str]
     status: ProcessStatus
     pid: Optional[int] = None
     exit_code: Optional[int] = None
@@ -39,7 +39,7 @@ class ProcessInfo:
     started_at: Optional[datetime] = None
     finished_at: Optional[datetime] = None
     working_dir: Optional[str] = None
-    environment: Optional[Dict[str, str]] = None
+    environment: Optional[dict[str, str]] = None
 
     def __post_init__(self):
         if self.created_at is None:
@@ -162,20 +162,20 @@ class ProcessContainer:
             return False
         return self.process.poll() is None
 
-    def get_logs(self, lines: Optional[int] = None, follow: bool = False) -> Dict[str, str]:
+    def get_logs(self, lines: Optional[int] = None, follow: bool = False) -> dict[str, str]:
         """Get process logs."""
         logs = {"stdout": "", "stderr": ""}
 
         try:
             if self.stdout_file and self.stdout_file.exists():
-                with open(self.stdout_file, "r") as f:
+                with open(self.stdout_file) as f:
                     content = f.read()
                     if lines:
                         content = "\n".join(content.split("\n")[-lines:])
                     logs["stdout"] = content
 
             if self.stderr_file and self.stderr_file.exists():
-                with open(self.stderr_file, "r") as f:
+                with open(self.stderr_file) as f:
                     content = f.read()
                     if lines:
                         content = "\n".join(content.split("\n")[-lines:])
@@ -186,7 +186,7 @@ class ProcessContainer:
 
         return logs
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get process statistics."""
         stats = {
             "cpu_percent": 0.0,
@@ -229,7 +229,7 @@ class ProcessManager:
     """Docker-like process management system."""
 
     def __init__(self):
-        self.containers: Dict[str, ProcessContainer] = {}
+        self.containers: dict[str, ProcessContainer] = {}
         self.base_dir = Path.home() / ".local" / "mcli" / "containers"
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
@@ -244,7 +244,7 @@ class ProcessManager:
                     metadata_file = container_dir / "metadata.json"
                     if metadata_file.exists():
                         try:
-                            with open(metadata_file, "r") as f:
+                            with open(metadata_file) as f:
                                 data = json.load(f)
 
                             # Convert string datetime back to datetime objects
@@ -274,9 +274,9 @@ class ProcessManager:
         self,
         name: str,
         command: str,
-        args: List[str] = None,
+        args: list[str] = None,
         working_dir: str = None,
-        environment: Dict[str, str] = None,
+        environment: dict[str, str] = None,
     ) -> str:
         """Create a new process container."""
         process_id = str(uuid.uuid4())
@@ -343,7 +343,7 @@ class ProcessManager:
         logger.info(f"Removed container {process_id}")
         return True
 
-    def list_processes(self, all_processes: bool = False) -> List[Dict[str, Any]]:
+    def list_processes(self, all_processes: bool = False) -> list[dict[str, Any]]:
         """List all process containers (Docker ps style)."""
         result = []
 
@@ -376,7 +376,7 @@ class ProcessManager:
 
         return result
 
-    def inspect(self, process_id: str) -> Optional[Dict[str, Any]]:
+    def inspect(self, process_id: str) -> Optional[dict[str, Any]]:
         """Get detailed information about a process container."""
         if process_id not in self.containers:
             return None
@@ -409,7 +409,7 @@ class ProcessManager:
 
     def logs(
         self, process_id: str, lines: Optional[int] = None, follow: bool = False
-    ) -> Optional[Dict[str, str]]:
+    ) -> Optional[dict[str, str]]:
         """Get logs from a process container."""
         if process_id not in self.containers:
             return None
@@ -420,9 +420,9 @@ class ProcessManager:
         self,
         name: str,
         command: str,
-        args: List[str] = None,
+        args: list[str] = None,
         working_dir: str = None,
-        environment: Dict[str, str] = None,
+        environment: dict[str, str] = None,
         detach: bool = True,
     ) -> str:
         """Create and start a process container in one step."""

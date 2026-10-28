@@ -29,7 +29,7 @@ from mcli.lib.logger.logger import get_logger
 logger = get_logger(__name__)
 
 
-def detect_script_language(script_path: Path) -> Tuple[str, Optional[str]]:
+def detect_script_language(script_path: Path) -> tuple[str, Optional[str]]:
     """
     Detect the language of a script file.
 
@@ -48,7 +48,7 @@ def detect_script_language(script_path: Path) -> Tuple[str, Optional[str]]:
     """
     # Check shebang first
     try:
-        with open(script_path, "r", encoding="utf-8") as f:
+        with open(script_path, encoding="utf-8") as f:
             first_line = f.readline().strip()
 
             if first_line.startswith("#!"):
@@ -102,7 +102,7 @@ def extract_help_text(script_path: Path, language: str) -> str:
         Help text string, or generic message if none found
     """
     try:
-        with open(script_path, "r", encoding="utf-8") as f:
+        with open(script_path, encoding="utf-8") as f:
             lines = f.readlines()
 
         if language == "python":
@@ -342,7 +342,7 @@ def create_shell_script_command(
     return script_cmd
 
 
-def scan_standalone_workflows(workflows_dir: Path) -> Dict[str, Dict[str, Any]]:
+def scan_standalone_workflows(workflows_dir: Path) -> dict[str, dict[str, Any]]:
     """
     Scan for standalone workflow scripts at the top level of workflows directory.
 
@@ -399,7 +399,7 @@ def scan_standalone_workflows(workflows_dir: Path) -> Dict[str, Dict[str, Any]]:
     return standalone_scripts
 
 
-def scan_folder_workflows(workflows_dir: Path) -> Dict[str, Dict[str, Any]]:
+def scan_folder_workflows(workflows_dir: Path) -> dict[str, dict[str, Any]]:
     """
     Scan a workflows directory for folder-based workflows.
 
@@ -494,7 +494,7 @@ def scan_folder_workflows(workflows_dir: Path) -> Dict[str, Dict[str, Any]]:
     return folder_groups
 
 
-def create_folder_command_group(group_name: str, commands: Dict[str, Any]) -> click.Group:
+def create_folder_command_group(group_name: str, commands: dict[str, Any]) -> click.Group:
     """
     Create a Click command group from a folder of scripts.
 

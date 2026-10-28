@@ -233,9 +233,9 @@ model_id = client.load_model(
 
 # Translate text
 result = client.translate_text(
-    model_id, 
-    "Hello, how are you?", 
-    source_lang="en", 
+    model_id,
+    "Hello, how are you?",
+    source_lang="en",
     target_lang="fr"
 )
 print(result['translated_text'])
@@ -292,7 +292,7 @@ import requests
 class ElectronModelClient:
     def __init__(self, base_url="http://localhost:8000"):
         self.base_url = base_url
-    
+
     def generate_text(self, model_id: str, prompt: str) -> str:
         response = requests.post(
             f"{self.base_url}/models/{model_id}/generate",

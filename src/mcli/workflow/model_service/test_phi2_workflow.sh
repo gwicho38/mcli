@@ -71,12 +71,12 @@ MODEL_ID=$(curl -s http://localhost:8000/models | grep -o '"id":"[^"]*"' | head 
 
 if [ -n "$MODEL_ID" ]; then
     echo -e "${BLUE}Model ID: $MODEL_ID${NC}"
-    
+
     # Test generation
     RESPONSE=$(curl -s -X POST "http://localhost:8000/models/$MODEL_ID/generate" \
         -H "Content-Type: application/json" \
         -d '{"prompt": "Hello, how are you?"}')
-    
+
     echo -e "${GREEN}✅ API test successful!${NC}"
     echo -e "${BLUE}Response: $RESPONSE${NC}"
 else
@@ -96,7 +96,7 @@ if [ -n "$MODEL_ID" ]; then
     RESPONSE=$(curl -s -X POST "http://localhost:8000/models/$MODEL_ID/generate" \
         -H "Content-Type: application/json" \
         -d '{"prompt": "Write a short poem about AI"}')
-    
+
     echo -e "${GREEN}✅ Updated model test successful!${NC}"
     echo -e "${BLUE}Response: $RESPONSE${NC}"
 fi
@@ -125,4 +125,4 @@ echo -e "${GREEN}   Stop service:${NC} mcli workflow model-service stop"
 
 echo -e "${BLUE}🌱 uv Environment Info:${NC}"
 echo -e "${GREEN}   Install dependencies:${NC} uv pip install package-name"
-echo -e "${GREEN}   Install model-service extras:${NC} uv pip install .[model-service]" 
+echo -e "${GREEN}   Install model-service extras:${NC} uv pip install .[model-service]"

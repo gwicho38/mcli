@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 # Conditionally import external dependencies (only if not skipped)
 try:
     from dotenv import load_dotenv
+
     from supabase import Client, create_client
 
     HAS_DEPENDENCIES = True

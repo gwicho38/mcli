@@ -62,7 +62,7 @@ class LazyLoader:
         self.module_name = module_name
         self._module = None
         self._fallback = fallback
-    
+
     def __getattr__(self, name):
         if self._module is None:
             try:
@@ -91,24 +91,24 @@ def load_conditional_imports():
     # Only load ML if actually needed
     if os.getenv("MCLI_ENABLE_ML"):
         import torch, mlflow, scikit_learn
-    
+
     # Only load dashboard if needed
     if os.getenv("MCLI_ENABLE_DASHBOARD"):
         import streamlit, plotly
-    
+
     # Only load trading if needed  
     if os.getenv("MCLI_ENABLE_TRADING"):
         import pandas, yfinance
-    
+
     return True
 
 def main():
     load_core_imports()
-    
+
     # Check if we need extra features for this command
     if requires_features(sys.argv):
         load_conditional_imports()
-    
+
     # Rest of main...
 ```
 
@@ -123,7 +123,7 @@ class ImportProfiler:
         mem_before = psutil.Process().memory_info().rss
         module = importlib.import_module(module_name)
         mem_after = psutil.Process().memory_info().rss
-        
+
         return {
             'module': module_name,
             'import_time': time.time() - start,
@@ -205,7 +205,7 @@ def benchmark_startup():
         subprocess.run(['python', '-m', 'mcli', '--help'])
         end = time.time()
         times.append(end - start)
-    
+
     print(f"Average startup time: {statistics.mean(times):.2f}s")
 ```
 

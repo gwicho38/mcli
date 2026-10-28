@@ -49,10 +49,10 @@ class ScheduledJob:
         max_runtime: int = 3600,  # 1 hour default
         retry_count: int = 0,
         retry_delay: int = 60,  # 1 minute default
-        environment: Optional[Dict[str, str]] = None,
+        environment: Optional[dict[str, str]] = None,
         working_directory: Optional[str] = None,
         output_format: str = "json",
-        notifications: Optional[Dict[str, Any]] = None,
+        notifications: Optional[dict[str, Any]] = None,
         job_id: Optional[str] = None,
     ):
         self.id = job_id or str(uuid.uuid4())
@@ -83,7 +83,7 @@ class ScheduledJob:
         self.runtime_seconds = 0
         self.current_retry = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert job to dictionary for serialization."""
         return {
             "id": self.id,
@@ -114,7 +114,7 @@ class ScheduledJob:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ScheduledJob":
+    def from_dict(cls, data: dict[str, Any]) -> "ScheduledJob":
         """Create job from dictionary."""
         job = cls(
             name=data["name"],

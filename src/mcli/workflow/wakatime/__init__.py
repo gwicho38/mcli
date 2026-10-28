@@ -7,21 +7,18 @@ from mcli.lib.watcher import watcher
 
 # from mcli.util.db.db import readDB
 
-""" 
-Source of Truth for the bundle command.
-c3 ui -u BA:BA -t $OE_C3_TENANT -g $OE_C3_TAG -c $OE_C3_PACKAGE -W $OE_C3_UI_WORK_DIR -e http://localhost:8080 --log-dir $OE_C3_UI_LOGS_DIR --out-dir $OE_C3_UI_OUT_DIR -a provision
-
-
-NODE_TLS_REJECT_UNAUTHORIZED=0 c3 ui --with-tests -W ~/c3/UiWorkingDirectory -e http://localhost:8080 --bundler-port 50082 -t operationalEnergy:dev -c operationalEnergyDemo -a . -T 303349a1bbcdbd5fd33d96ce1a34fa68b6b3cb24378cca4441c67718d1b670f4b092
-
- NODE_TLS_REJECT_UNAUTHORIZED=0  c3 prov tag -t operationalEnergy:dev -c operationalEnergyDemo -T 303349a1bbcdbd5fd33d96ce1a34fa68b6b3cb24378cca4441c67718d1b670f4b092 -e http://localhost:8080 -r --verbose
- 
- 
-NOTE: Info on getting UI artifacts: https://c3energy.atlassian.net/wiki/spaces/ENG/pages/8413446693/Component+Library+c3ui+repo+and+monthly+release#For-Studio-Administrators
-
-https://c3energy.atlassian.net/wiki/spaces/~63065ed547d60b7107ed59f8/pages/8906934405/8.6+React+18+ui+upgrade
-
-"""
+# Source of Truth for the bundle command.
+# c3 ui -u BA:BA -t $OE_C3_TENANT -g $OE_C3_TAG -c $OE_C3_PACKAGE -W $OE_C3_UI_WORK_DIR -e http://localhost:8080 --log-dir $OE_C3_UI_LOGS_DIR --out-dir $OE_C3_UI_OUT_DIR -a provision
+#
+#
+# NODE_TLS_REJECT_UNAUTHORIZED=0 c3 ui --with-tests -W ~/c3/UiWorkingDirectory -e http://localhost:8080 --bundler-port 50082 -t operationalEnergy:dev -c operationalEnergyDemo -a . -T 303349a1bbcdbd5fd33d96ce1a34fa68b6b3cb24378cca4441c67718d1b670f4b092
+#
+#  NODE_TLS_REJECT_UNAUTHORIZED=0  c3 prov tag -t operationalEnergy:dev -c operationalEnergyDemo -T 303349a1bbcdbd5fd33d96ce1a34fa68b6b3cb24378cca4441c67718d1b670f4b092 -e http://localhost:8080 -r --verbose
+#
+#
+# NOTE: Info on getting UI artifacts: https://c3energy.atlassian.net/wiki/spaces/ENG/pages/8413446693/Component+Library+c3ui+repo+and+monthly+release#For-Studio-Administrators
+#
+# https://c3energy.atlassian.net/wiki/spaces/~63065ed547d60b7107ed59f8/pages/8906934405/8.6+React+18+ui+upgrade
 
 C3LI_PACKAGES_TO_SYNC = [os.environ.get("C3LI_PACKAGES_TO_SYNC")]
 C3LI_PATH_TO_PACKAGE_REPO = os.environ.get("C3LI_PATH_TO_PACKAGE_REPO")

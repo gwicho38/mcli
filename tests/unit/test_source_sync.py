@@ -122,9 +122,7 @@ class TestLinkCommand:
         workflows_dir.mkdir(parents=True)
         monkeypatch.chdir(tmp_path)
 
-        result = runner.invoke(
-            source_group, ["link", "backup", "--source", str(sample_script)]
-        )
+        result = runner.invoke(source_group, ["link", "backup", "--source", str(sample_script)])
         assert result.exit_code == 0
         assert (workflows_dir / "backup.json").exists()
 
@@ -135,9 +133,7 @@ class TestLinkCommand:
         shell_script.write_text("#!/bin/bash\necho hi\n")
         monkeypatch.chdir(tmp_path)
 
-        result = runner.invoke(
-            source_group, ["link", "backup", "--source", str(shell_script)]
-        )
+        result = runner.invoke(source_group, ["link", "backup", "--source", str(shell_script)])
         assert result.exit_code == 0  # Click exits 0, error shown via UI
 
 
@@ -145,11 +141,7 @@ class TestUnlinkCommand:
     """Test the mcli source unlink CLI command."""
 
     def test_unlink_removes_link(self, runner, sample_script, tmp_path, monkeypatch):
-        from mcli.app.source_sync_cmd import (
-            _load_sync_state,
-            source_group,
-            sync_source_to_command,
-        )
+        from mcli.app.source_sync_cmd import _load_sync_state, source_group, sync_source_to_command
 
         workflows_dir = tmp_path / ".mcli" / "workflows"
         workflows_dir.mkdir(parents=True)

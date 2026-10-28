@@ -61,9 +61,7 @@ class TestPythonSyntax:
     def test_valid_code_block(self, doc_dir):
         """No errors for valid Python."""
         md_file = doc_dir / "example.md"
-        md_file.write_text(
-            "```python\nimport os\n\ndef hello():\n    print('hi')\n```\n"
-        )
+        md_file.write_text("```python\nimport os\n\ndef hello():\n    print('hi')\n```\n")
 
         errors = check_python_syntax([md_file], verbose=False)
         assert errors == []
@@ -71,9 +69,7 @@ class TestPythonSyntax:
     def test_invalid_code_block(self, doc_dir):
         """Errors for invalid Python that starts with import."""
         md_file = doc_dir / "example.md"
-        md_file.write_text(
-            "```python\nimport os\n\nif True:\n\n```\n"
-        )
+        md_file.write_text("```python\nimport os\n\nif True:\n\n```\n")
 
         errors = check_python_syntax([md_file], verbose=False)
         assert len(errors) == 1

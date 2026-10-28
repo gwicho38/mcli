@@ -11,31 +11,31 @@ Two main protocols define the interface:
 ```python
 class TypeSystem(Protocol):
     """Protocol for generic type system interface."""
-    
+
     def get_type(self, name: str) -> Any:
         """Get a type by name."""
-        
+
     def get_all_types(self) -> List[str]:
         """Get all available type names."""
-        
+
     def get_package_types(self, package_name: str) -> List[str]:
         """Get all types in a specific package."""
-        
+
     def create_type_metadata(self, type_obj: Any) -> "TypeMetadata":
         """Create type metadata from a type object."""
 
 class TypeMetadata(Protocol):
     """Protocol for type metadata interface."""
-    
+
     def get_name(self) -> str:
         """Get the type name."""
-        
+
     def get_fields(self) -> Dict[str, Any]:
         """Get field definitions."""
-        
+
     def get_methods(self) -> List[str]:
         """Get method names."""
-        
+
     def get_related_types(self) -> Set[str]:
         """Get names of related types."""
 ```
@@ -83,15 +83,15 @@ class MyTypeSystem:
     def get_type(self, name: str):
         # Your implementation
         pass
-    
+
     def get_all_types(self) -> List[str]:
         # Your implementation
         pass
-    
+
     def get_package_types(self, package_name: str) -> List[str]:
         # Your implementation
         pass
-    
+
     def create_type_metadata(self, type_obj):
         # Your implementation
         pass
@@ -109,7 +109,7 @@ from mcli.lib.erd.erd import create_merged_erd
 
 # With custom type system
 result = create_merged_erd(
-    types=["Type1", "Type2"], 
+    types=["Type1", "Type2"],
     type_system=my_type_system,
     max_depth=2
 )
