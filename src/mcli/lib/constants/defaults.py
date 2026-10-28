@@ -7,6 +7,21 @@ Using these constants ensures consistency and makes configuration easier.
 from typing import List
 
 
+class TraceLogs:
+    """Limits for the runtime and system trace logs (mcli_trace_*.log, mcli_system_*.log).
+
+    Tracing writes one line per Python call, so an unbounded file grows by
+    gigabytes a day. Each file rotates at MAX_BYTES and keeps BACKUP_COUNT
+    old copies; files older than RETENTION_DAYS are deleted when the logger
+    starts. MCLI_TRACE_LOG_MAX_BYTES and MCLI_TRACE_LOG_RETENTION_DAYS override.
+    """
+
+    MAX_BYTES = 50 * 1024 * 1024
+    BACKUP_COUNT = 2
+    RETENTION_DAYS = 7
+    PRUNE_GLOBS: List[str] = ["mcli_trace_*.log*", "mcli_system_*.log*"]
+
+
 class Editors:
     """Editor-related constants."""
 

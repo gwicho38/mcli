@@ -7,6 +7,8 @@ import threading
 import time
 import traceback
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from types import FrameType
 from typing import Any, Callable, Dict, List, Optional, Set
 
@@ -14,6 +16,43 @@ import psutil
 
 # Type alias for trace functions
 TraceFunction = Callable[[FrameType, str, Any], "Optional[TraceFunction]"]
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, ""))
+    except ValueError:
+        return default
+    return value if value > 0 else default
+
+
+def _capped_handler(path: Path) -> RotatingFileHandler:
+    """A trace-log handler that rotates by size and opens the file on first write."""
+    from mcli.lib.constants.defaults import TraceLogs
+    from mcli.lib.constants.env import EnvVars
+
+    return RotatingFileHandler(
+        path,
+        maxBytes=_env_int(EnvVars.MCLI_TRACE_LOG_MAX_BYTES, TraceLogs.MAX_BYTES),
+        backupCount=TraceLogs.BACKUP_COUNT,
+        delay=True,
+    )
+
+
+def _prune_trace_logs(log_dir: Path) -> None:
+    """Delete trace and system-trace logs older than the retention period."""
+    from mcli.lib.constants.defaults import TraceLogs
+    from mcli.lib.constants.env import EnvVars
+
+    days = _env_int(EnvVars.MCLI_TRACE_LOG_RETENTION_DAYS, TraceLogs.RETENTION_DAYS)
+    cutoff = time.time() - days * 86400
+    for pattern in TraceLogs.PRUNE_GLOBS:
+        for path in log_dir.glob(pattern):
+            try:
+                if path.is_file() and path.stat().st_mtime < cutoff:
+                    path.unlink()
+            except OSError:
+                pass
 
 
 class McliLogger:
@@ -126,15 +165,17 @@ class McliLogger:
 
         # Start monitoring thread if not already running
         if cls._system_trace_level > 0 and not cls._system_tracing_enabled:
+            # A worker from an earlier enable may still be asleep after a disable;
+            # setting the flag again keeps it running instead of leaving tracing off.
+            cls._system_tracing_enabled = True
             if cls._system_trace_thread is None or not cls._system_trace_thread.is_alive():
-                cls._system_tracing_enabled = True
                 cls._system_trace_thread = threading.Thread(
                     target=cls._instance._system_trace_worker, daemon=True
                 )
                 cls._system_trace_thread.start()
-                cls._instance.system_trace_logger.info(
-                    f"System process tracing enabled (level={cls._system_trace_level}, interval={cls._system_trace_interval}s)"
-                )
+            cls._instance.system_trace_logger.info(
+                f"System process tracing enabled (level={cls._system_trace_level}, interval={cls._system_trace_interval}s)"
+            )
         elif cls._system_trace_level == 0 and cls._system_tracing_enabled:
             # Disable tracing
             cls._system_tracing_enabled = False
@@ -229,15 +270,19 @@ class McliLogger:
             file_handler.setFormatter(file_formatter)
             self.logger.addHandler(file_handler)
 
+            # Trace logs grow by one line per Python call: cap them by size,
+            # create them only when written, and drop old ones.
+            _prune_trace_logs(log_dir)
+
             # Configure trace file handler
-            trace_handler = logging.FileHandler(trace_log_file)
+            trace_handler = _capped_handler(trace_log_file)
             trace_handler.setLevel(logging.DEBUG)
             trace_formatter = logging.Formatter("%(asctime)s [TRACE] %(message)s")
             trace_handler.setFormatter(trace_formatter)
             self.trace_logger.addHandler(trace_handler)
 
             # Configure system trace file handler
-            system_trace_handler = logging.FileHandler(system_trace_log_file)
+            system_trace_handler = _capped_handler(system_trace_log_file)
             system_trace_handler.setLevel(logging.DEBUG)
             system_trace_formatter = logging.Formatter("%(asctime)s [SYSTEM] %(message)s")
             system_trace_handler.setFormatter(system_trace_formatter)
@@ -245,8 +290,9 @@ class McliLogger:
 
             # Log the path to help with debugging
             self.logger.debug(f"Logging to: {log_file}")
-            self.trace_logger.debug(f"Trace logging to: {trace_log_file}")
-            self.system_trace_logger.debug(f"System trace logging to: {system_trace_log_file}")
+            # Written to the main log: a line in a trace file would create it on every run.
+            self.logger.debug(f"Trace logging to: {trace_log_file}")
+            self.logger.debug(f"System trace logging to: {system_trace_log_file}")
         except Exception as e:
             # If we can't set up file logging, fall back to stderr
             # This should only happen during development or in unusual environments

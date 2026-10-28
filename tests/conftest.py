@@ -7,6 +7,7 @@ Shared fixtures from tests/fixtures/ are automatically imported and available gl
 
 import os
 import sys
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -33,6 +34,9 @@ if str(src_path) not in sys.path:
 os.environ["MCLI_ENV"] = "test"
 os.environ["DEBUG"] = "true"
 os.environ["MCLI_TRACE_LEVEL"] = "0"
+# Never write logs, config or traces into the real ~/.mcli: the suite once traced
+# itself into the runner's home, 35 GB of mcli_trace_*.log.
+os.environ["MCLI_HOME"] = str(Path(tempfile.mkdtemp(prefix="mcli-test-home-")) / ".mcli")
 
 
 @pytest.fixture
@@ -109,10 +113,19 @@ temperature = 0.7
 
 @pytest.fixture(autouse=True)
 def reset_singletons():
-    """Reset singleton instances between tests."""
-    # This ensures test isolation
+    """Reset singleton state between tests.
+
+    Runtime tracing (sys.settrace) and the system-trace thread are process-wide:
+    a test that turns them on and fails to turn them off would trace every later
+    test. Switch both off after each test.
+    """
     yield
-    # Cleanup code here if needed
+    from mcli.lib.logger.logger import McliLogger
+
+    if McliLogger._runtime_tracing_enabled:
+        McliLogger.disable_runtime_tracing()
+    if McliLogger._system_tracing_enabled:
+        McliLogger.disable_system_tracing()
 
 
 # pytest configuration
