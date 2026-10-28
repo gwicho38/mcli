@@ -201,4 +201,4 @@ print(response.json())
 
 ---
 
-**Quick Start Command**: `./src/mcli/workflow/model_service/setup_phi2.sh` 
+**Quick Start Command**: `./src/mcli/workflow/model_service/setup_phi2.sh`

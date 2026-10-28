@@ -59,7 +59,7 @@ def _check_trading_imports() -> bool:
         return False
 
 
-def get_required_features() -> Set[str]:
+def get_required_features() -> set[str]:
     """Get set of features required based on current command/usage."""
     features = set()
 

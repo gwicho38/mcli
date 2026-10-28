@@ -127,6 +127,7 @@ check_prerequisites() {
     # Check environment variables
     if [ -z "$SUPABASE_URL" ]; then
         print_warning "SUPABASE_URL not set, loading from .env"
+        # shellcheck disable=SC2046 # each KEY=value must split into its own word
         export $(grep -v '^#' .env | xargs)
     fi
 

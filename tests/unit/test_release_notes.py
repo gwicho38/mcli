@@ -166,10 +166,12 @@ class TestRenderMarkdown:
         notes = ReleaseNotes(
             version="1.0.0",
             date="2026-03-23",
-            categories={"Features": [
-                ParsedCommit(hash="a", type="feat", scope=None, description="one"),
-                ParsedCommit(hash="b", type="feat", scope=None, description="two"),
-            ]},
+            categories={
+                "Features": [
+                    ParsedCommit(hash="a", type="feat", scope=None, description="one"),
+                    ParsedCommit(hash="b", type="feat", scope=None, description="two"),
+                ]
+            },
             uncategorized=[
                 ParsedCommit(hash="c", type="", scope=None, description="three"),
             ],

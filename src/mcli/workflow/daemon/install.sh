@@ -54,14 +54,14 @@ install_python_package() {
 # Function to check and install system dependencies
 check_system_dependencies() {
     print_status "Checking system dependencies..."
-    
+
     # Check Python
     if ! command_exists python3; then
         print_error "Python 3 is required but not installed"
         exit 1
     fi
     print_success "Python 3 found: $(python3 --version)"
-    
+
     # Check Node.js (optional)
     if command_exists node; then
         print_success "Node.js found: $(node --version)"
@@ -69,7 +69,7 @@ check_system_dependencies() {
         print_warning "Node.js not found. Node.js commands will not work."
         print_warning "Install Node.js from https://nodejs.org/"
     fi
-    
+
     # Check Lua (optional)
     if command_exists lua; then
         print_success "Lua found: $(lua -v)"
@@ -82,36 +82,36 @@ check_system_dependencies() {
 # Function to install Python dependencies
 install_python_dependencies() {
     print_status "Installing Python dependencies..."
-    
+
     # Core dependencies
     install_python_package "click"
     install_python_package "psutil"
     install_python_package "numpy"
     install_python_package "scikit-learn"
-    
+
     print_success "Python dependencies installed"
 }
 
 # Function to create daemon directories
 create_daemon_directories() {
     print_status "Creating daemon directories..."
-    
+
     local daemon_dir="$HOME/.local/mcli/daemon"
     mkdir -p "$daemon_dir"
-    
+
     print_success "Created daemon directory: $daemon_dir"
 }
 
 # Function to test daemon functionality
 test_daemon() {
     print_status "Testing daemon functionality..."
-    
+
     # Test if mcli is available
     if ! command_exists mcli; then
         print_warning "MCLI not found in PATH. Make sure it's installed and available."
         return
     fi
-    
+
     # Test daemon status
     if mcli workflow daemon status >/dev/null 2>&1; then
         print_success "Daemon commands are working"
@@ -152,28 +152,28 @@ main() {
     echo "🚀 MCLI Daemon Service Installation"
     echo "=================================="
     echo
-    
+
     # Check if running as root
     if [[ $EUID -eq 0 ]]; then
         print_error "This script should not be run as root"
         exit 1
     fi
-    
+
     # Check system dependencies
     check_system_dependencies
-    
+
     # Install Python dependencies
     install_python_dependencies
-    
+
     # Create daemon directories
     create_daemon_directories
-    
+
     # Test daemon functionality
     test_daemon
-    
+
     # Show usage examples
     show_usage_examples
 }
 
 # Run main function
-main "$@" 
+main "$@"

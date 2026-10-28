@@ -201,13 +201,13 @@ def ensure_daemon_running() -> bool:
 
     # Initialize if needed
     if not ipfs_initialized():
-        result = subprocess.run(
+        init_result = subprocess.run(
             ["ipfs", "init"],
             capture_output=True,
             text=True,
         )
-        if result.returncode != 0:
-            logger.error(f"Failed to initialize IPFS: {result.stderr.strip()}")
+        if init_result.returncode != 0:
+            logger.error(f"Failed to initialize IPFS: {init_result.stderr.strip()}")
             return False
         logger.info("IPFS repository initialized")
 

@@ -282,7 +282,7 @@ Generate text using a loaded model.
    ```bash
    # Check internet connection
    curl -I https://huggingface.co
-   
+
    # Try a different model
    python lightweight_model_server.py --model prajjwal1/bert-tiny
    ```
@@ -291,7 +291,7 @@ Generate text using a loaded model.
    ```bash
    # Use different port
    python lightweight_model_server.py --port 8081
-   
+
    # Or kill existing process
    lsof -ti:8080 | xargs kill -9
    ```
@@ -355,15 +355,15 @@ import json
 class LightweightClient:
     def __init__(self, base_url="http://localhost:8080"):
         self.base_url = base_url
-    
+
     def health_check(self):
         response = requests.get(f"{self.base_url}/health")
         return response.json()
-    
+
     def list_models(self):
         response = requests.get(f"{self.base_url}/models")
         return response.json()
-    
+
     def generate_text(self, model_name, prompt):
         response = requests.post(
             f"{self.base_url}/models/{model_name}/generate",
@@ -453,4 +453,4 @@ Potential improvements:
 
 ## 📄 License
 
-This project is part of the MCLI framework and follows the same license terms. 
+This project is part of the MCLI framework and follows the same license terms.

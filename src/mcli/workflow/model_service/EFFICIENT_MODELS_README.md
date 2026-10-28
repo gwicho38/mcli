@@ -329,4 +329,4 @@ To add new efficient models:
 
 ## License
 
-This project is part of the MCLI framework and follows the same license terms. 
+This project is part of the MCLI framework and follows the same license terms.

@@ -184,4 +184,4 @@ Potential improvements for future versions:
 - **Progress Bars**: Visual progress indicators for large downloads
 - **Model Validation**: Verify downloaded model integrity
 - **Caching**: Cache frequently used models
-- **Batch Operations**: Add multiple models from URLs in one command 
+- **Batch Operations**: Add multiple models from URLs in one command

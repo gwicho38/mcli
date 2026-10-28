@@ -30,7 +30,7 @@ class SyncKeyStore:
     def path(self) -> Path:
         return get_mcli_home() / _FILENAME
 
-    def get(self) -> Optional[str]:
+    def get(self) -> str | None:
         path = self.path
         if not path.is_file():
             return None

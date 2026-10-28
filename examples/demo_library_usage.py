@@ -11,26 +11,27 @@ This example demonstrates:
 """
 
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+from mcli.lib.config.config import get_config, save_config
 
 # Core mcli imports
 from mcli.lib.custom_commands import get_command_manager
-from mcli.lib.logger.logger import get_logger
-from mcli.lib.config.config import get_config, save_config
-from mcli.lib.paths import get_custom_commands_dir, is_git_repository
-from mcli.lib.ui.styling import success, info, warning, error
 
 # Advanced features
 from mcli.lib.discovery.command_discovery import ClickCommandDiscovery
+from mcli.lib.logger.logger import get_logger
+from mcli.lib.paths import get_custom_commands_dir, is_git_repository
+from mcli.lib.ui.styling import error, info, success, warning
 from mcli.workflow.script_sync import ScriptSyncSystem
 
 
 def demo_command_creation():
     """Demonstrate creating custom commands programmatically"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     info("📝 Demo 1: Creating Custom Commands")
-    print("="*60)
+    print("=" * 60)
 
     # Get command manager
     manager = get_command_manager(global_mode=True)
@@ -80,8 +81,8 @@ def convert_data(input_file, output_file, format):
                 "author": "MCLI Demo",
                 "version": "1.0.0",
                 "tags": ["data", "validation", "conversion"],
-                "requires": ["json", "pathlib"]
-            }
+                "requires": ["json", "pathlib"],
+            },
         )
         success("✅ Created command: datatools")
         info("   Run with: mcli workflow datatools validate <file>")
@@ -92,9 +93,9 @@ def convert_data(input_file, output_file, format):
 
 def demo_command_discovery():
     """Demonstrate command discovery and introspection"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     info("🔍 Demo 2: Command Discovery")
-    print("="*60)
+    print("=" * 60)
 
     discovery = ClickCommandDiscovery()
 
@@ -126,9 +127,9 @@ def demo_command_discovery():
 
 def demo_configuration():
     """Demonstrate configuration management"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     info("⚙️  Demo 3: Configuration Management")
-    print("="*60)
+    print("=" * 60)
 
     # Load current config
     config = get_config()
@@ -140,7 +141,7 @@ def demo_configuration():
     custom_config = {
         "demo_setting": True,
         "demo_timestamp": datetime.now().isoformat(),
-        "demo_value": 42
+        "demo_value": 42,
     }
 
     try:
@@ -152,9 +153,9 @@ def demo_configuration():
 
 def demo_path_management():
     """Demonstrate path utilities"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     info("📁 Demo 4: Path Management")
-    print("="*60)
+    print("=" * 60)
 
     # Get commands directory
     global_dir = get_custom_commands_dir(global_mode=True)
@@ -179,9 +180,9 @@ def demo_path_management():
 
 def demo_logger():
     """Demonstrate logging features"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     info("📋 Demo 5: Logging")
-    print("="*60)
+    print("=" * 60)
 
     logger = get_logger()
 
@@ -201,9 +202,9 @@ def demo_logger():
 
 def demo_script_sync():
     """Demonstrate script synchronization"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     info("🔄 Demo 6: Script Synchronization")
-    print("="*60)
+    print("=" * 60)
 
     # Create a demo script
     demo_script = """#!/usr/bin/env python3
@@ -235,8 +236,7 @@ if __name__ == '__main__':
     # Initialize sync system
     try:
         sync = ScriptSyncSystem(
-            scripts_dir=demo_dir,
-            commands_dir=get_custom_commands_dir(global_mode=True)
+            scripts_dir=demo_dir, commands_dir=get_custom_commands_dir(global_mode=True)
         )
 
         # Sync scripts
@@ -251,9 +251,9 @@ if __name__ == '__main__':
 
 def demo_command_manager_operations():
     """Demonstrate command manager CRUD operations"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     info("🛠️  Demo 7: Command Manager Operations")
-    print("="*60)
+    print("=" * 60)
 
     manager = get_command_manager(global_mode=True)
 
@@ -282,10 +282,10 @@ def demo_command_manager_operations():
 
 def main():
     """Run all demos"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("  MCLI Framework - Library Usage Demo")
     print("  Demonstrating mcli-framework as a Python library")
-    print("="*70)
+    print("=" * 70)
 
     try:
         demo_path_management()
@@ -296,9 +296,9 @@ def main():
         demo_script_sync()
         demo_command_manager_operations()
 
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         success("🎉 All demos completed successfully!")
-        print("="*70)
+        print("=" * 70)
 
         print("\n📚 Next steps:")
         print("   • Check the created commands with: mcli workflow --help")
@@ -312,6 +312,7 @@ def main():
     except Exception as e:
         error(f"\n❌ Demo failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

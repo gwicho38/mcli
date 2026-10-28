@@ -88,7 +88,7 @@ def get_temp_conversion_dir() -> Path:
     return temp_dir
 
 
-def create_temp_hardlink(source_path: Path) -> Tuple[Path, Path]:
+def create_temp_hardlink(source_path: Path) -> tuple[Path, Path]:
     """
     Create a hard link to the source file in temp directory.
 
@@ -138,7 +138,7 @@ def cleanup_temp_conversion(temp_dir: Path, preserve_output: Optional[Path] = No
 
 def get_conversion_strategies(
     input_path: Path, output_path: Path, from_format: str, to_format: str, pandoc_args: str = ""
-) -> List[ConversionStrategy]:
+) -> list[ConversionStrategy]:
     """
     Get ordered list of conversion strategies to try based on input/output formats.
 
@@ -214,7 +214,7 @@ def execute_conversion_strategy(
     from_format: str,
     to_format: str,
     pandoc_args: str = "",
-) -> Tuple[bool, str]:
+) -> tuple[bool, str]:
     """
     Execute a specific conversion strategy in a temp directory.
 

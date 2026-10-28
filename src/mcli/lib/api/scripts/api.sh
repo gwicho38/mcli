@@ -37,12 +37,13 @@
 #   -X PUT \
 #   -T "$FILE" \
 #   "$MCLI_ENDPOINT/file/1/$MCLI_TENANT/$MCLI_TAG/$SUBDIR/$FILE_NAME"
- 
+
 request () {
   echo "$@"
   exit 0
     # Use awk to match and extract sections between MCLI_ and _MCLI
     # Use awk to match and extract sections between MCLI_ and _MCLI
+  # shellcheck disable=SC2154 # input is set by the script that sources this file
   echo "$input" | awk '{
       while(match($0, /MCLI_(.*?)/)) {
           print substr($0, RSTART+0, RLENGTH-0);  # Extract and print each section

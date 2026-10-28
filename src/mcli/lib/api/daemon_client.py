@@ -36,7 +36,7 @@ class APIDaemonClient:
             self.base_url = f"http://{self.config.host}:{self.config.port}"
         self.session = requests.Session()
 
-    def execute_shell_command(self, command: str) -> Dict[str, Any]:
+    def execute_shell_command(self, command: str) -> dict[str, Any]:
         """Execute a raw shell command via the Flask test server."""
         url = "http://localhost:5005/execute"
         try:
@@ -79,10 +79,10 @@ class APIDaemonClient:
         self,
         method: str,
         endpoint: str,
-        data: Optional[Dict] = None,
-        params: Optional[Dict] = None,
+        data: Optional[dict] = None,
+        params: Optional[dict] = None,
         **kwargs,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Make HTTP request to daemon with retry logic."""
         url = f"{self.base_url}{endpoint}"
         for attempt in range(self.config.retry_attempts):
@@ -114,20 +114,20 @@ class APIDaemonClient:
                 time.sleep(self.config.retry_delay)
         return {}  # Always return a dict
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Check daemon health."""
         return self._make_request("GET", "/health")
 
-    def status(self) -> Dict[str, Any]:
+    def status(self) -> dict[str, Any]:
         """Get daemon status."""
         return self._make_request("GET", "/status")
 
-    def list_commands(self, all: bool = False) -> Dict[str, Any]:
+    def list_commands(self, all: bool = False) -> dict[str, Any]:
         """List available commands with metadata. If all=True, include inactive."""
         params = {"all": str(all).lower()} if all else None
         return self._make_request("GET", "/commands", params=params)
 
-    def get_command_details(self, command_id: str) -> Optional[Dict[str, Any]]:
+    def get_command_details(self, command_id: str) -> Optional[dict[str, Any]]:
         """Get detailed information about a specific command."""
         return self._make_request("GET", f"/commands/{command_id}")
 
@@ -135,9 +135,9 @@ class APIDaemonClient:
         self,
         command_id: Optional[str] = None,
         command_name: Optional[str] = None,
-        args: Optional[List[str]] = None,
+        args: Optional[list[str]] = None,
         timeout: Optional[int] = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute a command via the daemon."""
         if not command_id and not command_name:
             raise ValueError("Either command_id or command_name must be provided")
@@ -153,11 +153,11 @@ class APIDaemonClient:
             data["timeout"] = timeout
         return self._make_request("POST", "/execute", data=data)
 
-    def start_daemon(self) -> Dict[str, Any]:
+    def start_daemon(self) -> dict[str, Any]:
         """Start the daemon via HTTP."""
         return self._make_request("POST", "/daemon/start")
 
-    def stop_daemon(self) -> Dict[str, Any]:
+    def stop_daemon(self) -> dict[str, Any]:
         """Stop the daemon via HTTP."""
         return self._make_request("POST", "/daemon/stop")
 
@@ -180,7 +180,7 @@ class APIDaemonClient:
 
 
 # Convenience functions for easy usage
-def execute_shell_command_via_flask(command: str) -> Dict[str, Any]:
+def execute_shell_command_via_flask(command: str) -> dict[str, Any]:
     """Execute a raw shell command via the Flask test server (convenience function)."""
     client = APIDaemonClient(shell_mode=True)
     return client.execute_shell_command(command)
@@ -192,20 +192,20 @@ def get_daemon_client() -> APIDaemonClient:
 
 
 def execute_command_via_daemon(
-    command_name: str, args: Optional[List[str]] = None
-) -> Dict[str, Any]:
+    command_name: str, args: Optional[list[str]] = None
+) -> dict[str, Any]:
     """Execute a command via the daemon (convenience function)."""
     client = get_daemon_client()
     return client.execute_command(command_name=command_name, args=args)
 
 
-def check_daemon_status() -> Dict[str, Any]:
+def check_daemon_status() -> dict[str, Any]:
     """Check daemon status (convenience function)."""
     client = get_daemon_client()
     return client.status()
 
 
-def list_available_commands() -> Dict[str, Any]:
+def list_available_commands() -> dict[str, Any]:
     """List available commands (convenience function)."""
     client = get_daemon_client()
     return client.list_commands()

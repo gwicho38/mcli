@@ -20,9 +20,10 @@ import ast
 import fnmatch
 import json
 import re
+import subprocess  # nosec B404 - runs git with fixed arguments
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 # Import configuration from separate config file for better maintainability
 from linter_config import ALLOWED_PATTERNS, COMMON_ACCEPTABLE_STRINGS
@@ -222,6 +223,31 @@ def should_check_file(file_path: Path) -> bool:
     return True
 
 
+_HUNK = re.compile(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@", re.M)
+
+
+def staged_changed_lines(file_path: Path) -> Optional[set[int]]:
+    """Line numbers the staged diff adds or changes in file_path.
+
+    A new file counts as all lines. Returns None when git cannot answer, so the
+    caller falls back to checking the whole file.
+    """
+    try:
+        out = subprocess.run(  # nosec B603 B607 - fixed git arguments, no shell
+            ["git", "diff", "--cached", "--unified=0", "--no-color", "--", str(file_path)],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    lines: set[int] = set()
+    for m in _HUNK.finditer(out):
+        start, count = int(m.group(1)), int(m.group(2) or 1)
+        lines.update(range(start, start + count))
+    return lines
+
+
 def lint_file(file_path: Path) -> tuple[list[tuple[int, int, str, str]], bool]:
     """Lint a single Python file for hardcoded strings.
 
@@ -326,6 +352,11 @@ def main() -> int:
         help="Enable strict mode (fewer exceptions)",
     )
     parser.add_argument(
+        "--changed-lines-only",
+        action="store_true",
+        help="Report only strings on lines the staged diff adds or changes (pre-commit mode)",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="Output results in JSON format for CI/CD integration",
@@ -354,6 +385,10 @@ def main() -> int:
                 violations, had_error = lint_file(path)
                 if had_error:
                     had_errors = True
+                if args.changed_lines_only:
+                    changed = staged_changed_lines(path)
+                    if changed is not None:
+                        violations = [v for v in violations if v[0] in changed]
                 if violations:
                     all_violations[path] = violations
         else:

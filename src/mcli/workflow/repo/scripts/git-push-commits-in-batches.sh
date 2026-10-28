@@ -12,7 +12,7 @@ else
     range=HEAD
 fi
 
-echo "Range: $r"
+echo "Range: $range"
 
 # count the number of commits to push
 n=$(git log --first-parent --format=format:x $range | wc -l)

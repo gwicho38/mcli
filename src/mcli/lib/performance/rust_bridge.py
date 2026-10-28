@@ -17,7 +17,7 @@ _RUST_COMMAND_MATCHER: Optional[bool] = None
 _RUST_PROCESS_MANAGER: Optional[bool] = None
 
 
-def check_rust_extensions() -> Dict[str, Optional[bool]]:
+def check_rust_extensions() -> dict[str, Optional[bool]]:
     """Check which Rust extensions are available."""
     global _RUST_AVAILABLE, _RUST_TFIDF, _RUST_FILE_WATCHER, _RUST_COMMAND_MATCHER, _RUST_PROCESS_MANAGER
 
@@ -149,14 +149,14 @@ class PerformanceMonitor:
     """Monitor performance differences between Rust and Python implementations."""
 
     def __init__(self) -> None:
-        self.benchmarks: Dict[str, Any] = {}
+        self.benchmarks: dict[str, Any] = {}
         self.rust_status = check_rust_extensions()
 
-    def benchmark_tfidf(self, documents: List[str], queries: List[str]) -> Dict[str, Any]:
+    def benchmark_tfidf(self, documents: list[str], queries: list[str]) -> dict[str, Any]:
         """Benchmark TF-IDF performance."""
         import time
 
-        results: Dict[str, Optional[float]] = {"rust": None, "python": None, "speedup": None}
+        results: dict[str, Optional[float]] = {"rust": None, "python": None, "speedup": None}
 
         # Benchmark Rust implementation
         if self.rust_status["tfidf"]:
@@ -216,13 +216,13 @@ class PerformanceMonitor:
 
         return dot_product / (norm1 * norm2)
 
-    def benchmark_file_watching(self, test_dir: str, num_operations: int = 100) -> Dict[str, Any]:
+    def benchmark_file_watching(self, test_dir: str, num_operations: int = 100) -> dict[str, Any]:
         """Benchmark file watching performance."""
         import os
         import tempfile
         import time
 
-        results: Dict[str, Optional[float]] = {"rust": None, "python": None, "speedup": None}
+        results: dict[str, Optional[float]] = {"rust": None, "python": None, "speedup": None}
 
         # Create test directory
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -255,7 +255,7 @@ class PerformanceMonitor:
 
         return results
 
-    def get_system_info(self) -> Dict[str, Any]:
+    def get_system_info(self) -> dict[str, Any]:
         """Get system information relevant to performance."""
         import platform
 
@@ -297,7 +297,7 @@ class PythonFileWatcher:
         self.handler = EventHandler()
         self.is_watching = False
 
-    def start_watching(self, paths: List[str], recursive: bool = True):
+    def start_watching(self, paths: list[str], recursive: bool = True):
         pass
 
         for path in paths:
@@ -323,18 +323,18 @@ class PythonCommandMatcher:
 
     def __init__(self, fuzzy_threshold: float = 0.3) -> None:
         self.fuzzy_threshold = fuzzy_threshold
-        self.commands: List[Dict[str, Any]] = []
+        self.commands: list[dict[str, Any]] = []
 
-    def add_commands(self, commands: List[Dict[str, Any]]) -> None:
+    def add_commands(self, commands: list[dict[str, Any]]) -> None:
         self.commands.extend(commands)
 
-    def search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
-        results: List[Dict[str, Any]] = []
+    def search(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
+        results: list[dict[str, Any]] = []
         query_lower = query.lower()
 
         for cmd in self.commands:
             score = 0.0
-            matched_fields: List[str] = []
+            matched_fields: list[str] = []
 
             # Exact name match
             if cmd["name"].lower() == query_lower:
@@ -385,7 +385,7 @@ def print_performance_summary() -> None:
         console.print()
 
         # Check all optimization status
-        optimization_data: Dict[str, Dict[str, Any]] = {
+        optimization_data: dict[str, dict[str, Any]] = {
             "rust": {"success": status["available"], "extensions": status},
             "uvloop": {"success": False, "reason": ""},
             "redis": {"success": False, "reason": ""},
@@ -437,7 +437,7 @@ def print_performance_summary() -> None:
         # Show Rust extensions details if available
         if status["available"]:
             # Convert status to Dict[str, bool] for the table
-            status_for_table: Dict[str, bool] = {k: bool(v) for k, v in status.items()}
+            status_for_table: dict[str, bool] = {k: bool(v) for k, v in status.items()}
             rust_table = VisualTable.create_rust_extensions_table(status_for_table)
             console.print(rust_table)
             console.print()

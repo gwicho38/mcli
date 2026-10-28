@@ -21,7 +21,7 @@ class GitCommitAIService:
         )  # Lower temp for more consistent commits
         self.ollama_base_url = self.config.get("ollama_base_url", "http://localhost:11434")
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load LLM configuration from config.toml."""
         try:
             config = read_from_toml("config.toml", "llm") or {}
@@ -45,7 +45,7 @@ class GitCommitAIService:
                 "ollama_base_url": "http://localhost:11434",
             }
 
-    def _analyze_file_patterns(self, changes: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_file_patterns(self, changes: dict[str, Any]) -> dict[str, Any]:
         """Analyze file patterns to understand the scope of changes."""
         analysis = {"languages": set(), "categories": set(), "scope": "unknown", "confidence": 0.0}
 
@@ -145,7 +145,7 @@ class GitCommitAIService:
         return analysis
 
     def _create_commit_prompt(
-        self, changes: Dict[str, Any], diff_content: str, analysis: Dict[str, Any]
+        self, changes: dict[str, Any], diff_content: str, analysis: dict[str, Any]
     ) -> str:
         """Create a detailed prompt for AI commit message generation."""
 
@@ -158,7 +158,7 @@ class GitCommitAIService:
 
 CHANGE ANALYSIS:
 - Files changed: {changes['total_files']}
-- New files: {len(changes['changes']['added'])}  
+- New files: {len(changes['changes']['added'])}
 - Modified files: {len(changes['changes']['modified'])}
 - Deleted files: {len(changes['changes']['deleted'])}
 - Languages: {', '.join(analysis['languages']) if analysis['languages'] else 'unknown'}
@@ -185,7 +185,7 @@ Body: explain what and why, not how (optional, max 72 chars per line)
 
 Guidelines:
 1. Use imperative mood ("add" not "added" or "adds")
-2. Be specific but concise 
+2. Be specific but concise
 3. Focus on WHAT changed and WHY
 4. Don't describe HOW (that's in the diff)
 5. Use conventional commit types appropriately
@@ -194,7 +194,7 @@ Guidelines:
 
 Examples:
 - "feat(auth): add JWT token validation"
-- "fix: resolve memory leak in user session cleanup" 
+- "fix: resolve memory leak in user session cleanup"
 - "docs: update API documentation for new endpoints"
 - "refactor(database): optimize query performance"
 - "test: add unit tests for payment processing"
@@ -203,7 +203,7 @@ Generate ONLY the commit message, nothing else:"""
 
         return prompt
 
-    def generate_commit_message(self, changes: Dict[str, Any], diff_content: str) -> str:
+    def generate_commit_message(self, changes: dict[str, Any], diff_content: str) -> str:
         """Generate an AI-powered commit message."""
         try:
             # Check if ollama is available
@@ -273,7 +273,7 @@ Generate ONLY the commit message, nothing else:"""
 
         return "\n".join(cleaned_lines) if cleaned_lines else ""
 
-    def _generate_fallback_message(self, changes: Dict[str, Any], analysis: Dict[str, Any]) -> str:
+    def _generate_fallback_message(self, changes: dict[str, Any], analysis: dict[str, Any]) -> str:
         """Generate fallback commit message using rules."""
 
         # Determine commit type based on analysis

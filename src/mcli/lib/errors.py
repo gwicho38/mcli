@@ -91,7 +91,7 @@ class InvalidCommandNameError(CommandError):
 class CommandNotFoundError(CommandError):
     """Raised when a command cannot be found."""
 
-    def __init__(self, name: str, searched_locations: Optional[List[str]] = None) -> None:
+    def __init__(self, name: str, searched_locations: Optional[list[str]] = None) -> None:
         self.name = name
         self.searched_locations = searched_locations or []
         message = f"Command not found: '{name}'"
@@ -152,7 +152,7 @@ class UnsupportedLanguageError(ScriptError):
     for better user guidance.
     """
 
-    def __init__(self, language: str, supported: Optional[List[str]] = None) -> None:
+    def __init__(self, language: str, supported: Optional[list[str]] = None) -> None:
         self.language = language
         self.supported = supported or []
         message = f"Unsupported language: '{language}'"
@@ -166,7 +166,7 @@ class UnsupportedFileTypeError(ScriptError):
     Includes the list of supported extensions in the error message.
     """
 
-    def __init__(self, extension: str, supported: Optional[List[str]] = None) -> None:
+    def __init__(self, extension: str, supported: Optional[list[str]] = None) -> None:
         self.extension = extension
         self.supported = supported or []
         message = f"Unsupported file type: '{extension}'"

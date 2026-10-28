@@ -237,7 +237,7 @@ class EnhancedDaemon:
     async def _reload_command_file(self, file_path: str):
         """Reload a command from a JSON file."""
         try:
-            with open(file_path, "r") as f:
+            with open(file_path) as f:
                 data = json.load(f)
 
             command = Command(
@@ -356,7 +356,7 @@ class EnhancedDaemon:
 
     # Public API methods
 
-    async def add_command(self, command_data: Dict[str, Any]) -> str:
+    async def add_command(self, command_data: dict[str, Any]) -> str:
         """Add a new command."""
         command = Command(
             id=command_data.get("id") or str(uuid.uuid4()),
@@ -386,7 +386,7 @@ class EnhancedDaemon:
 
         return command_id
 
-    async def search_commands(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def search_commands(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """Search for commands."""
         self.metrics["search_queries"] += 1
 
@@ -454,7 +454,7 @@ class EnhancedDaemon:
         ]
 
     async def execute_command(
-        self, command_id: str, context: Optional[Dict[str, Any]] = None
+        self, command_id: str, context: Optional[dict[str, Any]] = None
     ) -> str:
         """Execute a command."""
         self.metrics["commands_executed"] += 1
@@ -499,7 +499,7 @@ class EnhancedDaemon:
         }
         return executors.get(language, "bash")
 
-    def _prepare_command_args(self, command: Command) -> List[str]:
+    def _prepare_command_args(self, command: Command) -> list[str]:
         """Prepare command arguments based on language."""
         if command.language == "python":
             return ["-c", command.code]
@@ -512,7 +512,7 @@ class EnhancedDaemon:
         else:
             return [command.code]
 
-    async def get_status(self) -> Dict[str, Any]:
+    async def get_status(self) -> dict[str, Any]:
         """Get daemon status."""
         return {
             "running": self.running,

@@ -410,4 +410,3 @@ The schema also enables Monaco's built-in JSON formatting:
 - Right-click → "Format Document" (or `Shift+Alt+F`)
 - Automatic indentation and structure validation
 - Preserves comments in JSONC files
-

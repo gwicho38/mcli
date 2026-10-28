@@ -26,7 +26,7 @@ class DependencyChecker:
         """
         self.python_executable = python_executable
 
-    def parse_requires(self, requires: List[str]) -> List[str]:
+    def parse_requires(self, requires: list[str]) -> list[str]:
         """Parse @requires list into normalized package specifications.
 
         Handles comma-separated values and normalizes package names.
@@ -46,7 +46,7 @@ class DependencyChecker:
                     packages.append(part)
         return packages
 
-    def check_installed(self, packages: List[str]) -> Tuple[List[str], List[str]]:
+    def check_installed(self, packages: list[str]) -> tuple[list[str], list[str]]:
         """Check which packages are installed.
 
         Args:
@@ -75,7 +75,7 @@ class DependencyChecker:
 
         return installed, missing
 
-    def merge_base_runtime(self, packages: List[str], base: List[str]) -> List[str]:
+    def merge_base_runtime(self, packages: list[str], base: list[str]) -> list[str]:
         """Append base runtime packages that are not already declared.
 
         Comparison is by normalized package name, so a declared spec like
@@ -95,7 +95,7 @@ class DependencyChecker:
                 merged.append(pkg)
         return merged
 
-    def install_packages(self, packages: List[str], venv_path: Path) -> bool:
+    def install_packages(self, packages: list[str], venv_path: Path) -> bool:
         """Install packages using uv pip install.
 
         Args:
@@ -134,7 +134,7 @@ class DependencyChecker:
         except FileNotFoundError:
             raise RuntimeError(VenvMessages.UV_NOT_INSTALLED)
 
-    def get_installed_packages(self) -> Dict[str, str]:
+    def get_installed_packages(self) -> dict[str, str]:
         """Get dictionary of installed packages and their versions.
 
         Returns:

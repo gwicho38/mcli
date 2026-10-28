@@ -78,4 +78,3 @@ Chat/Agent tests need analysis:
 - pytest.ini → stays
 - TEST_SUMMARY.md → stays
 - test_makefile_full.sh → stays or move to scripts/
-

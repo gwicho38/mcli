@@ -5,9 +5,10 @@ import random
 import socket
 import threading
 import time
+from collections.abc import Sequence
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Type, Union, cast
 
 import uvicorn
 from fastapi import FastAPI
@@ -50,7 +51,7 @@ def find_free_port(start_port: int = 8000, max_attempts: int = 100) -> int:
     return random.randint(49152, 65535)
 
 
-def get_api_config() -> Dict[str, Any]:
+def get_api_config() -> dict[str, Any]:
     """
     Get API configuration from MCLI config files.
 
@@ -113,7 +114,7 @@ class ClickToAPIDecorator:
         self,
         endpoint_path: Optional[str] = None,
         http_method: str = "POST",
-        response_model: Optional[Type[BaseModel]] = None,
+        response_model: Optional[type[BaseModel]] = None,
         description: Optional[str] = None,
         tags: Optional[Sequence[Union[str, Enum]]] = None,
     ):
@@ -223,9 +224,9 @@ class ClickToAPIDecorator:
 
     def _create_request_model(
         self, func: Callable[..., Any], sig: inspect.Signature
-    ) -> Type[BaseModel]:
+    ) -> type[BaseModel]:
         """Create a Pydantic model from function signature."""
-        fields: Dict[str, Any] = {}
+        fields: dict[str, Any] = {}
 
         for param_name, param in sig.parameters.items():
             if param_name in ["sel", "ctx"]:
@@ -255,9 +256,9 @@ class ClickToAPIDecorator:
 
         # Create dynamic model
         model_name = f"{func.__name__}Request"
-        return cast(Type[BaseModel], type(model_name, (BaseModel,), fields))
+        return cast(type[BaseModel], type(model_name, (BaseModel,), fields))
 
-    def _create_response_model(self) -> Type[BaseModel]:
+    def _create_response_model(self) -> type[BaseModel]:
         """Create a default response model."""
 
         class DefaultResponse(BaseModel):
@@ -274,8 +275,8 @@ class ClickToAPIDecorator:
         path: str,
         method: str,
         func: Callable[..., Any],
-        request_model: Type[BaseModel],
-        response_model: Type[BaseModel],
+        request_model: type[BaseModel],
+        response_model: type[BaseModel],
         description: str,
         tags: Sequence[Union[str, Enum]],
     ) -> None:
@@ -300,7 +301,7 @@ class ClickToAPIDecorator:
                 return response_model(success=False, error=str(e), message="Operation failed")
 
         # Convert tags to list for FastAPI
-        tags_list: List[Union[str, Enum]] = list(tags)
+        tags_list: list[Union[str, Enum]] = list(tags)
 
         # Register with FastAPI
         if method == "GET":
@@ -320,7 +321,7 @@ class ClickToAPIDecorator:
                 path, response_model=response_model, description=description, tags=tags_list
             )(api_endpoint)
 
-    def _get_registered_endpoints(self, app: FastAPI) -> List[Dict[str, str]]:
+    def _get_registered_endpoints(self, app: FastAPI) -> list[dict[str, str]]:
         """Get list of registered endpoints."""
         endpoints = []
         for route in app.routes:
@@ -339,7 +340,7 @@ class ClickToAPIDecorator:
 def api_endpoint(
     endpoint_path: Optional[str] = None,
     http_method: str = "POST",
-    response_model: Optional[Type[BaseModel]] = None,
+    response_model: Optional[type[BaseModel]] = None,
     description: Optional[str] = None,
     tags: Optional[Sequence[Union[str, Enum]]] = None,
 ) -> ClickToAPIDecorator:
@@ -528,7 +529,7 @@ def register_command_as_api(
     command_func: Callable[..., Any],
     endpoint_path: Optional[str] = None,
     http_method: str = "POST",
-    response_model: Optional[Type[BaseModel]] = None,
+    response_model: Optional[type[BaseModel]] = None,
     description: Optional[str] = None,
     tags: Optional[Sequence[Union[str, Enum]]] = None,
 ) -> None:
@@ -573,7 +574,7 @@ def register_command_as_api(
 
 
 # Convenience function for common response models
-def create_success_response_model(result_type: type = str) -> Type[BaseModel]:
+def create_success_response_model(result_type: type = str) -> type[BaseModel]:
     """Create a success response model."""
 
     class SuccessResponse(BaseModel):
@@ -586,7 +587,7 @@ def create_success_response_model(result_type: type = str) -> Type[BaseModel]:
     return SuccessResponse
 
 
-def create_error_response_model() -> Type[BaseModel]:
+def create_error_response_model() -> type[BaseModel]:
     """Create an error response model."""
 
     class ErrorResponse(BaseModel):

@@ -102,14 +102,14 @@ def sync_init(install: bool, foreground: bool):
     # Step 2: Initialize IPFS
     if not _ipfs_initialized():
         info("Initializing IPFS...")
-        result = subprocess.run(
+        init_result = subprocess.run(
             ["ipfs", "init"],
             capture_output=True,
             text=True,
         )
-        if result.returncode != 0:
+        if init_result.returncode != 0:
             error("Failed to initialize IPFS.")
-            console.print(f"[dim]{result.stderr}[/dim]")
+            console.print(f"[dim]{init_result.stderr}[/dim]")
             return 1
         success("IPFS initialized!")
     else:

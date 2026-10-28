@@ -31,7 +31,7 @@ class LSHClient:
         self.api_key = api_key or os.getenv("LSH_API_KEY")
         self.timeout = aiohttp.ClientTimeout(total=timeout)
         self.session: Optional[aiohttp.ClientSession] = None
-        self._event_handlers: Dict[str, List[Callable]] = {}
+        self._event_handlers: dict[str, list[Callable]] = {}
 
         if not self.api_key:
             logger.warning("LSH_API_KEY not set - authentication may fail")
@@ -59,7 +59,7 @@ class LSHClient:
             self.session = None
             logger.info("Disconnected from LSH API")
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """Get HTTP headers with authentication."""
         headers = {"Content-Type": "application/json"}
         if self.api_key:
@@ -67,8 +67,8 @@ class LSHClient:
         return headers
 
     async def _request(
-        self, method: str, endpoint: str, data: Optional[Dict] = None
-    ) -> Dict[str, Any]:
+        self, method: str, endpoint: str, data: Optional[dict] = None
+    ) -> dict[str, Any]:
         """Make HTTP request to LSH API."""
         if not self.session:
             await self.connect()
@@ -89,11 +89,11 @@ class LSHClient:
             raise
 
     # Job Management
-    async def get_status(self) -> Dict[str, Any]:
+    async def get_status(self) -> dict[str, Any]:
         """Get LSH daemon status."""
         return await self._request("GET", "/api/status")
 
-    async def list_jobs(self, filter_params: Optional[Dict] = None) -> List[Dict]:
+    async def list_jobs(self, filter_params: Optional[dict] = None) -> list[dict]:
         """List all jobs from LSH daemon."""
         endpoint = "/api/jobs"
         if filter_params:
@@ -101,23 +101,23 @@ class LSHClient:
             endpoint += "?" + "&".join(f"{k}={v}" for k, v in filter_params.items())
         return await self._request("GET", endpoint)
 
-    async def get_job(self, job_id: str) -> Dict[str, Any]:
+    async def get_job(self, job_id: str) -> dict[str, Any]:
         """Get specific job details."""
         return await self._request("GET", f"/api/jobs/{job_id}")
 
-    async def create_job(self, job_spec: Dict[str, Any]) -> Dict[str, Any]:
+    async def create_job(self, job_spec: dict[str, Any]) -> dict[str, Any]:
         """Create a new job in LSH daemon."""
         return await self._request("POST", "/api/jobs", job_spec)
 
-    async def trigger_job(self, job_id: str) -> Dict[str, Any]:
+    async def trigger_job(self, job_id: str) -> dict[str, Any]:
         """Trigger job execution."""
         return await self._request("POST", f"/api/jobs/{job_id}/trigger")
 
-    async def start_job(self, job_id: str) -> Dict[str, Any]:
+    async def start_job(self, job_id: str) -> dict[str, Any]:
         """Start a job."""
         return await self._request("POST", f"/api/jobs/{job_id}/start")
 
-    async def stop_job(self, job_id: str, signal: str = "SIGTERM") -> Dict[str, Any]:
+    async def stop_job(self, job_id: str, signal: str = "SIGTERM") -> dict[str, Any]:
         """Stop a job."""
         return await self._request("POST", f"/api/jobs/{job_id}/stop", {"signal": signal})
 
@@ -127,7 +127,7 @@ class LSHClient:
         endpoint = f"/api/jobs/{job_id}?" + "&".join(f"{k}={v}" for k, v in params.items())
         await self._request("DELETE", endpoint)
 
-    async def bulk_create_jobs(self, jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def bulk_create_jobs(self, jobs: list[dict[str, Any]]) -> dict[str, Any]:
         """Create multiple jobs."""
         return await self._request("POST", "/api/jobs/bulk", {"jobs": jobs})
 
@@ -138,11 +138,11 @@ class LSHClient:
         return await self._request("GET", endpoint)
 
     # Webhook Management
-    async def list_webhooks(self) -> Dict[str, Any]:
+    async def list_webhooks(self) -> dict[str, Any]:
         """List configured webhooks."""
         return await self._request("GET", "/api/webhooks")
 
-    async def add_webhook(self, endpoint_url: str) -> Dict[str, Any]:
+    async def add_webhook(self, endpoint_url: str) -> dict[str, Any]:
         """Add webhook endpoint."""
         return await self._request("POST", "/api/webhooks", {"endpoint": endpoint_url})
 
@@ -203,8 +203,8 @@ class LSHClient:
 
     # Supabase Integration
     async def trigger_supabase_sync(
-        self, table: str, operation: str, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, table: str, operation: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Trigger Supabase data sync notification."""
         payload = {"table": table, "operation": operation, "data": data}
         return await self._request("POST", "/api/supabase/sync", payload)
@@ -240,11 +240,11 @@ class LSHEventProcessor:
         self.client.on("supabase:sync", self._handle_supabase_sync)
         self.client.on("connected", self._handle_connected)
 
-    async def _handle_connected(self, data: Dict[str, Any]):
+    async def _handle_connected(self, data: dict[str, Any]):
         """Handle connection established event."""
         self.logger.info("Connected to LSH event stream")
 
-    async def _handle_job_started(self, data: Dict[str, Any]):
+    async def _handle_job_started(self, data: dict[str, Any]):
         """Handle job started event."""
         job_data = data.get("data", {})
         job_id = job_data.get("id", "unknown")
@@ -263,7 +263,7 @@ class LSHEventProcessor:
             },
         )
 
-    async def _handle_job_completed(self, data: Dict[str, Any]):
+    async def _handle_job_completed(self, data: dict[str, Any]):
         """Handle job completion event."""
         job_data = data.get("data", {})
         job_id = job_data.get("id", "unknown")
@@ -296,7 +296,7 @@ class LSHEventProcessor:
             },
         )
 
-    async def _handle_job_failed(self, data: Dict[str, Any]):
+    async def _handle_job_failed(self, data: dict[str, Any]):
         """Handle job failure event."""
         job_data = data.get("data", {})
         job_id = job_data.get("id", "unknown")
@@ -317,7 +317,7 @@ class LSHEventProcessor:
             },
         )
 
-    async def _handle_supabase_sync(self, data: Dict[str, Any]):
+    async def _handle_supabase_sync(self, data: dict[str, Any]):
         """Handle Supabase data sync event."""
         table = data.get("table", "unknown")
         operation = data.get("operation", "unknown")
@@ -340,7 +340,7 @@ class LSHEventProcessor:
             },
         )
 
-    async def _process_trading_data(self, job_data: Dict, stdout: str):
+    async def _process_trading_data(self, job_data: dict, stdout: str):
         """Process politician trading data from job output."""
         try:
             # Parse trading data from stdout
@@ -371,7 +371,7 @@ class LSHEventProcessor:
         except Exception as e:
             self.logger.error(f"Error processing trading data: {e}")
 
-    async def _process_supabase_job(self, job_data: Dict):
+    async def _process_supabase_job(self, job_data: dict):
         """Process Supabase synchronization job."""
         try:
             # Check for database sync metadata
@@ -388,7 +388,7 @@ class LSHEventProcessor:
         except Exception as e:
             self.logger.error(f"Error processing Supabase job: {e}")
 
-    async def _process_politician_data(self, table: str, operation: str, data: Dict):
+    async def _process_politician_data(self, table: str, operation: str, data: dict):
         """Process politician-related data changes."""
         try:
             self.logger.info(f"Processing politician data: {operation} on {table}")
@@ -411,7 +411,7 @@ class LSHEventProcessor:
         except Exception as e:
             self.logger.error(f"Error processing politician data: {e}")
 
-    async def _transform_politician_data(self, table: str, operation: str, data: Dict) -> Dict:
+    async def _transform_politician_data(self, table: str, operation: str, data: dict) -> dict:
         """Transform politician data based on business rules."""
         # Apply transformations here
         transformed = data.copy()
@@ -439,7 +439,7 @@ class LSHEventProcessor:
         else:
             return "very_large"
 
-    async def _emit_mcli_event(self, event_type: str, data: Dict[str, Any]):
+    async def _emit_mcli_event(self, event_type: str, data: dict[str, Any]):
         """Emit mcli-specific events (can be extended to use message queue)."""
         self.logger.debug(f"Emitting mcli event: {event_type}")
         # For now, just log - can be extended to use Redis, RabbitMQ, etc.

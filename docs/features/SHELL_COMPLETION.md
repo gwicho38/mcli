@@ -113,7 +113,7 @@ MCLI's completion system is designed for performance and maintainability:
 ### Lazy Loading with Completion
 - **Problem**: Traditional lazy loading breaks shell completion because commands aren't discoverable until loaded
 - **Solution**: Static completion data provides instant completions without loading heavy modules
-- **Files**: 
+- **Files**:
   - `completion_cmd.py` - Completion management commands
   - `completion_helpers.py` - Static completion data and completion-aware lazy loading
 

@@ -56,21 +56,21 @@ log_skip() {
 run_test() {
   local target="$1"
   local skip_reason="$2"
-  
+
   log_test "$target"
-  
+
   if [ -n "$skip_reason" ]; then
     log_skip "$target - $skip_reason"
     return
   fi
-  
+
   # Backup any existing cache files to restore afterwards
   local cache_dir=".build_cache"
   if [ -d "$cache_dir" ]; then
     log "Backing up cache directory"
     cp -r "$cache_dir" "${cache_dir}.bak"
   fi
-  
+
   # Run the make target with a timeout
   if $VERBOSE; then
     if timeout 60 make "$target" -n; then
@@ -87,7 +87,7 @@ run_test() {
       return
     fi
   fi
-  
+
   # Restore cache directory if it was backed up
   if [ -d "${cache_dir}.bak" ]; then
     log "Restoring cache directory"

@@ -25,7 +25,7 @@ class Command:
     code: str
     language: str  # 'python', 'node', 'lua', 'shell', 'rust'
     group: Optional[str] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     execution_count: int = 0
@@ -33,7 +33,7 @@ class Command:
     is_active: bool = True
     version: str = "1.0"
     author: Optional[str] = None
-    dependencies: Optional[List[str]] = None
+    dependencies: Optional[list[str]] = None
 
     def __post_init__(self):
         if self.created_at is None:
@@ -58,7 +58,7 @@ class ExecutionRecord:
     error: Optional[str] = None
     execution_time_ms: Optional[int] = None
     user: Optional[str] = None
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[dict[str, Any]] = None
 
 
 class AsyncCommandDatabase:
@@ -78,7 +78,7 @@ class AsyncCommandDatabase:
 
         # Connection pool
         self.pool_size = pool_size
-        self._connection_pool: List[aiosqlite.Connection] = []
+        self._connection_pool: list[aiosqlite.Connection] = []
         self._pool_lock = asyncio.Lock()
         self._initialized = False
 
@@ -282,8 +282,8 @@ class AsyncCommandDatabase:
             try:
                 await db.execute(
                     """
-                    INSERT INTO commands 
-                    (id, name, description, code, language, group_name, tags, 
+                    INSERT INTO commands
+                    (id, name, description, code, language, group_name, tags,
                      created_at, updated_at, execution_count, last_executed, is_active,
                      version, author, dependencies)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -353,7 +353,7 @@ class AsyncCommandDatabase:
             try:
                 result = await db.execute(
                     """
-                    UPDATE commands SET 
+                    UPDATE commands SET
                     name=?, description=?, code=?, language=?, group_name=?, tags=?,
                     updated_at=?, execution_count=?, last_executed=?, is_active=?,
                     version=?, author=?, dependencies=?
@@ -420,7 +420,7 @@ class AsyncCommandDatabase:
                 await db.rollback()
                 raise
 
-    async def search_commands(self, query: str, limit: int = 50) -> List[Command]:
+    async def search_commands(self, query: str, limit: int = 50) -> list[Command]:
         """Full-text search for commands."""
         if not query.strip():
             return await self.get_all_commands(limit=limit)
@@ -451,7 +451,7 @@ class AsyncCommandDatabase:
         language: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[Command]:
+    ) -> list[Command]:
         """Get all commands with optional filtering."""
         where_clauses = ["is_active = 1"]
         params = []
@@ -467,7 +467,7 @@ class AsyncCommandDatabase:
         params.extend([limit, offset])
 
         query = """
-            SELECT * FROM commands 
+            SELECT * FROM commands
             WHERE {" AND ".join(where_clauses)}
             ORDER BY execution_count DESC, updated_at DESC
             LIMIT ? OFFSET ?
@@ -480,12 +480,12 @@ class AsyncCommandDatabase:
                     commands.append(self._row_to_command(row))
                 return commands
 
-    async def get_popular_commands(self, limit: int = 10) -> List[Command]:
+    async def get_popular_commands(self, limit: int = 10) -> list[Command]:
         """Get most popular commands by execution count."""
         async with self._get_connection() as db:
             async with db.execute(
                 """
-                SELECT * FROM commands 
+                SELECT * FROM commands
                 WHERE is_active = 1 AND execution_count > 0
                 ORDER BY execution_count DESC, updated_at DESC
                 LIMIT ?
@@ -503,7 +503,7 @@ class AsyncCommandDatabase:
             try:
                 await db.execute(
                     """
-                    INSERT INTO executions 
+                    INSERT INTO executions
                     (id, command_id, executed_at, status, output, error, execution_time_ms, user, context)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -523,7 +523,7 @@ class AsyncCommandDatabase:
                 # Update command execution count
                 await db.execute(
                     """
-                    UPDATE commands SET 
+                    UPDATE commands SET
                     execution_count = execution_count + 1,
                     last_executed = ?
                     WHERE id = ?
@@ -544,7 +544,7 @@ class AsyncCommandDatabase:
 
     async def get_execution_history(
         self, command_id: Optional[str] = None, limit: int = 100
-    ) -> List[ExecutionRecord]:
+    ) -> list[ExecutionRecord]:
         """Get execution history."""
         query = "SELECT * FROM executions"
         params = []

@@ -25,8 +25,8 @@ class NotebookValidator:
     """Validator for workflow notebooks."""
 
     def __init__(self):
-        self.schema_errors: List[str] = []
-        self.syntax_errors: List[str] = []
+        self.schema_errors: list[str] = []
+        self.syntax_errors: list[str] = []
 
     def validate_schema(self, notebook: WorkflowNotebook) -> bool:
         """
@@ -186,7 +186,7 @@ class NotebookValidator:
         # - Common anti-patterns
         return True
 
-    def get_all_errors(self) -> List[str]:
+    def get_all_errors(self) -> list[str]:
         """Get all validation errors."""
         return self.schema_errors + self.syntax_errors
 
@@ -195,9 +195,9 @@ class CodeLinter:
     """Linter for workflow notebook code."""
 
     def __init__(self):
-        self.issues: List[Dict[str, any]] = []
+        self.issues: list[dict[str, any]] = []
 
-    def lint_python(self, code: str) -> List[Dict[str, any]]:
+    def lint_python(self, code: str) -> list[dict[str, any]]:
         """
         Lint Python code using available linters.
 
@@ -267,7 +267,7 @@ class CodeLinter:
             # Already caught by syntax validation
             pass
 
-    def lint_shell(self, code: str) -> List[Dict[str, any]]:
+    def lint_shell(self, code: str) -> list[dict[str, any]]:
         """
         Lint shell script using shellcheck if available.
 

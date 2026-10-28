@@ -11,9 +11,10 @@ import logging
 import os
 import re
 import sys
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generator, Optional
+from typing import Any, Optional
 
 import click
 

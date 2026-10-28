@@ -1,4 +1,5 @@
 """Unit tests for src/mcli/lib/ipns_manager.py"""
+
 import subprocess
 from unittest.mock import MagicMock, patch
 
@@ -14,7 +15,6 @@ from mcli.lib.ipns_manager import (
     publish_to_ipns,
     resolve_ipns,
 )
-
 
 # ---------------------------------------------------------------------------
 # derive_key_info tests
@@ -57,7 +57,7 @@ def test_key_name_format():
     """key_name starts with 'mcli-' followed by 16 hex characters."""
     info = derive_key_info("any-key", "any-repo", "any-scope")
     assert info.key_name.startswith("mcli-")
-    suffix = info.key_name[len("mcli-"):]
+    suffix = info.key_name[len("mcli-") :]
     assert len(suffix) == 16
     assert all(c in "0123456789abcdef" for c in suffix)
 

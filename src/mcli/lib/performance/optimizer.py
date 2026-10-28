@@ -22,7 +22,7 @@ class PerformanceOptimizer:
         self.redis_available = False
         self.uvloop_installed = False
 
-    def apply_all_optimizations(self) -> Dict[str, Any]:
+    def apply_all_optimizations(self) -> dict[str, Any]:
         """Apply all available performance optimizations."""
         results = {}
 
@@ -44,7 +44,7 @@ class PerformanceOptimizer:
         self.optimizations_applied = results
         return results
 
-    def _optimize_event_loop(self) -> Dict[str, Any]:
+    def _optimize_event_loop(self) -> dict[str, Any]:
         """Optimize asyncio event loop with UVLoop."""
         try:
             self.uvloop_installed = install_uvloop()
@@ -61,7 +61,7 @@ class PerformanceOptimizer:
             logger.error(f"Failed to optimize event loop: {e}")
             return {"success": False, "error": str(e)}
 
-    def _initialize_rust_extensions(self) -> Dict[str, Any]:
+    def _initialize_rust_extensions(self) -> dict[str, Any]:
         """Initialize Rust extensions for maximum performance."""
         try:
             self.rust_status = check_rust_extensions()
@@ -132,7 +132,7 @@ class PerformanceOptimizer:
             logger.error(f"Failed to initialize Rust extensions: {e}")
             return {"success": False, "error": str(e)}
 
-    def _check_redis_availability(self) -> Dict[str, Any]:
+    def _check_redis_availability(self) -> dict[str, Any]:
         """Check Redis availability for caching."""
         try:
             import redis
@@ -161,7 +161,7 @@ class PerformanceOptimizer:
                 "fallback": "In-memory caching only",
             }
 
-    def _optimize_python_settings(self) -> Dict[str, Any]:
+    def _optimize_python_settings(self) -> dict[str, Any]:
         """Apply Python-specific optimizations."""
         optimizations = {}
 
@@ -202,7 +202,7 @@ class PerformanceOptimizer:
             "performance_gain": "Reduced overhead and improved memory management",
         }
 
-    def _apply_environment_optimizations(self) -> Dict[str, Any]:
+    def _apply_environment_optimizations(self) -> dict[str, Any]:
         """Apply environment-specific optimizations."""
         optimizations = {}
 
@@ -265,7 +265,7 @@ class PerformanceOptimizer:
             "performance_gain": "Environment-specific optimizations applied",
         }
 
-    def get_optimization_summary(self) -> Dict[str, Any]:
+    def get_optimization_summary(self) -> dict[str, Any]:
         """Get a summary of all applied optimizations."""
         if not self.optimizations_applied:
             self.apply_all_optimizations()
@@ -301,7 +301,7 @@ class PerformanceOptimizer:
         else:
             return "Baseline performance with Python optimizations"
 
-    def benchmark_performance(self, test_size: str = "small") -> Dict[str, Any]:
+    def benchmark_performance(self, test_size: str = "small") -> dict[str, Any]:
         """Run performance benchmarks."""
         from mcli.lib.performance.rust_bridge import PerformanceMonitor
 
@@ -386,7 +386,7 @@ def get_global_optimizer() -> PerformanceOptimizer:
     return _global_optimizer
 
 
-def apply_optimizations() -> Dict[str, Any]:
+def apply_optimizations() -> dict[str, Any]:
     """Apply all available optimizations."""
     optimizer = get_global_optimizer()
     return optimizer.apply_all_optimizations()

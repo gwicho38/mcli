@@ -24,8 +24,9 @@ import json
 import logging
 import sys
 import traceback
+from collections.abc import MutableMapping
 from datetime import datetime, timezone
-from typing import Any, Dict, MutableMapping, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 from .correlation import get_correlation_id
 
@@ -69,7 +70,7 @@ class StructuredFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format the log record as JSON."""
         # Build the base log entry
-        log_entry: Dict[str, Any] = {
+        log_entry: dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
             "level": record.levelname,
             "logger": record.name,
@@ -165,7 +166,7 @@ class StructuredLogger(logging.LoggerAdapter):
     The extra fields will be included in the structured log output.
     """
 
-    def __init__(self, logger: logging.Logger, extra: Optional[Dict[str, Any]] = None) -> None:
+    def __init__(self, logger: logging.Logger, extra: Optional[dict[str, Any]] = None) -> None:
         """Initialize the structured logger adapter.
 
         Args:
@@ -176,7 +177,7 @@ class StructuredLogger(logging.LoggerAdapter):
 
     def process(
         self, msg: str, kwargs: MutableMapping[str, Any]
-    ) -> Tuple[str, MutableMapping[str, Any]]:
+    ) -> tuple[str, MutableMapping[str, Any]]:
         """Process the log message and keyword arguments.
 
         Merges extra context from the adapter with kwargs passed to the log call.
@@ -227,7 +228,7 @@ def get_structured_logger(
     structured_output: bool = True,
     log_to_file: bool = True,
     log_to_console: bool = False,
-    extra: Optional[Dict[str, Any]] = None,
+    extra: Optional[dict[str, Any]] = None,
 ) -> StructuredLogger:
     """Get a structured logger instance.
 

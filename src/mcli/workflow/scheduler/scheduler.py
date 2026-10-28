@@ -29,10 +29,10 @@ class JobExecutor:
     """Handles job execution in separate processes/threads."""
 
     def __init__(self):
-        self.running_processes: Dict[str, subprocess.Popen] = {}
+        self.running_processes: dict[str, subprocess.Popen] = {}
         self.lock = threading.Lock()
 
-    def execute_job(self, job: ScheduledJob) -> Dict[str, Any]:
+    def execute_job(self, job: ScheduledJob) -> dict[str, Any]:
         """Execute a job and return execution results."""
         start_time = datetime.now()
         result = {
@@ -84,7 +84,7 @@ class JobExecutor:
         job.runtime_seconds = runtime
         return result
 
-    def _execute_command(self, job: ScheduledJob) -> Dict[str, Any]:
+    def _execute_command(self, job: ScheduledJob) -> dict[str, Any]:
         """Execute shell command."""
         env = os.environ.copy()
         env.update(job.environment)
@@ -118,7 +118,7 @@ class JobExecutor:
             with self.lock:
                 self.running_processes.pop(job.id, None)
 
-    def _execute_python(self, job: ScheduledJob) -> Dict[str, Any]:
+    def _execute_python(self, job: ScheduledJob) -> dict[str, Any]:
         """Execute Python code.
 
         Uses the resolved Python executable from PyEnvManager, which prefers
@@ -163,7 +163,7 @@ class JobExecutor:
                 "status": JobStatus.FAILED.value,
             }
 
-    def _execute_cleanup(self, job: ScheduledJob) -> Dict[str, Any]:
+    def _execute_cleanup(self, job: ScheduledJob) -> dict[str, Any]:
         """Execute file system cleanup tasks."""
         try:
             # Parse cleanup command (JSON format expected)
@@ -196,12 +196,12 @@ class JobExecutor:
                 "status": JobStatus.FAILED.value,
             }
 
-    def _execute_system(self, job: ScheduledJob) -> Dict[str, Any]:
+    def _execute_system(self, job: ScheduledJob) -> dict[str, Any]:
         """Execute system maintenance tasks."""
         # Similar to cleanup but for system-level tasks
         return self._execute_command(job)
 
-    def _execute_api_call(self, job: ScheduledJob) -> Dict[str, Any]:
+    def _execute_api_call(self, job: ScheduledJob) -> dict[str, Any]:
         """Execute HTTP API calls."""
         try:
             import requests
@@ -244,12 +244,12 @@ class JobExecutor:
                 "status": JobStatus.FAILED.value,
             }
 
-    def _execute_custom(self, job: ScheduledJob) -> Dict[str, Any]:
+    def _execute_custom(self, job: ScheduledJob) -> dict[str, Any]:
         """Execute custom job types."""
         # Default to command execution
         return self._execute_command(job)
 
-    def _cleanup_old_files(self, path: str, days: int, pattern: str) -> Dict[str, Any]:
+    def _cleanup_old_files(self, path: str, days: int, pattern: str) -> dict[str, Any]:
         """Clean up old files in a directory."""
         try:
             import glob
@@ -276,7 +276,7 @@ class JobExecutor:
         except Exception as e:
             return {"task": "delete_old_files", "error": str(e)}
 
-    def _empty_trash(self) -> Dict[str, Any]:
+    def _empty_trash(self) -> dict[str, Any]:
         """Empty system trash/recycle bin."""
         try:
             import platform
@@ -302,7 +302,7 @@ class JobExecutor:
         except Exception as e:
             return {"task": "empty_trash", "error": str(e)}
 
-    def _organize_desktop(self) -> Dict[str, Any]:
+    def _organize_desktop(self) -> dict[str, Any]:
         """Organize desktop files into folders."""
         try:
             desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
@@ -367,7 +367,7 @@ class JobScheduler:
         self.monitor = JobMonitor()
         self.executor = JobExecutor()
 
-        self.jobs: Dict[str, ScheduledJob] = {}
+        self.jobs: dict[str, ScheduledJob] = {}
         self.running = False
         self.scheduler_thread: Optional[threading.Thread] = None
         self.lock = threading.Lock()
@@ -578,11 +578,11 @@ class JobScheduler:
         """Get a job by ID."""
         return self.jobs.get(job_id)
 
-    def get_all_jobs(self) -> List[ScheduledJob]:
+    def get_all_jobs(self) -> list[ScheduledJob]:
         """Get all jobs."""
         return list(self.jobs.values())
 
-    def get_job_status(self, job_id: str) -> Optional[Dict[str, Any]]:
+    def get_job_status(self, job_id: str) -> Optional[dict[str, Any]]:
         """Get detailed status of a job."""
         job = self.jobs.get(job_id)
         if not job:
@@ -595,7 +595,7 @@ class JobScheduler:
             "history": self.storage.get_job_history(job_id, limit=5),
         }
 
-    def get_scheduler_stats(self) -> Dict[str, Any]:
+    def get_scheduler_stats(self) -> dict[str, Any]:
         """Get scheduler statistics."""
         total_jobs = len(self.jobs)
         enabled_jobs = len([j for j in self.jobs.values() if j.enabled])
@@ -610,7 +610,7 @@ class JobScheduler:
             "storage_info": self.storage.get_storage_info(),
         }
 
-    def create_json_response(self) -> Dict[str, Any]:
+    def create_json_response(self) -> dict[str, Any]:
         """Create JSON response for frontend integration."""
         jobs_data = []
         for job in self.jobs.values():

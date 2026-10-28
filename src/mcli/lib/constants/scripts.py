@@ -25,7 +25,7 @@ class ScriptLanguages:
     IPYNB = "ipynb"
 
     # All supported languages as a list (useful for validation)
-    ALL: List[str] = [PYTHON, SHELL, JAVASCRIPT, TYPESCRIPT, IPYNB]
+    ALL: list[str] = [PYTHON, SHELL, JAVASCRIPT, TYPESCRIPT, IPYNB]
 
 
 class ScriptExtensions:
@@ -46,7 +46,7 @@ class ScriptExtensions:
     IPYNB = ".ipynb"
 
     # Language to extension mapping (canonical extension for each language)
-    BY_LANGUAGE: Dict[str, str] = {
+    BY_LANGUAGE: dict[str, str] = {
         ScriptLanguages.PYTHON: PYTHON,
         ScriptLanguages.SHELL: SHELL,
         ScriptLanguages.JAVASCRIPT: JAVASCRIPT,
@@ -55,7 +55,7 @@ class ScriptExtensions:
     }
 
     # Extension to language mapping (for detection)
-    TO_LANGUAGE: Dict[str, str] = {
+    TO_LANGUAGE: dict[str, str] = {
         PYTHON: ScriptLanguages.PYTHON,
         SHELL: ScriptLanguages.SHELL,
         SHELL_BASH: ScriptLanguages.SHELL,
@@ -65,7 +65,7 @@ class ScriptExtensions:
     }
 
     # All supported extensions
-    ALL: List[str] = [PYTHON, SHELL, SHELL_BASH, JAVASCRIPT, TYPESCRIPT, IPYNB]
+    ALL: list[str] = [PYTHON, SHELL, SHELL_BASH, JAVASCRIPT, TYPESCRIPT, IPYNB]
 
 
 class ScriptCommentPrefixes:
@@ -80,7 +80,7 @@ class ScriptCommentPrefixes:
     HASH = "#"
     DOUBLE_SLASH = "//"
 
-    BY_LANGUAGE: Dict[str, str] = {
+    BY_LANGUAGE: dict[str, str] = {
         ScriptLanguages.PYTHON: HASH,
         ScriptLanguages.SHELL: HASH,
         ScriptLanguages.JAVASCRIPT: DOUBLE_SLASH,
@@ -109,7 +109,7 @@ class ScriptMetadataKeys:
     SHELL = "shell"
 
     # Keys that contain comma-separated lists
-    LIST_KEYS: List[str] = [REQUIRES, TAGS]
+    LIST_KEYS: list[str] = [REQUIRES, TAGS]
 
 
 class ScriptMetadataDefaults:
@@ -142,7 +142,7 @@ class ShellTypes:
     FISH = "fish"
     SH = "sh"
 
-    ALL: List[str] = [BASH, ZSH, FISH, SH]
+    ALL: list[str] = [BASH, ZSH, FISH, SH]
     DEFAULT = BASH
 
 
@@ -157,7 +157,7 @@ class CommandTypes:
     COMMAND = "command"
     GROUP = "group"
 
-    ALL: List[str] = [COMMAND, GROUP]
+    ALL: list[str] = [COMMAND, GROUP]
     DEFAULT = COMMAND
 
 

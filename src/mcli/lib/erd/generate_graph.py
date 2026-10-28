@@ -9,7 +9,7 @@ import pydot
 def load_graph_data(json_file_path):
     """Load the graph data from a JSON file."""
     try:
-        with open(json_file_path, "r") as f:
+        with open(json_file_path) as f:
             return json.load(f)
     except json.JSONDecodeError as e:
         raise ValueError(f"Error parsing JSON file {json_file_path}: {e}")

@@ -37,7 +37,7 @@ class PDFProcessor:
         self.lightweight_server = LightweightModelServer(models_dir, port)
         self.temp_dir = Path(tempfile.mkdtemp(prefix="pdf_processor_"))
 
-    def extract_text_from_pdf(self, pdf_path: str) -> Dict[str, Any]:
+    def extract_text_from_pdf(self, pdf_path: str) -> dict[str, Any]:
         """Extract text from PDF with enhanced processing."""
         try:
             pdf_path = Path(pdf_path)
@@ -94,7 +94,7 @@ class PDFProcessor:
 
         return text_content
 
-    def process_pdf_with_ai(self, pdf_path: str, model_key: Optional[str] = None) -> Dict[str, Any]:
+    def process_pdf_with_ai(self, pdf_path: str, model_key: Optional[str] = None) -> dict[str, Any]:
         """Process PDF with AI model for enhanced analysis."""
         try:
             # Extract text first
@@ -131,7 +131,7 @@ class PDFProcessor:
             logger.error(f"Error processing PDF with AI: {e}")
             return {"error": str(e)}
 
-    def _analyze_text_with_ai(self, text_content: str, model_key: str) -> Dict[str, Any]:
+    def _analyze_text_with_ai(self, text_content: str, model_key: str) -> dict[str, Any]:
         """Analyze text content with AI model."""
         try:
             # For now, provide basic analysis
@@ -163,7 +163,7 @@ class PDFProcessor:
         summary = ". ".join(sentences[:2]) + ". " + sentences[-1]
         return summary[:500] + "..." if len(summary) > 500 else summary
 
-    def _extract_key_topics(self, text: str) -> List[str]:
+    def _extract_key_topics(self, text: str) -> list[str]:
         """Extract key topics from text."""
         # Simple keyword extraction
         words = text.lower().split()
@@ -274,7 +274,7 @@ class PDFProcessor:
             logger.error(f"Error starting PDF processing service: {e}")
             return False
 
-    def get_service_status(self) -> Dict[str, Any]:
+    def get_service_status(self) -> dict[str, Any]:
         """Get the status of the PDF processing service."""
         return {
             "service_running": self.lightweight_server.running,

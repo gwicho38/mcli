@@ -10,11 +10,11 @@ T = TypeVar("T")
 class RestrictedUnpickler(pickle.Unpickler):
     """Unpickler that only allows deserializing a specific class."""
 
-    def __init__(self, file: io.BufferedIOBase, allowed_class: Type):
+    def __init__(self, file: io.BufferedIOBase, allowed_class: type):
         super().__init__(file)
         self.allowed_class = allowed_class
 
-    def find_class(self, module: str, name: str) -> Type:
+    def find_class(self, module: str, name: str) -> type:
         if name == self.allowed_class.__name__:
             return self.allowed_class
         raise pickle.UnpicklingError(f"Forbidden class: {module}.{name}")
@@ -56,7 +56,7 @@ class SafeUnpickler(pickle.Unpickler):
     execution via pickle reduce gadgets.
     """
 
-    def find_class(self, module: str, name: str) -> Type:
+    def find_class(self, module: str, name: str) -> type:
         if (module, name) in _SAFE_GLOBALS:
             return super().find_class(module, name)
         raise pickle.UnpicklingError(f"Forbidden global during unpickling: {module}.{name}")
@@ -71,7 +71,7 @@ def safe_loads(data: bytes):
 
 
 class ObjectCache(Generic[T]):
-    def __init__(self, class_type: Type[T], app_name: str, factory: Callable[[], T] = None):
+    def __init__(self, class_type: type[T], app_name: str, factory: Callable[[], T] = None):
         self.class_type = class_type
         self.app_name = app_name
         self.factory = factory or class_type

@@ -21,16 +21,16 @@ SELECT cron.schedule(
 );
 
 -- Verify the cron job was created
-SELECT 
+SELECT
     jobname,
-    schedule, 
+    schedule,
     active,
     database
-FROM cron.job 
+FROM cron.job
 WHERE jobname = 'politician-trading-collection';
 
 -- Check if the job will run (shows next run time)
-SELECT 
+SELECT
     jobname,
     schedule,
     active,

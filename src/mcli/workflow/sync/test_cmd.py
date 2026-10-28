@@ -24,7 +24,7 @@ class McliSyncTester:
         self.vault_path = Path(vault_path).resolve()
         self.test_script = self.vault_path / "test_sync_connectivity.py"
 
-    def run_connectivity_test(self, quick: bool = False, output_file: Optional[str] = None) -> Dict:
+    def run_connectivity_test(self, quick: bool = False, output_file: Optional[str] = None) -> dict:
         """Run connectivity tests using the standalone test script."""
 
         if not self.test_script.exists():
@@ -53,7 +53,7 @@ class McliSyncTester:
             report = None
             if output_file and Path(output_file).exists():
                 try:
-                    with open(output_file, "r") as f:
+                    with open(output_file) as f:
                         report = json.load(f)
                 except Exception as e:
                     logger.warning(f"Could not parse test report: {e}")
@@ -83,7 +83,7 @@ class McliSyncTester:
                 "success": False,
             }
 
-    def validate_cloud_connectivity(self) -> Dict[str, bool]:
+    def validate_cloud_connectivity(self) -> dict[str, bool]:
         """Quick validation of cloud service connectivity."""
 
         cloud_paths = {
@@ -115,7 +115,7 @@ class McliSyncTester:
 
         return results
 
-    def check_sync_health(self) -> Dict[str, any]:
+    def check_sync_health(self) -> dict[str, any]:
         """Check overall sync system health."""
 
         health = {

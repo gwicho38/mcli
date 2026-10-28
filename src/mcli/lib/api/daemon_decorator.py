@@ -101,7 +101,7 @@ def _is_daemon_routing_enabled() -> bool:
     return False
 
 
-def _convert_to_command_args(args: tuple, kwargs: dict, func: Callable) -> List[str]:
+def _convert_to_command_args(args: tuple, kwargs: dict, func: Callable) -> list[str]:
     """Convert function arguments to command line arguments."""
     cmd_args = []
 
@@ -208,7 +208,7 @@ def is_daemon_available() -> bool:
 
 
 # Convenience function to get daemon status
-def get_daemon_status() -> Optional[Dict[str, Any]]:
+def get_daemon_status() -> Optional[dict[str, Any]]:
     """Get daemon status if available."""
     try:
         client = get_daemon_client()

@@ -363,7 +363,7 @@ The daemon stores its data in `~/.local/mcli/daemon/`:
    ```bash
    # Check if another daemon is running
    mcli workflow daemon status
-   
+
    # Force stop if needed
    mcli workflow daemon stop
    ```
@@ -372,7 +372,7 @@ The daemon stores its data in `~/.local/mcli/daemon/`:
    ```bash
    # Check command details
    mcli workflow daemon client show <command-id>
-   
+
    # Verify language runtime is installed
    python --version  # for Python
    node --version    # for Node.js
@@ -416,4 +416,4 @@ The daemon system is designed to be extensible. Key extension points:
 
 ## License
 
-This daemon service is part of the MCLI project and follows the same license terms. 
+This daemon service is part of the MCLI project and follows the same license terms.

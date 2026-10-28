@@ -98,7 +98,7 @@ def get_system_info():
     }
 
 
-def recommend_model(system_info: Dict) -> str:
+def recommend_model(system_info: dict) -> str:
     """Recommend the best model based on system capabilities."""
     print("🔍 Analyzing system capabilities...")
     print(f"  CPU Cores: {system_info['cpu_count']}")

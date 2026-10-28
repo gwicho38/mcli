@@ -179,7 +179,7 @@ class ServiceManager:
         self.stop_service(config.name)
         return self.start_service(config)
 
-    def get_service_status(self, name: str) -> Dict[str, Any]:
+    def get_service_status(self, name: str) -> dict[str, Any]:
         """Get current status of a service."""
         state = load_state(name)
         if not state:
@@ -204,7 +204,7 @@ class ServiceManager:
             "config": state.config or {},
         }
 
-    def get_service_info(self, name: str) -> Optional[Dict[str, Any]]:
+    def get_service_info(self, name: str) -> Optional[dict[str, Any]]:
         """Get detailed information about a service including process stats."""
         status = self.get_service_status(name)
         if status["status"] == "unknown":
@@ -232,7 +232,7 @@ class ServiceManager:
 
         return info
 
-    def list_services(self) -> List[Dict[str, Any]]:
+    def list_services(self) -> list[dict[str, Any]]:
         """List all known services with their status."""
         results = []
         for state in list_states():
@@ -259,7 +259,7 @@ class ServiceManager:
                 self._remove_pid(state.name)
         return count
 
-    def get_logs(self, name: str, lines: int = ServiceDefaults.LOG_TAIL_LINES) -> Dict[str, str]:
+    def get_logs(self, name: str, lines: int = ServiceDefaults.LOG_TAIL_LINES) -> dict[str, str]:
         """Get the last N lines of stdout/stderr logs for a service."""
         logs = {"stdout": "", "stderr": ""}
 

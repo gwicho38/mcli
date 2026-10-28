@@ -635,47 +635,45 @@ class IPFSSync:
 # NOTE: This block is intentionally kept as dead code for future reference
 # fmt: off
 # flake8: noqa
-"""
-# PostgreSQL/Supabase backend (requires configuration)
-class SupabaseSync:
-    def __init__(self, url: str, key: str):
-        self.url = url
-        self.key = key
-
-    def push(self, command_data: Dict) -> str:
-        # Upload to Supabase
-        pass
-
-    def pull(self, sync_id: str) -> Dict:
-        # Download from Supabase
-        pass
-
-
-# Git-based sync (requires repo setup)
-class GitSync:
-    def __init__(self, repo_url: str):
-        self.repo_url = repo_url
-
-    def push(self, command_data: Dict) -> str:
-        # Commit and push to git
-        pass
-
-    def pull(self, commit_hash: str) -> Dict:
-        # Fetch from git
-        pass
-
-
-# Arweave permanent storage (requires AR tokens)
-class ArweaveSync:
-    def __init__(self):
-        pass
-
-    def push(self, command_data: Dict) -> str:
-        # Upload to Arweave
-        pass
-
-    def pull(self, tx_id: str) -> Dict:
-        # Download from Arweave
-        pass
-"""
+# # PostgreSQL/Supabase backend (requires configuration)
+# class SupabaseSync:
+#     def __init__(self, url: str, key: str):
+#         self.url = url
+#         self.key = key
+#
+#     def push(self, command_data: Dict) -> str:
+#         # Upload to Supabase
+#         pass
+#
+#     def pull(self, sync_id: str) -> Dict:
+#         # Download from Supabase
+#         pass
+#
+#
+# # Git-based sync (requires repo setup)
+# class GitSync:
+#     def __init__(self, repo_url: str):
+#         self.repo_url = repo_url
+#
+#     def push(self, command_data: Dict) -> str:
+#         # Commit and push to git
+#         pass
+#
+#     def pull(self, commit_hash: str) -> Dict:
+#         # Fetch from git
+#         pass
+#
+#
+# # Arweave permanent storage (requires AR tokens)
+# class ArweaveSync:
+#     def __init__(self):
+#         pass
+#
+#     def push(self, command_data: Dict) -> str:
+#         # Upload to Arweave
+#         pass
+#
+#     def pull(self, tx_id: str) -> Dict:
+#         # Download from Arweave
+#         pass
 # fmt: on

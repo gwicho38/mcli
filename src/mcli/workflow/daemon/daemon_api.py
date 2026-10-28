@@ -27,7 +27,7 @@ class CommandOut(BaseModel):
     description: Optional[str]
     language: str
     group: Optional[str]
-    tags: List[str]
+    tags: list[str]
     created_at: Optional[str]
     updated_at: Optional[str]
     execution_count: int
@@ -37,10 +37,10 @@ class CommandOut(BaseModel):
 
 class ExecuteRequest(BaseModel):
     command_name: str
-    args: Optional[List[str]] = []
+    args: Optional[list[str]] = []
 
 
-@app.get("/commands", response_model=List[CommandOut])
+@app.get("/commands", response_model=list[CommandOut])
 def list_commands(all: bool = Query(False, description="Show all commands, including inactive")):
     commands = service.db.get_all_commands(include_inactive=all)
     return [

@@ -181,7 +181,7 @@ class LightweightModelDownloader:
         print(f"✅ Successfully downloaded {model_info['name']}")
         return str(model_dir)
 
-    def get_downloaded_models(self) -> List[str]:
+    def get_downloaded_models(self) -> list[str]:
         """Get list of downloaded models."""
         models = []
         # Check for nested structure like prajjwal1/bert-tiny
@@ -204,7 +204,7 @@ class LightweightModelServer:
         self.models_dir = Path(models_dir)
         self.port = port
         self.downloader = LightweightModelDownloader(models_dir)
-        self.loaded_models: Dict[str, Dict[str, Any]] = {}
+        self.loaded_models: dict[str, dict[str, Any]] = {}
         self.server_thread = None
         self.running = False
 
@@ -531,7 +531,7 @@ class LightweightModelServer:
             print(f"    Type: {info['model_type']} | Tags: {', '.join(info['tags'])}")
             print()
 
-    def get_system_info(self) -> Dict[str, Any]:
+    def get_system_info(self) -> dict[str, Any]:
         """Get system information."""
         import psutil
 
@@ -611,7 +611,7 @@ import json
 def test_server():
     """Test the lightweight model server"""
     base_url = "http://localhost:8080"
-    
+
     try:
         # Check server health
         response = requests.get(f"{base_url}/health")
@@ -620,7 +620,7 @@ def test_server():
         else:
             print("❌ Server health check failed")
             return
-        
+
         # List models
         response = requests.get(f"{base_url}/models")
         if response.status_code == 200:
@@ -629,7 +629,7 @@ def test_server():
         else:
             print("❌ Failed to get models")
             return
-        
+
         # Test generation (if models are loaded)
         if models.get("models"):
             model_name = models["models"][0]["name"]
@@ -644,7 +644,7 @@ def test_server():
                 print("❌ Generation failed")
         else:
             print("⚠️  No models loaded")
-            
+
     except requests.exceptions.ConnectionError:
         print("❌ Could not connect to server")
     except Exception as e:

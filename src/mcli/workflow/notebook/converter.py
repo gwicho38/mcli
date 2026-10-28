@@ -30,7 +30,7 @@ class WorkflowConverter:
     """Convert between workflow JSON and notebook formats."""
 
     @staticmethod
-    def _split_code_into_cells(code: str, language: str = "python") -> List[NotebookCell]:
+    def _split_code_into_cells(code: str, language: str = "python") -> list[NotebookCell]:
         """
         Split a monolithic code block into logical cells.
 
@@ -111,7 +111,7 @@ class WorkflowConverter:
 
     @classmethod
     def workflow_to_notebook(
-        cls, workflow_data: Dict[str, Any], add_description: bool = True
+        cls, workflow_data: dict[str, Any], add_description: bool = True
     ) -> WorkflowNotebook:
         """
         Convert legacy workflow JSON to notebook format.
@@ -164,7 +164,7 @@ class WorkflowConverter:
         return notebook
 
     @staticmethod
-    def notebook_to_workflow(notebook: WorkflowNotebook) -> Dict[str, Any]:
+    def notebook_to_workflow(notebook: WorkflowNotebook) -> dict[str, Any]:
         """
         Convert notebook format to legacy workflow JSON.
 
@@ -210,14 +210,14 @@ class WorkflowConverter:
         return workflow_data
 
     @classmethod
-    def load_workflow_json(cls, path: Union[str, Path]) -> Dict[str, Any]:
+    def load_workflow_json(cls, path: Union[str, Path]) -> dict[str, Any]:
         """Load workflow JSON from file."""
         path = Path(path)
-        with open(path, "r") as f:
+        with open(path) as f:
             return json.load(f)
 
     @classmethod
-    def save_workflow_json(cls, data: Dict[str, Any], path: Union[str, Path]) -> None:
+    def save_workflow_json(cls, data: dict[str, Any], path: Union[str, Path]) -> None:
         """Save workflow JSON to file."""
         path = Path(path)
         with open(path, "w") as f:
@@ -227,7 +227,7 @@ class WorkflowConverter:
     def load_notebook_json(cls, path: Union[str, Path]) -> WorkflowNotebook:
         """Load notebook from JSON file."""
         path = Path(path)
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
 
         # Check if it's a notebook or legacy workflow format
@@ -308,7 +308,7 @@ class WorkflowConverter:
     @classmethod
     def migrate_directory(
         cls, directory: Union[str, Path], backup: bool = True, in_place: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Migrate all workflow JSON files in a directory to notebook format.
 
@@ -336,7 +336,7 @@ class WorkflowConverter:
 
             try:
                 # Load and check if already a notebook
-                with open(json_file, "r") as f:
+                with open(json_file) as f:
                     data = json.load(f)
 
                 results["total"] += 1
