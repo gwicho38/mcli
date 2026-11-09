@@ -12,6 +12,7 @@ import time
 from enum import Enum
 from pathlib import Path
 
+from mcli.lib.constants import ActOutputMarkers
 from mcli.workflow.ci.act_lock import LOCK_TIMEOUT_ENV, act_lock, resolve_timeout
 
 # Docker Hub returns these when the unauthenticated image-pull rate limit is hit.
@@ -29,6 +30,16 @@ _RATE_LIMIT_MARKERS = (
 # run_act falls back to workflow_dispatch gates, and reports NOT_VALIDATED when
 # no job ran at all (#242).
 _NO_STAGES_MARKERS = ("could not find any stages to run",)
+
+# act prints one of these per job it actually executed (runner/job_executor.go).
+# Exit 0 alone is not evidence: when every job is skipped (an `if:` guard, or a
+# `runs-on` act has no platform for) act runs nothing and still exits 0 (#247).
+# A PASS therefore needs >=1 "Job succeeded" and no "Job failed".
+_JOB_RESULT_RE = re.compile(ActOutputMarkers.JOB_RESULT_PATTERN)
+
+# act or the container runtime could not be reached. An environment problem,
+# not a test failure: classified UNREACHABLE when no job ran.
+_DOCKER_UNREACHABLE_MARKERS = ActOutputMarkers.DOCKER_UNREACHABLE
 
 # Backoff (seconds) between docker rate-limit retries; the last value repeats.
 _RETRY_BACKOFF = (15, 45)
@@ -71,6 +82,20 @@ def _is_docker_rate_limited(output: str) -> bool:
 def _has_no_stages(output: str) -> bool:
     low = (output or "").lower()
     return any(marker in low for marker in _NO_STAGES_MARKERS)
+
+
+def _job_results(output: str) -> tuple[int, int]:
+    """(succeeded, failed) job counts from act's `🏁  Job …` result lines."""
+    results = _JOB_RESULT_RE.findall(output or "")
+    return (
+        results.count(ActOutputMarkers.JOB_SUCCEEDED),
+        results.count(ActOutputMarkers.JOB_FAILED),
+    )
+
+
+def _is_docker_unreachable(output: str) -> bool:
+    low = (output or "").lower()
+    return any(marker in low for marker in _DOCKER_UNREACHABLE_MARKERS)
 
 
 def act_available() -> bool:
@@ -269,15 +294,12 @@ def _run_with_retries(
         if output:
             sys.stdout.write(output if output.endswith("\n") else output + "\n")
 
-        if proc.returncode == 0:
-            return PreflightResult.PASS, output
+        # No job matches this event (e.g. workflow_dispatch-only). run_act
+        # decides whether a dispatch fallback exists.
+        if proc.returncode != 0 and _has_no_stages(output):
+            return PreflightResult.NOT_VALIDATED, output
 
-        # No job matches this event (e.g. workflow_dispatch-only). PASS here is
-        # provisional — run_act decides whether a dispatch fallback exists.
-        if _has_no_stages(output):
-            return PreflightResult.PASS, output
-
-        if _is_docker_rate_limited(output):
+        if proc.returncode != 0 and _is_docker_rate_limited(output):
             if attempt < retries:
                 delay = backoff[min(attempt, len(backoff) - 1)]
                 sys.stdout.write(
@@ -293,7 +315,25 @@ def _run_with_retries(
             )
             return PreflightResult.UNREACHABLE, output
 
-        return PreflightResult.FAIL, output
+        succeeded, failed = _job_results(output)
+        if proc.returncode != 0 or failed:
+            return PreflightResult.FAIL, output
+        if succeeded:
+            return PreflightResult.PASS, output
+
+        # act exited 0 but reported no job result: nothing ran (#247).
+        if _is_docker_unreachable(output):
+            sys.stdout.write(
+                "⚠️  act could not reach the container runtime (Docker/Podman) — "
+                "no job ran; cannot validate locally.\n"
+            )
+            return PreflightResult.UNREACHABLE, output
+        sys.stdout.write(
+            "⚠️  act exited 0 but no job ran (no '🏁  Job succeeded' line): every job "
+            "was skipped by an `if:` condition or an unsupported `runs-on`. This is "
+            "NOT a pass.\n"
+        )
+        return PreflightResult.NOT_VALIDATED, output
 
 
 def run_act(
@@ -303,10 +343,13 @@ def run_act(
 ) -> PreflightResult:
     """Run act for `event` and classify the outcome.
 
-    - exit 0 -> PASS.
+    - exit 0 with >=1 ``🏁  Job succeeded`` line and no ``Job failed`` -> PASS.
+    - exit 0 with no job result line (every job skipped by an ``if:`` or an
+      unsupported ``runs-on``) -> not a pass: try the dispatch gates below,
+      else NOT_VALIDATED (#247). If the runtime was unreachable -> UNREACHABLE.
     - non-zero whose output shows a Docker Hub pull rate limit
       (``toomanyrequests``) -> retried; if still limited, UNREACHABLE.
-    - any other non-zero exit -> FAIL.
+    - any other non-zero exit, or any ``Job failed`` line -> FAIL.
 
     Migrated repos are ``workflow_dispatch``-only, so the default
     ``pull_request`` event matches no jobs. Rather than hollow-pass, discover
@@ -322,10 +365,11 @@ def run_act(
     arch = default_container_arch()
     result, output = _run_with_retries(build_act_command(event, arch=arch), retries, backoff)
 
-    if not (result == PreflightResult.PASS and _has_no_stages(output)):
+    if result != PreflightResult.NOT_VALIDATED:
         return result
 
-    # No stages for the requested event — try safe workflow_dispatch gates.
+    # No job ran for the requested event (no stages, or every job skipped) —
+    # try safe workflow_dispatch gates.
     workflows = dispatch_workflows()
     if not workflows:
         sys.stdout.write(
@@ -348,11 +392,9 @@ def run_act(
             continue
 
         sys.stdout.write(
-            f"ℹ️  No '{event}' stages (workflow_dispatch-only); running "
-            f"{workflow} {jobs} via workflow_dispatch…\n"
+            f"ℹ️  No '{event}' job ran; running {workflow} {jobs} via workflow_dispatch…\n"
         )
         for job in jobs:
-            ran_job = True
             result, output = _run_with_retries(
                 build_act_command("workflow_dispatch", workflow=workflow, job=job, arch=arch),
                 retries,
@@ -362,13 +404,17 @@ def run_act(
                 return PreflightResult.UNREACHABLE
             # We KNOW this job exists (it came from `act --list`), so "no stages"
             # here means act ran nothing — a failure, not a no-op. Do not pass.
-            if result != PreflightResult.PASS or _has_no_stages(output):
+            if result == PreflightResult.FAIL or _has_no_stages(output):
                 return PreflightResult.FAIL
+            # A job act skipped (its `if:`, or `runs-on` act cannot serve) ran
+            # nothing; only a job that really succeeded counts toward a pass.
+            if result == PreflightResult.PASS:
+                ran_job = True
 
     if not ran_job:
         sys.stdout.write(
-            f"⚠️  No '{event}' jobs, and {', '.join(workflows)} "
-            "have no workflow_dispatch jobs — nothing was validated.\n"
+            f"⚠️  No '{event}' job ran, and no workflow_dispatch job in "
+            f"{', '.join(workflows)} ran either — nothing was validated.\n"
         )
         return PreflightResult.NOT_VALIDATED
 
