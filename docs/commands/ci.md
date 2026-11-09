@@ -23,11 +23,16 @@ only where a self-hosted runner is online.
 | `0` | `act` ran at least one job and every job passed — OK to open the PR. |
 | `1` | `act` ran and a job failed — fix before opening the PR. |
 | `2` | `act` could not run here (no Docker / no `act` / image pull failed / the machine-wide act lock never came free) **and** no online self-hosted runner exists — cannot validate. |
-| `2` | `act` ran, but no job matched: no workflow has a job for `--event`, and no check workflow has a `workflow_dispatch` job — **nothing was validated**. This is never reported as a pass. |
+| `2` | `act` ran, but no job ran: no workflow has a job for `--event`, or every such job was skipped (an `if:` guard, or a `runs-on` act has no platform for), and no check workflow's `workflow_dispatch` job ran either — **nothing was validated**. This is never reported as a pass. |
 | `3` | `act` could not run here, but an online self-hosted runner exists — push and let the runner validate. |
 
 "Could not run" is distinguished from "ran and failed" by a capability probe
 (Docker daemon up + `act -l` succeeds) before any job is executed.
+
+`act` exit `0` alone is not a pass. A pass needs at least one `🏁  Job succeeded`
+line and no `🏁  Job failed` line in act's output (#247). `act` exits `0` when it
+skips every job, so a run with no job-result line is "no job ran". If that run
+also says the Docker daemon could not be reached, it counts as "could not run".
 
 ## How the gate works
 
@@ -35,7 +40,7 @@ only where a self-hosted runner is online.
 git push  (or: mcli ci pr)
    └─ mcli ci preflight
         ├─ jobs for --event (default pull_request) → run them
-        ├─ no jobs for --event → workflow_dispatch fallback:
+        ├─ no job ran for --event (none exist, or all skipped) → workflow_dispatch fallback:
         │    run every job of each check workflow (see below)
         ├─ act passed ............................ open PR              ($0)
         ├─ act failed ............................ blocked, fix it

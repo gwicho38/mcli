@@ -24,6 +24,17 @@ def _cp(returncode=0, stdout=""):
     )
 
 
+# What act prints when it really runs a job (runner/job_executor.go).
+_JOB_OK = "[Conduit Elixir CI/test] 🏁  Job succeeded\n"
+_JOB_FAILED = "[Conduit Elixir CI/test] 🏁  Job failed\n"
+# The ONLY output of the #247 false green: act started, every job was skipped
+# (an `if:` guard, or an unsupported `runs-on`), and act exited 0.
+_DOCKER_HOST_ONLY = (
+    "level=info msg=\"Using docker host 'unix:///Volumes/mac_extended/tmp/podman/"
+    "podman-machine-default-api.sock', and daemon socket '-'\"\n"
+)
+
+
 class TestProbe:
     def test_probe_false_when_act_missing(self):
         with patch("shutil.which", return_value=None):
@@ -165,7 +176,7 @@ class TestDispatchWorkflows:
 
 class TestRunAct:
     def test_pass(self):
-        with patch("subprocess.run", return_value=_cp(0)):
+        with patch("subprocess.run", return_value=_cp(0, stdout=_JOB_OK)):
             assert run_act("pull_request") == PreflightResult.PASS
 
     def test_fail(self):
@@ -256,7 +267,10 @@ class TestDispatchFallback:
         with (
             patch("mcli.workflow.ci.act_runner.list_jobs", return_value=["test"]) as list_m,
             # 1st run: pull_request -> no stages; 2nd run: dispatch -> exit 0.
-            patch("subprocess.run", side_effect=[_cp(1, stdout=self._NO_STAGES), _cp(0)]) as run_m,
+            patch(
+                "subprocess.run",
+                side_effect=[_cp(1, stdout=self._NO_STAGES), _cp(0, stdout=_JOB_OK)],
+            ) as run_m,
         ):
             assert run_act("pull_request") == PreflightResult.PASS
         list_m.assert_called_once()
@@ -269,7 +283,10 @@ class TestDispatchFallback:
         self._with_ci_yml(tmp_path, monkeypatch)
         with (
             patch("mcli.workflow.ci.act_runner.list_jobs", return_value=["test"]),
-            patch("subprocess.run", side_effect=[_cp(1, stdout=self._NO_STAGES), _cp(0)]),
+            patch(
+                "subprocess.run",
+                side_effect=[_cp(1, stdout=self._NO_STAGES), _cp(0, stdout=_JOB_OK)],
+            ),
         ):
             assert run_act("pull_request") == PreflightResult.PASS
 
@@ -352,7 +369,11 @@ class TestDispatchOnlyTestWorkflow:
         self._repo(tmp_path, monkeypatch)
         with patch(
             "subprocess.run",
-            side_effect=[_cp(1, stdout=self._NO_STAGES), _cp(0, stdout=self._LIST), _cp(0)],
+            side_effect=[
+                _cp(1, stdout=self._NO_STAGES),
+                _cp(0, stdout=self._LIST),
+                _cp(0, stdout=_JOB_OK),
+            ],
         ) as run_m:
             assert run_act("pull_request") == PreflightResult.PASS
         assert run_m.call_count == 3, "the dispatch job was never run"
@@ -408,7 +429,7 @@ class TestRunActDockerRateLimit:
         assert m.call_count == 3  # initial + 2 retries
 
     def test_rate_limit_then_success_on_retry(self):
-        seq = [_cp(1, stdout=self._RL), _cp(0)]
+        seq = [_cp(1, stdout=self._RL), _cp(0, stdout=_JOB_OK)]
         with patch("subprocess.run", side_effect=seq), patch("time.sleep"):
             assert run_act("pull_request", retries=2, backoff=(0, 0)) == PreflightResult.PASS
 
@@ -461,7 +482,7 @@ class TestNativeGate:
 
     def test_run_act_drops_git_hook_env(self, monkeypatch):
         monkeypatch.setenv("GIT_DIR", "/repo/.git")
-        with patch("subprocess.run", return_value=_cp(0, "ok")) as run:
+        with patch("subprocess.run", return_value=_cp(0, _JOB_OK)) as run:
             run_act()
         assert all("GIT_DIR" not in c.kwargs["env"] for c in run.call_args_list)
 
@@ -523,3 +544,83 @@ class TestPreflight:
             patch("mcli.workflow.ci.act_runner.probe", return_value=False),
         ):
             assert preflight("o/r") == PreflightResult.UNREACHABLE
+
+
+class TestNoJobRanIsNeverPass:
+    """#247: exit 0 is not evidence. A pass needs act to report ≥1 job that ran
+    and succeeded (`🏁  Job succeeded`), and no job that failed."""
+
+    def test_exit0_with_no_job_output_is_not_pass(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.chdir(tmp_path)  # no dispatch gate to fall back to
+        with patch("subprocess.run", return_value=_cp(0, stdout=_DOCKER_HOST_ONLY)):
+            result = run_act("pull_request")
+        assert result is not PreflightResult.PASS, "act ran no job but preflight passed"
+        assert result == PreflightResult.NOT_VALIDATED
+        assert "no job ran" in capsys.readouterr().out.lower()
+
+    def test_exit0_with_job_succeeded_is_pass(self):
+        with patch("subprocess.run", return_value=_cp(0, stdout=_JOB_OK)):
+            assert run_act("pull_request") == PreflightResult.PASS
+
+    def test_exit0_with_a_failed_job_is_fail(self):
+        with patch("subprocess.run", return_value=_cp(0, stdout=_JOB_OK + _JOB_FAILED)):
+            assert run_act("pull_request") == PreflightResult.FAIL
+
+    def test_exit0_but_docker_daemon_unreachable_is_unreachable(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        out = (
+            "Error: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. "
+            "Is the docker daemon running?\n"
+        )
+        with patch("subprocess.run", return_value=_cp(0, stdout=out)):
+            assert run_act("pull_request") == PreflightResult.UNREACHABLE
+
+    def test_skipped_pull_request_jobs_fall_back_to_dispatch_gate(self, tmp_path, monkeypatch):
+        """The pull_request jobs were all skipped, so try the workflow_dispatch
+        gate, exactly as for the 'no stages' case. A real job run there passes."""
+        wf = tmp_path / ".github" / "workflows"
+        wf.mkdir(parents=True)
+        (wf / "elixir-ci.yml").write_text("name: ci\non: [pull_request, workflow_dispatch]\n")
+        monkeypatch.chdir(tmp_path)
+        with (
+            patch("mcli.workflow.ci.act_runner.list_jobs", return_value=["test"]),
+            patch(
+                "subprocess.run",
+                side_effect=[_cp(0, stdout=_DOCKER_HOST_ONLY), _cp(0, stdout=_JOB_OK)],
+            ) as run_m,
+        ):
+            assert run_act("pull_request") == PreflightResult.PASS
+        assert run_m.call_args_list[1].args[0][:2] == ["act", "workflow_dispatch"]
+
+    def test_skipped_dispatch_jobs_are_not_validated(self, tmp_path, monkeypatch):
+        """Every job skipped on pull_request AND on workflow_dispatch (e.g.
+        `runs-on: self-hosted` with no -P mapping): nothing ran, so no pass."""
+        wf = tmp_path / ".github" / "workflows"
+        wf.mkdir(parents=True)
+        (wf / "elixir-ci.yml").write_text("name: ci\non: [pull_request, workflow_dispatch]\n")
+        monkeypatch.chdir(tmp_path)
+        with (
+            patch("mcli.workflow.ci.act_runner.list_jobs", return_value=["guard", "test"]),
+            patch("subprocess.run", return_value=_cp(0, stdout=_DOCKER_HOST_ONLY)),
+        ):
+            result = run_act("pull_request")
+        assert result is not PreflightResult.PASS, "act ran no job but preflight passed"
+        assert result == PreflightResult.NOT_VALIDATED
+
+    def test_cli_reports_no_pass_for_the_247_repro(self, tmp_path, monkeypatch):
+        """End to end through `mcli ci preflight`: the exact #247 output must
+        not print 'act passed' and must not exit 0."""
+        from click.testing import CliRunner
+
+        from mcli.workflow.ci.ci import ci
+
+        monkeypatch.chdir(tmp_path)
+        with (
+            patch("mcli.workflow.ci.act_runner.native_gate_available", return_value=False),
+            patch("mcli.workflow.ci.act_runner.probe", return_value=True),
+            patch("mcli.workflow.ci.ci.current_repo_slug", return_value=None),
+            patch("subprocess.run", return_value=_cp(0, stdout=_DOCKER_HOST_ONLY)),
+        ):
+            res = CliRunner().invoke(ci, ["preflight", "--lock-timeout", "5"])
+        assert "act passed" not in res.output
+        assert res.exit_code == 2, res.output

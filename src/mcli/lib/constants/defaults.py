@@ -170,6 +170,22 @@ class IpfsDefaults:
     DAEMON_POLL_INTERVAL_MS = 500
 
 
+class ActOutputMarkers:
+    """Patterns in `act` output that `mcli ci preflight` classifies (#247)."""
+
+    # act prints one per job it actually executed (runner/job_executor.go).
+    JOB_RESULT_PATTERN = r"\U0001F3C1\s+Job (succeeded|failed)"
+    JOB_SUCCEEDED = "succeeded"
+    JOB_FAILED = "failed"
+    # Lower-case substrings meaning the container runtime could not be reached.
+    DOCKER_UNREACHABLE = (
+        "cannot connect to the docker daemon",
+        "is the docker daemon running",
+        "error during connect",
+        "failed to connect to the docker api",
+    )
+
+
 class ImportDefaults:
     """Import command default values."""
 
