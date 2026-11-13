@@ -24,11 +24,11 @@ import uvicorn
 # FastAPI for REST API
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 from transformers import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
 
 # Import existing utilities
-from mcli.lib.constants import ModelServiceMessages
+from mcli.lib.constants import EmbeddingDefaults, ModelServiceMessages
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
 
@@ -790,6 +790,11 @@ class TextClassificationRequest(BaseModel):
     text: str
 
 
+class DocumentEmbeddingRequest(BaseModel):
+    text: str
+    chunk_size: PositiveInt = EmbeddingDefaults.CHUNK_SIZE
+
+
 class TranslationRequest(BaseModel):
     text: str
     source_lang: str = "en"
@@ -1204,11 +1209,11 @@ class ModelService:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.post("/embed/document")
-        async def embed_document(request: dict[str, Any]):
+        async def embed_document(request: DocumentEmbeddingRequest):
             """Embed document using lightweight embedder."""
             try:
-                text = request.get("text")
-                chunk_size = request.get("chunk_size", 1000)
+                text = request.text
+                chunk_size = request.chunk_size
 
                 if not text:
                     raise HTTPException(status_code=400, detail="Text is required")

@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from mcli.lib.constants import ModelServiceMessages
+from mcli.lib.constants import EmbeddingDefaults, ModelServiceMessages
 
 # Try to import lightweight alternatives
 HAS_SENTENCE_TRANSFORMERS = False  # Placeholder for future implementation
@@ -156,7 +156,12 @@ class LightweightEmbedder:
             logger.error(f"Simple hash embedding failed: {e}")
             raise
 
-    def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
+    def chunk_text(
+        self,
+        text: str,
+        chunk_size: int = EmbeddingDefaults.CHUNK_SIZE,
+        overlap: int = EmbeddingDefaults.CHUNK_OVERLAP,
+    ) -> list[str]:
         """Split text into overlapping chunks."""
         if chunk_size <= 0 or overlap < 0 or overlap >= chunk_size:
             raise ValueError(ModelServiceMessages.INVALID_CHUNK_OVERLAP)
@@ -174,11 +179,16 @@ class LightweightEmbedder:
 
         return chunks
 
-    def embed_document(self, text: str, chunk_size: int = 1000) -> dict[str, Any]:
+    def embed_document(
+        self, text: str, chunk_size: int = EmbeddingDefaults.CHUNK_SIZE
+    ) -> dict[str, Any]:
         """Embed a document by chunking and embedding each chunk."""
         try:
             # Split text into chunks
-            chunks = self.chunk_text(text, chunk_size)
+            overlap = EmbeddingDefaults.CHUNK_OVERLAP
+            if 0 < chunk_size <= overlap:
+                overlap = chunk_size * overlap // EmbeddingDefaults.CHUNK_SIZE
+            chunks = self.chunk_text(text, chunk_size, overlap)
 
             # Embed each chunk
             chunk_embeddings = []

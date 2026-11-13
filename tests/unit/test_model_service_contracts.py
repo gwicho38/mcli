@@ -232,16 +232,17 @@ def test_invalid_embedding_chunks_fail_before_looping(tmp_path):
         [sys.executable, "-c", code, str(tmp_path)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True,
+        bufsize=0,
     )
     try:
-        assert child.stdout.readline().strip() == "READY"
+        ready = child.stdout.readline()
+        assert ready.strip() == b"READY"
         try:
             output, error = child.communicate(timeout=3)
         except subprocess.TimeoutExpired:
             pytest.fail("chunk_size <= overlap did not terminate")
         assert child.returncode == 0, error
-        assert output.strip() == "REJECTED"
+        assert output.strip() == b"REJECTED"
     finally:
         if child.poll() is None:
             child.kill()
@@ -254,6 +255,40 @@ def test_chunk_size_and_overlap_require_forward_progress(tmp_path, size, overlap
 
     with pytest.raises(ValueError, match="chunk_size"):
         LightweightEmbedder(str(tmp_path)).chunk_text("nonempty", size, overlap)
+
+
+@pytest.mark.parametrize(
+    "chunk_size,expected_chunks", [(1, 16), (100, 1), (200, 1), (201, 16), (1000, 1)]
+)
+def test_document_embedding_accepts_positive_sizes_without_overlap_parameter(
+    model_module, tmp_path, monkeypatch, chunk_size, expected_chunks
+):
+    service = model_module.ModelService({"models_dir": str(tmp_path / "models")})
+    monkeypatch.setattr(service.embedder, "get_embedding_method", lambda: "simple_hash")
+    text = "alpha beta gamma"
+    with TestClient(service.app) as client:
+        response = client.post("/embed/document", json={"text": text, "chunk_size": chunk_size})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True, body
+    document = body["document_embedding"]
+    assert document["total_text_length"] == len(text)
+    assert document["total_chunks"] == expected_chunks
+    direct = service.embedder.embed_document(text, chunk_size)
+    assert direct["success"] is True
+    assert direct["document_embedding"]["total_chunks"] == expected_chunks
+
+
+@pytest.mark.parametrize("chunk_size", [0, -1, "invalid"])
+def test_document_embedding_rejects_invalid_sizes_at_http_boundary(
+    model_module, tmp_path, chunk_size
+):
+    service = model_module.ModelService({"models_dir": str(tmp_path / "models")})
+    with TestClient(service.app) as client:
+        response = client.post(
+            "/embed/document", json={"text": "alpha beta", "chunk_size": chunk_size}
+        )
+    assert response.status_code == 422
 
 
 def test_embedder_fallback_and_tfidf_reuse(tmp_path, monkeypatch):

@@ -142,6 +142,44 @@ only after import; the regression reproduced the nonterminating call. Invalid
 size/overlap combinations now raise `ValueError` before the loop. Valid overlapping
 chunks and document embeddings retain their behavior.
 
+The document-level Python and HTTP interfaces expose `chunk_size` without an
+overlap parameter. They now scale the internal default overlap down only for
+positive sizes at or below 200. Sizes above 200 retain their previous overlap,
+including the 201 boundary. HTTP document requests declare a positive integer
+size and reject zero, negative and invalid sizes with 422 before processing.
+Actual HTTP/Python regressions cover sizes 1, 100, 200, 201 and 1000.
+
+Reviewer controls must remain bounded: remove only caller normalization and
+request validation when exercising the public API regressions, retaining the
+low-level guard. Remove that guard only for the separate subprocess regression,
+which has a timeout and kills/reaps the child. Restoring the entire pre-guard
+implementation and calling the small-size HTTP cases would reproduce its hang.
+
+**Before**
+
+```mermaid
+flowchart LR
+    A[Document caller selects size 100] --> B[Fixed internal overlap 200]
+    B --> C[No successful embedding]
+    D[Unconstrained request size] --> E[Invalid size enters processing]
+```
+
+**After**
+
+```mermaid
+flowchart LR
+    A[Document caller selects size 100] --> B[Internal overlap scales to 20]
+    B --> C[Successful bounded embedding]
+    D[Nonpositive or invalid HTTP size] --> E[422 request validation]
+```
+
+Fresh independent review reproduced a harness race: mixing a buffered text
+`readline()` handshake with `communicate()` could lose an already buffered result
+line. The child could exit successfully while the parent saw an empty result.
+The regression now uses binary, unbuffered stdout and still requires both READY
+and REJECTED, with the bounded timeout and kill/reap cleanup intact. Empty output
+is never accepted as proof of rejection.
+
 Issue #258: remote package tests enabled INFO logging and exposed three
 `CredentialManager` messages that supplied a path without a format placeholder.
 A real formatting-handler regression reproduced `TypeError`; the messages now
@@ -154,6 +192,7 @@ logger cannot hide this failure again.
 flowchart LR
     A[Chunk size at or below overlap] --> B[Loop makes no forward progress]
     C[INFO logger formats path argument] --> D[Missing placeholder raises TypeError]
+    E[Buffered text stdout] --> F[Read ahead hides child rejection]
 ```
 
 **After**
@@ -162,4 +201,5 @@ flowchart LR
 flowchart LR
     A[Invalid chunk step] --> B[ValueError before iteration]
     C[INFO logger with percent-s placeholder] --> D[Path formatted without exception]
+    E[Unbuffered byte stdout] --> F[Readiness and actual rejection both observed]
 ```
