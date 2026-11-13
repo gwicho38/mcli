@@ -649,7 +649,9 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
             )
             return
 
-        console.print(f"[yellow]⬆️  Update available: {current_version} → {latest_version}[/yellow]")
+        console.print(
+            f"[yellow]⬆️  Update available: {current_version} → {latest_version}[/yellow]"
+        )
 
         # Show release notes if available
         if "urls" in pypi_data["info"] and pypi_data["info"].get("project_urls"):

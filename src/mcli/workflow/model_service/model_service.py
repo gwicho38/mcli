@@ -101,8 +101,7 @@ class ModelDatabase:
         cursor = conn.cursor()
 
         # Models table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS models (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -119,12 +118,10 @@ class ModelDatabase:
                 memory_usage_mb REAL DEFAULT 0.0,
                 parameters_count INTEGER DEFAULT 0
             )
-        """
-        )
+        """)
 
         # Inference history
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS inferences (
                 id TEXT PRIMARY KEY,
                 model_id TEXT NOT NULL,
@@ -136,8 +133,7 @@ class ModelDatabase:
                 error_message TEXT,
                 FOREIGN KEY (model_id) REFERENCES models (id)
             )
-        """
-        )
+        """)
 
         conn.commit()
         conn.close()
@@ -214,14 +210,12 @@ class ModelDatabase:
         cursor = conn.cursor()
 
         try:
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT id, name, model_type, model_path, tokenizer_path, device,
                        max_length, temperature, top_p, top_k, created_at, is_loaded,
                        memory_usage_mb, parameters_count
                 FROM models ORDER BY name
-            """
-            )
+            """)
 
             return [self._row_to_model_info(row) for row in cursor.fetchall()]
 

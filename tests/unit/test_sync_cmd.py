@@ -93,13 +93,11 @@ class TestSyncStatusCommand:
         workflows_dir = tmp_path / "workflows"
         workflows_dir.mkdir()
         test_script = workflows_dir / "test_cmd.py"
-        test_script.write_text(
-            """#!/usr/bin/env python3
+        test_script.write_text("""#!/usr/bin/env python3
 # @description: Test command
 # @version: 1.0.0
 print("Hello")
-"""
-        )
+""")
 
         with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
             result = runner.invoke(sync_group, ["status"])
@@ -145,13 +143,11 @@ class TestSyncUpdateCommand:
         workflows_dir = tmp_path / "workflows"
         workflows_dir.mkdir()
         test_script = workflows_dir / "my_cmd.py"
-        test_script.write_text(
-            """#!/usr/bin/env python3
+        test_script.write_text("""#!/usr/bin/env python3
 # @description: My test command
 # @version: 2.0.0
 print("Test")
-"""
-        )
+""")
 
         with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
             result = runner.invoke(sync_group, ["update"])

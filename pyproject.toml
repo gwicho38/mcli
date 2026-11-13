@@ -39,21 +39,31 @@ dependencies = [
   "click>=8.1.7,<9.0.0",
   "ruamel.yaml>=0.18,<0.19",
   "rich>=14.0.0,<15.0.0",
-  "requests>=2.31.0,<3.0.0",
+  "requests>=2.33.0,<3.0.0",
   "tomli>=2.2.1,<3.0.0",
-  "python-dotenv>=1.1.1,<2.0.0",
+  "python-dotenv>=1.2.2,<2.0.0",
   "pydantic>=2.0.0,<3.0.0",
-  "pydantic-settings>=2.0.0,<3.0.0",
+  "pydantic-settings>=2.14.2,<3.0.0",
+  # Runtime encryption and transitive security floors (#251)
+  "cryptography>=50.0.0,<51.0.0",
+  "anyio>=4.14.2,<5.0.0",
+  "idna>=3.15,<4.0.0",
+  "multidict>=6.9.1,<7.0.0",
+  "pygments>=2.20.0,<3.0.0",
+  "pyjwt>=2.15.0,<3.0.0",
+  "soupsieve>=2.9,<3.0",
+  "starlette>=1.3.1,<2.0.0",
+  "urllib3>=2.8.0,<3.0.0",
   # Core utilities
   "watchdog>=3.0.0,<4.0.0",
   "tqdm>=4.66.1,<5.0.0",
   "humanize>=4.9.0,<5.0.0",
   "psutil>=5.9.0,<6.0.0",
   "inquirerpy>=0.3.4,<0.4.0",
-  "gitpython>=3.1.40,<4.0.0",
+  "gitpython>=3.1.62,<4.0.0",
   "prompt-toolkit>=3.0.0,<4.0.0",
   # Basic HTTP/async support
-  "aiohttp>=3.13.3,<4.0.0",  # CVE-2025-69223 through CVE-2025-69230 fixes
+  "aiohttp>=3.14.3,<4.0.0",
   "httpx>=0.28.1,<1.0.0",
   "websockets>=12.0,<14.0.0",
   # Data parsing
@@ -65,7 +75,7 @@ dependencies = [
   "ollama>=0.5.3,<1.0.0",
   "ipython>=8.12.0,<9.0.0",
   # Enhanced async/performance features
-  "fastapi>=0.110.0,<1.0.0",
+  "fastapi>=0.133.0,<1.0.0",
   "uvicorn>=0.27.0,<1.0.0",
   "uvloop>=0.19.0,<1.0.0",
   "aiosqlite>=0.20.0,<1.0.0",
@@ -86,7 +96,7 @@ dependencies = [
 # Development tools
 dev = [
   # Testing framework
-  "pytest>=8.4.1",
+  "pytest>=9.0.3",
   "pytest-cov>=4.1.0,<5.0.0",
   "pytest-mock>=3.14.1",
   "pytest-asyncio>=1.1.0",
@@ -101,7 +111,7 @@ dev = [
   "pytest-json-report>=1.5.0",   # JSON reports
 
   # Code quality
-  "black>=25.0.0,<26.0.0",  # Pin to 25.x to match lockfile, avoid 26.x formatting changes
+  "black>=26.3.1,<27.0.0",
   "isort>=5.13.2,<6.0.0",
   "mypy>=1.16.1,<2.0.0",
   "ruff>=0.1.0",                  # Fast linter
@@ -116,6 +126,9 @@ dev = [
   # Security
   "bandit>=1.7.0",
   "safety>=3.0.0",
+  "authlib>=1.6.12,<2.0.0",
+  "nltk>=3.10.4,<4.0.0",
+  "virtualenv>=21.7.13,<22.0.0",
 
   # Optional-feature deps exercised by the test suite (ERD/repo graphs) — kept
   # in dev so CI can run those tests strictly instead of best-effort (#169).
@@ -277,7 +290,7 @@ build-backend = "setuptools.build_meta"
 # [project.optional-dependencies] dev is kept for pip compatibility.
 dev = [
     # Testing
-    "pytest>=8.4.1",
+    "pytest>=9.0.3",
     "pytest-cov>=4.1.0,<5.0.0",
     "pytest-mock>=3.14.1",
     "pytest-asyncio>=1.1.0",
@@ -291,7 +304,7 @@ dev = [
     "responses>=0.24.0",
     "freezegun>=1.4.0",
     # Linting / formatting / typing
-    "black>=25.0.0,<26.0.0",  # Pin to 25.x to match lockfile
+    "black>=26.3.1,<27.0.0",
     "isort>=5.13.2,<6.0.0",
     "mypy>=1.16.1,<2.0.0",
     "ruff>=0.1.0",
@@ -304,6 +317,9 @@ dev = [
     # Security
     "bandit>=1.7.0",
     "safety>=3.0.0",
+    "authlib>=1.6.12,<2.0.0",
+    "nltk>=3.10.4,<4.0.0",
+    "virtualenv>=21.7.13,<22.0.0",
     # Optional-feature deps exercised by the test suite (ERD/repo graphs) — kept
     # in dev so CI can run those tests strictly instead of best-effort (#169).
     "pandas>=2.0.0",

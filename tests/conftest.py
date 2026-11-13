@@ -100,14 +100,12 @@ def mock_supabase():
 def temp_config_file(tmp_path):
     """Create a temporary config file."""
     config_file = tmp_path / "config.toml"
-    config_file.write_text(
-        """
+    config_file.write_text("""
 [llm]
 provider = "local"
 model = "test-model"
 temperature = 0.7
-"""
-    )
+""")
     return config_file
 
 

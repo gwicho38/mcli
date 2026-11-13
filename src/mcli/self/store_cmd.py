@@ -51,8 +51,7 @@ def init_store(path, remote):
 
             # Create README
             readme = store_path / "README.md"
-            readme.write_text(
-                f"""# MCLI Commands Store
+            readme.write_text(f"""# MCLI Commands Store
 
 Personal workflow commands for mcli framework.
 
@@ -78,8 +77,7 @@ mcli self store sync
 All JSON command files from `~/.mcli/commands/` are stored here and version controlled.
 
 Last updated: {datetime.now().isoformat()}
-"""
-            )
+""")
 
             # Add remote if provided
             if remote:

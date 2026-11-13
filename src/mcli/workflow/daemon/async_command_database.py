@@ -109,8 +109,7 @@ class AsyncCommandDatabase:
             await db.execute("PRAGMA mmap_size=268435456")  # 256MB
 
             # Create tables
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS commands (
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -128,11 +127,9 @@ class AsyncCommandDatabase:
                     author TEXT,
                     dependencies TEXT
                 )
-            """
-            )
+            """)
 
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS groups (
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -142,11 +139,9 @@ class AsyncCommandDatabase:
                     metadata TEXT,
                     FOREIGN KEY (parent_group_id) REFERENCES groups (id)
                 )
-            """
-            )
+            """)
 
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS executions (
                     id TEXT PRIMARY KEY,
                     command_id TEXT NOT NULL,
@@ -159,8 +154,7 @@ class AsyncCommandDatabase:
                     context TEXT,
                     FOREIGN KEY (command_id) REFERENCES commands (id)
                 )
-            """
-            )
+            """)
 
             # Create performance indexes
             await db.execute("CREATE INDEX IF NOT EXISTS idx_commands_name ON commands(name)")
@@ -187,8 +181,7 @@ class AsyncCommandDatabase:
             )
 
             # Create full-text search for commands
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE VIRTUAL TABLE IF NOT EXISTS commands_fts USING fts5(
                     id UNINDEXED,
                     name,
@@ -197,35 +190,28 @@ class AsyncCommandDatabase:
                     content='commands',
                     content_rowid='rowid'
                 )
-            """
-            )
+            """)
 
             # Create FTS triggers
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TRIGGER IF NOT EXISTS commands_fts_insert AFTER INSERT ON commands BEGIN
                     INSERT INTO commands_fts(id, name, description, tags)
                     VALUES (new.id, new.name, new.description, new.tags);
                 END
-            """
-            )
+            """)
 
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TRIGGER IF NOT EXISTS commands_fts_update AFTER UPDATE ON commands BEGIN
                     UPDATE commands_fts SET name=new.name, description=new.description, tags=new.tags
                     WHERE id=new.id;
                 END
-            """
-            )
+            """)
 
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TRIGGER IF NOT EXISTS commands_fts_delete AFTER DELETE ON commands BEGIN
                     DELETE FROM commands_fts WHERE id=old.id;
                 END
-            """
-            )
+            """)
 
             await db.commit()
 

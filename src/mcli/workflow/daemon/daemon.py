@@ -163,8 +163,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
         cursor = conn.cursor()
 
         # Commands table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS commands (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -179,12 +178,10 @@ def start_command_file_watcher(db, watch_dir: str = None):
                 last_executed TIMESTAMP,
                 is_active BOOLEAN DEFAULT 1
             )
-        """
-        )
+        """)
 
         # Groups table for hierarchical organization
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS groups (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -193,12 +190,10 @@ def start_command_file_watcher(db, watch_dir: str = None):
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (parent_group_id) REFERENCES groups (id)
             )
-        """
-        )
+        """)
 
         # Execution history
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS executions (
                 id TEXT PRIMARY KEY,
                 command_id TEXT NOT NULL,
@@ -209,8 +204,7 @@ def start_command_file_watcher(db, watch_dir: str = None):
                 execution_time_ms INTEGER,
                 FOREIGN KEY (command_id) REFERENCES commands (id)
             )
-        """
-        )
+        """)
 
         conn.commit()
         conn.close()
@@ -300,23 +294,19 @@ def start_command_file_watcher(db, watch_dir: str = None):
         cursor = conn.cursor()
         try:
             if include_inactive:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT id, name, description, code, language, group_name, tags,
                            created_at, updated_at, execution_count, last_executed, is_active
                     FROM commands
                     ORDER BY name
-                """
-                )
+                """)
             else:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT id, name, description, code, language, group_name, tags,
                            created_at, updated_at, execution_count, last_executed, is_active
                     FROM commands WHERE is_active = 1
                     ORDER BY name
-                """
-                )
+                """)
             return [self._row_to_command(row) for row in cursor.fetchall()]
         finally:
             conn.close()

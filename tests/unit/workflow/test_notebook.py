@@ -373,16 +373,14 @@ class TestNotebookIntegration:
         notebook.add_markdown_cell("# Example Workflow\n\nThis is an example.")
 
         # Add code cells
-        notebook.add_code_cell(
-            '''"""Example workflow"""
+        notebook.add_code_cell('''"""Example workflow"""
 import click
 
 @click.command()
 def hello():
     """Say hello."""
     click.echo("Hello from workflow!")
-'''
-        )
+''')
 
         # Validate
         validator = NotebookValidator()

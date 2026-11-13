@@ -338,8 +338,7 @@ class AsyncProcessManager:
             await db.execute("PRAGMA temp_store=memory")
 
             # Create processes table
-            await db.execute(
-                """
+            await db.execute("""
                 CREATE TABLE IF NOT EXISTS processes (
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -356,8 +355,7 @@ class AsyncProcessManager:
                     stdout_lines TEXT,
                     stderr_lines TEXT
                 )
-            """
-            )
+            """)
 
             # Create indexes for better performance
             await db.execute("CREATE INDEX IF NOT EXISTS idx_processes_status ON processes(status)")
