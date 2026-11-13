@@ -232,7 +232,15 @@ class ImportDefaults:
     }
 
 
+class EmbeddingDefaults:
+    """Document chunk defaults shared by Python and HTTP callers."""
+
+    CHUNK_SIZE = 1000
+    CHUNK_OVERLAP = 200
+
+
 __all__ = [
+    "EmbeddingDefaults",
     "Editors",
     "Shells",
     "URLs",

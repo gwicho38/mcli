@@ -28,7 +28,7 @@ from typing import Any, Optional
 
 import click
 
-from mcli.lib.constants import FileNames
+from mcli.lib.constants import CommandMessages, FileNames
 from mcli.lib.logger.logger import get_logger, register_subprocess
 from mcli.lib.pyenv import PyEnvManager
 
@@ -625,14 +625,14 @@ class ScriptLoader:
                         click.echo(stderr, nl=False, err=True)
                     returncode = process.returncode
 
-                if returncode != 0:
-                    logger.warning(f"Shell command {name} exited with code {returncode}")
-                    ctx.exit(returncode)
-
             except Exception as e:
                 logger.error(f"Failed to execute shell command {name}: {e}")
                 click.echo(f"Error executing shell command: {e}", err=True)
                 ctx.exit(1)
+
+            if returncode != 0:
+                logger.warning(CommandMessages.SHELL_EXITED.format(name=name, code=returncode))
+                ctx.exit(returncode)
 
         return shell_command
 

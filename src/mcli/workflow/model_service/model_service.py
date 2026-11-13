@@ -24,11 +24,11 @@ import uvicorn
 # FastAPI for REST API
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, PositiveInt
 from transformers import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM, AutoTokenizer
 
 # Import existing utilities
-from mcli.lib.constants import ModelServiceMessages
+from mcli.lib.constants import EmbeddingDefaults, ModelServiceMessages
 from mcli.lib.logger.logger import get_logger
 from mcli.lib.toml.toml import read_from_toml
 
@@ -101,8 +101,7 @@ class ModelDatabase:
         cursor = conn.cursor()
 
         # Models table
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS models (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -119,12 +118,10 @@ class ModelDatabase:
                 memory_usage_mb REAL DEFAULT 0.0,
                 parameters_count INTEGER DEFAULT 0
             )
-        """
-        )
+        """)
 
         # Inference history
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS inferences (
                 id TEXT PRIMARY KEY,
                 model_id TEXT NOT NULL,
@@ -136,8 +133,7 @@ class ModelDatabase:
                 error_message TEXT,
                 FOREIGN KEY (model_id) REFERENCES models (id)
             )
-        """
-        )
+        """)
 
         conn.commit()
         conn.close()
@@ -214,14 +210,12 @@ class ModelDatabase:
         cursor = conn.cursor()
 
         try:
-            cursor.execute(
-                """
+            cursor.execute("""
                 SELECT id, name, model_type, model_path, tokenizer_path, device,
                        max_length, temperature, top_p, top_k, created_at, is_loaded,
                        memory_usage_mb, parameters_count
                 FROM models ORDER BY name
-            """
-            )
+            """)
 
             return [self._row_to_model_info(row) for row in cursor.fetchall()]
 
@@ -796,6 +790,11 @@ class TextClassificationRequest(BaseModel):
     text: str
 
 
+class DocumentEmbeddingRequest(BaseModel):
+    text: str
+    chunk_size: PositiveInt = EmbeddingDefaults.CHUNK_SIZE
+
+
 class TranslationRequest(BaseModel):
     text: str
     source_lang: str = "en"
@@ -1210,11 +1209,11 @@ class ModelService:
                 raise HTTPException(status_code=500, detail=str(e))
 
         @self.app.post("/embed/document")
-        async def embed_document(request: dict[str, Any]):
+        async def embed_document(request: DocumentEmbeddingRequest):
             """Embed document using lightweight embedder."""
             try:
-                text = request.get("text")
-                chunk_size = request.get("chunk_size", 1000)
+                text = request.text
+                chunk_size = request.chunk_size
 
                 if not text:
                     raise HTTPException(status_code=400, detail="Text is required")

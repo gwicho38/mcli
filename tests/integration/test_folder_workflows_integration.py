@@ -19,27 +19,23 @@ def temp_workflows_dir(tmp_path):
 
     # Create standalone Python workflow
     standalone_py = workflows_dir / "test-standalone.py"
-    standalone_py.write_text(
-        """#!/usr/bin/env python3
+    standalone_py.write_text("""#!/usr/bin/env python3
 \"\"\"Standalone test workflow.\"\"\"
 import sys
 print("Standalone Python workflow executed")
 print(f"Args: {sys.argv[1:]}")
 sys.exit(0)
-"""
-    )
+""")
     standalone_py.chmod(0o755)
 
     # Create standalone shell workflow
     standalone_sh = workflows_dir / "test-deploy.sh"
-    standalone_sh.write_text(
-        """#!/bin/bash
+    standalone_sh.write_text("""#!/bin/bash
 # Deploy workflow
 echo "Deploy workflow executed"
 echo "Args: $*"
 exit 0
-"""
-    )
+""")
     standalone_sh.chmod(0o755)
 
     # Create folder workflow group
@@ -48,25 +44,21 @@ exit 0
 
     # Python script in folder
     py_cmd = folder_group / "python-cmd.py"
-    py_cmd.write_text(
-        """#!/usr/bin/env python3
+    py_cmd.write_text("""#!/usr/bin/env python3
 \"\"\"Python command in group.\"\"\"
 import sys
 print("Python command in test-group")
 print(f"Args: {sys.argv[1:]}")
-"""
-    )
+""")
     py_cmd.chmod(0o755)
 
     # Shell script in folder
     sh_cmd = folder_group / "shell-cmd.sh"
-    sh_cmd.write_text(
-        """#!/bin/bash
+    sh_cmd.write_text("""#!/bin/bash
 # Shell command in group
 echo "Shell command in test-group"
 echo "Args: $*"
-"""
-    )
+""")
     sh_cmd.chmod(0o755)
 
     yield workflows_dir
@@ -202,13 +194,11 @@ class TestWorkflowEnvironment:
     def test_workflow_has_environment_variables(self, temp_workflows_dir):
         """Test that workflows receive environment variables."""
         script = temp_workflows_dir / "env-test.py"
-        script.write_text(
-            """#!/usr/bin/env python3
+        script.write_text("""#!/usr/bin/env python3
 import os
 print(f"PATH={os.environ.get('PATH', 'NOT_SET')}")
 print(f"HOME={os.environ.get('HOME', 'NOT_SET')}")
-"""
-        )
+""")
         script.chmod(0o755)
 
         result = subprocess.run(
@@ -222,11 +212,9 @@ print(f"HOME={os.environ.get('HOME', 'NOT_SET')}")
     def test_workflow_can_access_current_directory(self, temp_workflows_dir):
         """Test that workflows can access current working directory."""
         script = temp_workflows_dir / "pwd-test.sh"
-        script.write_text(
-            """#!/bin/bash
+        script.write_text("""#!/bin/bash
 echo "CWD: $(pwd)"
-"""
-        )
+""")
         script.chmod(0o755)
 
         result = subprocess.run(
@@ -248,13 +236,11 @@ class TestWorkflowErrorHandling:
     def test_python_workflow_with_error(self, temp_workflows_dir):
         """Test handling Python workflow that exits with error."""
         script = temp_workflows_dir / "error-test.py"
-        script.write_text(
-            """#!/usr/bin/env python3
+        script.write_text("""#!/usr/bin/env python3
 import sys
 print("Error workflow")
 sys.exit(1)
-"""
-        )
+""")
         script.chmod(0o755)
 
         result = subprocess.run(
@@ -267,12 +253,10 @@ sys.exit(1)
     def test_shell_workflow_with_error(self, temp_workflows_dir):
         """Test handling shell workflow that exits with error."""
         script = temp_workflows_dir / "error-test.sh"
-        script.write_text(
-            """#!/bin/bash
+        script.write_text("""#!/bin/bash
 echo "Error workflow"
 exit 42
-"""
-        )
+""")
         script.chmod(0o755)
 
         result = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=10)
@@ -283,11 +267,9 @@ exit 42
     def test_python_workflow_with_exception(self, temp_workflows_dir):
         """Test handling Python workflow that raises exception."""
         script = temp_workflows_dir / "exception-test.py"
-        script.write_text(
-            """#!/usr/bin/env python3
+        script.write_text("""#!/usr/bin/env python3
 raise ValueError("Test exception")
-"""
-        )
+""")
         script.chmod(0o755)
 
         result = subprocess.run(
@@ -306,14 +288,12 @@ class TestComplexWorkflows:
     def test_workflow_with_multiple_args(self, temp_workflows_dir):
         """Test workflow with many arguments."""
         script = temp_workflows_dir / "multi-arg.py"
-        script.write_text(
-            """#!/usr/bin/env python3
+        script.write_text("""#!/usr/bin/env python3
 import sys
 print(f"Received {len(sys.argv) - 1} arguments")
 for i, arg in enumerate(sys.argv[1:], 1):
     print(f"Arg {i}: {arg}")
-"""
-        )
+""")
         script.chmod(0o755)
 
         args = ["arg1", "arg2", "arg3", "arg4", "arg5"]
@@ -332,13 +312,11 @@ for i, arg in enumerate(sys.argv[1:], 1):
     def test_workflow_with_special_characters(self, temp_workflows_dir):
         """Test workflow with special characters in arguments."""
         script = temp_workflows_dir / "special-chars.py"
-        script.write_text(
-            """#!/usr/bin/env python3
+        script.write_text("""#!/usr/bin/env python3
 import sys
 for arg in sys.argv[1:]:
     print(f"Arg: {arg}")
-"""
-        )
+""")
         script.chmod(0o755)
 
         special_args = ["hello world", "test@example.com", "path/to/file", "$VAR"]
@@ -356,13 +334,11 @@ for arg in sys.argv[1:]:
     def test_workflow_with_stdin(self, temp_workflows_dir):
         """Test workflow that reads from stdin."""
         script = temp_workflows_dir / "stdin-test.py"
-        script.write_text(
-            """#!/usr/bin/env python3
+        script.write_text("""#!/usr/bin/env python3
 import sys
 data = sys.stdin.read()
 print(f"Received: {data.strip()}")
-"""
-        )
+""")
         script.chmod(0o755)
 
         input_data = "test input data\n"

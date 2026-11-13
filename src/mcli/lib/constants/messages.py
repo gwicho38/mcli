@@ -51,6 +51,8 @@ class SuccessMessages:
 class WarningMessages:
     """Warning message constants."""
 
+    UPDATE_AVAILABLE = "[yellow]⬆️  Update available: {current} → {latest}[/yellow]"
+
     NO_CHANGES = "No changes to commit"
     NO_REMOTE = "No remote configured or push failed. Commands committed locally."
     ALREADY_EXISTS = "{item} already exists"
@@ -64,6 +66,10 @@ class WarningMessages:
 
 class InfoMessages:
     """Informational message constants."""
+
+    CONFIG_FILE_LOG = "config file: %s"
+    CONFIG_DIR_LOG = "config dir: %s"
+    READING_CONFIG_LOG = "Reading config file: %s"
 
     COPYING_COMMANDS = "Copying commands from {source} to {dest}..."
     NO_CHANGES_TO_COMMIT = "No changes to commit"
@@ -428,6 +434,10 @@ class ChatMessages:
 class ModelServiceMessages:
     """Model service message constants."""
 
+    INVALID_CHUNK_OVERLAP = (
+        "chunk_size must be positive and overlap must satisfy 0 <= overlap < chunk_size"
+    )
+
     # Model loading
     USING_DEVICE = "Using device: {device}"
     LOADING_MODEL = "Loading model: {model}"
@@ -460,6 +470,8 @@ class ModelServiceMessages:
 
 class CommandMessages:
     """Command store and workflow message constants."""
+
+    SHELL_EXITED = "Shell command {name} exited with code {code}"
 
     # Git operations
     GIT_REPO_EXISTS = "Git repository already exists at {path}"

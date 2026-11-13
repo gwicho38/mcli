@@ -66,8 +66,7 @@ def mock_repo(tmp_path):
 
     # Create config.toml
     config_file = mcli_dir / "config.toml"
-    config_file.write_text(
-        """
+    config_file.write_text("""
 [general]
 log_level = "INFO"
 theme = "default"
@@ -81,8 +80,7 @@ temperature = 0.7
 logs_dir = "~/.mcli/logs"
 cache_dir = "~/.mcli/cache"
 included_dirs = ["app", "self", "workflow", "public"]
-"""
-    )
+""")
 
     # Create a sample workflow JSON
     test_workflow = workflow_dir / "test_workflow.json"
@@ -146,8 +144,7 @@ def sample_script():
 
     # Create Makefile for make workflow detection
     makefile = repo_dir / "Makefile"
-    makefile.write_text(
-        """
+    makefile.write_text("""
 .PHONY: test build clean
 
 test:
@@ -158,8 +155,7 @@ build:
 
 clean:
 \t@echo "Cleaning up"
-"""
-    )
+""")
 
     # Create package.json for npm workflow detection
     package_json = repo_dir / "package.json"
@@ -208,13 +204,11 @@ def mock_home(tmp_path, mock_repo):
     (mcli_dir / "cache").mkdir()
 
     # Create global config
-    (mcli_dir / "config.toml").write_text(
-        """
+    (mcli_dir / "config.toml").write_text("""
 [general]
 log_level = "INFO"
 theme = "default"
-"""
-    )
+""")
 
     # Create lockfile
     (mcli_dir / "workflows.lock.json").write_text(

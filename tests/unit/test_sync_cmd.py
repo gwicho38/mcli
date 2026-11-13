@@ -93,13 +93,11 @@ class TestSyncStatusCommand:
         workflows_dir = tmp_path / "workflows"
         workflows_dir.mkdir()
         test_script = workflows_dir / "test_cmd.py"
-        test_script.write_text(
-            """#!/usr/bin/env python3
+        test_script.write_text("""#!/usr/bin/env python3
 # @description: Test command
 # @version: 1.0.0
 print("Hello")
-"""
-        )
+""")
 
         with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
             result = runner.invoke(sync_group, ["status"])
@@ -145,13 +143,11 @@ class TestSyncUpdateCommand:
         workflows_dir = tmp_path / "workflows"
         workflows_dir.mkdir()
         test_script = workflows_dir / "my_cmd.py"
-        test_script.write_text(
-            """#!/usr/bin/env python3
+        test_script.write_text("""#!/usr/bin/env python3
 # @description: My test command
 # @version: 2.0.0
 print("Test")
-"""
-        )
+""")
 
         with patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=workflows_dir):
             result = runner.invoke(sync_group, ["update"])
@@ -522,3 +518,186 @@ class TestSyncTeardownCommand:
 
             # Should handle the teardown
             assert result.exit_code in [0, 1]
+
+
+class TestSyncRemoteContracts:
+    """Remote CLI outcomes use transport doubles and real temporary outputs."""
+
+    @pytest.fixture
+    def remote(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        with (
+            patch("mcli.lib.ipfs_sync.IPFSSync") as cls,
+            patch("mcli.lib.ipfs_utils.ensure_daemon_running", return_value=True),
+            patch("mcli.lib.ipns_manager.get_sync_key", return_value=None),
+        ):
+            yield cls.return_value
+
+    @pytest.mark.parametrize("verify", [True, False])
+    def test_pull_writes_manifest_and_reconstructs_scripts(self, remote, tmp_path, verify):
+        remote.pull.return_value = {"commands": {"backup": {"version": "1"}}, "version": "2"}
+        remote.pull_workflows.return_value = [tmp_path / "scripts" / "backup.py"]
+        args = ["pull", "fixture-cid", "-o", "manifest.json", "-w", str(tmp_path / "scripts")]
+        if not verify:
+            args.append("--no-verify")
+        result = CliRunner().invoke(sync_group, args)
+        assert result.exit_code == 0, result.output
+        assert json.loads((tmp_path / "manifest.json").read_text()) == remote.pull.return_value
+        remote.pull.assert_called_once_with("fixture-cid", verify=verify)
+        remote.pull_workflows.assert_called_once_with(
+            "fixture-cid", tmp_path / "scripts", verify=verify
+        )
+        assert "Restored 1" in result.output
+
+    def test_pull_resolves_repo_and_reports_hash_failure(self, remote, tmp_path):
+        remote.resolve_latest_cid.return_value = "resolved-cid"
+        remote.pull.return_value = {"commands": {}}
+        remote.pull_workflows.side_effect = ValueError("backup.py hash mismatch")
+        result = CliRunner().invoke(
+            sync_group, ["pull", "--repo", "other", "-w", str(tmp_path / "scripts")]
+        )
+        remote.resolve_latest_cid.assert_called_once_with(scope="global", repo_name="other")
+        assert "Hash verification failed" in result.output
+        assert (tmp_path / "commands_resolved.json").exists()
+
+    def test_pull_missing_cid_does_not_write_output(self, remote, tmp_path):
+        remote.pull.return_value = None
+        result = CliRunner().invoke(sync_group, ["pull", "unavailable"])
+        assert "Failed" in result.output
+        assert list(tmp_path.iterdir()) == []
+
+    def test_history_displays_reverse_chronological_entries(self, remote):
+        remote.get_history.return_value = [
+            {"cid": "old-cid", "timestamp": "old"},
+            {
+                "cid": "new-cid",
+                "timestamp": "new",
+                "description": "Fixture release",
+                "command_count": 3,
+            },
+        ]
+        result = CliRunner().invoke(sync_group, ["history", "--limit", "2"])
+        assert result.exit_code == 0
+        assert result.output.index("new-cid") < result.output.index("old-cid")
+        assert "Fixture release" in result.output and "Commands: 3" in result.output
+        remote.get_history.assert_called_once_with(limit=2)
+
+    @pytest.mark.parametrize("accessible", [True, False])
+    def test_verify_reports_remote_accessibility(self, remote, accessible):
+        remote.verify_cid.return_value = accessible
+        result = CliRunner().invoke(sync_group, ["verify", "fixture-cid"])
+        assert result.exit_code == 0
+        assert ("not accessible" in result.output.lower()) is not accessible
+        remote.verify_cid.assert_called_once_with("fixture-cid")
+
+    @pytest.mark.parametrize("published", [True, False])
+    def test_push_reports_actual_ipns_publication(self, remote, tmp_path, published):
+        (tmp_path / "commands.lock.json").write_text('{"commands":{}}')
+        remote.push.return_value = "fixture-cid"
+        remote.last_ipns_name = "fixture-ipns" if published else None
+        with (
+            patch("mcli.app.sync_cmd.get_custom_commands_dir", return_value=tmp_path),
+            patch("mcli.lib.ipns_manager.get_sync_key", return_value="test-key"),
+        ):
+            result = CliRunner().invoke(sync_group, ["push", "-g", "-d", "Fixture"])
+        assert result.exit_code == 0
+        remote.push.assert_called_once_with(tmp_path / "commands.lock.json", description="Fixture")
+        assert "fixture-cid" in result.output
+        assert ("fixture-ipns" in result.output) is published
+
+
+class TestSyncIsolatedConfiguration:
+    def test_teardown_cancel_and_force_preserve_parent(self, tmp_path):
+        root = tmp_path / "mcli"
+        workflows = root / "workflows"
+        workflows.mkdir(parents=True)
+        (workflows / "fixture.py").write_text("pass")
+        sibling = root / "keep.json"
+        sibling.write_text("preserve")
+        with (
+            patch("mcli.lib.paths.get_mcli_home", return_value=root),
+            patch("mcli.lib.paths.is_git_repository", return_value=False),
+            patch("rich.prompt.Prompt.ask", return_value="n"),
+        ):
+            result = CliRunner().invoke(sync_group, ["teardown", "-g"])
+            assert "cancelled" in result.output.lower()
+            assert workflows.exists()
+            result = CliRunner().invoke(sync_group, ["teardown", "-g", "--force"])
+            assert result.exit_code == 0 and not workflows.exists()
+            assert sibling.read_text() == "preserve"
+            result = CliRunner().invoke(sync_group, ["teardown", "-g", "--force"])
+            assert "does not exist" in result.output
+
+    def test_info_reports_actual_script_counts_without_services(self, tmp_path):
+        workflows = tmp_path / "workflows"
+        workflows.mkdir()
+        for extension in ("py", "sh", "js", "ts", "ipynb"):
+            (workflows / ("fixture." + extension)).write_text("fixture")
+        with (
+            patch("mcli.lib.paths.get_mcli_home", return_value=tmp_path),
+            patch("mcli.lib.paths.get_custom_commands_dir", return_value=workflows),
+            patch("mcli.lib.paths.get_local_mcli_dir", return_value=None),
+            patch("mcli.lib.paths.is_git_repository", return_value=False),
+            patch("mcli.app.sync_cmd._ipfs_installed", return_value=False),
+        ):
+            result = CliRunner().invoke(sync_group, ["info"])
+        assert result.exit_code == 0
+        assert "Total: 5" in result.output
+        assert "Python: 1" in result.output and "Notebooks: 1" in result.output
+        assert "Installed: No" in result.output
+
+
+class TestSyncDaemonStartupContracts:
+    @pytest.fixture
+    def startup(self, tmp_path):
+        with (
+            patch.object(Path, "home", return_value=tmp_path),
+            patch("mcli.app.sync_cmd._ipfs_installed", return_value=True),
+            patch("mcli.app.sync_cmd._ipfs_initialized", return_value=False),
+            patch("mcli.app.sync_cmd._ipfs_daemon_running", side_effect=[False, True]),
+            patch("mcli.app.sync_cmd.subprocess.run") as run,
+            patch("mcli.app.sync_cmd.subprocess.Popen") as spawn,
+            patch("requests.get") as health,
+        ):
+            run.return_value.returncode = 0
+            spawn.return_value.pid = 123456
+            health.return_value.ok = True
+            yield run, spawn, tmp_path
+
+    def test_background_start_initializes_tracks_owned_pid_and_checks_health(self, startup):
+        run, spawn, root = startup
+        result = CliRunner().invoke(sync_group, ["init"])
+        assert result.exit_code == 0 and "daemon started" in result.output.lower()
+        run.assert_called_once_with(["ipfs", "init"], capture_output=True, text=True)
+        assert spawn.call_args.args == (["ipfs", "daemon"],)
+        assert spawn.call_args.kwargs["start_new_session"] is True
+        assert (root / ".mcli" / "data" / "ipfs-daemon.pid").read_text() == "123456"
+
+    def test_initialization_failure_prevents_background_spawn(self, startup):
+        run, spawn, root = startup
+        run.return_value.returncode = 1
+        run.return_value.stderr = "fixture initialization failed"
+        result = CliRunner().invoke(sync_group, ["init"])
+        assert "fixture initialization failed" in result.output
+        spawn.assert_not_called()
+        assert not (root / ".mcli").exists()
+
+    def test_foreground_interrupt_is_reported_and_not_detached(self, startup):
+        run, spawn, _ = startup
+        run.side_effect = [MagicMock(returncode=0), KeyboardInterrupt()]
+        result = CliRunner().invoke(sync_group, ["init", "--foreground"])
+        assert result.exit_code == 0 and "Daemon stopped" in result.output
+        assert run.call_args.args == (["ipfs", "daemon"],)
+        spawn.assert_not_called()
+
+    def test_install_failure_is_reported_without_initializing_or_spawning(self, startup):
+        run, spawn, _ = startup
+        with (
+            patch("mcli.app.sync_cmd._ipfs_installed", return_value=False),
+            patch("mcli.app.sync_cmd.sys.platform", "darwin"),
+        ):
+            run.return_value.returncode = 1
+            result = CliRunner().invoke(sync_group, ["init", "--install"])
+        assert "Failed to install" in result.output
+        run.assert_called_once_with(["brew", "install", "ipfs"], capture_output=False)
+        spawn.assert_not_called()

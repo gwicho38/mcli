@@ -45,8 +45,7 @@ def mock_config_file(tmp_path):
     config_dir.mkdir()
 
     config_file = config_dir / "config.toml"
-    config_file.write_text(
-        """
+    config_file.write_text("""
 [general]
 log_level = "INFO"
 theme = "default"
@@ -59,8 +58,7 @@ temperature = 0.7
 [paths]
 logs_dir = "~/.mcli/logs"
 cache_dir = "~/.mcli/cache"
-"""
-    )
+""")
 
     return config_file
 

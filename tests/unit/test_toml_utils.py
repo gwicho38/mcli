@@ -1,9 +1,13 @@
 """Unit tests for mcli.lib.toml module."""
 
 import os
+import sys
 import tempfile
+from unittest.mock import patch
 
 import pytest
+
+from mcli.lib.toml.toml import read_from_toml
 
 
 class TestTomlUtils:
@@ -190,3 +194,37 @@ disabled = false
             assert result is None
         finally:
             os.unlink(temp_path)
+
+
+@pytest.mark.parametrize("fallback", [False, True])
+def test_toml_reader_handles_utf8_nested_values_and_missing_keys(tmp_path, monkeypatch, fallback):
+    if fallback:
+        monkeypatch.setitem(sys.modules, "tomllib", None)
+    config = tmp_path / "config.toml"
+    config.write_text('[paths]\nincluded_dirs=["app", "self"]\nlabel="café"\n', encoding="utf-8")
+    assert read_from_toml(str(config), "paths") == {
+        "included_dirs": ["app", "self"],
+        "label": "café",
+    }
+    assert read_from_toml(str(config), "absent") is None
+
+
+@pytest.mark.parametrize("fallback", [False, True])
+def test_invalid_and_missing_toml_are_reported(tmp_path, monkeypatch, fallback):
+    if fallback:
+        monkeypatch.setitem(sys.modules, "tomllib", None)
+    config = tmp_path / "config.toml"
+    config.write_text("[invalid TOML")
+    with pytest.raises(ValueError):
+        read_from_toml(str(config), "paths")
+    with pytest.raises(FileNotFoundError):
+        read_from_toml(str(tmp_path / "missing.toml"), "paths")
+
+
+@pytest.mark.parametrize("fallback", [False, True])
+def test_unreadable_toml_is_reported(tmp_path, monkeypatch, fallback):
+    if fallback:
+        monkeypatch.setitem(sys.modules, "tomllib", None)
+    with patch("builtins.open", side_effect=PermissionError("fixture cannot read")):
+        with pytest.raises(PermissionError, match="fixture cannot read"):
+            read_from_toml(str(tmp_path / "unreadable.toml"), "paths")

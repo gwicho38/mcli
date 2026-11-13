@@ -70,8 +70,10 @@ class ProcessContainer:
 
         # Create metadata file
         metadata_file = self.container_dir / "metadata.json"
+        metadata = asdict(self.info)
+        metadata["status"] = self.info.status.value
         with open(metadata_file, "w") as f:
-            json.dump(asdict(self.info), f, indent=2, default=str)
+            json.dump(metadata, f, indent=2, default=str)
 
     def start(self) -> bool:
         """Start the containerized process."""
@@ -253,7 +255,12 @@ class ProcessManager:
                                     data[date_field] = datetime.fromisoformat(data[date_field])
 
                             # Convert status back to enum
-                            data["status"] = ProcessStatus(data["status"])
+                            legacy_statuses = {
+                                str(status): status.value for status in ProcessStatus
+                            }
+                            data["status"] = ProcessStatus(
+                                legacy_statuses.get(data["status"], data["status"])
+                            )
 
                             process_info = ProcessInfo(**data)
                             container = ProcessContainer(process_info)

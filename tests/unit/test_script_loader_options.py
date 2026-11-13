@@ -11,9 +11,48 @@ import tempfile
 from pathlib import Path
 
 import click
+import pytest
 from click.testing import CliRunner
 
 from mcli.lib.script_loader import ScriptLoader
+
+
+@pytest.mark.parametrize("exit_code", [0, 3, 17])
+@pytest.mark.parametrize("is_tty", [False, True])
+def test_shell_command_preserves_child_exit_status(tmp_path, monkeypatch, exit_code, is_tty):
+    """A normal child exit must not be mistaken for a failure to launch it."""
+    script = tmp_path / "child_status.sh"
+    script.write_text('#!/bin/sh\nprintf "child-finished\\n"\nexit "$1"\n')
+    command = ScriptLoader(tmp_path).load_shell_command(script, {})
+
+    @click.group()
+    def cli():
+        # Set this after CliRunner installs its isolated stdout stream.
+        monkeypatch.setattr("sys.stdout.isatty", lambda: is_tty)
+
+    cli.add_command(command)
+    result = CliRunner().invoke(cli, ["child_status", str(exit_code)])
+
+    assert result.exit_code == exit_code
+    assert "Error executing shell command:" not in result.output
+    if not is_tty:
+        assert "child-finished" in result.output
+
+
+def test_shell_command_reports_process_launch_failure(tmp_path, monkeypatch):
+    """Launch errors retain the existing execution-error diagnostic and status."""
+    script = tmp_path / "launch_failure.sh"
+    script.write_text("#!/bin/sh\nexit 0\n")
+    command = ScriptLoader(tmp_path).load_shell_command(script, {})
+
+    def fail_to_launch(*args, **kwargs):
+        raise OSError("cannot launch child")
+
+    monkeypatch.setattr("mcli.lib.script_loader.subprocess.Popen", fail_to_launch)
+    result = CliRunner().invoke(command)
+
+    assert result.exit_code == 1
+    assert "Error executing shell command: cannot launch child" in result.output
 
 
 class TestShellCommandOptionPassthrough:
@@ -150,14 +189,12 @@ class TestPythonVenvCommandOptionPassthrough:
     def test_python_venv_command_context_settings(self):
         """Test that Python venv commands have correct context settings."""
         script_path = self.workflows_dir / "test_py.py"
-        script_path.write_text(
-            """#!/usr/bin/env python
+        script_path.write_text("""#!/usr/bin/env python
 # @description: Test Python script
 # @requires: requests
 import sys
 print(f"ARGS: {sys.argv[1:]}")
-"""
-        )
+""")
 
         # Load the command using _load_python_with_deps
         command = self.loader._load_python_with_deps(
@@ -191,12 +228,10 @@ class TestBunCommandOptionPassthrough:
     def test_bun_command_context_settings(self):
         """Test that Bun commands have correct context settings."""
         script_path = self.workflows_dir / "test_js.js"
-        script_path.write_text(
-            """#!/usr/bin/env bun
+        script_path.write_text("""#!/usr/bin/env bun
 // @description: Test JavaScript script
 console.log("ARGS:", process.argv.slice(2));
-"""
-        )
+""")
 
         command = self.loader.load_bun_command(
             script_path,

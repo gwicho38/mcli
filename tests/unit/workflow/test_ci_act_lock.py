@@ -43,9 +43,7 @@ with act_lock(timeout=60, path=lock, announce=lambda msg: None) as acquired:
     start = time.time()
     time.sleep(hold)
     out.write_text("{{}} {{}}".format(start, time.time()))
-""".format(
-    src=_SRC
-)
+""".format(src=_SRC)
 
 # Child process: take the lock and then hang forever, so the parent can SIGKILL it.
 _WEDGE_WORKER = """
@@ -59,9 +57,7 @@ with act_lock(timeout=60, path=lock, announce=lambda msg: None) as acquired:
     assert acquired
     ready.write_text("held")
     time.sleep(600)
-""".format(
-    src=_SRC
-)
+""".format(src=_SRC)
 
 
 def _spawn(script: str, *args: str) -> subprocess.Popen:

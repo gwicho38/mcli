@@ -2,6 +2,7 @@
 """
 Test script to check if the mcli.lib.erd module can be imported correctly.
 """
+
 import pytest
 
 

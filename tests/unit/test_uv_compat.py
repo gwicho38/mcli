@@ -115,8 +115,7 @@ def test_virtual_env():
 
         # Create a minimal pyproject.toml
         with open("pyproject.toml", "w") as f:
-            f.write(
-                """
+            f.write("""
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
@@ -126,8 +125,7 @@ name = "uvtest"
 version = "0.1.0"
 description = "Test UV compatibility"
 requires-python = ">=3.9"
-            """
-            )
+            """)
 
         # Test UV venv creation
         success, _ = run_command(["uv", "venv"], "Create virtual environment")

@@ -24,14 +24,12 @@ pytestmark = pytest.mark.skip(
 def test_python_script(tmp_path):
     """Create a test Python script."""
     script = tmp_path / "test.py"
-    script.write_text(
-        """#!/usr/bin/env python3
+    script.write_text("""#!/usr/bin/env python3
 import sys
 print("Hello from Python!")
 if sys.argv[1:]:
     print(f"Args: {sys.argv[1:]}")
-"""
-    )
+""")
     return script
 
 
@@ -39,14 +37,12 @@ if sys.argv[1:]:
 def test_shell_script(tmp_path):
     """Create a test shell script."""
     script = tmp_path / "test.sh"
-    script.write_text(
-        """#!/bin/bash
+    script.write_text("""#!/bin/bash
 echo "Hello from shell!"
 if [ $# -gt 0 ]; then
     echo "Args: $@"
 fi
-"""
-    )
+""")
     script.chmod(0o755)
     return script
 
@@ -149,11 +145,9 @@ class TestShellScriptExecution:
     def test_execute_non_executable_shell_script(self, tmp_path):
         """Test executing a shell script that's not marked executable."""
         script = tmp_path / "test.sh"
-        script.write_text(
-            """#!/bin/bash
+        script.write_text("""#!/bin/bash
 echo "Not executable initially!"
-"""
-        )
+""")
         # Don't make it executable
 
         runner = CliRunner()
@@ -241,11 +235,9 @@ class TestMixedUsage:
         """Test that an actual file takes precedence over a workflow name."""
         # Create a file named "secrets" which conflicts with builtin workflow
         secrets_script = tmp_path / "secrets.py"
-        secrets_script.write_text(
-            """
+        secrets_script.write_text("""
 print("This is the secrets file, not the workflow!")
-"""
-        )
+""")
 
         monkeypatch.chdir(tmp_path)
 
