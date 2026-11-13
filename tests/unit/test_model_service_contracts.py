@@ -147,8 +147,10 @@ def test_model_service_routes_use_real_database(model_module, tmp_path, monkeypa
         )
         assert service.model_manager.db.get_model(model_id).name == "Updated"
         assert client.put("/models/missing", json={"name": "No"}).status_code == 404
-        assert client.delete(f"/models/{model_id}/remove").json()["status"] == "removed"
-        assert client.delete(f"/models/{model_id}/remove").status_code == 404
+        removed = client.delete(f"/models/{model_id}/remove")
+        missing = client.delete(f"/models/{model_id}/remove")
+        assert removed.json()["status"] == "removed"
+        assert missing.status_code == 404
         monkeypatch.setattr(service.model_manager, "load_model", lambda info: False)
         assert client.post("/models", json=body).status_code == 500
         assert client.get("/models").json() == []
@@ -239,8 +241,8 @@ def test_invalid_embedding_chunks_fail_before_looping(tmp_path):
         assert ready.strip() == b"READY"
         try:
             output, error = child.communicate(timeout=3)
-        except subprocess.TimeoutExpired:
-            pytest.fail("chunk_size <= overlap did not terminate")
+        except subprocess.TimeoutExpired as exc:
+            raise AssertionError("chunk_size <= overlap did not terminate") from exc
         assert child.returncode == 0, error
         assert output.strip() == b"REJECTED"
     finally:
