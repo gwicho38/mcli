@@ -14,20 +14,16 @@ def read_from_toml(file_path: str, key: str) -> Optional[Any]:
 
     Raises:
         FileNotFoundError: If the specified file does not exist.
-        tomllib.TOMLDecodeError or toml.TomlDecodeError: If the file contains invalid TOML.
+        tomllib.TOMLDecodeError or tomli.TOMLDecodeError: If the file contains invalid TOML.
     """
     try:
         # Attempt to use the built-in tomllib (available in Python 3.11+)
         import tomllib
-
-        with open(file_path, "rb") as file:
-            config_data = tomllib.load(file)
     except ModuleNotFoundError:
-        # Fall back to the third-party 'toml' package for earlier Python versions.
-        import toml
+        import tomli as tomllib
 
-        with open(file_path, encoding="utf-8") as file:
-            config_data = toml.load(file)
+    with open(file_path, "rb") as file:
+        config_data = tomllib.load(file)
 
     # Return the value for the provided key, or None if the key is not found.
     return config_data.get(key)

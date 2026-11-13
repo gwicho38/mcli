@@ -143,3 +143,80 @@ async def test_health_check_handles_disconnection():
     client.session = MagicMock()
     client.session.get.side_effect = aiohttp.ClientConnectionError("offline")
     assert await client.health_check() is False
+
+
+async def test_event_stream_skips_invalid_payloads_and_notifies_wildcard_handlers():
+    from types import SimpleNamespace
+
+    class Events:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        def __aiter__(self):
+            async def events():
+                for data in [
+                    " ",
+                    "not json",
+                    '{"type":"job:completed","id":"42"}',
+                    '{"id":"unknown"}',
+                ]:
+                    yield SimpleNamespace(data=data)
+
+            return events()
+
+    client = LSHClient("https://lsh.test", api_key="test-key")
+    client.session = MagicMock()
+    specific = AsyncMock()
+    wildcard = Mock()
+    unknown = Mock()
+    client.on("job:completed", specific)
+    client.on("*", wildcard)
+    client.on("unknown", unknown)
+    with patch(
+        "mcli.lib.services.lsh_client.sse_client.EventSource", return_value=Events()
+    ) as source:
+        await client.stream_events()
+    specific.assert_awaited_once_with({"type": "job:completed", "id": "42"})
+    assert wildcard.call_count == 2
+    unknown.assert_called_once_with({"id": "unknown"})
+    source.assert_called_once_with(
+        "https://lsh.test/api/events",
+        session=client.session,
+        headers={"Content-Type": "application/json", "X-API-Key": "test-key"},
+    )
+
+
+async def test_processor_emits_job_failure_and_processed_trading_records():
+    from mcli.lib.services.lsh_client import LSHEventProcessor
+
+    client = LSHClient("https://lsh.test", api_key="test-key")
+    processor = LSHEventProcessor(client)
+    processor._emit_mcli_event = AsyncMock()
+    await client._emit_event(
+        "job:started", {"data": {"id": "42", "name": "fixture"}, "timestamp": 123}
+    )
+    assert processor._emit_mcli_event.call_args.args[0] == "lsh.job.started"
+    assert processor._emit_mcli_event.call_args.args[1]["job_id"] == "42"
+    await client._emit_event(
+        "job:failed", {"data": {"id": "42", "name": "fixture", "error": "offline"}}
+    )
+    assert processor._emit_mcli_event.call_args.args[0] == "lsh.job.failed"
+    assert processor._emit_mcli_event.call_args.args[1]["error"] == "offline"
+    await client._emit_event(
+        "job:completed",
+        {
+            "data": {
+                "id": "42",
+                "name": "trading supabase",
+                "stdout": 'invalid\n{"amount":12}\n',
+                "databaseSync": {"table": "demo"},
+            }
+        },
+    )
+    emitted = {call.args[0]: call.args[1] for call in processor._emit_mcli_event.call_args_list}
+    assert emitted["trading.data.processed"]["records"] == [{"amount": 12}]
+    assert emitted["database.sync.completed"]["sync_info"] == {"table": "demo"}
+    assert emitted["lsh.job.completed"]["job_id"] == "42"
