@@ -9,6 +9,10 @@ PYTHON := python3
 UV := uv
 PIP := uv pip
 VENV_PYTHON := .venv/bin/python3
+PRE_COMMIT_PYTHON := 3.11
+PRE_COMMIT_RUNNER := $(UV) tool run --python $(PRE_COMMIT_PYTHON) --with 'filelock>=4.2.1,<5' --with 'virtualenv>=21.14.9,<22' --from 'pre-commit>=4.5.1' pre-commit
+DEPENDENCY_AUDITOR := $(UV) tool run --python $(PRE_COMMIT_PYTHON) --from 'pip-audit>=2.9.0' pip-audit
+SECURITY_REQUIREMENTS = $(CACHE_DIR)/security-requirements.txt
 # Get version from pyproject.toml and git
 VERSION := $(shell grep -m 1 'version =' pyproject.toml | cut -d '"' -f 2)
 GIT_HASH := $(shell git rev-parse --short HEAD)
@@ -461,25 +465,27 @@ type-check-report: setup ## Generate type checking report with error counts
 security-check: setup ## Run security checks
 	@echo "$(CYAN)Running security checks...$(RESET)"
 	$(UV) run bandit -r src/
-	$(UV) run safety check
+	@mkdir -p $(dir $(SECURITY_REQUIREMENTS))
+	$(UV) export --frozen --extra dev --no-hashes --no-emit-project --format requirements-txt --output-file $(SECURITY_REQUIREMENTS)
+	$(DEPENDENCY_AUDITOR) --disable-pip --no-deps --progress-spinner off --requirement $(SECURITY_REQUIREMENTS)
 	@echo "$(GREEN)Security checks completed ✅$(RESET)"
 
 .PHONY: pre-commit-install
 pre-commit-install: setup ## Install pre-commit hooks
 	@echo "$(CYAN)Installing pre-commit hooks...$(RESET)"
-	$(UV) run pre-commit install
+	$(PRE_COMMIT_RUNNER) install
 	@echo "$(GREEN)Pre-commit hooks installed ✅$(RESET)"
 
 .PHONY: pre-commit-run
 pre-commit-run: setup ## Run pre-commit hooks on all files
 	@echo "$(CYAN)Running pre-commit hooks...$(RESET)"
-	$(UV) run pre-commit run --all-files
+	$(PRE_COMMIT_RUNNER) run --all-files
 	@echo "$(GREEN)Pre-commit hooks completed ✅$(RESET)"
 
 .PHONY: pre-commit-update
 pre-commit-update: setup ## Update pre-commit hooks
 	@echo "$(CYAN)Updating pre-commit hooks...$(RESET)"
-	$(UV) run pre-commit autoupdate
+	$(PRE_COMMIT_RUNNER) autoupdate
 	@echo "$(GREEN)Pre-commit hooks updated ✅$(RESET)"
 
 # =============================================================================

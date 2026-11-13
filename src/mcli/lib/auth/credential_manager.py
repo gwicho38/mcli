@@ -38,8 +38,8 @@ class CredentialManager:
         Ensures parent directories exist and sets proper access modes.
         """
         logger.info("Insure of ensure config dir")
-        logger.info("config file:", self.config_file)
-        logger.info("config dir:", self.config_dir)
+        logger.info("config file: %s", self.config_file)
+        logger.info("config dir: %s", self.config_dir)
         try:
             # Create parent directories if they don't exist
             # 0o700 means read, write, execute permissions for owner only
@@ -59,7 +59,7 @@ class CredentialManager:
             Dict[str, Any]: Configuration dictionary, empty if file doesn't exist or is invalid.
         """
         try:
-            logger.info("Reading config file:", self.config_file)
+            logger.info("Reading config file: %s", self.config_file)
             if not self.config_file.exists():
                 return {}
 

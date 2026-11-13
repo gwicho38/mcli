@@ -54,7 +54,8 @@ def test_run_captures_output_and_uses_requested_environment(manager, tmp_path):
     assert detail["started_at"] is not None
     assert manager.stop(pid)
     assert manager.kill(pid)
-    assert manager.remove(pid)
+    removed = manager.remove(pid)
+    assert removed
     assert manager.inspect(pid) is None
 
 
@@ -75,7 +76,8 @@ def test_live_process_lifecycle_and_owned_group_cleanup(manager, tmp_path, actio
         assert container.info.finished_at is not None
         assert manager.list_processes() == []
         assert len(manager.list_processes(all_processes=True)) == 1
-        assert manager.remove(pid)
+        removed = manager.remove(pid)
+        assert removed
     assert pid not in manager.containers
 
 

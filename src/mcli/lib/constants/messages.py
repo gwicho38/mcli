@@ -428,6 +428,10 @@ class ChatMessages:
 class ModelServiceMessages:
     """Model service message constants."""
 
+    INVALID_CHUNK_OVERLAP = (
+        "chunk_size must be positive and overlap must satisfy 0 <= overlap < chunk_size"
+    )
+
     # Model loading
     USING_DEVICE = "Using device: {device}"
     LOADING_MODEL = "Loading model: {model}"

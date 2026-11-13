@@ -7,6 +7,20 @@ from unittest.mock import patch
 import pytest
 
 
+def test_credential_config_logs_are_format_safe_at_info_level(tmp_path, monkeypatch, caplog):
+    import logging
+
+    from mcli.lib.auth import credential_manager as module
+
+    monkeypatch.setattr(module.Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(module.logger, "handlers", [caplog.handler])
+    with caplog.at_level(logging.INFO, logger=module.logger.name):
+        manager = module.CredentialManager(app_name="test-formatting")
+        manager.write_config({"example": "value"})
+        assert manager.read_config() == {"example": "value"}
+    assert "config file:" in caplog.text
+
+
 class TestCredentialManager:
     """Test suite for CredentialManager base class."""
 

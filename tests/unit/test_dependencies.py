@@ -8,6 +8,19 @@ when not installed.
 import pytest
 
 
+def test_authlib_rejects_unsigned_json_serialization():
+    """An empty JWS signature list is not an authenticated payload."""
+    from authlib.jose import JsonWebSignature
+    from authlib.jose.errors import JoseError
+
+    verifier = JsonWebSignature(algorithms=["HS256"])
+    key = b"test-only-hmac-key-with-at-least-32-bytes"
+    signed = verifier.serialize_json({"protected": {"alg": "HS256"}}, b"{}", key)
+    assert verifier.deserialize_json(signed, key)["payload"] == b"{}"
+    with pytest.raises(JoseError):
+        verifier.deserialize_json({"payload": "e30", "signatures": []}, key)
+
+
 class TestOptionalRedisImport:
     """Test that redis import is handled gracefully when not available."""
 

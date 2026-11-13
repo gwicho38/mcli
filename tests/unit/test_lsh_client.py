@@ -99,12 +99,16 @@ async def test_context_reuses_session_and_closes_it_on_failure():
         "mcli.lib.services.lsh_client.aiohttp.ClientSession", return_value=session
     ) as factory:
         client = LSHClient("https://lsh.test", api_key="test-key", timeout=7)
-        with pytest.raises(RuntimeError, match="work failed"):
+
+        async def fail_inside_session():
             async with client as active:
                 assert active is client
                 await client.connect()
                 assert client.session is session
                 raise RuntimeError("work failed")
+
+        with pytest.raises(RuntimeError, match="work failed"):
+            await fail_inside_session()
         assert factory.call_count == 1
         assert factory.call_args.kwargs["timeout"].total == 7
         session.close.assert_awaited_once()

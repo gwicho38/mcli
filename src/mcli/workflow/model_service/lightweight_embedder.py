@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+from mcli.lib.constants import ModelServiceMessages
+
 # Try to import lightweight alternatives
 HAS_SENTENCE_TRANSFORMERS = False  # Placeholder for future implementation
 
@@ -156,6 +158,8 @@ class LightweightEmbedder:
 
     def chunk_text(self, text: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
         """Split text into overlapping chunks."""
+        if chunk_size <= 0 or overlap < 0 or overlap >= chunk_size:
+            raise ValueError(ModelServiceMessages.INVALID_CHUNK_OVERLAP)
         chunks = []
         start = 0
 

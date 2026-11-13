@@ -2,6 +2,77 @@
 
 Issue: #251. Integration release: 8.0.71, not yet published.
 
+## Review correction
+
+The initial Safety-only clean result below was not a release approval. PR #256's
+Dependency Review identified eight Authlib advisories; the critical empty-JWS
+signature bypass was still present in 1.6.12. A regression with a valid signed
+control reproduced acceptance of an unsigned payload. Authlib is now at least
+1.9.5, beyond the advisory fixed versions 1.9.0 and 1.9.1. The signed control
+continues to verify and an empty signature list is rejected.
+
+Auditing the actual exported frozen development set independently with pip-audit
+found 46 findings across eight further packages after the Authlib repair. Named
+upgrades address aiohttp, Black, certifi, GitPython and Pylint. Beautiful Soup and
+Soup Sieve had no callers in owning source, tests, scripts or workflows; their
+unused declarations are removed, including legacy requirements files. The
+documentation's optional pentest instructions still explicitly install their
+own dependencies.
+
+Fixed filelock 4.2.1 requires Python 3.11. Secure virtualenv versions require
+filelock at least 3.24.2. An attempted older pin, 3.20.3, avoided some advisories
+but still had two findings; GHSA-69hj-f68j-2879 affects every version through
+4.2.0. Keeping pre-commit/virtualenv or Safety in the Python 3.10 project
+environment was therefore unsatisfiable with those security requirements. The
+three existing Make pre-commit targets use UV's isolated tool runner on Python
+3.11 with fixed dependency floors. Runtime and test Python support remain intact.
+No owning source used Safety, virtualenv or filelock. Pre-commit remains available
+through the existing Make targets. Project runtime/development exports and the
+isolated pre-commit environment are audited separately.
+
+Safety's compatible filelock-4 environment selected Safety 3.2.3, but the actual
+scanner failed before scanning: current Typer no longer exports `rich_utils`.
+A bounded Typer/Click compatibility attempt then failed because Safety imports
+`pkg_resources`, removed from the required fixed setuptools release. No unsafe
+dependency override was used. The existing `security-check` target retains
+Bandit and now runs pip-audit on a fresh frozen project dependency export;
+the hosted dependency-audit job uses the same route. Scanner failures propagate,
+and the former advisory-ignore fallback is removed. A vulnerable Authlib fixture
+exercises the actual scanner's failure exit, separately from clean interpreter
+exports and the Make failure-propagation regression.
+
+The Make regression executes each target against a recording UV command and
+checks interpreter selection, security floors and preserved arguments; the three
+pre-commit cases and the dependency-audit case failed before their runner changes. Final audit and test results must correspond
+to the resulting frozen lock and all three supported interpreters.
+
+**Before**
+
+```mermaid
+flowchart LR
+    A[Python 3.10 project dev environment] --> B[Pre-commit and virtualenv]
+    B --> C[Requires vulnerable filelock 3.x]
+    D[Unused Beautiful Soup declaration] --> E[Vulnerable Soup Sieve]
+```
+
+**After**
+
+```mermaid
+flowchart LR
+    A[Project runtime and tests] --> B[Python 3.10 to 3.12 retained]
+    C[Make pre-commit targets] --> D[UV tool environment on Python 3.11]
+    D --> E[Fixed filelock and virtualenv]
+    F[Unused HTML dependencies removed] --> G[No affected Soup Sieve in project lock]
+```
+
+Primary references: [Authlib empty-signature advisory](https://github.com/authlib/authlib/security/advisories/GHSA-6v38-4h7w-rj9h),
+[Soup Sieve affected versions](https://github.com/advisories/GHSA-mmhr-3c5m-f64f),
+[filelock affected versions](https://github.com/advisories/GHSA-v4x8-3wr5-3wq8),
+[virtualenv 21.14.9 dependency metadata](https://pypi.org/pypi/virtualenv/21.14.9/json),
+[filelock 4.2.1 Python requirement](https://pypi.org/pypi/filelock/4.2.1/json).
+
+## Initial checkpoint, superseded for release approval
+
 The project development environment reproduced 156 active Safety advisories
 across 19 packages, with zero ignores. Matching tuples on main establish that
 the shell exit-status fix did not introduce them; baseline provenance does not

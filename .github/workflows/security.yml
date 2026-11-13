@@ -64,7 +64,7 @@ jobs:
             bandit-full-report.txt
 
   safety:
-    name: Safety Check
+    name: Dependency Audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -75,17 +75,20 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Safety
-        run: pip install --upgrade "setuptools>=83" safety
+      - name: Install UV
+        uses: astral-sh/setup-uv@v3
 
-      - name: Run Safety Check
-        run: safety check --json > safety-report.json || safety check --ignore 59234,71691,71584,71578,71577,71692,71579,71587,71693,64459,64396
+      - name: Export frozen dependencies
+        run: uv export --frozen --extra dev --no-hashes --no-emit-project --format requirements-txt --output-file dependency-audit-requirements.txt
 
-      - name: Upload Safety results
+      - name: Run dependency audit
+        run: uv tool run --python 3.11 --from 'pip-audit>=2.9.0' pip-audit --disable-pip --no-deps --progress-spinner off --requirement dependency-audit-requirements.txt --format json --output dependency-audit-report.json
+
+      - name: Upload dependency audit results
         uses: actions/upload-artifact@v4
         with:
-          name: safety-results
-          path: safety-report.json
+          name: dependency-audit-results
+          path: dependency-audit-report.json
 
   trivy:
     name: Trivy Vulnerability Scan

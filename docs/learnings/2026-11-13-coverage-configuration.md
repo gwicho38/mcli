@@ -101,33 +101,65 @@ External services are mocked. Temporary files, encryption, repositories and owne
 child process groups run for real. Existing test IDs and skip decisions remain.
 The batch also reproduced and fixed the metadata reload defect tracked in #254.
 
-The final clean Python 3.11 full run passes 1,964 tests with 267 existing skips. Coverage is
-50.13%: 12,221/22,918 statements plus 2,469/6,388 branches, or 14,690/29,306
-combined items. The report exits 0 at the unchanged 50% minimum. The production
-metadata correction adds three statements and the TOML fallback repair removes
-two, for one net additional statement in the denominator; the coverage
-configuration, omissions and exclusions are unchanged from the prior checkpoint.
-This satisfies the release minimum; it does not establish completion of every
-core-module acceptance requirement in #178.
+The earlier Python 3.11 run passed 1,964 tests with 267 existing skips, but its
+50.13% report was incomplete: coverage did not discover 15 namespace modules.
+Adding namespace discovery to a copy of that data preserved the hits and expanded
+the denominator from 22,918 to 26,316 statements and from 6,388 to 7,076 branches.
+The actual combined result was 43.992573%, so that run did not satisfy the gate.
+The previous 3.10 and 3.12 percentages have the same limitation.
+
+`include_namespace_packages = True` now counts unimported namespace source. A
+regression creates an untouched namespace module and checks its zero-hit lines
+in the JSON report; it failed before the configuration repair. Additional tests
+exercise actual SQLite persistence, service routes, response streams, embedding
+normalization and fallback, script synchronization, and storage CLI boundaries.
+No source omission, exclusion, skip or threshold was added to raise coverage.
+Fresh whole-source matrix results must be checked before release. The broader
+84-module acceptance scope of #178 remains open.
 
 **Before**
 
 ```mermaid
 flowchart LR
-    A[Valid instrumentation] --> B[12395 of 29305 items covered]
-    B --> C[42.30 percent gate fails]
+    A[Namespace modules not imported] --> B[15 source files absent from report]
+    B --> C[Apparent pass with incomplete denominator]
 ```
 
 **After**
 
 ```mermaid
 flowchart LR
-    A[Core behavior and persistence regressions] --> B[14690 of 29306 items covered]
-    B --> C[50.13 percent gate passes]
+    A[Namespace discovery enabled] --> B[All source files remain in report]
+    B --> C[Behavioral tests must satisfy unchanged 50 percent minimum]
 ```
 
-The final full-suite matrix also passes on Python 3.10 and 3.12: each has
-1,964 passed and 267 skipped, with 50.16% coverage (12,229 statements plus
-2,472 branches covered out of the same 29,306 combined items). Each interpreter
-has separate coverage data and an actual child exit marker of 0. The broader
-84-core-module acceptance scope in #178 is not claimed complete.
+## Defects exposed by the expanded gate
+
+Issue #257: `chunk_text` advanced by `chunk_size - overlap` without checking
+that the step was positive. A request with chunk size 100 and default overlap
+200 looped indefinitely. A subprocess READY handshake starts the bounded timeout
+only after import; the regression reproduced the nonterminating call. Invalid
+size/overlap combinations now raise `ValueError` before the loop. Valid overlapping
+chunks and document embeddings retain their behavior.
+
+Issue #258: remote package tests enabled INFO logging and exposed three
+`CredentialManager` messages that supplied a path without a format placeholder.
+A real formatting-handler regression reproduced `TypeError`; the messages now
+use `%s` placeholders. Final full runs explicitly enable INFO logging, so a quiet
+logger cannot hide this failure again.
+
+**Before**
+
+```mermaid
+flowchart LR
+    A[Chunk size at or below overlap] --> B[Loop makes no forward progress]
+    C[INFO logger formats path argument] --> D[Missing placeholder raises TypeError]
+```
+
+**After**
+
+```mermaid
+flowchart LR
+    A[Invalid chunk step] --> B[ValueError before iteration]
+    C[INFO logger with percent-s placeholder] --> D[Path formatted without exception]
+```

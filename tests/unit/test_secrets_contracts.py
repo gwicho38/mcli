@@ -1,6 +1,5 @@
 """Encrypted secret persistence and local Git synchronization without real credentials."""
 
-import json
 from pathlib import Path
 from unittest.mock import patch
 
@@ -33,8 +32,10 @@ def test_encryption_namespaces_reopen_and_tamper(tmp_path):
     stored.write_bytes(b"invalid ciphertext")
     assert reopened.get("api-key") is None
     assert reopened.get("absent") is None
-    assert reopened.delete("api-key") is True
-    assert reopened.delete("api-key") is False
+    deleted = reopened.delete("api-key")
+    assert deleted is True
+    deleted_again = reopened.delete("api-key")
+    assert deleted_again is False
 
 
 def test_import_and_export_environment_roundtrip(tmp_path):

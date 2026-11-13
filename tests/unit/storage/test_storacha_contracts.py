@@ -39,7 +39,8 @@ async def test_cache_only_roundtrip_query_and_deletion(backend):
     assert metadata["encrypted"] is True
     assert (await backend.query({"scope": "test"}))[0]["cid"] == cid
     assert await backend.list_all(limit=1) == [cid]
-    assert await backend.delete(cid) is True
+    deleted = await backend.delete(cid)
+    assert deleted is True
     assert await backend.retrieve(cid) is None
     backend.client.get.assert_not_awaited()
 

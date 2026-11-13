@@ -47,11 +47,11 @@ dependencies = [
   # Runtime encryption and transitive security floors (#251)
   "cryptography>=50.0.0,<51.0.0",
   "anyio>=4.14.2,<5.0.0",
+  "certifi>=2026.10.18",
   "idna>=3.15,<4.0.0",
   "multidict>=6.9.1,<7.0.0",
   "pygments>=2.20.0,<3.0.0",
   "pyjwt>=2.15.0,<3.0.0",
-  "soupsieve>=2.9,<3.0",
   "starlette>=1.3.1,<2.0.0",
   "urllib3>=2.8.0,<3.0.0",
   # Core utilities
@@ -60,14 +60,13 @@ dependencies = [
   "humanize>=4.9.0,<5.0.0",
   "psutil>=5.9.0,<6.0.0",
   "inquirerpy>=0.3.4,<0.4.0",
-  "gitpython>=3.1.62,<4.0.0",
+  "gitpython>=3.2.1,<4.0.0",
   "prompt-toolkit>=3.0.0,<4.0.0",
   # Basic HTTP/async support
-  "aiohttp>=3.14.3,<4.0.0",
+  "aiohttp>=3.14.4,<4.0.0",
   "httpx>=0.28.1,<1.0.0",
   "websockets>=12.0,<14.0.0",
   # Data parsing
-  "beautifulsoup4>=4.13.5,<5.0.0",
   "fuzzywuzzy>=0.18.0,<1.0.0",
   # Chat and AI capabilities
   "openai>=1.3.0,<2.0.0",
@@ -111,24 +110,21 @@ dev = [
   "pytest-json-report>=1.5.0",   # JSON reports
 
   # Code quality
-  "black>=26.3.1,<27.0.0",
+  "black>=26.10.1,<27.0.0",
   "isort>=5.13.2,<6.0.0",
   "mypy>=1.16.1,<2.0.0",
   "ruff>=0.1.0",                  # Fast linter
-  "pylint>=3.0.0",
+  "pylint>=4.0.9",
   "flake8>=7.0.0",
   "flake8-docstrings>=1.7.0",
   "flake8-bugbear>=24.1.0",
   "flake8-comprehensions>=3.14.0",
   "flake8-simplify>=0.21.0",
-  "pre-commit>=4.5.1",            # Git hooks
 
   # Security
   "bandit>=1.7.0",
-  "safety>=3.0.0",
-  "authlib>=1.6.12,<2.0.0",
+  "authlib>=1.9.5,<2.0.0",
   "nltk>=3.10.4,<4.0.0",
-  "virtualenv>=21.7.13,<22.0.0",
 
   # Optional-feature deps exercised by the test suite (ERD/repo graphs) — kept
   # in dev so CI can run those tests strictly instead of best-effort (#169).
@@ -304,11 +300,11 @@ dev = [
     "responses>=0.24.0",
     "freezegun>=1.4.0",
     # Linting / formatting / typing
-    "black>=26.3.1,<27.0.0",
+    "black>=26.10.1,<27.0.0",
     "isort>=5.13.2,<6.0.0",
     "mypy>=1.16.1,<2.0.0",
     "ruff>=0.1.0",
-    "pylint>=3.0.0",
+    "pylint>=4.0.9",
     "flake8>=7.0.0",
     "flake8-docstrings>=1.7.0",
     "flake8-bugbear>=24.1.0",
@@ -316,10 +312,8 @@ dev = [
     "flake8-simplify>=0.21.0",
     # Security
     "bandit>=1.7.0",
-    "safety>=3.0.0",
-    "authlib>=1.6.12,<2.0.0",
+    "authlib>=1.9.5,<2.0.0",
     "nltk>=3.10.4,<4.0.0",
-    "virtualenv>=21.7.13,<22.0.0",
     # Optional-feature deps exercised by the test suite (ERD/repo graphs) — kept
     # in dev so CI can run those tests strictly instead of best-effort (#169).
     "pandas>=2.0.0",
@@ -327,7 +321,6 @@ dev = [
     "openpyxl>=3.1.0",  # Excel engine for repo.py pd.ExcelWriter (#169)
     "scikit-learn>=1.3.0",  # sklearn TF-IDF fallback for cached_vectorizer (pulls scipy) (#169)
     # Pre-commit / build / publish
-    "pre-commit>=4.5.1",
     "build>=1.2.2.post1",
     "maturin>=1.9.3",
     "twine>=4.0.0",
