@@ -62,6 +62,9 @@ class McliLogger:
 
     _instance: Optional["McliLogger"] = None
     _runtime_tracing_enabled: bool = False
+    _owned_runtime_trace: Optional[TraceFunction] = None
+    _previous_runtime_trace: Optional[TraceFunction] = None
+    _previous_thread_trace: Optional[TraceFunction] = None
     _system_tracing_enabled: bool = False
     _system_trace_interval: int = 5  # Default to check every 5 seconds
     _system_trace_process_ids: set[int] = set()  # Process IDs to monitor
@@ -132,17 +135,24 @@ class McliLogger:
             }
 
         if cls._trace_level > 0 and not cls._runtime_tracing_enabled:
-            # Enable tracing
-            sys.settrace(cls._instance._trace_callback)
-            threading.settrace(cls._instance._trace_callback)
+            cls._previous_runtime_trace = sys.gettrace()
+            cls._previous_thread_trace = threading.gettrace()
+            cls._owned_runtime_trace = cls._instance._trace_callback
+            sys.settrace(cls._owned_runtime_trace)
+            threading.settrace(cls._owned_runtime_trace)
             cls._runtime_tracing_enabled = True
             cls._instance.trace_logger.info(
                 f"Python interpreter tracing enabled (level={cls._trace_level})"
             )
         elif cls._trace_level == 0 and cls._runtime_tracing_enabled:
-            # Disable tracing (None is valid to disable tracing per Python docs)
-            sys.settrace(None)
-            threading.settrace(None)  # type: ignore[arg-type]
+            # Another debugger may have replaced either hook independently.
+            if sys.gettrace() is cls._owned_runtime_trace:
+                sys.settrace(cls._previous_runtime_trace)
+            if threading.gettrace() is cls._owned_runtime_trace:
+                threading.settrace(cls._previous_thread_trace)
+            cls._owned_runtime_trace = None
+            cls._previous_runtime_trace = None
+            cls._previous_thread_trace = None
             cls._runtime_tracing_enabled = False
             cls._instance.trace_logger.info("Python interpreter tracing disabled")
 

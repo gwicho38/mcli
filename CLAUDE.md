@@ -254,7 +254,7 @@ The CLI has been simplified to focus on the core command runner experience:
 - **`mcli self`** - Self-management (version, update, health, plugin, completion)
 
 ### Testing Requirements
-- Current minimum coverage: 30% (configured in `pyproject.toml`, goal: 80%)
+- Current minimum coverage: 50% (canonical `setup.cfg`, selected by `pytest.ini`; goal: 80%)
 - Tests in `tests/` organized by category: unit, cli, integration, e2e, performance
 - Use pytest markers: `@pytest.mark.slow`, `@pytest.mark.integration`, `@pytest.mark.cli`, `@pytest.mark.unit`
 - Additional markers: `@pytest.mark.performance`, `@pytest.mark.requires_redis`, etc.

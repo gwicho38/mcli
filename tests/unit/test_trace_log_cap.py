@@ -119,6 +119,10 @@ def test_runtime_tracing_does_not_outlive_the_test_that_enabled_it_part_2():
 
     assert not McliLogger._runtime_tracing_enabled
     assert getattr(sys.gettrace(), "__func__", None) is not McliLogger._trace_callback
+    import coverage
+
+    if coverage.Coverage.current() is not None:
+        assert sys.gettrace() is not None, "logger cleanup disabled the active coverage collector"
 
 
 def test_trace_logs_on_disk_are_bounded_even_if_tracing_stays_on():

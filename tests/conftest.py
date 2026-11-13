@@ -8,6 +8,7 @@ Shared fixtures from tests/fixtures/ are automatically imported and available gl
 import os
 import sys
 import tempfile
+import threading
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -117,6 +118,8 @@ def reset_singletons():
     a test that turns them on and fails to turn them off would trace every later
     test. Switch both off after each test.
     """
+    previous_trace = sys.gettrace()
+    previous_thread_trace = threading.gettrace()
     yield
     from mcli.lib.logger.logger import McliLogger
 
@@ -124,6 +127,11 @@ def reset_singletons():
         McliLogger.disable_runtime_tracing()
     if McliLogger._system_tracing_enabled:
         McliLogger.disable_system_tracing()
+    # Runtime tracing replaces coverage/debugger hooks; stopping it clears them.
+    if sys.gettrace() is not previous_trace:
+        sys.settrace(previous_trace)
+    if threading.gettrace() is not previous_thread_trace:
+        threading.settrace(previous_thread_trace)
 
 
 # pytest configuration
