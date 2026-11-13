@@ -625,14 +625,14 @@ class ScriptLoader:
                         click.echo(stderr, nl=False, err=True)
                     returncode = process.returncode
 
-                if returncode != 0:
-                    logger.warning(f"Shell command {name} exited with code {returncode}")
-                    ctx.exit(returncode)
-
             except Exception as e:
                 logger.error(f"Failed to execute shell command {name}: {e}")
                 click.echo(f"Error executing shell command: {e}", err=True)
                 ctx.exit(1)
+
+            if returncode != 0:
+                logger.warning(f"Shell command {name} exited with code {returncode}")
+                ctx.exit(returncode)
 
         return shell_command
 

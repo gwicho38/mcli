@@ -1,15 +1,13 @@
 # MCLI Installation Guide
 
-Version 8.0.8 is now available through multiple installation methods!
+Version 8.0.71 is available through the installation methods below.
 
-## 🎉 What's New in 8.0.8
+## What's New in 8.0.71
 
-Documentation updates in this release:
-- **Updated all documentation** - README, INDEX, INSTALL, and CHANGELOG synchronized
-- **PyPI documentation** - Package page now shows current project state
-- **Release notes** - Complete release history for 8.0.x series
+Shell workflows preserve the child process exit code in captured-output and
+interactive execution. A workflow that exits `3` now returns `3` to its caller.
 
-For detailed release notes, see [8.0.8 Release Notes](../releases/8.0.8.md)
+See the [8.0.71 release notes](../releases/8.0.71.md).
 
 ## 🚀 What's New in 8.0.x
 
