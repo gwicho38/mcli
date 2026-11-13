@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from mcli.lib.config import DEV_SECRETS_ROOT
+from mcli.lib.constants import InfoMessages
 from mcli.lib.fs import get_absolute_path
 from mcli.lib.logger.logger import get_logger
 
@@ -38,8 +39,8 @@ class CredentialManager:
         Ensures parent directories exist and sets proper access modes.
         """
         logger.info("Insure of ensure config dir")
-        logger.info("config file: %s", self.config_file)
-        logger.info("config dir: %s", self.config_dir)
+        logger.info(InfoMessages.CONFIG_FILE_LOG, self.config_file)
+        logger.info(InfoMessages.CONFIG_DIR_LOG, self.config_dir)
         try:
             # Create parent directories if they don't exist
             # 0o700 means read, write, execute permissions for owner only
@@ -59,7 +60,7 @@ class CredentialManager:
             Dict[str, Any]: Configuration dictionary, empty if file doesn't exist or is invalid.
         """
         try:
-            logger.info("Reading config file: %s", self.config_file)
+            logger.info(InfoMessages.READING_CONFIG_LOG, self.config_file)
             if not self.config_file.exists():
                 return {}
 

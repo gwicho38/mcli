@@ -4,9 +4,20 @@ import json
 import os
 import subprocess
 import sys
+from importlib.metadata import version
 from pathlib import Path
 
 import pytest
+from ruamel.yaml import YAML
+
+
+def test_configured_black_hook_matches_frozen_project_formatter():
+    root = Path(__file__).resolve().parents[2]
+    configuration = YAML(typ="safe").load((root / ".pre-commit-config.yaml").read_text())
+    black = next(
+        repo for repo in configuration["repos"] if repo["repo"] == "https://github.com/psf/black"
+    )
+    assert black["rev"] == version("black")
 
 
 @pytest.mark.parametrize(

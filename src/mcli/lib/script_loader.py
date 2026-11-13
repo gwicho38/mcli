@@ -28,7 +28,7 @@ from typing import Any, Optional
 
 import click
 
-from mcli.lib.constants import FileNames
+from mcli.lib.constants import CommandMessages, FileNames
 from mcli.lib.logger.logger import get_logger, register_subprocess
 from mcli.lib.pyenv import PyEnvManager
 
@@ -631,7 +631,7 @@ class ScriptLoader:
                 ctx.exit(1)
 
             if returncode != 0:
-                logger.warning(f"Shell command {name} exited with code {returncode}")
+                logger.warning(CommandMessages.SHELL_EXITED.format(name=name, code=returncode))
                 ctx.exit(returncode)
 
         return shell_command

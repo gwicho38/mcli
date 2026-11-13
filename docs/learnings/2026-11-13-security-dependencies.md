@@ -41,6 +41,18 @@ and the former advisory-ignore fallback is removed. A vulnerable Authlib fixture
 exercises the actual scanner's failure exit, separately from clean interpreter
 exports and the Make failure-propagation regression.
 
+Fresh review also found the configured Black hook still pinned to 24.8.0 while
+the project used 26.10.1. Running that old formatter on two source files changed
+their formatting again. The hook now uses 26.10.1; a regression compares the
+configured revision with the frozen project formatter. Validation runs the actual
+configured hook, not a disposable local-hook substitute.
+
+The complete configured hook run also caught new log/update message literals;
+these now live in the existing message constants without changing their output.
+The Bandit baseline initially appeared invalid because the checkout contained
+its Git LFS pointer. The existing 130,324-byte blob was materialized and checked
+against its recorded SHA-256; no baseline findings or policy exceptions changed.
+
 The Make regression executes each target against a recording UV command and
 checks interpreter selection, security floors and preserved arguments; the three
 pre-commit cases and the dependency-audit case failed before their runner changes. Final audit and test results must correspond

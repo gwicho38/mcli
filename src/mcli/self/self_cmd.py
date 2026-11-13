@@ -31,7 +31,7 @@ try:
 except ImportError:
     process = None
 
-from mcli.lib.constants import ErrorMessages
+from mcli.lib.constants import ErrorMessages, WarningMessages
 from mcli.lib.logger.logger import get_logger
 
 logger = get_logger()
@@ -650,7 +650,7 @@ def update(check: bool, pre: bool, yes: bool, skip_ci_check: bool):
             return
 
         console.print(
-            f"[yellow]⬆️  Update available: {current_version} → {latest_version}[/yellow]"
+            WarningMessages.UPDATE_AVAILABLE.format(current=current_version, latest=latest_version)
         )
 
         # Show release notes if available
