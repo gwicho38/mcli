@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from mcli.lib.config import DEV_SECRETS_ROOT
+from mcli.lib.constants import InfoMessages
 from mcli.lib.fs import get_absolute_path
 from mcli.lib.logger.logger import get_logger
 
@@ -30,7 +31,6 @@ class CredentialManager:
         self.config_dir = Path.home() / ".config" / app_name
         self.config_file = self.config_dir / config_filename
         self._ensure_config_dir()
-        # logger.info("config file:", self.config_file)
 
     def _ensure_config_dir(self):
         """
@@ -38,8 +38,8 @@ class CredentialManager:
         Ensures parent directories exist and sets proper access modes.
         """
         logger.info("Insure of ensure config dir")
-        logger.info("config file:", self.config_file)
-        logger.info("config dir:", self.config_dir)
+        logger.info(InfoMessages.CONFIG_FILE_PATH, self.config_file)
+        logger.info(InfoMessages.CONFIG_DIRECTORY_PATH, self.config_dir)
         try:
             # Create parent directories if they don't exist
             # 0o700 means read, write, execute permissions for owner only
@@ -59,7 +59,7 @@ class CredentialManager:
             Dict[str, Any]: Configuration dictionary, empty if file doesn't exist or is invalid.
         """
         try:
-            logger.info("Reading config file:", self.config_file)
+            logger.info(InfoMessages.READING_CONFIG_PATH, self.config_file)
             if not self.config_file.exists():
                 return {}
 
@@ -178,7 +178,7 @@ class CredentialManager:
         filepath = get_absolute_path(DEV_SECRETS_ROOT + "thirdParty/" + thirdPartyApiKind + ".txt")
         with open(filepath, "w") as f:
             f.write(json.dumps(str(creds)))
-        logger.info(thirdPartyApiKind + " secrets have been persisted into:", filepath)
+        logger.info(InfoMessages.CREDENTIALS_PERSISTED_PATH, thirdPartyApiKind, filepath)
 
     @staticmethod
     def create_key_auth_token(user_id, private_key_path):

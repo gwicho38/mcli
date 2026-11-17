@@ -70,6 +70,11 @@ class WarningMessages:
 class InfoMessages:
     """Informational message constants."""
 
+    CONFIG_FILE_PATH = "Config file: %s"
+    CONFIG_DIRECTORY_PATH = "Config directory: %s"
+    READING_CONFIG_PATH = "Reading config file: %s"
+    CREDENTIALS_PERSISTED_PATH = "%s secrets have been persisted into: %s"
+
     COPYING_COMMANDS = "Copying commands from {source} to {dest}..."
     NO_CHANGES_TO_COMMIT = "No changes to commit"
     WORKFLOW_CRASH_LOCATION = "  in {location}"

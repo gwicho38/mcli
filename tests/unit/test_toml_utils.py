@@ -2,8 +2,27 @@
 
 import os
 import tempfile
+from unittest.mock import patch
 
 import pytest
+
+
+def test_declared_parser_fallback_without_stdlib_or_legacy_toml(tmp_path):
+    from mcli.lib.toml.toml import read_from_toml
+
+    original_import = __import__
+
+    def supported_import(name, *args, **kwargs):
+        if name == "tomllib":
+            raise ModuleNotFoundError("Python 3.10 has no tomllib")
+        if name == "toml":
+            raise AssertionError("undeclared legacy parser must not be needed")
+        return original_import(name, *args, **kwargs)
+
+    source = tmp_path / "sample.toml"
+    source.write_text('[settings]\nvalue = "ready"\n')
+    with patch("builtins.__import__", side_effect=supported_import):
+        assert read_from_toml(str(source), "settings") == {"value": "ready"}
 
 
 class TestTomlUtils:
