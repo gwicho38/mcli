@@ -9,6 +9,7 @@ from pathlib import Path
 
 import click
 
+from mcli.lib.constants import ErrorMessages, SuccessMessages
 from mcli.workflow.ci.act_lock import DEFAULT_LOCK_TIMEOUT_SECONDS, LOCK_TIMEOUT_ENV
 from mcli.workflow.ci.act_runner import PreflightResult, act_available, docker_running
 from mcli.workflow.ci.act_runner import preflight as preflight_fn
@@ -115,10 +116,10 @@ def preflight(event, lock_timeout):
     slug = current_repo_slug()
     result = preflight_fn(slug, event, lock_timeout=lock_timeout)
     if result == PreflightResult.PASS:
-        click.echo("✅ act passed — OK to open PR.")
+        click.echo(SuccessMessages.CI_GATE_PASSED)
         raise SystemExit(0)
     if result == PreflightResult.FAIL:
-        click.echo("❌ act failed — fix before opening PR.")
+        click.echo(ErrorMessages.CI_GATE_FAILED)
         raise SystemExit(1)
     if result == PreflightResult.NOT_VALIDATED:
         click.echo(
@@ -149,7 +150,7 @@ def pr():
         subprocess.run(["gh", "pr", "create", "--fill", "--base", "main"], check=False)
         return
     if result == PreflightResult.FAIL:
-        click.echo("act failed; not opening PR.")
+        click.echo(ErrorMessages.CI_GATE_PR_REFUSED)
         raise SystemExit(1)
     if result == PreflightResult.NOT_VALIDATED:
         click.echo("act ran no job; refusing to open an unvalidated PR.")

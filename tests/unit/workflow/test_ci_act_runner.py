@@ -624,3 +624,49 @@ class TestNoJobRanIsNeverPass:
             res = CliRunner().invoke(ci, ["preflight", "--lock-timeout", "5"])
         assert "act passed" not in res.output
         assert res.exit_code == 2, res.output
+
+
+class TestRunnerNeutralCliOutcomes:
+    def test_native_success_is_not_reported_as_act(self):
+        from click.testing import CliRunner
+
+        from mcli.workflow.ci.ci import ci
+
+        with (
+            patch("mcli.workflow.ci.ci.current_repo_slug", return_value=None),
+            patch("mcli.workflow.ci.ci.preflight_fn", return_value=PreflightResult.PASS),
+        ):
+            result = CliRunner().invoke(ci, ["preflight"])
+        assert result.exit_code == 0
+        assert "Local CI gate passed" in result.output
+        assert "act passed" not in result.output
+
+    def test_native_failure_is_not_reported_as_act(self):
+        from click.testing import CliRunner
+
+        from mcli.workflow.ci.ci import ci
+
+        with (
+            patch("mcli.workflow.ci.ci.current_repo_slug", return_value=None),
+            patch("mcli.workflow.ci.ci.preflight_fn", return_value=PreflightResult.FAIL),
+        ):
+            result = CliRunner().invoke(ci, ["preflight"])
+        assert result.exit_code == 1
+        assert "Local CI gate failed" in result.output
+        assert "act failed" not in result.output
+
+    def test_native_failure_refuses_pr_without_naming_act(self):
+        from click.testing import CliRunner
+
+        from mcli.workflow.ci.ci import ci
+
+        with (
+            patch("mcli.workflow.ci.ci.current_repo_slug", return_value=None),
+            patch("mcli.workflow.ci.ci.preflight_fn", return_value=PreflightResult.FAIL),
+            patch("mcli.workflow.ci.ci.subprocess.run") as run,
+        ):
+            result = CliRunner().invoke(ci, ["pr"])
+        assert result.exit_code == 1
+        assert "Local CI gate failed" in result.output
+        assert "act failed" not in result.output
+        run.assert_not_called()
