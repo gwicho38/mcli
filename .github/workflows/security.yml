@@ -75,17 +75,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Safety
-        run: pip install --upgrade "setuptools>=83" safety
+      - name: Set up UV
+        uses: astral-sh/setup-uv@v3
 
-      - name: Run Safety Check
-        run: safety check --json > safety-report.json || safety check --ignore 59234,71691,71584,71578,71577,71692,71579,71587,71693,64459,64396
+      - name: Install isolated MCLI runtime
+        run: |
+          uv venv --python 3.11 .audit-runtime
+          uv pip install --python .audit-runtime/bin/python -e .
+          uv pip freeze --python .audit-runtime/bin/python --exclude-editable > runtime-requirements.txt
 
-      - name: Upload Safety results
+      - name: Audit installed runtime dependencies
+        # Only the first-party editable project is excluded; its source is checked
+        # by CodeQL/Bandit. Audit every installed third-party runtime dependency.
+        run: uvx --from pip-audit==2.10.1 pip-audit --requirement runtime-requirements.txt --no-deps --disable-pip --strict --format json --output safety-report.json
+
+      - name: Upload dependency audit results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: safety-results
-          path: safety-report.json
+          path: |
+            safety-report.json
+            runtime-requirements.txt
 
   trivy:
     name: Trivy Vulnerability Scan
