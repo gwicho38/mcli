@@ -9,6 +9,9 @@ internationalization easier in the future.
 class ErrorMessages:
     """Error message constants."""
 
+    CI_GATE_FAILED = "❌ Local CI gate failed — fix before opening PR."
+    CI_GATE_PR_REFUSED = "Local CI gate failed; not opening PR."
+
     EDITOR_NOT_FOUND = (
         "No editor found. Please set the EDITOR environment variable or install vim/nano."
     )
@@ -33,6 +36,8 @@ class ErrorMessages:
 
 class SuccessMessages:
     """Success message constants."""
+
+    CI_GATE_PASSED = "✅ Local CI gate passed — OK to open PR."
 
     INITIALIZED_GIT_REPO = "Initialized git repository at {path}"
     COMMAND_STORE_INITIALIZED = "Command store initialized at {path}"
@@ -64,6 +69,11 @@ class WarningMessages:
 
 class InfoMessages:
     """Informational message constants."""
+
+    CONFIG_FILE_PATH = "Config file: %s"
+    CONFIG_DIRECTORY_PATH = "Config directory: %s"
+    READING_CONFIG_PATH = "Reading config file: %s"
+    CREDENTIALS_PERSISTED_PATH = "%s secrets have been persisted into: %s"
 
     COPYING_COMMANDS = "Copying commands from {source} to {dest}..."
     NO_CHANGES_TO_COMMIT = "No changes to commit"

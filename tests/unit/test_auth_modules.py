@@ -1,10 +1,29 @@
 """Unit tests for mcli.lib.auth modules."""
 
+import logging
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+
+
+def test_configuration_and_persistence_logs_format_without_exposing_values(tmp_path, caplog):
+    import mcli.lib.auth.credential_manager as credentials
+
+    caplog.set_level(logging.INFO, logger=credentials.logger.name)
+    with patch.object(credentials.Path, "home", return_value=tmp_path):
+        manager = credentials.CredentialManager(app_name="fixture")
+        manager.write_config({"sample": "not-a-real-secret"})
+        assert manager.read_config() == {"sample": "not-a-real-secret"}
+    (tmp_path / "thirdParty").mkdir()
+    with patch.object(credentials, "DEV_SECRETS_ROOT", str(tmp_path) + "/"):
+        credentials.CredentialManager.persist_generic_creds(
+            "fixture", {"sample": "not-a-real-secret"}
+        )
+    assert str(manager.config_file) in caplog.text
+    assert str(tmp_path / "thirdParty" / "fixture.txt") in caplog.text
+    assert "not-a-real-secret" not in caplog.text
 
 
 class TestCredentialManager:
