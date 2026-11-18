@@ -1,5 +1,6 @@
 """CliRunner tests for the `mcli ci` group."""
 
+import os
 import shutil
 import subprocess
 from unittest.mock import patch
@@ -20,6 +21,15 @@ jobs:
     steps:
       - run: echo hi
 """
+
+
+@pytest.fixture(autouse=True)
+def isolated_git_environment(monkeypatch):
+    for name in list(os.environ):
+        if name.startswith("GIT_"):
+            monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
+    monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
 
 
 class TestMigrate:
@@ -128,7 +138,7 @@ class TestDoctorAndHook:
         assert "act" in res.output.lower()
         assert "docker" in res.output.lower()
 
-    def test_install_hook_writes_pre_push(self, tmp_path, monkeypatch):
+    def test_install_hook_writes_pre_push(self, tmp_path, monkeypatch, isolated_git_environment):
         subprocess.run(["git", "init", str(tmp_path)], check=True, capture_output=True)
         hooks = tmp_path / ".git" / "hooks"
         monkeypatch.chdir(tmp_path)
@@ -292,7 +302,7 @@ def git_repo(path):
     )
 
 
-def test_install_hook_from_linked_worktree(tmp_path, monkeypatch):
+def test_install_hook_from_linked_worktree(tmp_path, monkeypatch, isolated_git_environment):
     repo, worktree = tmp_path / "repo", tmp_path / "linked"
     git_repo(repo)
     subprocess.run(
@@ -327,7 +337,7 @@ def test_install_hook_respects_configured_path_from_subdirectory(tmp_path, monke
     assert not (repo / ".git" / "hooks" / "pre-push").exists()
 
 
-def test_install_hook_rejects_a_non_repository(tmp_path, monkeypatch):
+def test_install_hook_rejects_a_non_repository(tmp_path, monkeypatch, isolated_git_environment):
     monkeypatch.chdir(tmp_path)
     result = CliRunner().invoke(ci, ["install-hook"])
     assert result.exit_code != 0

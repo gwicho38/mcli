@@ -29,3 +29,9 @@ flowchart LR
     Current[Current directory] --> Git[Git resolves root and effective hooks]
     Git --> Hook[Executable hook at the configured path]
 ```
+
+Temporary-repository tests clear inherited GIT_* variables and disable user/system
+Git configuration. This keeps pre-push repository context and global hook paths
+out of the fixture. Local/global configuration semantics in the installed command
+remain unchanged. A wheel smoke invokes the actual packaged CLI from a temporary
+linked checkout and verifies the shared executable hook.
