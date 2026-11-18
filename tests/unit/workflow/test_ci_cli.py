@@ -1,8 +1,10 @@
 """CliRunner tests for the `mcli ci` group."""
 
 import shutil
+import subprocess
 from unittest.mock import patch
 
+import pytest
 from click.testing import CliRunner
 
 from mcli.workflow.ci.ci import ci
@@ -127,8 +129,8 @@ class TestDoctorAndHook:
         assert "docker" in res.output.lower()
 
     def test_install_hook_writes_pre_push(self, tmp_path, monkeypatch):
+        subprocess.run(["git", "init", str(tmp_path)], check=True, capture_output=True)
         hooks = tmp_path / ".git" / "hooks"
-        hooks.mkdir(parents=True)
         monkeypatch.chdir(tmp_path)
         res = CliRunner().invoke(ci, ["install-hook"])
         assert res.exit_code == 0
@@ -265,3 +267,68 @@ class TestRepoSlug:
 
     def test_ghe_returns_none(self):
         assert self._slug("https://github.example.com/owner/repo.git") is None
+
+
+def git_repo(path):
+    subprocess.run(["git", "init", str(path)], check=True, capture_output=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(path),
+            "-c",
+            "commit.gpgsign=false",
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "--allow-empty",
+            "-m",
+            "Initial test repository",
+        ],
+        check=True,
+        capture_output=True,
+    )
+
+
+def test_install_hook_from_linked_worktree(tmp_path, monkeypatch):
+    repo, worktree = tmp_path / "repo", tmp_path / "linked"
+    git_repo(repo)
+    subprocess.run(
+        ["git", "-C", str(repo), "worktree", "add", "-b", "linked", str(worktree)],
+        check=True,
+        capture_output=True,
+    )
+    monkeypatch.chdir(worktree)
+    result = CliRunner().invoke(ci, ["install-hook"])
+    assert result.exit_code == 0, result.output
+    hook = repo / ".git" / "hooks" / "pre-push"
+    assert "mcli ci preflight" in hook.read_text()
+    assert hook.stat().st_mode & 0o111
+    assert (worktree / ".git").is_file()
+
+
+@pytest.mark.parametrize("absolute", [False, True])
+def test_install_hook_respects_configured_path_from_subdirectory(tmp_path, monkeypatch, absolute):
+    repo = tmp_path / "repo"
+    git_repo(repo)
+    hooks = tmp_path / "custom hooks" if absolute else repo / "custom hooks"
+    value = str(hooks) if absolute else "custom hooks"
+    subprocess.run(["git", "-C", str(repo), "config", "core.hooksPath", value], check=True)
+    nested = repo / "nested"
+    nested.mkdir()
+    monkeypatch.chdir(nested)
+    result = CliRunner().invoke(ci, ["install-hook"])
+    assert result.exit_code == 0, result.output
+    hook = hooks / "pre-push"
+    assert "mcli ci preflight" in hook.read_text()
+    assert hook.stat().st_mode & 0o111
+    assert not (repo / ".git" / "hooks" / "pre-push").exists()
+
+
+def test_install_hook_rejects_a_non_repository(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = CliRunner().invoke(ci, ["install-hook"])
+    assert result.exit_code != 0
+    assert not (tmp_path / ".git").exists()

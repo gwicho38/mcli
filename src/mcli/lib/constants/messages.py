@@ -11,6 +11,7 @@ class ErrorMessages:
 
     CI_GATE_FAILED = "❌ Local CI gate failed — fix before opening PR."
     CI_GATE_PR_REFUSED = "Local CI gate failed; not opening PR."
+    CI_HOOK_INSTALL_FAILED = "Could not install Git pre-push hook: {error}"
 
     EDITOR_NOT_FOUND = (
         "No editor found. Please set the EDITOR environment variable or install vim/nano."
@@ -38,6 +39,7 @@ class SuccessMessages:
     """Success message constants."""
 
     CI_GATE_PASSED = "✅ Local CI gate passed — OK to open PR."
+    CI_HOOK_INSTALLED = "Installed pre-push hook at {path}"
 
     INITIALIZED_GIT_REPO = "Initialized git repository at {path}"
     COMMAND_STORE_INITIALIZED = "Command store initialized at {path}"
