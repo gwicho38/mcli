@@ -9,7 +9,7 @@ from pathlib import Path
 
 import click
 
-from mcli.lib.constants import ErrorMessages, SuccessMessages
+from mcli.lib.constants import DirNames, ErrorMessages, FileNames, SuccessMessages, Timeouts
 from mcli.workflow.ci.act_lock import DEFAULT_LOCK_TIMEOUT_SECONDS, LOCK_TIMEOUT_ENV
 from mcli.workflow.ci.act_runner import PreflightResult, act_available, docker_running
 from mcli.workflow.ci.act_runner import preflight as preflight_fn
@@ -217,12 +217,39 @@ def doctor():
 @ci.command(name="install-hook")
 def install_hook():
     """Install an opt-in pre-push hook that runs `mcli ci preflight`."""
-    hooks = Path(".git") / "hooks"
-    if not hooks.exists():
-        click.echo("Not a git repo (.git/hooks missing).")
-        raise SystemExit(1)
-    hook = hooks / "pre-push"
-    hook.write_text(PRE_PUSH_HOOK)
-    mode = hook.stat().st_mode
-    hook.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    click.echo(f"Installed pre-push hook at {hook}")
+    try:
+        root = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=Timeouts.SHORT,
+        ).stdout.strip()
+        # Relative core.hooksPath is interpreted from the worktree root.
+        resolved = subprocess.run(
+            [
+                "git",
+                "-C",
+                root,
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-path",
+                DirNames.GIT_HOOKS,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=Timeouts.SHORT,
+        ).stdout.strip()
+        hooks = Path(resolved)
+        hooks.mkdir(parents=True, exist_ok=True)
+        hook = hooks / FileNames.PRE_PUSH_HOOK
+        hook.write_text(PRE_PUSH_HOOK)
+        mode = hook.stat().st_mode
+        hook.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    except (OSError, subprocess.SubprocessError) as exc:
+        detail = exc.stderr.strip() if isinstance(exc, subprocess.CalledProcessError) else str(exc)
+        raise click.ClickException(
+            ErrorMessages.CI_HOOK_INSTALL_FAILED.format(error=detail)
+        ) from exc
+    click.echo(SuccessMessages.CI_HOOK_INSTALLED.format(path=hook))

@@ -10,6 +10,7 @@ class DirNames:
 
     MCLI = ".mcli"
     GIT = ".git"
+    GIT_HOOKS = "hooks"
     LOGS = "logs"
     CONFIG = "config"
     DATA = "data"
@@ -49,6 +50,7 @@ class FileNames:
 
     CONFIG_TOML = "config.toml"
     GITIGNORE = ".gitignore"
+    PRE_PUSH_HOOK = "pre-push"
     STORE_CONF = "store.conf"
     COMMANDS_LOCK_JSON = "commands.lock.json"
     # Legacy lockfile name (pre-v8.0.49); still skipped by loaders so a stale
